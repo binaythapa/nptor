@@ -385,21 +385,33 @@ def student_dashboard(request):
     """
     exams = Exam.objects.filter(is_published=True).order_by('title')
 
-    active_attempt = UserExam.objects.filter(user=request.user, submitted_at__isnull=True).order_by('-started_at').first()
+    active_attempt = UserExam.objects.filter(
+        user=request.user,
+        submitted_at__isnull=True
+    ).order_by('-started_at').first()
 
-    recent_attempts = UserExam.objects.filter(user=request.user, submitted_at__isnull=False).select_related('exam').order_by('-submitted_at')[:8]
+    recent_attempts = UserExam.objects.filter(
+        user=request.user,
+        submitted_at__isnull=False
+    ).select_related('exam').order_by('-submitted_at')[:8]
 
-    attempted_count = UserExam.objects.filter(user=request.user, submitted_at__isnull=False).count()
+    attempted_count = UserExam.objects.filter(
+        user=request.user,
+        submitted_at__isnull=False
+    ).count()
+
     from django.db.models import Max
-    best_score_val = UserExam.objects.filter(user=request.user, submitted_at__isnull=False).aggregate(best=Max('score'))['best'] or 0.0
+    best_score_val = UserExam.objects.filter(
+        user=request.user,
+        submitted_at__isnull=False
+    ).aggregate(best=Max('score'))['best'] or 0.0
 
-    # Build exam_items to show locked/unlocked state
     exam_items = []
     for e in exams:
         locked = False
         reason = None
 
-        # 1) explicit prerequisites (if exam has M2M 'prerequisite_exams')
+        # 1) explicit prerequisites
         prereqs = list(getattr(e, 'prerequisite_exams', []).all()) if hasattr(e, 'prerequisite_exams') else []
         if prereqs:
             missing = [p for p in prereqs if not _user_passed_exam(request.user, p)]
@@ -407,15 +419,39 @@ def student_dashboard(request):
                 locked = True
                 reason = 'Pass: ' + ', '.join([m.title for m in missing])
 
-        # 2) level-based gating (if exam has integer 'level' attribute)
+        # 2) level-based gating
         elif getattr(e, 'level', None) and e.level > 1:
             prev_level = e.level - 1
-            passed_prev = UserExam.objects.filter(user=request.user, exam__level=prev_level, passed=True).exists()
+            passed_prev = UserExam.objects.filter(
+                user=request.user,
+                exam__level=prev_level,
+                passed=True
+            ).exists()
             if not passed_prev:
                 locked = True
                 reason = f'Pass at least one Level {prev_level} exam to unlock'
 
-        exam_items.append({'exam': e, 'locked': locked, 'reason': reason})
+        # 3) build a clean category label (remove "Snowpro ->")
+        #    - handle both single category and many-to-many categories
+        if hasattr(e, 'categories') and e.categories.exists():
+            parts = []
+            for c in e.categories.all():
+                name = getattr(c, 'name', str(c))
+                leaf = name.split('->')[-1].strip()
+                parts.append(leaf)
+            category_label = ', '.join(parts)
+        elif getattr(e, 'category', None):
+            name = getattr(e.category, 'name', str(e.category))
+            category_label = name.split('->')[-1].strip()
+        else:
+            category_label = 'General'
+
+        exam_items.append({
+            'exam': e,
+            'locked': locked,
+            'reason': reason,
+            'category_label': category_label,
+        })
 
     context = {
         'exams': exams,

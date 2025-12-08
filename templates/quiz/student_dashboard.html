@@ -2,7 +2,47 @@
 {% block title %}Student Dashboard - Objective Exam{% endblock %}
 
 {% block head_extra %}
-<!-- optional: small extra CSS for this page -->
+<style>
+  /* Small, attractive Start button */
+  .start-btn {
+    padding: 4px 14px;
+    background: linear-gradient(135deg, #4a90e2, #007bff);
+    color: #fff !important;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: 0.22s ease;
+  }
+  .start-btn:hover {
+    background: linear-gradient(135deg, #007bff, #0056c1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.28);
+  }
+
+  .locked-chip {
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #a0a0a0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .category-heading {
+    margin: 0.75rem 0 0.35rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #444;
+    border-left: 3px solid #3273dc;
+    padding-left: 6px;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -17,8 +57,12 @@
 
     <div class="level-right">
       <div class="buttons">
-        <a class="button is-white" href="{% url 'quiz:exam_list' %}"><i class="fa fa-search"></i>&nbsp; Browse all Exams</a>
-        <a class="button is-primary" href="{% url 'quiz:profile' %}"><i class="fa fa-user"></i>&nbsp; Edit profile</a>
+        <a class="button is-white" href="{% url 'quiz:exam_list' %}">
+          <i class="fa fa-search"></i>&nbsp; Browse all Exams
+        </a>
+        <a class="button is-primary" href="{% url 'quiz:profile' %}">
+          <i class="fa fa-user"></i>&nbsp; Edit profile
+        </a>
       </div>
     </div>
   </div>
@@ -32,58 +76,78 @@
       <div class="card-header">
         <div>
           <h3 class="title is-5">Available Exams</h3>
-          <p class="small-muted">Choose an exam to begin. Locked exams show the requirement.</p>
+          <p class="small-muted">Exams are grouped by category. Locked exams show the requirement.</p>
         </div>
       </div>
 
       <div class="card-body">
         <div class="exams-grid">
-          {% for item in exam_items %}
-            {% with e=item.exam %}
-            <article class="exam-card {% if item.locked %}locked{% endif %}">
-              <div class="exam-meta">
-                <div class="exam-title">
-                  <strong>{{ e.title }}</strong>
-                  <span class="tag is-light is-small">Level {{ e.level|default:"-" }}</span>
-                </div>
+          {% if exam_items %}
+            {# Group dashboard items by exam.category #}
+            {% regroup exam_items by exam.category as category_groups %}
 
-                {# safe handling of categories or legacy category or fallback text #}
-                <div class="exam-sub">
-                  {% if e.categories.all|length %}
-                    {{ e.categories.all|join:", " }}
-                  {% else %}
-                    {% if e.category %}
-                      {{ e.category.name }}
-                    {% else %}
-                      General
-                    {% endif %}
-                  {% endif %}
-                </div>
-              </div>
+            {% for group in category_groups %}
+              <h4 class="category-heading">
+                {% if group.grouper %}
+                  {{ group.grouper }}   {# Category __str__() #}
+                {% else %}
+                  General
+                {% endif %}
+              </h4>
 
-              <div class="exam-body">
-                <div class="exam-info">
-                  <div class="muted">• {{ e.question_count }} Q • {{ e.duration_seconds }}s</div>
-                  <div class="muted" style="margin-top:6px;">{{ e.description|default:"No description" }}</div>
-                </div>
+              {% for item in group.list %}
+                {% with e=item.exam %}
+                <article class="exam-card {% if item.locked %}locked{% endif %}">
+                  <div class="exam-meta">
+                    <div class="exam-title">
+                      <strong>{{ e.title }}</strong>
+                      <span class="tag is-light is-small">Level {{ e.level|default:"-" }}</span>
+                    </div>
 
-                <div class="exam-actions">
-                  {% if item.locked %}
-                    <span class="lock-badge"><i class="fa fa-lock"></i> Locked</span>
-                    <div class="muted small-muted" style="margin-top:6px;">{{ item.reason }}</div>
-                  {% else %}
-                    <a class="button is-link is-light is-small" href="{% url 'quiz:exam_start' e.id %}">Start</a>
-                  {% endif %}
-                  {% if e.passing_score %}
-                    <div class="passing">Passing: <strong>{{ e.passing_score }}%</strong></div>
-                  {% endif %}
-                </div>
-              </div>
-            </article>
-            {% endwith %}
-          {% empty %}
+                    <div class="exam-sub">
+                         {{ item.category_label }}
+                            </div>
+
+                  </div>
+
+                  <div class="exam-body">
+                    <div class="exam-info">
+                      <div class="muted">• {{ e.question_count }} Q • {{ e.duration_seconds }}s</div>
+                      <div class="muted" style="margin-top:6px;">
+                        {{ e.description|default:"No description" }}
+                      </div>
+                    </div>
+
+                    <div class="exam-actions">
+                      {% if item.locked %}
+                        <span class="locked-chip">
+                          <i class="fa fa-lock"></i> Locked
+                        </span>
+                        {% if item.reason %}
+                          <div class="muted small-muted" style="margin-top:6px;">
+                            {{ item.reason }}
+                          </div>
+                        {% endif %}
+                      {% else %}
+                        <a class="start-btn" href="{% url 'quiz:exam_start' e.id %}">
+                          <i class="fa fa-play"></i> Start
+                        </a>
+                      {% endif %}
+
+                      {% if e.passing_score %}
+                        <div class="passing" style="margin-top:6px;">
+                          Passing: <strong>{{ e.passing_score }}%</strong>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </article>
+                {% endwith %}
+              {% endfor %}
+            {% endfor %}
+          {% else %}
             <div class="small-muted">No exams available.</div>
-          {% endfor %}
+          {% endif %}
         </div>
       </div>
     </div>
@@ -95,17 +159,32 @@
       </div>
       <div class="card-body">
         <table class="table is-fullwidth is-striped">
-          <thead><tr><th>Exam</th><th>Date</th><th>Score</th><th>Status</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Exam</th>
+              <th>Date</th>
+              <th>Score</th>
+              <th>Status</th>
+            </tr>
+          </thead>
           <tbody>
             {% for r in recent_attempts %}
-            <tr>
-              <td>{{ r.exam.title }}</td>
-              <td>{{ r.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</td>
-              <td>{% if r.submitted_at %}{{ r.score }}%{% else %}-{% endif %}</td>
-              <td>{% if r.submitted_at %}Completed{% else %}<em>In progress</em>{% endif %}</td>
-            </tr>
+              <tr>
+                <td>{{ r.exam.title }}</td>
+                <td>{{ r.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+                <td>{% if r.submitted_at %}{{ r.score }}%{% else %}-{% endif %}</td>
+                <td>
+                  {% if r.submitted_at %}
+                    Completed
+                  {% else %}
+                    <em>In progress</em>
+                  {% endif %}
+                </td>
+              </tr>
             {% empty %}
-            <tr><td colspan="4" class="small-muted">No attempts yet</td></tr>
+              <tr>
+                <td colspan="4" class="small-muted">No attempts yet</td>
+              </tr>
             {% endfor %}
           </tbody>
         </table>
