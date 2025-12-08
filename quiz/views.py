@@ -1099,39 +1099,68 @@ def exam_submit(request, user_exam_id):
 # Result view
 # -------------------------
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
-from django.db.models import Q
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib import messages
+
+from .models import UserExam, QuestionFeedback  # adjust import paths
+
 
 @login_required
 def exam_result(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
+
+    # Handle feedback submission
+    if request.method == 'POST':
+        qid_raw = request.POST.get('question_id')
+        comment = (request.POST.get('comment') or '').strip()
+        is_incorrect = bool(request.POST.get('is_answer_incorrect'))
+
+        try:
+            qid = int(qid_raw)
+        except (TypeError, ValueError):
+            qid = None
+
+        if not qid:
+            messages.error(request, "Invalid question reference.")
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        # ensure the question actually belongs to this exam attempt
+        if not ue.answers.filter(question_id=qid).exists():
+            messages.error(request, "This question does not belong to your exam attempt.")
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        if not comment and not is_incorrect:
+            messages.info(request, "Please enter a comment or mark the answer as incorrect before submitting.")
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        # avoid multiple feedback submissions for same question+attempt+user
+        existing = QuestionFeedback.objects.filter(
+            user=request.user,
+            user_exam=ue,
+            question_id=qid
+        ).first()
+
+        if existing:
+            messages.info(request, "You have already submitted feedback for this question. Thank you!")
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        QuestionFeedback.objects.create(
+            user=request.user,
+            user_exam=ue,
+            question_id=qid,
+            comment=comment,
+            is_answer_incorrect=is_incorrect,
+        )
+
+        messages.success(request, "Thank you! Your feedback has been submitted.")
+        return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+    # GET: show result
     answers = ue.answers.select_related('question', 'choice')
 
-    exam = ue.exam
-
-    # ----- Find next-level exam in the same "track" -----
-    next_level_exam = None
-
-    # Only make sense if this exam has a numeric level
-    if getattr(exam, 'level', None) is not None:
-        # base queryset: only published exams, at next level
-        qs = Exam.objects.filter(is_published=True, level=exam.level + 1)
-
-        # Build a category-based filter:
-        # 1) If exam has M2M categories, use those as the track
-        if exam.categories.exists():
-            qs = qs.filter(categories__in=exam.categories.all()).distinct()
-
-        # 2) Otherwise, fall back to legacy single FK `category`
-        elif exam.category is not None:
-            qs = qs.filter(
-                Q(category=exam.category) | Q(categories=exam.category)
-            ).distinct()
-
-        # 3) If no category at all, just find any exam with next level
-        #    (already covered by base `qs`)
-
-        next_level_exam = qs.order_by('id').first()
+    # map of question_id -> feedback (if any) for this attempt
+    feedback_qs = QuestionFeedback.objects.filter(user=request.user, user_exam=ue)
+    feedback_map = {fb.question_id: fb for fb in feedback_qs}
 
     return render(
         request,
@@ -1139,7 +1168,6 @@ def exam_result(request, user_exam_id):
         {
             'user_exam': ue,
             'answers': answers,
-            'next_level_exam': next_level_exam,
+            'feedback_map': feedback_map,
         }
     )
-

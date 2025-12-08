@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>{% block title %}{{ title|default:"Objective Exam" }}{% endblock %}</title>
+  <title>{% block title %}{{ title|default:"Nepal Mentor" }}{% endblock %}</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
   <!-- Bulma -->
@@ -28,7 +28,7 @@
 
           <a class="brand" href="{% url 'quiz:dashboard' %}">
             <img src="{% static 'images/logo.jpg' %}" alt="logo" class="brand-logo">
-            <span class="brand-text">Objective Exam</span>
+            <span class="brand-text">Nepal Mentor</span>
           </a>
 
           <form action="{% url 'quiz:exam_list' %}" method="get" class="header-search">

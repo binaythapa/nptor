@@ -74,7 +74,6 @@ class ExamCategoryAllocation(models.Model):
     def __str__(self):
         return f"{self.exam.title} - {self.category.name}: {self.percentage}%{' / ' + str(self.fixed_count) if self.fixed_count else ''}"
 
-
 class Question(models.Model):
     SINGLE = 'single'
     MULTI = 'multi'
@@ -100,19 +99,114 @@ class Question(models.Model):
     HARD = 'hard'
     DIFFICULTY_CHOICES = [(EASY,'Easy'),(MEDIUM,'Medium'),(HARD,'Hard')]
 
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='questions', null=True, blank=True)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name='questions',
+        null=True,
+        blank=True
+    )
     text = models.TextField()
-    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES, default=SINGLE)
-    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default=MEDIUM)
+    question_type = models.CharField(
+        max_length=20,
+        choices=QUESTION_TYPES,
+        default=SINGLE
+    )
+    difficulty = models.CharField(
+        max_length=10,
+        choices=DIFFICULTY_CHOICES,
+        default=MEDIUM
+    )
 
-    correct_text = models.TextField(blank=True, null=True, help_text='Correct text for fill-in')
-    numeric_answer = models.FloatField(blank=True, null=True, help_text='Numeric correct answer')
-    numeric_tolerance = models.FloatField(default=0.0, help_text='Tolerance for numeric answer')
+    # NEW – detailed explanation / solution, visible on result page
+    explanation = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Optional detailed explanation or solution shown on the result page.'
+    )
 
-    matching_pairs = models.JSONField(blank=True, null=True, help_text='List of {"left":"A","right":"1"}')
-    ordering_items = models.JSONField(blank=True, null=True, help_text='List of canonical ordering items')
+    correct_text = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Correct text for fill-in'
+    )
+    numeric_answer = models.FloatField(
+        blank=True,
+        null=True,
+        help_text='Numeric correct answer'
+    )
+    numeric_tolerance = models.FloatField(
+        default=0.0,
+        help_text='Tolerance for numeric answer'
+    )
 
-    def __str__(self): return (self.text[:75] + '...') if len(self.text)>75 else self.text
+    matching_pairs = models.JSONField(
+        blank=True,
+        null=True,
+        help_text='List of {"left":"A","right":"1"}'
+    )
+    ordering_items = models.JSONField(
+        blank=True,
+        null=True,
+        help_text='List of canonical ordering items'
+    )
+
+    def __str__(self):
+        return (self.text[:75] + '...') if len(self.text) > 75 else self.text
+
+
+from django.contrib.auth.models import User
+
+class QuestionFeedback(models.Model):
+    STATUS_NEW = 'new'
+    STATUS_REVIEWED = 'reviewed'
+    STATUS_RESOLVED = 'resolved'
+    STATUS_CHOICES = [
+        (STATUS_NEW, 'New'),
+        (STATUS_REVIEWED, 'Reviewed'),
+        (STATUS_RESOLVED, 'Resolved'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='question_feedbacks'
+    )
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name='feedbacks'
+    )
+    user_exam = models.ForeignKey(
+        'UserExam',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='question_feedbacks'
+    )
+
+    # student’s comment
+    comment = models.TextField(blank=True)
+
+    # tick if they think the official answer/options are wrong
+    is_answer_incorrect = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_NEW
+    )
+    staff_note = models.TextField(blank=True)
+
+    def __str__(self):
+        label = "Incorrect-answer report" if self.is_answer_incorrect else "Comment"
+        return f"{label} by {self.user} on Q#{self.question_id}"
+
+
+
+
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')

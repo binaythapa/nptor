@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     # Local
     'quiz',
     'phone_field', 
+   
 ]
 
 SITE_ID = 1  # Required by allauth
