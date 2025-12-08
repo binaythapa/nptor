@@ -1,9 +1,9 @@
 # quiz/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import viewsss
+from . import views
 from .forms import EmailOrUsernameLoginForm
-from objective_exam_all_types.quiz.viewsss import *
+from quiz.views import *
 from django.conf.urls.static import static
 
 app_name = "quiz"
@@ -53,46 +53,46 @@ urlpatterns = [
     ),
 
     # Registration
-    path("register/", viewsss.register, name="register"),
+    path("register/", views.register, name="register"),
 
     # ============================================================
     # DASHBOARD
     # ============================================================
-    path("", viewsss.exam_list, name="exam_list"),
+    path("", views.exam_list, name="exam_list"),
 
-    path("dashboard/", viewsss.dashboard_dispatch, name="dashboard"),
+    path("dashboard/", views.dashboard_dispatch, name="dashboard"),
 
     # Admin + Student dashboards
-    path("dashboard/admin/", viewsss.admin_dashboard, name="admin_dashboard"),
-    path("dashboard/student/", viewsss.student_dashboard, name="student_dashboard"),
+    path("dashboard/admin/", views.admin_dashboard, name="admin_dashboard"),
+    path("dashboard/student/", views.student_dashboard, name="student_dashboard"),
 
     # ============================================================
     # USER
     # ============================================================
-    path("profile/", viewsss.profile, name="profile"),
-    path("users/", viewsss.users_list, name="users_list"),
+    path("profile/", views.profile, name="profile"),
+    path("users/", views.users_list, name="users_list"),
 
     # ============================================================
     # EXAMS
     # ============================================================
-    path("exam/<int:exam_id>/start/", viewsss.exam_start, name="exam_start"),
-    path("exam/<int:user_exam_id>/take/", viewsss.exam_take, name="exam_take"),
-    path("exam/<int:user_exam_id>/question/<int:index>/", viewsss.exam_question, name="exam_question"),
-    path("exam/<int:user_exam_id>/autosave/", viewsss.autosave, name="autosave"),
-    path("exam/<int:user_exam_id>/submit/", viewsss.exam_submit, name="exam_submit"),
-    path("exam/<int:user_exam_id>/result/", viewsss.exam_result, name="exam_result"),
+    path("exam/<int:exam_id>/start/", views.exam_start, name="exam_start"),
+    path("exam/<int:user_exam_id>/take/", views.exam_take, name="exam_take"),
+    path("exam/<int:user_exam_id>/question/<int:index>/", views.exam_question, name="exam_question"),
+    path("exam/<int:user_exam_id>/autosave/", views.autosave, name="autosave"),
+    path("exam/<int:user_exam_id>/submit/", views.exam_submit, name="exam_submit"),
+    path("exam/<int:user_exam_id>/result/", views.exam_result, name="exam_result"),
 
     # ============================================================
     # NOTIFICATIONS
     # ============================================================
-    path("notifications/", viewsss.notifications_list, name="notifications_list"),
-    path("notifications/mark-all/", viewsss.notifications_mark_all, name="notifications_mark_all"),
-    path("notifications/<int:pk>/", viewsss.notification_read, name="notification_detail"),
+    path("notifications/", views.notifications_list, name="notifications_list"),
+    path("notifications/mark-all/", views.notifications_mark_all, name="notifications_mark_all"),
+    path("notifications/<int:pk>/", views.notification_read, name="notification_detail"),
 
     # ============================================================
     # AJAX API
     # ============================================================
-    path("api/recent_attempts/", viewsss.recent_attempts_api, name="recent_attempts_api"),
+    path("api/recent_attempts/", views.recent_attempts_api, name="recent_attempts_api"),
     path('customerregister/',CustomerRegisterView.as_view(), name='customer-register'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root= settings.STATIC_ROOT)

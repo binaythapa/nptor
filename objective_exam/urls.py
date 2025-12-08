@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
-from objective_exam_all_types.quiz.viewsss import *
+from quiz.views import *
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 
