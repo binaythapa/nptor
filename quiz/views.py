@@ -1104,7 +1104,6 @@ from django.contrib import messages
 
 from .models import UserExam, QuestionFeedback  # adjust import paths
 
-
 @login_required
 def exam_result(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
@@ -1156,11 +1155,25 @@ def exam_result(request, user_exam_id):
         return redirect('quiz:exam_result', user_exam_id=ue.id)
 
     # GET: show result
-    answers = ue.answers.select_related('question', 'choice')
+    answers = list(ue.answers.select_related('question', 'choice'))
 
-    # map of question_id -> feedback (if any) for this attempt
+    # map of question_id -> feedback (if any) for THIS attempt+user
     feedback_qs = QuestionFeedback.objects.filter(user=request.user, user_exam=ue)
     feedback_map = {fb.question_id: fb for fb in feedback_qs}
+
+    # NEW: other users' comments for these questions
+    question_ids = [a.question_id for a in answers]
+    other_feedback_qs = (
+        QuestionFeedback.objects
+        .filter(question_id__in=question_ids)
+        .exclude(user=request.user)
+        .select_related('user')
+        .order_by('-created_at')
+    )
+
+    comments_map = {}
+    for fb in other_feedback_qs:
+        comments_map.setdefault(fb.question_id, []).append(fb)
 
     return render(
         request,
@@ -1169,5 +1182,6 @@ def exam_result(request, user_exam_id):
             'user_exam': ue,
             'answers': answers,
             'feedback_map': feedback_map,
+            'comments_map': comments_map,   # 👈 NEW
         }
     )

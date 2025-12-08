@@ -114,8 +114,7 @@
       {% endif %}
     </div>
 
-    {# ===================== EXPLANATION (EXPANDABLE) ===================== #}
-    {% if ans.question.explanation %}         
+    {# ===================== EXPLANATION (ALWAYS VISIBLE ICON) ===================== #}
     <details style="margin-top:10px;">
       <summary style="cursor:pointer; font-weight:500;">
         📘 View explanation / solution
@@ -129,10 +128,9 @@
       </div>
     </details>
 
-    {% endif %}
-
-    {# ===================== FEEDBACK FORM / STATUS ===================== #}
+    {# ===================== FEEDBACK FORM / STATUS + OTHER COMMENTS ===================== #}
     <div style="margin-top:10px; border-top:1px dashed #ddd; padding-top:8px;">
+      {# Your feedback status / form #}
       {% with fb=feedback_map|dict_get:ans.question.id %}
         {% if fb %}
           <p class="small-muted">
@@ -168,6 +166,32 @@
               </button>
             </div>
           </form>
+        {% endif %}
+      {% endwith %}
+
+      {# Other learners' comments (expandable) #}
+      {% with others=comments_map|dict_get:ans.question.id %}
+        {% if others %}
+          <details style="margin-top:6px;">
+            <summary style="cursor:pointer; font-size:0.9rem;">
+              💬 View {{ others|length }} comment(s) from other learners
+            </summary>
+            <ul class="small-muted" style="margin-top:4px; margin-left:1.2rem;">
+              {% for fb in others %}
+                <li style="margin-bottom:4px;">
+                  {{ fb.comment|linebreaksbr }}
+                  <br>
+                  <span class="small-muted">
+                    — {{ fb.user.username }}, {{ fb.created_at|date:"SHORT_DATETIME_FORMAT" }}
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          </details>
+        {% else %}
+          <p class="small-muted" style="margin-top:4px;">
+            💬 No comments from other learners yet.
+          </p>
         {% endif %}
       {% endwith %}
     </div>
