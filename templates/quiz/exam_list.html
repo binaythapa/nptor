@@ -6,41 +6,85 @@
 
 <div class="box">
 
-    {# Group exams by category #}
     {% regroup exams by category as category_list %}
 
     {% for cat in category_list %}
-        <h3 class="title is-5" style="margin-top: 1rem;">
-            {{ cat.grouper }}  {# will print category.__str__() #}
-        </h3>
+        {% with first_exam=cat.list.0 %}
+        <div class="box" style="margin-bottom: 1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
 
-        <ul>
-            {% for exam in cat.list %}
-                <li style="margin-bottom: 0.5rem;">
-                    <strong>{{ exam.title }}</strong>
-                    — Level: {{ exam.level }}
-                    — Duration: {{ exam.duration_seconds }}s
-                    | Questions: {{ exam.question_count }}
+                <div>
+                    <h3 class="title is-5" style="margin-bottom: 0;">
+                        {{ cat.grouper }}
+                    </h3>
+                    <p class="is-size-7 has-text-grey">
+                        Level-based exams under this category
+                    </p>
+                </div>
 
-                    {# simple level-based access (later tie to subscription) #}
-                    {% if user_level and exam.level <= user_level %}
-                        <a class="button is-small is-link"
-                           href="{% url 'quiz:exam_start' exam.id %}">
-                            Start
-                        </a>
-                    {% else %}
-                        <button class="button is-small is-light" disabled>
-                            🔒 Locked
-                        </button>
-                    {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
+                <div style="display:flex; gap:0.5rem;">
 
+                    {# Subscribe now acts like START — open first exam #}
+                    <a class="button is-small is-primary"
+                       href="{% url 'quiz:exam_start' first_exam.id %}">
+                       Subscribe
+                    </a>
+
+                    <button type="button"
+                            class="button is-small is-link is-light"
+                            onclick="toggleLevels('levels-{{ forloop.counter }}', this)">
+                        Show levels
+                    </button>
+                </div>
+
+            </div>
+
+            <div id="levels-{{ forloop.counter }}" style="display:none; margin-top:0.75rem;">
+                <ul>
+    {% for exam in cat.list %}
+        <li style="margin-bottom: 0.5rem;">
+            <strong>{{ exam.title }}</strong>
+            — Level: {{ exam.level }}
+            — Duration: {{ exam.duration_seconds }}s
+            | Questions: {{ exam.question_count }}
+
+            {% if exam.level == 1 %}
+                <!-- Only Level 1 is enabled -->
+                <a class="button is-small is-link"
+                   href="{% url 'quiz:exam_start' exam.id %}">
+                    Start
+                </a>
+            {% else %}
+                <!-- Higher levels locked -->
+                <button class="button is-small is-light" disabled>
+                    🔒 Locked
+                </button>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+
+            </div>
+        </div>
+        {% endwith %}
     {% empty %}
         <p>No published exams.</p>
     {% endfor %}
 
 </div>
+
+<script>
+function toggleLevels(id, btn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const isHidden = (el.style.display === 'none' || el.style.display === '');
+    el.style.display = isHidden ? 'block' : 'none';
+
+    if (btn) {
+        btn.textContent = isHidden ? 'Hide levels' : 'Show levels';
+    }
+}
+</script>
 
 {% endblock %}
