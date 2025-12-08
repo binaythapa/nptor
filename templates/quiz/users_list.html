@@ -1,17 +1,92 @@
 {% extends 'quiz/base.html' %}
+
 {% block content %}
 <h1 class="title">Users</h1>
-<table class="table is-fullwidth is-striped">
-  <thead><tr><th>Username</th><th>Email</th><th>Staff</th><th>Active</th></tr></thead>
-  <tbody>
-    {% for u in users %}
-    <tr>
-      <td>{{ u.username }}</td>
-      <td>{{ u.email }}</td>
-      <td>{% if u.is_staff %}Yes{% else %}No{% endif %}</td>
-      <td>{% if u.is_active %}Yes{% else %}No{% endif %}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+<!-- Top summary + search -->
+<div class="level" style="margin-bottom: 12px;">
+  <div class="level-left">
+    <p class="small-muted">
+      Total users: <strong>{{ users|length }}</strong>
+    </p>
+  </div>
+  <div class="level-right">
+    <form method="get" action="" style="display:flex; gap:6px; align-items:center;">
+      <input name="q"
+             class="input is-small"
+             placeholder="Search by username or email"
+             value="{{ request.GET.q|default:'' }}">
+      <button class="button is-small" type="submit">Filter</button>
+    </form>
+  </div>
+</div>
+
+<div class="box">
+  <table class="table is-fullwidth is-striped is-hoverable is-narrow">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Status</th>
+        <th style="width: 130px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>
+          {{ u.username }}
+          {% if u.get_full_name %}
+            <br><span class="small-muted">{{ u.get_full_name }}</span>
+          {% endif %}
+        </td>
+
+        <td>
+          {% if u.email %}
+            <a href="mailto:{{ u.email }}">{{ u.email }}</a>
+          {% else %}
+            <span class="small-muted">—</span>
+          {% endif %}
+        </td>
+
+        <td>
+          {% if u.is_superuser %}
+            <span class="tag is-danger is-light">Superuser</span>
+          {% elif u.is_staff %}
+            <span class="tag is-info is-light">Staff</span>
+          {% else %}
+            <span class="tag is-light">User</span>
+          {% endif %}
+        </td>
+
+        <td>
+          {% if u.is_active %}
+            <span class="tag is-success is-light">Active</span>
+          {% else %}
+            <span class="tag is-dark is-light">Inactive</span>
+          {% endif %}
+        </td>
+
+        <td>
+          <div class="buttons are-small">
+            <a class="button is-light"
+               href="/admin/auth/user/{{ u.id }}/change/">
+              Admin
+            </a>
+            <a class="button is-link is-light"
+               href="mailto:{{ u.email }}">
+              Email
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="small-muted">No users found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

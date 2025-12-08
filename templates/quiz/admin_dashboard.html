@@ -1,7 +1,9 @@
 {% extends 'quiz/base.html' %}
+
 {% block content %}
 <h1 class="title">Admin Dashboard</h1>
 
+{# Top stats #}
 <div class="columns is-multiline">
   <div class="column is-one-quarter">
     <div class="stats-card">
@@ -34,65 +36,140 @@
   </div>
 </div>
 
-<div class="box">
-  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
-    <h2 class="subtitle" style="margin:0;">Recent attempts</h2>
+<div class="columns">
+  <!-- Left: Data overview + categories/questions -->
+  <div class="column is-two-thirds">
+    <div class="box">
+      <h2 class="subtitle">Data overview</h2>
+      <p class="small-muted" style="margin-bottom:10px;">
+        Quick snapshot of the current activity in the system.
+      </p>
 
-    <!-- quick filters / actions (non-functional placeholders — extend as needed) -->
-    <div style="display:flex; gap:8px; align-items:center;">
-      <form method="get" action="" style="display:inline-flex; gap:6px; align-items:center;">
-        <input name="q" class="input is-small" placeholder="Filter by user / exam" value="{{ request.GET.q|default:'' }}" style="width:220px;">
-        <button class="button is-small" type="submit">Filter</button>
-      </form>
-    </div>
-  </div>
+      <table class="table is-fullwidth is-striped is-narrow">
+        <tbody>
+          <tr>
+            <th>Published exams</th>
+            <td>{{ published_count }} / {{ exams_count }}</td>
+          </tr>
+          <tr>
+            <th>Total registered users</th>
+            <td>{{ total_users }}</td>
+          </tr>
+          <tr>
+            <th>Total attempts (all time)</th>
+            <td>{{ total_attempts }}</td>
+          </tr>
+          <tr>
+            <th>Attempts waiting for completion</th>
+            <td>{{ pending_attempts }}</td>
+          </tr>
+          <tr>
+            <th>Average score (completed attempts)</th>
+            <td>{{ avg_score }}%</td>
+          </tr>
+          <tr>
+            <th>Total questions in bank</th>
+            <td>{{ total_questions }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-  <!-- paginated table -->
-  <div class="table-responsive" style="overflow:auto;">
-    <table class="table is-fullwidth is-striped" id="recent-attempts-table">
-      <thead>
-        <tr>
-          <th>User</th>
-          <th>Exam</th>
-          <th>Started</th>
-          <th>Score</th>
-        </tr>
-      </thead>
-      <tbody id="recent-body">
-        {% for a in recent_attempts %}
-        <tr data-id="{{ a.id }}">
-          <td>{{ a.user.username }}</td>
-          <td>{{ a.exam.title }}</td>
-          <td>{{ a.started_at|date:"SHORT_DATETIME_FORMAT" }}</td>
-          <td>
-            {% if a.submitted_at %}
-              {{ a.score|floatformat:2 }}%
-            {% else %}
-              <em>In progress</em>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4" class="small-muted">No attempts yet.</td></tr>
+      <p class="small-muted">
+        For deeper analysis (per exam / per user / per question), use Django admin:
+        <a href="/admin/quiz/userexam/">UserExam</a>,
+        <a href="/admin/quiz/question/">Question</a>.
+      </p>
+
+      {% if categories_stats %}
+        <hr style="margin: 16px 0;">
+
+        <h3 class="subtitle is-6">Categories & question distribution</h3>
+        <p class="small-muted" style="margin-bottom:8px;">
+          Top categories by question count (grouped by parent). Click a parent to expand.
+        </p>
+
+        {# Group by parent category #}
+        {% regroup categories_stats by parent as parent_groups %}
+
+        {% for group in parent_groups %}
+          <div class="box" style="margin-bottom:8px;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong>
+                  {% if group.grouper %}
+                    {{ group.grouper.name }}
+                  {% else %}
+                    Top-level (no parent)
+                  {% endif %}
+                </strong>
+              </div>
+
+              <button type="button"
+                      class="button is-small is-link is-light"
+                      onclick="toggleCatBlock('cat-group-{{ forloop.counter }}', this)">
+                Show categories
+              </button>
+            </div>
+
+            <div id="cat-group-{{ forloop.counter }}" style="display:none; margin-top:8px;">
+              <table class="table is-fullwidth is-striped is-narrow">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Total questions</th>
+                    <th>Easy</th>
+                    <th>Medium</th>
+                    <th>Hard</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in group.list %}
+                    <tr>
+                      <td>{{ c }}</td> {# c.__str__ shows full hierarchy "Parent -> Child" #}
+                      <td>{{ c.total_questions }}</td>
+                      <td>{{ c.easy_count }}</td>
+                      <td>{{ c.medium_count }}</td>
+                      <td>{{ c.hard_count }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
         {% endfor %}
-      </tbody>
-    </table>
+      {% else %}
+        <p class="small-muted">No categories or questions defined yet.</p>
+      {% endif %}
+    </div>
   </div>
 
-  <!-- load more / actions -->
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px;">
-    <div>
-      <a class="button is-link" href="/admin/auth/user/">Manage users</a>
-      <a class="button is-primary" href="/admin/quiz/exam/">Manage exams</a>
-      <a class="button is-light" href="{% url 'quiz:users_list' %}">Users list</a>
-    </div>
+  <!-- Right: Management shortcuts -->
+  <div class="column is-one-third">
+    <div class="box">
+      <h2 class="subtitle">Management & navigation</h2>
+      <p class="small-muted" style="margin-bottom:10px;">
+        Jump directly to the most common admin actions.
+      </p>
 
-    <div style="text-align:right;">
-      {% if recent_has_next %}
-        <button id="recent-loadmore" class="button is-light" data-next-page="{{ recent_next_page }}" data-page-size="{{ recent_page_size }}">Load more</button>
-      {% else %}
-        <span class="small-muted">Showing latest {{ recent_attempts|length }} attempts</span>
-      {% endif %}
+      <div class="buttons" style="flex-direction:column; align-items:stretch;">
+        <a class="button is-link is-fullwidth" href="/admin/auth/user/">
+          Manage users
+        </a>
+        <a class="button is-primary is-fullwidth" href="/admin/quiz/exam/">
+          Manage exams
+        </a>
+        <a class="button is-light is-fullwidth" href="/admin/quiz/category/">
+          Manage categories
+        </a>
+        <a class="button is-light is-fullwidth" href="/admin/quiz/question/">
+          Manage questions
+        </a>
+        <a class="button is-light is-fullwidth" href="{% url 'quiz:users_list' %}">
+          Users list (custom view)
+        </a>
+      </div>
     </div>
   </div>
 </div>
@@ -100,81 +177,16 @@
 
 {% block scripts_extra %}
 <script>
-(function(){
-  // API endpoint (rendered by Django so the URL is correct)
-  const apiUrl = "{% url 'quiz:recent_attempts_api' %}";
-  const loadBtn = document.getElementById('recent-loadmore');
-  if (!loadBtn) return; // nothing to do if no more pages
+function toggleCatBlock(id, btn) {
+  const panel = document.getElementById(id);
+  if (!panel) return;
 
-  // small helper to escape HTML to avoid injection
-  function escapeHtml(s){
-    if (s === null || s === undefined) return '';
-    return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]; });
+  const isHidden = (panel.style.display === 'none' || panel.style.display === '');
+  panel.style.display = isHidden ? 'block' : 'none';
+
+  if (btn) {
+    btn.textContent = isHidden ? 'Hide categories' : 'Show categories';
   }
-
-  loadBtn.addEventListener('click', function() {
-    const nextPage = parseInt(loadBtn.getAttribute('data-next-page') || '2', 10);
-    const pageSize = parseInt(loadBtn.getAttribute('data-page-size') || '8', 10);
-
-    // build URL with params
-    // build URL with params
-    const url = new URL(apiUrl, window.location.origin);
-    url.searchParams.set('page', nextPage);
-    url.searchParams.set('page_size', pageSize);
-    // include current filter value if user typed one
-    const qInput = document.querySelector('input[name="q"]');
-    const qVal = qInput ? (qInput.value || '').trim() : '';
-    if (qVal) url.searchParams.set('q', qVal);
-
-  
-
-    // UI feedback
-    loadBtn.disabled = true;
-    const originalText = loadBtn.innerText;
-    loadBtn.innerText = 'Loading...';
-
-    fetch(url, { credentials: 'same-origin' })
-      .then(resp => {
-        if (!resp.ok) throw new Error('Network response was not ok');
-        return resp.json();
-      })
-      .then(data => {
-        const tbody = document.getElementById('recent-body');
-        (data.results || []).forEach(row => {
-          const tr = document.createElement('tr');
-          tr.setAttribute('data-id', row.id);
-          tr.innerHTML = `
-            <td>${escapeHtml(row.user)}</td>
-            <td>${escapeHtml(row.exam)}</td>
-            <td>${escapeHtml(row.started)}</td>
-            <td>${escapeHtml(row.score)}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        if (data.has_next) {
-          loadBtn.setAttribute('data-next-page', data.next_page);
-          loadBtn.disabled = false;
-          loadBtn.innerText = originalText;
-        } else {
-          // no more pages: remove button and show message
-          loadBtn.remove();
-          const span = document.createElement('span');
-          span.className = 'small-muted';
-          span.innerText = 'No more records';
-          const container = document.querySelector('#recent-body').closest('div').querySelector('div[style*="text-align:right"], div[style*="text-align:right;"]');
-          // fallback: append after the table actions area
-          const actionsArea = document.querySelector('.box > div[style*="text-align:right"], .box > div:last-child');
-          if (actionsArea) actionsArea.appendChild(span);
-        }
-      })
-      .catch(err => {
-        console.error('Failed to load more attempts', err);
-        loadBtn.disabled = false;
-        loadBtn.innerText = originalText;
-        alert('Failed to load more attempts — please try again.');
-      });
-  });
-})();
+}
 </script>
 {% endblock %}

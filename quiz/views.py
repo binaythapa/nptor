@@ -285,31 +285,64 @@ def dashboard_dispatch(request):
 # add at top of file (if not present)
 from django.db.models import Q
 
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import PermissionDenied
+from django.db.models import Avg, Q
+from django.shortcuts import render
+
+from .models import Exam, UserExam
+from django.contrib.auth.models import User
+
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.models import User
+from django.db.models import Avg, Q, Count
+from django.shortcuts import render
+
+from .models import Exam, UserExam, Category, Question
+
+
 @staff_member_required
 def admin_dashboard(request):
-    from django.db.models import Avg
+    # Top stats
     exams_count = Exam.objects.count()
     published_count = Exam.objects.filter(is_published=True).count()
     total_users = User.objects.count()
     total_attempts = UserExam.objects.count()
     pending_attempts = UserExam.objects.filter(submitted_at__isnull=True).count()
-    avg = UserExam.objects.filter(submitted_at__isnull=False).aggregate(avg_score=Avg('score'))['avg_score'] or 0.0
+    avg = (
+        UserExam.objects
+        .filter(submitted_at__isnull=False)
+        .aggregate(avg_score=Avg('score'))['avg_score']
+        or 0.0
+    )
 
-    # read filter query
-    q = (request.GET.get('q') or '').strip()
+    # Question & category stats
+    total_questions = Question.objects.count()
 
-    # base queryset for recent attempts (apply filter if provided)
-    recent_qs = UserExam.objects.select_related('user', 'exam').order_by('-started_at')
-    if q:
-        recent_qs = recent_qs.filter(
-            Q(user__username__icontains=q) | Q(exam__title__icontains=q)
+    # Per-category stats (top 20 by question count)
+    categories_stats = (
+        Category.objects
+        .annotate(
+            total_questions=Count('questions', distinct=True),
+            easy_count=Count(
+                'questions',
+                filter=Q(questions__difficulty=Question.EASY),
+                distinct=True,
+            ),
+            medium_count=Count(
+                'questions',
+                filter=Q(questions__difficulty=Question.MEDIUM),
+                distinct=True,
+            ),
+            hard_count=Count(
+                'questions',
+                filter=Q(questions__difficulty=Question.HARD),
+                distinct=True,
+            ),
         )
-
-    # paginated recent attempts: show first page server-side
-    page_size = 8
-    paginator = Paginator(recent_qs, page_size)
-    recent_page = paginator.get_page(1)
-    recent_attempts = recent_page.object_list
+        .order_by('-total_questions', 'name')[:20]
+    )
 
     context = {
         'exams_count': exams_count,
@@ -318,13 +351,12 @@ def admin_dashboard(request):
         'total_attempts': total_attempts,
         'pending_attempts': pending_attempts,
         'avg_score': round(avg, 2),
-        'recent_attempts': recent_attempts,
-        'recent_has_next': recent_page.has_next(),
-        'recent_next_page': recent_page.next_page_number() if recent_page.has_next() else None,
-        'recent_page_size': page_size,
-        'filter_q': q,            # pass current filter to template
+
+        'total_questions': total_questions,
+        'categories_stats': categories_stats,
     }
     return render(request, 'quiz/admin_dashboard.html', context)
+
 
 
 
@@ -381,37 +413,58 @@ def recent_attempts_api(request):
 def student_dashboard(request):
     """
     Student-facing dashboard: shows available exams, active attempt, and past results.
-    Adds `exam_items` to indicate locked/unlocked exams for the UI.
+    Adds `exam_items` to indicate locked/unlocked exams for the UI, with per-exam attempts.
     """
     exams = Exam.objects.filter(is_published=True).order_by('title')
 
-    active_attempt = UserExam.objects.filter(
-        user=request.user,
-        submitted_at__isnull=True
-    ).order_by('-started_at').first()
+    # Active attempt (if any)
+    active_attempt = (
+        UserExam.objects
+        .filter(user=request.user, submitted_at__isnull=True)
+        .order_by('-started_at')
+        .first()
+    )
 
-    recent_attempts = UserExam.objects.filter(
-        user=request.user,
-        submitted_at__isnull=False
-    ).select_related('exam').order_by('-submitted_at')[:8]
+    # Recent attempts (for "Your Recent Results" section)
+    recent_attempts = (
+        UserExam.objects
+        .filter(user=request.user, submitted_at__isnull=False)
+        .select_related('exam')
+        .order_by('-submitted_at')[:8]
+    )
 
-    attempted_count = UserExam.objects.filter(
-        user=request.user,
-        submitted_at__isnull=False
-    ).count()
+    # All completed attempts (for per-exam history in Available Exams)
+    all_attempts = (
+        UserExam.objects
+        .filter(user=request.user, submitted_at__isnull=False)
+        .select_related('exam')
+        .order_by('-submitted_at')
+    )
+
+    # Map: exam_id -> list of attempts (you can limit per exam if you want, e.g. first 5)
+    attempts_by_exam = {}
+    for att in all_attempts:
+        attempts_by_exam.setdefault(att.exam_id, []).append(att)
+
+    attempted_count = (
+        UserExam.objects
+        .filter(user=request.user, submitted_at__isnull=False)
+        .count()
+    )
 
     from django.db.models import Max
-    best_score_val = UserExam.objects.filter(
-        user=request.user,
-        submitted_at__isnull=False
-    ).aggregate(best=Max('score'))['best'] or 0.0
+    best_score_val = (
+        UserExam.objects
+        .filter(user=request.user, submitted_at__isnull=False)
+        .aggregate(best=Max('score'))['best'] or 0.0
+    )
 
     exam_items = []
     for e in exams:
         locked = False
         reason = None
 
-        # 1) explicit prerequisites
+        # --- 1) explicit prerequisites ---
         prereqs = list(getattr(e, 'prerequisite_exams', []).all()) if hasattr(e, 'prerequisite_exams') else []
         if prereqs:
             missing = [p for p in prereqs if not _user_passed_exam(request.user, p)]
@@ -419,7 +472,7 @@ def student_dashboard(request):
                 locked = True
                 reason = 'Pass: ' + ', '.join([m.title for m in missing])
 
-        # 2) level-based gating
+        # --- 2) level-based gating ---
         elif getattr(e, 'level', None) and e.level > 1:
             prev_level = e.level - 1
             passed_prev = UserExam.objects.filter(
@@ -431,26 +484,40 @@ def student_dashboard(request):
                 locked = True
                 reason = f'Pass at least one Level {prev_level} exam to unlock'
 
-        # 3) build a clean category label (remove "Snowpro ->")
-        #    - handle both single category and many-to-many categories
+        # --- 3) Clean category label (drop Snowflake / SnowPro Core parents) ---
         if hasattr(e, 'categories') and e.categories.exists():
             parts = []
             for c in e.categories.all():
                 name = getattr(c, 'name', str(c))
-                leaf = name.split('->')[-1].strip()
+                split_parts = [p.strip() for p in name.split('->')]
+
+                # skip pure parent categories
+                if len(split_parts) == 1 and split_parts[0] in ["Snowflake", "SnowPro Core"]:
+                    continue
+
+                leaf = split_parts[-1]
+                if leaf in ["Snowflake", "SnowPro Core"]:
+                    continue
+
                 parts.append(leaf)
-            category_label = ', '.join(parts)
+            category_label = ', '.join(parts) if parts else "General"
         elif getattr(e, 'category', None):
             name = getattr(e.category, 'name', str(e.category))
-            category_label = name.split('->')[-1].strip()
+            split_parts = [p.strip() for p in name.split('->')]
+            if len(split_parts) == 1 and split_parts[0] in ["Snowflake", "SnowPro Core"]:
+                category_label = ""
+            else:
+                leaf = split_parts[-1]
+                category_label = "" if leaf in ["Snowflake", "SnowPro Core"] else leaf
         else:
-            category_label = 'General'
+            category_label = "General"
 
         exam_items.append({
             'exam': e,
             'locked': locked,
             'reason': reason,
             'category_label': category_label,
+            'attempts': attempts_by_exam.get(e.id, []),   # 👈 per-exam attempts
         })
 
     context = {
@@ -462,7 +529,6 @@ def student_dashboard(request):
         'exam_items': exam_items,
     }
     return render(request, 'quiz/student_dashboard.html', context)
-
 
 # -------------------------
 # Profile / users
@@ -478,10 +544,28 @@ def profile(request):
     return render(request, 'quiz/profile.html', {'user': request.user})
 
 
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
+from django.db.models import Q
+from django.shortcuts import render
+
+
 @user_passes_test(lambda u: u.is_staff)
 def users_list(request):
-    users = User.objects.all().order_by('username')
-    return render(request, 'quiz/users_list.html', {'users': users})
+    q = (request.GET.get('q') or '').strip()
+
+    users_qs = User.objects.all().order_by('username')
+
+    if q:
+        users_qs = users_qs.filter(
+            Q(username__icontains=q) |
+            Q(email__icontains=q)
+        )
+
+    return render(request, 'quiz/users_list.html', {
+        'users': users_qs,
+    })
+
 
 
 # -------------------------
@@ -1014,8 +1098,48 @@ def exam_submit(request, user_exam_id):
 # -------------------------
 # Result view
 # -------------------------
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
+from django.db.models import Q
+
 @login_required
 def exam_result(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
     answers = ue.answers.select_related('question', 'choice')
-    return render(request, 'quiz/result.html', {'user_exam': ue, 'answers': answers})
+
+    exam = ue.exam
+
+    # ----- Find next-level exam in the same "track" -----
+    next_level_exam = None
+
+    # Only make sense if this exam has a numeric level
+    if getattr(exam, 'level', None) is not None:
+        # base queryset: only published exams, at next level
+        qs = Exam.objects.filter(is_published=True, level=exam.level + 1)
+
+        # Build a category-based filter:
+        # 1) If exam has M2M categories, use those as the track
+        if exam.categories.exists():
+            qs = qs.filter(categories__in=exam.categories.all()).distinct()
+
+        # 2) Otherwise, fall back to legacy single FK `category`
+        elif exam.category is not None:
+            qs = qs.filter(
+                Q(category=exam.category) | Q(categories=exam.category)
+            ).distinct()
+
+        # 3) If no category at all, just find any exam with next level
+        #    (already covered by base `qs`)
+
+        next_level_exam = qs.order_by('id').first()
+
+    return render(
+        request,
+        'quiz/result.html',
+        {
+            'user_exam': ue,
+            'answers': answers,
+            'next_level_exam': next_level_exam,
+        }
+    )
+

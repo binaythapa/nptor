@@ -16,6 +16,30 @@
   </p>
 </div>
 
+<div class="buttons" style="margin-bottom: 22px;">
+  {% if user_exam.passed %}
+    {% if next_level_exam %}
+      <a class="button is-primary"
+         href="{% url 'quiz:exam_start' next_level_exam.id %}">
+        Start Next Level (Level {{ next_level_exam.level }})
+      </a>
+    {% else %}
+      <span class="tag is-success is-light">
+        🎉 You have completed the highest level in this track!
+      </span>
+    {% endif %}
+  {% else %}
+    <a class="button is-warning"
+       href="{% url 'quiz:exam_start' user_exam.exam.id %}">
+      Retake this Level
+    </a>
+  {% endif %}
+
+  <a class="button is-light" href="{% url 'quiz:student_dashboard' %}">
+    Back to Dashboard
+  </a>
+</div>
+
 <h3 class="subtitle">Answers</h3>
 
 {% for ans in answers %}
@@ -70,7 +94,6 @@
 
     <p><strong>Correct:</strong></p>
     <div>
-      {# Use explicit comparisons instead of the tuple membership test #}
       {% if ans.question.question_type == 'single' or ans.question.question_type == 'dropdown' or ans.question.question_type == 'tf' or ans.question.question_type == 'multi' %}
         {% for c in ans.question.choices.all %}
           {% if c.is_correct %}

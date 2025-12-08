@@ -72,78 +72,137 @@
 <div class="grid-dashboard">
   <!-- left column: exams list -->
   <div class="left-col">
+
+    <!-- AVAILABLE EXAMS -->
     <div class="card card-surface">
       <div class="card-header">
         <div>
           <h3 class="title is-5">Available Exams</h3>
-          <p class="small-muted">Exams are grouped by category. Locked exams show the requirement.</p>
+          <p class="small-muted">
+            Exams are grouped by category. Click on a category to expand its levels.
+          </p>
         </div>
       </div>
 
       <div class="card-body">
         <div class="exams-grid">
           {% if exam_items %}
-            {# Group dashboard items by exam.category #}
             {% regroup exam_items by exam.category as category_groups %}
 
             {% for group in category_groups %}
-              <h4 class="category-heading">
-                {% if group.grouper %}
-                  {{ group.grouper }}   {# Category __str__() #}
-                {% else %}
-                  General
-                {% endif %}
-              </h4>
+              <div class="category-block" style="margin-bottom: 10px;">
 
-              {% for item in group.list %}
-                {% with e=item.exam %}
-                <article class="exam-card {% if item.locked %}locked{% endif %}">
-                  <div class="exam-meta">
-                    <div class="exam-title">
-                      <strong>{{ e.title }}</strong>
-                      <span class="tag is-light is-small">Level {{ e.level|default:"-" }}</span>
-                    </div>
+                <!-- Category row with expand button -->
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <h4 class="category-heading" style="margin: 0;">
+                    {% if group.grouper %}
+                      {{ group.grouper }}
+                    {% else %}
+                      General
+                    {% endif %}
+                  </h4>
 
-                    <div class="exam-sub">
-                         {{ item.category_label }}
-                            </div>
+                  <button type="button"
+                          class="button is-small is-link is-light"
+                          onclick="toggleAttempts('cat-block-{{ forloop.counter }}', this)">
+                    Show levels
+                  </button>
+                </div>
 
-                  </div>
+                <!-- Hidden block containing all levels (exams) of this category -->
+                <div id="cat-block-{{ forloop.counter }}" style="display:none; margin-top:8px;">
 
-                  <div class="exam-body">
-                    <div class="exam-info">
-                      <div class="muted">• {{ e.question_count }} Q • {{ e.duration_seconds }}s</div>
-                      <div class="muted" style="margin-top:6px;">
-                        {{ e.description|default:"No description" }}
+                  {% for item in group.list %}
+                    {% with e=item.exam %}
+                    <article class="exam-card {% if item.locked %}locked{% endif %}">
+                      <div class="exam-meta">
+                        <div class="exam-title">
+                          <strong>{{ e.title }}</strong>
+                          <span class="tag is-light is-small">Level {{ e.level|default:'-' }}</span>
+                        </div>
+
+                        {% if item.category_label %}
+                          <div class="exam-sub">{{ item.category_label }}</div>
+                        {% endif %}
                       </div>
-                    </div>
 
-                    <div class="exam-actions">
-                      {% if item.locked %}
-                        <span class="locked-chip">
-                          <i class="fa fa-lock"></i> Locked
-                        </span>
-                        {% if item.reason %}
-                          <div class="muted small-muted" style="margin-top:6px;">
-                            {{ item.reason }}
+                      <div class="exam-body">
+
+                        <div class="exam-info">
+                          <div class="muted">• {{ e.question_count }} Q • {{ e.duration_seconds }}s</div>
+                          <div class="muted" style="margin-top:6px;">
+                            {{ e.description|default:"No description" }}
+                          </div>
+                        </div>
+
+                        <div class="exam-actions">
+                          {% if item.locked %}
+                            <span class="locked-chip"><i class="fa fa-lock"></i> Locked</span>
+                            {% if item.reason %}
+                              <div class="muted small-muted" style="margin-top:6px;">
+                                {{ item.reason }}
+                              </div>
+                            {% endif %}
+                          {% else %}
+                            <a class="start-btn" href="{% url 'quiz:exam_start' e.id %}">
+                              <i class="fa fa-play"></i> Start
+                            </a>
+                          {% endif %}
+                        </div>
+
+                        {% if e.passing_score %}
+                          <div class="passing" style="margin-top:6px;">
+                            Passing: <strong>{{ e.passing_score }}%</strong>
                           </div>
                         {% endif %}
-                      {% else %}
-                        <a class="start-btn" href="{% url 'quiz:exam_start' e.id %}">
-                          <i class="fa fa-play"></i> Start
-                        </a>
-                      {% endif %}
 
-                      {% if e.passing_score %}
-                        <div class="passing" style="margin-top:6px;">
-                          Passing: <strong>{{ e.passing_score }}%</strong>
-                        </div>
-                      {% endif %}
-                    </div>
-                  </div>
-                </article>
-                {% endwith %}
-              {% endfor %}
+                        <!-- Expandable attempts per exam -->
+                        {% if item.attempts %}
+                          <div class="exam-attempts" style="margin-top:10px;">
+                            <button type="button"
+                                    class="button is-small is-link is-light"
+                                    onclick="toggleAttempts('exam-attempts-{{ e.id }}', this)">
+                              Show attempts
+                            </button>
+
+                            <div id="exam-attempts-{{ e.id }}" style="display:none; margin-top:8px;">
+                              <table class="table is-fullwidth is-striped is-narrow">
+                                <thead>
+                                  <tr>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                    <th>Pass / Fail</th>
+                                    <th>Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {% for r in item.attempts %}
+                                    <tr>
+                                      <td>{{ r.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                      <td>{{ r.score }}%</td>
+                                      <td>
+                                        {% if r.passed %}
+                                          <span style="color:green;font-weight:600;">Passed</span>
+                                        {% else %}
+                                          <span style="color:red;font-weight:600;">Failed</span>
+                                        {% endif %}
+                                      </td>
+                                      <td>Completed</td>
+                                    </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        {% endif %}
+
+                      </div>
+                    </article>
+                    {% endwith %}
+                  {% endfor %}
+
+                </div>
+              </div>
             {% endfor %}
           {% else %}
             <div class="small-muted">No exams available.</div>
@@ -152,63 +211,29 @@
       </div>
     </div>
 
-    <!-- recent attempts summary -->
-    <div class="card card-surface" style="margin-top:18px;">
-      <div class="card-header">
-        <h3 class="title is-5">Your Recent Results</h3>
-      </div>
-      <div class="card-body">
-        <table class="table is-fullwidth is-striped">
-          <thead>
-            <tr>
-              <th>Exam</th>
-              <th>Date</th>
-              <th>Score</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in recent_attempts %}
-              <tr>
-                <td>{{ r.exam.title }}</td>
-                <td>{{ r.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</td>
-                <td>{% if r.submitted_at %}{{ r.score }}%{% else %}-{% endif %}</td>
-                <td>
-                  {% if r.submitted_at %}
-                    Completed
-                  {% else %}
-                    <em>In progress</em>
-                  {% endif %}
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="4" class="small-muted">No attempts yet</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
   </div>
 
-  <!-- right column: stats & quick actions -->
+  <!-- right column -->
   <aside class="right-col">
     <div class="card card-surface stats-overview">
       <h4 class="title is-5">Quick Stats</h4>
+
       <div class="stats-grid">
         <div class="stat-item">
           <div class="stat-value">{{ attempted_count }}</div>
           <div class="stat-label">Completed Attempts</div>
         </div>
+
         <div class="stat-item">
           <div class="stat-value">{{ best_score }}%</div>
           <div class="stat-label">Best score</div>
         </div>
+
         <div class="stat-item">
           <div class="stat-value">{{ exams|length }}</div>
           <div class="stat-label">Available Exams</div>
         </div>
+
         <div class="stat-item">
           <div class="stat-value">{% if active_attempt %}1{% else %}0{% endif %}</div>
           <div class="stat-label">Active Attempt</div>
@@ -216,12 +241,15 @@
       </div>
 
       <div style="margin-top:12px;">
-        <a class="button is-primary is-fullwidth" href="{% url 'quiz:exam_list' %}">Browse Exams</a>
-        <a class="button is-light is-fullwidth" href="{% url 'quiz:profile' %}" style="margin-top:8px;">Edit profile</a>
+        <a class="button is-primary is-fullwidth" href="{% url 'quiz:exam_list' %}">
+          Browse Exams
+        </a>
+        <a class="button is-light is-fullwidth" href="{% url 'quiz:profile' %}" style="margin-top:8px;">
+          Edit profile
+        </a>
       </div>
     </div>
 
-    <!-- help / hints -->
     <div class="card card-surface" style="margin-top:14px;">
       <h4 class="title is-6">Hints</h4>
       <ul class="small-muted">
@@ -231,5 +259,21 @@
     </div>
   </aside>
 </div>
+
+<script>
+function toggleAttempts(id, btn) {
+  const panel = document.getElementById(id);
+  if (!panel) return;
+
+  const isHidden = (panel.style.display === 'none' || panel.style.display === '');
+  panel.style.display = isHidden ? 'block' : 'none';
+
+  if (btn) {
+    btn.textContent = isHidden ? 'Hide' : 'Show levels';
+    // For exam-level attempts toggle, you might prefer:
+    // if (btn.textContent.includes('levels')) ...
+  }
+}
+</script>
 
 {% endblock %}
