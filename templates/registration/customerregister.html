@@ -1,0 +1,99 @@
+{% extends "quiz/base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Create Account{% endblock %}
+
+{% block content %}
+<section style="max-width:560px; margin:40px auto;">
+  <div class="card-surface" style="padding:32px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+
+    <h1 class="title is-4 has-text-centered mb-6">Create Your Account</h1>
+
+    <!-- Messages & Non-field Errors -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="notification {% if message.tags %}is-{{ message.tags }}{% endif %} mb-5">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if form.non_field_errors %}
+      <div class="notification is-danger mb-5">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- Username -->
+      <div class="field mb-4">
+        <label class="label">Username</label>
+        <div class="control">
+          {{ form.username|add_class:"input"|attr:"placeholder:Choose a username" }}
+        </div>
+        {% if form.username.errors %}
+          <p class="help is-danger">{{ form.username.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Email -->
+      <div class="field mb-4">
+        <label class="label">Email Address</label>
+        <div class="control">
+          {{ form.email|add_class:"input"|attr:"placeholder:you@example.com" }}
+        </div>
+        {% if form.email.errors %}
+          <p class="help is-danger">{{ form.email.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Password -->
+      <div class="field mb-4">
+        <label class="label">Password</label>
+        <div class="control">
+          {{ form.password|add_class:"input" }}
+        </div>
+        {% if form.password.errors %}
+          <p class="help is-danger">{{ form.password.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Contact -->
+      <div class="field mb-4">
+        <label class="label">Contact Number</label>
+        <div class="control">
+          {{ form.contact|add_class:"input"|attr:"placeholder:98xxxxxxxx" }}
+        </div>
+        {% if form.contact.errors %}
+          <p class="help is-danger">{{ form.contact.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Terms & Conditions -->
+      <div class="field mb-5">
+        <div class="control">
+          <label class="checkbox">
+            <input type="checkbox" name="terms" required>
+            I accept the <a href="#" target="_blank">Terms and Conditions</a>
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit Button + Login Link -->
+      <div class="field" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <a href="{% url 'quiz:login' %}">Already have an account?</a>
+        </div>
+        <div>
+          <button type="submit" class="button is-primary is-medium">
+            Create Account
+          </button>
+        </div>
+      </div>
+    </form>
+
+  </div>
+</section>
+{% endblock %}

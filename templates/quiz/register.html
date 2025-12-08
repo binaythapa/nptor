@@ -1,0 +1,75 @@
+<!-- templates/registration/register.html -->
+{% extends "quiz/base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container">
+  <div class="columns is-centered">
+    <div class="column is-5">
+      <h1 class="title has-text-centered">Create Account</h1>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="notification {% if message.tags %}is-{{ message.tags }}{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="field">
+          <label class="label">Username</label>
+          <div class="control">
+            {{ form.username|add_class:"input" }}
+          </div>
+          {% if form.username.errors %}
+            <p class="help is-danger">{{ form.username.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <label class="label">Email</label>
+          <div class="control">
+            {{ form.email|add_class:"input" }}
+          </div>
+          {% if form.email.errors %}
+            <p class="help is-danger">{{ form.email.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <label class="label">Password</label>
+          <div class="control">
+            {{ form.password1|add_class:"input" }}
+          </div>
+          {% if form.password1.errors %}
+            <p class="help is-danger">{{ form.password1.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <label class="label">Confirm Password</label>
+          <div class="control">
+            {{ form.password2|add_class:"input" }}
+          </div>
+          {% if form.password2.errors %}
+            <p class="help is-danger">{{ form.password2.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary is-fullwidth">Register</button>
+          </div>
+        </div>
+      </form>
+
+      <p class="has-text-centered mt-4">
+        Already have an account? <a href="{% url 'quiz:login' %}">Log in</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

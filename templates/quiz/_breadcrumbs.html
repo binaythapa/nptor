@@ -1,0 +1,21 @@
+{# expects `breadcrumbs` variable as list of (name, url_or_none) #}
+{% if breadcrumbs %}
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      {% for name,url in breadcrumbs %}
+        {% if url %}
+          <li><a href="{{ url }}">{{ name }}</a></li>
+        {% else %}
+          <li class="is-active"><a aria-current="page">{{ name }}</a></li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </nav>
+{% else %}
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="{% url 'quiz:exam_list' %}">Home</a></li>
+      <li class="is-active"><a aria-current="page">{{ title|default:"Dashboard" }}</a></li>
+    </ul>
+  </nav>
+{% endif %}

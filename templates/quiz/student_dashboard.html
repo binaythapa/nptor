@@ -1,0 +1,156 @@
+{% extends 'quiz/base.html' %}
+{% block title %}Student Dashboard - Objective Exam{% endblock %}
+
+{% block head_extra %}
+<!-- optional: small extra CSS for this page -->
+{% endblock %}
+
+{% block content %}
+<section class="page-top">
+  <div class="level">
+    <div class="level-left">
+      <div>
+        <h1 class="title is-3">Welcome , {{ user.first_name|default:user.username }} 👋</h1>
+        <p class="small-muted">Choose an exam to practice or continue your active attempt.</p>
+      </div>
+    </div>
+
+    <div class="level-right">
+      <div class="buttons">
+        <a class="button is-white" href="{% url 'quiz:exam_list' %}"><i class="fa fa-search"></i>&nbsp; Browse all Exams</a>
+        <a class="button is-primary" href="{% url 'quiz:profile' %}"><i class="fa fa-user"></i>&nbsp; Edit profile</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- dashboard grid -->
+<div class="grid-dashboard">
+  <!-- left column: exams list -->
+  <div class="left-col">
+    <div class="card card-surface">
+      <div class="card-header">
+        <div>
+          <h3 class="title is-5">Available Exams</h3>
+          <p class="small-muted">Choose an exam to begin. Locked exams show the requirement.</p>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="exams-grid">
+          {% for item in exam_items %}
+            {% with e=item.exam %}
+            <article class="exam-card {% if item.locked %}locked{% endif %}">
+              <div class="exam-meta">
+                <div class="exam-title">
+                  <strong>{{ e.title }}</strong>
+                  <span class="tag is-light is-small">Level {{ e.level|default:"-" }}</span>
+                </div>
+
+                {# safe handling of categories or legacy category or fallback text #}
+                <div class="exam-sub">
+                  {% if e.categories.all|length %}
+                    {{ e.categories.all|join:", " }}
+                  {% else %}
+                    {% if e.category %}
+                      {{ e.category.name }}
+                    {% else %}
+                      General
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="exam-body">
+                <div class="exam-info">
+                  <div class="muted">• {{ e.question_count }} Q • {{ e.duration_seconds }}s</div>
+                  <div class="muted" style="margin-top:6px;">{{ e.description|default:"No description" }}</div>
+                </div>
+
+                <div class="exam-actions">
+                  {% if item.locked %}
+                    <span class="lock-badge"><i class="fa fa-lock"></i> Locked</span>
+                    <div class="muted small-muted" style="margin-top:6px;">{{ item.reason }}</div>
+                  {% else %}
+                    <a class="button is-link is-light is-small" href="{% url 'quiz:exam_start' e.id %}">Start</a>
+                  {% endif %}
+                  {% if e.passing_score %}
+                    <div class="passing">Passing: <strong>{{ e.passing_score }}%</strong></div>
+                  {% endif %}
+                </div>
+              </div>
+            </article>
+            {% endwith %}
+          {% empty %}
+            <div class="small-muted">No exams available.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- recent attempts summary -->
+    <div class="card card-surface" style="margin-top:18px;">
+      <div class="card-header">
+        <h3 class="title is-5">Your Recent Results</h3>
+      </div>
+      <div class="card-body">
+        <table class="table is-fullwidth is-striped">
+          <thead><tr><th>Exam</th><th>Date</th><th>Score</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for r in recent_attempts %}
+            <tr>
+              <td>{{ r.exam.title }}</td>
+              <td>{{ r.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+              <td>{% if r.submitted_at %}{{ r.score }}%{% else %}-{% endif %}</td>
+              <td>{% if r.submitted_at %}Completed{% else %}<em>In progress</em>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="small-muted">No attempts yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- right column: stats & quick actions -->
+  <aside class="right-col">
+    <div class="card card-surface stats-overview">
+      <h4 class="title is-5">Quick Stats</h4>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">{{ attempted_count }}</div>
+          <div class="stat-label">Completed Attempts</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ best_score }}%</div>
+          <div class="stat-label">Best score</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ exams|length }}</div>
+          <div class="stat-label">Available Exams</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{% if active_attempt %}1{% else %}0{% endif %}</div>
+          <div class="stat-label">Active Attempt</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a class="button is-primary is-fullwidth" href="{% url 'quiz:exam_list' %}">Browse Exams</a>
+        <a class="button is-light is-fullwidth" href="{% url 'quiz:profile' %}" style="margin-top:8px;">Edit profile</a>
+      </div>
+    </div>
+
+    <!-- help / hints -->
+    <div class="card card-surface" style="margin-top:14px;">
+      <h4 class="title is-6">Hints</h4>
+      <ul class="small-muted">
+        <li>Locked exams require passing earlier levels or prerequisites.</li>
+        <li>Your active exam will appear at the top when you resume.</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

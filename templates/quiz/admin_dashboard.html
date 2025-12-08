@@ -1,0 +1,180 @@
+{% extends 'quiz/base.html' %}
+{% block content %}
+<h1 class="title">Admin Dashboard</h1>
+
+<div class="columns is-multiline">
+  <div class="column is-one-quarter">
+    <div class="stats-card">
+      <p class="small-muted">Exams</p>
+      <h2 class="title is-4">{{ exams_count }}</h2>
+      <p class="small-muted">Published: {{ published_count }}</p>
+    </div>
+  </div>
+
+  <div class="column is-one-quarter">
+    <div class="stats-card">
+      <p class="small-muted">Users</p>
+      <h2 class="title is-4">{{ total_users }}</h2>
+    </div>
+  </div>
+
+  <div class="column is-one-quarter">
+    <div class="stats-card">
+      <p class="small-muted">Total Attempts</p>
+      <h2 class="title is-4">{{ total_attempts }}</h2>
+    </div>
+  </div>
+
+  <div class="column is-one-quarter">
+    <div class="stats-card">
+      <p class="small-muted">Pending Attempts</p>
+      <h2 class="title is-4">{{ pending_attempts }}</h2>
+      <p class="small-muted">Avg score: {{ avg_score }}%</p>
+    </div>
+  </div>
+</div>
+
+<div class="box">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
+    <h2 class="subtitle" style="margin:0;">Recent attempts</h2>
+
+    <!-- quick filters / actions (non-functional placeholders — extend as needed) -->
+    <div style="display:flex; gap:8px; align-items:center;">
+      <form method="get" action="" style="display:inline-flex; gap:6px; align-items:center;">
+        <input name="q" class="input is-small" placeholder="Filter by user / exam" value="{{ request.GET.q|default:'' }}" style="width:220px;">
+        <button class="button is-small" type="submit">Filter</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- paginated table -->
+  <div class="table-responsive" style="overflow:auto;">
+    <table class="table is-fullwidth is-striped" id="recent-attempts-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Exam</th>
+          <th>Started</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="recent-body">
+        {% for a in recent_attempts %}
+        <tr data-id="{{ a.id }}">
+          <td>{{ a.user.username }}</td>
+          <td>{{ a.exam.title }}</td>
+          <td>{{ a.started_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+          <td>
+            {% if a.submitted_at %}
+              {{ a.score|floatformat:2 }}%
+            {% else %}
+              <em>In progress</em>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="small-muted">No attempts yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- load more / actions -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px;">
+    <div>
+      <a class="button is-link" href="/admin/auth/user/">Manage users</a>
+      <a class="button is-primary" href="/admin/quiz/exam/">Manage exams</a>
+      <a class="button is-light" href="{% url 'quiz:users_list' %}">Users list</a>
+    </div>
+
+    <div style="text-align:right;">
+      {% if recent_has_next %}
+        <button id="recent-loadmore" class="button is-light" data-next-page="{{ recent_next_page }}" data-page-size="{{ recent_page_size }}">Load more</button>
+      {% else %}
+        <span class="small-muted">Showing latest {{ recent_attempts|length }} attempts</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+(function(){
+  // API endpoint (rendered by Django so the URL is correct)
+  const apiUrl = "{% url 'quiz:recent_attempts_api' %}";
+  const loadBtn = document.getElementById('recent-loadmore');
+  if (!loadBtn) return; // nothing to do if no more pages
+
+  // small helper to escape HTML to avoid injection
+  function escapeHtml(s){
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]; });
+  }
+
+  loadBtn.addEventListener('click', function() {
+    const nextPage = parseInt(loadBtn.getAttribute('data-next-page') || '2', 10);
+    const pageSize = parseInt(loadBtn.getAttribute('data-page-size') || '8', 10);
+
+    // build URL with params
+    // build URL with params
+    const url = new URL(apiUrl, window.location.origin);
+    url.searchParams.set('page', nextPage);
+    url.searchParams.set('page_size', pageSize);
+    // include current filter value if user typed one
+    const qInput = document.querySelector('input[name="q"]');
+    const qVal = qInput ? (qInput.value || '').trim() : '';
+    if (qVal) url.searchParams.set('q', qVal);
+
+  
+
+    // UI feedback
+    loadBtn.disabled = true;
+    const originalText = loadBtn.innerText;
+    loadBtn.innerText = 'Loading...';
+
+    fetch(url, { credentials: 'same-origin' })
+      .then(resp => {
+        if (!resp.ok) throw new Error('Network response was not ok');
+        return resp.json();
+      })
+      .then(data => {
+        const tbody = document.getElementById('recent-body');
+        (data.results || []).forEach(row => {
+          const tr = document.createElement('tr');
+          tr.setAttribute('data-id', row.id);
+          tr.innerHTML = `
+            <td>${escapeHtml(row.user)}</td>
+            <td>${escapeHtml(row.exam)}</td>
+            <td>${escapeHtml(row.started)}</td>
+            <td>${escapeHtml(row.score)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        if (data.has_next) {
+          loadBtn.setAttribute('data-next-page', data.next_page);
+          loadBtn.disabled = false;
+          loadBtn.innerText = originalText;
+        } else {
+          // no more pages: remove button and show message
+          loadBtn.remove();
+          const span = document.createElement('span');
+          span.className = 'small-muted';
+          span.innerText = 'No more records';
+          const container = document.querySelector('#recent-body').closest('div').querySelector('div[style*="text-align:right"], div[style*="text-align:right;"]');
+          // fallback: append after the table actions area
+          const actionsArea = document.querySelector('.box > div[style*="text-align:right"], .box > div:last-child');
+          if (actionsArea) actionsArea.appendChild(span);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load more attempts', err);
+        loadBtn.disabled = false;
+        loadBtn.innerText = originalText;
+        alert('Failed to load more attempts — please try again.');
+      });
+  });
+})();
+</script>
+{% endblock %}

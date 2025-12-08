@@ -1,0 +1,25 @@
+{% extends 'quiz/base.html' %}
+
+{% block content %}
+
+<h2 class="subtitle">Available Exams</h2>
+
+<div class="box">
+    <ul>
+        {% for exam in exams %}
+            <li>
+                <strong>{{ exam.title }}</strong>
+                — Duration: {{ exam.duration_seconds }}s
+                | Questions: {{ exam.question_count }}
+                <a class="button is-small is-link"
+                   href="{% url 'quiz:exam_start' exam.id %}">
+                    Start
+                </a>
+            </li>
+        {% empty %}
+            <li>No published exams.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

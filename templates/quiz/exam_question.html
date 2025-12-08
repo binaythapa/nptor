@@ -1,0 +1,140 @@
+{% extends 'quiz/base.html' %}
+{% load dict_extras %}
+{% block content %}
+
+<h2 class="subtitle">{{ user_exam.exam.title }}</h2>
+
+<div class="notification is-info">
+  Time remaining: <span id="timer">{{ remaining }}</span> seconds
+</div>
+
+<div class="progress">
+  <span style="width: {{ progress }}%"></span>
+</div>
+
+<form id="qform" method="post" action="{% url 'quiz:exam_submit' user_exam.id %}">
+  {% csrf_token %}
+  <div class="box">
+    <p><strong>Q{{ index|add:1 }}. {{ question.text }}</strong></p>
+
+    {# SINGLE / DROPDOWN / TRUE-FALSE #}
+    {% if question.question_type in 'single,dropdown,tf' %}
+      {% for c in choices %}
+        <label class="radio" style="display:block; margin:6px 0;">
+          <input type="radio"
+                 name="question_{{ question.id }}"
+                 value="{{ c.id }}"
+                 {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}>
+          &nbsp;{{ c.text }}
+        </label>
+      {% endfor %}
+
+    {# MULTI (checkboxes) #}
+    {% elif question.question_type == 'multi' %}
+      {% for c in choices %}
+        <label class="checkbox" style="display:block; margin:6px 0;">
+          <input type="checkbox"
+                 name="question_{{ question.id }}"
+                 value="{{ c.id }}"
+                 {% if ua.selections %}
+                   {# ua.selections may be a list of ints OR list of strings OR dict; handle common cases #}
+                   {% if c.id in ua.selections %} checked
+                   {% elif c.id|stringformat:"s" in ua.selections %} checked
+                   {% elif ua.selections|dict_get:forloop.counter0 and ua.selections|dict_get:forloop.counter0|stringformat:"s" == c.id|stringformat:"s" %} checked
+                   {% endif %}
+                 {% endif %}>
+          &nbsp;{{ c.text }}
+        </label>
+      {% endfor %}
+
+    {# FILL (text) #}
+    {% elif question.question_type == 'fill' %}
+      <label class="label">Your answer</label>
+      <input class="input" type="text"
+             name="question_{{ question.id }}"
+             value="{{ ua.raw_answer|default_if_none:'' }}">
+
+    {# NUMERIC #}
+    {% elif question.question_type == 'numeric' %}
+      <label class="label">Enter numeric answer</label>
+      <input class="input" type="text"
+             name="question_{{ question.id }}"
+             value="{{ ua.raw_answer|default_if_none:'' }}">
+      <p class="help">Acceptable ± {{ question.numeric_tolerance }}</p>
+
+    {# MATCHING (pairing) #}
+    {% elif question.question_type == 'match' %}
+      <p>Match the right item for each left item</p>
+      {% for pair in question.matching_pairs %}
+        {% with li=forloop.counter0 %}
+          <div style="margin:8px 0;">
+            <strong>{{ pair.left }}</strong>
+            <div style="margin-top:6px;">
+              <select name="match_{{ question.id }}_{{ li }}">
+                <option value="">-- pick --</option>
+                {% for opt in question.matching_pairs %}
+                  {# preselect using ua.selections if available via dict_get #}
+                  <option value="{{ opt.right }}"
+                    {% if ua.selections %}
+                      {% if ua.selections|dict_get:li %}
+                        {% if ua.selections|dict_get:li|stringformat:"s" == opt.right|stringformat:"s" %} selected {% endif %}
+                      {% endif %}
+                    {% endif %}>
+                    {{ opt.right }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        {% endwith %}
+      {% endfor %}
+
+    {# ORDERING (comma-separated) #}
+    {% elif question.question_type == 'order' %}
+      <p>Enter items in correct order, separated by commas</p>
+      <input class="input" name="question_{{ question.id }}" value="{{ ua.raw_answer|default_if_none:'' }}">
+      <p class="help">Canonical items: {{ question.ordering_items|join:', ' }}</p>
+
+    {% else %}
+      <p>Unsupported question type</p>
+    {% endif %}
+  </div>
+
+  <div class="buttons" style="margin-top:12px;">
+    {% if index > 0 %}
+      <a class="button" href="{% url 'quiz:exam_question' user_exam.id index|add:-1 %}">Previous</a>
+    {% endif %}
+    {% if index < total|add:-1 %}
+      <a class="button is-primary" href="{% url 'quiz:exam_question' user_exam.id index|add:1 %}">Next</a>
+    {% else %}
+      <button type="submit" class="button is-success">Submit Exam</button>
+    {% endif %}
+  </div>
+</form>
+
+<script>
+  // countdown timer
+  let remaining = parseInt(document.getElementById('timer').innerText || '0', 10);
+  const timerEl = document.getElementById('timer');
+  const interval = setInterval(()=> {
+    remaining -= 1;
+    timerEl.innerText = remaining;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      document.getElementById('qform').submit();
+    }
+  }, 1000);
+
+  // autosave on change: send the whole form
+  document.getElementById('qform').addEventListener('change', function(e){
+    const data = new FormData(this);
+    fetch("{% url 'quiz:autosave' user_exam.id %}", {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'X-Requested-With': 'XMLHttpRequest'},
+      body: data
+    }).catch(err => console.warn('autosave error', err));
+  });
+</script>
+
+{% endblock %}

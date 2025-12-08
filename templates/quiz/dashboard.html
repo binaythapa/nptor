@@ -1,0 +1,46 @@
+{% extends 'quiz/base.html' %}
+{% block content %}
+<h1 class="title">Dashboard</h1>
+<div class="columns is-multiline">
+  <div class="column is-one-quarter">
+    <div class="stats-card">
+      <p class="small-muted">Exams</p>
+      <h2 class="title is-4">{{ exams_count }}</h2>
+      <p class="small-muted">Published: {{ published_count }}</p>
+    </div>
+  </div>
+
+  <div class="column is-one-quarter">
+    <div class="stats-card">
+      <p class="small-muted">Active Attempts</p>
+      <h2 class="title is-4">{{ active_attempts }}</h2>
+    </div>
+  </div>
+
+  <div class="column is-one-quarter">
+    <div class="stats-card">
+      <p class="small-muted">Users</p>
+      <h2 class="title is-4">{{ users_count }}</h2>
+    </div>
+  </div>
+
+  <div class="column is-one-quarter">
+    <div class="stats-card">
+      <p class="small-muted">Your recent attempts</p>
+      <ul>
+        {% for a in my_attempts %}
+          <li><strong>{{ a.exam.title }}</strong><br><span class="small-muted">Started: {{ a.started_at|date:"SHORT_DATETIME_FORMAT" }}</span></li>
+        {% empty %}
+          <li class="small-muted">No recent attempts</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="box">
+  <h3 class="subtitle is-5">Quick actions</h3>
+  <a class="button is-link" href="{% url 'quiz:exam_list' %}"><span class="icon"><i class="fas fa-file-alt"></i></span>&nbsp; View Exams</a>
+  <a class="button is-primary" href="{% url 'quiz:exam_list' %}#create"><span class="icon"><i class="fas fa-plus"></i></span>&nbsp; Create Exam</a>
+</div>
+{% endblock %}

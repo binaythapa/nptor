@@ -1,0 +1,104 @@
+{% extends 'quiz/base.html' %}
+{% load dict_extras %}
+{% block content %}
+<h2 class="title">Result for {{ user_exam.exam.title }}</h2>
+
+<div class="box" style="margin-bottom:18px;">
+  <p>Score: <strong>{{ user_exam.score }}%</strong></p>
+  <p>Submitted at: {{ user_exam.submitted_at }}</p>
+  <p>
+    Status:
+    {% if user_exam.passed %}
+      <span style="color:green">Passed</span>
+    {% else %}
+      <span style="color:red">Failed</span>
+    {% endif %}
+  </p>
+</div>
+
+<h3 class="subtitle">Answers</h3>
+
+{% for ans in answers %}
+  <div class="box" style="margin-bottom:14px;">
+    <p><strong>{{ forloop.counter }}. {{ ans.question.text }}</strong></p>
+
+    <p><strong>Your answer:</strong>
+      {# Single / dropdown / tf: show chosen choice text #}
+      {% if ans.choice %}
+        {{ ans.choice.text }}
+
+      {# Multi: ans.selections expected as list of ids or strings #}
+      {% elif ans.selections and ans.question.question_type == 'multi' %}
+        <ul style="margin:6px 0 6px 16px;">
+          {% for cid in ans.selections %}
+            <li>
+              {% for ch in ans.question.choices.all %}
+                {% if ch.id|stringformat:"s" == cid|stringformat:"s" or ch.id == cid %}
+                  {{ ch.text }}
+                {% endif %}
+              {% endfor %}
+            </li>
+          {% endfor %}
+        </ul>
+
+      {# Match: ans.selections expected as dict index->chosen-right (strings) #}
+      {% elif ans.selections and ans.question.question_type == 'match' %}
+        <ul style="margin:6px 0 6px 16px;">
+          {% for pair in ans.question.matching_pairs %}
+            {% with idx=forloop.counter0 %}
+              {% with chosen=ans.selections|dict_get:idx %}
+                <li>{{ pair.left }} → {{ chosen|default:"(no answer)" }}</li>
+              {% endwith %}
+            {% endwith %}
+          {% endfor %}
+        </ul>
+
+      {% elif ans.raw_answer %}
+        {{ ans.raw_answer }}
+
+      {% else %}
+        <span class="small-muted">No answer</span>
+      {% endif %}
+
+      &nbsp;—&nbsp;
+      {% if ans.is_correct %}
+        <span style="color:green">Correct</span>
+      {% else %}
+        <span style="color:red">Wrong</span>
+      {% endif %}
+    </p>
+
+    <p><strong>Correct:</strong></p>
+    <div>
+      {# Use explicit comparisons instead of the tuple membership test #}
+      {% if ans.question.question_type == 'single' or ans.question.question_type == 'dropdown' or ans.question.question_type == 'tf' or ans.question.question_type == 'multi' %}
+        {% for c in ans.question.choices.all %}
+          {% if c.is_correct %}
+            <div>- {{ c.text }}</div>
+          {% endif %}
+        {% endfor %}
+
+      {% elif ans.question.question_type == 'match' %}
+        {% for p in ans.question.matching_pairs %}
+          <div>- {{ p.left }} → {{ p.right }}</div>
+        {% endfor %}
+
+      {% elif ans.question.question_type == 'fill' %}
+        <div>- {{ ans.question.correct_text }}</div>
+
+      {% elif ans.question.question_type == 'numeric' %}
+        <div>- {{ ans.question.numeric_answer }} (±{{ ans.question.numeric_tolerance }})</div>
+
+      {% elif ans.question.question_type == 'order' %}
+        {% for item in ans.question.ordering_items %}
+          <div>- {{ item }}</div>
+        {% endfor %}
+
+      {% else %}
+        <div class="small-muted">No correct-answer data available for this type.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

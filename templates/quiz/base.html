@@ -1,0 +1,137 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{% block title %}{{ title|default:"Objective Exam" }}{% endblock %}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Bulma -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Core theme -->
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+
+  {% block head_extra %}{% endblock %}
+</head>
+
+<body {% if request.COOKIES.darkmode == '1' %} data-theme="dark"{% endif %}>
+  <div id="app" class="app-layout">
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="header-left">
+          <button id="sidebar-toggle" class="button is-white is-hidden-desktop" title="Open menu">
+            <i class="fa fa-bars"></i>
+          </button>
+
+          <a class="brand" href="{% url 'quiz:dashboard' %}">
+            <img src="{% static 'images/logo.jpg' %}" alt="logo" class="brand-logo">
+            <span class="brand-text">Objective Exam</span>
+          </a>
+
+          <form action="{% url 'quiz:exam_list' %}" method="get" class="header-search">
+            <input class="input" name="q" placeholder="Search exams, questions...">
+            <button class="button is-white search-btn" type="submit">
+              <i class="fa fa-search"></i>
+            </button>
+          </form>
+        </div>
+
+        <div class="header-right">
+          <a href="{% url 'quiz:notifications_list' %}" class="icon-btn" title="Notifications">
+            <i class="fa fa-bell"></i>
+            {% if unread_count|default:0 > 0 %}
+              <span class="notif-badge">{{ unread_count }}</span>
+            {% endif %}
+          </a>
+
+          {% if user.is_authenticated %}
+          <div class="user-dropdown">
+            <div class="user-toggle">
+              <img src="{% static 'images/logo.jpg' %}" class="avatar">
+              <span class="username is-hidden-mobile">{{ user.username }}</span>
+              <i class="fa fa-caret-down"></i>
+            </div>
+            <div class="user-menu">
+              <a href="{% url 'quiz:profile' %}"><i class="fa fa-user"></i> Profile</a>
+              <a href="{% url 'quiz:exam_list' %}"><i class="fa fa-book"></i> Exams</a>
+              {% if user.is_staff %}
+                <a href="/admin/"><i class="fa fa-shield"></i> Admin</a>
+              {% endif %}
+              <hr />
+              <!-- FIXED LOGOUT (POST + CSRF) -->
+              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fa fa-right-from-bracket"></i> Logout
+              </a>
+            </div>
+          </div>
+          {% endif %}
+
+          <button id="theme-toggle" class="button is-white" title="Toggle theme">
+            <i class="fa fa-moon"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN LAYOUT -->
+    <div class="container main-area" role="main">
+
+      <!-- SIDEBAR -->
+      <aside id="site-sidebar" class="site-sidebar" aria-label="Primary navigation">
+        <nav class="menu">
+          <p class="menu-label">General</p>
+          <ul class="menu-list">
+            <li><a href="{% url 'quiz:dashboard' %}"><i class="fa fa-home"></i> Dashboard</a></li>
+            <li><a href="{% url 'quiz:exam_list' %}"><i class="fa fa-book"></i> Exams</a></li>
+            <li><a href="{% url 'quiz:notifications_list' %}"><i class="fa fa-bell"></i> Notifications 
+              {% if unread_count|default:0 > 0 %}<span class="badge-inline">{{ unread_count }}</span>{% endif %}
+            </a></li>
+          </ul>
+
+          <p class="menu-label">Account</p>
+          <ul class="menu-list">
+            <li><a href="{% url 'quiz:profile' %}"><i class="fa fa-user"></i> Profile</a></li>
+            {% if user.is_staff %}
+              <li><a href="/admin/"><i class="fa fa-cog"></i> Admin</a></li>
+            {% endif %}
+            <!-- FIXED LOGOUT IN SIDEBAR -->
+            <li>
+              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fa fa-right-from-bracket"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="site-content" style="min-width:0;">
+        <div class="page-top">{% block breadcrumbs %}{% endblock %}</div>
+        <div class="page-body">{% block content %}{% endblock %}</div>
+      </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="site-footer" role="contentinfo">
+      <div class="footer-inner" style="max-width:1200px; margin:0 auto;">
+        <div>© {% now "Y" %} Objective Exam</div>
+        <div class="small-muted">Made with ♥ • Version 1.0</div>
+      </div>
+    </footer>
+
+    <!-- HIDDEN LOGOUT FORM (REQUIRED FOR SECURITY) -->
+    <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
+      {% csrf_token %}
+      <!-- Redirect to exam list after logout -->
+      <input type="hidden" name="next" value="{% url 'quiz:exam_list' %}">
+    </form>
+
+  </div>
+
+  <script src="{% static 'js/ui.js' %}"></script>
+  {% block scripts_extra %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,6 @@
+log
+venv
+*.pyc
+outbound/
+index/
+source_file/
