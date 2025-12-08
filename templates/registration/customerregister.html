@@ -9,7 +9,7 @@
 
     <h1 class="title is-4 has-text-centered mb-6">Create Your Account</h1>
 
-    <!-- Messages & Non-field Errors -->
+    <!-- Messages -->
     {% if messages %}
       {% for message in messages %}
         <div class="notification {% if message.tags %}is-{{ message.tags }}{% endif %} mb-5">
@@ -38,55 +38,56 @@
         {% endif %}
       </div>
 
-     <!-- Password -->
-<div class="field mb-4">
-  <label class="label">Password</label>
-
-  <div class="control" style="position:relative;">
-    {{ form.password|add_class:"input"|attr:"id:password-field"|attr:"required:required" }}
-
-    <!-- Eye Icon -->
-    <span 
-      onclick="togglePassword()" 
-      style="
-        position:absolute;
-        right:12px;
-        top:50%;
-        transform:translateY(-50%);
-        cursor:pointer;
-        user-select:none;
-      "
-    >
-      👁️
-    </span>
-  </div>
-
-  {% if form.password.errors %}
-    <p class="help is-danger">{{ form.password.errors|join:", " }}</p>
-  {% endif %}
-</div>
-
-
-      <!-- First Name -->
+      <!-- Password + Eye -->
       <div class="field mb-4">
-        <label class="label">First Name</label>
-        <div class="control">
-          {{ form.first_name|add_class:"input"|attr:"placeholder:Enter your first name"|attr:"required:required" }}
+        <label class="label">Password</label>
+
+        <div class="control" style="position:relative;">
+          {{ form.password|add_class:"input"|attr:"id:password-field"|attr:"required:required" }}
+
+          <!-- Eye Icon -->
+          <span 
+            onclick="togglePassword()" 
+            style="
+              position:absolute;
+              right:12px;
+              top:50%;
+              transform:translateY(-50%);
+              cursor:pointer;
+              user-select:none;
+              font-size:18px;
+            "
+          >👁️</span>
         </div>
-        {% if form.first_name.errors %}
-          <p class="help is-danger">{{ form.first_name.errors|join:", " }}</p>
+
+        {% if form.password.errors %}
+          <p class="help is-danger">{{ form.password.errors|join:", " }}</p>
         {% endif %}
       </div>
 
-      <!-- Last Name -->
+      <!-- Full Name (Both in one row) -->
       <div class="field mb-4">
-        <label class="label">Last Name</label>
-        <div class="control">
-          {{ form.last_name|add_class:"input"|attr:"placeholder:Enter your last name"|attr:"required:required" }}
+        <label class="label">Full Name</label>
+
+        <div class="control" style="display:flex; gap:12px;">
+
+          <!-- First Name -->
+          <div style="flex:1;">
+            {{ form.first_name|add_class:"input"|attr:"placeholder:First name"|attr:"required:required" }}
+            {% if form.first_name.errors %}
+              <p class="help is-danger">{{ form.first_name.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Last Name -->
+          <div style="flex:1;">
+            {{ form.last_name|add_class:"input"|attr:"placeholder:Last name"|attr:"required:required" }}
+            {% if form.last_name.errors %}
+              <p class="help is-danger">{{ form.last_name.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
         </div>
-        {% if form.last_name.errors %}
-          <p class="help is-danger">{{ form.last_name.errors|join:", " }}</p>
-        {% endif %}
       </div>
 
       <!-- Email -->
@@ -100,7 +101,7 @@
         {% endif %}
       </div>
 
-      <!-- Contact (Other field) -->
+      <!-- Contact -->
       <div class="field mb-4">
         <label class="label">Contact Number</label>
         <div class="control">
@@ -111,7 +112,7 @@
         {% endif %}
       </div>
 
-      <!-- Terms & Conditions -->
+      <!-- Terms -->
       <div class="field mb-5">
         <div class="control">
           <label class="checkbox">
@@ -121,7 +122,7 @@
         </div>
       </div>
 
-      <!-- Submit Button + Login Link -->
+      <!-- Submit Button -->
       <div class="field" style="display:flex; justify-content:space-between; align-items:center;">
         <div>
           <a href="{% url 'quiz:login' %}">Already have an account?</a>
@@ -136,4 +137,13 @@
 
   </div>
 </section>
+
+<!-- Password toggle script -->
+<script>
+function togglePassword() {
+  const field = document.getElementById("password-field");
+  field.type = field.type === "password" ? "text" : "password";
+}
+</script>
+
 {% endblock %}
