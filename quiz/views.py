@@ -565,7 +565,7 @@ def allocate_questions_for_exam(exam):
     return selected_qs
 
 
-
+'''
 # -------------------------
 # Registration + exam flows
 # -------------------------
@@ -579,12 +579,26 @@ def register(request):
     else:
         form = UserCreationForm()
     return render(request, 'quiz/register.html', {'form': form})
-
+'''
 
 @login_required
 def exam_list(request):
-    exams = Exam.objects.filter(is_published=True)
-    return render(request, 'quiz/exam_list.html', {'exams': exams})
+    exams = (
+        Exam.objects
+        .filter(is_published=True)
+        .select_related('category')      # assumes FK named "category"
+        .order_by('category__name', 'level')  # assumes Category has "name" field
+    )
+
+    # Later you can compute user_level based on subscription / progress
+    user_level = 1   # for now fixed; you can change logic later
+
+    context = {
+        'exams': exams,
+        'user_level': user_level,
+    }
+    return render(request, 'quiz/exam_list.html', context)
+
 
 
 @login_required

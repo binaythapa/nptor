@@ -5,21 +5,42 @@
 <h2 class="subtitle">Available Exams</h2>
 
 <div class="box">
-    <ul>
-        {% for exam in exams %}
-            <li>
-                <strong>{{ exam.title }}</strong>
-                — Duration: {{ exam.duration_seconds }}s
-                | Questions: {{ exam.question_count }}
-                <a class="button is-small is-link"
-                   href="{% url 'quiz:exam_start' exam.id %}">
-                    Start
-                </a>
-            </li>
-        {% empty %}
-            <li>No published exams.</li>
-        {% endfor %}
-    </ul>
+
+    {# Group exams by category #}
+    {% regroup exams by category as category_list %}
+
+    {% for cat in category_list %}
+        <h3 class="title is-5" style="margin-top: 1rem;">
+            {{ cat.grouper }}  {# will print category.__str__() #}
+        </h3>
+
+        <ul>
+            {% for exam in cat.list %}
+                <li style="margin-bottom: 0.5rem;">
+                    <strong>{{ exam.title }}</strong>
+                    — Level: {{ exam.level }}
+                    — Duration: {{ exam.duration_seconds }}s
+                    | Questions: {{ exam.question_count }}
+
+                    {# simple level-based access (later tie to subscription) #}
+                    {% if user_level and exam.level <= user_level %}
+                        <a class="button is-small is-link"
+                           href="{% url 'quiz:exam_start' exam.id %}">
+                            Start
+                        </a>
+                    {% else %}
+                        <button class="button is-small is-light" disabled>
+                            🔒 Locked
+                        </button>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+
+    {% empty %}
+        <p>No published exams.</p>
+    {% endfor %}
+
 </div>
 
 {% endblock %}
