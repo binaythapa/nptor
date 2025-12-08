@@ -132,6 +132,12 @@
   </div>
 
   <script src="{% static 'js/ui.js' %}"></script>
+  <script>
+function togglePassword() {
+  const field = document.getElementById("password-field");
+  field.type = field.type === "password" ? "text" : "password";
+}
+</script>
   {% block scripts_extra %}{% endblock %}
 </body>
 </html>

@@ -6,20 +6,23 @@ from .models import *
 
 User = get_user_model()
 
-
 class CustomerRegisterForm(forms.ModelForm):
-    username= forms.CharField(widget= forms.TextInput())
-    password= forms.CharField(widget= forms.PasswordInput())
-    email= forms.CharField(widget= forms.EmailInput())
+    username = forms.CharField(widget=forms.TextInput(), required=True)
+    password = forms.CharField(widget=forms.PasswordInput(), required=True)
+    email = forms.CharField(widget=forms.EmailInput(), required=True)
+    first_name = forms.CharField(widget=forms.TextInput(), required=True)
+    last_name = forms.CharField(widget=forms.TextInput(), required=True)
+
     class Meta:
-        model= Client
-        fields= ('username', 'password','email','contact')
+        model = Client
+        fields = ('username', 'password', 'email', 'first_name', 'last_name', 'contact')
 
     def clean_username(self):
-        uname= self.cleaned_data.get('username')
+        uname = self.cleaned_data.get('username')
         if User.objects.filter(username=uname).exists():
             raise forms.ValidationError("Customer with this username already exists")
         return uname
+
 
 
 

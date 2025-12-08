@@ -31,10 +31,61 @@
       <div class="field mb-4">
         <label class="label">Username</label>
         <div class="control">
-          {{ form.username|add_class:"input"|attr:"placeholder:Choose a username" }}
+          {{ form.username|add_class:"input"|attr:"placeholder:Choose a username"|attr:"required:required" }}
         </div>
         {% if form.username.errors %}
           <p class="help is-danger">{{ form.username.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+     <!-- Password -->
+<div class="field mb-4">
+  <label class="label">Password</label>
+
+  <div class="control" style="position:relative;">
+    {{ form.password|add_class:"input"|attr:"id:password-field"|attr:"required:required" }}
+
+    <!-- Eye Icon -->
+    <span 
+      onclick="togglePassword()" 
+      style="
+        position:absolute;
+        right:12px;
+        top:50%;
+        transform:translateY(-50%);
+        cursor:pointer;
+        user-select:none;
+      "
+    >
+      👁️
+    </span>
+  </div>
+
+  {% if form.password.errors %}
+    <p class="help is-danger">{{ form.password.errors|join:", " }}</p>
+  {% endif %}
+</div>
+
+
+      <!-- First Name -->
+      <div class="field mb-4">
+        <label class="label">First Name</label>
+        <div class="control">
+          {{ form.first_name|add_class:"input"|attr:"placeholder:Enter your first name"|attr:"required:required" }}
+        </div>
+        {% if form.first_name.errors %}
+          <p class="help is-danger">{{ form.first_name.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Last Name -->
+      <div class="field mb-4">
+        <label class="label">Last Name</label>
+        <div class="control">
+          {{ form.last_name|add_class:"input"|attr:"placeholder:Enter your last name"|attr:"required:required" }}
+        </div>
+        {% if form.last_name.errors %}
+          <p class="help is-danger">{{ form.last_name.errors|join:", " }}</p>
         {% endif %}
       </div>
 
@@ -42,29 +93,18 @@
       <div class="field mb-4">
         <label class="label">Email Address</label>
         <div class="control">
-          {{ form.email|add_class:"input"|attr:"placeholder:you@example.com" }}
+          {{ form.email|add_class:"input"|attr:"placeholder:you@example.com"|attr:"required:required" }}
         </div>
         {% if form.email.errors %}
           <p class="help is-danger">{{ form.email.errors|join:", " }}</p>
         {% endif %}
       </div>
 
-      <!-- Password -->
-      <div class="field mb-4">
-        <label class="label">Password</label>
-        <div class="control">
-          {{ form.password|add_class:"input" }}
-        </div>
-        {% if form.password.errors %}
-          <p class="help is-danger">{{ form.password.errors|join:", " }}</p>
-        {% endif %}
-      </div>
-
-      <!-- Contact -->
+      <!-- Contact (Other field) -->
       <div class="field mb-4">
         <label class="label">Contact Number</label>
         <div class="control">
-          {{ form.contact|add_class:"input"|attr:"placeholder:98xxxxxxxx" }}
+          {{ form.contact|add_class:"input"|attr:"placeholder:98xxxxxxxx"|attr:"required:required" }}
         </div>
         {% if form.contact.errors %}
           <p class="help is-danger">{{ form.contact.errors|join:", " }}</p>

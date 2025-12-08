@@ -110,15 +110,21 @@ class CustomerRegisterView(CreateView):
     success_url = reverse_lazy('quiz:dashboard')
 
     def form_valid(self, form):
-        email = form.cleaned_data.get('email')
-        password = form.cleaned_data.get('password')
+        cleaned = form.cleaned_data
+        email = cleaned.get('email')
+        password = cleaned.get('password')
+        username = cleaned.get('username')
+        first_name = cleaned.get('first_name')
+        last_name = cleaned.get('last_name')
 
         try:
-            # Create User with email as username
+            # Create User with real username + first/last name
             user = User.objects.create_user(
-                username=email,
+                username=username,
                 email=email,
-                password=password
+                password=password,
+                first_name=first_name,
+                last_name=last_name
             )
 
             # Link Client to User
@@ -130,7 +136,7 @@ class CustomerRegisterView(CreateView):
             send_mail(
                 subject="Welcome to nptor.com – Your Learning Journey Starts Now!",
                 message=f"""
-Hello Learner,
+Hello {first_name or username},
 
 Thank you for joining nptor.com – Nepal's trusted online education platform!
 
@@ -147,7 +153,7 @@ Login here: http://127.0.0.1:8000/quiz/login/
 
 We're thrilled to have you in our learning community!
 
-Happy Learning!  
+Happy Learning!
 Team nptor.com
 """,
                 from_email='tbinay5@gmail.com',
@@ -155,20 +161,20 @@ Team nptor.com
                 fail_silently=False,
             )
 
-            # Auto-login
-            user = authenticate(username=email, password=password)
+            # Auto-login using username now
+            user = authenticate(username=username, password=password)
             if user:
                 login(self.request, user)
-                messages.success(self.request, f"Welcome, {email}! You're now logged in.")
+                messages.success(self.request, f"Welcome, {first_name or username}! You're now logged in.")
             else:
                 messages.warning(self.request, "Account created! Please log in.")
 
             return super().form_valid(form)
 
-        except IntegrityError:   # ← Now recognized because of the import above
+        except IntegrityError:
             messages.error(
                 self.request,
-                "This email is already registered. Please log in instead."
+                "This email or username is already registered. Please log in instead."
             )
             return self.form_invalid(form)
 
