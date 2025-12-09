@@ -8,8 +8,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # ============================================================
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-please')
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+
 '''
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',') if h.strip()]
 
