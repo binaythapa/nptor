@@ -9,13 +9,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================================
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-please')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+'''
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',') if h.strip()]
 
-#ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
-#ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',') if h.strip()]
-
+'''
 DEBUG = False
 
 ALLOWED_HOSTS = ['nptor.com', 'www.nptor.com']
+
 
 # ============================================================
 # Application definition
@@ -85,7 +87,7 @@ WSGI_APPLICATION = 'objective_exam.wsgi.application'
 # ============================================================
 # Database
 # ============================================================
-'''
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -96,7 +98,7 @@ DATABASES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'sales',          # database
+        'NAME': 'nptor',          # database
         'USER': 'root',           # user
         'PASSWORD': 'root',       # password
         'HOST': 'localhost',      # host
@@ -106,7 +108,7 @@ DATABASES = {
         },
     }
 }
-
+'''
 
 
 
