@@ -9,10 +9,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================================
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-please')
 
+'''
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',') if h.strip()]
+
+'''
 DEBUG = False
 
-ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
+ALLOWED_HOSTS = ['nptor.com', 'www.nptor.com']
 
 
 # ============================================================
@@ -48,7 +54,6 @@ SITE_ID = 1  # Required by allauth
 # ============================================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -84,22 +89,20 @@ WSGI_APPLICATION = 'objective_exam.wsgi.application'
 # ============================================================
 # Database
 # ============================================================
-'''
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
-
+'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'nptor',          # database
-        'USER': 'admin',           # user
-        'PASSWORD': 'pMzvD_18C~Y}6DYw',       # password
+        'USER': 'root',           # user
+        'PASSWORD': 'root',       # password
         'HOST': 'localhost',      # host
         'PORT': '3306',           # default MySQL port
         'OPTIONS': {
@@ -107,25 +110,7 @@ DATABASES = {
         },
     }
 }
-
 '''
-
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nptorcom_nptor',       # EXACT database name from cPanel
-        'USER': 'nptorcom_admin',       # EXACT user name from cPanel
-        'PASSWORD': 'pMzvD_18C~Y}6DYw',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
-}
-
-
 
 
 
@@ -152,21 +137,13 @@ USE_TZ = True
 # Static & Media
 # ============================================================
 STATIC_URL = '/static/'
-
-# Folder for your own static files during development
 STATICFILES_DIRS = [BASE_DIR / 'static']
-
-# Folder where collectstatic will gather everything
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-
 
 # ============================================================
 # Authentication & URLs
