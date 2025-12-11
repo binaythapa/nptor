@@ -39,6 +39,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from .forms import RegistrationForm
+from .utils import get_leaf_category_name
 
 # Models (import before helpers that reference them)
 from .models import (
@@ -413,12 +414,11 @@ def recent_attempts_api(request):
 @login_required
 def student_dashboard(request):
     """
-    Student-facing dashboard: shows available exams, active attempt, and past results.
-    Adds `exam_items` to indicate locked/unlocked exams for the UI, with per-exam attempts.
+    Student-facing dashboard builder (updated: includes pass_threshold for templates).
     """
     exams = Exam.objects.filter(is_published=True).order_by('title')
 
-    # Active attempt (if any)
+    # user's active (in-progress) attempt, if any
     active_attempt = (
         UserExam.objects
         .filter(user=request.user, submitted_at__isnull=True)
@@ -426,15 +426,7 @@ def student_dashboard(request):
         .first()
     )
 
-    # Recent attempts (for "Your Recent Results" section)
-    recent_attempts = (
-        UserExam.objects
-        .filter(user=request.user, submitted_at__isnull=False)
-        .select_related('exam')
-        .order_by('-submitted_at')[:8]
-    )
-
-    # All completed attempts (for per-exam history in Available Exams)
+    # all completed attempts (submitted_at not null), most recent first
     all_attempts = (
         UserExam.objects
         .filter(user=request.user, submitted_at__isnull=False)
@@ -442,11 +434,12 @@ def student_dashboard(request):
         .order_by('-submitted_at')
     )
 
-    # Map: exam_id -> list of attempts (you can limit per exam if you want, e.g. first 5)
+    # map exam_id -> list of attempts (most recent first)
     attempts_by_exam = {}
     for att in all_attempts:
         attempts_by_exam.setdefault(att.exam_id, []).append(att)
 
+    # overall stats
     attempted_count = (
         UserExam.objects
         .filter(user=request.user, submitted_at__isnull=False)
@@ -465,71 +458,111 @@ def student_dashboard(request):
         locked = False
         reason = None
 
-        # --- 1) explicit prerequisites ---
-        prereqs = list(getattr(e, 'prerequisite_exams', []).all()) if hasattr(e, 'prerequisite_exams') else []
+        # gating: prerequisites (M2M) and level-based
+        prereqs_qs = getattr(e, 'prerequisite_exams', None)
+        prereqs = list(prereqs_qs.all()) if prereqs_qs is not None else []
         if prereqs:
             missing = [p for p in prereqs if not _user_passed_exam(request.user, p)]
             if missing:
                 locked = True
                 reason = 'Pass: ' + ', '.join([m.title for m in missing])
-
-        # --- 2) level-based gating ---
         elif getattr(e, 'level', None) and e.level > 1:
-            prev_level = e.level - 1
-            passed_prev = UserExam.objects.filter(
-                user=request.user,
-                exam__level=prev_level,
-                passed=True
-            ).exists()
-            if not passed_prev:
+            if not UserExam.objects.filter(user=request.user, exam__level=e.level-1, passed=True).exists():
                 locked = True
-                reason = f'Pass at least one Level {prev_level} exam to unlock'
+                reason = f'Pass at least one Level {e.level-1} exam to unlock this exam.'
 
-        # --- 3) Clean category label (drop Snowflake / SnowPro Core parents) ---
-        if hasattr(e, 'categories') and e.categories.exists():
-            parts = []
-            for c in e.categories.all():
-                name = getattr(c, 'name', str(c))
-                split_parts = [p.strip() for p in name.split('->')]
+        # last attempt for this user+exam
+        last_attempt = (
+            UserExam.objects
+            .filter(user=request.user, exam=e)
+            .order_by('-started_at')
+            .first()
+        )
 
-                # skip pure parent categories
-                if len(split_parts) == 1 and split_parts[0] in ["Snowflake", "SnowPro Core"]:
-                    continue
-
-                leaf = split_parts[-1]
-                if leaf in ["Snowflake", "SnowPro Core"]:
-                    continue
-
-                parts.append(leaf)
-            category_label = ', '.join(parts) if parts else "General"
-        elif getattr(e, 'category', None):
-            name = getattr(e.category, 'name', str(e.category))
-            split_parts = [p.strip() for p in name.split('->')]
-            if len(split_parts) == 1 and split_parts[0] in ["Snowflake", "SnowPro Core"]:
-                category_label = ""
+        recent_score = None
+        recent_status = None
+        can_retake = False
+        if last_attempt:
+            if last_attempt.submitted_at:
+                recent_status = 'completed'
+                # ensure numeric
+                try:
+                    recent_score = float(last_attempt.score or 0.0)
+                except Exception:
+                    recent_score = 0.0
+                can_retake = True
             else:
-                leaf = split_parts[-1]
-                category_label = "" if leaf in ["Snowflake", "SnowPro Core"] else leaf
+                recent_status = 'in_progress'
+                recent_score = None
+                can_retake = False
+
+        # action label (Start / Resume / Retake / Locked)
+        if locked:
+            action_label = 'Locked'
         else:
-            category_label = "General"
+            if last_attempt is None:
+                action_label = 'Start'
+            elif last_attempt.submitted_at is None:
+                action_label = 'Resume'
+            else:
+                action_label = 'Retake' if can_retake else 'Start'
+
+        # Build category label dynamically using cached helper
+        if hasattr(e, 'categories') and getattr(e, 'categories', None) is not None and e.categories.exists():
+            labels = []
+            for c in e.categories.all():
+                leaf = get_leaf_category_name(c)
+                if leaf:  # skip empty strings from parent categories
+                    labels.append(leaf)
+            category_label = ', '.join(labels) if labels else "General"
+        else:
+            # legacy single FK 'category' support
+            leaf = get_leaf_category_name(getattr(e, 'category', None))
+            category_label = leaf if leaf else "General"
+
+        # user's attempts for this exam (completed only) and best score for this exam
+        exam_attempts = attempts_by_exam.get(e.id, [])
+        best_for_exam = None
+        if exam_attempts:
+            scores = [a.score for a in exam_attempts if a.score is not None]
+            if scores:
+                try:
+                    best_for_exam = round(max(float(s) for s in scores), 2)
+                except Exception:
+                    best_for_exam = None
+
+        # compute pass_threshold (80% of passing_score) to avoid arithmetic in template
+        pass_threshold = None
+        try:
+            if e.passing_score is not None:
+                pass_threshold = round(float(e.passing_score) * 0.8, 2)
+        except Exception:
+            pass_threshold = None
 
         exam_items.append({
             'exam': e,
             'locked': locked,
             'reason': reason,
             'category_label': category_label,
-            'attempts': attempts_by_exam.get(e.id, []),   # 👈 per-exam attempts
+            'attempts': exam_attempts,
+            'last_attempt': last_attempt,
+            'recent_score': recent_score,
+            'recent_status': recent_status,
+            'action_label': action_label,
+            'can_retake': can_retake,
+            'best_score': best_for_exam,
+            'pass_threshold': pass_threshold,
         })
 
     context = {
         'exams': exams,
         'active_attempt': active_attempt,
-        'recent_attempts': recent_attempts,
         'attempted_count': attempted_count,
         'best_score': round(best_score_val, 2),
         'exam_items': exam_items,
     }
     return render(request, 'quiz/student_dashboard.html', context)
+
 
 # -------------------------
 # Profile / users
