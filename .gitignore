@@ -1,6 +1,9 @@
 log
 venv
+venv_bkp
 *.pyc
 outbound/
 index/
 source_file/
+objective_exam/settings.py
+
