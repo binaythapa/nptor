@@ -14,7 +14,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-plea
 DJANGO_ENV = os.environ.get("DJANGO_ENV", "local").lower()
 
 # DEBUG mode
-DEBUG = DJANGO_ENV == "local"
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+print(DEBUG)
 
 # ALLOWED_HOSTS
 if DEBUG:
@@ -23,6 +24,7 @@ if DEBUG:
 else:
     # Production (nptor.com)
     ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
+
 
 
 # ============================================================
@@ -94,31 +96,7 @@ WSGI_APPLICATION = 'objective_exam.wsgi.application'
 # ============================================================
 # Database
 # ============================================================
-'''
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
-
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nptor',          # database
-        'USER': 'admin',           # user
-        'PASSWORD': 'pMzvD_18C~Y}6DYw',       # password
-        'HOST': 'localhost',      # host
-        'PORT': '3306',           # default MySQL port
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
-}
-
-'''
 
 
 DATABASES = {
@@ -135,9 +113,34 @@ DATABASES = {
     }
 }
 
+'''
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 
 
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'nptor',          # database
+        'USER': 'root',           # user
+        'PASSWORD': 'pMzvD_18C~Y}6DYw',       # password
+        'HOST': 'localhost',      # host
+        'PORT': '3306',           # default MySQL port
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+
+
+'''
 
 
 # ============================================================
