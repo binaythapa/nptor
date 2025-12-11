@@ -23,7 +23,11 @@ class CustomerRegisterForm(forms.ModelForm):
             raise forms.ValidationError("Customer with this username already exists")
         return uname
 
-
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Customer with this email already exists")
+        return email
 
 
 

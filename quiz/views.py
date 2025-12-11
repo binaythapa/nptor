@@ -801,100 +801,183 @@ def exam_question(request, user_exam_id, index):
 # -------------------------
 # Autosave endpoint
 # -------------------------
+# Autosave endpoint (robust)
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+
 @login_required
 def autosave(request, user_exam_id):
     """
-    Autosave partial answers via AJAX. Accepts form POST
-    and stores best-effort values to UserAnswer rows.
+    Autosave partial answers via AJAX. Only updates fields present in the POST payload.
+    - Prevents autosave if attempt already submitted.
+    - Persists is_correct for single/dropdown/tf so final grading can rely on it.
+    - Uses select_for_update inside a transaction to avoid concurrent write races.
     """
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
+
+    # refuse autosave for already-submitted attempts (important to avoid clobbering)
+    if ue.submitted_at:
+        return JsonResponse({'status': 'attempt_already_submitted'}, status=409)
+
     if request.method != 'POST':
         return JsonResponse({'status': 'method_not_allowed'}, status=405)
 
-    data = request.POST
+    # Build a map of posted keys -> list(values)
     posted = {}
-    for key in data.keys():
-        # use getlist from QueryDict to capture multiple checkbox values
-        posted.setdefault(key, data.getlist(key))
+    for k in request.POST.keys():
+        if k == 'csrfmiddlewaretoken':
+            continue
+        posted[k] = request.POST.getlist(k)
 
-    for ua in ue.answers.select_related('question'):
-        q = ua.question
-        qkey = f'question_{q.id}'
+    # Partition keys into question_<qid> and match_<qid>_<i> groups
+    question_keys = [k for k in posted.keys() if k.startswith('question_')]
+    match_keys = [k for k in posted.keys() if k.startswith('match_')]
 
-        # SINGLE / DROPDOWN / TF
-        if q.question_type in ('single', 'dropdown', 'tf'):
-            vals = posted.get(qkey)
-            if vals:
-                val = vals[0] if isinstance(vals, (list, tuple)) else vals
-                try:
-                    ch = Choice.objects.get(pk=int(val), question=q)
-                    ua.choice = ch
+    # Process standard question_* keys first
+    for qkey in question_keys:
+        # parse qid from "question_<qid>"
+        try:
+            qid = int(qkey.split('_', 1)[1])
+        except Exception:
+            continue
+
+        # ensure question exists and belongs to this exam
+        try:
+            q = Question.objects.get(pk=qid)
+        except Question.DoesNotExist:
+            continue
+
+        # get_or_create the UserAnswer row for this attempt/question
+        ua, _ = UserAnswer.objects.get_or_create(user_exam=ue, question=q)
+
+        # Lock the row to avoid concurrent autosave/submit races
+        with transaction.atomic():
+            ua = UserAnswer.objects.select_for_update().get(pk=ua.pk)
+
+            vals = posted.get(qkey) or []
+            if q.question_type in ('single', 'dropdown', 'tf'):
+                if vals:
+                    val = vals[0]
+                    try:
+                        submitted_pk = int(str(val).strip())
+                    except (ValueError, TypeError):
+                        submitted_pk = None
+
+                    if submitted_pk is not None:
+                        try:
+                            ch = Choice.objects.get(pk=submitted_pk, question=q)
+                            ua.choice = ch
+                            ua.raw_answer = None
+                            ua.selections = None
+                            # persist correctness now (safe): final submit can rely on it
+                            ua.is_correct = bool(ch.is_correct)
+                            ua.save()
+                        except Choice.DoesNotExist:
+                            # invalid choice id: ignore this autosave for the field
+                            pass
+
+            elif q.question_type == 'multi':
+                if vals:
+                    # convert to ints where possible
+                    sel_ids = []
+                    for v in vals:
+                        try:
+                            sel_ids.append(int(str(v).strip()))
+                        except Exception:
+                            # keep any non-int entries as-is (safer to ignore later)
+                            pass
+                    ua.selections = sel_ids
+                    ua.choice = None
                     ua.raw_answer = None
+                    # keep is_correct None (final grading will compute)
+                    ua.is_correct = None
+                    ua.save()
+
+            elif q.question_type in ('fill', 'numeric', 'order'):
+                # for these types we just save the raw_answer
+                if vals is not None:
+                    raw = vals[0] if vals else ''
+                    ua.raw_answer = (raw or '').strip()
+                    ua.choice = None
                     ua.selections = None
                     ua.is_correct = None
                     ua.save()
-                except Exception:
-                    # invalid id: ignore autosave
-                    pass
 
-        # MULTI
-        elif q.question_type == 'multi':
-            vals = posted.get(qkey)
-            if vals:
-                try:
-                    sel_ids = [int(x) for x in vals if x]
-                except Exception:
-                    sel_ids = vals
-                ua.selections = sel_ids
-                ua.choice = None
-                ua.raw_answer = None
-                ua.is_correct = None
-                ua.save()
+            else:
+                # unsupported types handled later (match handled separately)
+                pass
 
-        # FILL / NUMERIC / ORDER
-        elif q.question_type in ('fill', 'numeric', 'order'):
-            vals = posted.get(qkey)
-            if vals is not None:
-                raw = vals[0] if isinstance(vals, (list, tuple)) else vals
-                ua.raw_answer = raw
-                ua.choice = None
-                ua.selections = None
-                ua.is_correct = None
-                ua.save()
+    # Now process match_* keys (group by question id)
+    if match_keys:
+        # build dict: qid -> list of (index, posted_value)
+        match_by_q = {}
+        for k in match_keys:
+            # expected key format: "match_<qid>_<li>"
+            parts = k.split('_')
+            if len(parts) < 3:
+                continue
+            try:
+                qid = int(parts[1])
+                li = int(parts[2])
+            except Exception:
+                continue
+            match_by_q.setdefault(qid, {})[li] = posted.get(k)[0] if posted.get(k) else ''
 
-        # MATCH
-        elif q.question_type == 'match':
-            pairs = q.matching_pairs or []
-            user_map = ua.selections or {}
-            changed = False
-            for i in range(len(pairs)):
-                k = f'match_{q.id}_{i}'
-                if k in posted:
-                    vlist = posted.get(k)
-                    val = vlist[0] if isinstance(vlist, (list, tuple)) else vlist
+        for qid, mapping in match_by_q.items():
+            try:
+                q = Question.objects.get(pk=qid)
+            except Question.DoesNotExist:
+                continue
+            ua, _ = UserAnswer.objects.get_or_create(user_exam=ue, question=q)
+            with transaction.atomic():
+                ua = UserAnswer.objects.select_for_update().get(pk=ua.pk)
+                # existing map or empty
+                user_map = ua.selections or {}
+                changed = False
+                for li, val in mapping.items():
                     if val is None or val == '':
-                        if str(i) in user_map:
-                            user_map.pop(str(i), None)
+                        if str(li) in user_map:
+                            user_map.pop(str(li), None)
                             changed = True
                     else:
-                        user_map[str(i)] = val
+                        user_map[str(li)] = val
                         changed = True
-            if changed:
-                ua.selections = user_map
-                ua.raw_answer = None
-                ua.choice = None
-                ua.is_correct = None
-                ua.save()
-        else:
-            # other question types - ignore autosave
-            pass
+                if changed:
+                    ua.selections = user_map
+                    ua.raw_answer = None
+                    ua.choice = None
+                    ua.is_correct = None
+                    ua.save()
 
     return JsonResponse({'status': 'ok'})
+
 
 
 # -------------------------
 # Submit / grade
 # -------------------------
+import logging
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
+from .models import UserExam, UserAnswer, Choice  # adjust import path if needed
+
+logger = logging.getLogger(__name__)
+
+# -------------------------
+# Submit / grade
+# -------------------------
+import logging
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
+from .models import UserExam, UserAnswer, Choice  # adjust import path if needed
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def exam_submit(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
@@ -912,47 +995,97 @@ def exam_submit(request, user_exam_id):
     if request.method != 'POST':
         return redirect('quiz:exam_question', user_exam_id=ue.id, index=ue.current_index)
 
+    # DEBUG: show what browser posted (helps diagnose missing keys/malformed values)
+    logger.debug("SUBMIT POST items for UserExam %s: %r", ue.id, list(request.POST.items()))
+
+    # Build canonical question id list to grade:
+    # Prefer ue.question_order if present (the exam flow uses this)
+    qids = []
+    if ue.question_order:
+        try:
+            qids = [int(x) for x in ue.question_order]
+        except Exception:
+            qids = [int(x) for x in (ue.question_order or []) if str(x).isdigit()]
+    else:
+        # fallback: use the question ids from related UserAnswer rows
+        qids = list(ue.answers.values_list('question_id', flat=True))
+
+    # Ensure a single UserAnswer exists for each qid (so updates persist to the correct row)
+    # get_or_create will do nothing if it already exists
+    for qid in qids:
+        UserAnswer.objects.get_or_create(user_exam=ue, question_id=qid)
+
     total = 0
     score_acc = 0.0
 
-    for ua in ue.answers.select_related('question'):
+    # Iterate through the canonical qid list (ensures deterministic behavior)
+    for qid in qids:
+        try:
+            ua = ue.answers.select_related('question').get(question_id=qid)
+        except UserAnswer.DoesNotExist:
+            # Shouldn't happen because of get_or_create above, but handle just in case
+            ua = UserAnswer.objects.create(user_exam=ue, question_id=qid)
+
         q = ua.question
         total += 1
 
-        # SINGLE / DROPDOWN / TF
+        # SINGLE / DROPDOWN / TF (robust)
         if q.question_type in ('single', 'dropdown', 'tf'):
             choice_id = request.POST.get(f'question_{q.id}')
+            logger.debug("Q%s: posted choice for question_%s = %r (ua.pk=%s, saved_choice=%r, saved_is_correct=%r)",
+                         q.id, q.id, choice_id, ua.pk, getattr(ua.choice, 'pk', None), ua.is_correct)
+
             if choice_id:
                 try:
-                    ch = Choice.objects.get(pk=int(choice_id), question=q)
-                    ua.choice = ch
-                    ua.is_correct = ch.is_correct
-                    if ua.is_correct:
-                        score_acc += 1.0
-                except Choice.DoesNotExist:
-                    # invalid id: fall back to autosaved choice if present
-                    if ua.choice and ua.choice.question_id == q.id:
+                    submitted_pk = int(str(choice_id).strip())
+                except (ValueError, TypeError) as e:
+                    logger.warning("Q%s: submitted choice is not an integer: %r (%s)", q.id, choice_id, e)
+                    submitted_pk = None
+
+                if submitted_pk is not None:
+                    try:
+                        ch = Choice.objects.get(pk=submitted_pk, question=q)
+                        ua.choice = ch
+                        ua.is_correct = bool(ch.is_correct)
                         if ua.is_correct:
                             score_acc += 1.0
+                    except Choice.DoesNotExist:
+                        logger.warning("Q%s: Choice.DoesNotExist for pk=%s", q.id, submitted_pk)
+                        # fallback to autosaved if present and valid
+                        if ua.choice and ua.choice.question_id == q.id and ua.is_correct:
+                            score_acc += 1.0
+                        else:
+                            ua.choice = None
+                            ua.is_correct = False
+                else:
+                    # malformed posted value (non-numeric)
+                    if ua.choice and ua.choice.question_id == q.id and ua.is_correct:
+                        score_acc += 1.0
                     else:
                         ua.choice = None
                         ua.is_correct = False
             else:
-                # no posted value: preserve autosaved value if exists
-                if ua.choice:
-                    if ua.is_correct:
-                        score_acc += 1.0
+                # no posted value: keep autosaved selection if any
+                logger.debug("Q%s: no posted value; existing ua.choice=%r ua.is_correct=%r",
+                             q.id, getattr(ua.choice, 'pk', None), ua.is_correct)
+                if ua.choice and ua.is_correct:
+                    score_acc += 1.0
                 else:
                     ua.is_correct = False
+
             ua.selections = None
             ua.raw_answer = None
             ua.save()
+            logger.debug("Q%s: after save ua.choice=%r ua.is_correct=%r", q.id, getattr(ua.choice, 'pk', None), ua.is_correct)
 
         # MULTI
         elif q.question_type == 'multi':
             selections = request.POST.getlist(f'question_{q.id}')
             if selections:
-                sel_ids = [int(x) for x in selections if x]
+                try:
+                    sel_ids = [int(x) for x in selections if x]
+                except ValueError:
+                    sel_ids = [int(x) for x in selections if x and str(x).isdigit()]
                 ua.selections = sel_ids
             else:
                 sel_ids = ua.selections or []
@@ -1093,7 +1226,6 @@ def exam_submit(request, user_exam_id):
     ue.save()
 
     return redirect('quiz:exam_result', user_exam_id=ue.id)
-
 
 # -------------------------
 # Result view
