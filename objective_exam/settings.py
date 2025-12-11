@@ -115,17 +115,16 @@ DATABASES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nptor',          # database
-        'USER': 'root',           # user
-        'PASSWORD': 'pMzvD_18C~Y}6DYw',       # password
-        'HOST': 'localhost',      # host
-        'PORT': '3306',           # default MySQL port
+        'NAME': 'nptorcom_nptor',       # EXACT database name from cPanel
+        'USER': 'nptorcom_admin',       # EXACT user name from cPanel
+        'PASSWORD': 'pMzvD_18C~Y}6DYw',
+        'HOST': 'localhost',
+        'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
-
 
 
 
