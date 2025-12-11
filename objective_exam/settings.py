@@ -9,23 +9,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================================
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-please')
 
+DEBUG = False
 
-# Detect environment: "local" or "production"
-DJANGO_ENV = os.environ.get("DJANGO_ENV", "local").lower()
-
-# DEBUG mode
-# objective_exam/settings.py
-
-DJANGO_ENV = os.environ.get("DJANGO_ENV", "local").lower()
-
-# DEBUG: true for local, otherwise read explicit DEBUG env var
-if DJANGO_ENV == "local":
-    DEBUG = True
-else:
-    DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
-
-print("DJANGO_ENV=", DJANGO_ENV, " DEBUG=", DEBUG)
-
+ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
 
 
 
@@ -101,7 +87,6 @@ WSGI_APPLICATION = 'objective_exam.wsgi.application'
 # ============================================================
 # Database
 # ============================================================
-
 '''
 DATABASES = {
     "default": {
@@ -123,9 +108,9 @@ DATABASES = {
     }
 }
 
+
+
 '''
-
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
