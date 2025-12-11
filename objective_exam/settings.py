@@ -14,44 +14,49 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-plea
 DJANGO_ENV = os.environ.get("DJANGO_ENV", "local").lower()
 
 # DEBUG mode
-DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
-print(DEBUG)
+# objective_exam/settings.py
 
-# ALLOWED_HOSTS
-if DEBUG:
-    # Local development
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
+DJANGO_ENV = os.environ.get("DJANGO_ENV", "local").lower()
+
+# DEBUG: true for local, otherwise read explicit DEBUG env var
+if DJANGO_ENV == "local":
+    DEBUG = True
 else:
-    # Production (nptor.com)
-    ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
+    DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+
+print("DJANGO_ENV=", DJANGO_ENV, " DEBUG=", DEBUG)
+
 
 
 
 # ============================================================
 # Application definition
 # ============================================================
+# ============================================================
+# Application definition
+# ============================================================
 INSTALLED_APPS = [
-    # Django core
+    # Django core apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',                     # Required by allauth
+    'django.contrib.sites',
 
-    # Third-party
+    # Third-party apps
     'rest_framework',
     'widget_tweaks',
-    #'allauth',                                  # ← NEW: django-allauth
-    #'allauth.account',                          # ← NEW
-    #'allauth.socialaccount',                    # ← NEW (optional, but safe to include)
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
 
-    # Local
-    'quiz',
-    'phone_field', 
-   
+    # Local apps (use AppConfig to avoid label conflicts)
+    'quiz.apps.QuizConfig',
+    'phone_field',
 ]
+
 
 SITE_ID = 1  # Required by allauth
 
@@ -97,23 +102,19 @@ WSGI_APPLICATION = 'objective_exam.wsgi.application'
 # Database
 # ============================================================
 
-
-
+'''
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nptorcom_nptor',       # EXACT database name from cPanel
-        'USER': 'nptorcom_admin',       # EXACT user name from cPanel
-        'PASSWORD': 'pMzvD_18C~Y}6DYw',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "nptor",
+        "USER": "root",
+        "PASSWORD": "root",
+        "HOST": "localhost",
+        "PORT": "3306",
     }
 }
 
-'''
+
 
 DATABASES = {
     'default': {
@@ -122,7 +123,7 @@ DATABASES = {
     }
 }
 
-
+'''
 
 
 DATABASES = {
@@ -140,7 +141,8 @@ DATABASES = {
 }
 
 
-'''
+
+
 
 
 # ============================================================
