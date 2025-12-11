@@ -10,9 +10,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-please')
 
 
-DEBUG = False
+# Detect environment: "local" or "production"
+DJANGO_ENV = os.environ.get("DJANGO_ENV", "local").lower()
 
-ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
+# DEBUG mode
+DEBUG = DJANGO_ENV == "local"
+
+# ALLOWED_HOSTS
+if DEBUG:
+    # Local development
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
+else:
+    # Production (nptor.com)
+    ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
 
 
 # ============================================================
