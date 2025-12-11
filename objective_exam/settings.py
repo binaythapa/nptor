@@ -110,12 +110,8 @@ DATABASES = {
 
 
 
-<<<<<<< HEAD
-
-
-=======
 '''
->>>>>>> f31753f4db0d15754fc77ddea70f2a8cf10104cb
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
