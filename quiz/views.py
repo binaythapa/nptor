@@ -1,3 +1,4 @@
+
 # quiz/views.py
 import math
 import random
