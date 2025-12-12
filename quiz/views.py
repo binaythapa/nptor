@@ -407,17 +407,22 @@ def recent_attempts_api(request):
     })
 
 
+
+
+
+
+
 # -------------------------
 # Student dashboard
 # -------------------------
 @login_required
 def student_dashboard(request):
     """
-    Student-facing dashboard builder (updated: includes pass_threshold for templates).
+    Student-facing dashboard builder (includes pass_threshold).
     """
     exams = Exam.objects.filter(is_published=True).order_by('title')
 
-    # user's active (in-progress) attempt, if any
+    # user's active attempt (in-progress)
     active_attempt = (
         UserExam.objects
         .filter(user=request.user, submitted_at__isnull=True)
@@ -425,7 +430,7 @@ def student_dashboard(request):
         .first()
     )
 
-    # all completed attempts (submitted_at not null), most recent first
+    # all completed attempts for this user (most recent first)
     all_attempts = (
         UserExam.objects
         .filter(user=request.user, submitted_at__isnull=False)
@@ -433,12 +438,11 @@ def student_dashboard(request):
         .order_by('-submitted_at')
     )
 
-    # map exam_id -> list of attempts (most recent first)
+    # map exam -> attempts
     attempts_by_exam = {}
     for att in all_attempts:
         attempts_by_exam.setdefault(att.exam_id, []).append(att)
 
-    # overall stats
     attempted_count = (
         UserExam.objects
         .filter(user=request.user, submitted_at__isnull=False)
@@ -457,7 +461,7 @@ def student_dashboard(request):
         locked = False
         reason = None
 
-        # gating: prerequisites (M2M) and level-based
+        # gating: prerequisites and levels
         prereqs_qs = getattr(e, 'prerequisite_exams', None)
         prereqs = list(prereqs_qs.all()) if prereqs_qs is not None else []
         if prereqs:
@@ -470,7 +474,7 @@ def student_dashboard(request):
                 locked = True
                 reason = f'Pass at least one Level {e.level-1} exam to unlock this exam.'
 
-        # last attempt for this user+exam
+        # last attempt
         last_attempt = (
             UserExam.objects
             .filter(user=request.user, exam=e)
@@ -484,7 +488,6 @@ def student_dashboard(request):
         if last_attempt:
             if last_attempt.submitted_at:
                 recent_status = 'completed'
-                # ensure numeric
                 try:
                     recent_score = float(last_attempt.score or 0.0)
                 except Exception:
@@ -495,7 +498,7 @@ def student_dashboard(request):
                 recent_score = None
                 can_retake = False
 
-        # action label (Start / Resume / Retake / Locked)
+        # action label
         if locked:
             action_label = 'Locked'
         else:
@@ -506,20 +509,19 @@ def student_dashboard(request):
             else:
                 action_label = 'Retake' if can_retake else 'Start'
 
-        # Build category label dynamically using cached helper
+        # category_label (use helper)
         if hasattr(e, 'categories') and getattr(e, 'categories', None) is not None and e.categories.exists():
             labels = []
             for c in e.categories.all():
                 leaf = get_leaf_category_name(c)
-                if leaf:  # skip empty strings from parent categories
+                if leaf:
                     labels.append(leaf)
             category_label = ', '.join(labels) if labels else "General"
         else:
-            # legacy single FK 'category' support
             leaf = get_leaf_category_name(getattr(e, 'category', None))
             category_label = leaf if leaf else "General"
 
-        # user's attempts for this exam (completed only) and best score for this exam
+        # attempts + best for this exam
         exam_attempts = attempts_by_exam.get(e.id, [])
         best_for_exam = None
         if exam_attempts:
@@ -530,7 +532,7 @@ def student_dashboard(request):
                 except Exception:
                     best_for_exam = None
 
-        # compute pass_threshold (80% of passing_score) to avoid arithmetic in template
+        # pass threshold (80% of passing_score) for template
         pass_threshold = None
         try:
             if e.passing_score is not None:
