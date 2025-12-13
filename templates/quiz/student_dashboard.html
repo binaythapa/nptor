@@ -1,368 +1,260 @@
 {% extends 'quiz/base.html' %}
-{% block title %}Student Dashboard - Objective Exam{% endblock %}
+{% load static %}
+{% block title %}Student Dashboard (No-JS){% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
-/* Scoped dashboard styles */
-.page-top .title { margin-bottom: 0.1rem; }
-.small-muted { color:#7a7a7a; font-size:0.92rem; }
+/* ===========================
+   CSS-only, mobile-first template
+   =========================== */
 
-/* Table improvements (scoped) */
-.exam-table { width:100%; border-collapse: collapse; background: #ffffff; }
-.exam-table th, .exam-table td { padding: 8px 10px; vertical-align: middle; border-bottom: 1px solid #f3f3f3; font-size:0.92rem; font-weight:400; }
-.exam-table thead th { background: #fbfbfd; color: #333; font-weight:600; border-bottom: 2px solid #eee; }
+/* Variables */
+:root{
+  --muted:#6f6f6f;
+  --accent:#2f6ef8;
+  --card-bg:#ffffff;
+  --surface:#fbfbfd;
+  --success:#16a34a;
+  --danger:#ef4444;
+  --radius:12px;
+  --gap:12px;
+  --tiny:0.78rem;
+  --sm:0.88rem;
+  --md:0.96rem;
+}
 
-/* subtitle under the exam title - smaller and normal weight */
-.exam-subtitle { color:#8a8a8a; font-size:0.84rem; margin-top:6px; display:block; font-weight:400; }
+/* Base */
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; color:#111827; }
+.container { padding:16px; }
+.header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+.small-muted { color:var(--muted); font-size:var(--sm); }
 
-/* compact badges */
-.badge { display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border-radius:999px; font-size:0.82rem; }
-.badge.small { padding:4px 8px; font-size:0.78rem; }
-.badge.success { background:#e6ffef; color:#1a7f37; border:1px solid rgba(26,127,55,0.08); }
-.badge.fail { background:#fff0f0; color:#a12b2b; border:1px solid rgba(161,43,43,0.06); }
-.badge.warn { background:#fff8e6; color:#a86900; border:1px solid rgba(168,105,0,0.06); }
-.badge.info { background:#eef7ff; color:#0f5fb2; border:1px solid rgba(15,95,178,0.06); }
+/* Details/summary appearance */
+details.category {
+  border:1px solid #eef2f7;
+  border-radius:10px;
+  background:var(--card-bg);
+  margin-bottom:12px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+  overflow:hidden;
+}
+details.category > summary {
+  list-style:none;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  gap:10px;
+}
+details.category > summary::-webkit-details-marker { display:none; } /* hide default marker */
+.summary-left { display:flex; gap:12px; align-items:center; }
+.cat-title { font-weight:600; font-size:var(--md); }
+.cat-meta { color:var(--muted); font-size:var(--sm); }
 
-/* action buttons */
-.action-btn { padding:6px 10px; border-radius:999px; font-size:0.86rem; display:inline-flex; gap:8px; align-items:center; text-decoration:none; }
-.action-start { background:linear-gradient(135deg,#4a90e2,#007bff); color:#fff; border:none; }
-.action-resume { background:linear-gradient(135deg,#f2b824,#ff8a00); color:#fff; border:none; }
-.action-retake { background:linear-gradient(135deg,#ff8a00,#e74c3c); color:#fff; border:none; }
+/* exam tile inside details */
+.exam-tile {
+  padding:12px;
+  border-top:1px solid #f6f7fa;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+@media(min-width:720px){
+  .exam-tile { flex-direction:row; align-items:center; justify-content:space-between; }
+}
 
-/* small locked chip */
-.locked-chip { padding:6px 10px; border-radius:999px; background:#f4f4f6; color:#666; font-size:0.88rem; }
+/* title + meta */
+.exam-left { min-width:0; }
+.exam-title { font-weight:600; font-size:0.98rem; display:flex; gap:8px; align-items:center; }
+.exam-meta { font-size:0.86rem; color:var(--muted); margin-top:4px; display:flex; gap:10px; flex-wrap:wrap; }
 
-/* --- Score bar --- */
-.score-bar { width:110px; height:8px; background:#f1f1f1; border-radius:999px; overflow:hidden; display:inline-block; vertical-align:middle; margin-left:8px; }
-.score-fill { height:100%; width:0%; background:#7dd3a6; border-radius:999px; transition: width .4s ease; }
-.score-fill.good { background: linear-gradient(90deg,#34d399,#10b981); }
-.score-fill.okay { background: linear-gradient(90deg,#ffb86b,#ff8a00); }
-.score-fill.bad  { background: linear-gradient(90deg,#ff7b7b,#f43f5e); }
+/* score and actions */
+.right-block { display:flex; gap:12px; align-items:center; margin-top:6px; }
+@media(min-width:720px){ .right-block { margin-top:0; } }
 
-/* best score badge beside title (smaller) */
-.best-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:0.78rem; margin-left:8px; background:#fff7ed; color:#a45a00; border:1px solid rgba(164,90,0,0.06); }
+.score-num { font-size:0.92rem; font-weight:400; }
+.score-bar { height:8px; width:120px; background:#f1f3f5; border-radius:999px; overflow:hidden; display:inline-block; vertical-align:middle; }
+.score-fill { height:100%; width:0%; display:block; }
 
-/* attempts dropdown area */
-.attempts-panel { display:none; margin-top:8px; }
-.attempts-panel.show { display:block !important; }
+/* badges */
+.badge { display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border-radius:999px; font-size:0.78rem; }
+.badge.best { background:#fff7ed; color:#a45a00; border:1px solid rgba(164,90,0,0.06); }
+.badge.passed { background:#ecfdf5; color:var(--success); border:1px solid rgba(22,163,74,0.08); }
+.badge.failed { background:#fff5f5; color:var(--danger); border:1px solid rgba(239,68,68,0.06); }
+.locked { padding:6px 10px; border-radius:999px; background:#f4f5f7; color:#666; font-size:0.86rem; }
 
-/* category block toggle */
-.cat-block { display:none; margin-top:6px; padding-left:6px; }
-.cat-header { display:flex; justify-content:space-between; align-items:center; padding:10px 8px; background:#ffffff; border:1px solid #f0f0f0; border-radius:6px; margin-bottom:8px; }
-.cat-title { font-weight:600; font-size:0.98rem; }
+/* summary chevron using CSS */
+summary .chev {
+  width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:6px; color:var(--accent); background:rgba(47,110,248,0.06); font-size:0.9rem;
+}
+details[open] > summary .chev { transform:rotate(180deg); }
 
-/* make per-row small text */
-.row-small { font-size:0.90rem; font-weight:400; color:#333; }
+/* attempts panel inside details (use nested details) */
+details.attempts { border-top:1px dashed #f1f5f9; padding:10px 12px; background:#fff; }
+.attempts-table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+.attempts-table th, .attempts-table td { padding:8px 6px; border-bottom:1px solid #f3f4f6; text-align:left; }
 
-/* responsive */
-@media (max-width:900px) {
-  .exam-table thead { display:none; }
-  .exam-table tbody td { display:block; width:100%; }
-  .exam-table tbody tr { margin-bottom:12px; display:block; border:1px solid #eee; padding:8px; border-radius:6px; }
-  .score-bar { width:100%; margin-left:0; margin-top:6px; display:block; }
+/* buttons (links styled) */
+.link-btn { display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border-radius:999px; text-decoration:none; font-size:0.90rem; color:#fff; }
+.link-btn.start { background:linear-gradient(135deg,#3c8dff,#2066ff); }
+.link-btn.resume { background:linear-gradient(135deg,#f3b54a,#f07b1a); }
+.link-btn.retake { background:linear-gradient(135deg,#ff8a00,#e74c3c); }
+.ghost { display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid rgba(47,110,248,0.08); color:var(--accent); text-decoration:none; }
+
+/* small helpers */
+.meta-small { color:var(--muted); font-size:0.82rem; }
+
+/* responsive adjustments */
+@media(min-width:720px){
+  .container { padding:20px; }
+  .cat-title { font-size:1.05rem; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="page-top">
-  <div class="level">
-    <div class="level-left">
-      <div>
-        <h1 class="title is-3">Welcome, {{ user.first_name|default:user.username }} 👋</h1>
-        <p class="small-muted">Choose an exam to practice or continue your active attempt.</p>
-      </div>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1 style="margin:0;">Welcome, {{ user.first_name|default:user.username }}</h1>
+      <div class="small-muted">Tap to expand a category — works without JavaScript.</div>
     </div>
-
-    <div class="level-right">
-      <div class="buttons">
-        <a class="button is-white" href="{% url 'quiz:exam_list' %}">
-          <i class="fa fa-search"></i>&nbsp; Browse all Exams
-        </a>
-        <a class="button is-primary" href="{% url 'quiz:profile' %}">
-          <i class="fa fa-user"></i>&nbsp; Edit profile
-        </a>
-      </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <a class="ghost" href="{% url 'quiz:exam_list' %}">Browse</a>
+      <a class="ghost" href="{% url 'quiz:profile' %}">Profile</a>
     </div>
   </div>
-</section>
 
-<div class="grid-dashboard">
-  <div class="left-col">
-    <div class="card card-surface">
-      <div class="card-header">
-        <div>
-          <h3 class="title is-5">Available Exams</h3>
-          <p class="small-muted">Click "Show levels" to expand exams under a category.</p>
+  {% regroup exam_items by category_label as category_groups %}
+
+  {% for group in category_groups %}
+    <details class="category" {% if forloop.first %}open{% endif %}>
+      <summary>
+        <div class="summary-left">
+          <div class="cat-title">
+            <i class="fa fa-layer-group" style="color:var(--accent)"></i>
+            {% if group.grouper %}{{ group.grouper }}{% else %}General{% endif %}
+          </div>
+          <div class="cat-meta">({{ group.list|length }} exams)</div>
         </div>
-      </div>
+        <div class="chev" aria-hidden="true"><i class="fa fa-chevron-down"></i></div>
+      </summary>
 
-      <div class="card-body">
-        <div class="exams-grid">
-
-          {# Group exam_items by category_label #}
-          {% regroup exam_items by category_label as category_groups %}
-
-          {% for group in category_groups %}
-            <div class="cat-header">
-              <div class="cat-title">
-                {% if group.grouper %}{{ group.grouper }}{% else %}General{% endif %}
-                <span class="small-muted" style="margin-left:8px; font-weight:400; font-size:0.85rem;">
-                  ({{ group.list|length }} exams)
-                </span>
-              </div>
-              <div>
-                <button type="button" class="button is-small is-link is-light" onclick="toggleCategoryBlock('cat-block-{{ forloop.counter }}', this)">
-                  Show levels
-                </button>
-              </div>
+      {% for item in group.list %}
+        {% with e=item.exam %}
+        <div class="exam-tile">
+          <div class="exam-left">
+            <div class="exam-title">
+              <span>{{ e.title }}</span>
+              {% if item.best_score %}
+                <span class="badge best">{{ item.best_score|floatformat:2 }}%</span>
+              {% endif %}
             </div>
 
-            <div id="cat-block-{{ forloop.counter }}" class="cat-block">
-              <table class="exam-table">
-                <thead>
-                  <tr>
-                    <th style="width:36%;">Exam</th>
-                    <th style="width:8%;">Level</th>
-                    <th style="width:14%;">Score obtained</th>
-                    <th style="width:16%;">Last attempt</th>
-                    <th style="width:10%;">Status</th>
-                    <th style="width:10%;">Action</th>
-                    <th style="width:6%;">Attempts</th>
-                  </tr>
-                </thead>
+            <div class="exam-meta">
+              <div class="meta-small"><i class="fa fa-pen-to-square"></i>&nbsp; Q: {{ e.question_count }}</div>
+              <div class="meta-small"><i class="fa fa-stopwatch"></i>&nbsp; {{ e.duration_seconds }}s</div>
+              <div class="meta-small"><i class="fa fa-bullseye"></i>&nbsp; Pass: {% if e.passing_score %}{{ e.passing_score|floatformat:2 }}%{% else %}-{% endif %}</div>
+              {% if item.category_label %}
+                <div class="meta-small"><i class="fa fa-folder"></i>&nbsp; {{ item.category_label }}</div>
+              {% endif %}
+            </div>
+          </div>
 
-                <tbody>
-                  {% for item in group.list %}
-                    {% with e=item.exam %}
+          <div class="right-block">
+            <div>
+              {% if item.recent_status == 'completed' %}
+                <div class="score-num">{{ item.recent_score|floatformat:2 }}%</div>
+                <div class="score-bar" title="Score {{ item.recent_score|floatformat:2 }}%">
+                  {# inline width set directly so CSS-only displays correct fill #}
+                  {% if e.passing_score %}
+                    {% if item.recent_score >= e.passing_score %}
+                      <span class="score-fill" style="width:{{ item.recent_score }}%; background:linear-gradient(90deg,#34d399,#10b981)"></span>
+                    {% elif item.pass_threshold and item.recent_score >= item.pass_threshold %}
+                      <span class="score-fill" style="width:{{ item.recent_score }}%; background:linear-gradient(90deg,#ffb86b,#ff8a00)"></span>
+                    {% else %}
+                      <span class="score-fill" style="width:{{ item.recent_score }}%; background:linear-gradient(90deg,#ff7b7b,#f43f5e)"></span>
+                    {% endif %}
+                  {% else %}
+                    <span class="score-fill" style="width:{{ item.recent_score }}%; background:#7dd3a6"></span>
+                  {% endif %}
+                </div>
+                <div class="meta-small" style="text-align:right; margin-top:6px;">{{ item.last_attempt.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</div>
+              {% elif item.recent_status == 'in_progress' %}
+                <div class="meta-small">In progress</div>
+              {% else %}
+                <div class="meta-small">Not attempted</div>
+              {% endif %}
+            </div>
 
-                    <!-- Title row -->
-                    <tr style="background:#fafafa;">
-                      <td colspan="7" style="padding:12px 10px; font-size:0.96rem; font-weight:400;">
-                        <span class="row-small">{{ e.title }}</span>
-                        {% if item.category_label %}
-                          <span class="small-muted" style="margin-left:8px; font-size:0.85rem;">
-                            ({{ item.category_label }})
-                          </span>
-                        {% endif %}
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+              {% if item.locked %}
+                <div class="locked"><i class="fa fa-lock"></i>&nbsp;Locked</div>
+              {% else %}
+                {% if item.action_label == 'Start' %}
+                  <a class="link-btn start" href="{% url 'quiz:exam_start' e.id %}"><i class="fa fa-play"></i> Start</a>
+                {% elif item.action_label == 'Resume' %}
+                  <a class="link-btn resume" href="{% url 'quiz:exam_take' item.last_attempt.id %}"><i class="fa fa-play"></i> Resume</a>
+                {% elif item.action_label == 'Retake' %}
+                  <a class="link-btn retake" href="{% url 'quiz:exam_start' e.id %}"><i class="fa fa-redo"></i> Retake</a>
+                {% endif %}
+              {% endif %}
 
-                        {% if item.best_score %}
-                          <span class="best-badge" style="font-size:0.78rem;">
-                            <i class="fa fa-star"></i> Best: {{ item.best_score|floatformat:2 }}%
-                          </span>
-                        {% endif %}
-
-                        <span class="exam-subtitle row-small">
-                          <i class="fa fa-pen-to-square"></i>&nbsp; Question Number: {{ e.question_count }}
-                          &nbsp;&nbsp;|&nbsp;&nbsp;
-                          <i class="fa fa-stopwatch"></i>&nbsp; Exam Duration: {{ e.duration_seconds }}s
-                          &nbsp;&nbsp;|&nbsp;&nbsp;
-                          Minimum score to pass: {% if e.passing_score %}{{ e.passing_score|floatformat:2 }}%{% else %}-{% endif %}
-                        </span>
-                      </td>
-                    </tr>
-
-                    <!-- Main row -->
-                    <tr id="exam-row-{{ e.id }}">
-                      <td></td>
-
-                      <td class="row-small">{{ e.level|default:'-' }}</td>
-
-                      <!-- Score obtained -->
-                      <td class="row-small">
-                        {% if item.recent_status == 'completed' %}
-                          <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-weight:400; font-size:0.92rem;">{{ item.recent_score|floatformat:2 }}%</span>
-
-                            <div class="score-bar" aria-hidden="true" title="Score: {{ item.recent_score|floatformat:2 }}%">
-                              {% if e.passing_score %}
-                                {% if item.recent_score >= e.passing_score %}
-                                  <div class="score-fill good" style="width:{{ item.recent_score }}%;"></div>
-                                {% elif item.pass_threshold and item.recent_score >= item.pass_threshold %}
-                                  <div class="score-fill okay" style="width:{{ item.recent_score }}%;"></div>
-                                {% else %}
-                                  <div class="score-fill bad" style="width:{{ item.recent_score }}%;"></div>
-                                {% endif %}
+              {% if item.attempts %}
+                {# nested details for attempts (CSS-only toggle) #}
+                <details class="attempts" aria-label="Attempts for {{ e.title }}">
+                  <summary class="meta-small" style="cursor:pointer; list-style:none; padding:6px 0;">
+                    <i class="fa fa-history" style="color:var(--accent)"></i> {{ item.attempts|length }} attempts — click to view
+                  </summary>
+                  <div style="padding-top:8px;">
+                    <table class="attempts-table">
+                      <thead>
+                        <tr><th>Date</th><th>Score</th><th>Status</th></tr>
+                      </thead>
+                      <tbody>
+                        {% for r in item.attempts %}
+                          <tr>
+                            <td>{{ r.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+                            <td>{{ r.score|floatformat:2 }}%</td>
+                            <td>
+                              {% if r.passed %}
+                                <span class="badge passed">Passed</span>
                               {% else %}
-                                <div class="score-fill ok" style="width:{{ item.recent_score }}%;"></div>
+                                <span class="badge failed">Failed</span>
                               {% endif %}
-                            </div>
-
-                            <i class="fa fa-clock" title="Last attempt: {{ item.last_attempt.submitted_at|date:'SHORT_DATETIME_FORMAT' }}" style="color:#666;"></i>
-                          </div>
-                        {% else %}
-                          <span class="small-muted">—</span>
-                        {% endif %}
-                      </td>
-
-                      <!-- Last attempt column -->
-                      <td class="row-small">
-                        {% if item.recent_status == 'completed' %}
-                          {{ item.last_attempt.submitted_at|date:"SHORT_DATETIME_FORMAT" }}
-                        {% else %}
-                          <span class="small-muted">—</span>
-                        {% endif %}
-                      </td>
-
-                      <!-- Status icon only -->
-                      <td class="row-small">
-                        {% if item.recent_status == 'completed' %}
-                          {% if item.last_attempt.passed %}
-                            <i class="fa fa-graduation-cap" style="color:#1a7f37;" title="Passed"></i>
-                          {% else %}
-                            <i class="fa fa-circle-exclamation" style="color:#a12b2b;" title="Failed"></i>
-                          {% endif %}
-                        {% elif item.recent_status == 'in_progress' %}
-                          <i class="fa fa-hourglass-half" style="color:#a86900;" title="In progress"></i>
-                        {% else %}
-                          <i class="fa fa-circle" style="color:#c0c0c0;" title="Not attempted"></i>
-                        {% endif %}
-                      </td>
-
-                      <!-- Action -->
-                      <td class="row-small">
-                        {% if item.locked %}
-                          <span class="locked-chip"><i class="fa fa-lock"></i></span>
-                        {% else %}
-                          {% if item.action_label == 'Start' %}
-                            <a class="action-btn action-start" href="{% url 'quiz:exam_start' e.id %}">
-                              <i class="fa fa-play"></i> Start
-                            </a>
-                          {% elif item.action_label == 'Resume' %}
-                            <a class="action-btn action-resume" href="{% url 'quiz:exam_take' item.last_attempt.id %}">
-                              <i class="fa fa-play"></i> Resume
-                            </a>
-                          {% elif item.action_label == 'Retake' %}
-                            <a class="action-btn action-retake" href="{% url 'quiz:exam_start' e.id %}">
-                              <i class="fa fa-redo"></i> Retake
-                            </a>
-                          {% endif %}
-                        {% endif %}
-                      </td>
-
-                      <!-- Attempts button -->
-                      <td class="row-small">
-                        {% if item.attempts %}
-                          <button class="button is-small is-light" onclick="toggleAttemptsPanel({{ e.id }})" title="Show attempts">
-                            <i class="fa fa-history"></i> {{ item.attempts|length }}
-                          </button>
-                        {% else %}
-                          <span class="small-muted">—</span>
-                        {% endif %}
-                      </td>
-                    </tr>
-
-                    <!-- Attempts Panel -->
-                    <tr id="attempts-panel-{{ e.id }}" class="attempts-panel">
-                      <td colspan="7">
-                        <div class="box" style="padding:10px; margin:0;">
-                          <table class="table is-fullwidth is-narrow">
-                            <thead>
-                              <tr>
-                                <th>Date</th>
-                                <th>Score</th>
-                                <th>Result</th>
-                                <th>Details</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {% for r in item.attempts %}
-                                <tr>
-                                  <td class="row-small">{{ r.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</td>
-                                  <td class="row-small">{{ r.score|floatformat:2 }}%</td>
-                                  <td class="row-small">
-                                    {% if r.passed %}
-                                      <span class="badge small success"><i class="fa fa-check-circle"></i> Passed</span>
-                                    {% else %}
-                                      <span class="badge small fail"><i class="fa fa-times-circle"></i> Failed</span>
-                                    {% endif %}
-                                  </td>
-                                  <td class="row-small">
-                                    <a class="button is-small is-light" href="{% url 'quiz:exam_result' user_exam_id=r.id %}">View</a>
-                                  </td>
-                                </tr>
-                              {% endfor %}
-                            </tbody>
-                          </table>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {% endwith %}
-                  {% endfor %}
-                </tbody>
-              </table>
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                    <div style="margin-top:8px; text-align:right;">
+                      <a class="ghost" href="{% url 'quiz:exam_result' user_exam_id=item.last_attempt.id %}">View latest</a>
+                    </div>
+                  </div>
+                </details>
+              {% endif %}
             </div>
-          {% endfor %}
-
+          </div>
         </div>
-      </div>
+        {% endwith %}
+      {% endfor %}
+    </details>
+  {% endfor %}
+
+  <!-- stats block -->
+  <div style="margin-top:12px; border:1px solid #f0f2f7; border-radius:10px; padding:12px; background:var(--card-bg);">
+    <h4 style="margin:0 0 8px 0; font-size:0.95rem">Quick Stats</h4>
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <div><strong>{{ attempted_count }}</strong> Completed</div>
+      <div><strong>{{ best_score|floatformat:2 }}%</strong> Best</div>
+      {% if active_attempt %}
+        <div><a class="ghost" href="{% url 'quiz:exam_take' user_exam_id=active_attempt.id %}">Resume active</a></div>
+      {% endif %}
+      <div><a class="ghost" href="{% url 'quiz:exam_list' %}">Browse</a></div>
     </div>
   </div>
-
-  <!-- right column: stats & quick links -->
-  <aside class="right-col">
-    <div class="card card-surface stats-overview">
-      <h4 class="title is-5">Quick Stats</h4>
-
-      <div class="stats-grid" style="display:grid; grid-template-columns: repeat(2,1fr); gap:12px;">
-        <div class="stat-item">
-          <div class="stat-value" style="font-weight:700;">{{ attempted_count }}</div>
-          <div class="stat-label small-muted">Completed Attempts</div>
-        </div>
-
-        <div class="stat-item">
-          <div class="stat-value" style="font-weight:700;">{{ best_score|floatformat:2 }}%</div>
-          <div class="stat-label small-muted">Your Best Score</div>
-        </div>
-
-        <div class="stat-item">
-          <div class="stat-value" style="font-weight:700;">{{ exams|length }}</div>
-          <div class="stat-label small-muted">Available Exams</div>
-        </div>
-
-        <div class="stat-item">
-          <div class="stat-value" style="font-weight:700;">{% if active_attempt %}1{% else %}0{% endif %}</div>
-          <div class="stat-label small-muted">Active Attempt</div>
-        </div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <a class="button is-primary is-fullwidth" href="{% url 'quiz:exam_list' %}">
-          Browse Exams
-        </a>
-        <a class="button is-light is-fullwidth" href="{% url 'quiz:profile' %}" style="margin-top:8px;">
-          Edit profile
-        </a>
-      </div>
-    </div>
-
-    <div class="card card-surface" style="margin-top:14px;">
-      <h4 class="title is-6">Hints</h4>
-      <ul class="small-muted">
-        <li>Locked exams require passing earlier levels or prerequisites.</li>
-        <li>Your active exam will appear at the top when you resume.</li>
-      </ul>
-    </div>
-  </aside>
 </div>
-
-<script>
-function toggleAttemptsPanel(examId) {
-  const panel = document.getElementById('attempts-panel-' + examId);
-  if (!panel) return;
-  panel.classList.toggle('show');
-  if (panel.classList.contains('show')) panel.scrollIntoView({behavior:'smooth', block:'center'});
-}
-
-function toggleCategoryBlock(blockId, btn) {
-  const el = document.getElementById(blockId);
-  if (!el) return;
-  const showing = el.style.display === 'block';
-  el.style.display = showing ? 'none' : 'block';
-  if (!showing) el.scrollIntoView({behavior:'smooth', block:'start'});
-  if (btn) btn.textContent = showing ? 'Show levels' : 'Hide';
-}
-</script>
 {% endblock %}
