@@ -1,10 +1,10 @@
 # quiz/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
+
 from . import views
 from .forms import EmailOrUsernameLoginForm
-from quiz.views import *
-from django.conf.urls.static import static
+from .views import CustomerRegisterView
 
 app_name = "quiz"
 
@@ -13,7 +13,7 @@ urlpatterns = [
     # ============================================================
     # AUTHENTICATION
     # ============================================================
-    
+
     path(
         "login/",
         auth_views.LoginView.as_view(
@@ -26,7 +26,13 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 
     # Password Reset Flow
-    path("password-reset/",auth_views.PasswordResetView.as_view(template_name="registration/password_reset.html"),name="password_reset"),
+    path(
+        "password-reset/",
+        auth_views.PasswordResetView.as_view(
+            template_name="registration/password_reset.html"
+        ),
+        name="password_reset"
+    ),
 
     path(
         "password-reset/done/",
@@ -59,10 +65,8 @@ urlpatterns = [
     # DASHBOARD
     # ============================================================
     path("", views.exam_list, name="exam_list"),
-
     path("dashboard/", views.dashboard_dispatch, name="dashboard"),
 
-    # Admin + Student dashboards
     path("dashboard/admin/", views.admin_dashboard, name="admin_dashboard"),
     path("dashboard/student/", views.student_dashboard, name="student_dashboard"),
 
@@ -77,7 +81,11 @@ urlpatterns = [
     # ============================================================
     path("exam/<int:exam_id>/start/", views.exam_start, name="exam_start"),
     path("exam/<int:user_exam_id>/take/", views.exam_take, name="exam_take"),
-    path("exam/<int:user_exam_id>/question/<int:index>/", views.exam_question, name="exam_question"),
+    path(
+        "exam/<int:user_exam_id>/question/<int:index>/",
+        views.exam_question,
+        name="exam_question"
+    ),
     path("exam/<int:user_exam_id>/autosave/", views.autosave, name="autosave"),
     path("exam/<int:user_exam_id>/submit/", views.exam_submit, name="exam_submit"),
     path("exam/<int:user_exam_id>/result/", views.exam_result, name="exam_result"),
@@ -90,10 +98,21 @@ urlpatterns = [
     path("notifications/<int:pk>/", views.notification_read, name="notification_detail"),
 
     # ============================================================
-    # AJAX API
+    # AJAX / API
     # ============================================================
     path("api/recent_attempts/", views.recent_attempts_api, name="recent_attempts_api"),
-    path('customerregister/',CustomerRegisterView.as_view(), name='customer-register'),
+
+    # ============================================================
+    # CUSTOMER
+    # ============================================================
+    path(
+        "customerregister/",
+        CustomerRegisterView.as_view(),
+        name="customer-register"
+    ),
+
+
+    # PUBLIC
+    path("practice/", views.practice, name="practice"),
+
 ]
-urlpatterns += static(settings.STATIC_URL, document_root= settings.STATIC_ROOT)
-urlpatterns +=  static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -39,40 +39,64 @@
           </form>
         </div>
 
-        <div class="header-right">
-          <a href="{% url 'quiz:notifications_list' %}" class="icon-btn" title="Notifications">
-            <i class="fa fa-bell"></i>
-            {% if unread_count|default:0 > 0 %}
-              <span class="notif-badge">{{ unread_count }}</span>
-            {% endif %}
+
+
+<div class="header-right">
+
+
+
+  {% if user.is_authenticated %}
+    <!-- Notifications -->
+    <a href="{% url 'quiz:notifications_list' %}" class="icon-btn" title="Notifications">
+      <i class="fa fa-bell"></i>
+      {% if unread_count|default:0 > 0 %}
+        <span class="notif-badge">{{ unread_count }}</span>
+      {% endif %}
+    </a>
+
+    <!-- User Dropdown -->
+    <div class="user-dropdown">
+      <div class="user-toggle">
+        <img src="{% static 'images/logo.jpg' %}" class="avatar">
+        <span class="username is-hidden-mobile">{{ user.username }}</span>
+        <i class="fa fa-caret-down"></i>
+      </div>
+
+      <div class="user-menu">
+        <a href="{% url 'quiz:profile' %}">
+          <i class="fa fa-user"></i> Profile
+        </a>
+        <a href="{% url 'quiz:exam_list' %}">
+          <i class="fa fa-book"></i> Exams
+        </a>
+
+        {% if user.is_staff %}
+          <a href="/admin/">
+            <i class="fa fa-shield"></i> Admin
           </a>
+        {% endif %}
 
-          {% if user.is_authenticated %}
-          <div class="user-dropdown">
-            <div class="user-toggle">
-              <img src="{% static 'images/logo.jpg' %}" class="avatar">
-              <span class="username is-hidden-mobile">{{ user.username }}</span>
-              <i class="fa fa-caret-down"></i>
-            </div>
-            <div class="user-menu">
-              <a href="{% url 'quiz:profile' %}"><i class="fa fa-user"></i> Profile</a>
-              <a href="{% url 'quiz:exam_list' %}"><i class="fa fa-book"></i> Exams</a>
-              {% if user.is_staff %}
-                <a href="/admin/"><i class="fa fa-shield"></i> Admin</a>
-              {% endif %}
-              <hr />
-              <!-- FIXED LOGOUT (POST + CSRF) -->
-              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fa fa-right-from-bracket"></i> Logout
-              </a>
-            </div>
-          </div>
-          {% endif %}
+        <hr>
 
-          <button id="theme-toggle" class="button is-white" title="Toggle theme">
-            <i class="fa fa-moon"></i>
-          </button>
-        </div>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+          <i class="fa fa-right-from-bracket"></i> Logout
+        </a>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- GUEST ONLY -->
+    <a href="{% url 'quiz:login' %}" class="button is-light">Login</a>
+    <a href="{% url 'quiz:customer-register' %}" class="button is-primary">Register</a>
+  {% endif %}
+
+  <!-- Theme toggle visible for all -->
+  <button id="theme-toggle" class="button is-white" title="Toggle theme">
+    <i class="fa fa-moon"></i>
+  </button>
+
+</div>
+
       </div>
     </header>
 
@@ -80,32 +104,47 @@
     <div class="container main-area" role="main">
 
       <!-- SIDEBAR -->
-      <aside id="site-sidebar" class="site-sidebar" aria-label="Primary navigation">
-        <nav class="menu">
-          <p class="menu-label">General</p>
-          <ul class="menu-list">
-            <li><a href="{% url 'quiz:dashboard' %}"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="{% url 'quiz:exam_list' %}"><i class="fa fa-book"></i> Exams</a></li>
-            <li><a href="{% url 'quiz:notifications_list' %}"><i class="fa fa-bell"></i> Notifications 
-              {% if unread_count|default:0 > 0 %}<span class="badge-inline">{{ unread_count }}</span>{% endif %}
-            </a></li>
-          </ul>
+     {% if user.is_authenticated %}
+<aside id="site-sidebar" class="site-sidebar" aria-label="Primary navigation">
 
-          <p class="menu-label">Account</p>
-          <ul class="menu-list">
-            <li><a href="{% url 'quiz:profile' %}"><i class="fa fa-user"></i> Profile</a></li>
-            {% if user.is_staff %}
-              <li><a href="/admin/"><i class="fa fa-cog"></i> Admin</a></li>
-            {% endif %}
-            <!-- FIXED LOGOUT IN SIDEBAR -->
-            <li>
-              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fa fa-right-from-bracket"></i> Logout
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </aside>
+  <nav class="menu">
+    <p class="menu-label">General</p>
+    <ul class="menu-list">
+      <li><a href="{% url 'quiz:dashboard' %}"><i class="fa fa-home"></i> Dashboard</a></li>
+      <li><a href="{% url 'quiz:exam_list' %}"><i class="fa fa-book"></i> Exams</a></li>
+      <li>
+        <a href="{% url 'quiz:notifications_list' %}">
+          <i class="fa fa-bell"></i> Notifications
+          {% if unread_count|default:0 > 0 %}
+            <span class="badge-inline">{{ unread_count }}</span>
+          {% endif %}
+        </a>
+      </li>
+    </ul>
+
+    <p class="menu-label">Account</p>
+    <ul class="menu-list">
+      <li><a href="{% url 'quiz:profile' %}"><i class="fa fa-user"></i> Profile</a></li>
+
+      {% if user.is_staff %}
+        <li><a href="/admin/"><i class="fa fa-cog"></i> Admin</a></li>
+      {% endif %}
+
+      <li>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+          <i class="fa fa-right-from-bracket"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+</aside>
+{% endif %}
+
+
+
+
+      
 
       <!-- MAIN CONTENT -->
       <main class="site-content" style="min-width:0;">

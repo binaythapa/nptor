@@ -1,0 +1,43 @@
+{% extends "quiz/base.html" %}
+
+{% block title %}Practice{% endblock %}
+
+{% block content %}
+<div class="practice-page">
+
+  <div class="practice-card">
+    <h2 class="title is-4">Practice Question</h2>
+
+    {% if result == "correct" %}
+      <div class="notification is-success">
+        ✅ Correct! Next question loaded below.
+      </div>
+    {% elif result == "wrong" %}
+      <div class="notification is-danger">
+        ❌ Incorrect.<br>
+        <strong>Correct answer:</strong> {{ correct_choice.text }}
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="box">
+        <p class="mb-4"><strong>{{ question.text }}</strong></p>
+
+        {% for c in choices %}
+          <label class="radio mb-2" style="display:block">
+            <input type="radio" name="choice" value="{{ c.id }}" required>
+            {{ c.text }}
+          </label>
+        {% endfor %}
+      </div>
+
+      <button class="button is-primary">
+        Submit Answer
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

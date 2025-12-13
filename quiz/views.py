@@ -57,6 +57,78 @@ from django.contrib.auth.views import (
 from django.urls import reverse_lazy
 from .forms import EmailOrUsernameLoginForm  # ensure this exists in quiz/forms.py
 
+
+
+def practice(request):
+    """
+    Public practice mode (NO login)
+    Supports SINGLE choice questions only
+    """
+
+    # Get current question from session
+    qid = request.session.get("practice_qid")
+
+    if qid:
+        question = Question.objects.filter(
+            id=qid,
+            question_type=Question.SINGLE
+        ).first()
+    else:
+        question = None
+
+    # If no question in session or invalid → pick random
+    if not question:
+        question = (
+            Question.objects
+            .filter(question_type=Question.SINGLE)
+            .order_by("?")
+            .first()
+        )
+        request.session["practice_qid"] = question.id
+
+    choices = question.choices.order_by("order", "id")
+
+    result = None
+    correct_choice = None
+
+    if request.method == "POST":
+        selected_id = request.POST.get("choice")
+
+        if selected_id:
+            selected = Choice.objects.get(id=selected_id)
+            correct_choice = choices.filter(is_correct=True).first()
+
+            if selected.is_correct:
+                result = "correct"
+
+                # Pick NEXT question
+                next_question = (
+                    Question.objects
+                    .filter(question_type=Question.SINGLE)
+                    .exclude(id=question.id)
+                    .order_by("?")
+                    .first()
+                )
+
+                if next_question:
+                    request.session["practice_qid"] = next_question.id
+                    question = next_question
+                    choices = question.choices.order_by("order", "id")
+                    correct_choice = None
+                else:
+                    request.session.pop("practice_qid", None)
+
+            else:
+                result = "wrong"
+
+    return render(request, "quiz/practice.html", {
+        "question": question,
+        "choices": choices,
+        "result": result,
+        "correct_choice": correct_choice,
+    })
+
+
 # -----------------------
 # Auth views (login & password reset)
 # -----------------------

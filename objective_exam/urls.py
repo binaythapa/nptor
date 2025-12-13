@@ -10,8 +10,10 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('quiz/', include('quiz.urls')),
     path('api/', include('quiz.api_urls')),
-    path('', RedirectView.as_view(pattern_name='quiz:exam_list', permanent=False)),
-    
+    #path('', RedirectView.as_view(pattern_name='quiz:exam_list', permanent=False)),
+    path('', RedirectView.as_view(pattern_name='quiz:practice', permanent=False)),
+
+
    
 ]
 urlpatterns += static(settings.STATIC_URL, document_root= settings.STATIC_ROOT)

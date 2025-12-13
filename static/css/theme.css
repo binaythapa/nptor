@@ -289,4 +289,21 @@ a:hover { text-decoration: underline; }
 /* end of theme.css */
 
 
+/* =====================================
+   Practice page alignment (NO sidebar)
+   ===================================== */
+
+.practice-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;   /* horizontal centering */
+  padding-top: 24px;
+}
+
+.practice-card {
+  width: 100%;
+  max-width: 420px;          /* nice card width */
+}
+
+
 
