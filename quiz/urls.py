@@ -114,5 +114,22 @@ urlpatterns = [
 
     # PUBLIC
     path("practice/", views.practice, name="practice"),
+     path(
+        "practice/express/",
+        views.practice_express,
+        name="practice_express"
+    ),
+
+    path(
+        "practice/express/next/",
+        views.practice_express_next,
+        name="practice_express_next"
+    ),
+
+    path(
+        "practice/express/save/",
+        views.practice_express_save,
+        name="practice_express_save"
+    ),
 
 ]

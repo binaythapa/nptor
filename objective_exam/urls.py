@@ -11,7 +11,7 @@ urlpatterns = [
     path('quiz/', include('quiz.urls')),
     path('api/', include('quiz.api_urls')),
     #path('', RedirectView.as_view(pattern_name='quiz:exam_list', permanent=False)),
-    path('', RedirectView.as_view(pattern_name='quiz:practice', permanent=False)),
+    path('', RedirectView.as_view(pattern_name='quiz:practice_express', permanent=False)),
 
 
    

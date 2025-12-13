@@ -74,7 +74,22 @@
          =============================== -->
     <div class="practice-card box">
 
-      <h2 class="title is-4">Practice Question</h2>
+      <div class="is-flex is-align-items-center is-justify-content-space-between mb-3">
+  <h1 class="title is-4 mb-0">
+    Practice Question
+  </h1>
+
+  <div class="practice-modes">
+    <a href="{% url 'quiz:practice_express' %}" class="practice-link">
+      Express
+    </a>
+    <span class="mx-1 has-text-grey">|</span>
+    <a href="{% url 'quiz:exam_list' %}" class="practice-link">
+      Pro
+    </a>
+  </div>
+</div>
+
 
       <!-- Counter -->
       <div class="mb-3">

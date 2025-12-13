@@ -192,6 +192,114 @@ def practice(request):
     })
 
 
+######################################################################################
+# quiz/views.py (Practice Express)
+
+import random
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET, require_POST
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
+from .models import Question, Choice, Category, PracticeStat
+
+
+# =====================================================
+# PRACTICE EXPRESS – PAGE
+# =====================================================
+def practice_express(request):
+    """
+    Practice Express main page (AJAX driven)
+    Public access (no login required)
+    """
+    return render(request, "quiz/practice_express.html", {
+        "categories": Category.objects.all(),
+        "difficulty_choices": Question.DIFFICULTY_CHOICES,
+    })
+
+
+# =====================================================
+# PRACTICE EXPRESS – LOAD NEXT QUESTION (AJAX)
+# =====================================================
+@require_GET
+def practice_express_next(request):
+    qs = Question.objects.filter(
+        question_type=Question.SINGLE
+    ).prefetch_related("choices")
+
+    category = request.GET.get("category")
+    difficulty = request.GET.get("difficulty")
+
+    if category:
+        qs = qs.filter(category_id=category)
+    if difficulty:
+        qs = qs.filter(difficulty=difficulty)
+
+    if not qs.exists():
+        return JsonResponse({"empty": True})
+
+    question = random.choice(list(qs))
+    correct = question.choices.filter(is_correct=True).first()
+
+    return JsonResponse({
+        "id": question.id,
+        "text": question.text,
+        "explanation": question.explanation or "",
+        "correct_choice": correct.id if correct else None,
+        "choices": [
+            {"id": c.id, "text": c.text}
+            for c in question.choices.all()
+        ]
+    })
+
+
+# =====================================================
+# PRACTICE EXPRESS – SAVE RESULT (AJAX, LOGIN ONLY)
+# =====================================================
+@require_POST
+@login_required
+def practice_express_save(request):
+    question_id = request.POST.get("question_id")
+    is_correct = request.POST.get("is_correct") == "true"
+
+    question = Question.objects.select_related("category").get(id=question_id)
+    today = timezone.now().date()
+
+    stat, _ = PracticeStat.objects.get_or_create(
+        user=request.user,
+        category=question.category
+    )
+
+    # streak logic
+    if stat.last_practice_date == today:
+        pass
+    elif stat.last_practice_date == today - timezone.timedelta(days=1):
+        stat.streak += 1
+    else:
+        stat.streak = 1
+
+    stat.last_practice_date = today
+    stat.total_attempted += 1
+    if is_correct:
+        stat.total_correct += 1
+
+    stat.save()
+
+    return JsonResponse({
+        "total": stat.total_attempted,
+        "correct": stat.total_correct,
+        "accuracy": stat.accuracy(),
+        "streak": stat.streak
+    })
+
+
+
+
+
+
+
+
 
 
 

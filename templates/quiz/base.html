@@ -30,10 +30,10 @@
           <i class="fa fa-bars"></i>
         </button>
 
-        <!-- LOGO / BRAND (NO HOME ICON) -->
+        <!-- LOGO -->
         <div class="brand-group">
           <a class="brand"
-             href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'quiz:practice' %}{% endif %}">
+             href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'quiz:practice_express' %}{% endif %}">
             <img src="{% static 'images/logo.jpg' %}" class="brand-logo" alt="logo">
             <span class="brand-text">Nepal Mentor</span>
           </a>
@@ -54,7 +54,7 @@
 
         {% if user.is_authenticated %}
 
-          <!-- Welcome (hidden on mobile) -->
+          <!-- Welcome -->
           <a href="{% url 'quiz:profile' %}" class="welcome-user is-hidden-mobile">
             <span class="user-avatar">
               {% if user.first_name %}
@@ -118,12 +118,20 @@
         <ul class="menu-list">
 
           <li>
-            <a href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'quiz:practice' %}{% endif %}">
+            <a href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'quiz:practice_express' %}{% endif %}">
               <i class="fa fa-home"></i>
               {% if user.is_authenticated %}Dashboard{% else %}Home{% endif %}
             </a>
           </li>
 
+          <!-- PRACTICE EXPRESS (NEW) -->
+          <li>
+            <a href="{% url 'quiz:practice_express' %}">
+              <i class="fa fa-bolt"></i> Practice Express
+            </a>
+          </li>
+
+          <!-- PRACTICE (CLASSIC) -->
           <li>
             <a href="{% url 'quiz:practice' %}">
               <i class="fa fa-pen-to-square"></i> Practice
