@@ -2,42 +2,182 @@
 
 {% block title %}Practice{% endblock %}
 
+{% block head_extra %}
+<style>
+/* =====================================
+   PRACTICE PAGE – LOCAL CSS ONLY
+   (Base.html untouched)
+   ===================================== */
+
+.practice-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.practice-card {
+  width: 100%;
+  max-width: 440px;
+}
+
+/* Answer options */
+.practice-option {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+}
+
+.practice-option:hover {
+  background: #f9fafb;
+}
+
+.practice-option.correct {
+  background: #ecfdf5;
+  border-color: #34d399;
+}
+
+.practice-option.wrong {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+/* Counter badge */
+.practice-counter {
+  font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="practice-page">
+<div class="practice-wrapper">
 
-  <div class="practice-card">
-    <h2 class="title is-4">Practice Question</h2>
+  {% if no_questions %}
+    <!-- ===============================
+         NO QUESTIONS
+         =============================== -->
+    <div class="practice-card box has-text-centered">
+      <h2 class="title is-5">No Questions Available</h2>
+      <p>No practice questions found for selected filters.</p>
 
-    {% if result == "correct" %}
-      <div class="notification is-success">
-        ✅ Correct! Next question loaded below.
+      <a href="{% url 'quiz:practice' %}" class="button is-link mt-4">
+        Show All Questions
+      </a>
+    </div>
+
+  {% else %}
+    <!-- ===============================
+         PRACTICE CARD
+         =============================== -->
+    <div class="practice-card box">
+
+      <h2 class="title is-4">Practice Question</h2>
+
+      <!-- Counter -->
+      <div class="mb-3">
+        <span class="tag is-info is-light practice-counter">
+          Practiced: <strong>{{ practice_count }}</strong>
+        </span>
       </div>
-    {% elif result == "wrong" %}
-      <div class="notification is-danger">
-        ❌ Incorrect.<br>
-        <strong>Correct answer:</strong> {{ correct_choice.text }}
-      </div>
-    {% endif %}
 
-    <form method="post">
-      {% csrf_token %}
+      <!-- ===============================
+           FILTERS
+           =============================== -->
+      <form method="get" class="mb-4">
+        <div class="columns is-mobile is-multiline">
 
-      <div class="box">
-        <p class="mb-4"><strong>{{ question.text }}</strong></p>
+          <!-- Difficulty -->
+          <div class="column is-half">
+            <div class="select is-small is-fullwidth">
+              <select name="difficulty" onchange="this.form.submit()">
+                <option value="">All difficulties</option>
+                {% for value, label in difficulty_choices %}
+                  <option value="{{ value }}"
+                    {% if value == difficulty %}selected{% endif %}>
+                    {{ label }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Category -->
+          <div class="column is-half">
+            <div class="select is-small is-fullwidth">
+              <select name="category" onchange="this.form.submit()">
+                <option value="">All categories</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.id }}"
+                    {% if cat.id|stringformat:"s" == category_id %}selected{% endif %}>
+                    {{ cat.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+        </div>
+      </form>
+
+      <!-- ===============================
+           RESULT MESSAGE
+           =============================== -->
+      {% if result == "correct" %}
+        <div class="notification is-success">
+          ✅ Correct! Well done.
+        </div>
+      {% elif result == "wrong" %}
+        <div class="notification is-danger">
+          ❌ Incorrect.<br>
+          <strong>Correct answer:</strong> {{ correct_choice.text }}
+        </div>
+      {% endif %}
+
+      <!-- ===============================
+           QUESTION FORM
+           =============================== -->
+      <form method="post">
+        {% csrf_token %}
+
+        <p class="mb-4">
+          <strong>{{ question.text }}</strong>
+        </p>
 
         {% for c in choices %}
-          <label class="radio mb-2" style="display:block">
-            <input type="radio" name="choice" value="{{ c.id }}" required>
+          <label class="practice-option
+            {% if result and c.id == correct_choice.id %}correct{% endif %}
+            {% if result == 'wrong' and c.id|stringformat:'s' == selected_choice_id %}wrong{% endif %}
+          ">
+            <input
+              type="radio"
+              name="choice"
+              value="{{ c.id }}"
+              {% if result == 'correct' %}disabled{% endif %}
+              {% if c.id|stringformat:'s' == selected_choice_id %}checked{% endif %}
+              required
+            >
             {{ c.text }}
           </label>
         {% endfor %}
-      </div>
 
-      <button class="button is-primary">
-        Submit Answer
-      </button>
-    </form>
-  </div>
+        <div class="mt-4">
+          {% if show_next %}
+            <button class="button is-link" name="next" value="1" autofocus>
+              Next Question →
+            </button>
+          {% else %}
+            <button class="button is-primary">
+              Submit Answer
+            </button>
+          {% endif %}
+        </div>
+      </form>
+
+    </div>
+  {% endif %}
 
 </div>
 {% endblock %}

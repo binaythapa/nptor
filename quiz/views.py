@@ -23,6 +23,8 @@ from django.contrib.auth import login
 from django.contrib import messages
 from .forms import RegistrationForm, EmailOrUsernameLoginForm
 from django.views.generic import TemplateView, CreateView, DetailView, UpdateView
+from django.urls import reverse_lazy
+
 
 
 # quiz/views.py
@@ -54,79 +56,149 @@ from django.contrib.auth.views import (
     PasswordResetView, PasswordResetDoneView,
     PasswordResetConfirmView, PasswordResetCompleteView
 )
-from django.urls import reverse_lazy
-from .forms import EmailOrUsernameLoginForm  # ensure this exists in quiz/forms.py
+import random
+from django.shortcuts import render
+from .models import Question, Choice
 
+from django.shortcuts import render
+from .models import Question, Choice, Category
+
+from django.shortcuts import render
+from .models import Question, Choice, Category
 
 
 def practice(request):
     """
     Public practice mode (NO login)
-    Supports SINGLE choice questions only
+    Supports SINGLE choice questions
+    Filters: difficulty + category
+    Tracks practiced count in session
     """
 
-    # Get current question from session
+    # -----------------------------
+    # Read filters
+    # -----------------------------
+    difficulty = request.GET.get("difficulty")
+    category_id = request.GET.get("category")
+
+    # Reset counter if filters changed
+    last_filters = request.session.get("practice_filters")
+    current_filters = {"difficulty": difficulty, "category": category_id}
+
+    if last_filters != current_filters:
+        request.session["practice_count"] = 0
+        request.session["practice_filters"] = current_filters
+
+    # Initialize counter
+    practice_count = request.session.get("practice_count", 0)
+
+    # -----------------------------
+    # Base queryset
+    # -----------------------------
+    qs = Question.objects.filter(question_type=Question.SINGLE)
+
+    valid_difficulties = [d[0] for d in Question.DIFFICULTY_CHOICES]
+    if difficulty in valid_difficulties:
+        qs = qs.filter(difficulty=difficulty)
+
+    if category_id:
+        qs = qs.filter(category_id=category_id)
+
+    # -----------------------------
+    # No questions
+    # -----------------------------
+    if not qs.exists():
+        return render(request, "quiz/practice.html", {
+            "no_questions": True,
+            "difficulty": difficulty,
+            "category_id": category_id,
+            "categories": Category.objects.all(),
+            "difficulty_choices": Question.DIFFICULTY_CHOICES,
+            "practice_count": practice_count,
+        })
+
+    # -----------------------------
+    # Load question
+    # -----------------------------
     qid = request.session.get("practice_qid")
+    question = qs.filter(id=qid).first() if qid else None
 
-    if qid:
-        question = Question.objects.filter(
-            id=qid,
-            question_type=Question.SINGLE
-        ).first()
-    else:
-        question = None
-
-    # If no question in session or invalid → pick random
     if not question:
-        question = (
-            Question.objects
-            .filter(question_type=Question.SINGLE)
-            .order_by("?")
-            .first()
-        )
+        question = qs.order_by("?").first()
         request.session["practice_qid"] = question.id
 
     choices = question.choices.order_by("order", "id")
 
     result = None
     correct_choice = None
+    selected_choice_id = None
+    show_next = False
 
-    if request.method == "POST":
-        selected_id = request.POST.get("choice")
+    # -----------------------------
+    # Handle answer submit
+    # -----------------------------
+    if request.method == "POST" and request.POST.get("next") != "1":
+        selected_choice_id = request.POST.get("choice")
+        correct_choice = choices.filter(is_correct=True).first()
 
-        if selected_id:
-            selected = Choice.objects.get(id=selected_id)
-            correct_choice = choices.filter(is_correct=True).first()
+        if selected_choice_id:
+            selected = Choice.objects.get(id=selected_choice_id)
 
             if selected.is_correct:
                 result = "correct"
+                show_next = True
 
-                # Pick NEXT question
-                next_question = (
-                    Question.objects
-                    .filter(question_type=Question.SINGLE)
-                    .exclude(id=question.id)
-                    .order_by("?")
-                    .first()
-                )
-
-                if next_question:
-                    request.session["practice_qid"] = next_question.id
-                    question = next_question
-                    choices = question.choices.order_by("order", "id")
-                    correct_choice = None
-                else:
-                    request.session.pop("practice_qid", None)
+                # ✅ increment practice counter
+                practice_count += 1
+                request.session["practice_count"] = practice_count
 
             else:
                 result = "wrong"
 
+    # -----------------------------
+    # Handle next question
+    # -----------------------------
+    if request.method == "POST" and request.POST.get("next") == "1":
+        next_q = qs.exclude(id=question.id).order_by("?").first()
+
+        if next_q:
+            request.session["practice_qid"] = next_q.id
+            question = next_q
+            choices = question.choices.order_by("order", "id")
+
+        result = None
+        correct_choice = None
+        selected_choice_id = None
+        show_next = False
+
+    # -----------------------------
+    # Render
+    # -----------------------------
     return render(request, "quiz/practice.html", {
         "question": question,
         "choices": choices,
         "result": result,
         "correct_choice": correct_choice,
+        "selected_choice_id": selected_choice_id,
+        "show_next": show_next,
+
+        "difficulty": difficulty,
+        "category_id": category_id,
+        "categories": Category.objects.all(),
+        "difficulty_choices": Question.DIFFICULTY_CHOICES,
+
+        "practice_count": practice_count,
+        "no_questions": False,
     })
+
+
+
+
+
+
+
+
+
 
 
 # -----------------------
