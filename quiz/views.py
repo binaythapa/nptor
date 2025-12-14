@@ -72,13 +72,44 @@ from .models import Question, Choice, Category
 from django.shortcuts import render, redirect
 from .models import Question, Choice, Category
 
+from django.shortcuts import render, redirect
+from .models import Question, Choice, Category
+
+import random
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET, require_POST
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
+from .models import Question, Choice, Category, PracticeStat
+
+
+# =====================================================
+# BASIC PRACTICE
+# =====================================================
+from django.shortcuts import render, redirect
+from .models import Question, Choice, Category
+
 
 def practice(request):
     """
-    Public practice mode (NO login)
-    Supports SINGLE choice questions
-    No question repetition within a session
+    Basic Practice Mode
+    - No repeated questions (session-based)
+    - Supports difficulty + category filters
+    - Progress tracking
+    - Explicit reset support
     """
+
+    # =====================================================
+    # EXPLICIT RESET (Restart Practice button)
+    # =====================================================
+    if request.GET.get("reset") == "1":
+        request.session.pop("practice_seen_qids", None)
+        request.session.pop("practice_qid", None)
+        request.session.pop("practice_count", None)
+        request.session.pop("practice_filters", None)
+        return redirect("quiz:practice")
 
     # =====================================================
     # Read & normalize filters
@@ -86,13 +117,17 @@ def practice(request):
     difficulty = request.GET.get("difficulty")
     category_id = request.GET.get("category")
 
-    if difficulty in ["None", "", None]:
+    if difficulty in ["", "None", None]:
         difficulty = None
 
-    if category_id in ["None", "", None]:
+    if category_id in ["", "None", None]:
         category_id = None
 
-    current_filters = {"difficulty": difficulty, "category": category_id}
+    current_filters = {
+        "difficulty": difficulty,
+        "category": category_id
+    }
+
     last_filters = request.session.get("practice_filters")
 
     # =====================================================
@@ -100,12 +135,12 @@ def practice(request):
     # =====================================================
     if last_filters != current_filters:
         request.session["practice_filters"] = current_filters
-        request.session["practice_count"] = 0
         request.session["practice_seen_qids"] = []
+        request.session["practice_count"] = 0
         request.session.pop("practice_qid", None)
 
-    practice_count = request.session.get("practice_count", 0)
     seen_qids = request.session.get("practice_seen_qids", [])
+    practice_count = request.session.get("practice_count", 0)
 
     # =====================================================
     # Base queryset
@@ -122,16 +157,13 @@ def practice(request):
     total_questions = qs.count()
 
     # =====================================================
-    # No questions available
+    # No questions at all
     # =====================================================
     if total_questions == 0:
         return render(request, "quiz/practice.html", {
             "no_questions": True,
-            "difficulty": difficulty,
-            "category_id": category_id,
             "categories": Category.objects.all(),
             "difficulty_choices": Question.DIFFICULTY_CHOICES,
-            "practice_count": practice_count,
         })
 
     # =====================================================
@@ -139,14 +171,20 @@ def practice(request):
     # =====================================================
     qs = qs.exclude(id__in=seen_qids)
 
-    # All questions completed → restart cycle
+    # =====================================================
+    # Practice completed (all questions done)
+    # =====================================================
     if not qs.exists():
-        request.session["practice_seen_qids"] = []
-        request.session.pop("practice_qid", None)
-        return redirect(request.path)
+        return render(request, "quiz/practice.html", {
+            "question": None,
+            "practice_count": practice_count,
+            "progress_done": len(seen_qids),
+            "progress_total": total_questions,
+            "no_questions": False,
+        })
 
     # =====================================================
-    # Load question
+    # Load current question
     # =====================================================
     qid = request.session.get("practice_qid")
     question = qs.filter(id=qid).first() if qid else None
@@ -184,24 +222,13 @@ def practice(request):
     # Handle next question
     # =====================================================
     if request.method == "POST" and request.POST.get("next") == "1":
-
-        # mark current question as seen
         seen_qids.append(question.id)
         request.session["practice_seen_qids"] = seen_qids
         request.session.pop("practice_qid", None)
-
-        # clean redirect (no None in URL)
-        params = []
-        if difficulty:
-            params.append(f"difficulty={difficulty}")
-        if category_id:
-            params.append(f"category={category_id}")
-
-        query_string = "&".join(params)
-        return redirect(request.path + ("?" + query_string if query_string else ""))
+        return redirect(request.path)
 
     # =====================================================
-    # Render
+    # Render page
     # =====================================================
     return render(request, "quiz/practice.html", {
         "question": question,
@@ -217,14 +244,148 @@ def practice(request):
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
 
         "practice_count": practice_count,
-        "total_questions": total_questions,
-        "remaining_questions": total_questions - len(seen_qids),
+        "progress_done": len(seen_qids),
+        "progress_total": total_questions,
         "no_questions": False,
     })
 
 
 
 
+
+
+
+
+
+
+
+
+
+# =====================================================
+# PRACTICE EXPRESS PAGE
+# =====================================================
+def practice_express(request):
+    return render(request, "quiz/practice_express.html", {
+        "categories": Category.objects.all(),
+        "difficulty_choices": Question.DIFFICULTY_CHOICES,
+    })
+
+
+# =====================================================
+# PRACTICE EXPRESS – NEXT QUESTION
+# =====================================================
+@require_GET
+def practice_express_next(request):
+    qs_base = Question.objects.filter(
+        question_type=Question.SINGLE
+    ).prefetch_related("choices")
+
+    category = request.GET.get("category")
+    difficulty = request.GET.get("difficulty")
+
+    if category in ["", "None", None]:
+        category = None
+    if difficulty in ["", "None", None]:
+        difficulty = None
+
+    # -----------------------------
+    # Reset seen questions if filters changed
+    # -----------------------------
+    current_filters = {"category": category, "difficulty": difficulty}
+    if request.session.get("pe_filters") != current_filters:
+        request.session["pe_filters"] = current_filters
+        request.session["pe_seen_qids"] = []
+
+    seen_qids = request.session.get("pe_seen_qids", [])
+
+    # -----------------------------
+    # Apply filters
+    # -----------------------------
+    if category and str(category).isdigit():
+        qs_base = qs_base.filter(category_id=int(category))
+    if difficulty:
+        qs_base = qs_base.filter(difficulty=difficulty)
+
+    # -----------------------------
+    # TOTAL QUESTIONS (FIXED)
+    # -----------------------------
+    total_questions = qs_base.count()
+
+    # -----------------------------
+    # Remaining questions
+    # -----------------------------
+    remaining = qs_base.exclude(id__in=seen_qids)
+
+    # -----------------------------
+    # Practice completed
+    # -----------------------------
+    if not remaining.exists():
+        request.session["pe_seen_qids"] = []
+        return JsonResponse({
+            "reset": True,
+            "progress_done": total_questions,
+            "progress_total": total_questions
+        })
+
+    # -----------------------------
+    # Pick next question
+    # -----------------------------
+    question = random.choice(list(remaining))
+    correct = question.choices.filter(is_correct=True).first()
+
+    seen_qids.append(question.id)
+    request.session["pe_seen_qids"] = seen_qids
+
+    return JsonResponse({
+        "id": question.id,
+        "text": question.text,
+        "explanation": question.explanation or "",
+        "correct_choice": correct.id if correct else None,
+        "choices": [
+            {"id": c.id, "text": c.text}
+            for c in question.choices.all()
+        ],
+        "progress_done": len(seen_qids),
+        "progress_total": total_questions
+    })
+
+# =====================================================
+# PRACTICE EXPRESS – SAVE RESULT
+# =====================================================
+@require_POST
+@login_required
+def practice_express_save(request):
+    question_id = request.POST.get("question_id")
+    is_correct = request.POST.get("is_correct") == "true"
+
+    question = Question.objects.select_related("category").get(id=question_id)
+    today = timezone.now().date()
+
+    stat, _ = PracticeStat.objects.get_or_create(
+        user=request.user,
+        category=question.category
+    )
+
+    if stat.last_practice_date == today:
+        pass
+    elif stat.last_practice_date == today - timezone.timedelta(days=1):
+        stat.streak += 1
+    else:
+        stat.streak = 1
+
+    stat.last_practice_date = today
+    stat.total_attempted += 1
+    if is_correct:
+        stat.total_correct += 1
+
+    stat.save()
+
+    return JsonResponse({
+        "total": stat.total_attempted,
+        "correct": stat.total_correct,
+        "accuracy": stat.accuracy(),
+        "streak": stat.streak
+    })
 
 
 

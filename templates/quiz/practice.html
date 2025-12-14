@@ -56,7 +56,7 @@
 
   {% if no_questions %}
     <!-- ===============================
-         NO QUESTIONS AT ALL
+         NO QUESTIONS AVAILABLE
          =============================== -->
     <div class="practice-card box has-text-centered">
       <h2 class="title is-5">No Questions Available</h2>
@@ -78,11 +78,19 @@
         You’ve completed all available practice questions.
       </p>
 
-      <div class="buttons is-centered mt-4">
-        <a href="{% url 'quiz:practice' %}" class="button is-light">
-          🔄 Restart Practice
-        </a>
+      <p class="has-text-grey mt-1">
+        Progress: {{ progress_done }} / {{ progress_total }}
+      </p>
 
+      <progress class="progress is-small is-primary"
+                value="{{ progress_done }}"
+                max="{{ progress_total }}">
+      </progress>
+
+      <div class="buttons is-centered mt-4">
+        <a href="{% url 'quiz:practice' %}?reset=1" class="button is-light">
+  🔄 Restart Practice
+</a>
         <a href="{% url 'quiz:exam_list' %}" class="button is-link">
           🚀 Upgrade to Pro
         </a>
@@ -110,11 +118,23 @@
         </div>
       </div>
 
-      <!-- Counter -->
-      <div class="mb-3">
+      <!-- Counters -->
+      <div class="mb-2">
         <span class="tag is-info is-light practice-counter">
           Practiced: <strong>{{ practice_count }}</strong>
         </span>
+      </div>
+
+      <!-- Progress -->
+      <div class="mb-3">
+        <progress class="progress is-small is-primary"
+                  value="{{ progress_done }}"
+                  max="{{ progress_total }}">
+        </progress>
+
+        <p class="has-text-grey is-size-7">
+          Progress: {{ progress_done }} / {{ progress_total }}
+        </p>
       </div>
 
       <!-- ===============================
@@ -123,6 +143,7 @@
       <form method="get" class="mb-4">
         <div class="columns is-mobile is-multiline">
 
+          <!-- Difficulty -->
           <div class="column is-half">
             <div class="select is-small is-fullwidth">
               <select name="difficulty" onchange="this.form.submit()">
@@ -137,6 +158,7 @@
             </div>
           </div>
 
+          <!-- Category -->
           <div class="column is-half">
             <div class="select is-small is-fullwidth">
               <select name="category" onchange="this.form.submit()">
