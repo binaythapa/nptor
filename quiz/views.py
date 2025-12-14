@@ -67,47 +67,64 @@ from django.shortcuts import render
 from .models import Question, Choice, Category
 
 
+
+
+from django.shortcuts import render, redirect
+from .models import Question, Choice, Category
+
+
 def practice(request):
     """
     Public practice mode (NO login)
     Supports SINGLE choice questions
-    Filters: difficulty + category
-    Tracks practiced count in session
+    No question repetition within a session
     """
 
-    # -----------------------------
-    # Read filters
-    # -----------------------------
+    # =====================================================
+    # Read & normalize filters
+    # =====================================================
     difficulty = request.GET.get("difficulty")
     category_id = request.GET.get("category")
 
-    # Reset counter if filters changed
-    last_filters = request.session.get("practice_filters")
+    if difficulty in ["None", "", None]:
+        difficulty = None
+
+    if category_id in ["None", "", None]:
+        category_id = None
+
     current_filters = {"difficulty": difficulty, "category": category_id}
+    last_filters = request.session.get("practice_filters")
 
+    # =====================================================
+    # Reset session if filters changed
+    # =====================================================
     if last_filters != current_filters:
-        request.session["practice_count"] = 0
         request.session["practice_filters"] = current_filters
+        request.session["practice_count"] = 0
+        request.session["practice_seen_qids"] = []
+        request.session.pop("practice_qid", None)
 
-    # Initialize counter
     practice_count = request.session.get("practice_count", 0)
+    seen_qids = request.session.get("practice_seen_qids", [])
 
-    # -----------------------------
+    # =====================================================
     # Base queryset
-    # -----------------------------
+    # =====================================================
     qs = Question.objects.filter(question_type=Question.SINGLE)
 
     valid_difficulties = [d[0] for d in Question.DIFFICULTY_CHOICES]
     if difficulty in valid_difficulties:
         qs = qs.filter(difficulty=difficulty)
 
-    if category_id:
-        qs = qs.filter(category_id=category_id)
+    if category_id and str(category_id).isdigit():
+        qs = qs.filter(category_id=int(category_id))
 
-    # -----------------------------
-    # No questions
-    # -----------------------------
-    if not qs.exists():
+    total_questions = qs.count()
+
+    # =====================================================
+    # No questions available
+    # =====================================================
+    if total_questions == 0:
         return render(request, "quiz/practice.html", {
             "no_questions": True,
             "difficulty": difficulty,
@@ -117,9 +134,20 @@ def practice(request):
             "practice_count": practice_count,
         })
 
-    # -----------------------------
+    # =====================================================
+    # Exclude already practiced questions
+    # =====================================================
+    qs = qs.exclude(id__in=seen_qids)
+
+    # All questions completed → restart cycle
+    if not qs.exists():
+        request.session["practice_seen_qids"] = []
+        request.session.pop("practice_qid", None)
+        return redirect(request.path)
+
+    # =====================================================
     # Load question
-    # -----------------------------
+    # =====================================================
     qid = request.session.get("practice_qid")
     question = qs.filter(id=qid).first() if qid else None
 
@@ -134,46 +162,47 @@ def practice(request):
     selected_choice_id = None
     show_next = False
 
-    # -----------------------------
+    # =====================================================
     # Handle answer submit
-    # -----------------------------
+    # =====================================================
     if request.method == "POST" and request.POST.get("next") != "1":
         selected_choice_id = request.POST.get("choice")
         correct_choice = choices.filter(is_correct=True).first()
 
         if selected_choice_id:
-            selected = Choice.objects.get(id=selected_choice_id)
+            selected = Choice.objects.filter(id=selected_choice_id).first()
 
-            if selected.is_correct:
+            if selected and selected.is_correct:
                 result = "correct"
                 show_next = True
-
-                # ✅ increment practice counter
                 practice_count += 1
                 request.session["practice_count"] = practice_count
-
             else:
                 result = "wrong"
 
-    # -----------------------------
+    # =====================================================
     # Handle next question
-    # -----------------------------
+    # =====================================================
     if request.method == "POST" and request.POST.get("next") == "1":
-        next_q = qs.exclude(id=question.id).order_by("?").first()
 
-        if next_q:
-            request.session["practice_qid"] = next_q.id
-            question = next_q
-            choices = question.choices.order_by("order", "id")
+        # mark current question as seen
+        seen_qids.append(question.id)
+        request.session["practice_seen_qids"] = seen_qids
+        request.session.pop("practice_qid", None)
 
-        result = None
-        correct_choice = None
-        selected_choice_id = None
-        show_next = False
+        # clean redirect (no None in URL)
+        params = []
+        if difficulty:
+            params.append(f"difficulty={difficulty}")
+        if category_id:
+            params.append(f"category={category_id}")
 
-    # -----------------------------
+        query_string = "&".join(params)
+        return redirect(request.path + ("?" + query_string if query_string else ""))
+
+    # =====================================================
     # Render
-    # -----------------------------
+    # =====================================================
     return render(request, "quiz/practice.html", {
         "question": question,
         "choices": choices,
@@ -188,8 +217,23 @@ def practice(request):
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
 
         "practice_count": practice_count,
+        "total_questions": total_questions,
+        "remaining_questions": total_questions - len(seen_qids),
         "no_questions": False,
     })
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ######################################################################################
@@ -228,19 +272,63 @@ def practice_express_next(request):
         question_type=Question.SINGLE
     ).prefetch_related("choices")
 
+    # -----------------------------
+    # Read & normalize filters
+    # -----------------------------
     category = request.GET.get("category")
     difficulty = request.GET.get("difficulty")
 
-    if category:
-        qs = qs.filter(category_id=category)
+    if category in ["", "None", None]:
+        category = None
+    if difficulty in ["", "None", None]:
+        difficulty = None
+
+    current_filters = {
+        "category": category,
+        "difficulty": difficulty
+    }
+
+    last_filters = request.session.get("pe_filters")
+
+    # -----------------------------
+    # Reset session if filters changed
+    # -----------------------------
+    if last_filters != current_filters:
+        request.session["pe_filters"] = current_filters
+        request.session["pe_seen_qids"] = []
+
+    seen_qids = request.session.get("pe_seen_qids", [])
+
+    # -----------------------------
+    # Apply filters
+    # -----------------------------
+    if category and str(category).isdigit():
+        qs = qs.filter(category_id=int(category))
+
     if difficulty:
         qs = qs.filter(difficulty=difficulty)
 
-    if not qs.exists():
-        return JsonResponse({"empty": True})
+    # -----------------------------
+    # Exclude already served questions
+    # -----------------------------
+    qs = qs.exclude(id__in=seen_qids)
 
+    # -----------------------------
+    # All questions exhausted → reset
+    # -----------------------------
+    if not qs.exists():
+        request.session["pe_seen_qids"] = []
+        return JsonResponse({"reset": True})
+
+    # -----------------------------
+    # Pick random question
+    # -----------------------------
     question = random.choice(list(qs))
     correct = question.choices.filter(is_correct=True).first()
+
+    # mark as seen
+    seen_qids.append(question.id)
+    request.session["pe_seen_qids"] = seen_qids
 
     return JsonResponse({
         "id": question.id,

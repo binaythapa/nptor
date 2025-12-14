@@ -4,24 +4,21 @@
 {% block title %}Practice Express{% endblock %}
 
 {% block content %}
+
+<!-- =========================
+ HEADER + FILTERS + STATS
+========================= -->
 <div class="box">
 
   <div class="is-flex is-align-items-center is-justify-content-space-between mb-3">
-  <h1 class="title is-4 mb-0">
-    Practice Question
-  </h1>
+    <h1 class="title is-4 mb-0">Practice Question</h1>
 
-  <div class="practice-modes">
-    <a href="{% url 'quiz:practice' %}" class="practice-link">
-      Basics
-    </a>
-    <span class="mx-1 has-text-grey">|</span>
-    <a href="{% url 'quiz:exam_list' %}" class="practice-link">
-      Pro
-    </a>
+    <div class="practice-modes">
+      <a href="{% url 'quiz:practice' %}" class="practice-link">Basics</a>
+      <span class="mx-1 has-text-grey">|</span>
+      <a href="{% url 'quiz:exam_list' %}" class="practice-link">Pro</a>
+    </div>
   </div>
-</div>
-
 
   {% if not user.is_authenticated %}
     <div class="notification is-info is-light">
@@ -54,7 +51,7 @@
     </div>
   </div>
 
-  <!-- Stats + Timer -->
+  <!-- Stats + Timer + Reset -->
   <div class="level">
     <div class="level-left">
       <div>
@@ -63,16 +60,21 @@
       </div>
     </div>
 
-    <div class="level-right">
-      <span id="timerBadge" class="tag is-warning is-light">
+    <div class="level-right is-flex is-align-items-center">
+      <span id="timerBadge" class="tag is-warning is-light mr-3">
         ⏱ <span id="timer">30</span>s
       </span>
+      <button id="resetBtn" class="button is-small is-light">
+        🔄 Reset Practice
+      </button>
     </div>
   </div>
 
 </div>
 
-<!-- Question Card -->
+<!-- =========================
+ QUESTION CARD
+========================= -->
 <div class="box">
 
   <p id="qText" class="mb-4 has-text-weight-semibold">Loading…</p>
@@ -96,6 +98,29 @@
 
 </div>
 
+<!-- =========================
+ END / UPGRADE MESSAGE
+========================= -->
+<div id="endMessage" class="notification is-info is-light is-hidden mt-4">
+  <p class="has-text-weight-semibold">
+    🎉 You’ve completed all practice questions!
+  </p>
+  <p class="mt-2">
+    Unlock timed exams, analytics, and full-length tests in Pro mode.
+  </p>
+  <div class="buttons mt-3">
+    <a href="{% url 'quiz:exam_list' %}" class="button is-link">
+      🚀 Upgrade to Pro
+    </a>
+    <button onclick="resetPractice()" class="button is-light">
+      🔄 Restart Practice
+    </button>
+  </div>
+</div>
+
+<!-- =========================
+ JAVASCRIPT
+========================= -->
 <script>
 let qid = null;
 let correctChoice = null;
@@ -113,11 +138,12 @@ function startTimer(){
   clearInterval(timer);
   timeLeft = 30;
   autoSubmitted = false;
-  document.getElementById("timer").innerText = timeLeft;
+  timerBadge.className = "tag is-warning is-light";
+  timer.innerText = timeLeft;
 
   timer = setInterval(() => {
     timeLeft--;
-    document.getElementById("timer").innerText = timeLeft;
+    timer.innerText = timeLeft;
 
     if(timeLeft <= 0){
       clearInterval(timer);
@@ -137,10 +163,8 @@ function autoSubmit(){
   document.getElementById("total").innerText = total;
 
   if(!selected){
-    document.getElementById("feedback").className =
-      "notification is-danger mt-4";
-    document.getElementById("feedback").innerText =
-      "⏰ Time up! Correct answer highlighted.";
+    feedback.className = "notification is-danger mt-4";
+    feedback.innerText = "⏰ Time up! Correct answer highlighted.";
 
     const correctRadio =
       document.querySelector(`input[value="${correctChoice}"]`);
@@ -148,9 +172,7 @@ function autoSubmit(){
       correctRadio.closest("label").classList.add("has-text-success");
     }
 
-    document.getElementById("accuracy").innerText =
-      matched === 0 ? "0%" : Math.round((matched/total)*100) + "%";
-
+    updateAccuracy();
     setTimeout(loadQuestion, 1200);
     return;
   }
@@ -171,11 +193,24 @@ function loadQuestion(){
   fetch("{% url 'quiz:practice_express_next' %}?" + params.toString())
     .then(r => r.json())
     .then(d => {
+
+      // 🔁 Practice finished
+      if(d.reset){
+        qText.innerText = "Practice completed 🎉";
+        choices.innerHTML = "";
+        endMessage.classList.remove("is-hidden");
+        return;
+      }
+
+      // ❌ No questions
       if(d.empty){
         qText.innerText = "No questions available.";
         choices.innerHTML = "";
         return;
       }
+
+      // ✅ Normal flow
+      endMessage.classList.add("is-hidden");
 
       qid = d.id;
       correctChoice = d.correct_choice;
@@ -217,7 +252,6 @@ function submitAnswer(){
   const isCorrect =
     parseInt(sel.value, 10) === parseInt(correctChoice, 10);
 
-  // Save stats (logged-in users)
   fetch("{% url 'quiz:practice_express_save' %}",{
     method:"POST",
     headers:{
@@ -230,16 +264,15 @@ function submitAnswer(){
     })
   });
 
-  const fb = document.getElementById("feedback");
-  fb.classList.remove("is-hidden","is-success","is-danger");
+  feedback.classList.remove("is-hidden","is-success","is-danger");
 
   if(isCorrect){
     matched++;
-    fb.classList.add("is-success");
-    fb.innerText = "✅ Correct!";
+    feedback.classList.add("is-success");
+    feedback.innerText = "✅ Correct!";
   } else {
-    fb.classList.add("is-danger");
-    fb.innerText = "❌ Incorrect. Correct answer highlighted.";
+    feedback.classList.add("is-danger");
+    feedback.innerText = "❌ Incorrect. Correct answer highlighted.";
 
     const correctRadio =
       document.querySelector(`input[value="${correctChoice}"]`);
@@ -249,19 +282,44 @@ function submitAnswer(){
   }
 
   document.getElementById("matched").innerText = matched;
-  document.getElementById("accuracy").innerText =
-    Math.round((matched/total)*100) + "%";
+  updateAccuracy();
 
   explain.style.display = "block";
-
   setTimeout(loadQuestion, 1200);
+}
+
+/* ==========================
+   HELPERS
+========================== */
+function updateAccuracy(){
+  accuracy.innerText =
+    total === 0 ? "0%" : Math.round((matched/total)*100) + "%";
+}
+
+function resetPractice(){
+  clearInterval(timer);
+  matched = 0;
+  total = 0;
+  qid = null;
+  correctChoice = null;
+
+  matched.innerText = "0";
+  total.innerText = "0";
+  accuracy.innerText = "0%";
+
+  feedback.classList.add("is-hidden");
+  explain.style.display = "none";
+  endMessage.classList.add("is-hidden");
+
+  loadQuestion();
 }
 
 /* ==========================
    EVENTS
 ========================== */
-categorySelect.onchange = loadQuestion;
-difficultySelect.onchange = loadQuestion;
+categorySelect.onchange = resetPractice;
+difficultySelect.onchange = resetPractice;
+resetBtn.onclick = resetPractice;
 
 document.addEventListener("keydown", e => {
   if(e.key === "Enter"){

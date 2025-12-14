@@ -6,7 +6,6 @@
 <style>
 /* =====================================
    PRACTICE PAGE – LOCAL CSS ONLY
-   (Base.html untouched)
    ===================================== */
 
 .practice-wrapper {
@@ -57,7 +56,7 @@
 
   {% if no_questions %}
     <!-- ===============================
-         NO QUESTIONS
+         NO QUESTIONS AT ALL
          =============================== -->
     <div class="practice-card box has-text-centered">
       <h2 class="title is-5">No Questions Available</h2>
@@ -68,28 +67,48 @@
       </a>
     </div>
 
+  {% elif question is None %}
+    <!-- ===============================
+         PRACTICE COMPLETED
+         =============================== -->
+    <div class="practice-card box has-text-centered">
+      <h2 class="title is-5">🎉 Practice Completed!</h2>
+
+      <p class="mt-2">
+        You’ve completed all available practice questions.
+      </p>
+
+      <div class="buttons is-centered mt-4">
+        <a href="{% url 'quiz:practice' %}" class="button is-light">
+          🔄 Restart Practice
+        </a>
+
+        <a href="{% url 'quiz:exam_list' %}" class="button is-link">
+          🚀 Upgrade to Pro
+        </a>
+      </div>
+    </div>
+
   {% else %}
     <!-- ===============================
          PRACTICE CARD
          =============================== -->
     <div class="practice-card box">
 
+      <!-- Header -->
       <div class="is-flex is-align-items-center is-justify-content-space-between mb-3">
-  <h1 class="title is-4 mb-0">
-    Practice Question
-  </h1>
+        <h1 class="title is-4 mb-0">Practice Question</h1>
 
-  <div class="practice-modes">
-    <a href="{% url 'quiz:practice_express' %}" class="practice-link">
-      Express
-    </a>
-    <span class="mx-1 has-text-grey">|</span>
-    <a href="{% url 'quiz:exam_list' %}" class="practice-link">
-      Pro
-    </a>
-  </div>
-</div>
-
+        <div class="practice-modes">
+          <a href="{% url 'quiz:practice_express' %}" class="practice-link">
+            Express
+          </a>
+          <span class="mx-1 has-text-grey">|</span>
+          <a href="{% url 'quiz:exam_list' %}" class="practice-link">
+            Pro
+          </a>
+        </div>
+      </div>
 
       <!-- Counter -->
       <div class="mb-3">
@@ -104,7 +123,6 @@
       <form method="get" class="mb-4">
         <div class="columns is-mobile is-multiline">
 
-          <!-- Difficulty -->
           <div class="column is-half">
             <div class="select is-small is-fullwidth">
               <select name="difficulty" onchange="this.form.submit()">
@@ -119,7 +137,6 @@
             </div>
           </div>
 
-          <!-- Category -->
           <div class="column is-half">
             <div class="select is-small is-fullwidth">
               <select name="category" onchange="this.form.submit()">
@@ -178,7 +195,7 @@
           </label>
         {% endfor %}
 
-        <div class="mt-4">
+        <div class="mt-4 is-flex is-justify-content-space-between">
           {% if show_next %}
             <button class="button is-link" name="next" value="1" autofocus>
               Next Question →
@@ -188,6 +205,10 @@
               Submit Answer
             </button>
           {% endif %}
+
+          <a href="{% url 'quiz:practice' %}" class="button is-light">
+            🔄 Reset
+          </a>
         </div>
       </form>
 
