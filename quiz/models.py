@@ -52,8 +52,8 @@ class Domain(models.Model):
 
 
 class Category(models.Model):
-    domain = models.ForeignKey(Domain, on_delete=models.CASCADE, related_name="categories")
-    name = models.CharField(max_length=200)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE,null=True,blank=True,related_name="categories")
+    name = models.CharField(max_length=200, default= 'Unknown')
     slug = models.SlugField(unique=True)
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
@@ -104,6 +104,10 @@ class Difficulty(models.Model):
         return self.name
 
 
+
+
+
+
 class Question(models.Model):
     SINGLE = 'single'
     MULTI = 'multi'
@@ -133,9 +137,7 @@ class Question(models.Model):
     difficulty = models.CharField(
         max_length=10,
         choices=DIFFICULTY_CHOICES,      
-    )
-    
-  
+    ) 
 
     category = models.ForeignKey(
         Category,
@@ -150,20 +152,6 @@ class Question(models.Model):
         choices=QUESTION_TYPES,
         default=SINGLE
     )
-
-
-
-   
-    '''
-    difficulty = models.ForeignKey(
-        Difficulty,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="questions",
-        help_text="Leave empty if difficulty is undefined"
-    )
-    '''
 
     # NEW – detailed explanation / solution, visible on result page
     explanation = models.TextField(
@@ -200,6 +188,20 @@ class Question(models.Model):
 
     def __str__(self):
         return (self.text[:75] + '...') if len(self.text) > 75 else self.text
+    
+    
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
+    text = models.CharField(max_length=500)
+    is_correct = models.BooleanField(default=False)
+    order = models.IntegerField(default=0)
+    def __str__(self): return self.text
+
+
+
+
+
+
 
 
 from django.contrib.auth.models import User
@@ -250,17 +252,6 @@ class QuestionFeedback(models.Model):
     def __str__(self):
         label = "Incorrect-answer report" if self.is_answer_incorrect else "Comment"
         return f"{label} by {self.user} on Q#{self.question_id}"
-
-
-
-
-
-class Choice(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
-    text = models.CharField(max_length=500)
-    is_correct = models.BooleanField(default=False)
-    order = models.IntegerField(default=0)
-    def __str__(self): return self.text
 
 # quiz/models.py (excerpt - update Exam model)
 class Exam(models.Model):
