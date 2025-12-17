@@ -27,7 +27,6 @@ ALLOWED_HOSTS = (
 '''
 
 DEBUG = False
-
 ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
 
 # ============================================================
