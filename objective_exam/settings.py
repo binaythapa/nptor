@@ -16,6 +16,7 @@ SECRET_KEY = os.environ.get(
     "django-insecure-change-me-please"
 )
 
+'''
 DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = (
@@ -23,7 +24,11 @@ ALLOWED_HOSTS = (
     if DEBUG
     else ["nptor.com", "www.nptor.com"]
 )
+'''
 
+DEBUG = False
+
+ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
 
 # ============================================================
 # APPLICATION DEFINITION
