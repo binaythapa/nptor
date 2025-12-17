@@ -370,6 +370,13 @@ def practice_express(request):
 # =====================================================
 # PRACTICE EXPRESS – NEXT QUESTION (AJAX)
 # =====================================================
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from django.conf import settings
+
+from .models import Question, Category
+
+
 @require_GET
 def practice_express_next(request):
 
@@ -401,7 +408,7 @@ def practice_express_next(request):
     ).prefetch_related("choices")
 
     # -------------------------------
-    # DOMAIN FILTER (KEY FIX)
+    # DOMAIN FILTER
     # -------------------------------
     if domain_id:
         qs = qs.filter(category__domain_id=domain_id)
@@ -433,9 +440,11 @@ def practice_express_next(request):
         request.session["pe_filters"] = current_filters
         request.session["pe_seen_qids"] = []
         request.session["pe_total"] = qs.count()
+        request.session["pe_anon_attempted"] = 0   # 🔑 reset anon count
 
     seen_qids = request.session.get("pe_seen_qids", [])
     total_questions = request.session.get("pe_total", qs.count())
+    anon_attempted = request.session.get("pe_anon_attempted", 0)
 
     # -------------------------------
     # NO QUESTIONS
@@ -448,12 +457,26 @@ def practice_express_next(request):
         })
 
     # -------------------------------
+    # 🔒 ANONYMOUS USER LIMIT (FROM SETTINGS)
+    # -------------------------------
+    if not request.user.is_authenticated:
+        limit = getattr(settings, "EXPRESS_ANON_LIMIT", 0)
+
+        if anon_attempted >= limit:
+            return JsonResponse({
+                "limit_reached": True,
+                "message": f"Free limit of {limit} question(s) reached.",
+                "progress_done": anon_attempted,
+                "progress_total": limit,
+            })
+
+    # -------------------------------
     # REMAINING QUESTIONS
     # -------------------------------
     remaining = qs.exclude(id__in=seen_qids)
 
     # -------------------------------
-    # COMPLETED
+    # COMPLETED ALL QUESTIONS
     # -------------------------------
     if not remaining.exists():
         request.session["pe_seen_qids"] = []
@@ -464,7 +487,7 @@ def practice_express_next(request):
         })
 
     # -------------------------------
-    # PICK NEXT QUESTION (SAFE)
+    # PICK NEXT QUESTION
     # -------------------------------
     question = remaining.order_by("?").first()
     correct = question.choices.filter(is_correct=True).first()
@@ -472,6 +495,13 @@ def practice_express_next(request):
     seen_qids.append(question.id)
     request.session["pe_seen_qids"] = seen_qids
 
+    # 🔒 increment anon counter AFTER serving question
+    if not request.user.is_authenticated:
+        request.session["pe_anon_attempted"] = anon_attempted + 1
+
+    # -------------------------------
+    # RESPONSE
+    # -------------------------------
     return JsonResponse({
         "id": question.id,
         "text": question.text,
@@ -484,6 +514,7 @@ def practice_express_next(request):
         "progress_done": len(seen_qids),
         "progress_total": total_questions,
     })
+
 
 
 # =====================================================

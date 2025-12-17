@@ -2,116 +2,120 @@
 import os
 from pathlib import Path
 
+# ============================================================
+# BASE DIRECTORY
+# ============================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # ============================================================
 # SECURITY
 # ============================================================
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-please')
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-change-me-please"
+)
 
-DEBUG = False
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
-
+ALLOWED_HOSTS = (
+    ["localhost", "127.0.0.1"]
+    if DEBUG
+    else ["nptor.com", "www.nptor.com"]
+)
 
 
 # ============================================================
-# Application definition
-# ============================================================
-# ============================================================
-# Application definition
+# APPLICATION DEFINITION
 # ============================================================
 INSTALLED_APPS = [
-    # Django core apps
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
+    # Django core
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
 
-    # Third-party apps
-    'rest_framework',
-    'widget_tweaks',
-    # 'allauth',
-    # 'allauth.account',
-    # 'allauth.socialaccount',
+    # Third-party
+    "rest_framework",
+    "widget_tweaks",
+    "phone_field",
 
-    # Local apps (use AppConfig to avoid label conflicts)
-    'quiz.apps.QuizConfig',
-    'phone_field',
+    # Local
+    "quiz.apps.QuizConfig",
 ]
 
+SITE_ID = 1
 
-SITE_ID = 1  # Required by allauth
 
 # ============================================================
-# Middleware
+# MIDDLEWARE
 # ============================================================
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    #'allauth.account.middleware.AccountMiddleware',   # ← Required by allauth ≥0.57
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-ROOT_URLCONF = 'objective_exam.urls'
+
+
+ROOT_URLCONF = "objective_exam.urls"
+
 
 # ============================================================
-# Templates
+# TEMPLATES
 # ============================================================
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'quiz.context_processors.unread_notifications_count',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+
+                # Custom
+                "quiz.context_processors.unread_notifications_count",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'objective_exam.wsgi.application'
 
 # ============================================================
-# Database
+# WSGI
+# ============================================================
+WSGI_APPLICATION = "objective_exam.wsgi.application"
+
+
+# ============================================================
+# DATABASE
 # ============================================================
 '''
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "nptor",
-        "USER": "root",
-        "PASSWORD": "root",
-        "HOST": "localhost",
+        "NAME": os.environ.get("DB_NAME", "nptor3"),
+        "USER": os.environ.get("DB_USER", "root"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "root"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
         "PORT": "3306",
+        "OPTIONS": {
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
-
-
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-
-
 '''
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -127,119 +131,105 @@ DATABASES = {
 }
 
 
-
-
-
 # ============================================================
-# Password validation
+# PASSWORD VALIDATION
 # ============================================================
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+
 # ============================================================
-# Internationalization
+# INTERNATIONALIZATION
 # ============================================================
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "Asia/Kolkata"   # or Asia/Kathmandu
 USE_I18N = True
 USE_TZ = True
 
+
 # ============================================================
-# Static & Media
+# STATIC & MEDIA FILES
 # ============================================================
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Folder for your own static files during development
-STATICFILES_DIRS = [BASE_DIR / 'static']
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
-# Folder where collectstatic will gather everything
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = (
+    "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # ============================================================
-# Authentication & URLs
+# AUTHENTICATION
 # ============================================================
-LOGIN_URL = 'quiz:login'
-LOGIN_REDIRECT_URL = 'quiz:dashboard'
-LOGOUT_REDIRECT_URL = 'quiz:login'
+LOGIN_URL = "quiz:login"
+LOGIN_REDIRECT_URL = "quiz:dashboard"
+LOGOUT_REDIRECT_URL = "quiz:login"
 
-
-
-
-# ============================================================
-# Custom Authentication Backend (username OR email login)
-# ============================================================
 AUTHENTICATION_BACKENDS = [
-    'quiz.auth_backends.EmailOrUsernameModelBackend',   # ← Your custom one first
-    'django.contrib.auth.backends.ModelBackend',
+    "quiz.auth_backends.EmailOrUsernameModelBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
-# ============================================================
-# django-allauth Configuration (CRITICAL)
-# ============================================================
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'   # Login with username OR email
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'optional'           # Change to 'mandatory' later if needed
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
-ACCOUNT_SESSION_REMEMBER = True                   # "Remember me" default = True
-ACCOUNT_LOGOUT_ON_GET = True                      # Instant logout without confirmation
-ACCOUNT_FORMS = {}                                # You can override forms here later
-
-# Optional: nicer URLs (remove /accounts/ prefix)
-ACCOUNT_URLS_PREFIX = ''  # Makes /login/, /signup/, /logout/ work directly
 
 # ============================================================
-# Email Backend (console for dev)
+# EMAIL CONFIGURATION
 # ============================================================
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'no-reply@objectiveexam.com'
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-# ============================================================
-# REST Framework
-# ============================================================
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ),
-}
-
-# ============================================================
-# Misc
-# ============================================================
-SITE_NAME = os.environ.get('SITE_NAME', 'Objective Exam')
-
-# ============================================================
-# Logging
-# ============================================================
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {'console': {'class': 'logging.StreamHandler'}},
-    'root': {'handlers': ['console'], 'level': 'INFO'},
-}
-
-
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tbinay5@gmail.com'
-EMAIL_HOST_PASSWORD = 'ykex bzxs lesd zwke'  # ← no quotes if spaces
-DEFAULT_FROM_EMAIL = 'Gharchaiyo <tbinay5@gmail.com>'
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "tbinay5@gmail.com")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = "Gharchaiyo <tbinay5@gmail.com>"
+
+
+# ============================================================
+# DJANGO REST FRAMEWORK
+# ============================================================
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ),
+}
+
+
+# ============================================================
+# MISC
+# ============================================================
+SITE_NAME = os.environ.get("SITE_NAME", "Objective Exam")
+
+
+# ============================================================
+# LOGGING
+# ============================================================
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
+
+BASICS_ANON_LIMIT = 10
+EXPRESS_ANON_LIMIT = 10

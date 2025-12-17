@@ -20,13 +20,11 @@
 
   {% if not user.is_authenticated %}
     <div class="notification is-info is-light">
-      Login to save accuracy, stats, and streaks.
+      Free users have limited questions. Login to unlock unlimited access.
     </div>
   {% endif %}
 
-  <!-- ===============================
-       FILTERS
-       =============================== -->
+  <!-- FILTERS -->
   <div class="columns mb-4">
 
     <!-- DOMAIN -->
@@ -64,13 +62,16 @@
 
   </div>
 
-  <!-- ===============================
-       STATS
-       =============================== -->
+  <!-- STATS -->
   <div class="level">
     <div class="level-left">
       <div>
-        <p><strong>Matched:</strong> <span id="matched">0</span> / <span id="total">0</span></p>
+        <p>
+          <strong>Matched:</strong>
+          <span id="matched">0</span> /
+          <span id="total">0</span>
+        </p>
+
         <p><strong>Accuracy:</strong> <span id="accuracy">0%</span></p>
 
         <p class="is-size-7 has-text-grey">
@@ -91,57 +92,34 @@
         ⏱ <span id="timer">30</span>s
       </span>
       <button id="resetBtn" class="button is-small is-light">
-        🔄 Reset
+        🔄 Restart
       </button>
     </div>
   </div>
 
 </div>
 
-<!-- ===============================
-     QUESTION CARD
-     =============================== -->
+<!-- QUESTION CARD -->
 <div class="box">
   <p id="qText" class="mb-4 has-text-weight-semibold">Loading…</p>
 
   <form onsubmit="submitAnswer(); return false;">
     <div id="choices" class="mb-4"></div>
     <button type="submit" class="button is-success">
-      Submit (Enter)
+      Submit
     </button>
   </form>
 
   <div id="feedback" class="notification is-hidden mt-4"></div>
-
-  <div id="explain" class="mt-3" style="display:none;">
-    <details>
-      <summary>Explanation</summary>
-      <div id="explainText" class="content mt-2"></div>
-    </details>
-  </div>
 </div>
 
-<!-- ===============================
-     COMPLETION MESSAGE
-     =============================== -->
-<div id="endMessage" class="notification is-info is-light is-hidden mt-4">
-  <p class="has-text-weight-semibold">🎉 Practice completed!</p>
-  <p class="mt-2">Unlock exams, analytics and more in Pro mode.</p>
-  <div class="buttons mt-3">
-    <a href="{% url 'quiz:exam_list' %}" class="button is-link">
-      🚀 Go Pro
-    </a>
-    <button onclick="resetPractice()" class="button is-light">
-      🔄 Restart
-    </button>
-  </div>
-</div>
+<!-- END / LIMIT MESSAGE -->
+<div id="endMessage" class="notification is-info is-light is-hidden mt-4"></div>
 
 <script>
 /* ===============================
    STATE
 ================================ */
-let qid = null;
 let correctChoice = null;
 let matched = 0;
 let total = 0;
@@ -151,12 +129,10 @@ let total = 0;
 ================================ */
 let timerInterval = null;
 let timeLeft = 30;
-let autoSubmitted = false;
 
 function startTimer(){
   clearInterval(timerInterval);
   timeLeft = 30;
-  autoSubmitted = false;
   timer.innerText = timeLeft;
 
   timerInterval = setInterval(() => {
@@ -164,14 +140,12 @@ function startTimer(){
     timer.innerText = timeLeft;
     if(timeLeft <= 0){
       clearInterval(timerInterval);
-      autoSubmit();
+      submitTimeout();
     }
   }, 1000);
 }
 
-function autoSubmit(){
-  if(autoSubmitted) return;
-  autoSubmitted = true;
+function submitTimeout(){
   total++;
   totalSpan.innerText = total;
   showFeedback(false, true);
@@ -179,41 +153,55 @@ function autoSubmit(){
 }
 
 /* ===============================
-   LOAD QUESTION (🔥 FIXED)
+   LOAD QUESTION
 ================================ */
 function loadQuestion(){
   clearInterval(timerInterval);
 
   const params = new URLSearchParams();
-
-  if(domainSelect.value){
-    params.append("domain", domainSelect.value);
-  }
-  if(categorySelect.value){
-    params.append("category", categorySelect.value);
-  }
-  if(difficultySelect.value){
-    params.append("difficulty", difficultySelect.value);
-  }
+  if(domainSelect.value) params.append("domain", domainSelect.value);
+  if(categorySelect.value) params.append("category", categorySelect.value);
+  if(difficultySelect.value) params.append("difficulty", difficultySelect.value);
 
   fetch("{% url 'quiz:practice_express_next' %}?" + params.toString())
     .then(r => r.json())
     .then(d => {
 
-      if(d.completed){
+      /* 🔒 LIMIT REACHED */
+      if(d.limit_reached){
         endMessage.classList.remove("is-hidden");
+        endMessage.innerHTML = `
+          <p class="has-text-weight-semibold">🔒 Free limit reached</p>
+          <p class="mt-2">${d.message}</p>
+          <div class="buttons mt-3">
+            <a href="{% url 'quiz:login' %}" class="button is-primary">Login</a>
+            <a href="{% url 'quiz:practice' %}" class="button is-light">Try Basics</a>
+          </div>
+        `;
         updateProgress(d.progress_done, d.progress_total);
         return;
       }
 
-      qid = d.id;
-      correctChoice = d.correct_choice;
+      /* ✅ COMPLETED */
+      if(d.completed){
+        endMessage.classList.remove("is-hidden");
+        endMessage.innerHTML = `
+          <p class="has-text-weight-semibold">🎉 Practice completed!</p>
+          <p class="mt-2">Unlock exams & analytics in Pro mode.</p>
+          <div class="buttons mt-3">
+            <a href="{% url 'quiz:exam_list' %}" class="button is-link">🚀 Go Pro</a>
+            <a href="{% url 'quiz:practice' %}" class="button is-light">Try Basics</a>
+          </div>
+        `;
+        updateProgress(d.progress_done, d.progress_total);
+        return;
+      }
 
+      /* NORMAL QUESTION */
+      correctChoice = d.correct_choice;
       qText.innerText = d.text;
       choices.innerHTML = "";
       feedback.classList.add("is-hidden");
-      explain.style.display = "none";
-      explainText.innerHTML = d.explanation || "";
 
       d.choices.forEach(c => {
         choices.insertAdjacentHTML("beforeend", `
@@ -246,6 +234,7 @@ function submitAnswer(){
   matchedSpan.innerText = matched;
   updateAccuracy();
   showFeedback(isCorrect, false);
+
   setTimeout(loadQuestion, 1200);
 }
 
@@ -267,8 +256,9 @@ function updateAccuracy(){
 function showFeedback(isCorrect, timeout){
   feedback.classList.remove("is-hidden","is-success","is-danger");
   feedback.classList.add(isCorrect ? "is-success" : "is-danger");
-  feedback.innerText = isCorrect ? "✅ Correct!" :
-    (timeout ? "⏰ Time up!" : "❌ Incorrect");
+  feedback.innerText = isCorrect
+    ? "✅ Correct!"
+    : (timeout ? "⏰ Time up!" : "❌ Incorrect");
 }
 
 /* ===============================
@@ -286,7 +276,7 @@ function resetPractice(){
 }
 
 /* ===============================
-   DOMAIN → CATEGORY
+   DOMAIN → CATEGORY (AJAX)
 ================================ */
 domainSelect.onchange = () => {
   resetPractice();
@@ -298,22 +288,12 @@ domainSelect.onchange = () => {
   fetch("{% url 'quiz:ajax_categories_by_domain' %}?domain=" + domainSelect.value)
     .then(r => r.json())
     .then(d => {
-      if(!d.categories.length) return;
-
-      const parents = d.categories.filter(c => !c.parent_id);
-      const children = d.categories.filter(c => c.parent_id);
-
-      parents.forEach(p => {
+      d.categories.forEach(c => {
         categorySelect.insertAdjacentHTML(
-          "beforeend", `<option value="${p.id}">${p.name}</option>`
+          "beforeend",
+          `<option value="${c.id}">${c.parent_id ? "↳ " : ""}${c.name}</option>`
         );
-        children.filter(ch => ch.parent_id === p.id).forEach(ch => {
-          categorySelect.insertAdjacentHTML(
-            "beforeend", `<option value="${ch.id}">↳ ${ch.name}</option>`
-          );
-        });
       });
-
       categorySelect.disabled = false;
     });
 };
@@ -329,6 +309,5 @@ const matchedSpan = document.getElementById("matched");
 const totalSpan = document.getElementById("total");
 loadQuestion();
 </script>
-
 
 {% endblock %}
