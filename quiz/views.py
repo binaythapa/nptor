@@ -112,6 +112,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from .models import Question, Choice, Domain, Category
 
+from django.conf import settings
 
 def practice(request):
     """
@@ -132,12 +133,13 @@ def practice(request):
             "practice_filters",
             "practice_total",
             "practice_anon_attempted",
+            "practice_count",
         ]:
             request.session.pop(key, None)
         return redirect("quiz:practice")
 
     # =====================================================
-    # READ FILTERS (POST FIRST, THEN GET)
+    # READ FILTERS
     # =====================================================
     domain_id = request.POST.get("domain") or request.GET.get("domain")
     category_id = request.POST.get("category") or request.GET.get("category")
@@ -156,7 +158,7 @@ def practice(request):
     last_filters = request.session.get("practice_filters")
 
     # =====================================================
-    # BASE QUERYSET (USED FOR TOTAL COUNT)
+    # BASE QUERYSET
     # =====================================================
     base_qs = Question.objects.filter(
         question_type=Question.SINGLE
@@ -192,12 +194,14 @@ def practice(request):
         request.session["practice_seen_qids"] = []
         request.session.pop("practice_qid", None)
         request.session["practice_total"] = base_qs.count()
+        request.session["practice_count"] = 0
 
     seen_qids = request.session.get("practice_seen_qids", [])
     practice_total = request.session.get("practice_total", base_qs.count())
+    practice_count = request.session.get("practice_count", 0)
 
     # =====================================================
-    # 🔒 ANONYMOUS USER LIMIT (FROM SETTINGS)
+    # 🔒 ANONYMOUS USER LIMIT
     # =====================================================
     if not request.user.is_authenticated:
         limit = getattr(settings, "BASICS_ANON_LIMIT", 0)
@@ -212,10 +216,9 @@ def practice(request):
                 "difficulty_choices": Question.DIFFICULTY_CHOICES,
 
                 "limit_reached": True,
-                "limit_message": (
-                    f"You’ve reached the free limit of {limit} question(s)."
-                ),
+                "limit_message": f"You’ve reached the free limit of {limit} question(s).",
 
+                "practice_count": practice_count,
                 "progress_done": anon_attempted,
                 "progress_total": limit,
             })
@@ -225,18 +228,17 @@ def practice(request):
     # =====================================================
     remaining_qs = base_qs.exclude(id__in=seen_qids)
 
-    # =====================================================
-    # COMPLETED
-    # =====================================================
     if not remaining_qs.exists():
         return render(request, "quiz/practice.html", {
             "question": None,
             "choices": [],
+            "completed": True,
+
             "domains": Domain.objects.filter(is_active=True),
             "categories": Category.objects.none(),
             "difficulty_choices": Question.DIFFICULTY_CHOICES,
 
-            "completed": True,
+            "practice_count": practice_count,
             "progress_done": practice_total,
             "progress_total": practice_total,
         })
@@ -254,22 +256,27 @@ def practice(request):
     choices = question.choices.order_by("order", "id")
 
     result = None
-    correct_choice = None
+    correct_choice = choices.filter(is_correct=True).first()
     selected_choice_id = None
     show_next = False
 
     # =====================================================
-    # SUBMIT ANSWER
+    # SUBMIT ANSWER (✅ FIXED)
     # =====================================================
     if request.method == "POST" and request.POST.get("next") != "1":
         selected_choice_id = request.POST.get("choice")
-        correct_choice = choices.filter(is_correct=True).first()
 
         if selected_choice_id:
             selected = Choice.objects.filter(id=selected_choice_id).first()
+
             if selected and selected.is_correct:
                 result = "correct"
                 show_next = True
+                practice_count += 1
+                request.session["practice_count"] = practice_count
+            else:
+                result = "wrong"
+                show_next = True   # allow Next even if wrong
 
     # =====================================================
     # NEXT QUESTION
@@ -292,12 +299,10 @@ def practice(request):
         if difficulty:
             query.append(f"difficulty={difficulty}")
 
-        return redirect(
-            request.path + ("?" + "&".join(query) if query else "")
-        )
+        return redirect(request.path + ("?" + "&".join(query) if query else ""))
 
     # =====================================================
-    # CATEGORIES (DOMAIN SCOPED)
+    # CATEGORIES
     # =====================================================
     categories = (
         Category.objects.filter(domain=selected_domain, is_active=True)
@@ -323,12 +328,11 @@ def practice(request):
         "difficulty": difficulty,
 
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
+        "practice_count": practice_count,
 
         "progress_done": len(seen_qids),
         "progress_total": practice_total,
     })
-
-
 
 
 
