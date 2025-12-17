@@ -23,17 +23,21 @@
   <header class="site-header">
     <div class="container header-inner">
 
-      <!-- ===== HEADER LEFT ===== -->
+      <!-- ===== LEFT ===== -->
       <div class="header-left">
 
         <button id="sidebar-toggle" class="button is-white is-hidden-desktop">
           <i class="fa fa-bars"></i>
         </button>
 
-        <!-- LOGO -->
+        <!-- LOGO (🔥 FIXED) -->
         <div class="brand-group">
           <a class="brand"
-             href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'quiz:practice_express' %}{% endif %}">
+             href="{% if user.is_authenticated %}
+                      {% url 'quiz:dashboard' %}
+                   {% else %}
+                      {% url 'quiz:practice' %}
+                   {% endif %}">
             <img src="{% static 'images/logo.jpg' %}" class="brand-logo" alt="logo">
             <span class="brand-text">Nepal Mentor</span>
           </a>
@@ -49,7 +53,7 @@
         {% endif %}
       </div>
 
-      <!-- ===== HEADER RIGHT ===== -->
+      <!-- ===== RIGHT ===== -->
       <div class="header-right">
 
         {% if user.is_authenticated %}
@@ -57,23 +61,10 @@
           <!-- Welcome -->
           <a href="{% url 'quiz:profile' %}" class="welcome-user is-hidden-mobile">
             <span class="user-avatar">
-              {% if user.first_name %}
-                {{ user.first_name|first|upper }}{% if user.last_name %}{{ user.last_name|first|upper }}{% endif %}
-              {% else %}
-                {{ user.username|first|upper }}
-              {% endif %}
+              {{ user.username|first|upper }}
             </span>
-
             <span class="welcome-text">
-              {% now "H" as hour %}
-              {% if hour|add:0 < 12 %}
-                Good Morning,
-              {% elif hour|add:0 < 17 %}
-                Good Afternoon,
-              {% else %}
-                Good Evening,
-              {% endif %}
-              <strong>{{ user.first_name|default:user.username }}</strong>
+              Welcome, <strong>{{ user.username }}</strong>
             </span>
           </a>
 
@@ -99,7 +90,7 @@
         {% endif %}
 
         <!-- Theme toggle -->
-        <button id="theme-toggle" class="button is-white" aria-pressed="false">
+        <button id="theme-toggle" class="button is-white">
           <i class="fa fa-moon"></i>
         </button>
 
@@ -117,24 +108,29 @@
         <p class="menu-label">General</p>
         <ul class="menu-list">
 
+          <!-- HOME (🔥 FIXED) -->
           <li>
-            <a href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'quiz:practice_express' %}{% endif %}">
+            <a href="{% if user.is_authenticated %}
+                         {% url 'quiz:dashboard' %}
+                     {% else %}
+                         {% url 'quiz:practice' %}
+                     {% endif %}">
               <i class="fa fa-home"></i>
-              {% if user.is_authenticated %}Dashboard{% else %}Home{% endif %}
+              Home
             </a>
           </li>
 
-          <!-- PRACTICE EXPRESS (NEW) -->
+          <!-- PRACTICE EXPRESS -->
           <li>
             <a href="{% url 'quiz:practice_express' %}">
-              <i class="fa fa-bolt"></i> Practice(Express)
+              <i class="fa fa-bolt"></i> Practice (Express)
             </a>
           </li>
 
-          <!-- PRACTICE (CLASSIC) -->
+          <!-- PRACTICE BASIC -->
           <li>
             <a href="{% url 'quiz:practice' %}">
-              <i class="fa fa-pen-to-square"></i> Practice(Basic)
+              <i class="fa fa-pen-to-square"></i> Practice (Basic)
             </a>
           </li>
 
@@ -177,7 +173,7 @@
   <!-- ================= FOOTER ================= -->
   <footer class="site-footer">
     <div class="footer-inner">
-      © {% now "Y" %} Objective Exam • Version 1.0
+      © {% now "Y" %} Nepal Mentor • Version 1.0
     </div>
   </footer>
 
@@ -185,7 +181,6 @@
   {% if user.is_authenticated %}
   <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">
     {% csrf_token %}
-    <input type="hidden" name="next" value="{% url 'quiz:login' %}">
   </form>
   {% endif %}
 

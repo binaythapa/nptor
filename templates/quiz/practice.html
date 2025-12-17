@@ -77,6 +77,38 @@
       </p>
     </div>
 
+
+
+{% if limit_reached %}
+  <div class="notification is-warning has-text-centered">
+    <h2 class="title is-5">🚫 Free Limit Reached</h2>
+
+    <p class="mt-2">
+      You’ve reached the free practice limit. Log in to get unlimited access.
+    </p>
+
+    <div class="buttons is-centered mt-4">
+      <a href="{% url 'login' %}?next={{ request.path }}"
+         class="button is-link">
+        🔐 Login
+      </a>
+
+      <a href="{% url 'quiz:practice_express' %}"
+         class="button is-light">
+        ⚡ Try Express
+      </a>
+
+      <a href="{% url 'quiz:exam_list' %}"
+         class="button is-primary">
+        🚀 Upgrade to Pro
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+
+
+
     <!-- ================= FILTERS ================= -->
     <form method="get" class="mb-4">
       <div class="columns is-mobile is-multiline">

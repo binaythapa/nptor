@@ -24,7 +24,9 @@
     </div>
   {% endif %}
 
-  <!-- FILTERS -->
+  <!-- ===============================
+       FILTERS
+       =============================== -->
   <div class="columns mb-4">
 
     <!-- DOMAIN -->
@@ -62,7 +64,9 @@
 
   </div>
 
-  <!-- STATS -->
+  <!-- ===============================
+       STATS
+       =============================== -->
   <div class="level">
     <div class="level-left">
       <div>
@@ -94,7 +98,9 @@
 
 </div>
 
-<!-- QUESTION CARD -->
+<!-- ===============================
+     QUESTION CARD
+     =============================== -->
 <div class="box">
   <p id="qText" class="mb-4 has-text-weight-semibold">Loading…</p>
 
@@ -115,36 +121,19 @@
   </div>
 </div>
 
-<!-- COMPLETION MESSAGE -->
-<div id="endMessage" class="notification is-info is-light is-hidden mt-4 has-text-centered">
-  <h2 class="title is-5">🎉 Practice Completed!</h2>
-
-  <p class="mt-2">
-    You’ve completed all available Express questions
-    for the selected filters.
-  </p>
-
-  <p class="has-text-grey mt-1">
-    Progress: <span id="finalDone">0</span> / <span id="finalTotal">0</span>
-  </p>
-
-  <progress class="progress is-small is-primary"
-            id="finalBar"
-            value="0"
-            max="0"></progress>
-
-  <div class="buttons is-centered mt-4">
-    <button onclick="resetPractice()" class="button is-light">
-      🔄 Restart Express
-    </button>
-
-    <a href="{% url 'quiz:practice' %}" class="button is-light">
-      📘 Try Basics
-    </a>
-
+<!-- ===============================
+     COMPLETION MESSAGE
+     =============================== -->
+<div id="endMessage" class="notification is-info is-light is-hidden mt-4">
+  <p class="has-text-weight-semibold">🎉 Practice completed!</p>
+  <p class="mt-2">Unlock exams, analytics and more in Pro mode.</p>
+  <div class="buttons mt-3">
     <a href="{% url 'quiz:exam_list' %}" class="button is-link">
-      🚀 Upgrade to Pro
+      🚀 Go Pro
     </a>
+    <button onclick="resetPractice()" class="button is-light">
+      🔄 Restart
+    </button>
   </div>
 </div>
 
@@ -190,15 +179,22 @@ function autoSubmit(){
 }
 
 /* ===============================
-   LOAD QUESTION
+   LOAD QUESTION (🔥 FIXED)
 ================================ */
 function loadQuestion(){
   clearInterval(timerInterval);
 
   const params = new URLSearchParams();
-  if(domainSelect.value) params.append("domain", domainSelect.value);
-  if(categorySelect.value) params.append("category", categorySelect.value);
-  if(difficultySelect.value) params.append("difficulty", difficultySelect.value);
+
+  if(domainSelect.value){
+    params.append("domain", domainSelect.value);
+  }
+  if(categorySelect.value){
+    params.append("category", categorySelect.value);
+  }
+  if(difficultySelect.value){
+    params.append("difficulty", difficultySelect.value);
+  }
 
   fetch("{% url 'quiz:practice_express_next' %}?" + params.toString())
     .then(r => r.json())
@@ -206,12 +202,6 @@ function loadQuestion(){
 
       if(d.completed){
         endMessage.classList.remove("is-hidden");
-
-        finalDone.innerText = d.progress_done;
-        finalTotal.innerText = d.progress_total;
-        finalBar.max = d.progress_total;
-        finalBar.value = d.progress_done;
-
         updateProgress(d.progress_done, d.progress_total);
         return;
       }
@@ -277,9 +267,8 @@ function updateAccuracy(){
 function showFeedback(isCorrect, timeout){
   feedback.classList.remove("is-hidden","is-success","is-danger");
   feedback.classList.add(isCorrect ? "is-success" : "is-danger");
-  feedback.innerText = isCorrect
-    ? "✅ Correct!"
-    : (timeout ? "⏰ Time up!" : "❌ Incorrect");
+  feedback.innerText = isCorrect ? "✅ Correct!" :
+    (timeout ? "⏰ Time up!" : "❌ Incorrect");
 }
 
 /* ===============================
@@ -288,15 +277,10 @@ function showFeedback(isCorrect, timeout){
 function resetPractice(){
   clearInterval(timerInterval);
   matched = total = 0;
-
-  matchedSpan.innerText = "0";
-  totalSpan.innerText = "0";
+  matchedSpan.innerText = totalSpan.innerText = "0";
   accuracy.innerText = "0%";
-
-  pDone.innerText = "0";
-  pTotal.innerText = "0";
+  pDone.innerText = pTotal.innerText = "0";
   pBar.value = pBar.max = 0;
-
   endMessage.classList.add("is-hidden");
   loadQuestion();
 }
@@ -323,14 +307,11 @@ domainSelect.onchange = () => {
         categorySelect.insertAdjacentHTML(
           "beforeend", `<option value="${p.id}">${p.name}</option>`
         );
-        children
-          .filter(ch => ch.parent_id === p.id)
-          .forEach(ch => {
-            categorySelect.insertAdjacentHTML(
-              "beforeend",
-              `<option value="${ch.id}">↳ ${ch.name}</option>`
-            );
-          });
+        children.filter(ch => ch.parent_id === p.id).forEach(ch => {
+          categorySelect.insertAdjacentHTML(
+            "beforeend", `<option value="${ch.id}">↳ ${ch.name}</option>`
+          );
+        });
       });
 
       categorySelect.disabled = false;
@@ -348,5 +329,6 @@ const matchedSpan = document.getElementById("matched");
 const totalSpan = document.getElementById("total");
 loadQuestion();
 </script>
+
 
 {% endblock %}
