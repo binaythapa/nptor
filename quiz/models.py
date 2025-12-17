@@ -37,12 +37,29 @@ class Notification(models.Model):
 
     def unread_for(self, user):
         return not self.is_read_by.get(str(user.id), False)
+    
+
+ # =====================================================
+# DOMAIN (Snowflake, Power BI, Tableau)
+# =====================================================
+class Domain(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)  
+    is_active = models.BooleanField(default=True)  
+
+    def __str__(self):
+        return self.name   
 
 
 class Category(models.Model):
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE, related_name="categories")
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        unique_together = ("domain", "slug")
     # optionally store a description or metadata
     def __str__(self):
         # show hierarchy in admin list
@@ -58,6 +75,7 @@ class Category(models.Model):
         for c in children:
             ids.extend(c.get_descendants_include_self())
         return ids
+    
 # New model: ExamCategoryAllocation
 class ExamCategoryAllocation(models.Model):
     exam = models.ForeignKey('Exam', on_delete=models.CASCADE, related_name='allocations')
@@ -73,6 +91,18 @@ class ExamCategoryAllocation(models.Model):
 
     def __str__(self):
         return f"{self.exam.title} - {self.category.name}: {self.percentage}%{' / ' + str(self.fixed_count) if self.fixed_count else ''}"
+
+# =====================================================
+# DIFFICULTY 
+# =====================================================
+class Difficulty(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)   # ✅ ADD THIS    
+    is_active = models.BooleanField(default=True)   
+
+    def __str__(self):
+        return self.name
+
 
 class Question(models.Model):
     SINGLE = 'single'
@@ -94,10 +124,18 @@ class Question(models.Model):
         (ORDERING, 'Ordering'),
     ]
 
+ 
     EASY = 'easy'
     MEDIUM = 'medium'
-    HARD = 'hard'
+    HARD = 'hard'   
     DIFFICULTY_CHOICES = [(EASY,'Easy'),(MEDIUM,'Medium'),(HARD,'Hard')]
+    
+    difficulty = models.CharField(
+        max_length=10,
+        choices=DIFFICULTY_CHOICES,      
+    )
+    
+  
 
     category = models.ForeignKey(
         Category,
@@ -112,11 +150,20 @@ class Question(models.Model):
         choices=QUESTION_TYPES,
         default=SINGLE
     )
-    difficulty = models.CharField(
-        max_length=10,
-        choices=DIFFICULTY_CHOICES,
-        default=MEDIUM
+
+
+
+   
+    '''
+    difficulty = models.ForeignKey(
+        Difficulty,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="questions",
+        help_text="Leave empty if difficulty is undefined"
     )
+    '''
 
     # NEW – detailed explanation / solution, visible on result page
     explanation = models.TextField(

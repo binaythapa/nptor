@@ -13,7 +13,6 @@ urlpatterns = [
     # ============================================================
     # AUTHENTICATION
     # ============================================================
-
     path(
         "login/",
         auth_views.LoginView.as_view(
@@ -25,7 +24,7 @@ urlpatterns = [
 
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 
-    # Password Reset Flow
+    # Password Reset
     path(
         "password-reset/",
         auth_views.PasswordResetView.as_view(
@@ -33,7 +32,6 @@ urlpatterns = [
         ),
         name="password_reset"
     ),
-
     path(
         "password-reset/done/",
         auth_views.PasswordResetDoneView.as_view(
@@ -41,7 +39,6 @@ urlpatterns = [
         ),
         name="password_reset_done"
     ),
-
     path(
         "reset/<uidb64>/<token>/",
         auth_views.PasswordResetConfirmView.as_view(
@@ -49,7 +46,6 @@ urlpatterns = [
         ),
         name="password_reset_confirm"
     ),
-
     path(
         "reset/done/",
         auth_views.PasswordResetCompleteView.as_view(
@@ -60,13 +56,17 @@ urlpatterns = [
 
     # Registration
     path("register/", views.register, name="register"),
+    path(
+        "customerregister/",
+        CustomerRegisterView.as_view(),
+        name="customer-register"
+    ),
 
     # ============================================================
     # DASHBOARD
     # ============================================================
     path("", views.exam_list, name="exam_list"),
     path("dashboard/", views.dashboard_dispatch, name="dashboard"),
-
     path("dashboard/admin/", views.admin_dashboard, name="admin_dashboard"),
     path("dashboard/student/", views.student_dashboard, name="student_dashboard"),
 
@@ -94,42 +94,53 @@ urlpatterns = [
     # NOTIFICATIONS
     # ============================================================
     path("notifications/", views.notifications_list, name="notifications_list"),
-    path("notifications/mark-all/", views.notifications_mark_all, name="notifications_mark_all"),
-    path("notifications/<int:pk>/", views.notification_read, name="notification_detail"),
-
-    # ============================================================
-    # AJAX / API
-    # ============================================================
-    path("api/recent_attempts/", views.recent_attempts_api, name="recent_attempts_api"),
-
-    # ============================================================
-    # CUSTOMER
-    # ============================================================
     path(
-        "customerregister/",
-        CustomerRegisterView.as_view(),
-        name="customer-register"
+        "notifications/mark-all/",
+        views.notifications_mark_all,
+        name="notifications_mark_all"
+    ),
+    path(
+        "notifications/<int:pk>/",
+        views.notification_read,
+        name="notification_detail"
     ),
 
+    # ============================================================
+    # API / AJAX
+    # ============================================================
+    path(
+        "api/recent_attempts/",
+        views.recent_attempts_api,
+        name="recent_attempts_api"
+    ),
 
-    # PUBLIC
+    # ============================================================
+    # PRACTICE (PUBLIC)
+    # ============================================================
     path("practice/", views.practice, name="practice"),
-     path(
+
+    path(
         "practice/express/",
         views.practice_express,
         name="practice_express"
     ),
-
     path(
         "practice/express/next/",
         views.practice_express_next,
         name="practice_express_next"
     ),
-
     path(
         "practice/express/save/",
         views.practice_express_save,
         name="practice_express_save"
     ),
 
+    # ============================================================
+    # AJAX – DOMAIN → CATEGORY
+    # ============================================================
+    path(
+        "ajax/categories-by-domain/",
+        views.ajax_categories_by_domain,
+        name="ajax_categories_by_domain"
+    ),
 ]

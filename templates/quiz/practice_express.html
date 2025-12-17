@@ -26,7 +26,30 @@
 
   <!-- FILTERS -->
   <div class="columns mb-4">
-    <div class="column is-6">
+
+    <!-- DOMAIN -->
+    <div class="column is-4">
+      <div class="select is-fullwidth">
+        <select id="domainSelect">
+          <option value="">All domains</option>
+          {% for d in domains %}
+            <option value="{{ d.id }}">{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- CATEGORY -->
+    <div class="column is-4">
+      <div class="select is-fullwidth">
+        <select id="categorySelect" disabled>
+          <option value="">All categories</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- DIFFICULTY -->
+    <div class="column is-4">
       <div class="select is-fullwidth">
         <select id="difficultySelect">
           <option value="">All difficulties</option>
@@ -37,16 +60,6 @@
       </div>
     </div>
 
-    <div class="column is-6">
-      <div class="select is-fullwidth">
-        <select id="categorySelect">
-          <option value="">All categories</option>
-          {% for c in categories %}
-            <option value="{{ c.id }}">{{ c.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
   </div>
 
   <!-- STATS -->
@@ -103,31 +116,50 @@
 </div>
 
 <!-- COMPLETION MESSAGE -->
-<div id="endMessage" class="notification is-info is-light is-hidden mt-4">
-  <p class="has-text-weight-semibold">🎉 Practice completed!</p>
-  <p class="mt-2">Unlock exams, analytics and more in Pro mode.</p>
-  <div class="buttons mt-3">
-    <a href="{% url 'quiz:exam_list' %}" class="button is-link">
-      🚀 Go Pro
-    </a>
+<div id="endMessage" class="notification is-info is-light is-hidden mt-4 has-text-centered">
+  <h2 class="title is-5">🎉 Practice Completed!</h2>
+
+  <p class="mt-2">
+    You’ve completed all available Express questions
+    for the selected filters.
+  </p>
+
+  <p class="has-text-grey mt-1">
+    Progress: <span id="finalDone">0</span> / <span id="finalTotal">0</span>
+  </p>
+
+  <progress class="progress is-small is-primary"
+            id="finalBar"
+            value="0"
+            max="0"></progress>
+
+  <div class="buttons is-centered mt-4">
     <button onclick="resetPractice()" class="button is-light">
-      🔄 Restart
+      🔄 Restart Express
     </button>
+
+    <a href="{% url 'quiz:practice' %}" class="button is-light">
+      📘 Try Basics
+    </a>
+
+    <a href="{% url 'quiz:exam_list' %}" class="button is-link">
+      🚀 Upgrade to Pro
+    </a>
   </div>
 </div>
 
 <script>
-/* =====================================================
+/* ===============================
    STATE
-===================================================== */
+================================ */
 let qid = null;
 let correctChoice = null;
 let matched = 0;
 let total = 0;
 
-/* =====================================================
-   TIMER (SAFE)
-===================================================== */
+/* ===============================
+   TIMER
+================================ */
 let timerInterval = null;
 let timeLeft = 30;
 let autoSubmitted = false;
@@ -136,12 +168,11 @@ function startTimer(){
   clearInterval(timerInterval);
   timeLeft = 30;
   autoSubmitted = false;
-  document.getElementById("timer").innerText = timeLeft;
+  timer.innerText = timeLeft;
 
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById("timer").innerText = timeLeft;
-
+    timer.innerText = timeLeft;
     if(timeLeft <= 0){
       clearInterval(timerInterval);
       autoSubmit();
@@ -152,21 +183,20 @@ function startTimer(){
 function autoSubmit(){
   if(autoSubmitted) return;
   autoSubmitted = true;
-
   total++;
-  document.getElementById("total").innerText = total;
-
+  totalSpan.innerText = total;
   showFeedback(false, true);
   setTimeout(loadQuestion, 1200);
 }
 
-/* =====================================================
+/* ===============================
    LOAD QUESTION
-===================================================== */
+================================ */
 function loadQuestion(){
   clearInterval(timerInterval);
 
   const params = new URLSearchParams();
+  if(domainSelect.value) params.append("domain", domainSelect.value);
   if(categorySelect.value) params.append("category", categorySelect.value);
   if(difficultySelect.value) params.append("difficulty", difficultySelect.value);
 
@@ -174,12 +204,13 @@ function loadQuestion(){
     .then(r => r.json())
     .then(d => {
 
-      console.log("Practice Express response:", d);
-
-      if(d.reset){
-        qText.innerText = "Practice completed 🎉";
-        choices.innerHTML = "";
+      if(d.completed){
         endMessage.classList.remove("is-hidden");
+
+        finalDone.innerText = d.progress_done;
+        finalTotal.innerText = d.progress_total;
+        finalBar.max = d.progress_total;
+        finalBar.value = d.progress_done;
 
         updateProgress(d.progress_done, d.progress_total);
         return;
@@ -208,40 +239,30 @@ function loadQuestion(){
     });
 }
 
-/* =====================================================
+/* ===============================
    SUBMIT ANSWER
-===================================================== */
+================================ */
 function submitAnswer(){
   clearInterval(timerInterval);
-
   const sel = document.querySelector('input[name="ans"]:checked');
-  if(!sel){
-    alert("Please select an option");
-    return;
-  }
+  if(!sel){ alert("Select an option"); return; }
 
   total++;
-  document.getElementById("total").innerText = total;
+  totalSpan.innerText = total;
 
   const isCorrect = Number(sel.value) === Number(correctChoice);
   if(isCorrect) matched++;
 
-  document.getElementById("matched").innerText = matched;
+  matchedSpan.innerText = matched;
   updateAccuracy();
   showFeedback(isCorrect, false);
-
   setTimeout(loadQuestion, 1200);
 }
 
-/* =====================================================
+/* ===============================
    HELPERS
-===================================================== */
+================================ */
 function updateProgress(done, total){
-  if(typeof done !== "number" || typeof total !== "number"){
-    console.error("Invalid progress data", done, total);
-    return;
-  }
-
   pDone.innerText = done;
   pTotal.innerText = total;
   pBar.max = total;
@@ -255,58 +276,76 @@ function updateAccuracy(){
 
 function showFeedback(isCorrect, timeout){
   feedback.classList.remove("is-hidden","is-success","is-danger");
-
-  if(isCorrect){
-    feedback.classList.add("is-success");
-    feedback.innerText = "✅ Correct!";
-  } else {
-    feedback.classList.add("is-danger");
-    feedback.innerText = timeout
-      ? "⏰ Time up! Correct answer highlighted."
-      : "❌ Incorrect. Correct answer highlighted.";
-
-    const correctRadio =
-      document.querySelector(`input[value="${correctChoice}"]`);
-    if(correctRadio){
-      correctRadio.closest("label").classList.add("has-text-success");
-    }
-  }
+  feedback.classList.add(isCorrect ? "is-success" : "is-danger");
+  feedback.innerText = isCorrect
+    ? "✅ Correct!"
+    : (timeout ? "⏰ Time up!" : "❌ Incorrect");
 }
 
+/* ===============================
+   RESET
+================================ */
 function resetPractice(){
   clearInterval(timerInterval);
-  matched = 0;
-  total = 0;
+  matched = total = 0;
 
-  matched.innerText = "0";
-  total.innerText = "0";
+  matchedSpan.innerText = "0";
+  totalSpan.innerText = "0";
   accuracy.innerText = "0%";
 
   pDone.innerText = "0";
   pTotal.innerText = "0";
-  pBar.value = 0;
-  pBar.max = 0;
+  pBar.value = pBar.max = 0;
 
   endMessage.classList.add("is-hidden");
   loadQuestion();
 }
 
-/* =====================================================
-   EVENTS
-===================================================== */
+/* ===============================
+   DOMAIN → CATEGORY
+================================ */
+domainSelect.onchange = () => {
+  resetPractice();
+  categorySelect.innerHTML = '<option value="">All categories</option>';
+  categorySelect.disabled = true;
+
+  if(!domainSelect.value) return;
+
+  fetch("{% url 'quiz:ajax_categories_by_domain' %}?domain=" + domainSelect.value)
+    .then(r => r.json())
+    .then(d => {
+      if(!d.categories.length) return;
+
+      const parents = d.categories.filter(c => !c.parent_id);
+      const children = d.categories.filter(c => c.parent_id);
+
+      parents.forEach(p => {
+        categorySelect.insertAdjacentHTML(
+          "beforeend", `<option value="${p.id}">${p.name}</option>`
+        );
+        children
+          .filter(ch => ch.parent_id === p.id)
+          .forEach(ch => {
+            categorySelect.insertAdjacentHTML(
+              "beforeend",
+              `<option value="${ch.id}">↳ ${ch.name}</option>`
+            );
+          });
+      });
+
+      categorySelect.disabled = false;
+    });
+};
+
 categorySelect.onchange = resetPractice;
 difficultySelect.onchange = resetPractice;
 resetBtn.onclick = resetPractice;
 
-document.addEventListener("keydown", e => {
-  if(e.key === "Enter"){
-    submitAnswer();
-  }
-});
-
-/* =====================================================
+/* ===============================
    INIT
-===================================================== */
+================================ */
+const matchedSpan = document.getElementById("matched");
+const totalSpan = document.getElementById("total");
 loadQuestion();
 </script>
 

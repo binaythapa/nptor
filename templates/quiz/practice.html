@@ -4,10 +4,6 @@
 
 {% block head_extra %}
 <style>
-/* =====================================
-   PRACTICE PAGE – LOCAL CSS ONLY
-   ===================================== */
-
 .practice-wrapper {
   width: 100%;
   display: flex;
@@ -20,7 +16,6 @@
   max-width: 440px;
 }
 
-/* Answer options */
 .practice-option {
   display: block;
   padding: 10px 12px;
@@ -44,7 +39,6 @@
   border-color: #f87171;
 }
 
-/* Counter badge */
 .practice-counter {
   font-size: 0.9rem;
 }
@@ -54,188 +48,196 @@
 {% block content %}
 <div class="practice-wrapper">
 
-  {% if no_questions %}
-    <!-- ===============================
-         NO QUESTIONS AVAILABLE
-         =============================== -->
-    <div class="practice-card box has-text-centered">
-      <h2 class="title is-5">No Questions Available</h2>
-      <p>No practice questions found for selected filters.</p>
+  <div class="practice-card box">
 
-      <a href="{% url 'quiz:practice' %}" class="button is-link mt-4">
-        Show All Questions
-      </a>
+    <!-- ================= HEADER ================= -->
+    <div class="is-flex is-align-items-center is-justify-content-space-between mb-3">
+      <h1 class="title is-4 mb-0">Practice Question</h1>
+      <div>
+        <a href="{% url 'quiz:practice_express' %}">Express</a>
+        <span class="mx-1">|</span>
+        <a href="{% url 'quiz:exam_list' %}">Pro</a>
+      </div>
     </div>
 
-  {% elif question is None %}
-    <!-- ===============================
-         PRACTICE COMPLETED
-         =============================== -->
-    <div class="practice-card box has-text-centered">
-      <h2 class="title is-5">🎉 Practice Completed!</h2>
+    <!-- ================= COUNTER ================= -->
+    <div class="mb-2">
+      <span class="tag is-info is-light practice-counter">
+        Practiced: <strong>{{ practice_count }}</strong>
+      </span>
+    </div>
 
-      <p class="mt-2">
-        You’ve completed all available practice questions.
-      </p>
-
-      <p class="has-text-grey mt-1">
-        Progress: {{ progress_done }} / {{ progress_total }}
-      </p>
-
+    <!-- ================= PROGRESS ================= -->
+    <div class="mb-3">
       <progress class="progress is-small is-primary"
                 value="{{ progress_done }}"
-                max="{{ progress_total }}">
-      </progress>
-
-      <div class="buttons is-centered mt-4">
-        <a href="{% url 'quiz:practice' %}?reset=1" class="button is-light">
-  🔄 Restart Practice
-</a>
-        <a href="{% url 'quiz:exam_list' %}" class="button is-link">
-          🚀 Upgrade to Pro
-        </a>
-      </div>
+                max="{{ progress_total }}"></progress>
+      <p class="has-text-grey is-size-7">
+        Progress: {{ progress_done }} / {{ progress_total }}
+      </p>
     </div>
 
-  {% else %}
-    <!-- ===============================
-         PRACTICE CARD
-         =============================== -->
-    <div class="practice-card box">
+    <!-- ================= FILTERS ================= -->
+    <form method="get" class="mb-4">
+      <div class="columns is-mobile is-multiline">
 
-      <!-- Header -->
-      <div class="is-flex is-align-items-center is-justify-content-space-between mb-3">
-        <h1 class="title is-4 mb-0">Practice Question</h1>
-
-        <div class="practice-modes">
-          <a href="{% url 'quiz:practice_express' %}" class="practice-link">
-            Express
-          </a>
-          <span class="mx-1 has-text-grey">|</span>
-          <a href="{% url 'quiz:exam_list' %}" class="practice-link">
-            Pro
-          </a>
-        </div>
-      </div>
-
-      <!-- Counters -->
-      <div class="mb-2">
-        <span class="tag is-info is-light practice-counter">
-          Practiced: <strong>{{ practice_count }}</strong>
-        </span>
-      </div>
-
-      <!-- Progress -->
-      <div class="mb-3">
-        <progress class="progress is-small is-primary"
-                  value="{{ progress_done }}"
-                  max="{{ progress_total }}">
-        </progress>
-
-        <p class="has-text-grey is-size-7">
-          Progress: {{ progress_done }} / {{ progress_total }}
-        </p>
-      </div>
-
-      <!-- ===============================
-           FILTERS
-           =============================== -->
-      <form method="get" class="mb-4">
-        <div class="columns is-mobile is-multiline">
-
-          <!-- Difficulty -->
-          <div class="column is-half">
-            <div class="select is-small is-fullwidth">
-              <select name="difficulty" onchange="this.form.submit()">
-                <option value="">All difficulties</option>
-                {% for value, label in difficulty_choices %}
-                  <option value="{{ value }}"
-                    {% if value == difficulty %}selected{% endif %}>
-                    {{ label }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
+        <!-- DOMAIN -->
+        <div class="column is-one-third">
+          <div class="select is-small is-fullwidth">
+            <select name="domain" onchange="this.form.submit()">
+              <option value="">All domains</option>
+              {% for d in domains %}
+                <option value="{{ d.id }}"
+                  {% if d.id|stringformat:"s" == domain_id %}selected{% endif %}>
+                  {{ d.name }}
+                </option>
+              {% endfor %}
+            </select>
           </div>
+        </div>
 
-          <!-- Category -->
-          <div class="column is-half">
-            <div class="select is-small is-fullwidth">
-              <select name="category" onchange="this.form.submit()">
-                <option value="">All categories</option>
-                {% for cat in categories %}
+        <!-- CATEGORY -->
+        <div class="column is-one-third">
+          <div class="select is-small is-fullwidth">
+            <select name="category"
+                    onchange="this.form.submit()"
+                    {% if not domain_id %}disabled{% endif %}>
+              <option value="">All categories</option>
+              {% for cat in categories %}
+                {% if not cat.parent %}
                   <option value="{{ cat.id }}"
                     {% if cat.id|stringformat:"s" == category_id %}selected{% endif %}>
                     {{ cat.name }}
                   </option>
-                {% endfor %}
-              </select>
-            </div>
+                  {% for child in cat.children.all %}
+                    <option value="{{ child.id }}"
+                      {% if child.id|stringformat:"s" == category_id %}selected{% endif %}>
+                      &nbsp;&nbsp;↳ {{ child.name }}
+                    </option>
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+            </select>
           </div>
-
         </div>
-      </form>
 
-      <!-- ===============================
-           RESULT MESSAGE
-           =============================== -->
-      {% if result == "correct" %}
-        <div class="notification is-success">
-          ✅ Correct! Well done.
+        <!-- DIFFICULTY -->
+        <div class="column is-one-third">
+          <div class="select is-small is-fullwidth">
+            <select name="difficulty" onchange="this.form.submit()">
+              <option value="">All difficulties</option>
+              {% for value, label in difficulty_choices %}
+                <option value="{{ value }}"
+                  {% if value == difficulty %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
-      {% elif result == "wrong" %}
-        <div class="notification is-danger">
-          ❌ Incorrect.<br>
-          <strong>Correct answer:</strong> {{ correct_choice.text }}
-        </div>
-      {% endif %}
 
-      <!-- ===============================
-           QUESTION FORM
-           =============================== -->
-      <form method="post">
-        {% csrf_token %}
+      </div>
+    </form>
 
-        <p class="mb-4">
-          <strong>{{ question.text }}</strong>
+    <!-- ================= NO QUESTIONS ================= -->
+    {% if no_questions_message %}
+      <div class="notification is-warning">
+        ⚠️ {{ no_questions_message }}
+      </div>
+    {% endif %}
+
+    <!-- ================= RESULT ================= -->
+    {% if result == "correct" %}
+      <div class="notification is-success">✅ Correct!</div>
+    {% elif result == "wrong" %}
+      <div class="notification is-danger">
+        ❌ Incorrect<br>
+        <strong>Correct answer:</strong> {{ correct_choice.text }}
+      </div>
+    {% endif %}
+
+    <!-- ================= COMPLETED ================= -->
+    {% if not question and progress_total > 0 %}
+      <div class="notification is-info has-text-centered">
+        <h2 class="title is-5">🎉 Practice Completed!</h2>
+
+        <p class="mt-2">
+          You’ve completed all available practice questions
+          for the selected filters.
         </p>
 
-        {% for c in choices %}
-          <label class="practice-option
-            {% if result and c.id == correct_choice.id %}correct{% endif %}
-            {% if result == 'wrong' and c.id|stringformat:'s' == selected_choice_id %}wrong{% endif %}
-          ">
-            <input
-              type="radio"
-              name="choice"
-              value="{{ c.id }}"
-              {% if result == 'correct' %}disabled{% endif %}
-              {% if c.id|stringformat:'s' == selected_choice_id %}checked{% endif %}
-              required
-            >
-            {{ c.text }}
-          </label>
-        {% endfor %}
+        <p class="has-text-grey mt-1">
+          Progress: {{ progress_done }} / {{ progress_total }}
+        </p>
 
-        <div class="mt-4 is-flex is-justify-content-space-between">
-          {% if show_next %}
-            <button class="button is-link" name="next" value="1" autofocus>
-              Next Question →
-            </button>
-          {% else %}
-            <button class="button is-primary">
-              Submit Answer
-            </button>
-          {% endif %}
+        <progress class="progress is-small is-primary"
+                  value="{{ progress_done }}"
+                  max="{{ progress_total }}"></progress>
 
-          <a href="{% url 'quiz:practice' %}" class="button is-light">
-            🔄 Reset
+        <div class="buttons is-centered mt-4">
+          <a href="{% url 'quiz:practice' %}?reset=1"
+             class="button is-light">
+            🔄 Restart Practice
+          </a>
+
+          <a href="{% url 'quiz:practice_express' %}"
+             class="button is-light">
+            ⚡ Try Express
+          </a>
+
+          <a href="{% url 'quiz:exam_list' %}"
+             class="button is-link">
+            🚀 Upgrade to Pro
           </a>
         </div>
-      </form>
+      </div>
+    {% endif %}
 
-    </div>
-  {% endif %}
+    <!-- ================= QUESTION ================= -->
+    {% if question %}
+    <form method="post">
+      {% csrf_token %}
 
+      <!-- Preserve filters -->
+      {% if domain_id %}<input type="hidden" name="domain" value="{{ domain_id }}">{% endif %}
+      {% if category_id %}<input type="hidden" name="category" value="{{ category_id }}">{% endif %}
+      {% if difficulty %}<input type="hidden" name="difficulty" value="{{ difficulty }}">{% endif %}
+
+      <p class="mb-4"><strong>{{ question.text }}</strong></p>
+
+      {% for c in choices %}
+        <label class="practice-option
+          {% if result and c.id == correct_choice.id %}correct{% endif %}
+          {% if result == 'wrong' and c.id|stringformat:'s' == selected_choice_id %}wrong{% endif %}">
+          <input type="radio"
+                 name="choice"
+                 value="{{ c.id }}"
+                 {% if c.id|stringformat:'s' == selected_choice_id %}checked{% endif %}
+                 {% if result == 'correct' %}disabled{% endif %}
+                 required>
+          {{ c.text }}
+        </label>
+      {% endfor %}
+
+      <div class="mt-4 is-flex is-justify-content-space-between">
+        {% if show_next %}
+          <button class="button is-link" name="next" value="1">
+            Next →
+          </button>
+        {% else %}
+          <button class="button is-primary">
+            Submit
+          </button>
+        {% endif %}
+
+        <a href="{% url 'quiz:practice' %}?reset=1"
+           class="button is-light">
+          🔄 Reset
+        </a>
+      </div>
+    </form>
+    {% endif %}
+
+  </div>
 </div>
 {% endblock %}

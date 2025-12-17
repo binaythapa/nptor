@@ -3,11 +3,7 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from django.forms import widgets
-from .models import (
-    Category, Question, Choice, Exam,
-    UserExam, UserAnswer, ExamCategoryAllocation, Notification, Client,
-    QuestionFeedback
-)
+from .models import *
 
 import csv
 from django.http import HttpResponse
@@ -249,3 +245,25 @@ class QuestionFeedbackAdmin(admin.ModelAdmin):
         updated = queryset.update(status=QuestionFeedback.STATUS_RESOLVED)
         self.message_user(request, f"{updated} feedback item(s) marked as RESOLVED.")
     mark_as_resolved.short_description = "Mark selected feedback as resolved"
+
+
+
+
+
+# =====================================================
+# DOMAIN
+# =====================================================
+@admin.register(Domain)
+class DomainAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'is_active')
+    prepopulated_fields = {'slug': ('name',)}
+
+
+    # =====================================================
+# DIFFICULTY  ✅ NEW & IMPORTANT
+# =====================================================
+@admin.register(Difficulty)
+class DifficultyAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug')
+    ordering = ('name',)
+    prepopulated_fields = {'slug': ('name',)}

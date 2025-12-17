@@ -89,111 +89,124 @@ from .models import Question, Choice, Category, PracticeStat
 # BASIC PRACTICE
 # =====================================================
 from django.shortcuts import render, redirect
-from .models import Question, Choice, Category
+from django.contrib.auth.decorators import login_required
+from .models import Question, Choice, Domain, Category
 
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Question, Choice, Domain, Category
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Question, Choice, Domain, Category
+
+
+@login_required
 def practice(request):
     """
-    Basic Practice Mode
-    - No repeated questions (session-based)
-    - Supports difficulty + category filters
-    - Progress tracking
-    - Explicit reset support
+    FINAL Practice View
+    - Filters persist (GET + POST)
+    - Domain → Category dependency
+    - Inline no-question message
+    - Progress denominator is FIXED (does not reset)
     """
 
     # =====================================================
-    # EXPLICIT RESET (Restart Practice button)
+    # RESET PRACTICE
     # =====================================================
     if request.GET.get("reset") == "1":
-        request.session.pop("practice_seen_qids", None)
-        request.session.pop("practice_qid", None)
-        request.session.pop("practice_count", None)
-        request.session.pop("practice_filters", None)
+        for k in [
+            "practice_seen_qids",
+            "practice_qid",
+            "practice_count",
+            "practice_filters",
+            "practice_total",
+        ]:
+            request.session.pop(k, None)
         return redirect("quiz:practice")
 
     # =====================================================
-    # Read & normalize filters
+    # READ FILTERS (POST FIRST, THEN GET)
     # =====================================================
-    difficulty = request.GET.get("difficulty")
-    category_id = request.GET.get("category")
+    domain_id = request.POST.get("domain") or request.GET.get("domain")
+    category_id = request.POST.get("category") or request.GET.get("category")
+    difficulty = request.POST.get("difficulty") or request.GET.get("difficulty")
 
-    if difficulty in ["", "None", None]:
-        difficulty = None
-
-    if category_id in ["", "None", None]:
-        category_id = None
+    domain_id = domain_id if domain_id not in ["", None] else None
+    category_id = category_id if category_id not in ["", None] else None
+    difficulty = difficulty if difficulty not in ["", None] else None
 
     current_filters = {
+        "domain": domain_id,
+        "category": category_id,
         "difficulty": difficulty,
-        "category": category_id
     }
 
     last_filters = request.session.get("practice_filters")
 
     # =====================================================
-    # Reset session if filters changed
+    # BASE QUERYSET (USED FOR TOTAL COUNT)
     # =====================================================
-    if last_filters != current_filters:
+    base_qs = Question.objects.filter(question_type=Question.SINGLE)
+
+    if difficulty:
+        base_qs = base_qs.filter(difficulty=difficulty)
+
+    selected_domain = None
+    if domain_id and domain_id.isdigit():
+        selected_domain = Domain.objects.filter(id=domain_id, is_active=True).first()
+        if selected_domain:
+            base_qs = base_qs.filter(category__domain=selected_domain)
+
+    if category_id and category_id.isdigit() and selected_domain:
+        cat = Category.objects.filter(
+            id=category_id,
+            domain=selected_domain,
+            is_active=True
+        ).first()
+        if cat:
+            base_qs = base_qs.filter(
+                category_id__in=cat.get_descendants_include_self()
+            )
+
+    # =====================================================
+    # RESET SESSION IF FILTERS CHANGED
+    # =====================================================
+    if current_filters != last_filters:
         request.session["practice_filters"] = current_filters
         request.session["practice_seen_qids"] = []
         request.session["practice_count"] = 0
         request.session.pop("practice_qid", None)
 
+        # 🔒 FREEZE TOTAL QUESTIONS FOR THIS FILTER SET
+        request.session["practice_total"] = base_qs.count()
+
     seen_qids = request.session.get("practice_seen_qids", [])
     practice_count = request.session.get("practice_count", 0)
+    practice_total = request.session.get("practice_total", base_qs.count())
 
     # =====================================================
-    # Base queryset
+    # REMAINING QUESTIONS
     # =====================================================
-    qs = Question.objects.filter(question_type=Question.SINGLE)
+    remaining_qs = base_qs.exclude(id__in=seen_qids)
 
-    valid_difficulties = [d[0] for d in Question.DIFFICULTY_CHOICES]
-    if difficulty in valid_difficulties:
-        qs = qs.filter(difficulty=difficulty)
-
-    if category_id and str(category_id).isdigit():
-        qs = qs.filter(category_id=int(category_id))
-
-    total_questions = qs.count()
+    no_questions_message = None
+    if practice_total == 0:
+        no_questions_message = "No practice questions available for the selected filters."
 
     # =====================================================
-    # No questions at all
+    # PICK QUESTION
     # =====================================================
-    if total_questions == 0:
-        return render(request, "quiz/practice.html", {
-            "no_questions": True,
-            "categories": Category.objects.all(),
-            "difficulty_choices": Question.DIFFICULTY_CHOICES,
-        })
+    question = None
+    if remaining_qs.exists():
+        qid = request.session.get("practice_qid")
+        question = remaining_qs.filter(id=qid).first() if qid else None
+        if not question:
+            question = remaining_qs.order_by("?").first()
+            request.session["practice_qid"] = question.id
 
-    # =====================================================
-    # Exclude already practiced questions
-    # =====================================================
-    qs = qs.exclude(id__in=seen_qids)
-
-    # =====================================================
-    # Practice completed (all questions done)
-    # =====================================================
-    if not qs.exists():
-        return render(request, "quiz/practice.html", {
-            "question": None,
-            "practice_count": practice_count,
-            "progress_done": len(seen_qids),
-            "progress_total": total_questions,
-            "no_questions": False,
-        })
-
-    # =====================================================
-    # Load current question
-    # =====================================================
-    qid = request.session.get("practice_qid")
-    question = qs.filter(id=qid).first() if qid else None
-
-    if not question:
-        question = qs.order_by("?").first()
-        request.session["practice_qid"] = question.id
-
-    choices = question.choices.order_by("order", "id")
+    choices = question.choices.order_by("order", "id") if question else []
 
     result = None
     correct_choice = None
@@ -201,15 +214,14 @@ def practice(request):
     show_next = False
 
     # =====================================================
-    # Handle answer submit
+    # SUBMIT ANSWER
     # =====================================================
-    if request.method == "POST" and request.POST.get("next") != "1":
+    if request.method == "POST" and question and request.POST.get("next") != "1":
         selected_choice_id = request.POST.get("choice")
         correct_choice = choices.filter(is_correct=True).first()
 
         if selected_choice_id:
             selected = Choice.objects.filter(id=selected_choice_id).first()
-
             if selected and selected.is_correct:
                 result = "correct"
                 show_next = True
@@ -219,16 +231,37 @@ def practice(request):
                 result = "wrong"
 
     # =====================================================
-    # Handle next question
+    # NEXT QUESTION (FILTERS PRESERVED)
     # =====================================================
-    if request.method == "POST" and request.POST.get("next") == "1":
+    if request.method == "POST" and request.POST.get("next") == "1" and question:
         seen_qids.append(question.id)
         request.session["practice_seen_qids"] = seen_qids
         request.session.pop("practice_qid", None)
-        return redirect(request.path)
+
+        query = []
+        if domain_id:
+            query.append(f"domain={domain_id}")
+        if category_id:
+            query.append(f"category={category_id}")
+        if difficulty:
+            query.append(f"difficulty={difficulty}")
+
+        redirect_url = request.path
+        if query:
+            redirect_url += "?" + "&".join(query)
+
+        return redirect(redirect_url)
 
     # =====================================================
-    # Render page
+    # CATEGORIES (DOMAIN-SCOPED)
+    # =====================================================
+    categories = (
+        Category.objects.filter(domain=selected_domain, is_active=True)
+        if selected_domain else Category.objects.none()
+    )
+
+    # =====================================================
+    # RENDER
     # =====================================================
     return render(request, "quiz/practice.html", {
         "question": question,
@@ -238,15 +271,21 @@ def practice(request):
         "selected_choice_id": selected_choice_id,
         "show_next": show_next,
 
-        "difficulty": difficulty,
-        "category_id": category_id,
-        "categories": Category.objects.all(),
-        "difficulty_choices": Question.DIFFICULTY_CHOICES,
+        "domains": Domain.objects.filter(is_active=True),
+        "categories": categories,
 
+        "domain_id": domain_id,
+        "category_id": category_id,
+        "difficulty": difficulty,
+
+        "difficulty_choices": Question.DIFFICULTY_CHOICES,
         "practice_count": practice_count,
+
+        # ✅ FIXED PROGRESS
         "progress_done": len(seen_qids),
-        "progress_total": total_questions,
-        "no_questions": False,
+        "progress_total": practice_total,
+
+        "no_questions_message": no_questions_message,
     })
 
 
@@ -261,76 +300,131 @@ def practice(request):
 
 
 
+
+
+
+
+import random
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET, require_POST
+from django.utils import timezone
+
+from .models import Domain, Category, Question, PracticeStat
+
+
 # =====================================================
-# PRACTICE EXPRESS PAGE
+# PRACTICE EXPRESS – PAGE
 # =====================================================
+@login_required
 def practice_express(request):
     return render(request, "quiz/practice_express.html", {
-        "categories": Category.objects.all(),
+        "domains": Domain.objects.filter(is_active=True),
+        "categories": Category.objects.none(),
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
     })
 
 
 # =====================================================
-# PRACTICE EXPRESS – NEXT QUESTION
+# PRACTICE EXPRESS – NEXT QUESTION (AJAX)
 # =====================================================
 @require_GET
 def practice_express_next(request):
-    qs_base = Question.objects.filter(
-        question_type=Question.SINGLE
-    ).prefetch_related("choices")
 
-    category = request.GET.get("category")
+    # -------------------------------
+    # READ FILTERS
+    # -------------------------------
+    domain_id = request.GET.get("domain")
+    category_id = request.GET.get("category")
     difficulty = request.GET.get("difficulty")
 
-    if category in ["", "None", None]:
-        category = None
-    if difficulty in ["", "None", None]:
-        difficulty = None
+    domain_id = domain_id if domain_id and domain_id.isdigit() else None
+    category_id = category_id if category_id and category_id.isdigit() else None
+    difficulty = difficulty if difficulty else None
 
-    # -----------------------------
-    # Reset seen questions if filters changed
-    # -----------------------------
-    current_filters = {"category": category, "difficulty": difficulty}
-    if request.session.get("pe_filters") != current_filters:
+    current_filters = {
+        "domain": domain_id,
+        "category": category_id,
+        "difficulty": difficulty,
+    }
+
+    last_filters = request.session.get("pe_filters")
+
+    # -------------------------------
+    # BASE QUERYSET (SAFE)
+    # -------------------------------
+    qs = Question.objects.filter(
+        question_type=Question.SINGLE,
+        category__isnull=False
+    ).prefetch_related("choices")
+
+    # -------------------------------
+    # DOMAIN FILTER (KEY FIX)
+    # -------------------------------
+    if domain_id:
+        qs = qs.filter(category__domain_id=domain_id)
+
+    # -------------------------------
+    # CATEGORY FILTER (WITH DESCENDANTS)
+    # -------------------------------
+    if category_id:
+        cat = Category.objects.filter(
+            id=category_id,
+            domain_id=domain_id,
+            is_active=True
+        ).first()
+        if cat:
+            qs = qs.filter(
+                category_id__in=cat.get_descendants_include_self()
+            )
+
+    # -------------------------------
+    # DIFFICULTY FILTER
+    # -------------------------------
+    if difficulty:
+        qs = qs.filter(difficulty=difficulty)
+
+    # -------------------------------
+    # RESET WHEN FILTERS CHANGE
+    # -------------------------------
+    if current_filters != last_filters:
         request.session["pe_filters"] = current_filters
         request.session["pe_seen_qids"] = []
+        request.session["pe_total"] = qs.count()
 
     seen_qids = request.session.get("pe_seen_qids", [])
+    total_questions = request.session.get("pe_total", qs.count())
 
-    # -----------------------------
-    # Apply filters
-    # -----------------------------
-    if category and str(category).isdigit():
-        qs_base = qs_base.filter(category_id=int(category))
-    if difficulty:
-        qs_base = qs_base.filter(difficulty=difficulty)
+    # -------------------------------
+    # NO QUESTIONS
+    # -------------------------------
+    if total_questions == 0:
+        return JsonResponse({
+            "no_questions": True,
+            "progress_done": 0,
+            "progress_total": 0,
+        })
 
-    # -----------------------------
-    # TOTAL QUESTIONS (FIXED)
-    # -----------------------------
-    total_questions = qs_base.count()
+    # -------------------------------
+    # REMAINING QUESTIONS
+    # -------------------------------
+    remaining = qs.exclude(id__in=seen_qids)
 
-    # -----------------------------
-    # Remaining questions
-    # -----------------------------
-    remaining = qs_base.exclude(id__in=seen_qids)
-
-    # -----------------------------
-    # Practice completed
-    # -----------------------------
+    # -------------------------------
+    # COMPLETED
+    # -------------------------------
     if not remaining.exists():
         request.session["pe_seen_qids"] = []
         return JsonResponse({
-            "reset": True,
+            "completed": True,
             "progress_done": total_questions,
-            "progress_total": total_questions
+            "progress_total": total_questions,
         })
 
-    # -----------------------------
-    # Pick next question
-    # -----------------------------
-    question = random.choice(list(remaining))
+    # -------------------------------
+    # PICK NEXT QUESTION (SAFE)
+    # -------------------------------
+    question = remaining.order_by("?").first()
     correct = question.choices.filter(is_correct=True).first()
 
     seen_qids.append(question.id)
@@ -346,161 +440,29 @@ def practice_express_next(request):
             for c in question.choices.all()
         ],
         "progress_done": len(seen_qids),
-        "progress_total": total_questions
-    })
-
-# =====================================================
-# PRACTICE EXPRESS – SAVE RESULT
-# =====================================================
-@require_POST
-@login_required
-def practice_express_save(request):
-    question_id = request.POST.get("question_id")
-    is_correct = request.POST.get("is_correct") == "true"
-
-    question = Question.objects.select_related("category").get(id=question_id)
-    today = timezone.now().date()
-
-    stat, _ = PracticeStat.objects.get_or_create(
-        user=request.user,
-        category=question.category
-    )
-
-    if stat.last_practice_date == today:
-        pass
-    elif stat.last_practice_date == today - timezone.timedelta(days=1):
-        stat.streak += 1
-    else:
-        stat.streak = 1
-
-    stat.last_practice_date = today
-    stat.total_attempted += 1
-    if is_correct:
-        stat.total_correct += 1
-
-    stat.save()
-
-    return JsonResponse({
-        "total": stat.total_attempted,
-        "correct": stat.total_correct,
-        "accuracy": stat.accuracy(),
-        "streak": stat.streak
-    })
-
-
-
-
-
-
-
-
-
-
-
-######################################################################################
-# quiz/views.py (Practice Express)
-
-import random
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET, require_POST
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-
-from .models import Question, Choice, Category, PracticeStat
-
-
-# =====================================================
-# PRACTICE EXPRESS – PAGE
-# =====================================================
-def practice_express(request):
-    """
-    Practice Express main page (AJAX driven)
-    Public access (no login required)
-    """
-    return render(request, "quiz/practice_express.html", {
-        "categories": Category.objects.all(),
-        "difficulty_choices": Question.DIFFICULTY_CHOICES,
+        "progress_total": total_questions,
     })
 
 
 # =====================================================
-# PRACTICE EXPRESS – LOAD NEXT QUESTION (AJAX)
+# AJAX: LOAD CATEGORIES BY DOMAIN
 # =====================================================
 @require_GET
-def practice_express_next(request):
-    qs = Question.objects.filter(
-        question_type=Question.SINGLE
-    ).prefetch_related("choices")
+def ajax_categories_by_domain(request):
+    domain_id = request.GET.get("domain")
 
-    # -----------------------------
-    # Read & normalize filters
-    # -----------------------------
-    category = request.GET.get("category")
-    difficulty = request.GET.get("difficulty")
+    if not domain_id or not domain_id.isdigit():
+        return JsonResponse({"categories": []})
 
-    if category in ["", "None", None]:
-        category = None
-    if difficulty in ["", "None", None]:
-        difficulty = None
-
-    current_filters = {
-        "category": category,
-        "difficulty": difficulty
-    }
-
-    last_filters = request.session.get("pe_filters")
-
-    # -----------------------------
-    # Reset session if filters changed
-    # -----------------------------
-    if last_filters != current_filters:
-        request.session["pe_filters"] = current_filters
-        request.session["pe_seen_qids"] = []
-
-    seen_qids = request.session.get("pe_seen_qids", [])
-
-    # -----------------------------
-    # Apply filters
-    # -----------------------------
-    if category and str(category).isdigit():
-        qs = qs.filter(category_id=int(category))
-
-    if difficulty:
-        qs = qs.filter(difficulty=difficulty)
-
-    # -----------------------------
-    # Exclude already served questions
-    # -----------------------------
-    qs = qs.exclude(id__in=seen_qids)
-
-    # -----------------------------
-    # All questions exhausted → reset
-    # -----------------------------
-    if not qs.exists():
-        request.session["pe_seen_qids"] = []
-        return JsonResponse({"reset": True})
-
-    # -----------------------------
-    # Pick random question
-    # -----------------------------
-    question = random.choice(list(qs))
-    correct = question.choices.filter(is_correct=True).first()
-
-    # mark as seen
-    seen_qids.append(question.id)
-    request.session["pe_seen_qids"] = seen_qids
+    categories = Category.objects.filter(
+        domain_id=domain_id,
+        is_active=True
+    ).values("id", "name", "parent_id")
 
     return JsonResponse({
-        "id": question.id,
-        "text": question.text,
-        "explanation": question.explanation or "",
-        "correct_choice": correct.id if correct else None,
-        "choices": [
-            {"id": c.id, "text": c.text}
-            for c in question.choices.all()
-        ]
+        "categories": list(categories)
     })
+
 
 
 # =====================================================
