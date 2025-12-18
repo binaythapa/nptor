@@ -16,7 +16,7 @@ SECRET_KEY = os.environ.get(
     "django-insecure-change-me-please"
 )
 
-'''
+
 DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = (
@@ -28,6 +28,7 @@ ALLOWED_HOSTS = (
 
 DEBUG = True
 ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
+'''
 
 # ============================================================
 # APPLICATION DEFINITION
@@ -188,17 +189,15 @@ AUTHENTICATION_BACKENDS = [
 # ============================================================
 # EMAIL CONFIGURATION
 # ============================================================
-if DEBUG:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = "smtp.gmail.com"
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "tbinay5@gmail.com")
-EMAIL_HOST_PASSWORD = os.environ.get("ykex bzxs lesd zwke")
-DEFAULT_FROM_EMAIL = "nptor <tbinay5@gmail.com>"
+EMAIL_HOST_USER = 'tbinay5@gmail.com'
+EMAIL_HOST_PASSWORD = 'ykex bzxs lesd zwke'  # ← no quotes if spaces
+DEFAULT_FROM_EMAIL = 'Nepal Mentor <tbinay5@gmail.com>'
 
 
 # ============================================================
