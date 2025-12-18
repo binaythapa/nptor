@@ -595,6 +595,16 @@ from django.urls import reverse_lazy
 from django.core.mail import send_mail
 from .forms import CustomerRegisterForm
 
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from django.contrib.auth import login, authenticate, get_user_model
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.db import IntegrityError
+from django.conf import settings
+
+User = get_user_model()
+
 
 class CustomerRegisterView(CreateView):
     template_name = 'registration/customerregister.html'
@@ -603,6 +613,7 @@ class CustomerRegisterView(CreateView):
 
     def form_valid(self, form):
         cleaned = form.cleaned_data
+
         email = cleaned.get('email')
         password = cleaned.get('password')
         username = cleaned.get('username')
@@ -610,7 +621,7 @@ class CustomerRegisterView(CreateView):
         last_name = cleaned.get('last_name')
 
         try:
-            # Create User with real username + first/last name
+            # 1️⃣ Create user
             user = User.objects.create_user(
                 username=username,
                 email=email,
@@ -619,47 +630,43 @@ class CustomerRegisterView(CreateView):
                 last_name=last_name
             )
 
-            # Link Client to User
+            # 2️⃣ Create client profile
             client = form.save(commit=False)
             client.user = user
             client.save()
 
-            # Send Welcome Email
-            send_mail(
-                subject="Welcome to nptor.com – Your Learning Journey Starts Now!",
-                message=f"""
-Hello {first_name or username},
+            # 3️⃣ Send welcome email (SAFE)
+            try:
+                send_mail(
+                    subject="Welcome to nptor.com - Your Learning Journey Starts Now!",
+                    message=(
+                        f"Hello {first_name or username},\n\n"
+                        "Thank you for joining nptor.com.\n\n"
+                        "Your account has been created successfully.\n\n"
+                        f"Login here: https://nptor.com/quiz/login/\n\n"
+                        "Happy Learning!\n"
+                        "Team nptor.com"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=True,   # ✅ NEVER break registration
+                )
+            except Exception:
+                pass
 
-Thank you for joining nptor.com – Nepal's trusted online education platform!
-
-Your account has been created successfully with:
-Email: {email}
-
-You can now:
-• Access hundreds of video courses
-• Join live classes & workshops
-• Download study materials
-• Track your progress and earn certificates
-
-Login here: http://127.0.0.1:8000/quiz/login/
-
-We're thrilled to have you in our learning community!
-
-Happy Learning!
-Team nptor.com
-""",
-                from_email='tbinay5@gmail.com',
-                recipient_list=[email],
-                fail_silently=False,
-            )
-
-            # Auto-login using username now
+            # 4️⃣ Auto login
             user = authenticate(username=username, password=password)
             if user:
                 login(self.request, user)
-                messages.success(self.request, f"Welcome, {first_name or username}! You're now logged in.")
+                messages.success(
+                    self.request,
+                    f"Welcome, {first_name or username}! You are now logged in."
+                )
             else:
-                messages.warning(self.request, "Account created! Please log in.")
+                messages.info(
+                    self.request,
+                    "Account created successfully. Please log in."
+                )
 
             return super().form_valid(form)
 
@@ -673,6 +680,7 @@ Team nptor.com
     def form_invalid(self, form):
         messages.error(self.request, "Please correct the errors below.")
         return super().form_invalid(form)
+
 
 
 
