@@ -66,12 +66,7 @@
   <div class="level">
     <div class="level-left">
       <div>
-        <p>
-          <strong>Matched:</strong>
-          <span id="matched">0</span> /
-          <span id="total">0</span>
-        </p>
-
+        <p><strong>Matched:</strong> <span id="matched">0</span> / <span id="total">0</span></p>
         <p><strong>Accuracy:</strong> <span id="accuracy">0%</span></p>
 
         <p class="is-size-7 has-text-grey">
@@ -80,56 +75,49 @@
           <span id="pTotal">0</span>
         </p>
 
-        <progress id="pBar"
-                  class="progress is-small is-link"
-                  value="0"
-                  max="0"></progress>
+        <progress id="pBar" class="progress is-small is-link" value="0" max="0"></progress>
       </div>
     </div>
 
-    <div class="level-right is-flex is-align-items-center">
+    <div class="level-right">
       <span class="tag is-warning is-light mr-3">
         ⏱ <span id="timer">30</span>s
       </span>
-      <button id="resetBtn" class="button is-small is-light">
-        🔄 Restart
-      </button>
+      <button id="resetBtn" class="button is-small is-light">🔄 Restart</button>
     </div>
   </div>
-
 </div>
 
-<!-- QUESTION CARD -->
+<!-- QUESTION -->
 <div class="box">
   <p id="qText" class="mb-4 has-text-weight-semibold">Loading…</p>
 
   <form onsubmit="submitAnswer(); return false;">
     <div id="choices" class="mb-4"></div>
-    <button type="submit" class="button is-success">
-      Submit
-    </button>
+    <button type="submit" class="button is-success">Submit</button>
   </form>
 
   <div id="feedback" class="notification is-hidden mt-4"></div>
 </div>
 
-<!-- END / LIMIT MESSAGE -->
+<!-- END / LIMIT -->
 <div id="endMessage" class="notification is-info is-light is-hidden mt-4"></div>
 
 <script>
 /* ===============================
    STATE
 ================================ */
-let correctChoice = null;
+let questionType = "single";
+let correctChoices = [];
 let matched = 0;
 let total = 0;
+
+let timerInterval = null;
+let timeLeft = 30;
 
 /* ===============================
    TIMER
 ================================ */
-let timerInterval = null;
-let timeLeft = 30;
-
 function startTimer(){
   clearInterval(timerInterval);
   timeLeft = 30;
@@ -140,12 +128,12 @@ function startTimer(){
     timer.innerText = timeLeft;
     if(timeLeft <= 0){
       clearInterval(timerInterval);
-      submitTimeout();
+      handleTimeout();
     }
   }, 1000);
 }
 
-function submitTimeout(){
+function handleTimeout(){
   total++;
   totalSpan.innerText = total;
   showFeedback(false, true);
@@ -167,12 +155,11 @@ function loadQuestion(){
     .then(r => r.json())
     .then(d => {
 
-      /* 🔒 LIMIT REACHED */
       if(d.limit_reached){
         endMessage.classList.remove("is-hidden");
         endMessage.innerHTML = `
           <p class="has-text-weight-semibold">🔒 Free limit reached</p>
-          <p class="mt-2">${d.message}</p>
+          <p>${d.message}</p>
           <div class="buttons mt-3">
             <a href="{% url 'quiz:login' %}" class="button is-primary">Login</a>
             <a href="{% url 'quiz:practice' %}" class="button is-light">Try Basics</a>
@@ -182,14 +169,12 @@ function loadQuestion(){
         return;
       }
 
-      /* ✅ COMPLETED */
       if(d.completed){
         endMessage.classList.remove("is-hidden");
         endMessage.innerHTML = `
           <p class="has-text-weight-semibold">🎉 Practice completed!</p>
-          <p class="mt-2">Unlock exams & analytics in Pro mode.</p>
           <div class="buttons mt-3">
-            <a href="{% url 'quiz:exam_list' %}" class="button is-link">🚀 Go Pro</a>
+            <a href="{% url 'quiz:exam_list' %}" class="button is-link">Go Pro</a>
             <a href="{% url 'quiz:practice' %}" class="button is-light">Try Basics</a>
           </div>
         `;
@@ -198,15 +183,18 @@ function loadQuestion(){
       }
 
       /* NORMAL QUESTION */
-      correctChoice = d.correct_choice;
+      questionType = d.question_type;
+      correctChoices = d.correct_choices;
+
       qText.innerText = d.text;
       choices.innerHTML = "";
       feedback.classList.add("is-hidden");
 
       d.choices.forEach(c => {
+        const type = (questionType === "multi") ? "checkbox" : "radio";
         choices.insertAdjacentHTML("beforeend", `
           <label class="radio block mb-2">
-            <input type="radio" name="ans" value="${c.id}">
+            <input type="${type}" name="ans" value="${c.id}">
             ${c.text}
           </label>
         `);
@@ -218,23 +206,37 @@ function loadQuestion(){
 }
 
 /* ===============================
-   SUBMIT ANSWER
+   SUBMIT
 ================================ */
 function submitAnswer(){
   clearInterval(timerInterval);
-  const sel = document.querySelector('input[name="ans"]:checked');
-  if(!sel){ alert("Select an option"); return; }
+
+  const selected = [...document.querySelectorAll('input[name="ans"]:checked')]
+                    .map(i => Number(i.value));
+
+  if(selected.length === 0){
+    alert("Select an option");
+    return;
+  }
 
   total++;
   totalSpan.innerText = total;
 
-  const isCorrect = Number(sel.value) === Number(correctChoice);
-  if(isCorrect) matched++;
+  let isCorrect = false;
 
+  if(questionType === "multi"){
+    isCorrect =
+      selected.length === correctChoices.length &&
+      selected.every(v => correctChoices.includes(v));
+  } else {
+    isCorrect = correctChoices.includes(selected[0]);
+  }
+
+  if(isCorrect) matched++;
   matchedSpan.innerText = matched;
   updateAccuracy();
-  showFeedback(isCorrect, false);
 
+  showFeedback(isCorrect, false);
   setTimeout(loadQuestion, 1200);
 }
 
@@ -276,7 +278,7 @@ function resetPractice(){
 }
 
 /* ===============================
-   DOMAIN → CATEGORY (AJAX)
+   DOMAIN → CATEGORY
 ================================ */
 domainSelect.onchange = () => {
   resetPractice();
@@ -307,6 +309,7 @@ resetBtn.onclick = resetPractice;
 ================================ */
 const matchedSpan = document.getElementById("matched");
 const totalSpan = document.getElementById("total");
+
 loadQuestion();
 </script>
 

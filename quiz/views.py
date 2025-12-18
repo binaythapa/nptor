@@ -89,53 +89,27 @@ from .models import Question, Choice, Category, PracticeStat
 # BASIC PRACTICE
 # =====================================================
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Question, Choice, Domain, Category
-
-
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Question, Choice, Domain, Category
-
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Question, Choice, Domain, Category
-
-
-
-
-
-
-
-from django.shortcuts import render, redirect
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from .models import Question, Choice, Domain, Category
-
-from django.conf import settings
 
 def practice(request):
     """
     BASIC PRACTICE (PUBLIC)
-    - No login required
+    - Supports SINGLE / MULTI / TRUE-FALSE
     - Domain → Category → Difficulty filters
-    - Fixed progress denominator
-    - Anonymous question limit from settings.py
+    - Anonymous limit from settings.py
+    - Correct / Wrong feedback
     """
 
     # =====================================================
-    # RESET PRACTICE
+    # RESET
     # =====================================================
     if request.GET.get("reset") == "1":
-        for key in [
-            "practice_seen_qids",
-            "practice_qid",
-            "practice_filters",
-            "practice_total",
-            "practice_anon_attempted",
-            "practice_count",
+        for k in [
+            "p_seen", "p_qid", "p_filters",
+            "p_total", "p_anon_count"
         ]:
-            request.session.pop(key, None)
+            request.session.pop(k, None)
         return redirect("quiz:practice")
 
     # =====================================================
@@ -145,32 +119,31 @@ def practice(request):
     category_id = request.POST.get("category") or request.GET.get("category")
     difficulty = request.POST.get("difficulty") or request.GET.get("difficulty")
 
-    domain_id = domain_id if domain_id not in ["", None] else None
-    category_id = category_id if category_id not in ["", None] else None
-    difficulty = difficulty if difficulty not in ["", None] else None
-
-    current_filters = {
+    filters = {
         "domain": domain_id,
         "category": category_id,
         "difficulty": difficulty,
     }
 
-    last_filters = request.session.get("practice_filters")
+    last_filters = request.session.get("p_filters")
 
     # =====================================================
-    # BASE QUERYSET
+    # BASE QUERYSET (IMPORTANT FIX)
     # =====================================================
-    base_qs = Question.objects.filter(
-        question_type=Question.SINGLE
+    qs = Question.objects.filter(
+        question_type__in=[
+            Question.SINGLE,
+            Question.MULTI,
+            Question.TRUE_FALSE
+        ]
     ).prefetch_related("choices")
 
     selected_domain = None
+
     if domain_id and domain_id.isdigit():
-        selected_domain = Domain.objects.filter(
-            id=domain_id, is_active=True
-        ).first()
+        selected_domain = Domain.objects.filter(id=domain_id, is_active=True).first()
         if selected_domain:
-            base_qs = base_qs.filter(category__domain=selected_domain)
+            qs = qs.filter(category__domain=selected_domain)
 
     if category_id and category_id.isdigit() and selected_domain:
         cat = Category.objects.filter(
@@ -179,135 +152,122 @@ def practice(request):
             is_active=True
         ).first()
         if cat:
-            base_qs = base_qs.filter(
-                category_id__in=cat.get_descendants_include_self()
-            )
+            qs = qs.filter(category_id__in=cat.get_descendants_include_self())
 
     if difficulty:
-        base_qs = base_qs.filter(difficulty=difficulty)
+        qs = qs.filter(difficulty=difficulty)
 
     # =====================================================
-    # RESET SESSION IF FILTERS CHANGED
+    # RESET SESSION ON FILTER CHANGE
     # =====================================================
-    if current_filters != last_filters:
-        request.session["practice_filters"] = current_filters
-        request.session["practice_seen_qids"] = []
-        request.session.pop("practice_qid", None)
-        request.session["practice_total"] = base_qs.count()
-        request.session["practice_count"] = 0
+    if filters != last_filters:
+        request.session["p_filters"] = filters
+        request.session["p_seen"] = []
+        request.session.pop("p_qid", None)
+        request.session["p_total"] = qs.count()
 
-    seen_qids = request.session.get("practice_seen_qids", [])
-    practice_total = request.session.get("practice_total", base_qs.count())
-    practice_count = request.session.get("practice_count", 0)
+    seen = request.session.get("p_seen", [])
+    total = request.session.get("p_total", qs.count())
 
     # =====================================================
-    # 🔒 ANONYMOUS USER LIMIT
+    # ANON LIMIT
     # =====================================================
     if not request.user.is_authenticated:
         limit = getattr(settings, "BASICS_ANON_LIMIT", 0)
-        anon_attempted = request.session.get("practice_anon_attempted", 0)
+        used = request.session.get("p_anon_count", 0)
 
-        if anon_attempted >= limit:
+        if limit and used >= limit:
             return render(request, "quiz/practice.html", {
-                "question": None,
-                "choices": [],
+                "limit_reached": True,
+                "progress_done": used,
+                "progress_total": limit,
                 "domains": Domain.objects.filter(is_active=True),
                 "categories": Category.objects.none(),
                 "difficulty_choices": Question.DIFFICULTY_CHOICES,
-
-                "limit_reached": True,
-                "limit_message": f"You’ve reached the free limit of {limit} question(s).",
-
-                "practice_count": practice_count,
-                "progress_done": anon_attempted,
-                "progress_total": limit,
             })
 
     # =====================================================
-    # REMAINING QUESTIONS
+    # REMAINING
     # =====================================================
-    remaining_qs = base_qs.exclude(id__in=seen_qids)
+    remaining = qs.exclude(id__in=seen)
 
-    if not remaining_qs.exists():
+    if not remaining.exists():
         return render(request, "quiz/practice.html", {
-            "question": None,
-            "choices": [],
             "completed": True,
-
+            "progress_done": total,
+            "progress_total": total,
             "domains": Domain.objects.filter(is_active=True),
             "categories": Category.objects.none(),
             "difficulty_choices": Question.DIFFICULTY_CHOICES,
-
-            "practice_count": practice_count,
-            "progress_done": practice_total,
-            "progress_total": practice_total,
         })
 
     # =====================================================
     # PICK QUESTION
     # =====================================================
-    qid = request.session.get("practice_qid")
-    question = remaining_qs.filter(id=qid).first() if qid else None
+    qid = request.session.get("p_qid")
+    question = remaining.filter(id=qid).first() if qid else None
 
     if not question:
-        question = remaining_qs.order_by("?").first()
-        request.session["practice_qid"] = question.id
+        question = remaining.order_by("?").first()
+        request.session["p_qid"] = question.id
 
     choices = question.choices.order_by("order", "id")
 
+    # =====================================================
+    # STATE
+    # =====================================================
     result = None
-    correct_choice = choices.filter(is_correct=True).first()
-    selected_choice_id = None
     show_next = False
+    correct_choices = choices.filter(is_correct=True)
+    selected_choice_id = None
+    selected_multi_ids = []
 
     # =====================================================
-    # SUBMIT ANSWER (✅ FIXED)
+    # SUBMIT
     # =====================================================
     if request.method == "POST" and request.POST.get("next") != "1":
-        selected_choice_id = request.POST.get("choice")
 
-        if selected_choice_id:
-            selected = Choice.objects.filter(id=selected_choice_id).first()
-
-            if selected and selected.is_correct:
+        if question.question_type == Question.MULTI:
+            selected_multi_ids = list(
+                map(int, request.POST.getlist("choice_multi"))
+            )
+            correct_ids = list(correct_choices.values_list("id", flat=True))
+            if set(selected_multi_ids) == set(correct_ids):
                 result = "correct"
                 show_next = True
-                practice_count += 1
-                request.session["practice_count"] = practice_count
             else:
                 result = "wrong"
-                show_next = True   # allow Next even if wrong
+
+        else:
+            selected_choice_id = request.POST.get("choice")
+            if selected_choice_id:
+                selected = choices.filter(id=selected_choice_id).first()
+                if selected and selected.is_correct:
+                    result = "correct"
+                    show_next = True
+                else:
+                    result = "wrong"
 
     # =====================================================
-    # NEXT QUESTION
+    # NEXT
     # =====================================================
     if request.method == "POST" and request.POST.get("next") == "1":
-        seen_qids.append(question.id)
-        request.session["practice_seen_qids"] = seen_qids
-        request.session.pop("practice_qid", None)
+        seen.append(question.id)
+        request.session["p_seen"] = seen
+        request.session.pop("p_qid", None)
 
         if not request.user.is_authenticated:
-            request.session["practice_anon_attempted"] = (
-                request.session.get("practice_anon_attempted", 0) + 1
-            )
+            request.session["p_anon_count"] = request.session.get("p_anon_count", 0) + 1
 
-        query = []
-        if domain_id:
-            query.append(f"domain={domain_id}")
-        if category_id:
-            query.append(f"category={category_id}")
-        if difficulty:
-            query.append(f"difficulty={difficulty}")
-
-        return redirect(request.path + ("?" + "&".join(query) if query else ""))
+        return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
 
     # =====================================================
     # CATEGORIES
     # =====================================================
-    categories = (
-        Category.objects.filter(domain=selected_domain, is_active=True)
-        if selected_domain else Category.objects.none()
-    )
+    categories = Category.objects.filter(
+        domain=selected_domain,
+        is_active=True
+    ) if selected_domain else Category.objects.none()
 
     # =====================================================
     # RENDER
@@ -316,8 +276,9 @@ def practice(request):
         "question": question,
         "choices": choices,
         "result": result,
-        "correct_choice": correct_choice,
+        "correct_choice": correct_choices.first(),
         "selected_choice_id": selected_choice_id,
+        "selected_multi_ids": selected_multi_ids,
         "show_next": show_next,
 
         "domains": Domain.objects.filter(is_active=True),
@@ -326,19 +287,11 @@ def practice(request):
         "domain_id": domain_id,
         "category_id": category_id,
         "difficulty": difficulty,
-
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
-        "practice_count": practice_count,
 
-        "progress_done": len(seen_qids),
-        "progress_total": practice_total,
+        "progress_done": len(seen),
+        "progress_total": total,
     })
-
-
-
-
-
-
 
 
 
@@ -380,7 +333,6 @@ from django.conf import settings
 
 from .models import Question, Category
 
-
 @require_GET
 def practice_express_next(request):
 
@@ -404,10 +356,10 @@ def practice_express_next(request):
     last_filters = request.session.get("pe_filters")
 
     # -------------------------------
-    # BASE QUERYSET (SAFE)
+    # BASE QUERYSET (🔥 FIXED)
+    # ❌ REMOVED question_type filter
     # -------------------------------
     qs = Question.objects.filter(
-        question_type=Question.SINGLE,
         category__isnull=False
     ).prefetch_related("choices")
 
@@ -418,7 +370,7 @@ def practice_express_next(request):
         qs = qs.filter(category__domain_id=domain_id)
 
     # -------------------------------
-    # CATEGORY FILTER (WITH DESCENDANTS)
+    # CATEGORY FILTER (DESCENDANTS)
     # -------------------------------
     if category_id:
         cat = Category.objects.filter(
@@ -444,7 +396,7 @@ def practice_express_next(request):
         request.session["pe_filters"] = current_filters
         request.session["pe_seen_qids"] = []
         request.session["pe_total"] = qs.count()
-        request.session["pe_anon_attempted"] = 0   # 🔑 reset anon count
+        request.session["pe_anon_attempted"] = 0
 
     seen_qids = request.session.get("pe_seen_qids", [])
     total_questions = request.session.get("pe_total", qs.count())
@@ -461,7 +413,7 @@ def practice_express_next(request):
         })
 
     # -------------------------------
-    # 🔒 ANONYMOUS USER LIMIT (FROM SETTINGS)
+    # 🔒 ANON LIMIT (SETTINGS)
     # -------------------------------
     if not request.user.is_authenticated:
         limit = getattr(settings, "EXPRESS_ANON_LIMIT", 0)
@@ -480,7 +432,7 @@ def practice_express_next(request):
     remaining = qs.exclude(id__in=seen_qids)
 
     # -------------------------------
-    # COMPLETED ALL QUESTIONS
+    # COMPLETED
     # -------------------------------
     if not remaining.exists():
         request.session["pe_seen_qids"] = []
@@ -494,31 +446,30 @@ def practice_express_next(request):
     # PICK NEXT QUESTION
     # -------------------------------
     question = remaining.order_by("?").first()
-    correct = question.choices.filter(is_correct=True).first()
+    correct_choices = question.choices.filter(is_correct=True)
 
     seen_qids.append(question.id)
     request.session["pe_seen_qids"] = seen_qids
 
-    # 🔒 increment anon counter AFTER serving question
     if not request.user.is_authenticated:
         request.session["pe_anon_attempted"] = anon_attempted + 1
 
     # -------------------------------
-    # RESPONSE
+    # RESPONSE (🔥 SUPPORTS ALL TYPES)
     # -------------------------------
     return JsonResponse({
         "id": question.id,
         "text": question.text,
+        "question_type": question.question_type,
         "explanation": question.explanation or "",
-        "correct_choice": correct.id if correct else None,
+        "correct_choices": [c.id for c in correct_choices],
         "choices": [
             {"id": c.id, "text": c.text}
-            for c in question.choices.all()
+            for c in question.choices.all().order_by("order", "id")
         ],
         "progress_done": len(seen_qids),
         "progress_total": total_questions,
     })
-
 
 
 # =====================================================
