@@ -16,9 +16,9 @@ SECRET_KEY = os.environ.get(
     "django-insecure-change-me-please"
 )
 
-
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 '''
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
+
 ALLOWED_HOSTS = (
     ["localhost", "127.0.0.1"]
     if DEBUG
@@ -26,7 +26,7 @@ ALLOWED_HOSTS = (
 )
 '''
 
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
 
 
@@ -234,7 +234,7 @@ LOGGING = {
     },
 }
 
-BASICS_ANON_LIMIT = 10
-EXPRESS_ANON_LIMIT = 10
+BASICS_ANON_LIMIT = 50
+EXPRESS_ANON_LIMIT = 50
 
 RETAKE_COOLDOWN_MINUTES = 30
