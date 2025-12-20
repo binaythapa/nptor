@@ -25,18 +25,45 @@
     </p>
 
     <!-- SINGLE / DROPDOWN / TRUE-FALSE -->
-    {% if question.question_type == 'single' or question.question_type == 'dropdown' or question.question_type == 'tf' %}
-      {% for c in choices %}
-        <label class="radio is-block mb-2">
-          <input
-            type="radio"
-            name="question_{{ question.id }}"
-            value="{{ c.id }}"
-            {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
-          >
-          {{ c.text }}
-        </label>
-      {% endfor %}
+    <!-- SINGLE / DROPDOWN -->
+{% if question.question_type == 'single' or question.question_type == 'dropdown' %}
+  {% for c in choices %}
+    <label class="radio is-block mb-2">
+      <input
+        type="radio"
+        name="question_{{ question.id }}"
+        value="{{ c.id }}"
+        {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
+      >
+      {{ c.text }}
+    </label>
+  {% endfor %}
+
+<!-- TRUE / FALSE (FIXED, AUTOSAVE-SAFE) -->
+{% elif question.question_type == 'tf' %}
+
+  <!-- hidden mirror (this is what backend reads) -->
+  <input
+    type="hidden"
+    name="question_{{ question.id }}"
+    id="tf_hidden_{{ question.id }}"
+    value="{% if ua.choice %}{{ ua.choice.id }}{% endif %}"
+  >
+
+  {% for c in choices %}
+    <label class="radio is-block mb-2">
+      <input
+        type="radio"
+        name="tf_radio_{{ question.id }}"
+        value="{{ c.id }}"
+        {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
+        onchange="document.getElementById('tf_hidden_{{ question.id }}').value=this.value"
+      >
+      {{ c.text }}
+    </label>
+  {% endfor %}
+
+
 
     <!-- MULTI -->
     {% elif question.question_type == 'multi' %}

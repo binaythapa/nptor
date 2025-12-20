@@ -97,17 +97,18 @@
 
             {# ===== LOCKED ===== #}
             {% elif item.action == "locked" %}
-              <a class="button is-light is-small"
-                 href="{% url 'quiz:exam_locked' item.exam.id %}">
-                🔒 Locked
-              </a>
-            {% endif %}
+  <button class="button is-light is-small" disabled>
+    🔒 Locked
+  </button>
+{% endif %}
+
 
             {# ===== MOCK (UNCHANGED) ===== #}
-            <a class="button is-info is-light is-small ml-1"
-               href="{% url 'quiz:mock_exam_start' item.exam.id %}">
-              Mock
-            </a>
+            {# ===== MOCK (DISABLED FOR NOW) ===== #}
+<button class="button is-info is-light is-small ml-1" disabled>
+  Mock (Coming Soon)
+</button>
+
 
           </div>
         </div>

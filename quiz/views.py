@@ -1075,7 +1075,6 @@ def student_dashboard(request):
 
 
 
-
 # -------------------------
 # Profile / users
 # -------------------------
@@ -1485,7 +1484,7 @@ def exam_submit(request, user_exam_id):
         total += 1
 
         # ==================================================
-        # SINGLE / DROPDOWN (UNCHANGED)
+        # SINGLE / DROPDOWN  ✅ FIXED (AUTOSAVE SAFE)
         # ==================================================
         if q.question_type in ('single', 'dropdown'):
             choice_id = request.POST.get(f'question_{q.id}')
@@ -1498,11 +1497,13 @@ def exam_submit(request, user_exam_id):
                     if ua.is_correct:
                         score_acc += 1.0
                 except Exception:
+                    # fallback to autosaved value
                     if ua.choice and ua.is_correct:
                         score_acc += 1.0
                     else:
                         ua.is_correct = False
             else:
+                # fallback to autosaved value
                 if ua.choice and ua.is_correct:
                     score_acc += 1.0
                 else:
@@ -1513,47 +1514,27 @@ def exam_submit(request, user_exam_id):
             ua.save()
 
         # ==================================================
-        # TRUE / FALSE  ✅ FINAL FIX (WORKS WITH "True"/"False")
+        # TRUE / FALSE  ✅ FIXED
         # ==================================================
         elif q.question_type == 'tf':
-            raw_val = request.POST.get(f'question_{q.id}')
+            choice_id = request.POST.get(f'question_{q.id}')
 
-            ua.selections = None
-            ua.raw_answer = None
-
-            if raw_val is None:
-                ua.choice = None
-                ua.is_correct = False
-                ua.save()
-                continue
-
-            raw_val_str = str(raw_val).strip().lower()
-            ch = None
-
-            # Case 1: value is choice ID
-            if raw_val_str.isdigit():
-                ch = q.choices.filter(id=int(raw_val_str)).first()
-
-            # Case 2: value is "true" / "false" (your current UI)
-            else:
-                if raw_val_str in ('true', '1', 'yes', 'on'):
-                    ch = q.choices.filter(is_correct=True).first()
-                elif raw_val_str in ('false', '0', 'no'):
-                    ch = q.choices.filter(is_correct=False).first()
-
-            if ch:
+            try:
+                ch = Choice.objects.get(pk=int(choice_id), question=q)
                 ua.choice = ch
                 ua.is_correct = ch.is_correct is True
                 if ua.is_correct:
                     score_acc += 1.0
-            else:
-                ua.choice = None
+            except Exception:
                 ua.is_correct = False
+                ua.choice = None
 
+            ua.selections = None
+            ua.raw_answer = None
             ua.save()
 
         # ==================================================
-        # MULTI SELECT (UNCHANGED)
+        # MULTI SELECT  ✅ FIXED
         # ==================================================
         elif q.question_type == 'multi':
             selections = request.POST.getlist(f'question_{q.id}')
@@ -1575,11 +1556,16 @@ def exam_submit(request, user_exam_id):
             selected_set = set(sel_ids)
             correct_set = set(correct_ids)
 
+            # ✔ Fully correct
             if selected_set == correct_set:
                 ua.is_correct = True
                 score_acc += 1.0
+
+            # ✘ Fully incorrect
             elif selected_set.isdisjoint(correct_set):
                 ua.is_correct = False
+
+            # ◐ Partial
             else:
                 ua.is_correct = None
                 true_pos = len(selected_set & correct_set)
@@ -1595,7 +1581,7 @@ def exam_submit(request, user_exam_id):
             ua.save()
 
         # ==================================================
-        # FILL IN THE BLANK (UNCHANGED)
+        # FILL IN THE BLANK
         # ==================================================
         elif q.question_type == 'fill':
             raw = (request.POST.get(f'question_{q.id}') or '').strip()
@@ -1614,7 +1600,7 @@ def exam_submit(request, user_exam_id):
             ua.save()
 
         # ==================================================
-        # NUMERIC (UNCHANGED)
+        # NUMERIC
         # ==================================================
         elif q.question_type == 'numeric':
             raw = (request.POST.get(f'question_{q.id}') or '').strip()
@@ -1639,7 +1625,7 @@ def exam_submit(request, user_exam_id):
             ua.save()
 
     # ==================================================
-    # FINALIZE RESULT (UNCHANGED)
+    # FINALIZE RESULT
     # ==================================================
     ue.score = round((score_acc / total) * 100, 2) if total else 0
     ue.submitted_at = timezone.now()
