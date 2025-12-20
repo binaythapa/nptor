@@ -1447,6 +1447,13 @@ def exam_question(request, user_exam_id, index):
 # -------------------------
 # Submit / grade
 # -------------------------
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
+
+from .models import UserExam, UserAnswer, Choice
+
+
 @login_required
 def exam_submit(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
@@ -1464,13 +1471,19 @@ def exam_submit(request, user_exam_id):
         return redirect('quiz:exam_result', user_exam_id=ue.id)
 
     if request.method != 'POST':
-        return redirect('quiz:exam_question', user_exam_id=ue.id, index=ue.current_index)
+        return redirect(
+            'quiz:exam_question',
+            user_exam_id=ue.id,
+            index=ue.current_index
+        )
 
     # Canonical question order
     if ue.question_order:
         qids = [int(x) for x in ue.question_order]
     else:
-        qids = list(ue.answers.values_list('question_id', flat=True))
+        qids = list(
+            ue.answers.values_list('question_id', flat=True)
+        )
 
     total = 0
     score_acc = 0.0
@@ -1484,40 +1497,16 @@ def exam_submit(request, user_exam_id):
         total += 1
 
         # ==================================================
-        # SINGLE / DROPDOWN  ✅ FIXED (AUTOSAVE SAFE)
+        # SINGLE / DROPDOWN
         # ==================================================
         if q.question_type in ('single', 'dropdown'):
             choice_id = request.POST.get(f'question_{q.id}')
 
-            if choice_id:
-                try:
-                    ch = Choice.objects.get(pk=int(choice_id), question=q)
-                    ua.choice = ch
-                    ua.is_correct = ch.is_correct is True
-                    if ua.is_correct:
-                        score_acc += 1.0
-                except Exception:
-                    # fallback to autosaved value
-                    if ua.choice and ua.is_correct:
-                        score_acc += 1.0
-                    else:
-                        ua.is_correct = False
-            else:
-                # fallback to autosaved value
+            if choice_id is None:
+                # keep autosaved value
                 if ua.choice and ua.is_correct:
                     score_acc += 1.0
-                else:
-                    ua.is_correct = False
-
-            ua.selections = None
-            ua.raw_answer = None
-            ua.save()
-
-        # ==================================================
-        # TRUE / FALSE  ✅ FIXED
-        # ==================================================
-        elif q.question_type == 'tf':
-            choice_id = request.POST.get(f'question_{q.id}')
+                continue
 
             try:
                 ch = Choice.objects.get(pk=int(choice_id), question=q)
@@ -1526,15 +1515,42 @@ def exam_submit(request, user_exam_id):
                 if ua.is_correct:
                     score_acc += 1.0
             except Exception:
-                ua.is_correct = False
-                ua.choice = None
+                if ua.choice and ua.is_correct:
+                    score_acc += 1.0
 
             ua.selections = None
             ua.raw_answer = None
             ua.save()
 
         # ==================================================
-        # MULTI SELECT  ✅ FIXED
+        # TRUE / FALSE  ✅ FIXED (AUTOSAVE SAFE)
+        # ==================================================
+        elif q.question_type == 'tf':
+            choice_id = request.POST.get(f'question_{q.id}')
+
+            if choice_id is None:
+                # 🔒 DO NOT ERASE AUTOSAVED ANSWER
+                if ua.choice and ua.is_correct:
+                    score_acc += 1.0
+                continue
+
+            try:
+                ch = Choice.objects.get(pk=int(choice_id), question=q)
+                ua.choice = ch
+                ua.is_correct = ch.is_correct is True
+                if ua.is_correct:
+                    score_acc += 1.0
+            except Exception:
+                # invalid POST value → keep autosave
+                if ua.choice and ua.is_correct:
+                    score_acc += 1.0
+
+            ua.selections = None
+            ua.raw_answer = None
+            ua.save()
+
+        # ==================================================
+        # MULTI SELECT
         # ==================================================
         elif q.question_type == 'multi':
             selections = request.POST.getlist(f'question_{q.id}')
@@ -1543,7 +1559,9 @@ def exam_submit(request, user_exam_id):
                 try:
                     sel_ids = [int(x) for x in selections if x]
                 except ValueError:
-                    sel_ids = [int(x) for x in selections if str(x).isdigit()]
+                    sel_ids = [
+                        int(x) for x in selections if str(x).isdigit()
+                    ]
                 ua.selections = sel_ids
             else:
                 sel_ids = ua.selections or []
@@ -1556,23 +1574,19 @@ def exam_submit(request, user_exam_id):
             selected_set = set(sel_ids)
             correct_set = set(correct_ids)
 
-            # ✔ Fully correct
             if selected_set == correct_set:
                 ua.is_correct = True
                 score_acc += 1.0
-
-            # ✘ Fully incorrect
             elif selected_set.isdisjoint(correct_set):
                 ua.is_correct = False
-
-            # ◐ Partial
             else:
                 ua.is_correct = None
                 true_pos = len(selected_set & correct_set)
                 false_pos = len(selected_set - correct_set)
                 fraction = max(
                     0.0,
-                    (true_pos - 0.5 * false_pos) / max(1, len(correct_set))
+                    (true_pos - 0.5 * false_pos)
+                    / max(1, len(correct_set))
                 )
                 score_acc += fraction
 
@@ -1587,7 +1601,8 @@ def exam_submit(request, user_exam_id):
             raw = (request.POST.get(f'question_{q.id}') or '').strip()
             ua.raw_answer = raw
 
-            def norm(s): return ' '.join(s.lower().split())
+            def norm(s):
+                return ' '.join(s.lower().split())
 
             if q.correct_text and norm(raw) == norm(q.correct_text):
                 ua.is_correct = True
@@ -1609,7 +1624,10 @@ def exam_submit(request, user_exam_id):
             try:
                 val = float(raw)
                 tol = q.numeric_tolerance or 0.0
-                if q.numeric_answer is not None and abs(val - q.numeric_answer) <= tol:
+                if (
+                    q.numeric_answer is not None
+                    and abs(val - q.numeric_answer) <= tol
+                ):
                     ua.is_correct = True
                     score_acc += 1.0
                 else:
@@ -1636,8 +1654,6 @@ def exam_submit(request, user_exam_id):
     ue.save()
 
     return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-
 
 
 

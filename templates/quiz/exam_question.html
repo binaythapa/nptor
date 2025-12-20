@@ -24,48 +24,35 @@
       <strong>Q{{ index|add:1 }}.</strong> {{ question.text }}
     </p>
 
-    <!-- SINGLE / DROPDOWN / TRUE-FALSE -->
     <!-- SINGLE / DROPDOWN -->
-{% if question.question_type == 'single' or question.question_type == 'dropdown' %}
-  {% for c in choices %}
-    <label class="radio is-block mb-2">
-      <input
-        type="radio"
-        name="question_{{ question.id }}"
-        value="{{ c.id }}"
-        {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
-      >
-      {{ c.text }}
-    </label>
-  {% endfor %}
+    {% if question.question_type == 'single' or question.question_type == 'dropdown' %}
+      {% for c in choices %}
+        <label class="radio is-block mb-2">
+          <input
+            type="radio"
+            name="question_{{ question.id }}"
+            value="{{ c.id }}"
+            {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
+          >
+          {{ c.text }}
+        </label>
+      {% endfor %}
 
-<!-- TRUE / FALSE (FIXED, AUTOSAVE-SAFE) -->
-{% elif question.question_type == 'tf' %}
+    <!-- TRUE / FALSE (FIXED) -->
+    {% elif question.question_type == 'tf' %}
+      {% for c in choices %}
+        <label class="radio is-block mb-2">
+          <input
+            type="radio"
+            name="question_{{ question.id }}"
+            value="{{ c.id }}"
+            {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
+          >
+          {{ c.text }}
+        </label>
+      {% endfor %}
 
-  <!-- hidden mirror (this is what backend reads) -->
-  <input
-    type="hidden"
-    name="question_{{ question.id }}"
-    id="tf_hidden_{{ question.id }}"
-    value="{% if ua.choice %}{{ ua.choice.id }}{% endif %}"
-  >
-
-  {% for c in choices %}
-    <label class="radio is-block mb-2">
-      <input
-        type="radio"
-        name="tf_radio_{{ question.id }}"
-        value="{{ c.id }}"
-        {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
-        onchange="document.getElementById('tf_hidden_{{ question.id }}').value=this.value"
-      >
-      {{ c.text }}
-    </label>
-  {% endfor %}
-
-
-
-    <!-- MULTI -->
+    <!-- MULTI SELECT -->
     {% elif question.question_type == 'multi' %}
       {% for c in choices %}
         <label class="checkbox is-block mb-2">
@@ -81,49 +68,58 @@
         </label>
       {% endfor %}
 
-    <!-- FILL -->
+    <!-- FILL IN THE BLANK -->
     {% elif question.question_type == 'fill' %}
-      <input class="input"
-             type="text"
-             name="question_{{ question.id }}"
-             value="{{ ua.raw_answer|default_if_none:'' }}">
+      <input
+        class="input"
+        type="text"
+        name="question_{{ question.id }}"
+        value="{{ ua.raw_answer|default_if_none:'' }}"
+      >
 
     <!-- NUMERIC -->
     {% elif question.question_type == 'numeric' %}
-      <input class="input"
-             type="text"
-             name="question_{{ question.id }}"
-             value="{{ ua.raw_answer|default_if_none:'' }}">
+      <input
+        class="input"
+        type="text"
+        name="question_{{ question.id }}"
+        value="{{ ua.raw_answer|default_if_none:'' }}"
+      >
       <p class="help">Tolerance ± {{ question.numeric_tolerance }}</p>
 
     <!-- MATCH -->
     {% elif question.question_type == 'match' %}
       {% for pair in question.matching_pairs %}
         {% with li=forloop.counter0 %}
-        <div class="mb-3">
-          <strong>{{ pair.left }}</strong>
-          <select class="select is-fullwidth"
-                  name="match_{{ question.id }}_{{ li }}">
-            <option value="">-- pick --</option>
-            {% for opt in question.matching_pairs %}
-              <option value="{{ opt.right }}"
-                {% if ua.selections and ua.selections|dict_get:li|stringformat:"s" == opt.right|stringformat:"s" %}
-                  selected
-                {% endif %}
-              >
-                {{ opt.right }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
+          <div class="mb-3">
+            <strong>{{ pair.left }}</strong>
+            <select
+              class="select is-fullwidth"
+              name="match_{{ question.id }}_{{ li }}"
+            >
+              <option value="">-- pick --</option>
+              {% for opt in question.matching_pairs %}
+                <option
+                  value="{{ opt.right }}"
+                  {% if ua.selections and ua.selections|dict_get:li|stringformat:"s" == opt.right|stringformat:"s" %}
+                    selected
+                  {% endif %}
+                >
+                  {{ opt.right }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         {% endwith %}
       {% endfor %}
 
     <!-- ORDER -->
     {% elif question.question_type == 'order' %}
-      <input class="input"
-             name="question_{{ question.id }}"
-             value="{{ ua.raw_answer|default_if_none:'' }}">
+      <input
+        class="input"
+        name="question_{{ question.id }}"
+        value="{{ ua.raw_answer|default_if_none:'' }}"
+      >
       <p class="help">
         Canonical: {{ question.ordering_items|join:", " }}
       </p>
@@ -138,19 +134,27 @@
   <!-- NAVIGATION -->
   <div class="buttons mt-4">
     {% if index > 0 %}
-      <a class="button"
-         href="{% url 'quiz:exam_question' user_exam.id index|add:-1 %}">
+      <a
+        class="button"
+        href="{% url 'quiz:exam_question' user_exam.id index|add:-1 %}"
+      >
         Previous
       </a>
     {% endif %}
 
     {% if index < total|add:-1 %}
-      <a class="button is-primary"
-         href="{% url 'quiz:exam_question' user_exam.id index|add:1 %}">
+      <a
+        class="button is-primary"
+        href="{% url 'quiz:exam_question' user_exam.id index|add:1 %}"
+      >
         Next
       </a>
     {% else %}
-      <button type="submit" class="button is-success" id="submitBtn">
+      <button
+        type="submit"
+        class="button is-success"
+        id="submitBtn"
+      >
         Submit Exam
       </button>
     {% endif %}
@@ -158,10 +162,9 @@
 </form>
 
 <!-- =========================
-     TIMER + AUTOSAVE (FIXED)
+     TIMER + AUTOSAVE (UNCHANGED)
 ========================= -->
 <script>
-/* Countdown timer */
 let remaining = parseInt(document.getElementById('timer').innerText || '0', 10);
 const timerEl = document.getElementById('timer');
 let submitted = false;
@@ -177,7 +180,6 @@ const interval = setInterval(() => {
   }
 }, 1000);
 
-/* 🔒 AUTOSAVE — DISABLED AFTER SUBMIT */
 const form = document.getElementById('qform');
 const submitBtn = document.getElementById('submitBtn');
 
@@ -188,7 +190,7 @@ if (submitBtn) {
 }
 
 form.addEventListener('change', function () {
-  if (submitted) return;   // 🔥 THIS LINE FIXES TF ISSUE
+  if (submitted) return;
 
   const data = new FormData(form);
 
