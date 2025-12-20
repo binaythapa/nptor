@@ -1,213 +1,164 @@
-{% extends 'quiz/base.html' %}
+{% extends "quiz/base.html" %}
 {% load dict_extras %}
-
 {% block content %}
-<h2 class="title">Result for {{ user_exam.exam.title }}</h2>
 
-<div class="box" style="margin-bottom:18px;">
-  <p>Score: <strong>{{ user_exam.score }}%</strong></p>
-  <p>Submitted at: {{ user_exam.submitted_at }}</p>
-  <p>
-    Status:
+<h2 class="title is-4">🎯 Exam Result — {{ user_exam.exam.title }}</h2>
+
+<!-- ================= SUMMARY ================= -->
+<div class="box columns is-multiline has-text-centered">
+
+  <div class="column is-3">
+    <p class="heading">Score</p>
+    <p class="title is-4">{{ user_exam.score }}%</p>
+  </div>
+
+  <div class="column is-3">
+    <p class="heading">Best</p>
+    <p class="title is-4">{{ best_score }}%</p>
+  </div>
+
+  <div class="column is-3">
+    <p class="heading">Accuracy</p>
+    <p class="title is-4">{{ accuracy }}%</p>
+  </div>
+
+  <div class="column is-3">
+    <p class="heading">Status</p>
     {% if user_exam.passed %}
-      <span style="color:green">Passed</span>
+      <span class="tag is-success is-medium">Passed</span>
     {% else %}
-      <span style="color:red">Failed</span>
+      <span class="tag is-danger is-medium">Failed</span>
     {% endif %}
-  </p>
+  </div>
+
 </div>
 
-<h3 class="subtitle">Answers</h3>
+<!-- ================= ANSWER REVIEW ================= -->
+<h3 class="subtitle mt-5">📋 Answer Review</h3>
 
 {% for ans in answers %}
-  <div class="box" style="margin-bottom:14px;">
-    <p><strong>{{ forloop.counter }}. {{ ans.question.text }}</strong></p>
+<div class="box">
 
-    {# ===================== YOUR ANSWER ===================== #}
-    <p><strong>Your answer:</strong>
+  <strong>{{ forloop.counter }}. {{ ans.question.text }}</strong>
 
-      {# 1) Single choice / dropdown / tf where ans.choice is set #}
-      {% if ans.choice %}
-        {{ ans.choice.text }}
-      {% endif %}
+  <!-- ===== STATUS ===== -->
+  <p class="mt-2">
+    {% if ans.is_correct %}
+      <span class="has-text-success">✔ Correct</span>
+    {% elif ans.is_correct is False %}
+      <span class="has-text-danger">✘ Incorrect</span>
+    {% else %}
+      <span class="has-text-warning">◐ Partial</span>
+    {% endif %}
+  </p>
 
-      {# 2) Multi-select answers #}
-      {% if not ans.choice and ans.selections and ans.question.question_type == 'multi' %}
-        <ul style="margin:6px 0 6px 16px;">
-          {% for cid in ans.selections %}
-            <li>
-              {% for ch in ans.question.choices.all %}
-                {% if ch.id|stringformat:"s" == cid|stringformat:"s" or ch.id == cid %}
-                  {{ ch.text }}
-                {% endif %}
-              {% endfor %}
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-
-      {# 3) Matching answers #}
-      {% if not ans.choice and ans.selections and ans.question.question_type == 'match' %}
-        <ul style="margin:6px 0 6px 16px;">
-          {% for pair in ans.question.matching_pairs %}
-            {% with idx=forloop.counter0 %}
-              {% with chosen=ans.selections|dict_get:idx %}
-                <li>{{ pair.left }} → {{ chosen|default:"(no answer)" }}</li>
-              {% endwith %}
-            {% endwith %}
-          {% endfor %}
-        </ul>
-      {% endif %}
-
-      {# 4) Raw answers (fill, numeric, etc.) #}
-      {% if not ans.choice and not ans.selections and ans.raw_answer %}
-        {{ ans.raw_answer }}
-      {% endif %}
-
-      {# 5) No answer case #}
-      {% if not ans.choice and not ans.selections and not ans.raw_answer %}
-        <span class="small-muted">No answer</span>
-      {% endif %}
-
-      &nbsp;—&nbsp;
-      {% if ans.is_correct %}
-        <span style="color:green">Correct</span>
-      {% else %}
-        <span style="color:red">Wrong</span>
-      {% endif %}
+  <!-- ===== USER ANSWERS ===== -->
+  {% if ans.user_answers_display %}
+    <p class="mt-2">
+      <strong>Your Answer{{ ans.user_answers_display|length|pluralize }}:</strong>
+      <ul>
+        {% for a in ans.user_answers_display %}
+          <li>✓ {{ a }}</li>
+        {% endfor %}
+      </ul>
     </p>
+  {% else %}
+    <p class="mt-2 has-text-grey">
+      <em>No answer submitted</em>
+    </p>
+  {% endif %}
 
-    {# ===================== CORRECT ANSWER(S) ===================== #}
-    <p><strong>Correct:</strong></p>
-    <div>
-      {# MCQ / dropdown / tf / multi #}
-      {% if ans.question.question_type == 'single' or ans.question.question_type == 'dropdown' or ans.question.question_type == 'tf' or ans.question.question_type == 'multi' %}
-        {% for c in ans.question.choices.all %}
-          {% if c.is_correct %}
-            <div>- {{ c.text }}</div>
-          {% endif %}
+  <!-- ===== CORRECT ANSWERS ===== -->
+  {% if ans.correct_answers_display %}
+    <p class="mt-2">
+      <strong>Correct Answer{{ ans.correct_answers_display|length|pluralize }}:</strong>
+      <ul>
+        {% for c in ans.correct_answers_display %}
+          <li>✓ {{ c }}</li>
         {% endfor %}
-      {% endif %}
+      </ul>
+    </p>
+  {% endif %}
 
-      {# Matching #}
-      {% if ans.question.question_type == 'match' %}
-        {% for p in ans.question.matching_pairs %}
-          <div>- {{ p.left }} → {{ p.right }}</div>
-        {% endfor %}
-      {% endif %}
+  <!-- ===== FEEDBACK FORM ===== -->
+  {% if not feedback_map|get_item:ans.question.id %}
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    <input type="hidden" name="question_id" value="{{ ans.question.id }}">
 
-      {# Fill in the blank #}
-      {% if ans.question.question_type == 'fill' %}
-        <div>- {{ ans.question.correct_text }}</div>
-      {% endif %}
-
-      {# Numeric #}
-      {% if ans.question.question_type == 'numeric' %}
-        <div>- {{ ans.question.numeric_answer }} (±{{ ans.question.numeric_tolerance }})</div>
-      {% endif %}
-
-      {# Ordering #}
-      {% if ans.question.question_type == 'order' %}
-        {% for item in ans.question.ordering_items %}
-          <div>- {{ item }}</div>
-        {% endfor %}
-      {% endif %}
-    </div>
-
-    {# ===================== EXPLANATION (ALWAYS VISIBLE ICON) ===================== #}
-    <details style="margin-top:10px;">
-      <summary style="cursor:pointer; font-weight:500;">
-        📘 View explanation / solution
-      </summary>
-      <div class="small-muted" style="margin-top:6px;">
-        {% if ans.question.explanation %}
-          {{ ans.question.explanation|linebreaks }}
-        {% else %}
-          No detailed explanation has been added for this question yet.
-        {% endif %}
+    <div class="field">
+      <label class="label">Report issue / Comment</label>
+      <div class="control">
+        <textarea class="textarea is-small"
+                  name="comment"
+                  placeholder="Optional feedback..."></textarea>
       </div>
-    </details>
-
-    {# ===================== FEEDBACK FORM / STATUS + OTHER COMMENTS ===================== #}
-    <div style="margin-top:10px; border-top:1px dashed #ddd; padding-top:8px;">
-      {# Your feedback status / form #}
-      {% with fb=feedback_map|dict_get:ans.question.id %}
-        {% if fb %}
-          <p class="small-muted">
-            ✅ You submitted feedback for this question on
-            {{ fb.created_at|date:"SHORT_DATETIME_FORMAT" }}.
-            Thank you!
-          </p>
-        {% else %}
-          <form method="post"
-                action="{% url 'quiz:exam_result' user_exam.id %}"
-                class="question-feedback-form">
-            {% csrf_token %}
-            <input type="hidden" name="question_id" value="{{ ans.question.id }}">
-
-            <div class="field">
-              <label class="label is-small">Your comment (optional)</label>
-              <div class="control">
-                <textarea name="comment"
-                          class="textarea is-small"
-                          rows="2"
-                          placeholder="Write your feedback about this question or answer..."></textarea>
-              </div>
-            </div>
-
-            <label class="checkbox">
-              <input type="checkbox" name="is_answer_incorrect">
-              I think the correct answer or options are incorrect.
-            </label>
-
-            <div class="field" style="margin-top:6px;">
-              <button type="submit" class="button is-small is-link is-light">
-                Submit feedback
-              </button>
-            </div>
-          </form>
-        {% endif %}
-      {% endwith %}
-
-      {# Other learners' comments (expandable) #}
-      {% with others=comments_map|dict_get:ans.question.id %}
-        {% if others %}
-          <details style="margin-top:6px;">
-            <summary style="cursor:pointer; font-size:0.9rem;">
-              💬 View {{ others|length }} comment(s) from other learners
-            </summary>
-            <ul class="small-muted" style="margin-top:4px; margin-left:1.2rem;">
-              {% for fb in others %}
-                <li style="margin-bottom:4px;">
-                  {{ fb.comment|linebreaksbr }}
-                  <br>
-                  <span class="small-muted">
-                    — {{ fb.user.username }}, {{ fb.created_at|date:"SHORT_DATETIME_FORMAT" }}
-                  </span>
-                </li>
-              {% endfor %}
-            </ul>
-          </details>
-        {% else %}
-          <p class="small-muted" style="margin-top:4px;">
-            💬 No comments from other learners yet.
-          </p>
-        {% endif %}
-      {% endwith %}
     </div>
 
-  </div>
+    <label class="checkbox">
+      <input type="checkbox" name="is_answer_incorrect">
+      Answer seems incorrect
+    </label>
+
+    <div class="mt-2">
+      <button class="button is-small is-link">Submit Feedback</button>
+    </div>
+  </form>
+  {% else %}
+    <p class="has-text-success mt-3">
+      ✔ Feedback submitted
+    </p>
+  {% endif %}
+
+</div>
 {% endfor %}
 
-{# ===================== BOTTOM BUTTONS ===================== #}
-<div class="box"
-     style="margin-top:18px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
-  <a href="{% url 'quiz:student_dashboard' %}" class="button is-light">
-    ← Back to dashboard
+<!-- ================= ACTIONS ================= -->
+<div class="box mt-5">
+
+  {% if can_retake %}
+    <a href="{% url 'quiz:exam_start' user_exam.exam.id %}"
+       class="button is-link is-light">
+      🔁 Retake Exam
+    </a>
+  {% else %}
+    <button class="button is-light" disabled>
+      ⏳ Retake locked
+    </button>
+
+    <p class="help mt-2">
+      Retake available in
+      <strong><span id="retake-countdown"></span></strong>
+    </p>
+  {% endif %}
+
+  <a href="{% url 'quiz:student_dashboard' %}"
+     class="button is-light ml-2">
+    ← Dashboard
   </a>
-  <a href="{% url 'quiz:exam_start' user_exam.exam.id %}" class="button is-link is-light">
-    Retake this level
-  </a>
+
 </div>
+
+<!-- ================= COUNTDOWN SCRIPT ================= -->
+{% if not can_retake %}
+<script>
+let seconds = {{ cooldown_seconds }};
+const el = document.getElementById("retake-countdown");
+
+function tick() {
+  if (!el) return;
+  if (seconds <= 0) {
+    el.innerText = "now";
+    return;
+  }
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  el.innerText = `${m}m ${s}s`;
+  seconds--;
+  setTimeout(tick, 1000);
+}
+tick();
+</script>
+{% endif %}
 
 {% endblock %}

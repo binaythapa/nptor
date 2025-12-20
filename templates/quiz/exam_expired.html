@@ -1,0 +1,17 @@
+{% extends 'quiz/base.html' %}
+{% block content %}
+
+<div class="box has-text-centered">
+  <h2 class="title is-4">⏰ Exam Time Expired</h2>
+
+  <p class="mb-4">
+    Your exam time has ended. The attempt has been automatically submitted.
+  </p>
+
+  <a class="button is-link"
+     href="{% url 'quiz:exam_result' user_exam.id %}">
+    View Result
+  </a>
+</div>
+
+{% endblock %}

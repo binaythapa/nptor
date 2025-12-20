@@ -347,6 +347,8 @@ class Exam(models.Model):
     def __str__(self):
         return self.title
 
+from django.core.exceptions import ValidationError
+
 class ExamCategoryAllocation(models.Model):
     exam = models.ForeignKey(
         Exam,
@@ -355,38 +357,20 @@ class ExamCategoryAllocation(models.Model):
     )
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
 
-    percentage = models.PositiveIntegerField(
-        default=0,
-        help_text="0–100"
-    )
-
-    fixed_count = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Overrides percentage if set"
-    )
+    percentage = models.PositiveIntegerField(default=0)
+    fixed_count = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         unique_together = ("exam", "category")
-        constraints = [
-            # percentage must be between 0 and 100
-            models.CheckConstraint(
-                condition=Q(percentage__gte=0) & Q(percentage__lte=100),
-                name="exam_alloc_percentage_between_0_100"
-            ),
-
-            # cannot have both fixed_count and percentage > 0
-            models.CheckConstraint(
-                condition=Q(fixed_count__isnull=True) | Q(percentage=0),
-                name="exam_alloc_fixed_or_percentage"
-            ),
-        ]
 
     def clean(self):
-        if self.fixed_count is not None and self.percentage > 0:
+        if self.fixed_count and self.percentage:
             raise ValidationError(
                 "Use either percentage OR fixed count, not both."
             )
+
+        if self.percentage > 100:
+            raise ValidationError("Percentage cannot exceed 100.")
 
     def __str__(self):
         return f"{self.exam} → {self.category}"
@@ -469,6 +453,11 @@ class UserAnswer(models.Model):
         related_name="answers"
     )
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    time_spent = models.PositiveIntegerField(
+    default=0,
+    help_text="Time spent on this question in seconds"
+)
+
 
     choice = models.ForeignKey(
         Choice,

@@ -1,11 +1,31 @@
 # quiz/context_processors.py
 from .models import Notification
 
+
+
+# quiz/context_processors.py
+from django.db.models import Count
+
 def unread_notifications_count(request):
+    """
+    SAFE context processor:
+    - No reverse()
+    - No translation calls
+    - No circular imports
+    """
+
     if not request.user.is_authenticated:
-        return {'unread_count': 0}
-    qs = Notification.objects.order_by('-created_at')
-    # Visible = broadcast OR in ManyToMany users
-    visible = [n for n in qs if (not n.users.exists()) or (request.user in n.users.all())]
-    count = sum(1 for n in visible if n.unread_for(request.user))
-    return {'unread_count': count}
+        return {"unread_notifications_count": 0}
+
+    try:
+        count = (
+            request.user.notifications
+            .filter(is_read=False)
+            .count()
+        )
+    except Exception:
+        count = 0
+
+    return {
+        "unread_notifications_count": count
+    }

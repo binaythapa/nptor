@@ -135,33 +135,55 @@ class ExamCategoryAllocationInline(admin.TabularInline):
 # ----------------------------
 # Exam admin
 # ----------------------------
+from django.contrib import admin
+from .models import Exam, ExamTrack
+#from .admin_inlines import ExamCategoryAllocationInline
+#from .widgets import BULMA_WIDGET_OVERRIDES
+
+
+# ================================
+# Exam Track Admin
+# ================================
+@admin.register(ExamTrack)
+class ExamTrackAdmin(admin.ModelAdmin):
+    list_display = ('title', 'slug', 'is_active', 'created_at')
+    search_fields = ('title',)
+    prepopulated_fields = {'slug': ('title',)}
+    list_filter = ('is_active',)
+    ordering = ('title',)
+
+
+# ================================
+# Exam Admin (UPDATED – SAFE)
+# ================================
 @admin.register(Exam)
 class ExamAdmin(admin.ModelAdmin):
     list_display = (
-        'title', 'category', 'question_count', 'duration_seconds',
+        'title', 'question_count', 'duration_seconds',
         'is_published', 'level', 'passing_score'
     )
+
     inlines = [ExamCategoryAllocationInline]
     filter_horizontal = ('categories', 'prerequisite_exams')
-    fieldsets = (
-        (None, {
-            'fields': (
-                'title',
-                'category',
-                'categories',
-                'question_count',
-                'duration_seconds',
-                'is_published',
-            )
-        }),
-        ('Progression / Rules', {
-            'classes': ('collapse',),
-            'fields': ('level', 'passing_score', 'prerequisite_exams',),
-            'description': 'Configure progression level, passing threshold and explicit prerequisites.'
-        }),
-    )
-    formfield_overrides = BULMA_WIDGET_OVERRIDES
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        allocations = obj.allocations.all()
+        fixed_total = sum(a.fixed_count or 0 for a in allocations)
+        percent_total = sum(
+            a.percentage for a in allocations if a.fixed_count is None
+        )
+
+        if fixed_total > obj.question_count:
+            raise ValidationError(
+                "Fixed allocation exceeds question count."
+            )
+
+        if percent_total > 100:
+            raise ValidationError(
+                "Percentage allocation exceeds 100%."
+            )
 
 # ----------------------------
 # Category admin
@@ -189,12 +211,6 @@ def export_userexams_csv(modeladmin, request, queryset):
 export_userexams_csv.short_description = "Export selected user exams to CSV"
 
 
-@admin.register(UserExam)
-class UserExamAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'exam', 'score', 'started_at', 'submitted_at')
-    search_fields = ('user__username', 'exam__title')  # 👈 added
-    actions = [export_userexams_csv]
-    formfield_overrides = BULMA_WIDGET_OVERRIDES
 
 
 
@@ -203,49 +219,6 @@ class UserAnswerAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_exam', 'question', 'choice', 'is_correct')
     readonly_fields = ('selections', 'raw_answer')
     formfield_overrides = BULMA_WIDGET_OVERRIDES
-
-
-# ----------------------------
-# QuestionFeedback admin
-# ----------------------------
-@admin.register(QuestionFeedback)
-class QuestionFeedbackAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'question',
-        'user',
-        'is_answer_incorrect',
-        'status',
-        'created_at',
-    )
-    list_filter = (
-        'status',
-        'is_answer_incorrect',
-        'created_at',
-        'question__category',
-    )
-    search_fields = (
-        'question__text',
-        'user__username',
-        'comment',
-        'staff_note',
-    )
-    date_hierarchy = 'created_at'
-    autocomplete_fields = ('question', 'user', 'user_exam')
-    formfield_overrides = BULMA_WIDGET_OVERRIDES
-
-    actions = ['mark_as_reviewed', 'mark_as_resolved']
-
-    def mark_as_reviewed(self, request, queryset):
-        updated = queryset.update(status=QuestionFeedback.STATUS_REVIEWED)
-        self.message_user(request, f"{updated} feedback item(s) marked as REVIEWED.")
-    mark_as_reviewed.short_description = "Mark selected feedback as reviewed"
-
-    def mark_as_resolved(self, request, queryset):
-        updated = queryset.update(status=QuestionFeedback.STATUS_RESOLVED)
-        self.message_user(request, f"{updated} feedback item(s) marked as RESOLVED.")
-    mark_as_resolved.short_description = "Mark selected feedback as resolved"
-
 
 
 
@@ -267,3 +240,51 @@ class DifficultyAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     ordering = ('name',)
     prepopulated_fields = {'slug': ('name',)}
+
+
+
+    #####################EXAM################
+@admin.register(UserExam)
+class UserExamAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'exam', 'score', 'started_at', 'submitted_at')
+    search_fields = ('user__username', 'exam__title')
+    actions = [export_userexams_csv]
+
+    readonly_fields = (
+        'user', 'exam', 'question_order',
+        'started_at', 'submitted_at',
+        'score', 'passed', 'status'
+    )
+
+    list_per_page = 50   # 🔥 pagination control
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('user', 'exam')
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(QuestionFeedback)
+class QuestionFeedbackAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'question', 'user',
+        'is_answer_incorrect', 'status', 'created_at'
+    )
+    list_filter = ('status', 'is_answer_incorrect', 'created_at')
+    search_fields = ('question__text', 'user__username', 'comment')
+    autocomplete_fields = ('question', 'user', 'user_exam')
+    date_hierarchy = 'created_at'
+    list_per_page = 50
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('question', 'user', 'user_exam')
+    
+
+@admin.register(ExamUnlockLog)
+class ExamUnlockLogAdmin(admin.ModelAdmin):
+    list_display = ("user", "exam", "unlocked_at", "source")
+    list_filter = ("exam", "source")
+

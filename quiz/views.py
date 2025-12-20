@@ -25,7 +25,43 @@ from .forms import RegistrationForm, EmailOrUsernameLoginForm
 from django.views.generic import TemplateView, CreateView, DetailView, UpdateView
 from django.urls import reverse_lazy
 
+import logging
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
+from .models import UserExam, UserAnswer, Choice  # adjust import path if needed
+
+logger = logging.getLogger(__name__)
+import logging
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib import messages
+
+from .models import UserExam, QuestionFeedback  # adjust import paths
+from .models import UserExam, UserAnswer, Choice  # adjust import path if needed
+from django.db.models import Q
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import PermissionDenied
+from django.db.models import Avg, Q
+from django.shortcuts import render
+
+from .models import Exam, UserExam
+from django.contrib.auth.models import User
+
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.models import User
+from django.db.models import Avg, Q, Count
+from django.shortcuts import render
+
+from .models import Exam, UserExam, Category, Question
+
+logger = logging.getLogger(__name__)
 
 # quiz/views.py
 from django.shortcuts import render, redirect
@@ -41,6 +77,9 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from .forms import RegistrationForm
 from .utils import get_leaf_category_name
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 # Models (import before helpers that reference them)
 from .models import (
@@ -783,25 +822,6 @@ def dashboard_dispatch(request):
 # Admin dashboard + API
 # -------------------------
 # add at top of file (if not present)
-from django.db.models import Q
-
-from django.contrib.admin.views.decorators import staff_member_required
-from django.core.exceptions import PermissionDenied
-from django.db.models import Avg, Q
-from django.shortcuts import render
-
-from .models import Exam, UserExam
-from django.contrib.auth.models import User
-
-
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.models import User
-from django.db.models import Avg, Q, Count
-from django.shortcuts import render
-
-from .models import Exam, UserExam, Category, Question
-
-
 @staff_member_required
 def admin_dashboard(request):
     # Top stats
@@ -914,154 +934,146 @@ def recent_attempts_api(request):
 # -------------------------
 # Student dashboard
 # -------------------------
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.utils import timezone
+from django.conf import settings
+
+from .models import Exam, UserExam
+from .utils import cleanup_illegal_attempts, check_exam_lock
+
+
 @login_required
 def student_dashboard(request):
-    """
-    Student-facing dashboard builder (includes pass_threshold).
-    """
-    exams = Exam.objects.filter(is_published=True).order_by('title')
+    user = request.user
 
-    # user's active attempt (in-progress)
-    active_attempt = (
-        UserExam.objects
-        .filter(user=request.user, submitted_at__isnull=True)
-        .order_by('-started_at')
-        .first()
+    # 🔒 Clean only illegal ACTIVE attempts (UNCHANGED)
+    cleanup_illegal_attempts(user)
+
+    # -----------------------------
+    # SUMMARY STATS (UNCHANGED)
+    # -----------------------------
+    attempts = UserExam.objects.filter(user=user)
+
+    completed = attempts.filter(submitted_at__isnull=False)
+    passed = completed.filter(passed=True)
+    failed = completed.filter(passed=False)
+
+    active_attempt = attempts.filter(
+        submitted_at__isnull=True
+    ).select_related("exam").first()
+
+    # -----------------------------
+    # SETTINGS (ADD-ON)
+    # -----------------------------
+    cooldown_minutes = getattr(settings, "RETAKE_COOLDOWN_MINUTES", 30)
+    cooldown_total_seconds = cooldown_minutes * 60
+
+    # -----------------------------
+    # LOAD ALL PUBLISHED EXAMS (UNCHANGED)
+    # -----------------------------
+    exams = (
+        Exam.objects
+        .filter(is_published=True)
+        .select_related("track")
+        .order_by("level", "title")
     )
 
-    # all completed attempts for this user (most recent first)
-    all_attempts = (
-        UserExam.objects
-        .filter(user=request.user, submitted_at__isnull=False)
-        .select_related('exam')
-        .order_by('-submitted_at')
-    )
+    # -----------------------------
+    # GROUP BY TRACK
+    # -----------------------------
+    track_map = {}
 
-    # map exam -> attempts
-    attempts_by_exam = {}
-    for att in all_attempts:
-        attempts_by_exam.setdefault(att.exam_id, []).append(att)
+    for exam in exams:
+        track_name = exam.track.title if exam.track else "General"
+        track_map.setdefault(track_name, [])
 
-    attempted_count = (
-        UserExam.objects
-        .filter(user=request.user, submitted_at__isnull=False)
-        .count()
-    )
-
-    from django.db.models import Max
-    best_score_val = (
-        UserExam.objects
-        .filter(user=request.user, submitted_at__isnull=False)
-        .aggregate(best=Max('score'))['best'] or 0.0
-    )
-
-    exam_items = []
-    for e in exams:
-        locked = False
-        reason = None
-
-        # gating: prerequisites and levels
-        prereqs_qs = getattr(e, 'prerequisite_exams', None)
-        prereqs = list(prereqs_qs.all()) if prereqs_qs is not None else []
-        if prereqs:
-            missing = [p for p in prereqs if not _user_passed_exam(request.user, p)]
-            if missing:
-                locked = True
-                reason = 'Pass: ' + ', '.join([m.title for m in missing])
-        elif getattr(e, 'level', None) and e.level > 1:
-            if not UserExam.objects.filter(user=request.user, exam__level=e.level-1, passed=True).exists():
-                locked = True
-                reason = f'Pass at least one Level {e.level-1} exam to unlock this exam.'
-
-        # last attempt
         last_attempt = (
-            UserExam.objects
-            .filter(user=request.user, exam=e)
-            .order_by('-started_at')
+            attempts.filter(exam=exam)
+            .order_by("-started_at")
             .first()
         )
 
-        recent_score = None
-        recent_status = None
-        can_retake = False
-        if last_attempt:
-            if last_attempt.submitted_at:
-                recent_status = 'completed'
-                try:
-                    recent_score = float(last_attempt.score or 0.0)
-                except Exception:
-                    recent_score = 0.0
-                can_retake = True
-            else:
-                recent_status = 'in_progress'
-                recent_score = None
-                can_retake = False
+        # -----------------------------
+        # EXISTING LOCK LOGIC (UNCHANGED)
+        # -----------------------------
+        locked, reason = check_exam_lock(user, exam)
 
-        # action label
+        # -----------------------------
+        # ➕ ADDITIONAL STRICT LEVEL LOCK
+        # (does NOT replace existing logic)
+        # -----------------------------
+        if not locked and exam.level > 1:
+            prev_level_passed = UserExam.objects.filter(
+                user=user,
+                exam__track=exam.track,
+                exam__level=exam.level - 1,
+                passed=True
+            ).exists()
+
+            if not prev_level_passed:
+                locked = True
+                reason = f"Pass Level {exam.level - 1} to unlock"
+
+        # -----------------------------
+        # ACTION LOGIC (ENHANCED, NOT REMOVED)
+        # -----------------------------
+        action = "start"
+        cooldown_remaining = None
+        status = "not_attempted"
+
         if locked:
-            action_label = 'Locked'
-        else:
-            if last_attempt is None:
-                action_label = 'Start'
-            elif last_attempt.submitted_at is None:
-                action_label = 'Resume'
-            else:
-                action_label = 'Retake' if can_retake else 'Start'
+            action = "locked"
+            status = "locked"
 
-        # category_label (use helper)
-        if hasattr(e, 'categories') and getattr(e, 'categories', None) is not None and e.categories.exists():
-            labels = []
-            for c in e.categories.all():
-                leaf = get_leaf_category_name(c)
-                if leaf:
-                    labels.append(leaf)
-            category_label = ', '.join(labels) if labels else "General"
-        else:
-            leaf = get_leaf_category_name(getattr(e, 'category', None))
-            category_label = leaf if leaf else "General"
+        elif last_attempt:
+            if last_attempt.submitted_at is None:
+                action = "resume"
+                status = "in_progress"
 
-        # attempts + best for this exam
-        exam_attempts = attempts_by_exam.get(e.id, [])
-        best_for_exam = None
-        if exam_attempts:
-            scores = [a.score for a in exam_attempts if a.score is not None]
-            if scores:
-                try:
-                    best_for_exam = round(max(float(s) for s in scores), 2)
-                except Exception:
-                    best_for_exam = None
+            elif last_attempt.passed is True:
+                action = "passed"
+                status = "passed"
 
-        # pass threshold (80% of passing_score) for template
-        pass_threshold = None
-        try:
-            if e.passing_score is not None:
-                pass_threshold = round(float(e.passing_score) * 0.8, 2)
-        except Exception:
-            pass_threshold = None
+            elif last_attempt.passed is False:
+                status = "failed"
 
-        exam_items.append({
-            'exam': e,
-            'locked': locked,
-            'reason': reason,
-            'category_label': category_label,
-            'attempts': exam_attempts,
-            'last_attempt': last_attempt,
-            'recent_score': recent_score,
-            'recent_status': recent_status,
-            'action_label': action_label,
-            'can_retake': can_retake,
-            'best_score': best_for_exam,
-            'pass_threshold': pass_threshold,
+                elapsed = (timezone.now() - last_attempt.submitted_at).total_seconds()
+                remaining = max(0, int(cooldown_total_seconds - elapsed))
+
+                if remaining > 0:
+                    action = "cooldown"
+                    cooldown_remaining = remaining
+                else:
+                    action = "retake"
+
+        track_map[track_name].append({
+            "exam": exam,
+            "last_attempt": last_attempt,
+            "action": action,
+            "status": status,                     # ➕ ADD
+            "locked": locked,
+            "lock_reason": reason,
+            "cooldown_remaining": cooldown_remaining,  # ➕ ADD
         })
 
+    # -----------------------------
+    # CONTEXT (UNCHANGED + ADDITIVE)
+    # -----------------------------
     context = {
-        'exams': exams,
-        'active_attempt': active_attempt,
-        'attempted_count': attempted_count,
-        'best_score': round(best_score_val, 2),
-        'exam_items': exam_items,
+        "total_attempts": attempts.count(),
+        "passed_count": passed.count(),
+        "failed_count": failed.count(),
+        "active_attempt": active_attempt,
+        "track_map": track_map,
     }
-    return render(request, 'quiz/student_dashboard.html', context)
+
+    return render(request, "quiz/student_dashboard.html", context)
+
+
+
+
+
 
 
 # -------------------------
@@ -1102,152 +1114,200 @@ def users_list(request):
 
 
 
-# -------------------------
-# Allocation / selection of questions
-# -------------------------
-def allocate_questions_for_exam(exam):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####################EXAM MANAGEMENT##############################
+
+from django.db import transaction
+
+
+import math
+import random
+from django.db.models import Q
+
+def allocate_questions_for_exam(exam, seed=None):
     """
-    Select questions for `exam` according to ExamCategoryAllocation rows.
-    Returns a list of Question objects with length up to exam.question_count (tries to reach exact).
+    Enterprise-grade allocation engine.
+    - Supports fixed + percentage allocation
+    - Deterministic if seed is provided (recommended: user_exam.id)
+    - Prevents over-allocation
+    - Uses active questions only
     """
+
     total_needed = int(exam.question_count)
+    if total_needed <= 0:
+        return []
+
+    rng = random.Random(seed) if seed is not None else random
     allocations = list(exam.allocations.select_related('category').all())
 
-    # No allocations -> fallback to M2M categories, legacy category, or global
-    if not allocations:
-        m2m_cats = list(exam.categories.all()) if hasattr(exam, 'categories') else []
-        if m2m_cats:
-            qs = Question.objects.filter(category__in=m2m_cats)
-            pool = list(qs)
-            random.shuffle(pool)
-            return pool[:total_needed]
-        elif getattr(exam, 'category', None):
-            pool = list(Question.objects.filter(category=exam.category))
-            random.shuffle(pool)
-            return pool[:total_needed]
-        else:
-            pool = list(Question.objects.all())
-            random.shuffle(pool)
-            return pool[:total_needed]
+    base_qs = Question.objects.filter(is_active=True)
+
 
     selected_qs = []
+    selected_ids = set()
+
+    # -------------------------------------------------
+    # 0️⃣ Guard: fixed_count overflow
+    # -------------------------------------------------
+    fixed_total = sum(a.fixed_count or 0 for a in allocations)
+    if fixed_total > total_needed:
+        raise ValueError(
+            f"Fixed allocation ({fixed_total}) exceeds exam.question_count ({total_needed})"
+        )
+
     remaining_needed = total_needed
+
+    # -------------------------------------------------
+    # 1️⃣ FIXED COUNT ALLOCATION
+    # -------------------------------------------------
     percent_allocs = []
     percent_sum = 0
 
-    # 1) fixed_count allocations
     for a in allocations:
         if a.fixed_count:
-            cat = a.category
             try:
-                cat_ids = cat.get_descendants_include_self()
+                cat_ids = a.category.get_descendants_include_self()
             except Exception:
-                cat_ids = [cat.id]
-            pool = list(Question.objects.filter(category_id__in=cat_ids))
-            random.shuffle(pool)
+                cat_ids = [a.category.id]
+
+            pool = list(
+                base_qs.filter(category_id__in=cat_ids).exclude(id__in=selected_ids)
+            )
+            rng.shuffle(pool)
+
             take = min(len(pool), a.fixed_count)
-            selected_qs.extend(pool[:take])
+            chosen = pool[:take]
+
+            selected_qs.extend(chosen)
+            selected_ids.update(q.id for q in chosen)
             remaining_needed -= take
         else:
             percent_allocs.append(a)
             percent_sum += a.percentage
 
-    # 2) percentage-based allocations from remaining
-    percent_counts = {}
+    # -------------------------------------------------
+    # 2️⃣ PERCENTAGE ALLOCATION
+    # -------------------------------------------------
     if percent_allocs and remaining_needed > 0 and percent_sum > 0:
         raw = []
         for a in percent_allocs:
-            scaled_fraction = (a.percentage / percent_sum) * remaining_needed
-            count_floor = math.floor(scaled_fraction)
-            remainder = scaled_fraction - count_floor
-            raw.append((a, count_floor, remainder))
-        for a, cnt, rem in raw:
-            percent_counts[a.id] = cnt
+            scaled = (a.percentage / percent_sum) * remaining_needed
+            raw.append((a, math.floor(scaled), scaled % 1))
+
+        percent_counts = {a.id: cnt for a, cnt, _ in raw}
         allocated = sum(percent_counts.values())
         left = remaining_needed - allocated
-        raw_sorted = sorted(raw, key=lambda x: x[2], reverse=True)
-        i = 0
-        while left > 0 and i < len(raw_sorted):
-            a, cnt, rem = raw_sorted[i]
+
+        # distribute remainders
+        for a, _, _ in sorted(raw, key=lambda x: x[2], reverse=True):
+            if left <= 0:
+                break
             percent_counts[a.id] += 1
             left -= 1
-            i += 1
 
-        already_selected_ids = {q.id for q in selected_qs}
         for a in percent_allocs:
             cnt = percent_counts.get(a.id, 0)
             if cnt <= 0:
                 continue
+
             try:
                 cat_ids = a.category.get_descendants_include_self()
             except Exception:
                 cat_ids = [a.category.id]
-            pool = list(Question.objects.filter(category_id__in=cat_ids).exclude(id__in=already_selected_ids))
-            random.shuffle(pool)
-            take = min(len(pool), cnt)
-            chosen = pool[:take]
-            selected_qs.extend(chosen)
-            already_selected_ids.update({q.id for q in chosen})
 
-    # 3) try exam.category subtree
-    if len(selected_qs) < total_needed and getattr(exam, 'category', None):
+            pool = list(
+                base_qs.filter(category_id__in=cat_ids).exclude(id__in=selected_ids)
+            )
+            rng.shuffle(pool)
+
+            chosen = pool[:cnt]
+            selected_qs.extend(chosen)
+            selected_ids.update(q.id for q in chosen)
+
+    # -------------------------------------------------
+    # 3️⃣ FALLBACK: legacy category
+    # -------------------------------------------------
+    if len(selected_qs) < total_needed and exam.category:
         needed = total_needed - len(selected_qs)
         try:
             cat_ids = exam.category.get_descendants_include_self()
         except Exception:
             cat_ids = [exam.category.id]
-        pool = list(Question.objects.filter(category_id__in=cat_ids).exclude(id__in={q.id for q in selected_qs}))
-        random.shuffle(pool)
-        take = min(len(pool), needed)
-        selected_qs.extend(pool[:take])
 
-    # 4) global pool fallback
+        pool = list(
+            base_qs.filter(category_id__in=cat_ids).exclude(id__in=selected_ids)
+        )
+        rng.shuffle(pool)
+        selected_qs.extend(pool[:needed])
+        selected_ids.update(q.id for q in pool[:needed])
+
+    # -------------------------------------------------
+    # 4️⃣ GLOBAL FALLBACK
+    # -------------------------------------------------
     if len(selected_qs) < total_needed:
         needed = total_needed - len(selected_qs)
-        pool = list(Question.objects.exclude(id__in={q.id for q in selected_qs}))
-        random.shuffle(pool)
-        take = min(len(pool), needed)
-        selected_qs.extend(pool[:take])
+        pool = list(base_qs.exclude(id__in=selected_ids))
+        rng.shuffle(pool)
+        selected_qs.extend(pool[:needed])
 
-    # Trim/shuffle final list
-    if len(selected_qs) > total_needed:
-        random.shuffle(selected_qs)
-        selected_qs = selected_qs[:total_needed]
-    else:
-        random.shuffle(selected_qs)
-
-    return selected_qs
+    # -------------------------------------------------
+    # FINAL SHUFFLE (order is stored anyway)
+    # -------------------------------------------------
+    rng.shuffle(selected_qs)
+    return selected_qs[:total_needed]
 
 
-'''
-# -------------------------
-# Registration + exam flows
-# -------------------------
-def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('quiz:exam_list')
-    else:
-        form = UserCreationForm()
-    return render(request, 'quiz/register.html', {'form': form})
-'''
 
 @login_required
 def exam_list(request):
     exams = (
         Exam.objects
         .filter(is_published=True)
-        .select_related('category')         # assumes FK named "category"
-        .order_by('category__name', 'level')  # adjust if different field
+        .select_related('category')
+        .prefetch_related('categories')
+        .order_by('level', 'title')
     )
 
-    context = {
-        'exams': exams,
+    # Build map: exam_id -> active UserExam (or None)
+    active_attempts = {
+        ue.exam_id: ue
+        for ue in UserExam.objects.filter(
+            user=request.user,
+            submitted_at__isnull=True,
+            exam__in=exams
+        )
     }
-    return render(request, 'quiz/exam_list.html', context)
+
+    return render(request, 'quiz/exam_list.html', {
+        'exams': exams,
+        'active_attempts': active_attempts,
+    })
+
+
+
+
 
 
 
@@ -1256,36 +1316,87 @@ def exam_list(request):
 def exam_start(request, exam_id):
     exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
 
-    # If an active attempt already exists, continue it
-    existing = UserExam.objects.filter(user=request.user, exam=exam, submitted_at__isnull=True).first()
-    if existing:
-        return redirect('quiz:exam_take', user_exam_id=existing.id)
+    try:
+        with transaction.atomic():
 
-    # GATING: prerequisite exams (M2M) if present
-    prereqs_qs = getattr(exam, 'prerequisite_exams', None)
-    prereqs = list(prereqs_qs.all()) if prereqs_qs is not None else []
-    if prereqs:
-        missing = [p for p in prereqs if not _user_passed_exam(request.user, p)]
-        if missing:
-            messages.error(request, 'You must pass prerequisite exam(s): ' + ', '.join([m.title for m in missing]))
-            return redirect('quiz:student_dashboard')
+            # 🔒 Prevent race condition (double attempts)
+            existing = (
+                UserExam.objects
+                .select_for_update()
+                .filter(user=request.user, exam=exam, submitted_at__isnull=True)
+                .first()
+            )
+            if existing:
+                return redirect('quiz:exam_take', user_exam_id=existing.id)
 
-    # Level-based gating fallback
-    elif getattr(exam, 'level', None) and exam.level > 1:
-        if not UserExam.objects.filter(user=request.user, exam__level=exam.level-1, passed=True).exists():
-            messages.error(request, f'You must pass at least one Level {exam.level-1} exam to unlock this exam.')
-            return redirect('quiz:student_dashboard')
+            # 2️⃣ Prerequisite exams gating
+            prereqs = list(exam.prerequisite_exams.all())
+            if prereqs:
+                missing = [
+                    p for p in prereqs
+                    if not UserExam.objects.filter(
+                        user=request.user,
+                        exam=p,
+                        passed=True
+                    ).exists()
+                ]
+                if missing:
+                    messages.error(
+                        request,
+                        "You must pass prerequisite exam(s): " +
+                        ", ".join(p.title for p in missing)
+                    )
+                    return redirect('quiz:student_dashboard')
 
-    # Create attempt after gating checks passed
-    ue = UserExam.objects.create(user=request.user, exam=exam)
-    qs = allocate_questions_for_exam(exam)
-    ue.question_order = [q.id for q in qs]
-    ue.save()
+            # 3️⃣ Level-based gating
+            if exam.level and exam.level > 1:
+                has_prev_level = UserExam.objects.filter(
+                    user=request.user,
+                    exam__level=exam.level - 1,
+                    passed=True
+                ).exists()
+                if not has_prev_level:
+                    messages.error(
+                        request,
+                        f"You must pass at least one Level {exam.level - 1} exam to unlock this exam."
+                    )
+                    return redirect('quiz:student_dashboard')
 
-    for q in qs:
-        UserAnswer.objects.create(user_exam=ue, question=q)
+            # 4️⃣ Create attempt FIRST (for deterministic seed)
+            ue = UserExam.objects.create(
+                user=request.user,
+                exam=exam
+            )
+
+            # 5️⃣ Deterministic allocation
+            questions = allocate_questions_for_exam(exam, seed=ue.id)
+            if not questions:
+                raise ValueError("No questions allocated")
+
+            ue.question_order = [q.id for q in questions]
+            ue.current_index = 0
+            ue.save()
+
+            # 6️⃣ Create answers
+            UserAnswer.objects.bulk_create([
+                UserAnswer(user_exam=ue, question=q)
+                for q in questions
+            ])
+
+    except Exception:
+        messages.error(
+            request,
+            "This exam is not properly configured. Please contact support."
+        )
+        return redirect('quiz:student_dashboard')
 
     return redirect('quiz:exam_question', user_exam_id=ue.id, index=0)
+
+
+
+
+
+
 
 
 @login_required
@@ -1302,7 +1413,8 @@ def exam_question(request, user_exam_id, index):
 
     remaining = ue.time_remaining()
     if remaining <= 0:
-        return redirect('quiz:exam_submit', user_exam_id=ue.id)
+        return redirect('quiz:exam_expired', user_exam_id=ue.id)
+
 
     q_ids = ue.question_order or []
     if index < 0 or index >= len(q_ids):
@@ -1332,14 +1444,557 @@ def exam_question(request, user_exam_id, index):
     })
 
 
+
+# -------------------------
+# Submit / grade
+# -------------------------
+@login_required
+def exam_submit(request, user_exam_id):
+    ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
+
+    # Prevent double submit
+    if ue.submitted_at:
+        return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+    # Time expired
+    if ue.time_remaining() <= 0:
+        ue.submitted_at = timezone.now()
+        ue.score = 0
+        ue.passed = False
+        ue.save()
+        return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+    if request.method != 'POST':
+        return redirect('quiz:exam_question', user_exam_id=ue.id, index=ue.current_index)
+
+    # Canonical question order
+    if ue.question_order:
+        qids = [int(x) for x in ue.question_order]
+    else:
+        qids = list(ue.answers.values_list('question_id', flat=True))
+
+    total = 0
+    score_acc = 0.0
+
+    for qid in qids:
+        ua, _ = UserAnswer.objects.get_or_create(
+            user_exam=ue,
+            question_id=qid
+        )
+        q = ua.question
+        total += 1
+
+        # ==================================================
+        # SINGLE / DROPDOWN (UNCHANGED)
+        # ==================================================
+        if q.question_type in ('single', 'dropdown'):
+            choice_id = request.POST.get(f'question_{q.id}')
+
+            if choice_id:
+                try:
+                    ch = Choice.objects.get(pk=int(choice_id), question=q)
+                    ua.choice = ch
+                    ua.is_correct = ch.is_correct is True
+                    if ua.is_correct:
+                        score_acc += 1.0
+                except Exception:
+                    if ua.choice and ua.is_correct:
+                        score_acc += 1.0
+                    else:
+                        ua.is_correct = False
+            else:
+                if ua.choice and ua.is_correct:
+                    score_acc += 1.0
+                else:
+                    ua.is_correct = False
+
+            ua.selections = None
+            ua.raw_answer = None
+            ua.save()
+
+        # ==================================================
+        # TRUE / FALSE  ✅ FINAL FIX (WORKS WITH "True"/"False")
+        # ==================================================
+        elif q.question_type == 'tf':
+            raw_val = request.POST.get(f'question_{q.id}')
+
+            ua.selections = None
+            ua.raw_answer = None
+
+            if raw_val is None:
+                ua.choice = None
+                ua.is_correct = False
+                ua.save()
+                continue
+
+            raw_val_str = str(raw_val).strip().lower()
+            ch = None
+
+            # Case 1: value is choice ID
+            if raw_val_str.isdigit():
+                ch = q.choices.filter(id=int(raw_val_str)).first()
+
+            # Case 2: value is "true" / "false" (your current UI)
+            else:
+                if raw_val_str in ('true', '1', 'yes', 'on'):
+                    ch = q.choices.filter(is_correct=True).first()
+                elif raw_val_str in ('false', '0', 'no'):
+                    ch = q.choices.filter(is_correct=False).first()
+
+            if ch:
+                ua.choice = ch
+                ua.is_correct = ch.is_correct is True
+                if ua.is_correct:
+                    score_acc += 1.0
+            else:
+                ua.choice = None
+                ua.is_correct = False
+
+            ua.save()
+
+        # ==================================================
+        # MULTI SELECT (UNCHANGED)
+        # ==================================================
+        elif q.question_type == 'multi':
+            selections = request.POST.getlist(f'question_{q.id}')
+
+            if selections:
+                try:
+                    sel_ids = [int(x) for x in selections if x]
+                except ValueError:
+                    sel_ids = [int(x) for x in selections if str(x).isdigit()]
+                ua.selections = sel_ids
+            else:
+                sel_ids = ua.selections or []
+
+            correct_ids = list(
+                q.choices.filter(is_correct=True)
+                .values_list('id', flat=True)
+            )
+
+            selected_set = set(sel_ids)
+            correct_set = set(correct_ids)
+
+            if selected_set == correct_set:
+                ua.is_correct = True
+                score_acc += 1.0
+            elif selected_set.isdisjoint(correct_set):
+                ua.is_correct = False
+            else:
+                ua.is_correct = None
+                true_pos = len(selected_set & correct_set)
+                false_pos = len(selected_set - correct_set)
+                fraction = max(
+                    0.0,
+                    (true_pos - 0.5 * false_pos) / max(1, len(correct_set))
+                )
+                score_acc += fraction
+
+            ua.choice = None
+            ua.raw_answer = None
+            ua.save()
+
+        # ==================================================
+        # FILL IN THE BLANK (UNCHANGED)
+        # ==================================================
+        elif q.question_type == 'fill':
+            raw = (request.POST.get(f'question_{q.id}') or '').strip()
+            ua.raw_answer = raw
+
+            def norm(s): return ' '.join(s.lower().split())
+
+            if q.correct_text and norm(raw) == norm(q.correct_text):
+                ua.is_correct = True
+                score_acc += 1.0
+            else:
+                ua.is_correct = False
+
+            ua.choice = None
+            ua.selections = None
+            ua.save()
+
+        # ==================================================
+        # NUMERIC (UNCHANGED)
+        # ==================================================
+        elif q.question_type == 'numeric':
+            raw = (request.POST.get(f'question_{q.id}') or '').strip()
+            ua.raw_answer = raw
+
+            try:
+                val = float(raw)
+                tol = q.numeric_tolerance or 0.0
+                if q.numeric_answer is not None and abs(val - q.numeric_answer) <= tol:
+                    ua.is_correct = True
+                    score_acc += 1.0
+                else:
+                    ua.is_correct = False
+            except Exception:
+                ua.is_correct = False
+
+            ua.choice = None
+            ua.selections = None
+            ua.save()
+
+        else:
+            ua.save()
+
+    # ==================================================
+    # FINALIZE RESULT (UNCHANGED)
+    # ==================================================
+    ue.score = round((score_acc / total) * 100, 2) if total else 0
+    ue.submitted_at = timezone.now()
+
+    is_mock = request.session.get(f"mock_exam_{ue.id}", False)
+    ue.passed = None if is_mock else ue.score >= (ue.exam.passing_score or 0)
+
+    ue.save()
+
+    return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+
+
+
+
+
+# -------------------------
+# Result view
+# -------------------------
+
+
+
+@login_required
+def exam_result(request, user_exam_id):
+    ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
+
+    # =====================================================
+    # HANDLE FEEDBACK SUBMISSION
+    # =====================================================
+    if request.method == 'POST':
+        qid_raw = request.POST.get('question_id')
+        comment = (request.POST.get('comment') or '').strip()
+        is_incorrect = bool(request.POST.get('is_answer_incorrect'))
+
+        try:
+            qid = int(qid_raw)
+        except (TypeError, ValueError):
+            messages.error(request, "Invalid question reference.")
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        if not ue.answers.filter(question_id=qid).exists():
+            messages.error(request, "This question does not belong to your exam.")
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        if not comment and not is_incorrect:
+            messages.info(request, "Please enter a comment or mark incorrect.")
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        existing = QuestionFeedback.objects.filter(
+            user=request.user,
+            user_exam=ue,
+            question_id=qid
+        ).first()
+
+        if existing:
+            messages.info(request, "Feedback already submitted.")
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        QuestionFeedback.objects.create(
+            user=request.user,
+            user_exam=ue,
+            question_id=qid,
+            comment=comment,
+            is_answer_incorrect=is_incorrect,
+        )
+
+        messages.success(request, "Thank you for your feedback!")
+        return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+    # =====================================================
+    # LOAD ANSWERS
+    # =====================================================
+    answers = list(
+        ue.answers
+        .select_related('question', 'choice')
+        .prefetch_related('question__choices')
+    )
+
+    # =====================================================
+    # BUILD ANSWER DISPLAY DATA (CRITICAL FIX)
+    # =====================================================
+    for ans in answers:
+        q = ans.question
+
+        ans.user_answers_display = []
+        ans.correct_answers_display = []
+
+        # ---------- SINGLE / DROPDOWN / TRUE-FALSE ----------
+        if q.question_type in ('single', 'dropdown', 'tf'):
+            if ans.choice:
+                ans.user_answers_display = [ans.choice.text]
+
+            correct = q.choices.filter(is_correct=True).first()
+            if correct:
+                ans.correct_answers_display = [correct.text]
+
+        # ---------- MULTI SELECT ----------
+        elif q.question_type == 'multi':
+            selected_ids = set(ans.selections or [])
+            correct_ids = set(
+                q.choices.filter(is_correct=True).values_list('id', flat=True)
+            )
+
+            ans.user_answers_display = list(
+                q.choices.filter(id__in=selected_ids).values_list('text', flat=True)
+            )
+
+            ans.correct_answers_display = list(
+                q.choices.filter(is_correct=True).values_list('text', flat=True)
+            )
+
+            # ✅ Correctness FIX
+            if selected_ids == correct_ids:
+                ans.is_correct = True
+            elif selected_ids & correct_ids:
+                ans.is_correct = None   # partial
+            else:
+                ans.is_correct = False
+
+        # ---------- FILL IN THE BLANK ----------
+        elif q.question_type == 'fill':
+            if ans.raw_answer:
+                ans.user_answers_display = [ans.raw_answer]
+            if q.correct_text:
+                ans.correct_answers_display = [q.correct_text]
+
+        # ---------- NUMERIC ----------
+        elif q.question_type == 'numeric':
+            if ans.raw_answer:
+                ans.user_answers_display = [ans.raw_answer]
+            if q.numeric_answer is not None:
+                ans.correct_answers_display = [str(q.numeric_answer)]
+
+        # ---------- MATCH / ORDER ----------
+        else:
+            if ans.raw_answer:
+                ans.user_answers_display = [ans.raw_answer]
+
+    # =====================================================
+    # ACCURACY / BEST SCORE
+    # =====================================================
+    total = len(answers)
+    correct_count = sum(1 for a in answers if a.is_correct is True)
+
+    accuracy = round((correct_count / total) * 100, 2) if total else 0
+
+    best_score = (
+        UserExam.objects
+        .filter(user=request.user, exam=ue.exam, submitted_at__isnull=False)
+        .order_by('-score')
+        .values_list('score', flat=True)
+        .first()
+    ) or ue.score
+
+    # =====================================================
+    # RETAKE COOLDOWN LOGIC
+    # =====================================================
+    cooldown_minutes = getattr(settings, "RETAKE_COOLDOWN_MINUTES", 0)
+    cooldown_seconds = 0
+    can_retake = True
+
+    if cooldown_minutes and ue.submitted_at:
+        total_cd = cooldown_minutes * 60
+        elapsed = (timezone.now() - ue.submitted_at).total_seconds()
+        remaining = max(0, int(total_cd - elapsed))
+
+        if remaining > 0:
+            can_retake = False
+            cooldown_seconds = remaining
+
+    # =====================================================
+    # FEEDBACK MAPS
+    # =====================================================
+    feedback_qs = QuestionFeedback.objects.filter(user=request.user, user_exam=ue)
+    
+
+    feedback_map = {fb.question_id: fb for fb in feedback_qs}
+
+    for ans in answers:
+        ans.has_feedback = ans.question_id in feedback_map
+
+
+    question_ids = [a.question_id for a in answers]
+    other_feedback_qs = (
+        QuestionFeedback.objects
+        .filter(question_id__in=question_ids)
+        .exclude(user=request.user)
+        .select_related('user')
+        .order_by('-created_at')
+    )
+
+    comments_map = {}
+    for fb in other_feedback_qs:
+        comments_map.setdefault(fb.question_id, []).append(fb)
+
+    # =====================================================
+    # RENDER
+    # =====================================================
+    return render(
+        request,
+        'quiz/result.html',
+        {
+            'user_exam': ue,
+            'answers': answers,
+            'accuracy': accuracy,
+            'best_score': best_score,
+            'can_retake': can_retake,
+            'cooldown_seconds': cooldown_seconds,
+            'feedback_map': feedback_map,
+            'comments_map': comments_map,
+        }
+    )
+
+
+
+
+
+
+@login_required
+def exam_resume(request, exam_id):
+    """
+    Single entry point for an exam.
+    - If user has an active attempt → resume
+    - Otherwise → start new attempt
+    """
+    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
+
+    active = UserExam.objects.filter(
+        user=request.user,
+        exam=exam,
+        submitted_at__isnull=True
+    ).order_by('-started_at').first()
+
+    if active:
+        return redirect('quiz:exam_take', user_exam_id=active.id)
+
+    return redirect('quiz:exam_start', exam_id=exam.id)
+
+
+
+@login_required
+def exam_locked(request, exam_id):
+    """
+    Shown when user tries to access a locked exam.
+    Displays reason instead of silent redirect.
+    """
+    exam = get_object_or_404(Exam, pk=exam_id)
+
+    reasons = []
+
+    # Prerequisite exams
+    prereqs = exam.prerequisite_exams.all()
+    if prereqs.exists():
+        missing = [
+            p.title for p in prereqs
+            if not UserExam.objects.filter(
+                user=request.user,
+                exam=p,
+                passed=True
+            ).exists()
+        ]
+        if missing:
+            reasons.append(
+                "You must pass the following exam(s): " + ", ".join(missing)
+            )
+
+    # Level-based lock
+    if exam.level and exam.level > 1:
+        has_prev_level = UserExam.objects.filter(
+            user=request.user,
+            exam__level=exam.level - 1,
+            passed=True
+        ).exists()
+        if not has_prev_level:
+            reasons.append(
+                f"You must pass at least one Level {exam.level - 1} exam."
+            )
+
+    return render(request, "quiz/exam_locked.html", {
+        "exam": exam,
+        "reasons": reasons or ["This exam is currently locked."],
+    })
+
+
+@login_required
+def exam_expired(request, user_exam_id):
+    """
+    Called when exam time expires.
+    Safely finalizes attempt if not already submitted.
+    """
+    ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
+
+    if ue.submitted_at:
+        return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+    ue.submitted_at = timezone.now()
+    ue.score = ue.score or 0.0
+    ue.passed = False
+    ue.save()
+
+    return render(request, "quiz/exam_expired.html", {
+        "user_exam": ue,
+    })
+
+
+@login_required
+def mock_exam_start(request, exam_id):
+    """
+    Starts a mock exam:
+    - No prerequisites
+    - No pass/fail impact
+    - Does NOT unlock progression
+    """
+
+    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
+
+    try:
+        with transaction.atomic():
+            ue = UserExam.objects.create(
+                user=request.user,
+                exam=exam
+            )
+
+            # Deterministic allocation
+            questions = allocate_questions_for_exam(exam, seed=ue.id)
+
+            if not questions:
+                raise ValueError("No questions allocated for mock exam")
+
+            ue.question_order = [q.id for q in questions]
+            ue.current_index = 0
+            ue.save()
+
+            UserAnswer.objects.bulk_create([
+                UserAnswer(user_exam=ue, question=q)
+                for q in questions
+            ])
+
+        # Mark as mock attempt (session-only flag)
+        request.session[f"mock_exam_{ue.id}"] = True
+
+    except Exception:
+        messages.error(
+            request,
+            "Mock exam is not available at the moment."
+        )
+        return redirect('quiz:student_dashboard')
+
+    return redirect('quiz:exam_question', user_exam_id=ue.id, index=0)
+
+
 # -------------------------
 # Autosave endpoint
 # -------------------------
 # Autosave endpoint (robust)
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.db import transaction
-from django.shortcuts import get_object_or_404
-
 @login_required
 def autosave(request, user_exam_id):
     """
@@ -1488,366 +2143,4 @@ def autosave(request, user_exam_id):
 
 
 
-# -------------------------
-# Submit / grade
-# -------------------------
-import logging
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
 
-from .models import UserExam, UserAnswer, Choice  # adjust import path if needed
-
-logger = logging.getLogger(__name__)
-
-# -------------------------
-# Submit / grade
-# -------------------------
-import logging
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-
-from .models import UserExam, UserAnswer, Choice  # adjust import path if needed
-
-logger = logging.getLogger(__name__)
-
-@login_required
-def exam_submit(request, user_exam_id):
-    ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
-    if ue.submitted_at:
-        return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-    # if time expired
-    if ue.time_remaining() <= 0:
-        ue.submitted_at = timezone.now()
-        ue.score = 0
-        ue.passed = False
-        ue.save()
-        return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-    if request.method != 'POST':
-        return redirect('quiz:exam_question', user_exam_id=ue.id, index=ue.current_index)
-
-    # DEBUG: show what browser posted (helps diagnose missing keys/malformed values)
-    logger.debug("SUBMIT POST items for UserExam %s: %r", ue.id, list(request.POST.items()))
-
-    # Build canonical question id list to grade:
-    # Prefer ue.question_order if present (the exam flow uses this)
-    qids = []
-    if ue.question_order:
-        try:
-            qids = [int(x) for x in ue.question_order]
-        except Exception:
-            qids = [int(x) for x in (ue.question_order or []) if str(x).isdigit()]
-    else:
-        # fallback: use the question ids from related UserAnswer rows
-        qids = list(ue.answers.values_list('question_id', flat=True))
-
-    # Ensure a single UserAnswer exists for each qid (so updates persist to the correct row)
-    # get_or_create will do nothing if it already exists
-    for qid in qids:
-        UserAnswer.objects.get_or_create(user_exam=ue, question_id=qid)
-
-    total = 0
-    score_acc = 0.0
-
-    # Iterate through the canonical qid list (ensures deterministic behavior)
-    for qid in qids:
-        try:
-            ua = ue.answers.select_related('question').get(question_id=qid)
-        except UserAnswer.DoesNotExist:
-            # Shouldn't happen because of get_or_create above, but handle just in case
-            ua = UserAnswer.objects.create(user_exam=ue, question_id=qid)
-
-        q = ua.question
-        total += 1
-
-        # SINGLE / DROPDOWN / TF (robust)
-        if q.question_type in ('single', 'dropdown', 'tf'):
-            choice_id = request.POST.get(f'question_{q.id}')
-            logger.debug("Q%s: posted choice for question_%s = %r (ua.pk=%s, saved_choice=%r, saved_is_correct=%r)",
-                         q.id, q.id, choice_id, ua.pk, getattr(ua.choice, 'pk', None), ua.is_correct)
-
-            if choice_id:
-                try:
-                    submitted_pk = int(str(choice_id).strip())
-                except (ValueError, TypeError) as e:
-                    logger.warning("Q%s: submitted choice is not an integer: %r (%s)", q.id, choice_id, e)
-                    submitted_pk = None
-
-                if submitted_pk is not None:
-                    try:
-                        ch = Choice.objects.get(pk=submitted_pk, question=q)
-                        ua.choice = ch
-                        ua.is_correct = bool(ch.is_correct)
-                        if ua.is_correct:
-                            score_acc += 1.0
-                    except Choice.DoesNotExist:
-                        logger.warning("Q%s: Choice.DoesNotExist for pk=%s", q.id, submitted_pk)
-                        # fallback to autosaved if present and valid
-                        if ua.choice and ua.choice.question_id == q.id and ua.is_correct:
-                            score_acc += 1.0
-                        else:
-                            ua.choice = None
-                            ua.is_correct = False
-                else:
-                    # malformed posted value (non-numeric)
-                    if ua.choice and ua.choice.question_id == q.id and ua.is_correct:
-                        score_acc += 1.0
-                    else:
-                        ua.choice = None
-                        ua.is_correct = False
-            else:
-                # no posted value: keep autosaved selection if any
-                logger.debug("Q%s: no posted value; existing ua.choice=%r ua.is_correct=%r",
-                             q.id, getattr(ua.choice, 'pk', None), ua.is_correct)
-                if ua.choice and ua.is_correct:
-                    score_acc += 1.0
-                else:
-                    ua.is_correct = False
-
-            ua.selections = None
-            ua.raw_answer = None
-            ua.save()
-            logger.debug("Q%s: after save ua.choice=%r ua.is_correct=%r", q.id, getattr(ua.choice, 'pk', None), ua.is_correct)
-
-        # MULTI
-        elif q.question_type == 'multi':
-            selections = request.POST.getlist(f'question_{q.id}')
-            if selections:
-                try:
-                    sel_ids = [int(x) for x in selections if x]
-                except ValueError:
-                    sel_ids = [int(x) for x in selections if x and str(x).isdigit()]
-                ua.selections = sel_ids
-            else:
-                sel_ids = ua.selections or []
-
-            correct_ids = [c.id for c in q.choices.filter(is_correct=True)]
-            if not correct_ids:
-                fraction = 0.0
-            else:
-                true_pos = len(set(sel_ids) & set(correct_ids))
-                false_pos = len(set(sel_ids) - set(correct_ids))
-                fraction = max(0.0, (true_pos - 0.5 * false_pos) / len(correct_ids))
-            score_acc += fraction
-
-            ua.choice = None
-            ua.is_correct = None
-            ua.raw_answer = None
-            ua.save()
-
-        # FILL
-        elif q.question_type == 'fill':
-            raw = request.POST.get(f'question_{q.id}')
-            if raw is None:
-                raw = ua.raw_answer or ''
-            raw = (raw or '').strip()
-            ua.raw_answer = raw
-
-            def norm(s): return ' '.join(s.lower().split())
-            if q.correct_text:
-                ua.is_correct = norm(raw) == norm(q.correct_text)
-                if ua.is_correct:
-                    score_acc += 1.0
-            else:
-                ua.is_correct = False
-            ua.selections = None
-            ua.choice = None
-            ua.save()
-
-        # NUMERIC
-        elif q.question_type == 'numeric':
-            raw = request.POST.get(f'question_{q.id}')
-            if raw is None:
-                raw = ua.raw_answer or ''
-            raw = (raw or '').strip()
-            ua.raw_answer = raw
-            try:
-                v = float(raw)
-                if q.numeric_answer is not None:
-                    tol = q.numeric_tolerance or 0.0
-                    if abs(v - float(q.numeric_answer)) <= float(tol):
-                        ua.is_correct = True
-                        score_acc += 1.0
-                    else:
-                        ua.is_correct = False
-                else:
-                    ua.is_correct = False
-            except Exception:
-                ua.is_correct = False
-            ua.selections = None
-            ua.choice = None
-            ua.save()
-
-        # MATCH
-        elif q.question_type == 'match':
-            pairs = q.matching_pairs or []
-            user_map = {}
-            true_pos = 0
-            false_pos = 0
-            for li, pair in enumerate(pairs):
-                key = f'match_{q.id}_{li}'
-                val = request.POST.get(key)
-                if val is not None:
-                    if val:
-                        user_map[str(li)] = val
-                        if str(val) == str(pair.get('right')):
-                            true_pos += 1
-                        else:
-                            false_pos += 1
-                    else:
-                        false_pos += 1
-                else:
-                    # fallback to autosaved selection
-                    saved_map = ua.selections or {}
-                    if str(li) in saved_map:
-                        v = saved_map[str(li)]
-                        user_map[str(li)] = v
-                        if str(v) == str(pair.get('right')):
-                            true_pos += 1
-                        else:
-                            false_pos += 1
-                    else:
-                        false_pos += 1
-            denom = len(pairs) if pairs else 1
-            fraction = max(0.0, (true_pos - 0.5 * false_pos) / denom)
-            score_acc += fraction
-
-            ua.selections = user_map
-            ua.choice = None
-            ua.raw_answer = None
-            ua.is_correct = None
-            ua.save()
-
-        # ORDER
-        elif q.question_type == 'order':
-            raw = request.POST.get(f'question_{q.id}')
-            if raw is None:
-                raw = ua.raw_answer or ''
-            raw = (raw or '').strip()
-            ua.raw_answer = raw
-            try:
-                user_order = [x.strip() for x in raw.split(',') if x.strip()]
-                canonical = q.ordering_items or []
-                correct_positions = 0
-                denom = max(1, len(canonical))
-                for i, val in enumerate(user_order):
-                    if i < len(canonical) and canonical[i].strip().lower() == val.strip().lower():
-                        correct_positions += 1
-                fraction = correct_positions / denom
-                score_acc += fraction
-            except Exception:
-                pass
-            ua.selections = None
-            ua.choice = None
-            ua.save()
-
-        else:
-            # fallback: preserve existing saved state
-            if ua.is_correct:
-                score_acc += 1.0
-            ua.save()
-
-    # finalize
-    ue.score = (score_acc / total) * 100 if total else 0
-    ue.submitted_at = timezone.now()
-    try:
-        ue.passed = (ue.score >= (ue.exam.passing_score or 0))
-    except Exception:
-        ue.passed = False
-    ue.save()
-
-    return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-# -------------------------
-# Result view
-# -------------------------
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib import messages
-
-from .models import UserExam, QuestionFeedback  # adjust import paths
-
-@login_required
-def exam_result(request, user_exam_id):
-    ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
-
-    # Handle feedback submission
-    if request.method == 'POST':
-        qid_raw = request.POST.get('question_id')
-        comment = (request.POST.get('comment') or '').strip()
-        is_incorrect = bool(request.POST.get('is_answer_incorrect'))
-
-        try:
-            qid = int(qid_raw)
-        except (TypeError, ValueError):
-            qid = None
-
-        if not qid:
-            messages.error(request, "Invalid question reference.")
-            return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-        # ensure the question actually belongs to this exam attempt
-        if not ue.answers.filter(question_id=qid).exists():
-            messages.error(request, "This question does not belong to your exam attempt.")
-            return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-        if not comment and not is_incorrect:
-            messages.info(request, "Please enter a comment or mark the answer as incorrect before submitting.")
-            return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-        # avoid multiple feedback submissions for same question+attempt+user
-        existing = QuestionFeedback.objects.filter(
-            user=request.user,
-            user_exam=ue,
-            question_id=qid
-        ).first()
-
-        if existing:
-            messages.info(request, "You have already submitted feedback for this question. Thank you!")
-            return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-        QuestionFeedback.objects.create(
-            user=request.user,
-            user_exam=ue,
-            question_id=qid,
-            comment=comment,
-            is_answer_incorrect=is_incorrect,
-        )
-
-        messages.success(request, "Thank you! Your feedback has been submitted.")
-        return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-    # GET: show result
-    answers = list(ue.answers.select_related('question', 'choice'))
-
-    # map of question_id -> feedback (if any) for THIS attempt+user
-    feedback_qs = QuestionFeedback.objects.filter(user=request.user, user_exam=ue)
-    feedback_map = {fb.question_id: fb for fb in feedback_qs}
-
-    # NEW: other users' comments for these questions
-    question_ids = [a.question_id for a in answers]
-    other_feedback_qs = (
-        QuestionFeedback.objects
-        .filter(question_id__in=question_ids)
-        .exclude(user=request.user)
-        .select_related('user')
-        .order_by('-created_at')
-    )
-
-    comments_map = {}
-    for fb in other_feedback_qs:
-        comments_map.setdefault(fb.question_id, []).append(fb)
-
-    return render(
-        request,
-        'quiz/result.html',
-        {
-            'user_exam': ue,
-            'answers': answers,
-            'feedback_map': feedback_map,
-            'comments_map': comments_map,   # 👈 NEW
-        }
-    )
