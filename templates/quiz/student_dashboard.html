@@ -1,5 +1,4 @@
-{% extends "quiz/base.html" %}
-{% block content %}
+{% extends "quiz/base.html" %}{% block content %}
 
 <h2 class="title is-4">🎓 Student Dashboard</h2>
 
@@ -39,12 +38,27 @@
   </div>
 </div>
 
-{# ================= EXAMS BY TRACK ================= #}
+{# ================= EXAMS BY TRACK (ACCORDION) ================= #}
 {% if track_map %}
   {% for track, items in track_map.items %}
-    <h3 class="title is-5 mt-5">📘 {{ track }}</h3>
 
-    {% for item in items %}
+  <div class="track-accordion">
+
+    <!-- TRACK HEADER -->
+    <button class="track-header" type="button">
+      <div class="track-left">
+        <span class="track-title">📘 {{ track }}</span>
+        <span class="track-count">
+          {{ items|length }} Exams
+        </span>
+      </div>
+      <i class="fa fa-chevron-down track-arrow"></i>
+    </button>
+
+    <!-- TRACK BODY -->
+    <div class="track-body">
+
+      {% for item in items %}
       <div class="box mb-3">
         <div class="is-flex is-justify-content-space-between is-align-items-center">
 
@@ -63,22 +77,23 @@
             {% endif %}
           </div>
 
-          <div class="buttons is-flex is-align-items-center">
+          <div class="buttons">
 
-            {# ===== PASSED ===== #}
             {% if item.status == "passed" %}
-              <span class="tag is-success is-medium mr-2">
-                ✔ Passed
-              </span>
+              <div class="passed-row">
+                <span class="tag is-success is-medium">✔ Passed</span>
+                <a class="button is-light is-small ml-2"
+                   href="{% url 'quiz:exam_start' item.exam.id %}">
+                  Retake
+                </a>
+              </div>
 
-            {# ===== RESUME ===== #}
             {% elif item.action == "resume" %}
               <a class="button is-warning is-small"
                  href="{% url 'quiz:exam_take' item.last_attempt.id %}">
                 Resume
               </a>
 
-            {# ===== FAILED – COOLDOWN ===== #}
             {% elif item.action == "cooldown" %}
               <button class="button is-light is-small" disabled>
                 ⏳ Retake locked
@@ -88,38 +103,36 @@
                 Retake in <strong class="countdown-text"></strong>
               </span>
 
-            {# ===== START / RETAKE ===== #}
             {% elif item.action == "start" or item.action == "retake" %}
               <a class="button is-primary is-small"
                  href="{% url 'quiz:exam_start' item.exam.id %}">
                 {% if item.action == "retake" %}Retake{% else %}Start{% endif %}
               </a>
 
-            {# ===== LOCKED ===== #}
-            {% elif item.action == "locked" %}
-  <button class="button is-light is-small" disabled>
-    🔒 Locked
-  </button>
-{% endif %}
+            {% else %}
+              <button class="button is-light is-small" disabled>
+                🔒 Locked
+              </button>
+            {% endif %}
 
-
-            {# ===== MOCK (UNCHANGED) ===== #}
-            {# ===== MOCK (DISABLED FOR NOW) ===== #}
-<button class="button is-info is-light is-small ml-1" disabled>
-  Mock (Coming Soon)
-</button>
-
+            <button class="button is-info is-light is-small ml-1" disabled>
+              Mock (Coming Soon)
+            </button>
 
           </div>
         </div>
       </div>
-    {% endfor %}
+      {% endfor %}
+
+    </div>
+  </div>
+
   {% endfor %}
 {% else %}
   <p>No exams available.</p>
 {% endif %}
 
-{# ================= COUNTDOWN SCRIPT (ADDED) ================= #}
+{# ================= COUNTDOWN SCRIPT ================= #}
 <script>
 document.querySelectorAll("[data-countdown]").forEach(el => {
   let seconds = parseInt(el.dataset.countdown);
