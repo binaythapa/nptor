@@ -29,28 +29,6 @@
   </p>
 </div>
 
-{# ================= STATS ================= #}
-<div class="columns is-multiline">
-  <div class="column is-4">
-    <div class="box has-text-centered">
-      <p class="heading">Total Attempts</p>
-      <p class="title is-4">{{ total_attempts }}</p>
-    </div>
-  </div>
-  <div class="column is-4">
-    <div class="box has-text-centered has-text-success">
-      <p class="heading">Passed</p>
-      <p class="title is-4">{{ passed_count }}</p>
-    </div>
-  </div>
-  <div class="column is-4">
-    <div class="box has-text-centered has-text-danger">
-      <p class="heading">Failed</p>
-      <p class="title is-4">{{ failed_count }}</p>
-    </div>
-  </div>
-</div>
-
 {# ================= TRACKS ================= #}
 {% for track, data in track_map.items %}
 <div class="box mb-4">
@@ -61,15 +39,15 @@
       📘 {{ track.title }}
 
       {% if data.is_completed %}
-        <span class="tag is-success is-light ml-2"
-              title="Completed on {{ data.completed_at|date:'d M Y' }}">
+        <span class="tag is-success is-light ml-2">
           🏆 Completed
         </span>
       {% endif %}
 
-      {% if data.avg_score is not None %}
-        <span class="tag is-info is-light ml-2">
-          📈 Avg {{ data.avg_score }}%
+      {% if data.avg_score %}
+        <span class="tag is-info is-light ml-2"
+              title="Calculated using your best score from each exam in this track">
+          📈 Avg {{ data.avg_score }}% (best score per exam)
         </span>
       {% endif %}
     </h3>
@@ -94,12 +72,6 @@
             {{ item.exam.question_count }} Q •
             {{ item.exam.duration_seconds }} sec
           </small>
-
-          {% if item.locked %}
-            <p class="has-text-danger is-size-7 mt-1">
-              🔒 {{ item.lock_reason }}
-            </p>
-          {% endif %}
         </div>
 
         <div class="buttons">
@@ -107,11 +79,20 @@
           {# ===== PASSED ===== #}
           {% if item.status == "passed" %}
             <span class="tag is-success">
-              ✔ Passed
-              {% if item.best_score is not None %}
-                ({{ item.best_score }}%)
-              {% endif %}
+              ✔ Passed ({{ item.best_score }}%)
             </span>
+
+            {% if item.retake_count > 0 %}
+              <span class="tag is-light ml-1">
+                🔁 {{ item.retake_count }} retake{{ item.retake_count|pluralize }}
+              </span>
+            {% endif %}
+
+            {% if item.retake_message %}
+              <span class="tag ml-1">
+                {{ item.retake_message }}
+              </span>
+            {% endif %}
 
             <a class="button is-light is-small ml-2"
                href="{% url 'quiz:exam_start' item.exam.id %}">
@@ -121,10 +102,7 @@
           {# ===== FAILED ===== #}
           {% elif item.status == "failed" %}
             <span class="tag is-danger">
-              ✖ Failed
-              {% if item.last_score is not None %}
-                ({{ item.last_score }}%)
-              {% endif %}
+              ✖ Failed ({{ item.last_score }}%)
             </span>
 
             {% if item.action == "cooldown" %}
@@ -166,65 +144,87 @@
 </div>
 {% endfor %}
 
-{# ================= JS ================= #}
-<script>
-function toggleTrack(id) {
-  const body = document.getElementById("track-body-" + id);
-  const arrow = document.getElementById("arrow-" + id);
-  if (!body) return;
-
-  const open = body.style.display === "block";
-  body.style.display = open ? "none" : "block";
-  arrow.innerText = open ? "▼" : "▲";
+{# ================= STYLES ================= #}
+<style>
+@keyframes pulseDanger {
+  0%   { transform: scale(1); background-color: #ffecec; }
+  50%  { transform: scale(1.05); background-color: #ffb3b3; }
+  100% { transform: scale(1); background-color: #ffecec; }
 }
 
-// Overall progress color
-(function () {
+.retry-pulse {
+  animation: pulseDanger 1s infinite;
+  color: #b00020;
+  font-weight: 600;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+</style>
+
+{# ================= JS ================= #}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // Accordion toggle
+  window.toggleTrack = function (id) {
+    const body = document.getElementById("track-body-" + id);
+    const arrow = document.getElementById("arrow-" + id);
+    const open = body.style.display === "block";
+    body.style.display = open ? "none" : "block";
+    arrow.innerText = open ? "▼" : "▲";
+  };
+
+  // Overall progress coloring
   const bar = document.getElementById("overallProgress");
-  if (!bar) return;
+  if (bar) {
+    const percent = Math.round((bar.value / (bar.max || 1)) * 100);
+    document.getElementById("overallPercent").innerText = percent;
 
-  const value = Number(bar.value || 0);
-  const max = Number(bar.max || 1);
-  const percent = Math.round((value / max) * 100);
+    bar.classList.add(
+      percent < 40 ? "is-danger" :
+      percent < 70 ? "is-warning" : "is-success"
+    );
+  }
 
-  document.getElementById("overallPercent").innerText = percent;
-
-  bar.classList.remove("is-danger", "is-warning", "is-success");
-  if (percent < 40) bar.classList.add("is-danger");
-  else if (percent < 70) bar.classList.add("is-warning");
-  else bar.classList.add("is-success");
-})();
-
-// Retry countdown timers
-(function () {
+  // Retry countdown + pulse animation
   function format(sec) {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   }
 
   document.querySelectorAll(".retry-timer").forEach(el => {
-    let seconds = parseInt(el.dataset.seconds || "0");
-    const btn = el.closest("button");
+    let seconds = parseInt(el.dataset.seconds || "0", 10);
+    const button = el.closest("button");
 
     function tick() {
       if (seconds <= 0) {
         el.innerText = "00:00";
-        if (btn) {
-          btn.disabled = false;
-          btn.classList.remove("is-light");
-          btn.classList.add("is-primary");
-          btn.innerHTML = "Retry";
+        el.classList.remove("retry-pulse");
+
+        if (button) {
+          button.disabled = false;
+          button.classList.remove("is-light");
+          button.classList.add("is-primary");
+          button.innerHTML = "Retry";
         }
         return;
       }
+
       el.innerText = format(seconds);
+
+      if (seconds <= 10) {
+        el.classList.add("retry-pulse");
+      }
+
       seconds--;
       setTimeout(tick, 1000);
     }
+
     tick();
   });
-})();
+
+});
 </script>
 
 {% endblock %}

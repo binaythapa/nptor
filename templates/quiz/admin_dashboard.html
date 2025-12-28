@@ -1,192 +1,76 @@
-{% extends 'quiz/base.html' %}
-
+{% extends "quiz/base.html" %}
 {% block content %}
-<h1 class="title">Admin Dashboard</h1>
 
-{# Top stats #}
+<h2 class="title is-4">🛠 Admin Dashboard</h2>
+
+<!-- ================= KPI CARDS ================= -->
 <div class="columns is-multiline">
-  <div class="column is-one-quarter">
-    <div class="stats-card">
-      <p class="small-muted">Exams</p>
-      <h2 class="title is-4">{{ exams_count }}</h2>
-      <p class="small-muted">Published: {{ published_count }}</p>
+  <div class="column is-3">
+    <div class="box has-text-centered">
+      <p class="heading">Users</p>
+      <p class="title">{{ total_users }}</p>
     </div>
   </div>
 
-  <div class="column is-one-quarter">
-    <div class="stats-card">
-      <p class="small-muted">Users</p>
-      <h2 class="title is-4">{{ total_users }}</h2>
+  <div class="column is-3">
+    <div class="box has-text-centered">
+      <p class="heading">Attempts</p>
+      <p class="title">{{ total_attempts }}</p>
     </div>
   </div>
 
-  <div class="column is-one-quarter">
-    <div class="stats-card">
-      <p class="small-muted">Total Attempts</p>
-      <h2 class="title is-4">{{ total_attempts }}</h2>
+  <div class="column is-3">
+    <div class="box has-text-centered has-text-success">
+      <p class="heading">Pass Rate</p>
+      <p class="title">{{ pass_rate }}%</p>
     </div>
   </div>
 
-  <div class="column is-one-quarter">
-    <div class="stats-card">
-      <p class="small-muted">Pending Attempts</p>
-      <h2 class="title is-4">{{ pending_attempts }}</h2>
-      <p class="small-muted">Avg score: {{ avg_score }}%</p>
-    </div>
-  </div>
-</div>
-
-<div class="columns">
-  <!-- Left: Data overview + categories/questions -->
-  <div class="column is-two-thirds">
-    <div class="box">
-      <h2 class="subtitle">Data overview</h2>
-      <p class="small-muted" style="margin-bottom:10px;">
-        Quick snapshot of the current activity in the system.
-      </p>
-
-      <table class="table is-fullwidth is-striped is-narrow">
-        <tbody>
-          <tr>
-            <th>Published exams</th>
-            <td>{{ published_count }} / {{ exams_count }}</td>
-          </tr>
-          <tr>
-            <th>Total registered users</th>
-            <td>{{ total_users }}</td>
-          </tr>
-          <tr>
-            <th>Total attempts (all time)</th>
-            <td>{{ total_attempts }}</td>
-          </tr>
-          <tr>
-            <th>Attempts waiting for completion</th>
-            <td>{{ pending_attempts }}</td>
-          </tr>
-          <tr>
-            <th>Average score (completed attempts)</th>
-            <td>{{ avg_score }}%</td>
-          </tr>
-          <tr>
-            <th>Total questions in bank</th>
-            <td>{{ total_questions }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p class="small-muted">
-        For deeper analysis (per exam / per user / per question), use Django admin:
-        <a href="/admin/quiz/userexam/">UserExam</a>,
-        <a href="/admin/quiz/question/">Question</a>.
-      </p>
-
-      {% if categories_stats %}
-        <hr style="margin: 16px 0;">
-
-        <h3 class="subtitle is-6">Categories & question distribution</h3>
-        <p class="small-muted" style="margin-bottom:8px;">
-          Top categories by question count (grouped by parent). Click a parent to expand.
-        </p>
-
-        {# Group by parent category #}
-        {% regroup categories_stats by parent as parent_groups %}
-
-        {% for group in parent_groups %}
-          <div class="box" style="margin-bottom:8px;">
-
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div>
-                <strong>
-                  {% if group.grouper %}
-                    {{ group.grouper.name }}
-                  {% else %}
-                    Top-level (no parent)
-                  {% endif %}
-                </strong>
-              </div>
-
-              <button type="button"
-                      class="button is-small is-link is-light"
-                      onclick="toggleCatBlock('cat-group-{{ forloop.counter }}', this)">
-                Show categories
-              </button>
-            </div>
-
-            <div id="cat-group-{{ forloop.counter }}" style="display:none; margin-top:8px;">
-              <table class="table is-fullwidth is-striped is-narrow">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Total questions</th>
-                    <th>Easy</th>
-                    <th>Medium</th>
-                    <th>Hard</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for c in group.list %}
-                    <tr>
-                      <td>{{ c }}</td> {# c.__str__ shows full hierarchy "Parent -> Child" #}
-                      <td>{{ c.total_questions }}</td>
-                      <td>{{ c.easy_count }}</td>
-                      <td>{{ c.medium_count }}</td>
-                      <td>{{ c.hard_count }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-
-          </div>
-        {% endfor %}
-      {% else %}
-        <p class="small-muted">No categories or questions defined yet.</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Right: Management shortcuts -->
-  <div class="column is-one-third">
-    <div class="box">
-      <h2 class="subtitle">Management & navigation</h2>
-      <p class="small-muted" style="margin-bottom:10px;">
-        Jump directly to the most common admin actions.
-      </p>
-
-      <div class="buttons" style="flex-direction:column; align-items:stretch;">
-        <a class="button is-link is-fullwidth" href="/admin/auth/user/">
-          Manage users
-        </a>
-        <a class="button is-primary is-fullwidth" href="/admin/quiz/exam/">
-          Manage exams
-        </a>
-        <a class="button is-light is-fullwidth" href="/admin/quiz/category/">
-          Manage categories
-        </a>
-        <a class="button is-light is-fullwidth" href="/admin/quiz/question/">
-          Manage questions
-        </a>
-        <a class="button is-light is-fullwidth" href="{% url 'quiz:users_list' %}">
-          Users list (custom view)
-        </a>
-      </div>
+  <div class="column is-3">
+    <div class="box has-text-centered has-text-info">
+      <p class="heading">Avg Score</p>
+      <p class="title">{{ avg_score }}%</p>
     </div>
   </div>
 </div>
-{% endblock %}
 
-{% block scripts_extra %}
-<script>
-function toggleCatBlock(id, btn) {
-  const panel = document.getElementById(id);
-  if (!panel) return;
+<!-- ================= SUBSCRIPTIONS ================= -->
+<div class="box">
+  <strong>Active Track Subscriptions:</strong> {{ active_track_subs }}
+</div>
 
-  const isHidden = (panel.style.display === 'none' || panel.style.display === '');
-  panel.style.display = isHidden ? 'block' : 'none';
+<!-- ================= TRACK ANALYTICS ================= -->
+<h3 class="title is-5 mt-5">📚 Track Analytics</h3>
 
-  if (btn) {
-    btn.textContent = isHidden ? 'Hide categories' : 'Show categories';
-  }
-}
-</script>
+<table class="table is-fullwidth is-striped">
+  <thead>
+    <tr>
+      <th>Track</th>
+      <th>Enrolled</th>
+      <th>Completed</th>
+      <th>Completion %</th>
+      <th>Avg Score</th>
+      <th>Drop-off Exam</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in track_rows %}
+    <tr>
+      <td>{{ row.track.title }}</td>
+      <td>{{ row.enrolled }}</td>
+      <td>{{ row.completed }}</td>
+      <td>{{ row.completion_rate }}%</td>
+      <td>
+        {% if row.avg_score %}
+          {{ row.avg_score }}%
+        {% else %}
+          —
+        {% endif %}
+      </td>
+      <td>{{ row.drop_exam }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 {% endblock %}
