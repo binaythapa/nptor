@@ -1,18 +1,33 @@
-{% extends "quiz/base.html" %}{% block content %}
+{% extends "quiz/base.html" %}
+{% block content %}
 
 <h2 class="title is-4">🎓 Student Dashboard</h2>
 
-{# ================= ACTIVE EXAM ================= #}
 {% if active_attempt %}
 <div class="notification is-warning is-light">
-  <strong>⏳ Active Exam:</strong>
-  {{ active_attempt.exam.title }}
+  <strong>⏳ Active Exam:</strong> {{ active_attempt.exam.title }}
   <a class="button is-small is-dark ml-2"
      href="{% url 'quiz:exam_take' active_attempt.id %}">
     Resume
   </a>
 </div>
 {% endif %}
+
+{# ================= OVERALL PROGRESS ================= #}
+<div class="box mb-5">
+  <h3 class="title is-5">📊 Overall Progress</h3>
+
+  <progress id="overallProgress"
+            class="progress"
+            value="{{ overall_passed }}"
+            max="{{ overall_total|default:1 }}">
+  </progress>
+
+  <p class="is-size-7 has-text-grey">
+    {{ overall_passed }} / {{ overall_total }} exams completed
+    (<span id="overallPercent">0</span>%)
+  </p>
+</div>
 
 {# ================= STATS ================= #}
 <div class="columns is-multiline">
@@ -22,14 +37,12 @@
       <p class="title is-4">{{ total_attempts }}</p>
     </div>
   </div>
-
   <div class="column is-4">
     <div class="box has-text-centered has-text-success">
       <p class="heading">Passed</p>
       <p class="title is-4">{{ passed_count }}</p>
     </div>
   </div>
-
   <div class="column is-4">
     <div class="box has-text-centered has-text-danger">
       <p class="heading">Failed</p>
@@ -38,119 +51,180 @@
   </div>
 </div>
 
-{# ================= EXAMS BY TRACK (ACCORDION) ================= #}
-{% if track_map %}
-  {% for track, items in track_map.items %}
+{# ================= TRACKS ================= #}
+{% for track, data in track_map.items %}
+<div class="box mb-4">
 
-  <div class="track-accordion">
+  <!-- TRACK HEADER -->
+  <div class="is-flex is-justify-content-space-between is-align-items-center">
+    <h3 class="title is-6 mb-0">
+      📘 {{ track.title }}
 
-    <!-- TRACK HEADER -->
-    <button class="track-header" type="button">
-      <div class="track-left">
-        <span class="track-title">📘 {{ track }}</span>
-        <span class="track-count">
-          {{ items|length }} Exams
+      {% if data.is_completed %}
+        <span class="tag is-success is-light ml-2"
+              title="Completed on {{ data.completed_at|date:'d M Y' }}">
+          🏆 Completed
         </span>
-      </div>
-      <i class="fa fa-chevron-down track-arrow"></i>
+      {% endif %}
+
+      {% if data.avg_score is not None %}
+        <span class="tag is-info is-light ml-2">
+          📈 Avg {{ data.avg_score }}%
+        </span>
+      {% endif %}
+    </h3>
+
+    <button class="button is-small is-light"
+            onclick="toggleTrack('{{ track.id }}')">
+      <span id="arrow-{{ track.id }}">▼</span>
     </button>
-
-    <!-- TRACK BODY -->
-    <div class="track-body">
-
-      {% for item in items %}
-      <div class="box mb-3">
-        <div class="is-flex is-justify-content-space-between is-align-items-center">
-
-          <div>
-            <strong>{{ item.exam.title }}</strong><br>
-            <small class="has-text-grey">
-              Level {{ item.exam.level }} •
-              {{ item.exam.question_count }} Questions •
-              {{ item.exam.duration_seconds }} sec
-            </small>
-
-            {% if item.locked %}
-              <p class="has-text-danger is-size-7 mt-1">
-                🔒 {{ item.lock_reason }}
-              </p>
-            {% endif %}
-          </div>
-
-          <div class="buttons">
-
-            {% if item.status == "passed" %}
-              <div class="passed-row">
-                <span class="tag is-success is-medium">✔ Passed</span>
-                <a class="button is-light is-small ml-2"
-                   href="{% url 'quiz:exam_start' item.exam.id %}">
-                  Retake
-                </a>
-              </div>
-
-            {% elif item.action == "resume" %}
-              <a class="button is-warning is-small"
-                 href="{% url 'quiz:exam_take' item.last_attempt.id %}">
-                Resume
-              </a>
-
-            {% elif item.action == "cooldown" %}
-              <button class="button is-light is-small" disabled>
-                ⏳ Retake locked
-              </button>
-              <span class="has-text-grey is-size-7 ml-2"
-                    data-countdown="{{ item.cooldown_remaining }}">
-                Retake in <strong class="countdown-text"></strong>
-              </span>
-
-            {% elif item.action == "start" or item.action == "retake" %}
-              <a class="button is-primary is-small"
-                 href="{% url 'quiz:exam_start' item.exam.id %}">
-                {% if item.action == "retake" %}Retake{% else %}Start{% endif %}
-              </a>
-
-            {% else %}
-              <button class="button is-light is-small" disabled>
-                🔒 Locked
-              </button>
-            {% endif %}
-
-            <button class="button is-info is-light is-small ml-1" disabled>
-              Mock (Coming Soon)
-            </button>
-
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-
-    </div>
   </div>
 
-  {% endfor %}
-{% else %}
-  <p>No exams available.</p>
-{% endif %}
+  <!-- TRACK BODY -->
+  <div id="track-body-{{ track.id }}" style="display:none; margin-top:1rem">
 
-{# ================= COUNTDOWN SCRIPT ================= #}
+    {% for item in data.items %}
+    <div class="box mb-2">
+      <div class="is-flex is-justify-content-space-between is-align-items-center">
+
+        <div>
+          <strong>{{ item.exam.title }}</strong><br>
+          <small class="has-text-grey">
+            Level {{ item.exam.level }} •
+            {{ item.exam.question_count }} Q •
+            {{ item.exam.duration_seconds }} sec
+          </small>
+
+          {% if item.locked %}
+            <p class="has-text-danger is-size-7 mt-1">
+              🔒 {{ item.lock_reason }}
+            </p>
+          {% endif %}
+        </div>
+
+        <div class="buttons">
+
+          {# ===== PASSED ===== #}
+          {% if item.status == "passed" %}
+            <span class="tag is-success">
+              ✔ Passed
+              {% if item.best_score is not None %}
+                ({{ item.best_score }}%)
+              {% endif %}
+            </span>
+
+            <a class="button is-light is-small ml-2"
+               href="{% url 'quiz:exam_start' item.exam.id %}">
+              Retake
+            </a>
+
+          {# ===== FAILED ===== #}
+          {% elif item.status == "failed" %}
+            <span class="tag is-danger">
+              ✖ Failed
+              {% if item.last_score is not None %}
+                ({{ item.last_score }}%)
+              {% endif %}
+            </span>
+
+            {% if item.action == "cooldown" %}
+              <button class="button is-light is-small ml-2" disabled>
+                ⏳ Retry in
+                <span class="retry-timer"
+                      data-seconds="{{ item.cooldown_remaining }}">
+                  --:--
+                </span>
+              </button>
+            {% else %}
+              <a class="button is-primary is-small ml-2"
+                 href="{% url 'quiz:exam_start' item.exam.id %}">
+                Retry
+              </a>
+            {% endif %}
+
+          {# ===== RESUME ===== #}
+          {% elif item.action == "resume" %}
+            <a class="button is-warning is-small"
+               href="{% url 'quiz:exam_take' item.last_attempt.id %}">
+              Resume
+            </a>
+
+          {# ===== START ===== #}
+          {% else %}
+            <a class="button is-primary is-small"
+               href="{% url 'quiz:exam_start' item.exam.id %}">
+              Start
+            </a>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+{% endfor %}
+
+{# ================= JS ================= #}
 <script>
-document.querySelectorAll("[data-countdown]").forEach(el => {
-  let seconds = parseInt(el.dataset.countdown);
-  const textEl = el.querySelector(".countdown-text");
+function toggleTrack(id) {
+  const body = document.getElementById("track-body-" + id);
+  const arrow = document.getElementById("arrow-" + id);
+  if (!body) return;
 
-  function tick() {
-    if (seconds <= 0) {
-      textEl.innerText = "now";
-      return;
-    }
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    textEl.innerText = `${m}m ${s}s`;
-    seconds--;
-    setTimeout(tick, 1000);
+  const open = body.style.display === "block";
+  body.style.display = open ? "none" : "block";
+  arrow.innerText = open ? "▼" : "▲";
+}
+
+// Overall progress color
+(function () {
+  const bar = document.getElementById("overallProgress");
+  if (!bar) return;
+
+  const value = Number(bar.value || 0);
+  const max = Number(bar.max || 1);
+  const percent = Math.round((value / max) * 100);
+
+  document.getElementById("overallPercent").innerText = percent;
+
+  bar.classList.remove("is-danger", "is-warning", "is-success");
+  if (percent < 40) bar.classList.add("is-danger");
+  else if (percent < 70) bar.classList.add("is-warning");
+  else bar.classList.add("is-success");
+})();
+
+// Retry countdown timers
+(function () {
+  function format(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
-  tick();
-});
+
+  document.querySelectorAll(".retry-timer").forEach(el => {
+    let seconds = parseInt(el.dataset.seconds || "0");
+    const btn = el.closest("button");
+
+    function tick() {
+      if (seconds <= 0) {
+        el.innerText = "00:00";
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove("is-light");
+          btn.classList.add("is-primary");
+          btn.innerHTML = "Retry";
+        }
+        return;
+      }
+      el.innerText = format(seconds);
+      seconds--;
+      setTimeout(tick, 1000);
+    }
+    tick();
+  });
+})();
 </script>
 
 {% endblock %}
