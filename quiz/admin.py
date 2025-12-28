@@ -141,16 +141,8 @@ from .models import Exam, ExamTrack
 #from .widgets import BULMA_WIDGET_OVERRIDES
 
 
-# ================================
-# Exam Track Admin
-# ================================
-@admin.register(ExamTrack)
-class ExamTrackAdmin(admin.ModelAdmin):
-    list_display = ('title', 'slug', 'is_active', 'created_at')
-    search_fields = ('title',)
-    prepopulated_fields = {'slug': ('title',)}
-    list_filter = ('is_active',)
-    ordering = ('title',)
+
+
 
 
 # ================================
@@ -263,7 +255,8 @@ class UserExamAdmin(admin.ModelAdmin):
         return qs.select_related('user', 'exam')
 
     def has_add_permission(self, request):
-        return False
+        return request.user.is_superuser
+
 
 
 @admin.register(QuestionFeedback)
@@ -287,4 +280,30 @@ class QuestionFeedbackAdmin(admin.ModelAdmin):
 class ExamUnlockLogAdmin(admin.ModelAdmin):
     list_display = ("user", "exam", "unlocked_at", "source")
     list_filter = ("exam", "source")
+
+@admin.register(ExamSubscription)
+class ExamSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("user", "exam", "is_active", "subscribed_at", "expires_at")
+    list_filter = ("is_active", "payment_required")
+    search_fields = ("user__username", "exam__title")
+
+from django.contrib import admin
+from .models import ExamTrack
+
+@admin.register(ExamTrack)
+class ExamTrackAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "subscription_scope",
+        "is_active",
+        "created_at",
+    )
+    list_filter = (
+        "subscription_scope",
+        "is_active",
+    )
+    search_fields = ("title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
+
+    admin.site.register(ExamTrackSubscription)
 

@@ -1,47 +1,55 @@
-{% extends 'quiz/base.html' %}
+{% extends "quiz/base.html" %}
 {% block content %}
 
-<h2 class="subtitle">Available Exams</h2>
+<h2 class="title is-4">📚 Available Exam Tracks</h2>
+<p class="has-text-grey mb-4">
+  Subscribe to unlock exams.
+</p>
 
-{% for row in exam_rows %}
-  <div class="box">
-    <h3 class="title is-5">{{ row.exam.title }}</h3>
 
-    <p class="is-size-7 has-text-grey">
-      Level {{ row.exam.level }} · {{ row.exam.question_count }} questions · {{ row.exam.duration_seconds }} sec
-    </p>
 
-    <div class="buttons mt-2">
+{% for track, items in track_map.items %}
+<div class="box">
+  <h3>{{ track.title }}</h3>
+  <p>{{ items|length }} Levels • Subscription: {{ track.subscription_scope|title }}</p>
 
-      {% if row.active_attempt %}
-        <a class="button is-warning"
-           href="{% url 'quiz:exam_take' row.active_attempt.id %}">
-          Resume
-        </a>
+  {% if track.subscription_scope == "track" %}
+    {% if items.0.is_track_subscribed %}
+      <span class="tag is-success">✔ Subscribed</span>
+    {% else %}
+      <form method="post" action="{% url 'quiz:subscribe_track' track.id %}">
+        {% csrf_token %}
+        <button class="button is-primary">Subscribe Track</button>
+      </form>
+    {% endif %}
+  {% endif %}
 
-      {% elif row.is_locked %}
-        <button class="button is-light" disabled>
-          🔒 Locked
-        </button>
-        <span class="is-size-7 has-text-grey">
-          {{ row.locked_reasons|join:", " }}
-        </span>
+  <hr>
 
-      {% else %}
-        <a class="button is-primary"
-           href="{% url 'quiz:exam_start' row.exam.id %}">
-          Start
-        </a>
+  {% for item in items %}
+    <p>
+      <strong>Level {{ item.exam.level }}</strong> •
+      {{ item.exam.question_count }} questions • {{ item.exam.duration_seconds }} sec
+
+      {% if track.subscription_scope == "exam" %}
+        {% if item.is_exam_subscribed %}
+          <span class="tag is-success ml-2">Subscribed</span>
+        {% elif item.can_subscribe %}
+          <form method="post" action="{% url 'quiz:subscribe_exam' item.exam.id %}" style="display:inline">
+            {% csrf_token %}
+            <button class="button is-small is-primary ml-2">Subscribe</button>
+          </form>
+        {% else %}
+          <span class="tag is-light ml-2">🔒 {{ item.locked_reason }}</span>
+        {% endif %}
       {% endif %}
-
-      <a class="button is-link is-light"
-         href="{% url 'quiz:mock_exam_start' row.exam.id %}">
-        Mock
-      </a>
-    </div>
-  </div>
+    </p>
+  {% endfor %}
+</div>
 {% empty %}
-  <p>No exams available.</p>
+<p>No exams available.</p>
 {% endfor %}
+
+
 
 {% endblock %}

@@ -282,15 +282,99 @@ class ExamTrack(models.Model):
     - SnowPro Core
     - SnowPro Advanced
     - SQL Analyst Track
+
+    Subscription scope decides whether access is granted
+    at track level or individual exam (level) level.
     """
+
+    TRACK = "track"
+    EXAM = "exam"
+
+    SUBSCRIPTION_SCOPE_CHOICES = [
+        (TRACK, "Track-level subscription (all levels included)"),
+        (EXAM, "Exam-level subscription (subscribe per level)"),
+    ]
+
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
+
+    # 🔥 NEW: subscription control
+    subscription_scope = models.CharField(
+        max_length=10,
+        choices=SUBSCRIPTION_SCOPE_CHOICES,
+        default=TRACK,  # safe default
+        help_text=(
+            "Choose whether users subscribe to the entire track "
+            "or individual exams (levels) under this track."
+        )
+    )
+
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)  # ✅ ADD THIS
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
+
+    
+
+class ExamTrackSubscription(models.Model):
+    """
+    Represents user's access to an ExamTrack.
+    Subscribing to a track unlocks ALL exams (levels) under it.
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="track_subscriptions"
+    )
+
+    track = models.ForeignKey(
+        ExamTrack,
+        on_delete=models.CASCADE,
+        related_name="subscriptions"
+    )
+
+    # Access control
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Deactivate to revoke access without deleting history"
+    )
+
+    # Timing (future: paid plans)
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    # Payment future-proofing
+    payment_required = models.BooleanField(default=False)
+    payment_id = models.CharField(max_length=100, null=True, blank=True)
+    amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+    currency = models.CharField(max_length=10, default="INR")
+
+    class Meta:
+        unique_together = ("user", "track")
+        indexes = [
+            models.Index(fields=["user", "track"]),
+            models.Index(fields=["is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user} → {self.track}"
+
+    def is_valid(self):
+        if not self.is_active:
+            return False
+        if self.expires_at and timezone.now() > self.expires_at:
+            return False
+        return True
+
+
 
 class Exam(models.Model):
     title = models.CharField(max_length=255)
@@ -346,6 +430,85 @@ class Exam(models.Model):
 
     def __str__(self):
         return self.title
+   
+
+class ExamSubscription(models.Model):
+    """
+    Represents user's access permission to an exam.
+    This is NOT an attempt.
+    This is NOT an unlock by passing.
+    This is the foundation for paid subscriptions.
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="exam_subscriptions"
+    )
+
+    exam = models.ForeignKey(
+        Exam,
+        on_delete=models.CASCADE,
+        related_name="subscriptions"
+    )
+
+    # Access control
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Deactivate to revoke access without deleting history"
+    )
+
+    # Timing (future use)
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Optional expiry for paid / time-limited access"
+    )
+
+    # Payment future-proofing
+    payment_required = models.BooleanField(
+        default=False,
+        help_text="Was payment required for this subscription"
+    )
+    payment_id = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Gateway payment reference (Razorpay/Stripe)"
+    )
+    amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+    currency = models.CharField(
+        max_length=10,
+        default="INR"
+    )
+
+    class Meta:
+        unique_together = ("user", "exam")
+        indexes = [
+            models.Index(fields=["user", "exam"]),
+            models.Index(fields=["is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user} → {self.exam}"
+
+    def is_valid(self):
+        """
+        Returns True if subscription is active and not expired.
+        Safe to use later in views.
+        """
+        if not self.is_active:
+            return False
+        if self.expires_at and timezone.now() > self.expires_at:
+            return False
+        return True
+
 
 from django.core.exceptions import ValidationError
 

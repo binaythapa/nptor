@@ -926,150 +926,162 @@ def recent_attempts_api(request):
     })
 
 
-
-
-
-
-
-# -------------------------
-# Student dashboard
-# -------------------------
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.utils import timezone
-from django.conf import settings
-
-from .models import Exam, UserExam
-from .utils import cleanup_illegal_attempts, check_exam_lock
-
-
 @login_required
 def student_dashboard(request):
     user = request.user
+    now = timezone.now()
 
-    # 🔒 Clean only illegal ACTIVE attempts (UNCHANGED)
-    cleanup_illegal_attempts(user)
-
-    # -----------------------------
-    # SUMMARY STATS (UNCHANGED)
-    # -----------------------------
-    attempts = UserExam.objects.filter(user=user)
-
-    completed = attempts.filter(submitted_at__isnull=False)
-    passed = completed.filter(passed=True)
-    failed = completed.filter(passed=False)
-
-    active_attempt = attempts.filter(
-        submitted_at__isnull=True
-    ).select_related("exam").first()
-
-    # -----------------------------
-    # SETTINGS (ADD-ON)
-    # -----------------------------
-    cooldown_minutes = getattr(settings, "RETAKE_COOLDOWN_MINUTES", 30)
-    cooldown_total_seconds = cooldown_minutes * 60
-
-    # -----------------------------
-    # LOAD ALL PUBLISHED EXAMS (UNCHANGED)
-    # -----------------------------
-    exams = (
-        Exam.objects
-        .filter(is_published=True)
-        .select_related("track")
-        .order_by("level", "title")
+    # ----------------------------------
+    # Active attempt (for banner)
+    # ----------------------------------
+    active_attempt = (
+        UserExam.objects
+        .filter(user=user, submitted_at__isnull=True)
+        .select_related("exam")
+        .order_by("-started_at")
+        .first()
     )
 
-    # -----------------------------
-    # GROUP BY TRACK
-    # -----------------------------
+    # ----------------------------------
+    # Stats
+    # ----------------------------------
+    total_attempts = UserExam.objects.filter(user=user).count()
+    passed_count = UserExam.objects.filter(user=user, passed=True).count()
+    failed_count = UserExam.objects.filter(
+        user=user,
+        submitted_at__isnull=False,
+        passed=False
+    ).count()
+
+    # ----------------------------------
+    # Passed exams
+    # ----------------------------------
+    passed_exam_ids = set(
+        UserExam.objects.filter(
+            user=user,
+            passed=True
+        ).values_list("exam_id", flat=True)
+    )
+
+    # ----------------------------------
+    # Last attempts per exam
+    # ----------------------------------
+    last_attempt_map = {
+        ue.exam_id: ue
+        for ue in (
+            UserExam.objects
+            .filter(user=user)
+            .select_related("exam")
+            .order_by("exam_id", "-started_at")
+        )
+    }
+
+    # ----------------------------------
+    # Build track map (SUBSCRIPTION FILTER APPLIED HERE)
+    # ----------------------------------
     track_map = {}
 
-    for exam in exams:
-        track_name = exam.track.title if exam.track else "General"
-        track_map.setdefault(track_name, [])
+    tracks = (
+        ExamTrack.objects
+        .filter(is_active=True)
+        .prefetch_related("exams")
+        .order_by("title")
+    )
 
-        last_attempt = (
-            attempts.filter(exam=exam)
-            .order_by("-started_at")
-            .first()
+    for track in tracks:
+        items = []
+
+        exams = (
+            track.exams
+            .filter(is_published=True)
+            .order_by("level", "title")
         )
 
-        # -----------------------------
-        # EXISTING LOCK LOGIC (UNCHANGED)
-        # -----------------------------
-        locked, reason = check_exam_lock(user, exam)
+        for exam in exams:
+            # 🔐 HARD FILTER: ONLY SUBSCRIBED EXAMS
+            if not has_valid_subscription(user, exam):
+                continue
 
-        # -----------------------------
-        # ➕ ADDITIONAL STRICT LEVEL LOCK
-        # (does NOT replace existing logic)
-        # -----------------------------
-        if not locked and exam.level > 1:
-            prev_level_passed = UserExam.objects.filter(
-                user=user,
-                exam__track=exam.track,
-                exam__level=exam.level - 1,
-                passed=True
-            ).exists()
+            last_attempt = last_attempt_map.get(exam.id)
 
-            if not prev_level_passed:
+            # -------------------------------
+            # Locking logic
+            # -------------------------------
+            locked = False
+            lock_reason = None
+
+            prereqs = exam.prerequisite_exams.all()
+            missing_prereqs = [
+                p.title for p in prereqs
+                if p.id not in passed_exam_ids
+            ]
+            if missing_prereqs:
                 locked = True
-                reason = f"Pass Level {exam.level - 1} to unlock"
+                lock_reason = (
+                    "Pass prerequisite: " + ", ".join(missing_prereqs)
+                )
 
-        # -----------------------------
-        # ACTION LOGIC (ENHANCED, NOT REMOVED)
-        # -----------------------------
-        action = "start"
-        cooldown_remaining = None
-        status = "not_attempted"
+            if not locked and exam.level and exam.level > 1:
+                has_prev_level = any(
+                    e.level == exam.level - 1 and e.id in passed_exam_ids
+                    for e in exams
+                )
+                if not has_prev_level:
+                    locked = True
+                    lock_reason = f"Pass Level {exam.level - 1} first"
 
-        if locked:
-            action = "locked"
-            status = "locked"
+            # -------------------------------
+            # Determine status & action
+            # -------------------------------
+            status = None
+            action = None
+            cooldown_remaining = None
 
-        elif last_attempt:
-            if last_attempt.submitted_at is None:
-                action = "resume"
-                status = "in_progress"
-
-            elif last_attempt.passed is True:
-                action = "passed"
+            if exam.id in passed_exam_ids:
                 status = "passed"
+                action = "retake"
 
-            elif last_attempt.passed is False:
-                status = "failed"
+            elif last_attempt and last_attempt.submitted_at is None:
+                action = "resume"
 
-                elapsed = (timezone.now() - last_attempt.submitted_at).total_seconds()
-                remaining = max(0, int(cooldown_total_seconds - elapsed))
-
-                if remaining > 0:
-                    action = "cooldown"
-                    cooldown_remaining = remaining
+            elif last_attempt and last_attempt.submitted_at:
+                cooldown_minutes = getattr(
+                    settings, "RETAKE_COOLDOWN_MINUTES", 0
+                )
+                if cooldown_minutes:
+                    elapsed = (now - last_attempt.submitted_at).total_seconds()
+                    remaining = int(cooldown_minutes * 60 - elapsed)
+                    if remaining > 0:
+                        action = "cooldown"
+                        cooldown_remaining = remaining
+                    else:
+                        action = "retake"
                 else:
                     action = "retake"
 
-        track_map[track_name].append({
-            "exam": exam,
-            "last_attempt": last_attempt,
-            "action": action,
-            "status": status,                     # ➕ ADD
-            "locked": locked,
-            "lock_reason": reason,
-            "cooldown_remaining": cooldown_remaining,  # ➕ ADD
-        })
+            else:
+                action = "start"
 
-    # -----------------------------
-    # CONTEXT (UNCHANGED + ADDITIVE)
-    # -----------------------------
-    context = {
-        "total_attempts": attempts.count(),
-        "passed_count": passed.count(),
-        "failed_count": failed.count(),
+            items.append({
+                "exam": exam,
+                "locked": locked,
+                "lock_reason": lock_reason,
+                "status": status,
+                "action": action,
+                "last_attempt": last_attempt,
+                "cooldown_remaining": cooldown_remaining,
+            })
+
+        if items:
+            track_map[track] = items
+
+    return render(request, "quiz/student_dashboard.html", {
         "active_attempt": active_attempt,
+        "total_attempts": total_attempts,
+        "passed_count": passed_count,
+        "failed_count": failed_count,
         "track_map": track_map,
-    }
-
-    return render(request, "quiz/student_dashboard.html", context)
-
+    })
 
 
 
@@ -1139,11 +1151,336 @@ def users_list(request):
 #####################EXAM MANAGEMENT##############################
 
 from django.db import transaction
-
-
 import math
 import random
 from django.db.models import Q
+from django.views.decorators.http import require_POST
+from django.contrib import messages
+# ===============================
+# SUBSCRIPTION ACCESS HELPERS
+# ===============================
+from quiz.services.access import can_access_exam
+from quiz.services.subscription import has_valid_subscription
+
+
+
+from quiz.models import (
+    Exam,
+    ExamTrack,
+    ExamSubscription,
+    ExamTrackSubscription,
+)
+
+
+@login_required
+def exam_start(request, exam_id):
+    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
+
+    # ==================================================
+    # 🔐 SUBSCRIPTION + UNLOCK CHECK (SINGLE SOURCE)
+    # ==================================================
+    allowed, reason = can_access_exam(request.user, exam)
+    if not allowed:
+        messages.error(request, reason)
+        return redirect('quiz:exam_locked', exam_id=exam.id)
+
+    try:
+        with transaction.atomic():
+
+            # 🔒 Prevent race condition (double attempts)
+            existing = (
+                UserExam.objects
+                .select_for_update()
+                .filter(user=request.user, exam=exam, submitted_at__isnull=True)
+                .first()
+            )
+            if existing:
+                return redirect('quiz:exam_take', user_exam_id=existing.id)
+
+            # ==================================================
+            # Create attempt FIRST (for deterministic seed)
+            # ==================================================
+            ue = UserExam.objects.create(
+                user=request.user,
+                exam=exam
+            )
+
+            # Deterministic allocation
+            questions = allocate_questions_for_exam(exam, seed=ue.id)
+            if not questions:
+                raise ValueError("No questions allocated")
+
+            ue.question_order = [q.id for q in questions]
+            ue.current_index = 0
+            ue.save()
+
+            UserAnswer.objects.bulk_create([
+                UserAnswer(user_exam=ue, question=q)
+                for q in questions
+            ])
+
+    except Exception:
+        messages.error(
+            request,
+            "This exam is not properly configured. Please contact support."
+        )
+        return redirect('quiz:student_dashboard')
+
+    return redirect('quiz:exam_question', user_exam_id=ue.id, index=0)
+
+
+@login_required
+def exam_resume(request, exam_id):
+    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
+
+    # 🔐 Subscription + unlock check
+    allowed, reason = can_access_exam(request.user, exam)
+    if not allowed:
+        messages.error(request, reason)
+        return redirect('quiz:exam_locked', exam_id=exam.id)
+
+    active = UserExam.objects.filter(
+        user=request.user,
+        exam=exam,
+        submitted_at__isnull=True
+    ).order_by('-started_at').first()
+
+    if active:
+        return redirect('quiz:exam_take', user_exam_id=active.id)
+
+    return redirect('quiz:exam_start', exam_id=exam.id)
+
+
+@login_required
+def exam_list(request):
+    """
+    Builds track_map used by exam_list.html
+
+    track_map = {
+        track: [
+            {
+                "exam": Exam,
+                "is_exam_subscribed": bool,
+                "can_subscribe": bool,
+                "locked_reason": str | None,
+            },
+            ...
+        ]
+    }
+    """
+
+    tracks = (
+        ExamTrack.objects
+        .filter(is_active=True)
+        .prefetch_related(
+            'exams',
+            'exams__prerequisite_exams'
+        )
+        .order_by('title')
+    )
+
+    # -------------------------------
+    # Active track subscriptions
+    # -------------------------------
+    track_subs = {
+        s.track_id: s
+        for s in ExamTrackSubscription.objects.filter(
+            user=request.user,
+            is_active=True
+        )
+    }
+
+    # -------------------------------
+    # Active exam subscriptions
+    # -------------------------------
+    exam_subs = {
+        s.exam_id: s
+        for s in ExamSubscription.objects.filter(
+            user=request.user,
+            is_active=True
+        )
+    }
+
+    # -------------------------------
+    # Passed exams
+    # -------------------------------
+    passed_exam_ids = set(
+        UserExam.objects.filter(
+            user=request.user,
+            passed=True
+        ).values_list('exam_id', flat=True)
+    )
+
+    track_map = {}
+
+    for track in tracks:
+        exams = (
+            track.exams
+            .filter(is_published=True)
+            .order_by('level', 'title')
+        )
+
+        if not exams.exists():
+            continue
+
+        is_track_subscribed = (
+            track.id in track_subs
+            and track_subs[track.id].is_valid()
+        )
+
+        items = []
+
+        for exam in exams:
+            locked_reason = None
+
+            # -------------------------------
+            # Prerequisite exams
+            # -------------------------------
+            prereqs = exam.prerequisite_exams.all()
+            missing_prereqs = [
+                p.title for p in prereqs
+                if p.id not in passed_exam_ids
+            ]
+            if missing_prereqs:
+                locked_reason = (
+                    "Pass prerequisite: " + ", ".join(missing_prereqs)
+                )
+
+            # -------------------------------
+            # Level-based gating
+            # -------------------------------
+            if not locked_reason and exam.level and exam.level > 1:
+                has_prev_level = any(
+                    e.level == exam.level - 1 and e.id in passed_exam_ids
+                    for e in exams
+                )
+                if not has_prev_level:
+                    locked_reason = (
+                        f"Pass Level {exam.level - 1} first"
+                    )
+
+            # -------------------------------
+            # Subscription checks
+            # -------------------------------
+            is_exam_subscribed = (
+                exam.id in exam_subs
+                and exam_subs[exam.id].is_valid()
+            )
+
+            can_subscribe = False
+
+            if track.subscription_scope == ExamTrack.EXAM:
+                # exam-level subscription
+                can_subscribe = locked_reason is None
+
+            items.append({
+                "exam": exam,
+                "is_exam_subscribed": is_exam_subscribed,
+                "can_subscribe": can_subscribe,
+                "locked_reason": locked_reason,
+            })
+
+        # Inject track-level subscription flag
+        for item in items:
+            item["is_track_subscribed"] = is_track_subscribed
+
+        track_map[track] = items
+
+    return render(request, "quiz/exam_list.html", {
+        "track_map": track_map,
+    })
+
+
+
+
+from django.views.decorators.http import require_POST
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+
+from quiz.models import (
+    Exam,
+    ExamTrack,
+    ExamSubscription,
+    ExamTrackSubscription,
+)
+
+
+@login_required
+@require_POST
+def subscribe_track(request, track_id):
+    track = get_object_or_404(
+        ExamTrack,
+        pk=track_id,
+        is_active=True
+    )
+
+    sub, created = ExamTrackSubscription.objects.get_or_create(
+        user=request.user,
+        track=track,
+        defaults={
+            "is_active": True,
+            "payment_required": False,
+            "amount": 0,
+        }
+    )
+
+    if not created and not sub.is_active:
+        sub.is_active = True
+        sub.save(update_fields=["is_active"])
+
+    messages.success(
+        request,
+        f"You are now subscribed to {track.title}"
+    )
+
+    return redirect("quiz:exam_list")
+
+
+@login_required
+@require_POST
+def subscribe_exam(request, exam_id):
+    exam = get_object_or_404(
+        Exam,
+        pk=exam_id,
+        is_published=True
+    )
+
+    track = exam.track
+
+    # Safety check
+    if track and track.subscription_scope != ExamTrack.EXAM:
+        messages.error(
+            request,
+            "This exam is included in a track subscription."
+        )
+        return redirect("quiz:exam_list")
+
+    sub, created = ExamSubscription.objects.get_or_create(
+        user=request.user,
+        exam=exam,
+        defaults={
+            "is_active": True,
+            "payment_required": False,
+            "amount": 0,
+        }
+    )
+
+    if not created and not sub.is_active:
+        sub.is_active = True
+        sub.save(update_fields=["is_active"])
+
+    messages.success(
+        request,
+        f"You are now subscribed to {exam.title}"
+    )
+
+    return redirect("quiz:exam_list")
+
+
+###############################################
+
+
+
 
 def allocate_questions_for_exam(exam, seed=None):
     """
@@ -1276,125 +1613,6 @@ def allocate_questions_for_exam(exam, seed=None):
     # -------------------------------------------------
     rng.shuffle(selected_qs)
     return selected_qs[:total_needed]
-
-
-
-@login_required
-def exam_list(request):
-    exams = (
-        Exam.objects
-        .filter(is_published=True)
-        .select_related('category')
-        .prefetch_related('categories')
-        .order_by('level', 'title')
-    )
-
-    # Build map: exam_id -> active UserExam (or None)
-    active_attempts = {
-        ue.exam_id: ue
-        for ue in UserExam.objects.filter(
-            user=request.user,
-            submitted_at__isnull=True,
-            exam__in=exams
-        )
-    }
-
-    return render(request, 'quiz/exam_list.html', {
-        'exams': exams,
-        'active_attempts': active_attempts,
-    })
-
-
-
-
-
-
-
-
-@login_required
-def exam_start(request, exam_id):
-    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
-
-    try:
-        with transaction.atomic():
-
-            # 🔒 Prevent race condition (double attempts)
-            existing = (
-                UserExam.objects
-                .select_for_update()
-                .filter(user=request.user, exam=exam, submitted_at__isnull=True)
-                .first()
-            )
-            if existing:
-                return redirect('quiz:exam_take', user_exam_id=existing.id)
-
-            # 2️⃣ Prerequisite exams gating
-            prereqs = list(exam.prerequisite_exams.all())
-            if prereqs:
-                missing = [
-                    p for p in prereqs
-                    if not UserExam.objects.filter(
-                        user=request.user,
-                        exam=p,
-                        passed=True
-                    ).exists()
-                ]
-                if missing:
-                    messages.error(
-                        request,
-                        "You must pass prerequisite exam(s): " +
-                        ", ".join(p.title for p in missing)
-                    )
-                    return redirect('quiz:student_dashboard')
-
-            # 3️⃣ Level-based gating
-            if exam.level and exam.level > 1:
-                has_prev_level = UserExam.objects.filter(
-                    user=request.user,
-                    exam__level=exam.level - 1,
-                    passed=True
-                ).exists()
-                if not has_prev_level:
-                    messages.error(
-                        request,
-                        f"You must pass at least one Level {exam.level - 1} exam to unlock this exam."
-                    )
-                    return redirect('quiz:student_dashboard')
-
-            # 4️⃣ Create attempt FIRST (for deterministic seed)
-            ue = UserExam.objects.create(
-                user=request.user,
-                exam=exam
-            )
-
-            # 5️⃣ Deterministic allocation
-            questions = allocate_questions_for_exam(exam, seed=ue.id)
-            if not questions:
-                raise ValueError("No questions allocated")
-
-            ue.question_order = [q.id for q in questions]
-            ue.current_index = 0
-            ue.save()
-
-            # 6️⃣ Create answers
-            UserAnswer.objects.bulk_create([
-                UserAnswer(user_exam=ue, question=q)
-                for q in questions
-            ])
-
-    except Exception:
-        messages.error(
-            request,
-            "This exam is not properly configured. Please contact support."
-        )
-        return redirect('quiz:student_dashboard')
-
-    return redirect('quiz:exam_question', user_exam_id=ue.id, index=0)
-
-
-
-
-
 
 
 
@@ -1854,32 +2072,6 @@ def exam_result(request, user_exam_id):
             'comments_map': comments_map,
         }
     )
-
-
-
-
-
-
-@login_required
-def exam_resume(request, exam_id):
-    """
-    Single entry point for an exam.
-    - If user has an active attempt → resume
-    - Otherwise → start new attempt
-    """
-    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
-
-    active = UserExam.objects.filter(
-        user=request.user,
-        exam=exam,
-        submitted_at__isnull=True
-    ).order_by('-started_at').first()
-
-    if active:
-        return redirect('quiz:exam_take', user_exam_id=active.id)
-
-    return redirect('quiz:exam_start', exam_id=exam.id)
-
 
 
 @login_required

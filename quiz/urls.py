@@ -187,4 +187,20 @@ urlpatterns = [
         views.practice_express_save,
         name="practice_express_save",
     ),
+
+
+        # ============================================================
+    # SUBSCRIPTIONS
+    # ============================================================
+    path(
+        "subscribe/track/<int:track_id>/",
+        views.subscribe_track,
+        name="subscribe_track",
+    ),
+    path(
+        "subscribe/exam/<int:exam_id>/",
+        views.subscribe_exam,
+        name="subscribe_exam",
+    ),
+
 ]
