@@ -997,195 +997,149 @@ def recent_attempts_api(request):
         'page': page,
         'page_size': page_size,
     })
-
-
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
 from django.utils import timezone
-from django.conf import settings
+from collections import defaultdict
 
-from quiz.models import ExamTrack, UserExam
-from quiz.services.subscription import has_valid_subscription
+from .models import (
+    UserExam,
+    Exam,
+    ExamTrack,
+    ExamTrackSubscription,
+    ExamSubscription
+)
 
 
 @login_required
 def student_dashboard(request):
     user = request.user
-    now = timezone.now()
 
-    # ================= ACTIVE ATTEMPT =================
+    # ---------------- ACTIVE ATTEMPT ----------------
     active_attempt = (
         UserExam.objects
         .filter(user=user, submitted_at__isnull=True)
-        .select_related("exam")
         .order_by("-started_at")
         .first()
     )
 
-    # ================= STATS =================
-    total_attempts = UserExam.objects.filter(user=user).count()
-    passed_count = UserExam.objects.filter(user=user, passed=True).count()
-    failed_count = UserExam.objects.filter(
-        user=user,
-        submitted_at__isnull=False,
-        passed=False
+    # ---------------- BASIC STATS ----------------
+    total_attempts = UserExam.objects.filter(
+        user=user, submitted_at__isnull=False
     ).count()
 
-    # ================= PASSED EXAMS =================
-    passed_exam_ids = set(
-        UserExam.objects
-        .filter(user=user, passed=True)
+    passed_count = UserExam.objects.filter(
+        user=user, passed=True
+    ).count()
+
+    failed_count = UserExam.objects.filter(
+        user=user, passed=False
+    ).count()
+
+    # ---------------- SUBSCRIPTIONS ----------------
+    subscribed_tracks = set(
+        ExamTrackSubscription.objects
+        .filter(user=user, is_active=True)
+        .values_list("track_id", flat=True)
+    )
+
+    subscribed_exams = set(
+        ExamSubscription.objects
+        .filter(user=user, is_active=True)
         .values_list("exam_id", flat=True)
     )
 
-    # ================= ATTEMPTS GROUPED =================
-    attempts_by_exam = {}
-    for ue in (
-        UserExam.objects
-        .filter(user=user, submitted_at__isnull=False)
-        .select_related("exam")
-        .order_by("exam_id", "submitted_at")
-    ):
-        attempts_by_exam.setdefault(ue.exam_id, []).append(ue)
+    # ---------------- GROUP EXAMS BY TRACK ----------------
+    track_map = defaultdict(list)
 
-    overall_total = 0
-    overall_passed = 0
-    track_map = {}
-
-    tracks = (
-        ExamTrack.objects
-        .filter(is_active=True)
-        .prefetch_related("exams", "exams__prerequisite_exams")
-        .order_by("title")
+    exams = (
+        Exam.objects
+        .filter(is_published=True)
+        .select_related("track")
+        .order_by("level")
     )
 
-    for track in tracks:
-        items = []
-        track_total = 0
-        track_passed = 0
-        track_scores = []
+    for exam in exams:
+        track = exam.track
+        if not track:
+            continue
 
-        exams = track.exams.filter(is_published=True).order_by("level", "title")
+        # show ONLY subscribed exams
+        if track.id not in subscribed_tracks and exam.id not in subscribed_exams:
+            continue
 
-        for exam in exams:
-            if not has_valid_subscription(user, exam):
-                continue
+        # ---------- ATTEMPTS ----------
+        attempts = list(
+            UserExam.objects
+            .filter(user=user, exam=exam, submitted_at__isnull=False)
+            .order_by("submitted_at")
+        )
 
-            overall_total += 1
-            track_total += 1
+        scores = [a.score for a in attempts if a.score is not None]
 
-            attempts = attempts_by_exam.get(exam.id, [])
-            last_attempt = attempts[-1] if attempts else None
+        last_score = scores[-1] if scores else None
+        best_score = max(scores) if scores else None
 
-            # ---------- Locking ----------
-            locked = False
-            lock_reason = None
+        improvement = None
+        if len(scores) > 1:
+            prev_best = max(scores[:-1])
+            improvement = round(last_score - prev_best, 2)
 
-            missing = [
-                p.title for p in exam.prerequisite_exams.all()
-                if p.id not in passed_exam_ids
-            ]
-            if missing:
-                locked = True
-                lock_reason = "Pass prerequisite: " + ", ".join(missing)
+        retry_count = max(0, len(attempts) - 1)
 
-            # ---------- Status ----------
-            status = None
-            action = None
-            cooldown_remaining = None
-            best_score = None
-            last_score = None
-            retake_count = 0
-            retake_trend = None
-            retake_message = None
+        # ---------- STATUS ----------
+        status = None
+        if attempts:
+            status = "passed" if attempts[-1].passed else "failed"
 
-            if attempts:
-                scores = [a.score for a in attempts if a.score is not None]
-                best_score = max(scores)
-                last_score = attempts[-1].score
-                track_scores.append(best_score)
+        # ---------- ACTIVE / COOLDOWN ----------
+        active = (
+            UserExam.objects
+            .filter(user=user, exam=exam, submitted_at__isnull=True)
+            .first()
+        )
 
-                first_pass = next((a for a in attempts if a.passed), None)
+        cooldown_remaining = 0
+        can_retake = True
 
-                if first_pass:
-                    status = "passed"
-                    action = "retake"
-                    track_passed += 1
-                    overall_passed += 1
+        if attempts:
+            last_attempt = attempts[-1]
+            cooldown_minutes = getattr(settings, "RETAKE_COOLDOWN_MINUTES", 0)
+            if cooldown_minutes and last_attempt.submitted_at:
+                elapsed = (timezone.now() - last_attempt.submitted_at).total_seconds()
+                remaining = (cooldown_minutes * 60) - elapsed
+                if remaining > 0:
+                    can_retake = False
+                    cooldown_remaining = int(remaining)
 
-                    retakes = [a for a in attempts if a.submitted_at > first_pass.submitted_at]
-                    retake_count = len(retakes)
+        # ---------- ACTION ----------
+        if active:
+            action = "resume"
+        elif not can_retake:
+            action = "cooldown"
+        elif attempts:
+            action = "retake"
+        else:
+            action = "start"
 
-                    if retake_count >= 1:
-                        last_retake = retakes[-1]
-                        prev_attempt = attempts[-2]
-
-                        if last_retake.score is not None and prev_attempt.score is not None:
-                            retake_trend = round(
-                                last_retake.score - prev_attempt.score, 2
-                            )
-
-                            if retake_trend > 0:
-                                retake_message = f"Improved by {retake_trend:.2f}% from last attempt"
-                            elif retake_trend < 0:
-                                retake_message = f"Dropped by {abs(retake_trend):.2f}% from last attempt"
-                            else:
-                                retake_message = "Same as last attempt"
-
-                elif last_attempt:
-                    status = "failed"
-                    cooldown_minutes = getattr(settings, "RETAKE_COOLDOWN_MINUTES", 0)
-                    if cooldown_minutes:
-                        elapsed = (now - last_attempt.submitted_at).total_seconds()
-                        remaining = int(cooldown_minutes * 60 - elapsed)
-                        if remaining > 0:
-                            action = "cooldown"
-                            cooldown_remaining = remaining
-                        else:
-                            action = "retake"
-                    else:
-                        action = "retake"
-
-            if not status:
-                action = "resume" if last_attempt and not last_attempt.submitted_at else "start"
-
-            items.append({
-                "exam": exam,
-                "locked": locked,
-                "lock_reason": lock_reason,
-                "status": status,
-                "action": action,
-                "last_attempt": last_attempt,
-                "cooldown_remaining": cooldown_remaining,
-                "best_score": best_score,
-                "last_score": last_score,
-                "retake_count": retake_count,
-                "retake_trend": retake_trend,
-                "retake_message": retake_message,
-            })
-
-        if items:
-            track_map[track] = {
-                "items": items,
-                "total": track_total,
-                "passed": track_passed,
-                "is_completed": track_total > 0 and track_passed == track_total,
-                "avg_score": round(sum(track_scores) / len(track_scores), 2) if track_scores else None,
-            }
+        track_map[track].append({
+            "exam": exam,
+            "status": status,
+            "action": action,
+            "last_attempt": active,
+            "retry_count": retry_count,
+            "last_score": last_score,
+            "best_score": best_score,
+            "improvement": improvement,
+            "cooldown_remaining": cooldown_remaining,
+        })
 
     return render(request, "quiz/student_dashboard.html", {
         "active_attempt": active_attempt,
         "total_attempts": total_attempts,
         "passed_count": passed_count,
         "failed_count": failed_count,
-        "track_map": track_map,
-        "overall_total": overall_total,
-        "overall_passed": overall_passed,
+        "track_map": dict(track_map),
     })
-
-
-
-
 
 
 
