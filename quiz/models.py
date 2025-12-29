@@ -10,6 +10,8 @@ from django.db.models import Q
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.core.exceptions import ValidationError
+
 
 User = get_user_model()
 
@@ -275,46 +277,96 @@ class Difficulty(models.Model):
 ##########################################################
 ##########EXAM MANAGEMENT
 ##########################################################
-
 class ExamTrack(models.Model):
-    """
-    Parent container like:
-    - SnowPro Core
-    - SnowPro Advanced
-    - SQL Analyst Track
-
-    Subscription scope decides whether access is granted
-    at track level or individual exam (level) level.
-    """
-
     TRACK = "track"
     EXAM = "exam"
 
-    SUBSCRIPTION_SCOPE_CHOICES = [
-        (TRACK, "Track-level subscription (all levels included)"),
-        (EXAM, "Exam-level subscription (subscribe per level)"),
+    PRICING_FREE = "free"
+    PRICING_MONTHLY = "monthly"
+    PRICING_LIFETIME = "lifetime"
+
+    PRICING_TYPE_CHOICES = [
+        (PRICING_FREE, "Free"),
+        (PRICING_MONTHLY, "Monthly"),
+        (PRICING_LIFETIME, "Lifetime"),
     ]
 
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
 
-    # 🔥 NEW: subscription control
     subscription_scope = models.CharField(
         max_length=10,
-        choices=SUBSCRIPTION_SCOPE_CHOICES,
-        default=TRACK,  # safe default
-        help_text=(
-            "Choose whether users subscribe to the entire track "
-            "or individual exams (levels) under this track."
-        )
+        choices=[(TRACK, "Track"), (EXAM, "Exam")],
+        default=TRACK
     )
 
+    # ================= PRICING =================
+    pricing_type = models.CharField(
+        max_length=20,
+        choices=PRICING_TYPE_CHOICES,
+        default=PRICING_FREE
+    )
+
+    monthly_price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Required if pricing type is Monthly"
+    )
+
+    lifetime_price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Required if pricing type is Lifetime"
+    )
+
+    trial_days = models.PositiveIntegerField(
+        default=7,
+        help_text="Free trial duration (days)"
+    )
+
+    currency = models.CharField(max_length=10, default="INR")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # ================= VALIDATION =================
+    def clean(self):
+    # Call parent clean
+        super().clean()
+
+        # Monthly pricing validation
+        if self.pricing_type == self.PRICING_MONTHLY:
+            if self.monthly_price is None:
+                raise ValidationError({
+                    "monthly_price": "Monthly price is required for monthly plans."
+                })
+
+        # Lifetime pricing validation
+        if self.pricing_type == self.PRICING_LIFETIME:
+            if self.lifetime_price is None:
+                raise ValidationError({
+                    "lifetime_price": "Lifetime price is required for lifetime plans."
+                })
+
+
+    # ================= HELPERS =================
+    def is_free(self):
+        return self.pricing_type == self.PRICING_FREE
+
+    def display_price(self):
+        if self.pricing_type == self.PRICING_FREE:
+            return "Free"
+        if self.pricing_type == self.PRICING_MONTHLY:
+            return f"{self.currency} {self.monthly_price}/month"
+        return f"{self.currency} {self.lifetime_price} (lifetime)"
+
     def __str__(self):
         return self.title
+
 
     
 
@@ -356,6 +408,8 @@ class ExamTrackSubscription(models.Model):
         blank=True
     )
     currency = models.CharField(max_length=10, default="INR")
+    is_trial = models.BooleanField(default=False)
+
 
     class Meta:
         unique_together = ("user", "track")
@@ -375,21 +429,17 @@ class ExamTrackSubscription(models.Model):
         return True
 
 
-
 class Exam(models.Model):
     title = models.CharField(max_length=255)
 
-    # ✅ NEW: Parent Exam Track (SnowPro Core, etc.)
     track = models.ForeignKey(
         "ExamTrack",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="exams",
-        help_text="Parent exam track like SnowPro Core"
+        related_name="exams"
     )
 
-    # Legacy single category
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -397,7 +447,6 @@ class Exam(models.Model):
         blank=True
     )
 
-    # Future-proof multi-category
     categories = models.ManyToManyField(
         Category,
         blank=True,
@@ -409,14 +458,10 @@ class Exam(models.Model):
 
     level = models.PositiveIntegerField(
         default=1,
-        db_index=True,
-        help_text="1=Beginner, 2=Intermediate, 3=Advanced"
+        db_index=True
     )
 
-    passing_score = models.FloatField(
-        default=50.0,
-        help_text="Percentage required to pass"
-    )
+    passing_score = models.FloatField(default=50.0)
 
     prerequisite_exams = models.ManyToManyField(
         "self",
@@ -425,12 +470,31 @@ class Exam(models.Model):
         related_name="unlocked_exams"
     )
 
+    # ✅ NEW — FREE / PAID CONTROL
+    is_free = models.BooleanField(
+        default=True,
+        help_text="If checked, this exam is free"
+    )
+
+    price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Required only if exam is paid"
+    )
+
+    currency = models.CharField(
+        max_length=10,
+        default="INR"
+    )
+
     is_published = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
-   
+    
 
 class ExamSubscription(models.Model):
     """
@@ -508,6 +572,100 @@ class ExamSubscription(models.Model):
         if self.expires_at and timezone.now() > self.expires_at:
             return False
         return True
+from django.db import models
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=30, unique=True)
+    is_active = models.BooleanField(default=True)
+
+    # ================= DISCOUNT =================
+    percent_off = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Percentage discount (0–100)"
+    )
+
+    flat_off = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Flat discount amount"
+    )
+
+    # ================= APPLICABILITY =================
+    track = models.ForeignKey(
+        "ExamTrack",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text="If set, coupon applies only to this track"
+    )
+
+    exam = models.ForeignKey(
+        "Exam",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text="If set, coupon applies only to this exam"
+    )
+
+    # ================= VALIDITY =================
+    valid_from = models.DateTimeField()
+    valid_to = models.DateTimeField()
+
+    usage_limit = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Maximum times this coupon can be used"
+    )
+
+    used_count = models.PositiveIntegerField(default=0)
+
+    # ================= TRIAL SUPPORT =================
+    extra_trial_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Adds extra trial days when coupon is applied"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # ================= VALIDATION =================
+    def clean(self):
+        if not self.percent_off and not self.flat_off:
+            raise ValidationError("Either percent_off or flat_off must be set.")
+
+        if self.percent_off and self.percent_off > 100:
+            raise ValidationError("percent_off cannot exceed 100.")
+
+        if self.track and self.exam:
+            raise ValidationError("Coupon cannot be linked to both track and exam.")
+
+    # ================= CORE LOGIC =================
+    def is_valid(self):
+        now = timezone.now()
+
+        if not self.is_active:
+            return False
+
+        if self.valid_from > now or self.valid_to < now:
+            return False
+
+        if self.usage_limit and self.used_count >= self.usage_limit:
+            return False
+
+        return True
+
+    def mark_used(self):
+        self.used_count += 1
+        self.save(update_fields=["used_count"])
+
+    def __str__(self):
+        return self.code
+
+
 
 
 from django.core.exceptions import ValidationError
