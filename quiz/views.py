@@ -31,6 +31,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 
 from .models import UserExam, UserAnswer, Choice  # adjust import path if needed
+from quiz.services.access import can_access_exam
+
 
 logger = logging.getLogger(__name__)
 import logging
@@ -832,11 +834,29 @@ from .models import (
     ExamTrackSubscription,
     User
 )
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Avg, Count, Q, Sum
+from django.utils import timezone
+from datetime import timedelta
+
+from quiz.models import (
+    User,
+    Exam,
+    UserExam,
+    ExamTrack,
+    ExamTrackSubscription,
+    ExamSubscription,
+    Coupon,
+)
 
 
 @staff_member_required
 def admin_dashboard(request):
-    # ================= KPI METRICS =================
+    now = timezone.now()
+
+    # =====================================================
+    # GLOBAL KPIs (EXISTING + EXTENDED)
+    # =====================================================
     total_users = User.objects.count()
 
     total_attempts = UserExam.objects.filter(
@@ -858,13 +878,61 @@ def admin_dashboard(request):
         if total_attempts else 0
     )
 
+    # =====================================================
+    # SUBSCRIPTIONS (NEW)
+    # =====================================================
+    total_track_subs = ExamTrackSubscription.objects.count()
+
     active_track_subs = ExamTrackSubscription.objects.filter(
         is_active=True
     ).count()
 
-    # ================= TRACK ANALYTICS =================
-    track_rows = []
+    expired_track_subs = ExamTrackSubscription.objects.filter(
+        is_active=True,
+        expires_at__lt=now
+    ).count()
 
+    trial_subs = ExamTrackSubscription.objects.filter(
+        is_trial=True
+    ).count()
+
+    paid_subs = ExamTrackSubscription.objects.filter(
+        payment_required=True
+    ).count()
+
+    conversion_rate = (
+        (paid_subs / trial_subs) * 100
+        if trial_subs else 0
+    )
+
+    # =====================================================
+    # REVENUE (NEW)
+    # =====================================================
+    total_revenue = (
+        ExamTrackSubscription.objects
+        .filter(payment_required=True)
+        .aggregate(total=Sum("amount"))["total"]
+    ) or 0
+
+    arpu = (
+        total_revenue / paid_subs
+        if paid_subs else 0
+    )
+
+    # =====================================================
+    # EXPIRY ALERTS (NEW)
+    # =====================================================
+    expiring_soon = ExamTrackSubscription.objects.filter(
+        is_active=True,
+        expires_at__isnull=False,
+        expires_at__lte=now + timedelta(days=7),
+        expires_at__gte=now
+    ).count()
+
+    # =====================================================
+    # TRACK ANALYTICS (YOUR LOGIC – ENHANCED)
+    # =====================================================
+    track_rows = []
     tracks = ExamTrack.objects.filter(is_active=True)
 
     for track in tracks:
@@ -879,7 +947,6 @@ def admin_dashboard(request):
             .count()
         )
 
-        # Users who passed ALL exams in this track
         completed_users = 0
         if exam_count > 0:
             completed_users = (
@@ -904,6 +971,15 @@ def admin_dashboard(request):
             )
             .aggregate(avg=Avg("score"))["avg"]
         )
+
+        revenue_by_track = (
+            ExamTrackSubscription.objects
+            .filter(
+                track=track,
+                payment_required=True
+            )
+            .aggregate(total=Sum("amount"))["total"]
+        ) or 0
 
         # ---------- DROP-OFF EXAM ----------
         drop_exam_title = "—"
@@ -934,6 +1010,7 @@ def admin_dashboard(request):
             "completed": completed_users,
             "completion_rate": round(completion_rate, 2),
             "avg_score": round(avg_track_score, 2) if avg_track_score else None,
+            "revenue": revenue_by_track,
             "drop_exam": (
                 f"{drop_exam_title} ({drop_exam_rate}%)"
                 if drop_exam_rate is not None else "—"
@@ -941,15 +1018,30 @@ def admin_dashboard(request):
         })
 
     return render(request, "quiz/admin_dashboard.html", {
+        # ===== EXISTING =====
         "total_users": total_users,
         "total_attempts": total_attempts,
         "pass_rate": round(pass_rate, 2),
         "avg_score": round(avg_score, 2) if avg_score else None,
+
+        # ===== SUBSCRIPTIONS =====
+        "total_track_subs": total_track_subs,
         "active_track_subs": active_track_subs,
+        "expired_track_subs": expired_track_subs,
+        "trial_subs": trial_subs,
+        "paid_subs": paid_subs,
+        "conversion_rate": round(conversion_rate, 2),
+
+        # ===== REVENUE =====
+        "total_revenue": total_revenue,
+        "arpu": round(arpu, 2),
+
+        # ===== ALERTS =====
+        "expiring_soon": expiring_soon,
+
+        # ===== TRACK TABLE =====
         "track_rows": track_rows,
     })
-
-
 
 
 
@@ -1009,6 +1101,15 @@ from .models import (
     ExamSubscription
 )
 
+from collections import defaultdict
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.conf import settings
+
+from quiz.models import (
+    Exam, UserExam,
+    ExamSubscription, ExamTrackSubscription
+)
 
 @login_required
 def student_dashboard(request):
@@ -1058,6 +1159,20 @@ def student_dashboard(request):
         .order_by("level")
     )
 
+    # Track → levels passed (IMPORTANT for locking)
+    passed_levels_by_track = defaultdict(set)
+
+    # Preload passed exams
+    passed_attempts = (
+        UserExam.objects
+        .filter(user=user, passed=True)
+        .select_related("exam")
+    )
+
+    for ue in passed_attempts:
+        if ue.exam.track:
+            passed_levels_by_track[ue.exam.track_id].add(ue.exam.level)
+
     for exam in exams:
         track = exam.track
         if not track:
@@ -1066,6 +1181,16 @@ def student_dashboard(request):
         # show ONLY subscribed exams
         if track.id not in subscribed_tracks and exam.id not in subscribed_exams:
             continue
+
+        # ---------- LEVEL LOCKING ----------
+        locked = False
+        lock_reason = None
+
+        if exam.level > 1:
+            required_level = exam.level - 1
+            if required_level not in passed_levels_by_track[track.id]:
+                locked = True
+                lock_reason = f"Complete Level {required_level}"
 
         # ---------- ATTEMPTS ----------
         attempts = list(
@@ -1114,6 +1239,8 @@ def student_dashboard(request):
         # ---------- ACTION ----------
         if active:
             action = "resume"
+        elif locked:
+            action = "locked"
         elif not can_retake:
             action = "cooldown"
         elif attempts:
@@ -1131,6 +1258,8 @@ def student_dashboard(request):
             "best_score": best_score,
             "improvement": improvement,
             "cooldown_remaining": cooldown_remaining,
+            "locked": locked,
+            "lock_reason": lock_reason,
         })
 
     return render(request, "quiz/student_dashboard.html", {
@@ -1140,7 +1269,6 @@ def student_dashboard(request):
         "failed_count": failed_count,
         "track_map": dict(track_map),
     })
-
 
 
 
@@ -1227,19 +1355,17 @@ from quiz.models import (
     ExamSubscription,
     ExamTrackSubscription,
 )
-
-
 @login_required
 def exam_start(request, exam_id):
     exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
 
-    # ==================================================
-    # 🔐 SUBSCRIPTION + UNLOCK CHECK (SINGLE SOURCE)
-    # ==================================================
     allowed, reason = can_access_exam(request.user, exam)
     if not allowed:
-        messages.error(request, reason)
-        return redirect('quiz:exam_locked', exam_id=exam.id)
+        messages.info(
+            request,
+            "This exam is premium. Please subscribe to unlock access."
+        )
+        return redirect("quiz:exam_locked", exam_id=exam.id) 
 
     try:
         with transaction.atomic():
@@ -1460,57 +1586,38 @@ from quiz.models import (
     ExamSubscription,
     ExamTrackSubscription,
 )
-
+from quiz.services.pricing import apply_coupon
 
 @login_required
 @require_POST
 def subscribe_track(request, track_id):
-    track = get_object_or_404(
-        ExamTrack,
-        pk=track_id,
-        is_active=True
-    )
+    track = get_object_or_404(ExamTrack, id=track_id)
 
-    sub, created = ExamTrackSubscription.objects.get_or_create(
+    coupon_code = request.POST.get("coupon")
+    price = track.lifetime_price or 0
+
+    final_price, error = apply_coupon(price, coupon_code)
+
+    if error:
+        messages.error(request, error)
+        return redirect("quiz:exam_list")
+
+    ExamTrackSubscription.objects.create(
         user=request.user,
         track=track,
-        defaults={
-            "is_active": True,
-            "payment_required": False,
-            "amount": 0,
-        }
+        is_active=True,
+        payment_required=final_price > 0,
+        amount=final_price,
+        expires_at=None  # lifetime
     )
 
-    if not created and not sub.is_active:
-        sub.is_active = True
-        sub.save(update_fields=["is_active"])
-
-    messages.success(
-        request,
-        f"You are now subscribed to {track.title}"
-    )
-
-    return redirect("quiz:exam_list")
-
+    messages.success(request, "Subscription activated")
+    return redirect("quiz:student_dashboard")
 
 @login_required
 @require_POST
 def subscribe_exam(request, exam_id):
-    exam = get_object_or_404(
-        Exam,
-        pk=exam_id,
-        is_published=True
-    )
-
-    track = exam.track
-
-    # Safety check
-    if track and track.subscription_scope != ExamTrack.EXAM:
-        messages.error(
-            request,
-            "This exam is included in a track subscription."
-        )
-        return redirect("quiz:exam_list")
+    exam = get_object_or_404(Exam, id=exam_id, is_published=True)
 
     sub, created = ExamSubscription.objects.get_or_create(
         user=request.user,
@@ -1519,19 +1626,85 @@ def subscribe_exam(request, exam_id):
             "is_active": True,
             "payment_required": False,
             "amount": 0,
+            "currency": "INR",
         }
     )
 
-    if not created and not sub.is_active:
-        sub.is_active = True
-        sub.save(update_fields=["is_active"])
+    messages.success(request, "Exam subscribed successfully.")
+    return redirect("quiz:exam_list")
 
-    messages.success(
-        request,
-        f"You are now subscribed to {exam.title}"
+from datetime import timedelta
+from django.utils import timezone
+
+@login_required
+@require_POST
+def start_trial(request, track_id):
+    track = get_object_or_404(ExamTrack, id=track_id)
+
+    existing = ExamTrackSubscription.objects.filter(
+        user=request.user,
+        track=track
+    ).exists()
+
+    if existing:
+        messages.error(request, "Trial already used.")
+        return redirect("quiz:exam_list")
+
+    ExamTrackSubscription.objects.create(
+        user=request.user,
+        track=track,
+        is_active=True,
+        is_trial=True,
+        expires_at=timezone.now() + timedelta(days=7),
+        payment_required=False,
+        amount=0
     )
 
-    return redirect("quiz:exam_list")
+    messages.success(request, "7-day free trial activated!")
+    return redirect("quiz:student_dashboard")
+
+
+
+@login_required
+def subscribe_track_checkout(request, track_id):
+    track = get_object_or_404(ExamTrack, id=track_id, is_active=True)
+
+    base_price = track.price or 0
+    coupon_code = request.POST.get("coupon")
+    final_price, coupon = apply_coupon(base_price, coupon_code)
+
+    # -------------------------------
+    # ₹0 FLOW (FREE / COUPON / TRIAL)
+    # -------------------------------
+    if final_price == 0:
+        ExamTrackSubscription.objects.update_or_create(
+            user=request.user,
+            track=track,
+            defaults={
+                "is_active": True,
+                "payment_required": False,
+                "amount": 0,
+                "expires_at": timezone.now() + timezone.timedelta(days=7),
+            }
+        )
+
+        if coupon:
+            coupon.used_count += 1
+            coupon.save()
+
+        messages.success(request, "Subscription activated successfully!")
+        return redirect("quiz:student_dashboard")
+
+    # -------------------------------
+    # PAID FLOW (Razorpay later)
+    # -------------------------------
+    return render(request, "quiz/checkout.html", {
+        "track": track,
+        "base_price": base_price,
+        "final_price": final_price,
+        "coupon_code": coupon_code,
+    })
+
 
 
 ###############################################
@@ -2391,6 +2564,218 @@ def autosave(request, user_exam_id):
                     ua.save()
 
     return JsonResponse({'status': 'ok'})
+
+
+
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render
+from django.utils import timezone
+
+from .models import (
+    ExamTrack,
+    Exam,
+    ExamTrackSubscription,
+    ExamSubscription,
+    Coupon,
+)
+
+@staff_member_required
+def subscription_admin_panel(request):
+    context = {
+        # Tracks & Exams
+        "tracks": ExamTrack.objects.all().order_by("-created_at"),
+        "exams": Exam.objects.select_related("track").all(),
+
+        # Subscriptions
+        "track_subs": (
+            ExamTrackSubscription.objects
+            .select_related("user", "track")
+            .order_by("-subscribed_at")[:50]
+        ),
+        "exam_subs": (
+            ExamSubscription.objects
+            .select_related("user", "exam")
+            .order_by("-subscribed_at")[:50]
+        ),
+
+        # Coupons
+        "coupons": Coupon.objects.all().order_by("-valid_to"),
+
+        # Meta
+        "now": timezone.now(),
+    }
+
+    return render(
+        request,
+        "quiz/admin_subscription_panel.html",
+        context,
+    )
+
+
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
+from django.utils import timezone
+from decimal import Decimal
+
+from .models import ExamTrack, Coupon
+
+
+# -----------------------------------------
+# INLINE TOGGLE TRACK
+# -----------------------------------------
+@staff_member_required
+@require_POST
+def toggle_track_status(request):
+    track_id = request.POST.get("track_id")
+
+    try:
+        track = ExamTrack.objects.get(id=track_id)
+        track.is_active = not track.is_active
+        track.save()
+        return JsonResponse({
+            "success": True,
+            "new_status": track.is_active
+        })
+    except ExamTrack.DoesNotExist:
+        return JsonResponse({"success": False})
+
+
+# -----------------------------------------
+# INLINE TOGGLE COUPON
+# -----------------------------------------
+@staff_member_required
+@require_POST
+def toggle_coupon_status(request):
+    coupon_id = request.POST.get("coupon_id")
+
+    try:
+        coupon = Coupon.objects.get(id=coupon_id)
+        coupon.is_active = not coupon.is_active
+        coupon.save()
+        return JsonResponse({
+            "success": True,
+            "new_status": coupon.is_active
+        })
+    except Coupon.DoesNotExist:
+        return JsonResponse({"success": False})
+
+
+# -----------------------------------------
+# CREATE COUPON (MODAL)
+# -----------------------------------------
+@staff_member_required
+@require_POST
+def create_coupon_ajax(request):
+    code = request.POST.get("code").upper()
+    percent_off = request.POST.get("percent_off") or None
+    flat_off = request.POST.get("flat_off") or None
+    valid_days = int(request.POST.get("valid_days", 7))
+
+    if Coupon.objects.filter(code=code).exists():
+        return JsonResponse({
+            "success": False,
+            "error": "Coupon already exists"
+        })
+
+    Coupon.objects.create(
+        code=code,
+        percent_off=int(percent_off) if percent_off else None,
+        flat_off=Decimal(flat_off) if flat_off else None,
+        valid_from=timezone.now(),
+        valid_to=timezone.now() + timezone.timedelta(days=valid_days),
+        is_active=True
+    )
+
+    return JsonResponse({"success": True})
+
+
+
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
+from decimal import Decimal
+
+from .models import ExamTrack
+
+
+@staff_member_required
+@require_POST
+def update_track_pricing(request):
+    track_id = request.POST.get("track_id")
+    is_free = request.POST.get("is_free") == "true"
+    price = request.POST.get("price")
+
+    try:
+        track = ExamTrack.objects.get(id=track_id)
+
+        if is_free:
+            track.is_free = True
+            track.price = 0
+        else:
+            if not price:
+                return JsonResponse({
+                    "success": False,
+                    "error": "Price is required for paid tracks"
+                })
+            track.is_free = False
+            track.price = Decimal(price)
+
+        track.save()
+
+        return JsonResponse({
+            "success": True,
+            "is_free": track.is_free,
+            "price": str(track.price),
+        })
+
+    except ExamTrack.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "error": "Track not found"
+        })
+    
+@staff_member_required
+@require_POST
+def update_track_pricing_type(request):
+    track_id = request.POST.get("track_id")
+    pricing_type = request.POST.get("pricing_type")
+    monthly_price = request.POST.get("monthly_price") or None
+    lifetime_price = request.POST.get("lifetime_price") or None
+
+    try:
+        track = ExamTrack.objects.get(id=track_id)
+
+        track.pricing_type = pricing_type
+
+        if pricing_type == "free":
+            track.monthly_price = None
+            track.lifetime_price = None
+
+        elif pricing_type == "monthly":
+            if not monthly_price:
+                return JsonResponse({"success": False, "error": "Monthly price required"})
+            track.monthly_price = monthly_price
+            track.lifetime_price = None
+
+        elif pricing_type == "lifetime":
+            if not lifetime_price:
+                return JsonResponse({"success": False, "error": "Lifetime price required"})
+            track.lifetime_price = lifetime_price
+            track.monthly_price = None
+
+        track.save()
+
+        return JsonResponse({"success": True})
+
+    except ExamTrack.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Track not found"})
+
+
+
 
 
 

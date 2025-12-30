@@ -1,0 +1,35 @@
+{% extends "quiz/base.html" %}
+{% block content %}
+
+<h2 class="title is-4">💳 Checkout</h2>
+
+<div class="box">
+  <p><strong>Track:</strong> {{ track.title }}</p>
+  <p>Base Price: ₹{{ base_price }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="field">
+      <label class="label">Coupon Code</label>
+      <input class="input" name="coupon" value="{{ coupon_code }}">
+    </div>
+
+    <p class="mt-2">
+      <strong>Final Price:</strong>
+      ₹{{ final_price }}
+    </p>
+
+    {% if final_price == 0 %}
+      <button class="button is-success mt-3">
+        Activate Subscription
+      </button>
+    {% else %}
+      <button class="button is-primary mt-3">
+        Proceed to Payment
+      </button>
+    {% endif %}
+  </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends "quiz/base.html" %}
+{% block content %}
+
+<h2 class="title is-4">🎛 Subscription Control Panel</h2>
+<p class="has-text-grey mb-5">
+  Manage pricing models, subscriptions & coupons from one place
+</p>
+
+{% csrf_token %}
+
+<!-- ================================================= -->
+<!-- EXAM TRACKS -->
+<!-- ================================================= -->
+<h3 class="title is-5">📚 Exam Tracks (Pricing)</h3>
+
+<div class="table-container mb-6">
+<table class="table is-fullwidth is-striped is-hoverable">
+  <thead>
+    <tr>
+      <th>Track</th>
+      <th>Pricing Type</th>
+      <th>Monthly ₹</th>
+      <th>Lifetime ₹</th>
+      <th>Status</th>
+      <th>Save</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for t in tracks %}
+    <tr>
+      <td><strong>{{ t.title }}</strong></td>
+
+      <!-- PRICING TYPE -->
+      <td>
+        <div class="select is-small">
+          <select id="ptype_{{ t.id }}"
+                  onchange="togglePricingFields({{ t.id }})">
+            <option value="free"
+              {% if t.pricing_type == "free" %}selected{% endif %}>
+              Free
+            </option>
+            <option value="monthly"
+              {% if t.pricing_type == "monthly" %}selected{% endif %}>
+              Monthly
+            </option>
+            <option value="lifetime"
+              {% if t.pricing_type == "lifetime" %}selected{% endif %}>
+              Lifetime
+            </option>
+          </select>
+        </div>
+      </td>
+
+      <!-- MONTHLY PRICE -->
+      <td>
+        <input class="input is-small"
+               id="monthly_{{ t.id }}"
+               type="number"
+               step="0.01"
+               min="0"
+               placeholder="₹ / month"
+               value="{{ t.monthly_price|default:'' }}"
+               {% if t.pricing_type != "monthly" %}disabled{% endif %}>
+      </td>
+
+      <!-- LIFETIME PRICE -->
+      <td>
+        <input class="input is-small"
+               id="lifetime_{{ t.id }}"
+               type="number"
+               step="0.01"
+               min="0"
+               placeholder="One-time ₹"
+               value="{{ t.lifetime_price|default:'' }}"
+               {% if t.pricing_type != "lifetime" %}disabled{% endif %}>
+      </td>
+
+      <!-- ACTIVE STATUS -->
+      <td>
+        <span class="tag {% if t.is_active %}is-success{% else %}is-danger{% endif %}">
+          {{ t.is_active|yesno:"Active,Inactive" }}
+        </span>
+        <button class="button is-small ml-2"
+                onclick="toggleTrack({{ t.id }})">
+          Toggle
+        </button>
+      </td>
+
+      <!-- SAVE -->
+      <td>
+        <button class="button is-small is-primary"
+                onclick="savePricingType({{ t.id }})">
+          Save
+        </button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<hr>
+
+<!-- ================================================= -->
+<!-- COUPONS -->
+<!-- ================================================= -->
+<h3 class="title is-5">
+  🏷 Coupons
+  <button class="button is-small is-primary ml-2"
+          onclick="openCouponModal()">
+    + Create Coupon
+  </button>
+</h3>
+
+<div class="table-container mb-6">
+<table class="table is-fullwidth is-striped is-hoverable">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Discount</th>
+      <th>Used</th>
+      <th>Valid Until</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for c in coupons %}
+    <tr>
+      <td><strong>{{ c.code }}</strong></td>
+      <td>
+        {% if c.percent_off %}
+          {{ c.percent_off }}%
+        {% elif c.flat_off %}
+          ₹{{ c.flat_off }}
+        {% else %}
+          —
+        {% endif %}
+      </td>
+      <td>{{ c.used_count }}</td>
+      <td>{{ c.valid_to|date:"d M Y" }}</td>
+      <td>
+        <span class="tag {% if c.is_active %}is-success{% else %}is-danger{% endif %}">
+          {{ c.is_active|yesno:"Active,Inactive" }}
+        </span>
+      </td>
+      <td>
+        <button class="button is-small"
+                onclick="toggleCoupon({{ c.id }})">
+          Toggle
+        </button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<!-- ================================================= -->
+<!-- CREATE COUPON MODAL -->
+<!-- ================================================= -->
+<div class="modal" id="couponModal">
+  <div class="modal-background"></div>
+
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Create Coupon</p>
+      <button class="delete" onclick="closeCouponModal()"></button>
+    </header>
+
+    <section class="modal-card-body">
+      <div class="field">
+        <label class="label">Coupon Code</label>
+        <input class="input" id="c_code" placeholder="e.g. OFF50">
+      </div>
+
+      <div class="field">
+        <label class="label">Percent Off (%)</label>
+        <input class="input" id="c_percent" type="number">
+      </div>
+
+      <div class="field">
+        <label class="label">Flat Off (₹)</label>
+        <input class="input" id="c_flat" type="number">
+      </div>
+
+      <div class="field">
+        <label class="label">Valid Days</label>
+        <input class="input" id="c_days" type="number" value="7">
+      </div>
+    </section>
+
+    <footer class="modal-card-foot">
+      <button class="button is-success" onclick="createCoupon()">Create</button>
+      <button class="button" onclick="closeCouponModal()">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ================================================= -->
+<script>
+function csrf() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+/* ---------- PRICING ---------- */
+function togglePricingFields(id) {
+  const type = document.getElementById(`ptype_${id}`).value;
+  document.getElementById(`monthly_${id}`).disabled = type !== "monthly";
+  document.getElementById(`lifetime_${id}`).disabled = type !== "lifetime";
+}
+
+function savePricingType(id) {
+  fetch("{% url 'quiz:update_track_pricing_type' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": csrf(),
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      track_id: id,
+      pricing_type: document.getElementById(`ptype_${id}`).value,
+      monthly_price: document.getElementById(`monthly_${id}`).value,
+      lifetime_price: document.getElementById(`lifetime_${id}`).value
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) alert(data.error);
+  });
+}
+
+/* ---------- TRACK ACTIVE ---------- */
+function toggleTrack(id) {
+  fetch("{% url 'quiz:toggle_track_status' %}", {
+    method: "POST",
+    headers: { "X-CSRFToken": csrf() },
+    body: new URLSearchParams({ track_id: id })
+  }).then(() => location.reload());
+}
+
+/* ---------- COUPONS ---------- */
+function toggleCoupon(id) {
+  fetch("{% url 'quiz:toggle_coupon_status' %}", {
+    method: "POST",
+    headers: { "X-CSRFToken": csrf() },
+    body: new URLSearchParams({ coupon_id: id })
+  }).then(() => location.reload());
+}
+
+function openCouponModal() {
+  document.getElementById("couponModal").classList.add("is-active");
+}
+function closeCouponModal() {
+  document.getElementById("couponModal").classList.remove("is-active");
+}
+
+function createCoupon() {
+  fetch("{% url 'quiz:create_coupon_ajax' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": csrf(),
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      code: document.getElementById("c_code").value,
+      percent_off: document.getElementById("c_percent").value,
+      flat_off: document.getElementById("c_flat").value,
+      valid_days: document.getElementById("c_days").value
+    })
+  }).then(() => location.reload());
+}
+</script>
+
+{% endblock %}

@@ -307,3 +307,25 @@ class ExamTrackAdmin(admin.ModelAdmin):
 
     admin.site.register(ExamTrackSubscription)
 
+
+
+    # =====================================================
+# COUPONS (NEW)
+# =====================================================
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    list_display = (
+        "code",
+        "is_active",
+        "percent_off",
+        "flat_off",
+        "used_count",
+        "usage_limit",
+        "valid_from",
+        "valid_to",
+    )
+    list_filter = ("is_active",)
+    search_fields = ("code",)
+    readonly_fields = ("used_count",)
+

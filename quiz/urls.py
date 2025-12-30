@@ -203,4 +203,40 @@ urlpatterns = [
         name="subscribe_exam",
     ),
 
+     path(
+        "dashboard/admin/subscriptions/",
+        views.subscription_admin_panel,
+        name="subscription_admin_panel",
+    ),
+   
+    path(
+        "dashboard/admin/toggle-track/",
+        views.toggle_track_status,
+        name="toggle_track_status",
+    ),
+
+    path(
+        "dashboard/admin/toggle-coupon/",
+        views.toggle_coupon_status,
+        name="toggle_coupon_status",
+    ),
+
+    path(
+        "dashboard/admin/create-coupon/",
+        views.create_coupon_ajax,
+        name="create_coupon_ajax",
+    ),
+
+    path(
+    "dashboard/admin/update-track-pricing/",
+    views.update_track_pricing,
+    name="update_track_pricing",
+),
+path(
+    "dashboard/admin/update-track-pricing-type/",
+    views.update_track_pricing_type,
+    name="update_track_pricing_type",
+),
+
+
 ]

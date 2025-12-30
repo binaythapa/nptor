@@ -43,6 +43,13 @@
           </a>
         </div>
 
+        {% if user.is_staff %}
+<a href="{% url 'quiz:subscription_admin_panel' %}">
+  🎛 Subscriptions
+</a>
+{% endif %}
+
+
         {% if user.is_authenticated %}
         <form action="{% url 'quiz:exam_list' %}" method="get" class="header-search">
           <input class="input" name="q" placeholder="Search exams, questions...">

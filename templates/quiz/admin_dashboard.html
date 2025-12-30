@@ -1,76 +1,226 @@
 {% extends "quiz/base.html" %}
 {% block content %}
 
-<h2 class="title is-4">🛠 Admin Dashboard</h2>
+<style>
+  /* ---------- Dashboard Enhancements ---------- */
+  .stat-card {
+    border-radius: 12px;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+  }
 
-<!-- ================= KPI CARDS ================= -->
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+
+  .muted {
+    color: #7a7a7a;
+    font-size: .8rem;
+  }
+
+  .badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+
+  .badge-green { background: #e6f7ef; color: #157347; }
+  .badge-yellow { background: #fff3cd; color: #856404; }
+  .badge-red { background: #fdecea; color: #842029; }
+
+  @media (max-width: 768px) {
+    .stat-value {
+      font-size: 1.4rem;
+    }
+  }
+</style>
+
+<!-- ================================================= -->
+<!-- HEADER -->
+<!-- ================================================= -->
+<div class="mb-5">
+  <h2 class="title is-4 mb-1">🛠 Admin Dashboard</h2>
+  <p class="muted">
+    Platform health, learning performance & subscription insights
+  </p>
+</div>
+
+<!-- ================================================= -->
+<!-- KPI ROW -->
+<!-- ================================================= -->
 <div class="columns is-multiline">
-  <div class="column is-3">
-    <div class="box has-text-centered">
-      <p class="heading">Users</p>
-      <p class="title">{{ total_users }}</p>
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">👥 Users</p>
+      <p class="stat-value">{{ total_users }}</p>
+      <p class="muted">Registered learners</p>
     </div>
   </div>
 
-  <div class="column is-3">
-    <div class="box has-text-centered">
-      <p class="heading">Attempts</p>
-      <p class="title">{{ total_attempts }}</p>
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">📝 Attempts</p>
+      <p class="stat-value">{{ total_attempts }}</p>
+      <p class="muted">Submitted exams</p>
     </div>
   </div>
 
-  <div class="column is-3">
-    <div class="box has-text-centered has-text-success">
-      <p class="heading">Pass Rate</p>
-      <p class="title">{{ pass_rate }}%</p>
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">✅ Pass Rate</p>
+      <p class="stat-value has-text-success">{{ pass_rate }}%</p>
+      <p class="muted">Success ratio</p>
     </div>
   </div>
 
-  <div class="column is-3">
-    <div class="box has-text-centered has-text-info">
-      <p class="heading">Avg Score</p>
-      <p class="title">{{ avg_score }}%</p>
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">📊 Avg Score</p>
+      <p class="stat-value has-text-info">
+        {% if avg_score %}{{ avg_score }}%{% else %}—{% endif %}
+      </p>
+      <p class="muted">Across all exams</p>
     </div>
   </div>
+
 </div>
 
-<!-- ================= SUBSCRIPTIONS ================= -->
-<div class="box">
-  <strong>Active Track Subscriptions:</strong> {{ active_track_subs }}
+<!-- ================================================= -->
+<!-- SUBSCRIPTION SUMMARY -->
+<!-- ================================================= -->
+<h3 class="title is-5 mt-6 mb-3">💳 Subscriptions Overview</h3>
+
+<div class="columns is-multiline">
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">📦 Total</p>
+      <p class="stat-value">{{ total_track_subs }}</p>
+      <p class="muted">All subscriptions</p>
+    </div>
+  </div>
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">🟢 Active</p>
+      <p class="stat-value has-text-success">{{ active_track_subs }}</p>
+      <p class="muted">Currently valid</p>
+    </div>
+  </div>
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">⏳ Expiring</p>
+      <p class="stat-value has-text-warning">{{ expiring_soon }}</p>
+      <p class="muted">Next 7 days</p>
+    </div>
+  </div>
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">🔴 Expired</p>
+      <p class="stat-value has-text-danger">{{ expired_track_subs }}</p>
+      <p class="muted">Needs renewal</p>
+    </div>
+  </div>
+
 </div>
 
-<!-- ================= TRACK ANALYTICS ================= -->
-<h3 class="title is-5 mt-5">📚 Track Analytics</h3>
+<!-- ================================================= -->
+<!-- REVENUE & CONVERSION -->
+<!-- ================================================= -->
+<h3 class="title is-5 mt-6 mb-3">📈 Revenue & Conversion</h3>
 
-<table class="table is-fullwidth is-striped">
-  <thead>
-    <tr>
-      <th>Track</th>
-      <th>Enrolled</th>
-      <th>Completed</th>
-      <th>Completion %</th>
-      <th>Avg Score</th>
-      <th>Drop-off Exam</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in track_rows %}
-    <tr>
-      <td>{{ row.track.title }}</td>
-      <td>{{ row.enrolled }}</td>
-      <td>{{ row.completed }}</td>
-      <td>{{ row.completion_rate }}%</td>
-      <td>
-        {% if row.avg_score %}
-          {{ row.avg_score }}%
-        {% else %}
-          —
-        {% endif %}
-      </td>
-      <td>{{ row.drop_exam }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="columns is-multiline">
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">🆓 Trial Users</p>
+      <p class="stat-value">{{ trial_subs }}</p>
+      <p class="muted">7-day trial</p>
+    </div>
+  </div>
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">💰 Paid Users</p>
+      <p class="stat-value has-text-success">{{ paid_subs }}</p>
+      <p class="muted">Converted</p>
+    </div>
+  </div>
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">🔁 Conversion</p>
+      <p class="stat-value has-text-primary">{{ conversion_rate }}%</p>
+      <p class="muted">Trial → Paid</p>
+    </div>
+  </div>
+
+  <div class="column is-6-mobile is-3-tablet">
+    <div class="box stat-card has-text-centered">
+      <p class="heading">💸 Revenue</p>
+      <p class="stat-value has-text-success">₹{{ total_revenue }}</p>
+      <p class="muted">ARPU ₹{{ arpu }}</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================================================= -->
+<!-- TRACK ANALYTICS -->
+<!-- ================================================= -->
+<h3 class="title is-5 mt-6 mb-3">📚 Track Analytics</h3>
+
+<div class="table-container">
+  <table class="table is-fullwidth is-hoverable is-striped">
+    <thead>
+      <tr>
+        <th>Track</th>
+        <th>Enrolled</th>
+        <th>Completed</th>
+        <th>Completion</th>
+        <th>Avg Score</th>
+        <th>Revenue</th>
+        <th>Drop-off</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in track_rows %}
+      <tr>
+        <td><strong>{{ row.track.title }}</strong></td>
+        <td>{{ row.enrolled }}</td>
+        <td>{{ row.completed }}</td>
+        <td>
+          <span class="badge badge-green">
+            {{ row.completion_rate }}%
+          </span>
+        </td>
+        <td>
+          {% if row.avg_score %}
+            {{ row.avg_score }}%
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td>₹{{ row.revenue }}</td>
+        <td>
+          {% if row.drop_exam != "—" %}
+            <span class="badge badge-red">{{ row.drop_exam }}</span>
+          {% else %}
+            —
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
 {% endblock %}

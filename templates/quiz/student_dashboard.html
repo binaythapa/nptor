@@ -39,18 +39,41 @@
 {% for track, items in track_map.items %}
 <div class="track-accordion box">
 
+  <!-- TRACK HEADER -->
   <button class="track-header button is-light is-fullwidth"
           onclick="this.nextElementSibling.classList.toggle('is-hidden')">
     <strong>📘 {{ track.title }}</strong>
-    <span class="is-size-7 has-text-grey">{{ items|length }} exams</span>
+    <span class="is-size-7 has-text-grey ml-2">
+      {{ items|length }} exams
+    </span>
   </button>
 
+  <!-- TRACK BODY -->
   <div class="track-body mt-3 is-hidden">
+
+    <!-- LEVEL LADDER (SAFE ADDITION) -->
+    <div class="mb-3">
+      {% for item in items %}
+        <span class="tag
+          {% if item.locked %}
+            is-light
+          {% else %}
+            is-success
+          {% endif %}
+        ">
+          L{{ item.exam.level }}
+        </span>
+        {% if not forloop.last %}
+          <span class="mx-1">→</span>
+        {% endif %}
+      {% endfor %}
+    </div>
 
     {% for item in items %}
     <div class="box mb-3">
       <div class="is-flex is-justify-content-space-between is-align-items-center">
 
+        <!-- LEFT INFO -->
         <div>
           <strong>{{ item.exam.title }}</strong><br>
           <small class="has-text-grey">
@@ -58,6 +81,12 @@
             {{ item.exam.question_count }} Q •
             {{ item.exam.duration_seconds }} sec
           </small>
+
+          {% if item.locked %}
+            <p class="has-text-warning is-size-7 mt-1">
+              🔒 Complete previous level
+            </p>
+          {% endif %}
 
           {% if item.last_score is not None %}
             <p class="is-size-7 mt-1">
@@ -78,9 +107,15 @@
           {% if item.improvement is not None %}
             <p class="is-size-7">
               {% if item.improvement > 0 %}
-                📈 Improved by <strong class="has-text-success">+{{ item.improvement }}%</strong>
+                📈 Improved by
+                <strong class="has-text-success">
+                  +{{ item.improvement }}%
+                </strong>
               {% elif item.improvement < 0 %}
-                📉 Dropped by <strong class="has-text-danger">{{ item.improvement }}%</strong>
+                📉 Dropped by
+                <strong class="has-text-danger">
+                  {{ item.improvement }}%
+                </strong>
               {% else %}
                 ➖ No change
               {% endif %}
@@ -89,6 +124,7 @@
           {% endif %}
         </div>
 
+        <!-- RIGHT ACTIONS -->
         <div class="buttons">
 
           {% if item.action == "resume" %}
@@ -106,13 +142,13 @@
               Retake in <strong class="countdown-text"></strong>
             </span>
 
-          {% elif item.action == "retake" %}
+          {% elif item.action == "retake" and not item.locked %}
             <a class="button is-primary is-small"
                href="{% url 'quiz:exam_start' item.exam.id %}">
               Retake
             </a>
 
-          {% else %}
+          {% elif not item.locked %}
             <a class="button is-primary is-small"
                href="{% url 'quiz:exam_start' item.exam.id %}">
               Start

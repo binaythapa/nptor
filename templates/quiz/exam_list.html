@@ -3,53 +3,128 @@
 
 <h2 class="title is-4">📚 Available Exam Tracks</h2>
 <p class="has-text-grey mb-4">
-  Subscribe to unlock exams.
+  All exams require subscription. Free tracks require ₹0 subscription.
 </p>
-
-
 
 {% for track, items in track_map.items %}
 <div class="box">
-  <h3>{{ track.title }}</h3>
-  <p>{{ items|length }} Levels • Subscription: {{ track.subscription_scope|title }}</p>
 
-  {% if track.subscription_scope == "track" %}
+  <!-- ================= TRACK HEADER ================= -->
+  <div class="is-flex is-justify-content-space-between is-align-items-center">
+    <div>
+      <h3 class="title is-5 mb-1">{{ track.title }}</h3>
+      <p class="is-size-7 has-text-grey">
+        {{ items|length }} Levels • Subscription:
+        {{ track.subscription_scope|title }}
+      </p>
+    </div>
+
+    <!-- TRACK STATUS BADGE -->
     {% if items.0.is_track_subscribed %}
-      <span class="tag is-success">✔ Subscribed</span>
+      <span class="tag is-success is-light">
+        ✔ Subscribed
+      </span>
+
+    {% elif track.is_free %}
+      <span class="tag is-success is-light">
+        🆓 Free (Subscription Required)
+      </span>
+
     {% else %}
-      <form method="post" action="{% url 'quiz:subscribe_track' track.id %}">
-        {% csrf_token %}
-        <button class="button is-primary">Subscribe Track</button>
-      </form>
+      <span class="tag is-warning is-light">
+        🔒 Premium
+      </span>
     {% endif %}
+  </div>
+
+  <!-- ================= TRACK PRICING / SUBSCRIBE ================= -->
+  {% if track.subscription_scope == "track" and not items.0.is_track_subscribed %}
+  <div class="notification is-light is-info mt-3">
+    <strong>{{ track.title }}</strong><br>
+
+    {% if track.is_free %}
+      This is a free track. Subscribe to unlock all {{ items|length }} levels.
+    {% else %}
+      Unlock all {{ items|length }} levels with a subscription.
+    {% endif %}
+
+    <!-- PRICING OPTIONS -->
+    <div class="buttons mt-3">
+
+      {% if track.is_free %}
+        <form method="post" action="{% url 'quiz:subscribe_track' track.id %}">
+          {% csrf_token %}
+          <button class="button is-success is-small">
+            Subscribe Free
+          </button>
+        </form>
+
+      {% else %}
+        {% if track.monthly_price %}
+          <button class="button is-link is-small" disabled>
+            Monthly ₹{{ track.monthly_price }}
+          </button>
+        {% endif %}
+
+        {% if track.lifetime_price %}
+          <button class="button is-primary is-small" disabled>
+            Lifetime ₹{{ track.lifetime_price }}
+          </button>
+        {% endif %}
+
+        <p class="is-size-7 has-text-grey mt-1">
+          💡 Payment integration coming soon.
+        </p>
+      {% endif %}
+    </div>
+  </div>
   {% endif %}
 
   <hr>
 
+  <!-- ================= EXAMS ================= -->
   {% for item in items %}
-    <p>
-      <strong>Level {{ item.exam.level }}</strong> •
-      {{ item.exam.question_count }} questions • {{ item.exam.duration_seconds }} sec
+  <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
 
-      {% if track.subscription_scope == "exam" %}
-        {% if item.is_exam_subscribed %}
-          <span class="tag is-success ml-2">Subscribed</span>
-        {% elif item.can_subscribe %}
-          <form method="post" action="{% url 'quiz:subscribe_exam' item.exam.id %}" style="display:inline">
-            {% csrf_token %}
-            <button class="button is-small is-primary ml-2">Subscribe</button>
-          </form>
-        {% else %}
-          <span class="tag is-light ml-2">🔒 {{ item.locked_reason }}</span>
-        {% endif %}
+    <div>
+      <strong>Level {{ item.exam.level }}</strong> •
+      {{ item.exam.question_count }} questions •
+      {{ item.exam.duration_seconds }} sec
+    </div>
+
+    <!-- EXAM-LEVEL SUBSCRIPTION -->
+    {% if track.subscription_scope == "exam" %}
+      {% if item.is_exam_subscribed %}
+        <span class="tag is-success is-light">
+          ✔ Subscribed
+        </span>
+
+      {% elif item.locked %}
+        <span class="tag is-light">
+          🔒 {{ item.locked_reason }}
+        </span>
+
+      {% else %}
+        <form method="post"
+              action="{% url 'quiz:subscribe_exam' item.exam.id %}">
+          {% csrf_token %}
+          <button class="button is-primary is-small">
+            {% if track.is_free %}
+              Subscribe Free
+            {% else %}
+              Subscribe
+            {% endif %}
+          </button>
+        </form>
       {% endif %}
-    </p>
+    {% endif %}
+
+  </div>
   {% endfor %}
+
 </div>
 {% empty %}
 <p>No exams available.</p>
 {% endfor %}
-
-
 
 {% endblock %}
