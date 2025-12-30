@@ -492,6 +492,11 @@ class Exam(models.Model):
     is_published = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    max_mock_attempts = models.PositiveIntegerField(
+        default=3,
+        help_text="Number of mock attempts allowed for this exam (0 = no mock)"
+    )
+
     def __str__(self):
         return self.title
     

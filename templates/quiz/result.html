@@ -2,6 +2,15 @@
 {% load dict_extras %}
 {% block content %}
 
+{# ================= MOCK BANNER ================= #}
+{% if is_mock %}
+  <div class="notification is-info is-light mb-4">
+    <strong>🧪 Mock Attempt</strong><br>
+    This was a practice attempt.
+    <strong>Your score does NOT affect pass/fail or progression.</strong>
+  </div>
+{% endif %}
+
 <h2 class="title is-4">🎯 Exam Result — {{ user_exam.exam.title }}</h2>
 
 <!-- ================= SUMMARY ================= -->
@@ -24,11 +33,15 @@
 
   <div class="column is-3">
     <p class="heading">Status</p>
-    {% if user_exam.passed %}
+
+    {% if is_mock %}
+      <span class="tag is-info is-medium">Mock</span>
+    {% elif user_exam.passed %}
       <span class="tag is-success is-medium">Passed</span>
     {% else %}
       <span class="tag is-danger is-medium">Failed</span>
     {% endif %}
+
   </div>
 
 </div>
@@ -116,20 +129,23 @@
 <!-- ================= ACTIONS ================= -->
 <div class="box mt-5">
 
-  {% if can_retake %}
-    <a href="{% url 'quiz:exam_start' user_exam.exam.id %}"
-       class="button is-link is-light">
-      🔁 Retake Exam
-    </a>
-  {% else %}
-    <button class="button is-light" disabled>
-      ⏳ Retake locked
-    </button>
+  {# Retake ONLY for real exams #}
+  {% if not is_mock %}
+    {% if can_retake %}
+      <a href="{% url 'quiz:exam_start' user_exam.exam.id %}"
+         class="button is-link is-light">
+        🔁 Retake Exam
+      </a>
+    {% else %}
+      <button class="button is-light" disabled>
+        ⏳ Retake locked
+      </button>
 
-    <p class="help mt-2">
-      Retake available in
-      <strong><span id="retake-countdown"></span></strong>
-    </p>
+      <p class="help mt-2">
+        Retake available in
+        <strong><span id="retake-countdown"></span></strong>
+      </p>
+    {% endif %}
   {% endif %}
 
   <a href="{% url 'quiz:student_dashboard' %}"
@@ -140,7 +156,7 @@
 </div>
 
 <!-- ================= COUNTDOWN SCRIPT ================= -->
-{% if not can_retake %}
+{% if not can_retake and not is_mock %}
 <script>
 let seconds = {{ cooldown_seconds }};
 const el = document.getElementById("retake-countdown");

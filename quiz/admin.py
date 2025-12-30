@@ -5,6 +5,7 @@ from django.db import models
 from django.forms import widgets
 from .models import *
 
+
 import csv
 from django.http import HttpResponse
 
@@ -329,3 +330,41 @@ class CouponAdmin(admin.ModelAdmin):
     search_fields = ("code",)
     readonly_fields = ("used_count",)
 
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+
+from quiz.models import User, Exam, UserExam
+
+
+@staff_member_required
+def reset_mock_attempts(request, user_id, exam_id):
+    """
+    Admin-only:
+    Reset ALL mock attempts for a user on a given exam
+    (mock = passed IS NULL)
+    """
+
+    user = get_object_or_404(User, id=user_id)
+    exam = get_object_or_404(Exam, id=exam_id)
+
+    deleted_count, _ = UserExam.objects.filter(
+        user=user,
+        exam=exam,
+        passed__isnull=True,
+        submitted_at__isnull=False
+    ).delete()
+
+    if deleted_count:
+        messages.success(
+            request,
+            f"Mock attempts reset for {user.username} on '{exam.title}'."
+        )
+    else:
+        messages.info(
+            request,
+            "No mock attempts found to reset."
+        )
+
+    return redirect("quiz:admin_dashboard")

@@ -14,7 +14,7 @@
 {% endif %}
 
 <!-- ================= STATS ================= -->
-<div class="columns is-multiline">
+<div class="columns is-mobile">
   <div class="column is-4">
     <div class="box has-text-centered">
       <p class="heading">Attempts</p>
@@ -35,153 +35,130 @@
   </div>
 </div>
 
-<!-- ================= TRACK ACCORDION ================= -->
-{% for track, items in track_map.items %}
-<div class="track-accordion box">
+{% for track, data in track_map.items %}
+<div class="box">
 
-  <!-- TRACK HEADER -->
-  <button class="track-header button is-light is-fullwidth"
+  <!-- ===== TRACK HEADER (UPDATED) ===== -->
+  <button class="button is-light is-fullwidth"
           onclick="this.nextElementSibling.classList.toggle('is-hidden')">
     <strong>📘 {{ track.title }}</strong>
-    <span class="is-size-7 has-text-grey ml-2">
-      {{ items|length }} exams
+
+    <span class="tag is-info is-light ml-2">
+      {{ data.items|length }} exams
     </span>
+
+    {% if data.attempted %}
+      {% if data.passed %}
+        <span class="tag is-success is-light ml-1">
+          ✅ {{ data.passed }} passed
+        </span>
+      {% endif %}
+      {% if data.failed %}
+        <span class="tag is-danger is-light ml-1">
+          ❌ {{ data.failed }} failed
+        </span>
+      {% endif %}
+    {% endif %}
   </button>
 
-  <!-- TRACK BODY -->
-  <div class="track-body mt-3 is-hidden">
+  <div class="mt-3 is-hidden">
 
-    <!-- LEVEL LADDER (SAFE ADDITION) -->
-    <div class="mb-3">
-      {% for item in items %}
-        <span class="tag
-          {% if item.locked %}
-            is-light
-          {% else %}
-            is-success
-          {% endif %}
-        ">
-          L{{ item.exam.level }}
-        </span>
-        {% if not forloop.last %}
-          <span class="mx-1">→</span>
-        {% endif %}
-      {% endfor %}
-    </div>
-
-    {% for item in items %}
+    {% for item in data.items %}
     <div class="box mb-3">
-      <div class="is-flex is-justify-content-space-between is-align-items-center">
 
-        <!-- LEFT INFO -->
-        <div>
-          <strong>{{ item.exam.title }}</strong><br>
-          <small class="has-text-grey">
-            Level {{ item.exam.level }} •
-            {{ item.exam.question_count }} Q •
-             {% widthratio item.exam.duration_seconds 60 1 %} min
-          </small>
+      <strong>{{ item.exam.title }}</strong><br>
+      <small class="has-text-grey">
+        Level {{ item.exam.level }} • {{ item.exam.question_count }} Q
+      </small>
 
-          {% if item.locked %}
-            <p class="has-text-warning is-size-7 mt-1">
-              🔒 Complete previous level
-            </p>
+      {% if item.last_score is not None %}
+        <p class="is-size-7 mt-1">
+          {% if item.status == "passed" %}
+            ✅ Passed ({{ item.last_score }}%)
+          {% elif item.status == "failed" %}
+            ❌ Failed ({{ item.last_score }}%)
           {% endif %}
+        </p>
+      {% endif %}
 
-          {% if item.last_score is not None %}
-            <p class="is-size-7 mt-1">
-              {% if item.status == "passed" %}
-                ✅ Passed ({{ item.last_score }}%)
-              {% else %}
-                ❌ Failed ({{ item.last_score }}%)
-              {% endif %}
-            </p>
-          {% endif %}
+      <!-- ACTIONS -->
+      <div class="buttons mt-3 is-flex-direction-column">
 
-          {% if item.retry_count > 0 %}
-            <p class="is-size-7 has-text-grey">
-              🔁 Retries: {{ item.retry_count }}
-            </p>
-          {% endif %}
+        {% if item.is_passed %}
+          <span class="tag is-success is-light">
+            ✔ Exam completed
+          </span>
 
-          {% if item.improvement is not None %}
-            <p class="is-size-7">
-              {% if item.improvement > 0 %}
-                📈 Improved by
-                <strong class="has-text-success">
-                  +{{ item.improvement }}%
-                </strong>
-              {% elif item.improvement < 0 %}
-                📉 Dropped by
-                <strong class="has-text-danger">
-                  {{ item.improvement }}%
-                </strong>
-              {% else %}
-                ➖ No change
-              {% endif %}
-              <span class="has-text-grey">(vs best attempt)</span>
-            </p>
-          {% endif %}
-        </div>
+        {% elif item.action == "resume" %}
+          <a class="button is-warning is-small"
+             href="{% url 'quiz:exam_take' item.last_attempt.id %}">
+            Resume
+          </a>
 
-        <!-- RIGHT ACTIONS -->
-        <div class="buttons">
+        {% elif item.action == "cooldown" %}
+          <span class="tag is-warning is-light">
+            ⏳ Retake locked
+          </span>
+          <span class="tag is-warning mt-1"
+                data-countdown="{{ item.cooldown_remaining }}">
+            Retake in <strong class="countdown-text"></strong>
+          </span>
 
-          {% if item.action == "resume" %}
-            <a class="button is-warning is-small"
-               href="{% url 'quiz:exam_take' item.last_attempt.id %}">
-              Resume
+        {% elif item.action == "retake" %}
+          <a class="button is-primary is-small"
+             href="{% url 'quiz:exam_start' item.exam.id %}">
+            🔁 Retake (Real Exam)
+          </a>
+
+        {% elif item.action == "start" %}
+          <a class="button is-primary is-small"
+             href="{% url 'quiz:exam_start' item.exam.id %}">
+            ▶ Start Exam
+          </a>
+        {% endif %}
+
+        {% if not item.is_passed and item.status == "failed" %}
+          {% if item.mock_used < item.mock_allowed %}
+            <a class="button is-info is-small is-fullwidth-mobile mb-2"
+               href="{% url 'quiz:mock_exam_start' item.exam.id %}">
+              ⭐ Recommended: Take Mock Exam
             </a>
-
-          {% elif item.action == "cooldown" %}
-            <button class="button is-light is-small" disabled>
-              ⏳ Retake locked
-            </button>
-            <span class="has-text-grey is-size-7 ml-2"
-                  data-countdown="{{ item.cooldown_remaining }}">
-              Retake in <strong class="countdown-text"></strong>
+          {% else %}
+            <span class="tag is-light">
+              🧪 Mock limit reached. Contact admin to reset.
             </span>
-
-          {% elif item.action == "retake" and not item.locked %}
-            <a class="button is-primary is-small"
-               href="{% url 'quiz:exam_start' item.exam.id %}">
-              Retake
-            </a>
-
-          {% elif not item.locked %}
-            <a class="button is-primary is-small"
-               href="{% url 'quiz:exam_start' item.exam.id %}">
-              Start
-            </a>
           {% endif %}
-        </div>
+        {% endif %}
 
       </div>
+
+      {% if not item.is_passed and item.mock_attempts %}
+      <div class="mt-2">
+        <p class="is-size-7 has-text-grey">
+          🧪 Mock Attempts ({{ item.mock_used }}/{{ item.mock_allowed }})
+        </p>
+        <ul class="is-size-7">
+          {% for m in item.mock_attempts %}
+            <li>• {{ m.score }}%</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
     </div>
     {% endfor %}
-
   </div>
 </div>
-{% empty %}
-<p>No subscribed exams.</p>
 {% endfor %}
 
-<!-- ================= COUNTDOWN SCRIPT ================= -->
 <script>
 document.querySelectorAll("[data-countdown]").forEach(el => {
   let seconds = parseInt(el.dataset.countdown);
-  const textEl = el.querySelector(".countdown-text");
-
+  const t = el.querySelector(".countdown-text");
   function tick() {
-    if (seconds <= 0) {
-      textEl.innerText = "now";
-      return;
-    }
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    textEl.innerText = `${m}m ${s}s`;
-    seconds--;
-    setTimeout(tick, 1000);
+    if (seconds <= 0) { location.reload(); return; }
+    t.innerText = `${Math.floor(seconds/60)}m ${seconds%60}s`;
+    seconds--; setTimeout(tick, 1000);
   }
   tick();
 });

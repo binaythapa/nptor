@@ -223,4 +223,72 @@
   </table>
 </div>
 
+
+<!-- ================================================= -->
+<!-- RESET MOCK ATTEMPTS (ADMIN ONLY) -->
+<!-- ================================================= -->
+<h3 class="title is-5 mt-6 mb-3">🧪 Reset Mock Attempts</h3>
+
+<div class="box">
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="reset_mock">
+
+    <div class="columns is-multiline">
+
+      <!-- STUDENT -->
+      <div class="column is-4">
+        <label class="label">Select Student</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="user_id" required>
+              <option value="">-- Select Student --</option>
+              {% for u in students %}
+                <option value="{{ u.id }}">
+                  {{ u.username }} ({{ u.email }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXAM -->
+      <div class="column is-4">
+        <label class="label">Select Exam</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="exam_id" required>
+              <option value="">-- Select Exam --</option>
+              {% for e in exams %}
+                <option value="{{ e.id }}">
+                  {{ e.title }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION -->
+      <div class="column is-4 is-flex is-align-items-flex-end">
+        <button
+          class="button is-danger is-fullwidth"
+          onclick="return confirm(
+            'This will reset ALL mock attempts for this student and exam. Continue?'
+          )">
+          ♻ Reset Mock Attempts
+        </button>
+      </div>
+
+    </div>
+
+    <p class="help has-text-grey mt-2">
+      ⚠ This will delete <strong>mock exams only</strong>.  
+      Real exam attempts are not affected.
+    </p>
+  </form>
+</div>
+
+
 {% endblock %}

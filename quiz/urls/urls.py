@@ -1,23 +1,38 @@
-# quiz/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
 
-from . import views
-from .forms import EmailOrUsernameLoginForm
-from .views import CustomerRegisterView
+from quiz.forms import EmailOrUsernameLoginForm
+from quiz.views.admin import reset_mock_attempts
+
+# ================================
+# IMPORT VIEWS (FROM views.py)
+# ================================
+from quiz.views.views import *
+from quiz.views.student import *
+from quiz.views.auth import *
+from quiz.views.subscription import *
+from quiz.views.admin_subscriptions import *
+from quiz.views.notifications import *
+from quiz.views.dashboards import *
+from quiz.views.exams import *
+from quiz.views.admin import reset_mock_attempts
+
+
+
+
 
 app_name = "quiz"
 
 urlpatterns = [
 
     # ============================================================
-    # AUTHENTICATION
+    # AUTH
     # ============================================================
     path(
         "login/",
         auth_views.LoginView.as_view(
             template_name="registration/login.html",
-            authentication_form=EmailOrUsernameLoginForm
+            authentication_form=EmailOrUsernameLoginForm,
         ),
         name="login",
     ),
@@ -53,8 +68,10 @@ urlpatterns = [
         name="password_reset_complete",
     ),
 
-    # Registration
-    path("register/", views.register, name="register"),
+    # ============================================================
+    # REGISTRATION
+    # ============================================================
+    path("register/", register, name="register"),
     path(
         "customerregister/",
         CustomerRegisterView.as_view(),
@@ -64,179 +81,149 @@ urlpatterns = [
     # ============================================================
     # DASHBOARD
     # ============================================================
-    path("", views.exam_list, name="exam_list"),
-    path("dashboard/", views.dashboard_dispatch, name="dashboard"),
-    path("dashboard/admin/", views.admin_dashboard, name="admin_dashboard"),
-    path("dashboard/student/", views.student_dashboard, name="student_dashboard"),
+    path("", exam_list, name="exam_list"),
+    path("dashboard/", dashboard_dispatch, name="dashboard"),
+    path("dashboard/admin/", admin_dashboard, name="admin_dashboard"),
+    path("dashboard/student/", student_dashboard, name="student_dashboard"),
 
     # ============================================================
     # USER
     # ============================================================
-    path("profile/", views.profile, name="profile"),
-    path("users/", views.users_list, name="users_list"),
+    path("profile/", profile, name="profile"),
+    path("users/", users_list, name="users_list"),
 
     # ============================================================
-    # EXAMS (ENTERPRISE FLOW)
+    # EXAMS
     # ============================================================
+    path("exam/<int:exam_id>/start/", exam_start, name="exam_start"),
+    path("exam/<int:exam_id>/resume/", exam_resume, name="exam_resume"),
+    path("exam/<int:exam_id>/locked/", exam_locked, name="exam_locked"),
 
-    # Start / resume
-    path(
-        "exam/<int:exam_id>/start/",
-        views.exam_start,
-        name="exam_start",
-    ),
-    path(
-        "exam/<int:exam_id>/resume/",
-        views.exam_resume,
-        name="exam_resume",
-    ),
-    path(
-        "exam/<int:exam_id>/locked/",
-        views.exam_locked,
-        name="exam_locked",
-    ),
-
-    # Attempt flow
-    path(
-        "exam/attempt/<int:user_exam_id>/",
-        views.exam_take,
-        name="exam_take",
-    ),
+    path("exam/attempt/<int:user_exam_id>/", exam_take, name="exam_take"),
     path(
         "exam/attempt/<int:user_exam_id>/question/<int:index>/",
-        views.exam_question,
+        exam_question,
         name="exam_question",
     ),
-
-    # Autosave & submit
     path(
         "exam/attempt/<int:user_exam_id>/autosave/",
-        views.autosave,
+        autosave,
         name="exam_autosave",
     ),
     path(
         "exam/attempt/<int:user_exam_id>/submit/",
-        views.exam_submit,
+        exam_submit,
         name="exam_submit",
     ),
-
-    # Result / expiry
     path(
         "exam/attempt/<int:user_exam_id>/result/",
-        views.exam_result,
+        exam_result,
         name="exam_result",
     ),
     path(
         "exam/attempt/<int:user_exam_id>/expired/",
-        views.exam_expired,
+        exam_expired,
         name="exam_expired",
     ),
 
-    # Mock exam
-    path(
-        "exam/<int:exam_id>/mock/",
-        views.mock_exam_start,
-        name="mock_exam_start",
-    ),
+    path("exam/<int:exam_id>/mock/", mock_exam_start, name="mock_exam_start"),
+
+    
 
     # ============================================================
     # NOTIFICATIONS
     # ============================================================
-    path("notifications/", views.notifications_list, name="notifications_list"),
+    path("notifications/", notifications_list, name="notifications_list"),
     path(
         "notifications/mark-all/",
-        views.notifications_mark_all,
+        notifications_mark_all,
         name="notifications_mark_all",
     ),
     path(
         "notifications/<int:pk>/",
-        views.notification_read,
+        notification_read,
         name="notification_detail",
     ),
 
     # ============================================================
-    # API / AJAX
+    # PRACTICE
     # ============================================================
-    path(
-        "api/recent_attempts/",
-        views.recent_attempts_api,
-        name="recent_attempts_api",
-    ),
-    path(
-        "ajax/categories-by-domain/",
-        views.ajax_categories_by_domain,
-        name="ajax_categories_by_domain",
-    ),
-
-    # ============================================================
-    # PRACTICE (PUBLIC)
-    # ============================================================
-    path("practice/", views.practice, name="practice"),
-    path(
-        "practice/express/",
-        views.practice_express,
-        name="practice_express",
-    ),
+    path("practice/", practice, name="practice"),
+    path("practice/express/", practice_express, name="practice_express"),
     path(
         "practice/express/next/",
-        views.practice_express_next,
+        practice_express_next,
         name="practice_express_next",
     ),
     path(
         "practice/express/save/",
-        views.practice_express_save,
+        practice_express_save,
         name="practice_express_save",
     ),
 
-
-        # ============================================================
+    # ============================================================
     # SUBSCRIPTIONS
     # ============================================================
     path(
         "subscribe/track/<int:track_id>/",
-        views.subscribe_track,
+        subscribe_track,
         name="subscribe_track",
     ),
     path(
         "subscribe/exam/<int:exam_id>/",
-        views.subscribe_exam,
+        subscribe_exam,
         name="subscribe_exam",
     ),
-
-     path(
+    path(
         "dashboard/admin/subscriptions/",
-        views.subscription_admin_panel,
+        subscription_admin_panel,
         name="subscription_admin_panel",
     ),
-   
     path(
         "dashboard/admin/toggle-track/",
-        views.toggle_track_status,
+        toggle_track_status,
         name="toggle_track_status",
     ),
-
     path(
         "dashboard/admin/toggle-coupon/",
-        views.toggle_coupon_status,
+        toggle_coupon_status,
         name="toggle_coupon_status",
     ),
-
     path(
         "dashboard/admin/create-coupon/",
-        views.create_coupon_ajax,
+        create_coupon_ajax,
         name="create_coupon_ajax",
     ),
-
     path(
-    "dashboard/admin/update-track-pricing/",
-    views.update_track_pricing,
-    name="update_track_pricing",
-),
-path(
-    "dashboard/admin/update-track-pricing-type/",
-    views.update_track_pricing_type,
-    name="update_track_pricing_type",
+        "dashboard/admin/update-track-pricing/",
+        update_track_pricing,
+        name="update_track_pricing",
+    ),
+    path(
+        "dashboard/admin/update-track-pricing-type/",
+        update_track_pricing_type,
+        name="update_track_pricing_type",
+    ),
+    path(
+    "ajax/categories-by-domain/",
+    ajax_categories_by_domain,
+    name="ajax_categories_by_domain",
 ),
 
+path(
+    "dashboard/admin/reset-mock/<int:user_id>/<int:exam_id>/",
+    reset_mock_attempts,
+    name="reset_mock_attempts",
+),
+
+
+
+
+# ---------------- ADMIN MOCK RESET ----------------
+path(
+    "dashboard/admin/reset-mock/",
+    reset_mock_attempts,
+    name="reset_mock_attempts",
+),
 
 ]
