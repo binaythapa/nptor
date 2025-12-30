@@ -79,7 +79,7 @@
           <small class="has-text-grey">
             Level {{ item.exam.level }} •
             {{ item.exam.question_count }} Q •
-            {{ item.exam.duration_seconds }} sec
+             {% widthratio item.exam.duration_seconds 60 1 %} min
           </small>
 
           {% if item.locked %}
