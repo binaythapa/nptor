@@ -128,7 +128,8 @@ urlpatterns = [
 
     path("exam/<int:exam_id>/mock/", mock_exam_start, name="mock_exam_start"),
 
-    
+    path("practice/feedback/", practice_feedback_ajax, name="practice_feedback_ajax"),
+
 
     # ============================================================
     # NOTIFICATIONS
@@ -160,6 +161,23 @@ urlpatterns = [
         practice_express_save,
         name="practice_express_save",
     ),
+
+    path("practice/answer/ajax/", practice_answer_ajax, name="practice_answer_ajax"),
+    path("practice/discussion/ajax/",discussion_submit_ajax, name="discussion_submit_ajax"),
+
+    path(
+    "practice/discussion/vote/",
+    discussion_vote,
+    name="discussion_vote"
+    ),
+
+    path(
+    "practice/next/ajax/",
+    practice_next_ajax,
+    name="practice_next_ajax"
+),
+
+
 
     # ============================================================
     # SUBSCRIPTIONS

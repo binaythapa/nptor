@@ -218,11 +218,33 @@
   <strong>Correct answer:</strong>
   <ul>
     {% for c in choices %}
-      {% if c.is_correct %}<li>{{ c.text }}</li>{% endif %}
+      {% if c.is_correct %}
+        <li>{{ c.text }}</li>
+      {% endif %}
     {% endfor %}
   </ul>
 </div>
+
+{% if explanation %}
+<button
+  type="button"
+  class="button is-small is-info mt-2"
+  onclick="toggleExplanation()"
+  id="explanationToggleBtn">
+  📘 Show Explanation
+</button>
+
+<div id="explanationBox"
+     class="notification is-info mt-3"
+     style="display:none;">
+  <strong>Explanation</strong>
+  <div class="mt-2">
+    {{ explanation|linebreaks }}
+  </div>
+</div>
 {% endif %}
+{% endif %}
+
 
 <!-- ACTIONS -->
 <div class="mt-4 is-flex is-justify-content-space-between">
@@ -241,5 +263,23 @@
 
 </div>
 </div>
+
+<script>
+function toggleExplanation() {
+  const box = document.getElementById("explanationBox");
+  const btn = document.getElementById("explanationToggleBtn");
+
+  if (!box || !btn) return;
+
+  if (box.style.display === "none") {
+    box.style.display = "block";
+    btn.innerText = "📘 Hide Explanation";
+  } else {
+    box.style.display = "none";
+    btn.innerText = "📘 Show Explanation";
+  }
+}
+</script>
+
 {% endblock %}
 

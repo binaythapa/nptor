@@ -53,26 +53,18 @@ from quiz.utils import get_leaf_category_name
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()
 
-# Logger
-logger = logging.getLogger(__name__)
+
 
 def practice(request):
     """
     BASIC PRACTICE (PUBLIC)
-    - Supports SINGLE / MULTI / TRUE-FALSE
-    - Domain → Category → Difficulty filters
-    - Anonymous limit from settings.py
-    - Correct / Wrong feedback
     """
 
     # =====================================================
     # RESET
     # =====================================================
     if request.GET.get("reset") == "1":
-        for k in [
-            "p_seen", "p_qid", "p_filters",
-            "p_total", "p_anon_count"
-        ]:
+        for k in ["p_seen", "p_qid", "p_filters", "p_total", "p_anon_count"]:
             request.session.pop(k, None)
         return redirect("quiz:practice")
 
@@ -83,27 +75,18 @@ def practice(request):
     category_id = request.POST.get("category") or request.GET.get("category")
     difficulty = request.POST.get("difficulty") or request.GET.get("difficulty")
 
-    filters = {
-        "domain": domain_id,
-        "category": category_id,
-        "difficulty": difficulty,
-    }
-
+    filters = {"domain": domain_id, "category": category_id, "difficulty": difficulty}
     last_filters = request.session.get("p_filters")
 
     # =====================================================
-    # BASE QUERYSET (IMPORTANT FIX)
+    # BASE QUERYSET
     # =====================================================
     qs = Question.objects.filter(
-        question_type__in=[
-            Question.SINGLE,
-            Question.MULTI,
-            Question.TRUE_FALSE
-        ]
+        question_type__in=[Question.SINGLE, Question.MULTI, Question.TRUE_FALSE],
+        is_active=True
     ).prefetch_related("choices")
 
     selected_domain = None
-
     if domain_id and domain_id.isdigit():
         selected_domain = Domain.objects.filter(id=domain_id, is_active=True).first()
         if selected_domain:
@@ -111,9 +94,7 @@ def practice(request):
 
     if category_id and category_id.isdigit() and selected_domain:
         cat = Category.objects.filter(
-            id=category_id,
-            domain=selected_domain,
-            is_active=True
+            id=category_id, domain=selected_domain, is_active=True
         ).first()
         if cat:
             qs = qs.filter(category_id__in=cat.get_descendants_include_self())
@@ -132,23 +113,6 @@ def practice(request):
 
     seen = request.session.get("p_seen", [])
     total = request.session.get("p_total", qs.count())
-
-    # =====================================================
-    # ANON LIMIT
-    # =====================================================
-    if not request.user.is_authenticated:
-        limit = getattr(settings, "BASICS_ANON_LIMIT", 0)
-        used = request.session.get("p_anon_count", 0)
-
-        if limit and used >= limit:
-            return render(request, "quiz/practice.html", {
-                "limit_reached": True,
-                "progress_done": used,
-                "progress_total": limit,
-                "domains": Domain.objects.filter(is_active=True),
-                "categories": Category.objects.none(),
-                "difficulty_choices": Question.DIFFICULTY_CHOICES,
-            })
 
     # =====================================================
     # REMAINING
@@ -187,30 +151,60 @@ def practice(request):
     selected_multi_ids = []
 
     # =====================================================
-    # SUBMIT
+    # 🔥 DISCUSSION SUBMIT (NEW – SAFE)
+    # =====================================================
+    if (
+        request.method == "POST"
+        and request.POST.get("feedback_submit") == "1"
+        and request.user.is_authenticated
+    ):
+        content = (request.POST.get("student_comment") or "").strip()
+        is_incorrect = bool(request.POST.get("answer_incorrect"))
+
+        discussion_type = request.POST.get(
+            "discussion_type",
+            QuestionDiscussion.TYPE_COMMENT
+        )
+
+        if content:
+            exists = QuestionDiscussion.objects.filter(
+                user=request.user,
+                question=question,
+                discussion_type=discussion_type,
+                content=content
+            ).exists()
+
+            if not exists:
+                QuestionDiscussion.objects.create(
+                    user=request.user,
+                    question=question,
+                    user_exam=None,  # practice mode
+                    discussion_type=discussion_type,
+                    content=content,
+                    is_answer_incorrect=is_incorrect
+                )
+                messages.success(request, "Thanks! Your comment was added.")
+            else:
+                messages.info(request, "You already posted this comment.")
+
+        return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+
+    # =====================================================
+    # SUBMIT ANSWER
     # =====================================================
     if request.method == "POST" and request.POST.get("next") != "1":
 
         if question.question_type == Question.MULTI:
-            selected_multi_ids = list(
-                map(int, request.POST.getlist("choice_multi"))
-            )
+            selected_multi_ids = list(map(int, request.POST.getlist("choice_multi")))
             correct_ids = list(correct_choices.values_list("id", flat=True))
-            if set(selected_multi_ids) == set(correct_ids):
-                result = "correct"
-                show_next = True
-            else:
-                result = "wrong"
+            result = "correct" if set(selected_multi_ids) == set(correct_ids) else "wrong"
+            show_next = result == "correct"
 
         else:
             selected_choice_id = request.POST.get("choice")
-            if selected_choice_id:
-                selected = choices.filter(id=selected_choice_id).first()
-                if selected and selected.is_correct:
-                    result = "correct"
-                    show_next = True
-                else:
-                    result = "wrong"
+            selected = choices.filter(id=selected_choice_id).first()
+            result = "correct" if selected and selected.is_correct else "wrong"
+            show_next = result == "correct"
 
     # =====================================================
     # NEXT
@@ -219,18 +213,24 @@ def practice(request):
         seen.append(question.id)
         request.session["p_seen"] = seen
         request.session.pop("p_qid", None)
-
-        if not request.user.is_authenticated:
-            request.session["p_anon_count"] = request.session.get("p_anon_count", 0) + 1
-
         return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
 
     # =====================================================
-    # CATEGORIES
+    # DISCUSSIONS (BEST FIRST)
     # =====================================================
+    discussions = (
+        QuestionDiscussion.objects
+        .filter(question=question, is_deleted=False)
+        .annotate(score=Sum("votes__value"))
+        .order_by(
+            "-is_pinned",
+            "-score",
+            "created_at"
+        )
+    )
+
     categories = Category.objects.filter(
-        domain=selected_domain,
-        is_active=True
+        domain=selected_domain, is_active=True
     ) if selected_domain else Category.objects.none()
 
     # =====================================================
@@ -240,22 +240,268 @@ def practice(request):
         "question": question,
         "choices": choices,
         "result": result,
-        "correct_choice": correct_choices.first(),
         "selected_choice_id": selected_choice_id,
         "selected_multi_ids": selected_multi_ids,
         "show_next": show_next,
 
+        # explanation (unchanged)
+        "explanation": question.explanation,
+
+        # NEW – discussions
+        "discussions": discussions,
+
         "domains": Domain.objects.filter(is_active=True),
         "categories": categories,
-
         "domain_id": domain_id,
         "category_id": category_id,
         "difficulty": difficulty,
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
-
         "progress_done": len(seen),
         "progress_total": total,
     })
+
+
+
+
+@require_POST
+@login_required
+def practice_feedback_ajax(request):
+    question_id = request.POST.get("question_id")
+    comment = (request.POST.get("student_comment") or "").strip()
+    is_incorrect = request.POST.get("answer_incorrect") == "on"
+
+    if not question_id or not comment:
+        return JsonResponse({
+            "success": False,
+            "message": "Comment cannot be empty."
+        })
+
+    question = get_object_or_404(Question, id=question_id)
+
+    # Prevent duplicate feedback by same user
+    if QuestionFeedback.objects.filter(
+        user=request.user,
+        question=question
+    ).exists():
+        return JsonResponse({
+            "success": False,
+            "message": "You already submitted feedback for this question."
+        })
+
+    QuestionFeedback.objects.create(
+        user=request.user,
+        question=question,
+        comment=comment,
+        is_answer_incorrect=is_incorrect
+    )
+
+    return JsonResponse({
+        "success": True,
+        "message": "Thank you! Your feedback was submitted."
+    })
+
+
+
+from django.http import JsonResponse
+from django.db.models import Sum
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+
+@require_POST
+@login_required
+def discussion_vote(request):
+    discussion_id = request.POST.get("discussion_id")
+    value = int(request.POST.get("value"))
+
+    discussion = get_object_or_404(QuestionDiscussion, id=discussion_id)
+
+    DiscussionVote.objects.update_or_create(
+        user=request.user,
+        discussion=discussion,
+        defaults={"value": value}
+    )
+
+    score = discussion.votes.aggregate(
+        s=Sum("value")
+    )["s"] or 0
+
+    return JsonResponse({
+        "success": True,
+        "score": score
+    })
+
+
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+
+# ============================================
+# AJAX ANSWER SUBMIT
+# ============================================
+@require_POST
+def practice_answer_ajax(request):
+    question_id = request.POST.get("question_id")
+    question = get_object_or_404(Question, id=question_id)
+    choices = question.choices.order_by("order", "id")
+
+    result = "wrong"
+    show_next = False
+    selected_choice_id = None
+    selected_multi_ids = []
+
+    correct_ids = list(
+        choices.filter(is_correct=True).values_list("id", flat=True)
+    )
+
+    if question.question_type == Question.MULTI:
+        selected_multi_ids = list(
+            map(int, request.POST.getlist("choice_multi"))
+        )
+        if set(selected_multi_ids) == set(correct_ids):
+            result = "correct"
+            show_next = True
+
+    else:
+        selected_choice_id = request.POST.get("choice")
+        if selected_choice_id and int(selected_choice_id) in correct_ids:
+            result = "correct"
+            show_next = True
+
+    html = render_to_string(
+        "quiz/_answer_result.html",
+        {
+            "question": question,
+            "choices": choices,
+            "result": result,
+            "selected_choice_id": selected_choice_id,
+            "selected_multi_ids": selected_multi_ids,
+            "show_next": show_next,
+        },
+        request=request
+    )
+
+    return JsonResponse({
+        "success": True,
+        "result": result,
+        "show_next": show_next,
+        "html": html
+    })
+
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+
+@require_POST
+def practice_next_ajax(request):
+    """
+    AJAX: Move to next practice question safely
+    """
+
+    # ===============================
+    # SESSION STATE (same as practice)
+    # ===============================
+    seen = request.session.get("p_seen", [])
+    qid = request.session.get("p_qid")
+
+    if qid:
+        seen.append(qid)
+        request.session["p_seen"] = seen
+        request.session.pop("p_qid", None)
+
+    # ===============================
+    # REBUILD QUERYSET (same filters)
+    # ===============================
+    domain_id = request.session.get("p_filters", {}).get("domain")
+    category_id = request.session.get("p_filters", {}).get("category")
+    difficulty = request.session.get("p_filters", {}).get("difficulty")
+
+    qs = Question.objects.filter(
+        question_type__in=[
+            Question.SINGLE,
+            Question.MULTI,
+            Question.TRUE_FALSE,
+        ]
+    ).prefetch_related("choices")
+
+    if domain_id and str(domain_id).isdigit():
+        qs = qs.filter(category__domain_id=domain_id)
+
+    if category_id and str(category_id).isdigit():
+        qs = qs.filter(category_id=category_id)
+
+    if difficulty:
+        qs = qs.filter(difficulty=difficulty)
+
+    remaining = qs.exclude(id__in=seen)
+
+    # ===============================
+    # NO MORE QUESTIONS
+    # ===============================
+    if not remaining.exists():
+        html = render_to_string(
+            "quiz/_practice_completed.html",
+            {},
+            request=request
+        )
+        return JsonResponse({"success": True, "html": html})
+
+    # ===============================
+    # PICK NEXT QUESTION
+    # ===============================
+    question = remaining.order_by("?").first()
+    request.session["p_qid"] = question.id
+
+    html = render_to_string(
+        "quiz/_practice_question.html",
+        {
+            "question": question,
+            "choices": question.choices.order_by("order", "id"),
+            "explanation": question.explanation,
+        },
+        request=request
+    )
+
+    return JsonResponse({
+        "success": True,
+        "html": html
+    })
+
+
+# ============================================
+# AJAX DISCUSSION SUBMIT (COMMENT / REPLY)
+# ============================================
+@require_POST
+@login_required
+def discussion_submit_ajax(request):
+    content = (request.POST.get("student_comment") or "").strip()
+    question_id = request.POST.get("question_id")
+    parent_id = request.POST.get("parent_id")
+
+    if not content:
+        return JsonResponse({"success": False, "message": "Empty comment"})
+
+    discussion = QuestionDiscussion.objects.create(
+        user=request.user,
+        question_id=question_id,
+        parent_id=parent_id or None,
+        content=content
+    )
+
+    html = render_to_string(
+        "quiz/_discussion_item.html",
+        {"d": discussion},
+        request=request
+    )
+
+    return JsonResponse({
+        "success": True,
+        "html": html
+    })
+
+
+#########################################
+
 
 
 

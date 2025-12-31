@@ -308,6 +308,11 @@ class ExamTrackAdmin(admin.ModelAdmin):
 
     admin.site.register(ExamTrackSubscription)
 
+    admin.site.register(QuestionDiscussion)
+    admin.site.register(DiscussionVote)
+    admin.site.register(DiscussionReport)
+    admin.site.register(QuestionQualitySignal)
+
 
 
     # =====================================================

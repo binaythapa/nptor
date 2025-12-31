@@ -390,9 +390,12 @@ def student_dashboard(request):
 
         # ---------- LEVEL LOCK ----------
         locked = False
+        lock_reason = None   # ✅ ADDED
+
         if exam.level > 1:
             if (exam.level - 1) not in passed_levels_by_track[track.id]:
                 locked = True
+                lock_reason = f"Complete Level {exam.level - 1} to unlock"  # ✅ ADDED
 
         # ---------- ATTEMPTS ----------
         attempts = list(
@@ -480,6 +483,7 @@ def student_dashboard(request):
             "best_score": best_score,
             "cooldown_remaining": cooldown_remaining,
             "locked": locked,
+            "lock_reason": lock_reason,  # ✅ ADDED
 
             # mock
             "mock_attempts": list(mock_attempts),

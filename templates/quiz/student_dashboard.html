@@ -1,166 +1,715 @@
 {% extends "quiz/base.html" %}
 {% block content %}
 
-<h2 class="title is-4">🎓 Student Dashboard</h2>
+<style>
+/* ===============================
+   CLEAN RESPONSIVE DESIGN
+   =============================== */
 
-{% if active_attempt %}
-<div class="notification is-warning is-light">
-  <strong>⏳ Active Exam:</strong> {{ active_attempt.exam.title }}
-  <a class="button is-small is-dark ml-2"
-     href="{% url 'quiz:exam_take' active_attempt.id %}">
-    Resume
-  </a>
-</div>
-{% endif %}
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-<!-- ================= STATS ================= -->
-<div class="columns is-mobile">
-  <div class="column is-4">
-    <div class="box has-text-centered">
-      <p class="heading">Attempts</p>
-      <p class="title">{{ total_attempts }}</p>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background: #f8f9fa;
+  padding: 0;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+/* Header */
+.header {
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+/* Active Exam Alert */
+.active-alert {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.alert-text {
+  font-size: 14px;
+  color: #856404;
+  font-weight: 500;
+}
+
+.resume-btn {
+  background: #343a40;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.resume-btn:hover {
+  background: #23272b;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border: 1px solid #e9ecef;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.stat-passed .stat-value {
+  color: #28a745;
+}
+
+.stat-failed .stat-value {
+  color: #dc3545;
+}
+
+/* Track Section */
+.track-section {
+  margin-bottom: 20px;
+}
+
+.track-header {
+  width: 100%;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.track-header:hover {
+  border-color: #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.track-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.track-icon {
+  font-size: 20px;
+}
+
+.track-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.track-count {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.track-stats {
+  display: flex;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.track-passed {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.track-failed {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+/* Exams Container */
+.exams-container {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+}
+
+.exam-item {
+  padding: 20px;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.exam-item:last-child {
+  border-bottom: none;
+}
+
+.exam-header {
+  margin-bottom: 16px;
+}
+
+.exam-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 4px;
+}
+
+.exam-details {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.exam-status {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.status-passed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Actions */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.action-btn {
+  display: block;
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-warning {
+  background: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover {
+  background: #e0a800;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #138496;
+}
+
+.btn-disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Tags */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin: 2px 0;
+}
+
+.tag-danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.tag-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.tag-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.tag-light {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+/* Countdown */
+.countdown-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.countdown-text {
+  font-weight: 600;
+  color: #856404;
+}
+
+/* Mock Attempts */
+.mock-attempts {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 16px;
+  border-left: 3px solid #6c757d;
+}
+
+.mock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mock-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.mock-count {
+  background: #6c757d;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.mock-scores {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.score-badge {
+  background: white;
+  color: #495057;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px 12px;
+  }
+  
+  .header h1 {
+    font-size: 20px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 14px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .active-alert {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .resume-btn {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .track-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .track-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .exam-item {
+    padding: 16px;
+  }
+  
+  .action-btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .action-btn {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* Utility */
+.hidden {
+  display: none;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+
+.mb-1 { margin-bottom: 4px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 12px; }
+.mb-4 { margin-bottom: 16px; }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.exam-item {
+  animation: fadeIn 0.3s ease-out;
+}
+</style>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Student Dashboard</h1>
+    
+    {% if active_attempt %}
+    <div class="active-alert">
+      <div class="alert-text">
+        Active Exam: {{ active_attempt.exam.title }}
+      </div>
+      <a href="{% url 'quiz:exam_take' active_attempt.id %}" class="resume-btn">
+        Resume Exam
+      </a>
     </div>
-  </div>
-  <div class="column is-4">
-    <div class="box has-text-centered has-text-success">
-      <p class="heading">Passed</p>
-      <p class="title">{{ passed_count }}</p>
-    </div>
-  </div>
-  <div class="column is-4">
-    <div class="box has-text-centered has-text-danger">
-      <p class="heading">Failed</p>
-      <p class="title">{{ failed_count }}</p>
-    </div>
-  </div>
-</div>
-
-{% for track, data in track_map.items %}
-<div class="box">
-
-  <!-- ===== TRACK HEADER (UPDATED) ===== -->
-  <button class="button is-light is-fullwidth"
-          onclick="this.nextElementSibling.classList.toggle('is-hidden')">
-    <strong>📘 {{ track.title }}</strong>
-
-    <span class="tag is-info is-light ml-2">
-      {{ data.items|length }} exams
-    </span>
-
-    {% if data.attempted %}
-      {% if data.passed %}
-        <span class="tag is-success is-light ml-1">
-          ✅ {{ data.passed }} passed
-        </span>
-      {% endif %}
-      {% if data.failed %}
-        <span class="tag is-danger is-light ml-1">
-          ❌ {{ data.failed }} failed
-        </span>
-      {% endif %}
     {% endif %}
-  </button>
-
-  <div class="mt-3 is-hidden">
-
-    {% for item in data.items %}
-    <div class="box mb-3">
-
-      <strong>{{ item.exam.title }}</strong><br>
-      <small class="has-text-grey">
-        Level {{ item.exam.level }} • {{ item.exam.question_count }} Q
-      </small>
-
-      {% if item.last_score is not None %}
-        <p class="is-size-7 mt-1">
-          {% if item.status == "passed" %}
-            ✅ Passed ({{ item.last_score }}%)
-          {% elif item.status == "failed" %}
-            ❌ Failed ({{ item.last_score }}%)
-          {% endif %}
-        </p>
-      {% endif %}
-
-      <!-- ACTIONS -->
-      <div class="buttons mt-3 is-flex-direction-column">
-
-        {% if item.is_passed %}
-          <span class="tag is-success is-light">
-            ✔ Exam completed
-          </span>
-
-        {% elif item.action == "resume" %}
-          <a class="button is-warning is-small"
-             href="{% url 'quiz:exam_take' item.last_attempt.id %}">
-            Resume
-          </a>
-
-        {% elif item.action == "cooldown" %}
-          <span class="tag is-warning is-light">
-            ⏳ Retake locked
-          </span>
-          <span class="tag is-warning mt-1"
-                data-countdown="{{ item.cooldown_remaining }}">
-            Retake in <strong class="countdown-text"></strong>
-          </span>
-
-        {% elif item.action == "retake" %}
-          <a class="button is-primary is-small"
-             href="{% url 'quiz:exam_start' item.exam.id %}">
-            🔁 Retake (Real Exam)
-          </a>
-
-        {% elif item.action == "start" %}
-          <a class="button is-primary is-small"
-             href="{% url 'quiz:exam_start' item.exam.id %}">
-            ▶ Start Exam
-          </a>
-        {% endif %}
-
-        {% if not item.is_passed and item.status == "failed" %}
-          {% if item.mock_used < item.mock_allowed %}
-            <a class="button is-info is-small is-fullwidth-mobile mb-2"
-               href="{% url 'quiz:mock_exam_start' item.exam.id %}">
-              ⭐ Recommended: Take Mock Exam
-            </a>
-          {% else %}
-            <span class="tag is-light">
-              🧪 Mock limit reached. Contact admin to reset.
-            </span>
-          {% endif %}
-        {% endif %}
-
-      </div>
-
-      {% if not item.is_passed and item.mock_attempts %}
-      <div class="mt-2">
-        <p class="is-size-7 has-text-grey">
-          🧪 Mock Attempts ({{ item.mock_used }}/{{ item.mock_allowed }})
-        </p>
-        <ul class="is-size-7">
-          {% for m in item.mock_attempts %}
-            <li>• {{ m.score }}%</li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% endif %}
-
-    </div>
-    {% endfor %}
   </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_attempts }}</div>
+      <div class="stat-label">Total Attempts</div>
+    </div>
+    
+    <div class="stat-card stat-passed">
+      <div class="stat-value">{{ passed_count }}</div>
+      <div class="stat-label">Passed</div>
+    </div>
+    
+    <div class="stat-card stat-failed">
+      <div class="stat-value">{{ failed_count }}</div>
+      <div class="stat-label">Failed</div>
+    </div>
+  </div>
+
+  <!-- Tracks -->
+  {% for track, data in track_map.items %}
+  <div class="track-section">
+    <button class="track-header" onclick="toggleExams(this)">
+      <div class="track-title">
+        <span class="track-icon">📘</span>
+        {{ track.title }}
+      </div>
+      
+      <div class="track-meta">
+        <span class="track-count">{{ data.items|length }} exams</span>
+        
+        {% if data.attempted %}
+        <div class="track-stats">
+          {% if data.passed %}
+          <span class="track-passed">✓ {{ data.passed }}</span>
+          {% endif %}
+          {% if data.failed %}
+          <span class="track-failed">✗ {{ data.failed }}</span>
+          {% endif %}
+        </div>
+        {% endif %}
+        
+        <span>▼</span>
+      </div>
+    </button>
+
+    <div class="exams-container hidden">
+      {% for item in data.items %}
+      <div class="exam-item">
+        <!-- Exam Header -->
+        <div class="exam-header">
+          <div class="exam-title">{{ item.exam.title }}</div>
+          <div class="exam-details">
+            Level {{ item.exam.level }} • {{ item.exam.question_count }} Questions
+          </div>
+          
+          {% if item.last_score is not None %}
+          <div class="exam-status {% if item.status == 'passed' %}status-passed{% else %}status-failed{% endif %}">
+            {% if item.status == "passed" %}
+            Passed ({{ item.last_score }}%)
+            {% else %}
+            Failed ({{ item.last_score }}%)
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="action-buttons">
+          {% if item.action == "locked" %}
+          <div class="tag tag-danger">
+            🔒 {{ item.lock_reason }}
+          </div>
+          
+          {% elif item.is_passed %}
+          <div class="tag tag-success">
+            ✔ Exam Completed
+          </div>
+          
+          {% elif item.action == "resume" %}
+          <a href="{% url 'quiz:exam_take' item.last_attempt.id %}" class="action-btn btn-warning">
+            Resume Exam
+          </a>
+          
+          {% elif item.action == "cooldown" %}
+          <div class="countdown-container">
+            <span>Retry in</span>
+            <span class="countdown-text" data-seconds="{{ item.cooldown_remaining }}"></span>
+          </div>
+          
+          {% elif item.action == "retake" %}
+          <a href="{% url 'quiz:exam_start' item.exam.id %}" class="action-btn btn-primary">
+            Retake Exam
+          </a>
+          
+          {% elif item.action == "start" %}
+          <a href="{% url 'quiz:exam_start' item.exam.id %}" class="action-btn btn-primary">
+            Start Exam
+          </a>
+          {% endif %}
+          
+          {% if not item.is_passed and item.status == "failed" %}
+            {% if item.mock_used < item.mock_allowed %}
+            <a href="{% url 'quiz:mock_exam_start' item.exam.id %}" class="action-btn btn-info">
+              Take Mock Exam
+            </a>
+            {% else %}
+            <div class="tag tag-light">
+              Mock limit reached, Contact admin for reset.
+            </div>
+            {% endif %}
+          {% endif %}
+        </div>
+
+        <!-- Mock Attempts -->
+        {% if not item.is_passed and item.mock_attempts %}
+        <div class="mock-attempts">
+          <div class="mock-header">
+            <span class="mock-title">Mock Attempts</span>
+            <span class="mock-count">{{ item.mock_used }}/{{ item.mock_allowed }}</span>
+          </div>
+          <div class="mock-scores">
+            {% for m in item.mock_attempts %}
+            <span class="score-badge">{{ m.score }}%</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
 </div>
-{% endfor %}
 
 <script>
-document.querySelectorAll("[data-countdown]").forEach(el => {
-  let seconds = parseInt(el.dataset.countdown);
-  const t = el.querySelector(".countdown-text");
-  function tick() {
-    if (seconds <= 0) { location.reload(); return; }
-    t.innerText = `${Math.floor(seconds/60)}m ${seconds%60}s`;
-    seconds--; setTimeout(tick, 1000);
+// Toggle exams visibility
+function toggleExams(button) {
+  const container = button.nextElementSibling;
+  const arrow = button.querySelector('.track-meta span:last-child');
+  
+  container.classList.toggle('hidden');
+  arrow.textContent = container.classList.contains('hidden') ? '▼' : '▲';
+}
+
+// Countdown timer
+function updateCountdown() {
+  document.querySelectorAll('.countdown-text[data-seconds]').forEach(el => {
+    let seconds = parseInt(el.dataset.seconds);
+    
+    if (seconds <= 0) {
+      el.textContent = 'Now!';
+      el.style.color = '#28a745';
+      el.closest('.countdown-container').style.background = '#d4edda';
+      el.closest('.countdown-container').style.borderColor = '#c3e6cb';
+      return;
+    }
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      el.textContent = `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      el.textContent = `${minutes}m ${secs}s`;
+    } else {
+      el.textContent = `${secs}s`;
+    }
+    
+    // Update remaining seconds
+    el.dataset.seconds = seconds - 1;
+  });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-open first track on mobile
+  if (window.innerWidth <= 768) {
+    const firstTrack = document.querySelector('.track-header');
+    if (firstTrack) {
+      toggleExams(firstTrack);
+    }
   }
-  tick();
+  
+  // Start countdown timer
+  setInterval(updateCountdown, 1000);
+  updateCountdown(); // Initial call
+  
+  // Add smooth scroll for better UX
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+});
+
+// Handle window resize
+let resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() {
+    // Adjust layout if needed
+  }, 250);
 });
 </script>
 

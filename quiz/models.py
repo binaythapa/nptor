@@ -893,3 +893,153 @@ class ExamUnlockLog(models.Model):
 
 
 ####################################################################################################
+
+
+
+class QuestionDiscussion(models.Model):
+    TYPE_COMMENT = "comment"
+    TYPE_DOUBT = "doubt"
+    TYPE_CORRECTION = "correction"
+    TYPE_EXPLANATION = "explanation"
+
+    DISCUSSION_TYPE_CHOICES = [
+        (TYPE_COMMENT, "Comment"),
+        (TYPE_DOUBT, "Doubt"),
+        (TYPE_CORRECTION, "Correction"),
+        (TYPE_EXPLANATION, "User Explanation"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="question_discussions"
+    )
+
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="discussions"
+    )
+
+    user_exam = models.ForeignKey(
+        UserExam,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="discussions"
+    )
+
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="replies"
+    )
+
+    discussion_type = models.CharField(
+        max_length=20,
+        choices=DISCUSSION_TYPE_CHOICES,
+        default=TYPE_COMMENT
+    )
+
+    content = models.TextField()
+
+    is_answer_incorrect = models.BooleanField(default=False)
+
+    is_staff_verified = models.BooleanField(default=False)
+    is_pinned = models.BooleanField(default=False)
+
+    is_deleted = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["question"]),
+            models.Index(fields=["discussion_type"]),
+            models.Index(fields=["is_pinned"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.discussion_type} by {self.user} on Q{self.question_id}"
+
+
+
+class DiscussionVote(models.Model):
+    UPVOTE = 1
+    DOWNVOTE = -1
+
+    VOTE_CHOICES = [
+        (UPVOTE, "Upvote"),
+        (DOWNVOTE, "Downvote"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    discussion = models.ForeignKey(
+        QuestionDiscussion,
+        on_delete=models.CASCADE,
+        related_name="votes"
+    )
+
+    value = models.SmallIntegerField(choices=VOTE_CHOICES)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "discussion")
+        indexes = [
+            models.Index(fields=["discussion"]),
+            models.Index(fields=["value"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user} → {self.value}"
+
+
+class DiscussionReport(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    discussion = models.ForeignKey(
+        QuestionDiscussion,
+        on_delete=models.CASCADE,
+        related_name="reports"
+    )
+
+    reason = models.CharField(max_length=255)
+    details = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "discussion")
+
+
+class QuestionQualitySignal(models.Model):
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="quality_signals"
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    is_confusing = models.BooleanField(default=False)
+    explanation_helpful = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("question", "user")
