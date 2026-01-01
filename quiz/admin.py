@@ -251,19 +251,24 @@ class DifficultyAdmin(admin.ModelAdmin):
 
 
 #####################EXAM################
+from django.contrib import admin
+from django.db import transaction
+from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
+
 @admin.register(UserExam)
 class UserExamAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'exam', 'score', 'started_at', 'submitted_at')
-    search_fields = ('user__username', 'exam__title')
-    actions = [export_userexams_csv]
-
+    list_display = ('id', 'user', 'exam', 'status', 'score', 'started_at', 'submitted_at')
+    list_filter = ('status', 'passed', 'exam')
+    search_fields = ('user__username', 'user__email', 'exam__title')
     readonly_fields = (
         'user', 'exam', 'question_order',
         'started_at', 'submitted_at',
-        'score', 'passed', 'status'
+        'score', 'passed', 'status',
+        'current_index'
     )
-
-    list_per_page = 50   # 🔥 pagination control
+    actions = [export_userexams_csv]
+    list_per_page = 50
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -271,6 +276,52 @@ class UserExamAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return request.user.is_superuser
+
+    def delete_queryset(self, request, queryset):
+        """
+        Handle bulk deletion to avoid constraint violations
+        """
+        count = 0
+        with transaction.atomic():
+            for obj in queryset:
+                try:
+                    obj.delete()
+                    count += 1
+                except Exception as e:
+                    self.message_user(
+                        request,
+                        _('Error deleting UserExam %(id)s: %(error)s') % {
+                            'id': obj.id,
+                            'error': str(e)
+                        },
+                        messages.ERROR
+                    )
+        
+        if count > 0:
+            self.message_user(
+                request,
+                _('Successfully deleted %(count)d user exam(s).') % {'count': count},
+                messages.SUCCESS
+            )
+
+    def delete_model(self, request, obj):
+        """
+        Handle single object deletion from admin
+        """
+        try:
+            obj.delete()
+            self.message_user(
+                request,
+                _('User exam "%(obj)s" was deleted successfully.') % {'obj': obj},
+                messages.SUCCESS
+            )
+        except Exception as e:
+            self.message_user(
+                request,
+                _('Error deleting user exam: %(error)s') % {'error': str(e)},
+                messages.ERROR
+            )
+            raise
 
 
 

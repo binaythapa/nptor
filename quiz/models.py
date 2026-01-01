@@ -709,6 +709,9 @@ from quiz.utils import SafeStrMixin
 
 
 
+from django.db import models, transaction
+from django.db.models import Q
+from django.utils import timezone
 
 class UserExam(SafeStrMixin, models.Model):
     STATUS_STARTED = "started"
@@ -779,6 +782,22 @@ class UserExam(SafeStrMixin, models.Model):
         self.status = self.STATUS_SUBMITTED
         self.passed = None if is_mock else (score >= self.exam.passing_score)
         self.save()
+
+    def delete(self, *args, **kwargs):
+        """
+        Override delete method to handle the unique constraint with condition.
+        The constraint 'one_active_attempt_per_exam' only applies when submitted_at is NULL.
+        By setting submitted_at before deletion, we avoid constraint violations.
+        """
+        with transaction.atomic():
+            # If this is an active attempt (submitted_at is NULL),
+            # set submitted_at to avoid constraint violation during deletion
+            if self.submitted_at is None:
+                self.submitted_at = timezone.now()
+                self.save(update_fields=['submitted_at'])
+            
+            # Now delete the object
+            super().delete(*args, **kwargs)
 
     
 
