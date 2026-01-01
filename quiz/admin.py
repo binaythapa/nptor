@@ -4,12 +4,39 @@ from django import forms
 from django.db import models
 from django.forms import widgets
 from .models import *
-
-
+from django.contrib import admin
+from .models import Exam, ExamTrack
 import csv
 from django.http import HttpResponse
+from django.contrib import admin
+from .models import ExamTrack
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from quiz.models import User, Exam, UserExam
+
+
 
 admin.site.register(Client)
+#admin.site.register(ExamTrackSubscription)
+admin.site.register(QuestionDiscussion)
+admin.site.register(DiscussionVote)
+admin.site.register(DiscussionReport)
+admin.site.register(QuestionQualitySignal)
+
+
+
+class ExamTrackSubscriptionAdmin(admin.ModelAdmin):
+    actions = ["deactivate"]
+
+    def deactivate(self, request, queryset):
+        queryset.update(is_active=False)
+
+    deactivate.short_description = "Deactivate subscription"
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 # ----------------------------
 # Helper: give admin form widgets Bulma-friendly classes
@@ -133,19 +160,6 @@ class ExamCategoryAllocationInline(admin.TabularInline):
     }
 
 
-# ----------------------------
-# Exam admin
-# ----------------------------
-from django.contrib import admin
-from .models import Exam, ExamTrack
-#from .admin_inlines import ExamCategoryAllocationInline
-#from .widgets import BULMA_WIDGET_OVERRIDES
-
-
-
-
-
-
 # ================================
 # Exam Admin (UPDATED – SAFE)
 # ================================
@@ -225,7 +239,7 @@ class DomainAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
 
 
-    # =====================================================
+# =====================================================
 # DIFFICULTY  ✅ NEW & IMPORTANT
 # =====================================================
 @admin.register(Difficulty)
@@ -236,7 +250,7 @@ class DifficultyAdmin(admin.ModelAdmin):
 
 
 
-    #####################EXAM################
+#####################EXAM################
 @admin.register(UserExam)
 class UserExamAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'exam', 'score', 'started_at', 'submitted_at')
@@ -288,8 +302,7 @@ class ExamSubscriptionAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "payment_required")
     search_fields = ("user__username", "exam__title")
 
-from django.contrib import admin
-from .models import ExamTrack
+
 
 @admin.register(ExamTrack)
 class ExamTrackAdmin(admin.ModelAdmin):
@@ -306,16 +319,7 @@ class ExamTrackAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug")
     prepopulated_fields = {"slug": ("title",)}
 
-    admin.site.register(ExamTrackSubscription)
-
-    admin.site.register(QuestionDiscussion)
-    admin.site.register(DiscussionVote)
-    admin.site.register(DiscussionReport)
-    admin.site.register(QuestionQualitySignal)
-
-
-
-    # =====================================================
+# =====================================================
 # COUPONS (NEW)
 # =====================================================
 
@@ -335,12 +339,6 @@ class CouponAdmin(admin.ModelAdmin):
     search_fields = ("code",)
     readonly_fields = ("used_count",)
 
-
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-
-from quiz.models import User, Exam, UserExam
 
 
 @staff_member_required
