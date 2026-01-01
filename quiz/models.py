@@ -702,7 +702,15 @@ class ExamCategoryAllocation(models.Model):
         return f"{self.exam} → {self.category}"
 
 
-class UserExam(models.Model):
+
+
+
+from quiz.utils import SafeStrMixin
+
+
+
+
+class UserExam(SafeStrMixin, models.Model):
     STATUS_STARTED = "started"
     STATUS_SUBMITTED = "submitted"
     STATUS_EXPIRED = "expired"
@@ -712,6 +720,9 @@ class UserExam(models.Model):
         (STATUS_SUBMITTED, "Submitted"),
         (STATUS_EXPIRED, "Expired"),
     ]
+
+    # 🔐 SafeStrMixin config
+    STR_FIELDS = ("user", "exam")
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
@@ -769,10 +780,10 @@ class UserExam(models.Model):
         self.passed = None if is_mock else (score >= self.exam.passing_score)
         self.save()
 
-    def __str__(self):
-        user = self.user.username if self.user_id else "Unknown User"
-        exam = self.exam.title if self.exam_id else "Unknown Exam"
-        return f"{user} → {exam}"
+    
+
+
+
 
 
 class UserAnswer(models.Model):

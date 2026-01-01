@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Dict
 from django.db import transaction
 from django.db.models import QuerySet
 
-from .models import Category, Exam, UserExam
+from .models import *
 
 
 # ============================================================
@@ -171,3 +171,31 @@ def cleanup_illegal_attempts(user):
         UserExam.objects.filter(id__in=illegal_ids).delete()
 
     return len(illegal_ids)
+
+
+###############safe str delete logic########
+
+class SafeStrMixin:
+    """
+    Makes __str__() safe for Django Admin delete operations.
+    Prevents ForeignKey access after object deletion.
+    """
+
+    STR_FIELDS = ()  # override in child: ("user", "exam", ...)
+
+    def __str__(self):
+        parts = []
+
+        for field in self.STR_FIELDS:
+            fk_id = getattr(self, f"{field}_id", None)
+            if not fk_id:
+                parts.append("N/A")
+                continue
+
+            try:
+                obj = getattr(self, field)
+                parts.append(str(obj))
+            except Exception:
+                parts.append("N/A")
+
+        return " → ".join(parts) if parts else super().__str__()
