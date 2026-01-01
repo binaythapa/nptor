@@ -770,7 +770,10 @@ class UserExam(models.Model):
         self.save()
 
     def __str__(self):
-        return f"{self.user} → {self.exam}"
+        user = self.user.username if self.user_id else "Unknown User"
+        exam = self.exam.title if self.exam_id else "Unknown Exam"
+        return f"{user} → {exam}"
+
 
 class UserAnswer(models.Model):
     user_exam = models.ForeignKey(
