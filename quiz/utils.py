@@ -174,14 +174,16 @@ def cleanup_illegal_attempts(user):
 
 
 ###############safe str delete logic########
+# quiz/utils.py
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from quiz.models import Exam
+
 
 class SafeStrMixin:
-    """
-    Makes __str__() safe for Django Admin delete operations.
-    Prevents ForeignKey access after object deletion.
-    """
-
-    STR_FIELDS = ()  # override in child: ("user", "exam", ...)
+    STR_FIELDS = ()
 
     def __str__(self):
         parts = []
@@ -199,3 +201,8 @@ class SafeStrMixin:
                 parts.append("N/A")
 
         return " → ".join(parts) if parts else super().__str__()
+
+
+def user_passed_exam(user, exam: "Exam") -> bool:
+    # keep your existing logic here
+    return True

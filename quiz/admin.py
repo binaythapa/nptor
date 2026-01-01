@@ -18,7 +18,7 @@ from quiz.models import User, Exam, UserExam
 
 
 admin.site.register(Client)
-#admin.site.register(ExamTrackSubscription)
+admin.site.register(ExamTrackSubscription)
 admin.site.register(QuestionDiscussion)
 admin.site.register(DiscussionVote)
 admin.site.register(DiscussionReport)
