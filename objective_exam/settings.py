@@ -26,7 +26,7 @@ ALLOWED_HOSTS = (
 )
 '''
 
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
 
 
@@ -238,3 +238,7 @@ BASICS_ANON_LIMIT = 50
 EXPRESS_ANON_LIMIT = 50
 
 RETAKE_COOLDOWN_MINUTES = 30
+
+
+
+
