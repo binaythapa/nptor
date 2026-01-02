@@ -190,6 +190,28 @@ class Question(models.Model):
     )
 
 
+        # ================= DELETE TRACKING =================
+    is_deleted = models.BooleanField(
+        default=False,
+        help_text="Soft delete flag"
+    )
+
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When this question was deleted"
+    )
+
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="questions_deleted"
+    )
+
+
+
 
     def __str__(self):
         return (self.text[:75] + '...') if len(self.text) > 75 else self.text

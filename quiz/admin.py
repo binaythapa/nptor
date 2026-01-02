@@ -93,8 +93,22 @@ class QuestionFeedbackInline(admin.TabularInline):
 # ----------------------------
 # Question admin
 # ----------------------------
+
+
+# ----------------------------
+# Question admin
+# ----------------------------
+from django.contrib import admin
+from django.utils import timezone
+
+from .models import Question
+# ChoiceInline and QuestionFeedbackInline are assumed to be defined ABOVE
+
+
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
+
+    # ================= LIST VIEW =================
     list_display = (
         'id',
         'short_text',
@@ -107,19 +121,24 @@ class QuestionAdmin(admin.ModelAdmin):
         'updated_at',
     )
 
-    inlines = [ChoiceInline, QuestionFeedbackInline]
     list_filter = ('question_type', 'difficulty', 'category')
     search_fields = ('text',)
+
+    inlines = [ChoiceInline, QuestionFeedbackInline]
     formfield_overrides = BULMA_WIDGET_OVERRIDES
 
+    # ================= READ ONLY =================
     readonly_fields = (
         'feedback_summary',
         'created_at',
         'updated_at',
         'created_by',
         'updated_by',
+        'deleted_at',
+        'deleted_by',
     )
 
+    # ================= FIELDSETS =================
     fieldsets = (
         (None, {
             'fields': ('category', 'text', 'question_type', 'difficulty')
@@ -149,8 +168,43 @@ class QuestionAdmin(admin.ModelAdmin):
             ),
             'classes': ('collapse',),
         }),
+        ('Deletion info', {
+            'fields': (
+                'is_deleted',
+                'deleted_at',
+                'deleted_by',
+            ),
+            'classes': ('collapse',),
+        }),
     )
 
+    # ================= QUERYSET =================
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(is_deleted=False)
+
+    # ================= SAVE =================
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
+
+    # ================= SOFT DELETE =================
+    def delete_model(self, request, obj):
+        obj.is_deleted = True
+        obj.deleted_at = timezone.now()
+        obj.deleted_by = request.user
+        obj.save()
+
+    def delete_queryset(self, request, queryset):
+        queryset.update(
+            is_deleted=True,
+            deleted_at=timezone.now(),
+            deleted_by=request.user
+        )
+
+    # ================= HELPERS =================
     def short_text(self, obj):
         return obj.text[:60] + ('...' if len(obj.text) > 60 else '') if obj.text else ''
     short_text.short_description = "Question"
@@ -168,11 +222,15 @@ class QuestionAdmin(admin.ModelAdmin):
         return f"This question has {count} feedbacks."
     feedback_summary.short_description = "Feedback summary"
 
-    def save_model(self, request, obj, form, change):
-        if not obj.pk:
-            obj.created_by = request.user
-        obj.updated_by = request.user
-        super().save_model(request, obj, form, change)
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        Allow delete ONLY for superusers
+        """
+        return request.user.is_superuser
+
+
+
 
 
 
