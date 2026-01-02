@@ -30,7 +30,7 @@
           <i class="fa fa-bars"></i>
         </button>
 
-        <!-- LOGO (🔥 FIXED) -->
+        <!-- LOGO -->
         <div class="brand-group">
           <a class="brand"
              href="{% if user.is_authenticated %}
@@ -42,13 +42,6 @@
             <span class="brand-text">Nepal Mentor</span>
           </a>
         </div>
-
-        {% if user.is_staff %}
-<a href="{% url 'quiz:subscription_admin_panel' %}">
-  🎛 Subscriptions
-</a>
-{% endif %}
-
 
         {% if user.is_authenticated %}
         <form action="{% url 'quiz:exam_list' %}" method="get" class="header-search">
@@ -83,6 +76,23 @@
             {% endif %}
           </a>
 
+          <!-- ================= SUBSCRIPTIONS ================= -->
+          {% if user.is_staff %}
+            <!-- Desktop -->
+            <a href="{% url 'quiz:subscription_admin_panel' %}"
+               class="button is-light is-hidden-mobile">
+              <i class="fa fa-sliders"></i>&nbsp; Subscriptions
+            </a>
+
+            <!-- Mobile -->
+            <a href="{% url 'quiz:subscription_admin_panel' %}"
+               class="icon-btn is-hidden-desktop"
+               title="Subscriptions">
+              <i class="fa fa-gear"></i>
+            </a>
+          {% endif %}
+          <!-- ================================================= -->
+
           <!-- Logout -->
           <a href="#"
              class="button is-light"
@@ -115,7 +125,6 @@
         <p class="menu-label">General</p>
         <ul class="menu-list">
 
-          <!-- HOME (🔥 FIXED) -->
           <li>
             <a href="{% if user.is_authenticated %}
                          {% url 'quiz:dashboard' %}
@@ -127,14 +136,12 @@
             </a>
           </li>
 
-          <!-- PRACTICE EXPRESS -->
           <li>
             <a href="{% url 'quiz:practice_express' %}">
               <i class="fa fa-bolt"></i> Practice (Express)
             </a>
           </li>
 
-          <!-- PRACTICE BASIC -->
           <li>
             <a href="{% url 'quiz:practice' %}">
               <i class="fa fa-pen-to-square"></i> Practice (Basic)
@@ -178,22 +185,7 @@
   </div>
 
   <!-- ================= FOOTER ================= -->
-  <footer class="site-footer">
-    <div class="footer-inner">
-      © {% now "Y" %} Nepal Mentor • Version 1.0
-    
-        <a href="https://api.whatsapp.com/send?phone=919600639802"
-           target="_blank">
-          <i class="fa fa-whatsapp"></i>
-          WhatsApp Support
-        </a>
-
-     <a href="mailto:contact.nptor@gmail.com">
-          <i class="fa fa-envelope"></i>
-          contact.nptor@gmail.com
-        </a>
-        </div>
-  </footer>
+  {% include "quiz/footer.html" %}
 
   <!-- LOGOUT FORM -->
   {% if user.is_authenticated %}
@@ -212,9 +204,9 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-0VP1Z2NB44');
 </script>
+
 {% block scripts_extra %}{% endblock %}
 </body>
 </html>

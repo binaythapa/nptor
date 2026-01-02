@@ -108,3 +108,24 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
+
+// ================= COPY EMAIL =================
+document.addEventListener("DOMContentLoaded", () => {
+  const copyBtn = document.querySelector(".email-copy");
+  const toast = document.getElementById("copy-toast");
+
+  if (!copyBtn || !toast) return;
+
+  copyBtn.addEventListener("click", () => {
+    const email = copyBtn.dataset.email;
+
+    navigator.clipboard.writeText(email).then(() => {
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2000);
+    });
+  });
+});
