@@ -95,14 +95,30 @@ class QuestionFeedbackInline(admin.TabularInline):
 # ----------------------------
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'short_text', 'question_type', 'difficulty', 'category', 'feedback_count')
+    list_display = (
+        'id',
+        'short_text',
+        'question_type',
+        'difficulty',
+        'category',
+        'feedback_count',
+        'created_by',
+        'updated_by',
+        'updated_at',
+    )
+
     inlines = [ChoiceInline, QuestionFeedbackInline]
     list_filter = ('question_type', 'difficulty', 'category')
     search_fields = ('text',)
     formfield_overrides = BULMA_WIDGET_OVERRIDES
 
-    # we add a readonly info field for feedback summary
-    readonly_fields = ('feedback_summary',)
+    readonly_fields = (
+        'feedback_summary',
+        'created_at',
+        'updated_at',
+        'created_by',
+        'updated_by',
+    )
 
     fieldsets = (
         (None, {
@@ -124,11 +140,19 @@ class QuestionAdmin(admin.ModelAdmin):
         ('Feedback info', {
             'fields': ('feedback_summary',),
         }),
+        ('Audit information', {
+            'fields': (
+                'created_at',
+                'created_by',
+                'updated_at',
+                'updated_by',
+            ),
+            'classes': ('collapse',),
+        }),
     )
 
     def short_text(self, obj):
         return obj.text[:60] + ('...' if len(obj.text) > 60 else '') if obj.text else ''
-
     short_text.short_description = "Question"
 
     def feedback_count(self, obj):
@@ -143,6 +167,13 @@ class QuestionAdmin(admin.ModelAdmin):
             return "This question has 1 feedback."
         return f"This question has {count} feedbacks."
     feedback_summary.short_description = "Feedback summary"
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
+
 
 
 # ----------------------------

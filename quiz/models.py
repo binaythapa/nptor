@@ -162,6 +162,35 @@ class Question(models.Model):
         help_text='List of canonical ordering items'
     )
 
+        # ================= AUDIT FIELDS =================
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When this question was created"
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="When this question was last updated"
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="questions_created"
+    )
+
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="questions_updated"
+    )
+
+
+
     def __str__(self):
         return (self.text[:75] + '...') if len(self.text) > 75 else self.text
     
