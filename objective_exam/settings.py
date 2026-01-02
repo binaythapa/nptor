@@ -120,7 +120,7 @@ DATABASES = {
         },
     }
 }
-'''
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -134,6 +134,26 @@ DATABASES = {
         },
     }
 }
+'''
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'nptorcom_nptor',       # EXACT database name from cPanel
+        'USER': 'nptorcom_admin',       # EXACT user name from cPanel
+        'PASSWORD': 'pMzvD_18C~Y}6DYw',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',   # 🔥 REQUIRED
+            'use_unicode': True,
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+
+
+
+
 
 
 # ============================================================
