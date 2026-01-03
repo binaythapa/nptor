@@ -3,14 +3,48 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>{% block title %}{{ title|default:"Nepal Mentor" }}{% endblock %}</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <!-- Bulma -->
+  <!-- ================= SEO TITLE ================= -->
+  <title>{% block title %}Nepal Mentor – Online Exams & Practice Platform{% endblock %}</title>
+
+  <!-- ================= BASIC SEO ================= -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description"
+        content="{% block meta_description %}
+        Nepal Mentor helps students practice exams, take mock tests, and improve skills with structured learning.
+        {% endblock %}">
+  <meta name="robots" content="index, follow">
+
+  <!-- ================= CANONICAL ================= -->
+  <link rel="canonical"
+        href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+
+  <!-- ================= OPEN GRAPH (Google / WhatsApp / Facebook) ================= -->
+  <meta property="og:title"
+        content="{% block og_title %}Nepal Mentor – Online Exam Platform{% endblock %}">
+  <meta property="og:description"
+        content="{% block og_description %}
+        Practice exams, mock tests, and improve your skills with Nepal Mentor.
+        {% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:image"
+        content="{% block og_image %}{% static 'images/logo.jpg' %}{% endblock %}">
+
+  <!-- ================= TWITTER CARD ================= -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title"
+        content="{% block twitter_title %}Nepal Mentor – Online Exam Platform{% endblock %}">
+  <meta name="twitter:description"
+        content="{% block twitter_description %}
+        Prepare smarter with online exams and mock tests on Nepal Mentor.
+        {% endblock %}">
+  <meta name="twitter:image"
+        content="{% static 'images/logo.jpg' %}">
+
+  <!-- ================= STYLES ================= -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Core theme -->
   <link rel="stylesheet" href="{% static 'css/theme.css' %}">
 
   {% block head_extra %}{% endblock %}
@@ -38,7 +72,7 @@
                    {% else %}
                       {% url 'quiz:practice' %}
                    {% endif %}">
-            <img src="{% static 'images/logo.jpg' %}" class="brand-logo" alt="logo">
+            <img src="{% static 'images/logo.jpg' %}" class="brand-logo" alt="Nepal Mentor Logo">
             <span class="brand-text">Nepal Mentor</span>
           </a>
         </div>
@@ -76,22 +110,18 @@
             {% endif %}
           </a>
 
-          <!-- ================= SUBSCRIPTIONS ================= -->
           {% if user.is_staff %}
-            <!-- Desktop -->
             <a href="{% url 'quiz:subscription_admin_panel' %}"
                class="button is-light is-hidden-mobile">
               <i class="fa fa-sliders"></i>&nbsp; Subscriptions
             </a>
 
-            <!-- Mobile -->
             <a href="{% url 'quiz:subscription_admin_panel' %}"
                class="icon-btn is-hidden-desktop"
                title="Subscriptions">
               <i class="fa fa-gear"></i>
             </a>
           {% endif %}
-          <!-- ================================================= -->
 
           <!-- Logout -->
           <a href="#"
@@ -131,8 +161,7 @@
                      {% else %}
                          {% url 'quiz:practice' %}
                      {% endif %}">
-              <i class="fa fa-home"></i>
-              Home
+              <i class="fa fa-home"></i> Home
             </a>
           </li>
 
@@ -198,7 +227,7 @@
 
 <script src="{% static 'js/ui.js' %}"></script>
 
-<!-- Google tag (gtag.js) -->
+<!-- ================= GOOGLE ANALYTICS ================= -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-0VP1Z2NB44"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
