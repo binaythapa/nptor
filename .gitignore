@@ -1,19 +1,58 @@
-log
-venv
-venv_bkp
-*.pyc
+# ==================================================
+# Python / Django cache
+# ==================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ==================================================
+# Virtual environments
+# ==================================================
+env/
+venv/
+ENV/
+venv_bkp/
+
+# ==================================================
+# Django static & media (BUILD OUTPUT ONLY)
+# ==================================================
+staticfiles/
+staticfiles/**
+media/
+
+# ==================================================
+# Logs & runtime files
+# ==================================================
+*.log
+log/
 outbound/
 index/
-source_file/
-quiz/migrations/*
-!quiz/migrations/__init__.py
 
-
-
-
-
-staticfiles/js/ui.js
-objective_exam/settings.py
-objective_exam/__init__.py
+# ==================================================
+# Temporary / local data files
+# ==================================================
+*.sqlite3
 question.json
-objective_exam_all_types\staticfiles
+
+# ==================================================
+# IDE / Editor
+# ==================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==================================================
+# OS files
+# ==================================================
+.DS_Store
+Thumbs.db
+
+# ==================================================
+# Frontend / Node (if used)
+# ==================================================
+node_modules/
+dist/
+build/
