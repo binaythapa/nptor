@@ -19,19 +19,22 @@ SECRET_KEY = os.environ.get(
     "django-insecure-change-me-please"
 )
 
-'''
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
+# ===============================
+# DEBUG (env-based)
+# ===============================
+DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
 
-ALLOWED_HOSTS = (
-    ["localhost", "127.0.0.1"]
-    if DEBUG
-    else ["nptor.com", "www.nptor.com"]
-)
-'''
 
-DEBUG = False
-ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
-
+# ===============================
+# ALLOWED HOSTS (env-based)
+# ===============================
+if DEBUG:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+else:
+    ALLOWED_HOSTS = os.environ.get(
+        "DJANGO_ALLOWED_HOSTS",
+        "nptor.com,www.nptor.com"
+    ).split(",")
 
 # ============================================================
 # APPLICATION DEFINITION
