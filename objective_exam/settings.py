@@ -2,8 +2,13 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-load_dotenv()
+# Load .env only in local/dev (safe in prod)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 
 # ============================================================
 # BASE DIRECTORY
