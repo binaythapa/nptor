@@ -106,6 +106,9 @@ WSGI_APPLICATION = "objective_exam.wsgi.application"
 # ============================================================
 # DATABASE
 # ============================================================
+CONN_MAX_AGE = 60
+
+
 '''
 DATABASES = {
     "default": {
