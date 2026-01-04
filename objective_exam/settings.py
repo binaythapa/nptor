@@ -2,6 +2,9 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # ============================================================
 # BASE DIRECTORY
 # ============================================================
@@ -106,38 +109,6 @@ WSGI_APPLICATION = "objective_exam.wsgi.application"
 # ============================================================
 # DATABASE
 # ============================================================
-CONN_MAX_AGE = 60
-
-
-'''
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("DB_NAME", "nptor3"),
-        "USER": os.environ.get("DB_USER", "root"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", "root"),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": "3306",
-        "OPTIONS": {
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
-}
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nptorcom_nptor',       # EXACT database name from cPanel
-        'USER': 'nptorcom_admin',       # EXACT user name from cPanel
-        'PASSWORD': 'pMzvD_18C~Y}6DYw',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
-}
-'''
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -258,10 +229,10 @@ LOGGING = {
     },
 }
 
-BASICS_ANON_LIMIT = 50
-EXPRESS_ANON_LIMIT = 50
+BASICS_ANON_LIMIT = 20
+EXPRESS_ANON_LIMIT = 20
 
-RETAKE_COOLDOWN_MINUTES = 30
+RETAKE_COOLDOWN_MINUTES = 720
 
 
 

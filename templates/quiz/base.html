@@ -5,13 +5,13 @@
   <meta charset="utf-8" />
 
   <!-- ================= SEO TITLE ================= -->
-  <title>{% block title %}Nptor – Online Exams & Practice Platform{% endblock %}</title>
+  <title>{% block title %}Nepal Mentor – Online Exams & Practice Platform{% endblock %}</title>
 
   <!-- ================= BASIC SEO ================= -->
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="description"
         content="{% block meta_description %}
-        Nptor helps students practice exams, take mock tests, and improve skills with structured learning.
+        Nepal Mentor helps students practice exams, take mock tests, and improve skills with structured learning.
         {% endblock %}">
   <meta name="robots" content="index, follow">
 
@@ -21,10 +21,10 @@
 
   <!-- ================= OPEN GRAPH (Google / WhatsApp / Facebook) ================= -->
   <meta property="og:title"
-        content="{% block og_title %}Nptor – Online Exam Platform{% endblock %}">
+        content="{% block og_title %}Nepal Mentor – Online Exam Platform{% endblock %}">
   <meta property="og:description"
         content="{% block og_description %}
-        Practice exams, mock tests, and improve your skills with Nptor.
+        Practice exams, mock tests, and improve your skills with Nepal Mentor.
         {% endblock %}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ request.build_absolute_uri }}">
@@ -34,10 +34,10 @@
   <!-- ================= TWITTER CARD ================= -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title"
-        content="{% block twitter_title %}Nptor – Online Exam Platform{% endblock %}">
+        content="{% block twitter_title %}Nepal Mentor – Online Exam Platform{% endblock %}">
   <meta name="twitter:description"
         content="{% block twitter_description %}
-        Prepare smarter with online exams and mock tests on Nptor.
+        Prepare smarter with online exams and mock tests on Nepal Mentor.
         {% endblock %}">
   <meta name="twitter:image"
         content="{% static 'images/logo.jpg' %}">
@@ -72,8 +72,8 @@
                    {% else %}
                       {% url 'quiz:practice' %}
                    {% endif %}">
-            <img src="{% static 'images/logo.jpg' %}" class="brand-logo" alt="Nptor Logo">
-            <span class="brand-text">Nptor</span>
+            <img src="{% static 'images/logo.jpg' %}" class="brand-logo" alt="Nepal Mentor Logo">
+            <span class="brand-text">Nepal Mentor</span>
           </a>
         </div>
 
