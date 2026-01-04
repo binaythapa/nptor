@@ -65,3 +65,25 @@ class EmailOrUsernameLoginForm(AuthenticationForm):
             attrs={"class": "input", "placeholder": "Password"}
         )
     )
+
+
+from django import forms
+from quiz.models import Question
+
+
+from django import forms
+from quiz.models import Question
+
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = [
+            "category",
+            "difficulty",
+            "question_type", 
+            "text",                       
+            "explanation",
+         
+        ]
+
+

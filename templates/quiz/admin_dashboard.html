@@ -43,17 +43,46 @@
 <!-- ================================================= -->
 <!-- HEADER -->
 <!-- ================================================= -->
-<div class="mb-5">
-  <h2 class="title is-4 mb-1">🛠 Admin Dashboard</h2>
-  <p class="muted">
-    Platform health, learning performance & subscription insights
-  </p>
+<div class="mb-5 is-flex is-justify-content-space-between is-align-items-center">
+
+  <div>
+    <h2 class="title is-4 mb-1">🛠 Admin Dashboard</h2>
+    <p class="muted">
+      Platform health, learning performance & subscription insights
+    </p>
+  </div>
+
+  {% if user.is_staff %}
+  <div class="buttons">
+    <a href="{% url 'quiz:question_dashboard' %}"
+       class="button is-link">
+      📚 Manage Questions
+    </a>
+
+    <a href="{% url 'quiz:add_question' %}"
+       class="button is-primary">
+      ➕ Add Question
+    </a>
+  </div>
+  {% endif %}
+
 </div>
+
+
 
 <!-- ================================================= -->
 <!-- KPI ROW -->
 <!-- ================================================= -->
 <div class="columns is-multiline">
+
+  <div class="column is-6-mobile is-3-tablet">
+  <div class="box stat-card has-text-centered">
+    <p class="heading">❓ Questions</p>
+    <p class="stat-value has-text-primary">{{ total_questions }}</p>
+    <p class="muted">Active questions</p>
+  </div>
+</div>
+
 
   <div class="column is-6-mobile is-3-tablet">
     <div class="box stat-card has-text-centered">

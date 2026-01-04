@@ -1,0 +1,348 @@
+{% extends "quiz/base.html" %}
+{% load widget_tweaks %}
+{% block title %}Edit Question{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 900px; margin: 0 auto;">
+
+  <!-- HEADER -->
+  <div class="mb-5">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+      <ul>
+        <li><a href="{% url 'quiz:question_dashboard' %}">Dashboard</a></li>
+        <li class="is-active"><a href="#" aria-current="page">Edit Question</a></li>
+      </ul>
+    </nav>
+    
+    <div class="mb-4">
+      <h1 class="title is-3 has-text-weight-semibold">✏️ Edit Question</h1>
+      {% if question %}
+      <p class="subtitle is-6 has-text-grey">ID: {{ question.id }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="post" id="question-form">
+    {% csrf_token %}
+
+    <!-- QUESTION CARD -->
+    <div class="card mb-5">
+      <header class="card-header">
+        <p class="card-header-title">
+          <span class="icon-text">
+            <span class="icon">
+              <i class="fas fa-question-circle"></i>
+            </span>
+            <span>Question Details</span>
+          </span>
+        </p>
+      </header>
+      <div class="card-content">
+        <!-- Loop through all form fields -->
+        {% for field in form %}
+        <div class="field mb-4">
+          <label class="label" for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {% if field.field.required %}
+            <span class="has-text-danger">*</span>
+            {% endif %}
+          </label>
+          
+          <div class="control">
+            {% if field.name == 'explanation' %}
+              <!-- Special handling for explanation field -->
+              <div class="mb-2">
+                <div class="buttons are-small">
+                  <button type="button" class="button is-light format-btn" data-tag="strong" title="Bold">
+                    <span class="icon">
+                      <i class="fas fa-bold"></i>
+                    </span>
+                  </button>
+                  <button type="button" class="button is-light format-btn" data-tag="em" title="Italic">
+                    <span class="icon">
+                      <i class="fas fa-italic"></i>
+                    </span>
+                  </button>
+                  <button type="button" class="button is-light format-btn" data-tag="ul" title="Bullet List">
+                    <span class="icon">
+                      <i class="fas fa-list-ul"></i>
+                    </span>
+                  </button>
+                  <button type="button" class="button is-light format-btn" data-tag="ol" title="Numbered List">
+                    <span class="icon">
+                      <i class="fas fa-list-ol"></i>
+                    </span>
+                  </button>
+                  <button type="button" class="button is-light" onclick="insertLink()" title="Insert Link">
+                    <span class="icon">
+                      <i class="fas fa-link"></i>
+                    </span>
+                  </button>
+                </div>
+              </div>
+              
+              {% if field.errors %}
+                {% render_field field class+="textarea is-danger" placeholder="Enter detailed explanation..." rows="6" %}
+              {% else %}
+                {% render_field field class+="textarea" placeholder="Enter detailed explanation..." rows="6" %}
+              {% endif %}
+              
+              <p class="help mt-2">
+                <small>Use formatting buttons above or type HTML tags directly. Preview available below.</small>
+              </p>
+              
+              <!-- Preview toggle -->
+              <div class="mt-3">
+                <button type="button" class="button is-small is-light" onclick="togglePreview()">
+                  <span class="icon">
+                    <i class="fas fa-eye"></i>
+                  </span>
+                  <span>Preview Explanation</span>
+                </button>
+              </div>
+              
+              <!-- Preview area (hidden by default) -->
+              <div class="box mt-3 is-hidden" id="preview-box">
+                <p class="has-text-weight-semibold mb-2">Preview:</p>
+                <div class="content" id="preview-content"></div>
+              </div>
+              
+            {% else %}
+              <!-- Regular fields -->
+              {% if field.field.widget.input_type == 'select' %}
+                {% if field.errors %}
+                  {% render_field field class+="select is-danger" %}
+                {% else %}
+                  {% render_field field class+="select" %}
+                {% endif %}
+              {% else %}
+                {% if field.errors %}
+                  {% render_field field class+="input is-danger" placeholder=field.help_text %}
+                {% else %}
+                  {% render_field field class+="input" placeholder=field.help_text %}
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          </div>
+          
+          {% if field.help_text and field.name != 'explanation' %}
+          <p class="help">{{ field.help_text }}</p>
+          {% endif %}
+          
+          {% if field.errors %}
+          <p class="help is-danger">{{ field.errors.0 }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- FORM VALIDATION SUMMARY -->
+    {% if form.errors %}
+    <div class="notification is-danger is-light mb-5">
+      <div class="content">
+        <p class="has-text-weight-semibold">Please fix the following errors:</p>
+        <ul>
+          {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+              <li>{{ field|title }}: {{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ACTION BUTTONS -->
+    <div class="field is-grouped is-grouped-centered mt-6 pt-5" style="border-top: 1px solid #dbdbdb;">
+      <div class="control">
+        <a href="{% url 'quiz:question_dashboard' %}" class="button is-light is-medium">
+          <span class="icon">
+            <i class="fas fa-arrow-left"></i>
+          </span>
+          <span>Cancel</span>
+        </a>
+      </div>
+      <div class="control">
+        <button type="submit" class="button is-primary is-medium">
+          <span class="icon">
+            <i class="fas fa-save"></i>
+          </span>
+          <span>Update Question</span>
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Formatting buttons for explanation field
+  const formatButtons = document.querySelectorAll('.format-btn');
+  const explanationField = document.querySelector('textarea[name="explanation"]');
+  
+  formatButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      if (!explanationField) return;
+      
+      const tag = this.dataset.tag;
+      const start = explanationField.selectionStart;
+      const end = explanationField.selectionEnd;
+      
+      if (start === end) {
+        // No text selected, insert placeholder
+        let placeholder;
+        if (tag === 'ul') {
+          placeholder = '<ul>\n  <li>Item 1</li>\n  <li>Item 2</li>\n</ul>';
+        } else if (tag === 'ol') {
+          placeholder = '<ol>\n  <li>First item</li>\n  <li>Second item</li>\n</ol>';
+        } else {
+          placeholder = `<${tag}>text</${tag}>`;
+        }
+        
+        insertTextAtCursor(explanationField, placeholder);
+      } else {
+        // Wrap selected text
+        const text = explanationField.value;
+        const before = text.substring(0, start);
+        const selected = text.substring(start, end);
+        const after = text.substring(end);
+        
+        let wrapped;
+        if (tag === 'ul') {
+          const items = selected.split('\n').filter(item => item.trim() !== '');
+          wrapped = '<ul>\n' + items.map(item => `  <li>${item}</li>`).join('\n') + '\n</ul>';
+        } else if (tag === 'ol') {
+          const items = selected.split('\n').filter(item => item.trim() !== '');
+          wrapped = '<ol>\n' + items.map(item => `  <li>${item}</li>`).join('\n') + '\n</ol>';
+        } else {
+          wrapped = `<${tag}>${selected}</${tag}>`;
+        }
+        
+        explanationField.value = before + wrapped + after;
+        explanationField.selectionStart = start + wrapped.length;
+        explanationField.selectionEnd = start + wrapped.length;
+      }
+      
+      explanationField.focus();
+    });
+  });
+});
+
+// Helper function to insert text at cursor
+function insertTextAtCursor(textarea, text) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const before = textarea.value.substring(0, start);
+  const after = textarea.value.substring(end);
+  
+  textarea.value = before + text + after;
+  textarea.selectionStart = textarea.selectionEnd = start + text.length;
+  textarea.focus();
+}
+
+// Insert link
+function insertLink() {
+  const explanationField = document.querySelector('textarea[name="explanation"]');
+  if (!explanationField) return;
+  
+  const url = prompt('Enter URL:', 'https://');
+  if (!url) return;
+  
+  const text = prompt('Enter link text (optional):', url);
+  const linkText = text || url;
+  
+  insertTextAtCursor(explanationField, `<a href="${url}">${linkText}</a>`);
+}
+
+// Toggle preview
+function togglePreview() {
+  const previewBox = document.getElementById('preview-box');
+  const previewContent = document.getElementById('preview-content');
+  const explanationField = document.querySelector('textarea[name="explanation"]');
+  
+  if (!explanationField) return;
+  
+  if (previewBox.classList.contains('is-hidden')) {
+    // Show preview
+    const html = explanationField.value
+      .replace(/<strong>(.*?)<\/strong>/g, '<strong>$1</strong>')
+      .replace(/<em>(.*?)<\/em>/g, '<em>$1</em>')
+      .replace(/<ul>([\s\S]*?)<\/ul>/g, function(match) {
+        return match.replace(/\n/g, '');
+      })
+      .replace(/<ol>([\s\S]*?)<\/ol>/g, function(match) {
+        return match.replace(/\n/g, '');
+      })
+      .replace(/<a href="(.*?)">(.*?)<\/a>/g, '<a href="$1" target="_blank">$2</a>')
+      .replace(/\n/g, '<br>');
+    
+    previewContent.innerHTML = html || '<p class="has-text-grey">No explanation provided</p>';
+    previewBox.classList.remove('is-hidden');
+  } else {
+    // Hide preview
+    previewBox.classList.add('is-hidden');
+  }
+}
+
+// Form validation
+const form = document.getElementById('question-form');
+if (form) {
+  form.addEventListener('submit', function(e) {
+    const requiredFields = form.querySelectorAll('input[required], textarea[required], select[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+      if (!field.value.trim()) {
+        field.classList.add('is-danger');
+        isValid = false;
+      } else {
+        field.classList.remove('is-danger');
+      }
+    });
+    
+    if (!isValid) {
+      e.preventDefault();
+      alert('Please fill in all required fields.');
+    }
+  });
+}
+</script>
+
+<style>
+.format-btn {
+  margin-right: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.format-btn:hover {
+  background-color: #e8e8e8;
+}
+
+#preview-content ul, #preview-content ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+#preview-content li {
+  margin-bottom: 0.25em;
+}
+
+#preview-content a {
+  color: #3273dc;
+  text-decoration: underline;
+}
+
+.card {
+  box-shadow: 0 2px 3px rgba(10,10,10,.1), 0 0 0 1px rgba(10,10,10,.1);
+}
+
+.card-header {
+  background-color: #f5f5f5;
+}
+</style>
+{% endblock %}

@@ -298,6 +298,8 @@ def admin_dashboard(request):
         # NEW: Reset form data
         "students": User.objects.order_by("username"),
         "exams": Exam.objects.filter(is_published=True),
+        "total_questions" : Question.objects.filter(is_deleted=False).count()
+
     })
 
 

@@ -7,6 +7,7 @@ from quiz.views.admin import reset_mock_attempts
 # ================================
 # IMPORT VIEWS (FROM views.py)
 # ================================
+from quiz.views.questions import *
 from quiz.views.views import *
 from quiz.views.student import *
 from quiz.views.auth import *
@@ -243,5 +244,28 @@ path(
     reset_mock_attempts,
     name="reset_mock_attempts",
 ),
+
+
+# ================= QUESTIONS DASHBOARD =================
+    path(
+        "dashboard/questions/",
+        question_dashboard,
+        name="question_dashboard",
+    ),
+    path(
+        "dashboard/questions/add/",
+        add_question,
+        name="add_question",
+    ),
+    path(
+        "dashboard/questions/<int:pk>/edit/",
+        edit_question,
+        name="edit_question",
+    ),
+    path(
+        "dashboard/questions/<int:pk>/delete/",
+        delete_question,
+        name="delete_question",
+    ),
 
 ]

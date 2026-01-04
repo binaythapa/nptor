@@ -3,141 +3,154 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title%} {% endblock%}</title>
+    <title>{% block title %}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" class="rel">
-   <style> {%block css%} {% endblock%}</style>
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>{% block css %}{% endblock %}</style>
 </head>
-<div class="container-fluid" style="height: 30px; background-color: #797e85">
+
+<body>
+
+<!-- ================= TOP BAR ================= -->
+<div class="container-fluid" style="height:30px;background-color:#797e85">
     <div class="row">
 
+        <div class="col-md-5 text-left">
+            <p class="text-white mb-0">9860147894</p>
+        </div>
 
-            <div class=" col-md-5 text-left">
-                <p class="text-white">9860147894</p>
+        <div class="col-md-3 text-center">
+            <p class="text-white mb-0">info@gharchaiyokarobar.com</p>
+        </div>
 
-            </div>
-
-            <div class="col-md-3 text-middle">
-                <p class="text-white">info@gharchaiyokarobar.com</p>
-            </div>
-
-            <div class=" col-md-4 text-right">
-                <a href=""><img src="{% static 'images/facebook.png' %}" width="20px" height="20px"></a>
-                <a href=""><img src="{% static 'images/instagram.jpg' %}" width="20px" height="20px"></a>
-            </div>
+        <div class="col-md-4 text-right">
+            <a href="#"><img src="{% static 'images/facebook.png' %}" width="20" height="20"></a>
+            <a href="#"><img src="{% static 'images/instagram.jpg' %}" width="20" height="20"></a>
+        </div>
 
     </div>
 </div>
 
+<!-- ================= NAVBAR ================= -->
 <nav class="navbar navbar-expand-md navbar-dark bg-dark p-0">
+
     <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
         <ul class="navbar-nav mr-auto">
+
             <li class="nav-item active">
-                <a class="nav-link" href="{%url 'home'%}">Home</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'filter-product'%}?action=sell">Buy</a>
-    </li>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'filter-product'%}?action=rent">Rent</a>
-            </li>
-            <li class="nav-item">
-               <a class="nav-link" href="{% url 'product-by-category'%}">Category</a>
-            </li>
-        </ul>
-    </div>
-    <div class="mx-auto order-0">
-        <a class="navbar-brand mx-auto" href="#"><div style="color:white">welcome,{{user}}</div></a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".dual-collapse2">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-    <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
-        <ul class="navbar-nav ml-auto">
-            {% if user.is_authenticated %}
-             <li class="nav-item">
-                <a class="nav-link" href="{% url 'profile'%}">Profile</a>
+                <a class="nav-link" href="{% url 'home' %}">Home</a>
             </li>
 
-             <li class="nav-item">
-                <a class="nav-link" href="{% url 'logout'%}">Logout</a>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'filter-product' %}?action=sell">Buy</a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'filter-product' %}?action=rent">Rent</a>
+            </li>
 
-            {% else %}
-             <li class="nav-item">
-               <a class="nav-link" href="{% url 'login'%}">Login</a>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'product-by-category' %}">Category</a>
+            </li>
+
+            <!-- 🔐 QUESTION ADMIN LINK (STAFF ONLY) -->
+            {% if user.is_staff %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'quiz:question_dashboard' %}">
+                    Question Admin
+                </a>
             </li>
             {% endif %}
- {% if user.is_authenticated%}
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'cart'%}"><img src="{% static 'images/cart.png' %}" width="20px" height="20px"><sup>{{cart_count}}</sup></a>
-            </li>
-            <li class="nav-item">
-
-                <a class="navbar-brand" href="{% url 'show-wishlist-item'%}"> <img src="{% static 'images/wishlist.png' %}" width="20px" height="20px">{{wishlist_count}}</a>
-
-                    {% endif %}
-            </li>
 
         </ul>
     </div>
 
-</nav>
-</div>
-<body>
-<hr>
-{%block body%}{% endblock %}
-</body>
-
-<hr>
-<footer class="container-fluid text-white" style="height: 250px; background-color:#1c2125; margin-top:20px; ">
-    <h1 style="text-align:center ;padding-top:50px">www.gharchaiyo.com.np</h1>
-    <p style="text-align:center">Nepal’s No. 1 Property Website – Buy, Sell or Rent Properties Online Nepal</p>
-    <p style="text-align:center">----------------------</p>
-
-</footer>
-
-<nav class="navbar navbar-expand-md navbar-dark bg-dark p-0">
-    <div class="navbar-collapse collapse w-100 order-1 order-md-0 ">
-        <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-                <a class="nav-link" href="{%url 'home'%}"></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'filter-product'%}?action=sell"></a>
-    </li>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'filter-product'%}?action=rent"></a>
-            </li>
-            <li class="nav-item">
-               <a class="nav-link" href="{% url 'product-by-category'%}"></a>
-            </li>
-
-        </ul>
-    </div>
     <div class="mx-auto order-0">
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".dual-collapse2">
+        <a class="navbar-brand mx-auto" href="#">
+            <div style="color:white">welcome, {{ user }}</div>
+        </a>
+        <button class="navbar-toggler" type="button"
+                data-toggle="collapse"
+                data-target=".dual-collapse2">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
+
     <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
         <ul class="navbar-nav ml-auto">
 
-             <li class="nav-item">
-                <a class="nav-link" href="{% url 'logout'%}"></a>
-            </li>
+            {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+                </li>
 
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'profile'%}"></a>
-            </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                </li>
+            {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'login' %}">Login</a>
+                </li>
+            {% endif %}
 
-             <li class="nav-item">
-               <a class="nav-link" href="{% url 'login'%}"></a>
-            </li>
+            {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'cart' %}">
+                        <img src="{% static 'images/cart.png' %}" width="20" height="20">
+                        <sup>{{ cart_count }}</sup>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="navbar-brand" href="{% url 'show-wishlist-item' %}">
+                        <img src="{% static 'images/wishlist.png' %}" width="20" height="20">
+                        {{ wishlist_count }}
+                    </a>
+                </li>
+            {% endif %}
+
+        </ul>
+    </div>
+
+</nav>
+
+<hr>
+
+<!-- ================= PAGE CONTENT ================= -->
+{% block body %}{% endblock %}
+
+<hr>
+
+<!-- ================= FOOTER ================= -->
+<footer class="container-fluid text-white"
+        style="height:250px;background-color:#1c2125;margin-top:20px;">
+    <h1 class="text-center pt-5">www.gharchaiyo.com.np</h1>
+    <p class="text-center">
+        Nepal’s No. 1 Property Website – Buy, Sell or Rent Properties Online Nepal
+    </p>
+    <p class="text-center">----------------------</p>
+</footer>
+
+<!-- ================= FOOTER NAV (UNCHANGED) ================= -->
+<nav class="navbar navbar-expand-md navbar-dark bg-dark p-0">
+    <div class="navbar-collapse collapse w-100 order-1 order-md-0">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item"><a class="nav-link" href="{% url 'home' %}"></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'filter-product' %}?action=sell"></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'filter-product' %}?action=rent"></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'product-by-category' %}"></a></li>
+        </ul>
+    </div>
+
+    <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}"></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}"></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}"></a></li>
         </ul>
     </div>
 </nav>
+
+</body>
 </html>
