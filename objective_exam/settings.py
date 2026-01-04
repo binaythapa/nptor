@@ -139,17 +139,18 @@ DATABASES = {
 }
 '''
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nptorcom_nptor',       # EXACT database name from cPanel
-        'USER': 'nptorcom_admin',       # EXACT user name from cPanel
-        'PASSWORD': 'pMzvD_18C~Y}6DYw',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',   # 🔥 REQUIRED
-            'use_unicode': True,
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ.get("DB_NAME", "nptor_local"),
+        "USER": os.environ.get("DB_USER", "root"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "3306"),
+        "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", 60)),
+        "OPTIONS": {
+            "charset": "utf8mb4",
+            "use_unicode": True,
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
