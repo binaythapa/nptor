@@ -5,5 +5,15 @@ venv_bkp
 outbound/
 index/
 source_file/
+quiz/migrations/*
+!quiz/migrations/__init__.py
 
 
+
+
+
+staticfiles/js/ui.js
+objective_exam/settings.py
+objective_exam/__init__.py
+question.json
+objective_exam_all_types\staticfiles
