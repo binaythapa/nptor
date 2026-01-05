@@ -1,5 +1,4 @@
 {% extends "quiz/base.html" %}
-
 {% block title %}Practice{% endblock %}
 
 {% block head_extra %}
@@ -31,7 +30,6 @@
   background: #fef2f2;
   border-color: #f87171;
 }
-.practice-counter { font-size: 0.9rem; }
 </style>
 {% endblock %}
 
@@ -62,8 +60,6 @@
 <!-- ================= FILTERS ================= -->
 <form method="get" class="mb-4">
   <div class="columns is-mobile is-multiline">
-
-    <!-- DOMAIN -->
     <div class="column is-one-third">
       <div class="select is-small is-fullwidth">
         <select name="domain" onchange="this.form.submit()">
@@ -78,11 +74,9 @@
       </div>
     </div>
 
-    <!-- CATEGORY -->
     <div class="column is-one-third">
       <div class="select is-small is-fullwidth">
-        <select name="category"
-                onchange="this.form.submit()"
+        <select name="category" onchange="this.form.submit()"
                 {% if not domain_id %}disabled{% endif %}>
           <option value="">All categories</option>
           {% for cat in categories %}
@@ -103,7 +97,6 @@
       </div>
     </div>
 
-    <!-- DIFFICULTY -->
     <div class="column is-one-third">
       <div class="select is-small is-fullwidth">
         <select name="difficulty" onchange="this.form.submit()">
@@ -117,91 +110,39 @@
         </select>
       </div>
     </div>
-
   </div>
 </form>
-
-<!-- ================= FREE LIMIT ================= -->
-{% if limit_reached %}
-<div class="notification is-warning has-text-centered">
-  <h2 class="title is-5">🚫 Free Limit Reached</h2>
-  <p class="mt-2">You’ve reached the free practice limit.</p>
-  <div class="buttons is-centered mt-4">
-    <a href="{% url 'login' %}?next={{ request.path }}" class="button is-link">
-      🔐 Login
-    </a>
-    <a href="{% url 'quiz:practice_express' %}" class="button is-light">
-      ⚡ Try Express
-    </a>
-    <a href="{% url 'quiz:exam_list' %}" class="button is-primary">
-      🚀 Upgrade to Pro
-    </a>
-  </div>
-</div>
-{% endif %}
-
-<!-- ================= COMPLETED ================= -->
-{% if completed %}
-<div class="notification is-info has-text-centered">
-  <h2 class="title is-5">🎉 Practice Completed!</h2>
-  <p class="mt-2">You’ve completed all available questions.</p>
-
-  <progress class="progress is-small is-primary"
-            value="{{ progress_done }}"
-            max="{{ progress_total }}"></progress>
-
-  <div class="buttons is-centered mt-4">
-    <a href="{% url 'quiz:practice' %}?reset=1" class="button is-light">
-      🔄 Restart Practice
-    </a>
-    <a href="{% url 'quiz:practice_express' %}" class="button is-light">
-      ⚡ Try Express
-    </a>
-    <a href="{% url 'quiz:exam_list' %}" class="button is-link">
-      🚀 Upgrade to Pro
-    </a>
-  </div>
-</div>
-{% endif %}
 
 <!-- ================= QUESTION ================= -->
 {% if question %}
 <form method="post">
 {% csrf_token %}
 
-<!-- Preserve filters -->
 {% if domain_id %}<input type="hidden" name="domain" value="{{ domain_id }}">{% endif %}
 {% if category_id %}<input type="hidden" name="category" value="{{ category_id }}">{% endif %}
 {% if difficulty %}<input type="hidden" name="difficulty" value="{{ difficulty }}">{% endif %}
 
 <p class="mb-4"><strong>{{ question.text }}</strong></p>
 
-<!-- SINGLE / TRUE-FALSE -->
 {% if question.question_type != "multi" %}
   {% for c in choices %}
   <label class="practice-option
     {% if result and c.is_correct %}correct{% endif %}
     {% if result == 'wrong' and c.id|stringformat:'s' == selected_choice_id %}wrong{% endif %}">
-    <input type="radio"
-           name="choice"
-           value="{{ c.id }}"
+    <input type="radio" name="choice" value="{{ c.id }}"
            {% if c.id|stringformat:'s' == selected_choice_id %}checked{% endif %}
-           {% if show_next %}disabled{% endif %}
-           required>
+           {% if show_next %}disabled{% endif %} required>
     {{ c.text }}
   </label>
   {% endfor %}
 {% endif %}
 
-<!-- MULTI SELECT -->
 {% if question.question_type == "multi" %}
   {% for c in choices %}
   <label class="practice-option
     {% if result and c.is_correct %}correct{% endif %}
     {% if result == 'wrong' and c.id in selected_multi_ids %}wrong{% endif %}">
-    <input type="checkbox"
-           name="choice_multi"
-           value="{{ c.id }}"
+    <input type="checkbox" name="choice_multi" value="{{ c.id }}"
            {% if c.id in selected_multi_ids %}checked{% endif %}
            {% if show_next %}disabled{% endif %}>
     {{ c.text }}
@@ -209,58 +150,67 @@
   {% endfor %}
 {% endif %}
 
-<!-- RESULT MESSAGE -->
 {% if result == "correct" %}
 <div class="notification is-success mt-3">✅ Correct!</div>
 {% elif result == "wrong" %}
-<div class="notification is-danger mt-3">
-  ❌ Incorrect<br>
-  <strong>Correct answer:</strong>
-  <ul>
-    {% for c in choices %}
-      {% if c.is_correct %}
-        <li>{{ c.text }}</li>
-      {% endif %}
-    {% endfor %}
-  </ul>
-</div>
+<div class="notification is-danger mt-3">❌ Incorrect</div>
 
 {% if explanation %}
-<button
-  type="button"
-  class="button is-small is-info mt-2"
-  onclick="toggleExplanation()"
-  id="explanationToggleBtn">
+<button type="button" class="button is-small is-info mt-2"
+        onclick="toggleExplanation()" id="explanationToggleBtn">
   📘 Show Explanation
 </button>
 
-<div id="explanationBox"
-     class="notification is-info mt-3"
+<div id="explanationBox" class="notification is-info mt-3"
      style="display:none;">
-  <strong>Explanation</strong>
-  <div class="mt-2">
-    {{ explanation|linebreaks }}
-  </div>
+  {{ explanation|linebreaks }}
 </div>
 {% endif %}
 {% endif %}
 
-
-<!-- ACTIONS -->
 <div class="mt-4 is-flex is-justify-content-space-between">
   {% if show_next %}
     <button class="button is-link" name="next" value="1">Next →</button>
   {% else %}
     <button class="button is-primary">Submit</button>
   {% endif %}
-  <a href="{% url 'quiz:practice' %}?reset=1" class="button is-light">
-    🔄 Reset
-  </a>
+  <a href="{% url 'quiz:practice' %}?reset=1" class="button is-light">🔄 Reset</a>
 </div>
 
 </form>
+
+<!-- ================= USER FEEDBACK (AJAX) ================= -->
+{% if user.is_authenticated %}
+<hr class="my-4">
+
+<div id="feedbackBox" class="box is-light">
+{% if feedback_submitted %}
+  <div class="notification is-success is-light">
+    ✅ Feedback already submitted. Thanks!
+  </div>
+{% else %}
+  <p class="has-text-weight-semibold mb-2">🗣️ Feedback</p>
+
+  <button type="button" id="flagBtn"
+          class="button is-small"
+          onclick="toggleFlag()">⚠️ Incorrect / Confusing</button>
+
+  <input type="hidden" id="answerIncorrect">
+
+  <div class="field mt-2">
+    <textarea id="studentComment"
+              class="textarea is-small"
+              rows="2"
+              placeholder="Optional comment..."></textarea>
+  </div>
+
+  <button class="button is-small is-link mt-2"
+          onclick="submitFeedback()">Submit Feedback</button>
+{% endif %}
+</div>
 {% endif %}
 
+{% endif %}
 </div>
 </div>
 
@@ -268,18 +218,37 @@
 function toggleExplanation() {
   const box = document.getElementById("explanationBox");
   const btn = document.getElementById("explanationToggleBtn");
-
   if (!box || !btn) return;
+  box.style.display = box.style.display === "none" ? "block" : "none";
+  btn.innerText = box.style.display === "block"
+    ? "📘 Hide Explanation"
+    : "📘 Show Explanation";
+}
 
-  if (box.style.display === "none") {
-    box.style.display = "block";
-    btn.innerText = "📘 Hide Explanation";
-  } else {
-    box.style.display = "none";
-    btn.innerText = "📘 Show Explanation";
-  }
+let flagged = false;
+function toggleFlag() {
+  flagged = !flagged;
+  document.getElementById("flagBtn")
+    .classList.toggle("is-warning", flagged);
+  document.getElementById("answerIncorrect").value = flagged ? "1" : "";
+}
+
+function submitFeedback() {
+  const data = new FormData();
+  data.append("feedback_submit", "1");
+  data.append("student_comment",
+              document.getElementById("studentComment").value);
+  if (flagged) data.append("answer_incorrect", "1");
+  data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+  fetch(window.location.href, { method: "POST", body: data })
+    .then(() => {
+      document.getElementById("feedbackBox").innerHTML =
+        `<div class="notification is-success is-light">
+          ✅ Feedback already submitted. Thanks!
+        </div>`;
+    });
 }
 </script>
 
 {% endblock %}
-

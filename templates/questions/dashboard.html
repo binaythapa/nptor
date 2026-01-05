@@ -2,383 +2,177 @@
 {% block title %}Question Dashboard{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <!-- HEADER -->
-  <div class="mb-6">
-    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
-      <div>
-        <h1 class="title is-3 has-text-weight-semibold">📚 Question Dashboard</h1>
-        <p class="subtitle is-6 has-text-grey">Manage your quiz questions and answers</p>
-      </div>
-      <div>
-        <a href="{% url 'quiz:add_question' %}" class="button is-primary is-medium">
-          <span class="icon">
-            <i class="fas fa-plus-circle"></i>
-          </span>
-          <span>Add Question</span>
-        </a>
-      </div>
+<section class="section">
+<div class="container">
+
+<!-- ================= HEADER ================= -->
+<div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+  <div>
+    <h1 class="title is-4">🧠 Question Dashboard</h1>
+    <p class="has-text-grey is-size-7">
+      Review question quality, flags & discussions
+    </p>
+  </div>
+
+  <a href="/admin/quiz/question/add/"
+     class="button is-primary">
+    ➕ Add Question
+  </a>
+</div>
+
+<!-- ================= KPI ================= -->
+<div class="columns is-multiline mb-4">
+  <div class="column is-3">
+    <div class="box has-text-centered">
+      <p class="heading">📘 Total</p>
+      <p class="title">{{ total_questions }}</p>
     </div>
+  </div>
 
-    <!-- STATS CARDS -->
-    <div class="columns mb-5">
-      <div class="column">
-        <div class="card has-text-centered">
-          <div class="card-content">
-            <p class="title is-2 has-text-info">{{ total_questions }}</p>
-            <p class="subtitle is-6">Total Questions</p>
-          </div>
-        </div>
-      </div>
-      <div class="column">
-        <div class="card has-text-centered">
-          <div class="card-content">
-            <p class="title is-2 has-text-success">{{ active_questions }}</p>
-            <p class="subtitle is-6">Active</p>
-          </div>
-        </div>
-      </div>
-      <div class="column">
-        <div class="card has-text-centered">
-          <div class="card-content">
-            <p class="title is-2 has-text-warning">{{ mcq_count }}</p>
-            <p class="subtitle is-6">Multiple Choice</p>
-          </div>
-        </div>
-      </div>
-      <div class="column">
-        <div class="card has-text-centered">
-          <div class="card-content">
-            <p class="title is-2 has-text-danger">{{ tf_count }}</p>
-            <p class="subtitle is-6">True/False</p>
-          </div>
-        </div>
-      </div>
+  <div class="column is-3">
+    <div class="box has-text-centered has-text-success">
+      <p class="heading">✅ Active</p>
+      <p class="title">{{ active_questions }}</p>
     </div>
+  </div>
 
-    <!-- SEARCH AND FILTERS -->
-    <div class="card mb-5">
-      <div class="card-content">
-        <form method="get" class="mb-0">
-          <div class="field is-grouped is-grouped-multiline">
-            <!-- Search -->
-            <div class="control is-expanded">
-              <div class="field has-addons">
-                <div class="control is-expanded">
-                  <input class="input"
-                         type="text"
-                         name="q"
-                         value="{{ search|default:'' }}"
-                         placeholder="Search questions...">
-                </div>
-                <div class="control">
-                  <button class="button is-info">
-                    <span class="icon">
-                      <i class="fas fa-search"></i>
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Category Filter -->
-            <div class="control">
-              <div class="select">
-                <select name="category">
-                  <option value="">All Categories</option>
-                  {% for cat in categories %}
-                  <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>
-                    {{ cat }}
-                  </option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <!-- Difficulty Filter -->
-            <div class="control">
-              <div class="select">
-                <select name="difficulty">
-                  <option value="">All Difficulties</option>
-                  <option value="Easy" {% if "Easy" == selected_difficulty %}selected{% endif %}>Easy</option>
-                  <option value="Medium" {% if "Medium" == selected_difficulty %}selected{% endif %}>Medium</option>
-                  <option value="Hard" {% if "Hard" == selected_difficulty %}selected{% endif %}>Hard</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Clear Filters -->
-            {% if search or selected_category or selected_difficulty %}
-            <div class="control">
-              <a href="{% url 'quiz:question_dashboard' %}" class="button is-light">
-                <span class="icon">
-                  <i class="fas fa-times"></i>
-                </span>
-                <span>Clear</span>
-              </a>
-            </div>
-            {% endif %}
-          </div>
-        </form>
-      </div>
+  <div class="column is-3">
+    <div class="box has-text-centered has-text-warning">
+      <p class="heading">🚩 Flagged</p>
+      <p class="title">{{ flagged_questions }}</p>
     </div>
+  </div>
 
-    <!-- QUESTIONS TABLE -->
-    <div class="card">
-      <div class="card-content p-0">
-        <div class="table-container">
-          <table class="table is-fullwidth is-hoverable mb-0">
-            <thead>
-              <tr class="has-background-light">
-                <th class="has-text-weight-semibold">ID</th>
-                <th class="has-text-weight-semibold">Question</th>
-                <th class="has-text-weight-semibold">Type</th>
-                <th class="has-text-weight-semibold">Difficulty</th>
-                <th class="has-text-weight-semibold">Category</th>
-                <th class="has-text-weight-semibold">Status</th>
-                <th class="has-text-weight-semibold">Updated</th>
-                <th class="has-text-weight-semibold has-text-centered">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for q in questions %}
-              <tr class="{% if q.is_deleted %}has-background-light{% endif %}">
-                <td class="has-text-grey">#{{ q.id }}</td>
-                <td>
-                  <div class="is-flex is-align-items-center">
-                    <div>
-                      <p class="has-text-weight-medium mb-1">{{ q.text|truncatechars:80 }}</p>
-                      {% if q.question_type == 'MCQ' and q.choices.exists %}
-                      <span class="tag is-light is-small">
-                        <span class="icon is-small">
-                          <i class="fas fa-list-check"></i>
-                        </span>
-                        <span>{{ q.choices.count }} choices</span>
-                      </span>
-                      {% endif %}
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="tag {% if q.question_type == 'MCQ' %}is-info{% else %}is-warning{% endif %}">
-                    {{ q.question_type }}
-                  </span>
-                </td>
-                <td>
-                  <span class="tag 
-                    {% if q.difficulty == 'Easy' %}is-success
-                    {% elif q.difficulty == 'Medium' %}is-warning
-                    {% else %}is-danger{% endif %}">
-                    {{ q.difficulty }}
-                  </span>
-                </td>
-                <td>
-                  <span class="tag is-light">{{ q.category|default:"General" }}</span>
-                </td>
-                <td>
-                  {% if q.is_deleted %}
-                  <span class="tag is-danger is-light">
-                    <span class="icon is-small">
-                      <i class="fas fa-trash"></i>
-                    </span>
-                    <span>Deleted</span>
-                  </span>
-                  {% elif not q.is_active %}
-                  <span class="tag is-warning is-light">
-                    <span class="icon is-small">
-                      <i class="fas fa-pause-circle"></i>
-                    </span>
-                    <span>Inactive</span>
-                  </span>
-                  {% else %}
-                  <span class="tag is-success is-light">
-                    <span class="icon is-small">
-                      <i class="fas fa-check-circle"></i>
-                    </span>
-                    <span>Active</span>
-                  </span>
-                  {% endif %}
-                </td>
-                <td>
-                  <div class="has-text-grey">
-                    <div>{{ q.updated_at|date:"d M Y" }}</div>
-                    <small class="has-text-grey-light">{{ q.updated_at|date:"H:i" }}</small>
-                  </div>
-                </td>
-                <td>
-                  <div class="buttons are-small is-justify-content-center">
-                    {% if not q.is_deleted %}
-                    <a href="{% url 'quiz:edit_question' q.id %}"
-                       class="button is-light"
-                       title="Edit">
-                      <span class="icon">
-                        <i class="fas fa-edit"></i>
-                      </span>
-                    </a>
-                    
-                    {% if q.question_type == 'MCQ' %}
-                    <a href="{% url 'quiz:add_choices' q.id %}"
-                       class="button is-light"
-                       title="Manage Choices">
-                      <span class="icon">
-                        <i class="fas fa-list-check"></i>
-                      </span>
-                    </a>
-                    {% endif %}
-                    
-                    {% if request.user.is_superuser %}
-                    <a href="{% url 'quiz:delete_question' q.id %}"
-                       class="button is-light is-danger"
-                       title="Delete"
-                       onclick="return confirmDelete('{{ q.text|escapejs }}')">
-                      <span class="icon">
-                        <i class="fas fa-trash"></i>
-                      </span>
-                    </a>
-                    {% endif %}
-                    {% endif %}
-                  </div>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="8" class="has-text-centered p-6">
-                  <div class="content">
-                    <span class="icon is-large has-text-grey-light mb-3">
-                      <i class="fas fa-inbox fa-3x"></i>
-                    </span>
-                    <p class="title is-5 has-text-grey">No questions found</p>
-                    <p class="subtitle is-6 has-text-grey">
-                      {% if search or selected_category or selected_difficulty %}
-                      Try changing your search filters
-                      {% else %}
-                      Get started by adding your first question
-                      {% endif %}
-                    </p>
-                    {% if not search and not selected_category and not selected_difficulty %}
-                    <a href="{% url 'quiz:add_question' %}" class="button is-primary">
-                      <span class="icon">
-                        <i class="fas fa-plus"></i>
-                      </span>
-                      <span>Add Your First Question</span>
-                    </a>
-                    {% endif %}
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <div class="column is-3">
+    <div class="box has-text-centered has-text-danger">
+      <p class="heading">🚫 Disabled</p>
+      <p class="title">{{ disabled_questions }}</p>
     </div>
-
-    <!-- PAGINATION -->
-    {% if questions.has_other_pages %}
-    <nav class="pagination is-centered mt-5" role="navigation" aria-label="pagination">
-      {% if questions.has_previous %}
-      <a href="?page={{ questions.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}"
-         class="pagination-previous">
-        Previous
-      </a>
-      {% else %}
-      <button class="pagination-previous" disabled>Previous</button>
-      {% endif %}
-      
-      {% if questions.has_next %}
-      <a href="?page={{ questions.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}"
-         class="pagination-next">
-        Next
-      </a>
-      {% else %}
-      <button class="pagination-next" disabled>Next</button>
-      {% endif %}
-      
-      <ul class="pagination-list">
-        {% for i in questions.paginator.page_range %}
-          {% if questions.number == i %}
-          <li><a class="pagination-link is-current" aria-label="Page {{ i }}" aria-current="page">{{ i }}</a></li>
-          {% elif i > questions.number|add:'-3' and i < questions.number|add:'3' %}
-          <li>
-            <a href="?page={{ i }}{% if search %}&q={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}"
-               class="pagination-link" aria-label="Goto page {{ i }}">
-              {{ i }}
-            </a>
-          </li>
-          {% endif %}
-        {% endfor %}
-      </ul>
-    </nav>
-    {% endif %}
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-function confirmDelete(questionText) {
-  const safeText = questionText.length > 50 ? questionText.substring(0, 50) + '...' : questionText;
-  return confirm(`Are you sure you want to delete this question?\n\n"${safeText}"\n\nThis action cannot be undone.`);
-}
+<!-- ================= FILTERS ================= -->
+<form method="get" class="box mb-4">
+<div class="columns is-multiline">
 
-// Auto-submit filters when changed
-document.addEventListener('DOMContentLoaded', function() {
-  const categorySelect = document.querySelector('select[name="category"]');
-  const difficultySelect = document.querySelector('select[name="difficulty"]');
-  
-  if (categorySelect) {
-    categorySelect.addEventListener('change', function() {
-      this.form.submit();
-    });
-  }
-  
-  if (difficultySelect) {
-    difficultySelect.addEventListener('change', function() {
-      this.form.submit();
-    });
-  }
-});
-</script>
+  <div class="column is-3">
+    <input class="input" name="q" placeholder="Search question..."
+           value="{{ search }}">
+  </div>
 
-<style>
-.card {
-  box-shadow: 0 2px 3px rgba(10,10,10,.1), 0 0 0 1px rgba(10,10,10,.1);
-}
+  <div class="column is-3">
+    <div class="select is-fullwidth">
+      <select name="category">
+        <option value="">All categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}"
+            {% if cat == selected_category %}selected{% endif %}>
+            {{ cat }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
 
-.table th {
-  border-bottom: 2px solid #dbdbdb;
-}
+  <div class="column is-2">
+    <div class="select is-fullwidth">
+      <select name="difficulty">
+        <option value="">All</option>
+        <option value="easy" {% if selected_difficulty == "easy" %}selected{% endif %}>Easy</option>
+        <option value="medium" {% if selected_difficulty == "medium" %}selected{% endif %}>Medium</option>
+        <option value="hard" {% if selected_difficulty == "hard" %}selected{% endif %}>Hard</option>
+      </select>
+    </div>
+  </div>
 
-.table tr:hover {
-  background-color: #fafafa !important;
-}
+  <div class="column is-2">
+    <label class="checkbox mt-2">
+      <input type="checkbox" name="flagged" value="1"
+             {% if only_flagged %}checked{% endif %}>
+      🚩 Only flagged
+    </label>
+  </div>
 
-.buttons.are-small .button {
-  margin-bottom: 0;
-}
+  <div class="column is-2">
+    <button class="button is-link is-fullwidth">Filter</button>
+  </div>
 
-.tag {
-  font-weight: 500;
-}
+</div>
+</form>
 
-.pagination-link.is-current {
-  background-color: #3273dc;
-  border-color: #3273dc;
-  color: white;
-}
+<!-- ================= TABLE ================= -->
+<div class="table-container">
+<table class="table is-fullwidth is-striped is-hoverable">
 
-.pagination {
-  margin-bottom: 2rem;
-}
+<thead>
+<tr>
+  <th>ID</th>
+  <th>Question</th>
+  <th>💬</th>
+  <th>🚩</th>
+  <th>Status</th>
+  <th>Admin</th>
+</tr>
+</thead>
 
-@media screen and (max-width: 1024px) {
-  .table-container {
-    overflow-x: auto;
-  }
-  
-  .buttons.are-small .button .icon-text span:not(.icon) {
-    display: none;
-  }
-}
-</style>
+<tbody>
+{% for q in questions %}
+<tr>
+
+<td>{{ q.id }}</td>
+
+<td title="Last activity: {{ q.latest_comment }}">
+  {{ q.text|truncatechars:70 }}
+</td>
+
+<td>{{ q.discussion_count|default:"—" }}</td>
+
+<td>
+  {% if q.flag_count > 0 %}
+    <span class="tag is-danger">{{ q.flag_count }}</span>
+  {% else %}—{% endif %}
+</td>
+
+<td>
+  {% if not q.is_active %}
+    <span class="tag is-danger">Disabled</span>
+  {% elif q.flag_count > 0 %}
+    <span class="tag is-warning">Under Review</span>
+  {% else %}
+    <span class="tag is-success">OK</span>
+  {% endif %}
+</td>
+
+<td>
+  <a href="/admin/quiz/question/{{ q.id }}/change/"
+     class="button is-small is-link">
+    Review
+  </a>
+
+  {% if not q.is_active %}
+  <form method="post" style="display:inline;">
+    {% csrf_token %}
+    <input type="hidden" name="enable_question" value="{{ q.id }}">
+    <button class="button is-small is-success ml-1">
+      Re-enable
+    </button>
+  </form>
+  {% endif %}
+</td>
+
+</tr>
+{% empty %}
+<tr>
+  <td colspan="6" class="has-text-centered has-text-grey">
+    No questions found
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+</div>
+
+</div>
+</section>
 {% endblock %}

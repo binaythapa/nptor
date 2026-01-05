@@ -12,62 +12,117 @@ def staff_required(user):
     return user.is_staff
 
 
+from django.db.models import Count, Q
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Q
-from django.shortcuts import render
-from quiz.models import Question
 
+from quiz.models import Question, QuestionDiscussion
+
+from django.db.models import Count, Q, Max
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.shortcuts import render, redirect
+from django.contrib.admin.views.decorators import staff_member_required
+
+from quiz.models import Question, QuestionDiscussion
+
+
+@staff_member_required
 def question_dashboard(request):
     questions = Question.objects.all().order_by('-updated_at')
-    
-    # Add filters
+
+    # ================= FILTERS =================
     search = request.GET.get('q', '')
     if search:
-        questions = questions.filter(
-            Q(text__icontains=search) | 
-            Q(category__icontains=search)
-        )
-    
+        questions = questions.filter(Q(text__icontains=search))
+
     category = request.GET.get('category', '')
     if category:
         questions = questions.filter(category=category)
-    
+
     difficulty = request.GET.get('difficulty', '')
     if difficulty:
         questions = questions.filter(difficulty=difficulty)
-    
-    # Get unique categories for filter dropdown
-    categories = Question.objects.values_list('category', flat=True).distinct().order_by('category')
-    
-    # Statistics
+
+    only_flagged = request.GET.get('flagged') == "1"
+    if only_flagged:
+        questions = questions.filter(
+            discussions__is_answer_incorrect=True,
+            discussions__is_deleted=False
+        ).distinct()
+
+    categories = (
+        Question.objects
+        .values_list('category', flat=True)
+        .distinct()
+        .order_by('category')
+    )
+
+    # ================= ANNOTATIONS =================
+    questions = questions.annotate(
+        discussion_count=Count(
+            'discussions',
+            filter=Q(discussions__is_deleted=False)
+        ),
+        flag_count=Count(
+            'discussions',
+            filter=Q(
+                discussions__is_answer_incorrect=True,
+                discussions__is_deleted=False
+            )
+        ),
+        latest_comment=Max(
+            'discussions__created_at',
+            filter=Q(discussions__is_deleted=False)
+        )
+    )
+
+    # ================= STATS =================
     total_questions = Question.objects.count()
     active_questions = Question.objects.filter(is_active=True).count()
-    mcq_count = Question.objects.filter(question_type='MCQ').count()
-    tf_count = Question.objects.filter(question_type='TF').count()
-    
-    # Pagination
-    paginator = Paginator(questions, 20)  # 20 per page
+    flagged_questions = Question.objects.filter(
+        discussions__is_answer_incorrect=True,
+        discussions__is_deleted=False
+    ).distinct().count()
+    disabled_questions = Question.objects.filter(is_active=False).count()
+
+    # ================= ACTION: RE-ENABLE =================
+    if request.method == "POST" and request.POST.get("enable_question"):
+        qid = request.POST.get("enable_question")
+        Question.objects.filter(id=qid).update(is_active=True)
+        return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+
+    # ================= PAGINATION =================
+    paginator = Paginator(questions, 20)
     page = request.GET.get('page')
+
     try:
         questions = paginator.page(page)
     except PageNotAnInteger:
         questions = paginator.page(1)
     except EmptyPage:
         questions = paginator.page(paginator.num_pages)
-    
+
     context = {
-        'questions': questions,
-        'search': search,
-        'selected_category': category,
-        'selected_difficulty': difficulty,
-        'categories': categories,
-        'total_questions': total_questions,
-        'active_questions': active_questions,
-        'mcq_count': mcq_count,
-        'tf_count': tf_count,
+        "questions": questions,
+        "search": search,
+        "selected_category": category,
+        "selected_difficulty": difficulty,
+        "categories": categories,
+        "only_flagged": only_flagged,
+
+        "total_questions": total_questions,
+        "active_questions": active_questions,
+        "flagged_questions": flagged_questions,
+        "disabled_questions": disabled_questions,
     }
-    
-    return render(request, 'questions/dashboard.html', context)
+
+    return render(request, "questions/dashboard.html", context)
+
+
+
+
+
+
+
 
 # views/questions.py
 

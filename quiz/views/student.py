@@ -55,6 +55,22 @@ User = get_user_model()
 
 
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db.models import Sum
+
+from quiz.models import (
+    Question,
+    Category,
+    Domain,
+    QuestionDiscussion,
+)
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db.models import Sum
+from django.http import JsonResponse
+
 def practice(request):
     """
     BASIC PRACTICE (PUBLIC)
@@ -75,35 +91,58 @@ def practice(request):
     category_id = request.POST.get("category") or request.GET.get("category")
     difficulty = request.POST.get("difficulty") or request.GET.get("difficulty")
 
-    filters = {"domain": domain_id, "category": category_id, "difficulty": difficulty}
+    filters = {
+        "domain": domain_id,
+        "category": category_id,
+        "difficulty": difficulty,
+    }
+
     last_filters = request.session.get("p_filters")
 
     # =====================================================
     # BASE QUERYSET
     # =====================================================
-    qs = Question.objects.filter(
-        question_type__in=[Question.SINGLE, Question.MULTI, Question.TRUE_FALSE],
-        is_active=True
-    ).prefetch_related("choices")
+    qs = (
+        Question.objects
+        .filter(
+            question_type__in=[
+                Question.SINGLE,
+                Question.MULTI,
+                Question.TRUE_FALSE,
+            ],
+            is_active=True,
+        )
+        .prefetch_related("choices")
+    )
 
     selected_domain = None
+
     if domain_id and domain_id.isdigit():
-        selected_domain = Domain.objects.filter(id=domain_id, is_active=True).first()
+        selected_domain = Domain.objects.filter(
+            id=domain_id,
+            is_active=True
+        ).first()
+
         if selected_domain:
             qs = qs.filter(category__domain=selected_domain)
 
     if category_id and category_id.isdigit() and selected_domain:
         cat = Category.objects.filter(
-            id=category_id, domain=selected_domain, is_active=True
+            id=category_id,
+            domain=selected_domain,
+            is_active=True
         ).first()
+
         if cat:
-            qs = qs.filter(category_id__in=cat.get_descendants_include_self())
+            qs = qs.filter(
+                category_id__in=cat.get_descendants_include_self()
+            )
 
     if difficulty:
         qs = qs.filter(difficulty=difficulty)
 
     # =====================================================
-    # RESET SESSION ON FILTER CHANGE
+    # RESET SESSION IF FILTERS CHANGED
     # =====================================================
     if filters != last_filters:
         request.session["p_filters"] = filters
@@ -115,7 +154,7 @@ def practice(request):
     total = request.session.get("p_total", qs.count())
 
     # =====================================================
-    # REMAINING
+    # REMAINING QUESTIONS
     # =====================================================
     remaining = qs.exclude(id__in=seen)
 
@@ -142,16 +181,18 @@ def practice(request):
     choices = question.choices.order_by("order", "id")
 
     # =====================================================
-    # STATE
+    # FEEDBACK STATUS (UI CONTROL)
     # =====================================================
-    result = None
-    show_next = False
-    correct_choices = choices.filter(is_correct=True)
-    selected_choice_id = None
-    selected_multi_ids = []
+    feedback_submitted = False
+    if request.user.is_authenticated:
+        feedback_submitted = QuestionDiscussion.objects.filter(
+            user=request.user,
+            question=question,
+            discussion_type=QuestionDiscussion.TYPE_DOUBT,
+        ).exists()
 
     # =====================================================
-    # 🔥 DISCUSSION SUBMIT (NEW – SAFE)
+    # 🚩 FEEDBACK SUBMIT (MUST BE BEFORE ANSWER LOGIC)
     # =====================================================
     if (
         request.method == "POST"
@@ -161,33 +202,33 @@ def practice(request):
         content = (request.POST.get("student_comment") or "").strip()
         is_incorrect = bool(request.POST.get("answer_incorrect"))
 
-        discussion_type = request.POST.get(
-            "discussion_type",
-            QuestionDiscussion.TYPE_COMMENT
-        )
-
-        if content:
-            exists = QuestionDiscussion.objects.filter(
+        if content or is_incorrect:
+            QuestionDiscussion.objects.get_or_create(
                 user=request.user,
                 question=question,
-                discussion_type=discussion_type,
-                content=content
-            ).exists()
+                discussion_type=QuestionDiscussion.TYPE_DOUBT,
+                defaults={
+                    "content": content or "Flagged as incorrect/confusing",
+                    "is_answer_incorrect": is_incorrect,
+                }
+            )
 
-            if not exists:
-                QuestionDiscussion.objects.create(
-                    user=request.user,
-                    question=question,
-                    user_exam=None,  # practice mode
-                    discussion_type=discussion_type,
-                    content=content,
-                    is_answer_incorrect=is_incorrect
-                )
-                messages.success(request, "Thanks! Your comment was added.")
-            else:
-                messages.info(request, "You already posted this comment.")
+        # AJAX response (no page reload)
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"status": "ok"})
 
-        return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+        return redirect(
+            request.path + "?" + request.META.get("QUERY_STRING", "")
+        )
+
+    # =====================================================
+    # STATE
+    # =====================================================
+    result = None
+    show_next = False
+    correct_choices = choices.filter(is_correct=True)
+    selected_choice_id = None
+    selected_multi_ids = []
 
     # =====================================================
     # SUBMIT ANSWER
@@ -195,15 +236,27 @@ def practice(request):
     if request.method == "POST" and request.POST.get("next") != "1":
 
         if question.question_type == Question.MULTI:
-            selected_multi_ids = list(map(int, request.POST.getlist("choice_multi")))
-            correct_ids = list(correct_choices.values_list("id", flat=True))
-            result = "correct" if set(selected_multi_ids) == set(correct_ids) else "wrong"
+            selected_multi_ids = list(
+                map(int, request.POST.getlist("choice_multi"))
+            )
+            correct_ids = list(
+                correct_choices.values_list("id", flat=True)
+            )
+            result = (
+                "correct"
+                if set(selected_multi_ids) == set(correct_ids)
+                else "wrong"
+            )
             show_next = result == "correct"
 
         else:
             selected_choice_id = request.POST.get("choice")
             selected = choices.filter(id=selected_choice_id).first()
-            result = "correct" if selected and selected.is_correct else "wrong"
+            result = (
+                "correct"
+                if selected and selected.is_correct
+                else "wrong"
+            )
             show_next = result == "correct"
 
     # =====================================================
@@ -213,7 +266,9 @@ def practice(request):
         seen.append(question.id)
         request.session["p_seen"] = seen
         request.session.pop("p_qid", None)
-        return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+        return redirect(
+            request.path + "?" + request.META.get("QUERY_STRING", "")
+        )
 
     # =====================================================
     # DISCUSSIONS (BEST FIRST)
@@ -225,13 +280,18 @@ def practice(request):
         .order_by(
             "-is_pinned",
             "-score",
-            "created_at"
+            "created_at",
         )
     )
 
-    categories = Category.objects.filter(
-        domain=selected_domain, is_active=True
-    ) if selected_domain else Category.objects.none()
+    categories = (
+        Category.objects.filter(
+            domain=selected_domain,
+            is_active=True,
+        )
+        if selected_domain
+        else Category.objects.none()
+    )
 
     # =====================================================
     # RENDER
@@ -244,11 +304,11 @@ def practice(request):
         "selected_multi_ids": selected_multi_ids,
         "show_next": show_next,
 
-        # explanation (unchanged)
         "explanation": question.explanation,
 
-        # NEW – discussions
         "discussions": discussions,
+
+        "feedback_submitted": feedback_submitted,
 
         "domains": Domain.objects.filter(is_active=True),
         "categories": categories,
@@ -256,9 +316,12 @@ def practice(request):
         "category_id": category_id,
         "difficulty": difficulty,
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
+
         "progress_done": len(seen),
         "progress_total": total,
     })
+
+
 
 
 

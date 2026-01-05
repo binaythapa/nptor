@@ -19,7 +19,7 @@ from quiz.models import User, Exam, UserExam
 
 admin.site.register(Client)
 admin.site.register(ExamTrackSubscription)
-admin.site.register(QuestionDiscussion)
+
 admin.site.register(DiscussionVote)
 admin.site.register(DiscussionReport)
 admin.site.register(QuestionQualitySignal)
@@ -425,6 +425,8 @@ class QuestionFeedbackAdmin(admin.ModelAdmin):
     autocomplete_fields = ('question', 'user', 'user_exam')
     date_hierarchy = 'created_at'
     list_per_page = 50
+    date_hierarchy = None
+
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -511,3 +513,51 @@ def reset_mock_attempts(request, user_id, exam_id):
         )
 
     return redirect("quiz:admin_dashboard")
+
+
+from django.contrib import admin
+from .models import QuestionDiscussion, Question
+
+
+@admin.register(QuestionDiscussion)
+class QuestionDiscussionAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "question",
+        "user",
+        "discussion_type",
+        "is_answer_incorrect",
+        "is_staff_verified",
+        "created_at",
+    )
+
+    list_filter = (
+        "discussion_type",
+        "is_answer_incorrect",
+        "is_staff_verified",
+        "created_at",
+    )
+
+    search_fields = (
+        "question__text",
+        "content",
+        "user__username",
+    )
+
+    actions = [
+        "mark_verified",
+        "disable_question",
+    ]
+
+    def mark_verified(self, request, queryset):
+        queryset.update(is_staff_verified=True)
+        self.message_user(request, "Selected reports marked as verified.")
+
+    mark_verified.short_description = "✅ Mark selected as verified"
+
+    def disable_question(self, request, queryset):
+        question_ids = queryset.values_list("question_id", flat=True)
+        Question.objects.filter(id__in=question_ids).update(is_active=False)
+        self.message_user(request, "🚫 Related questions disabled.")
+
+    disable_question.short_description = "🚫 Disable related questions"
