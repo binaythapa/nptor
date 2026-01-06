@@ -60,47 +60,56 @@ logger = logging.getLogger(__name__)
 @login_required
 @require_POST
 def subscribe_track(request, track_id):
-    track = get_object_or_404(ExamTrack, id=track_id)
+    track = get_object_or_404(ExamTrack, id=track_id, is_active=True)
 
     coupon_code = request.POST.get("coupon")
-    price = track.lifetime_price or 0
+    price = track.lifetime_price or Decimal("0")
 
     final_price, error = apply_coupon(price, coupon_code)
-
     if error:
         messages.error(request, error)
         return redirect("quiz:exam_list")
 
-    ExamTrackSubscription.objects.create(
+    sub, created = ExamTrackSubscription.objects.update_or_create(
         user=request.user,
         track=track,
-        is_active=True,
-        payment_required=final_price > 0,
-        amount=final_price,
-        expires_at=None  # lifetime
+        defaults={
+            "is_active": True,
+            "payment_required": final_price > 0,
+            "amount": final_price,
+            "expires_at": None,   # lifetime
+            "is_trial": False,
+        }
     )
 
-    messages.success(request, "Subscription activated")
+    messages.success(request, "Subscription activated successfully.")
     return redirect("quiz:student_dashboard")
+
 
 @login_required
 @require_POST
 def subscribe_exam(request, exam_id):
-    exam = get_object_or_404(Exam, id=exam_id, is_published=True)
+    exam = get_object_or_404(
+        Exam,
+        id=exam_id,
+        is_published=True
+    )
 
-    sub, created = ExamSubscription.objects.get_or_create(
+    sub, created = ExamSubscription.objects.update_or_create(
         user=request.user,
         exam=exam,
         defaults={
-            "is_active": True,
+            "is_active": True,          # 🔑 re-activate if revoked
             "payment_required": False,
             "amount": 0,
             "currency": "INR",
+            "expires_at": None,         # lifetime
         }
     )
 
     messages.success(request, "Exam subscribed successfully.")
     return redirect("quiz:exam_list")
+
 
 
 
