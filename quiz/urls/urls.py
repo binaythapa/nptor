@@ -213,11 +213,7 @@ urlpatterns = [
         create_coupon_ajax,
         name="create_coupon_ajax",
     ),
-    path(
-        "dashboard/admin/update-track-pricing/",
-        update_track_pricing,
-        name="update_track_pricing",
-    ),
+    
     path(
         "dashboard/admin/update-track-pricing-type/",
         update_track_pricing_type,
@@ -233,6 +229,57 @@ path(
     "dashboard/admin/reset-mock/<int:user_id>/<int:exam_id>/",
     reset_mock_attempts,
     name="reset_mock_attempts",
+),
+
+
+
+# ============================================================
+# ADMIN – MANUAL SUBSCRIPTIONS
+# ============================================================
+path(
+    "dashboard/admin/subscribe/exam/",
+    admin_subscribe_exam,
+    name="admin_subscribe_exam",
+),
+path(
+    "dashboard/admin/revoke/exam/",
+    admin_revoke_exam,
+    name="admin_revoke_exam",
+),
+path(
+    "dashboard/admin/subscribe/track/",
+    admin_subscribe_track,
+    name="admin_subscribe_track",
+),
+path(
+    "dashboard/admin/revoke/track/",
+    admin_revoke_track,
+    name="admin_revoke_track",
+),
+
+
+path(
+    "dashboard/admin/update-expiry/exam/",
+    admin_update_exam_expiry,
+    name="admin_update_exam_expiry",
+),
+path(
+    "dashboard/admin/update-expiry/track/",
+    admin_update_track_expiry,
+    name="admin_update_track_expiry",
+),
+
+
+path(
+    "dashboard/admin/add-exam-days/",
+    admin_add_exam_days,
+    name="admin_add_exam_days",
+),
+
+path(
+    "dashboard/admin/add-track-days/",
+    admin_add_track_days,
+    name="admin_add_track_days",
 ),
 
 

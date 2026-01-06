@@ -656,7 +656,7 @@ def practice_express_next(request):
         if anon_attempted >= limit:
             return JsonResponse({
                 "limit_reached": True,
-                "message": f"Free limit of {limit} question(s) reached.",
+                "message": f"Free limit of {limit} question(s) reached.Login to unlock unlimited access.",
                 "progress_done": anon_attempted,
                 "progress_total": limit,
             })

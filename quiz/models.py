@@ -460,6 +460,11 @@ class ExamTrackSubscription(models.Model):
     )
     currency = models.CharField(max_length=10, default="INR")
     is_trial = models.BooleanField(default=False)
+    subscribed_by_admin = models.BooleanField(
+        default=False,
+        help_text="Granted manually by admin"
+    )
+
 
 
     class Meta:
@@ -607,6 +612,12 @@ class ExamSubscription(models.Model):
         max_length=10,
         default="INR"
     )
+
+    subscribed_by_admin = models.BooleanField(
+        default=False,
+        help_text="Granted manually by admin"
+    )
+
 
     class Meta:
         unique_together = ("user", "exam")
