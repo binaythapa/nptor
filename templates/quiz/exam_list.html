@@ -62,8 +62,13 @@
               WhatsApp
             </a>
 
-            <a href="viber://chat?number=918754795806"
-               onclick="logLead('track','{{ track.id }}','viber')"
+            <!-- ✅ UPDATED VIBER -->
+            <a href="javascript:void(0)"
+               onclick="openViber(
+                 'Hi I want to enroll in {{ track.title }}',
+                 'track',
+                 '{{ track.id }}'
+               )"
                class="button is-link is-small is-fullwidth">
               Viber
             </a>
@@ -86,7 +91,6 @@
       {{ item.exam.duration_seconds }} sec
     </div>
 
-    <!-- ================= EXAM-LEVEL SUBSCRIPTION ================= -->
     {% if track.subscription_scope == "exam" %}
 
       {% if item.is_exam_subscribed %}
@@ -98,44 +102,13 @@
       {% else %}
 
         {% if item.exam.is_free %}
-          <!-- ✅ FREE EXAM -->
-          {% if item.exam.is_free %}
-  <!-- FREE EXAM -->
-  <form method="post" action="{% url 'quiz:subscribe_exam' item.exam.id %}">
-    {% csrf_token %}
-    <button class="button is-success is-small">
-      Subscribe Free
-    </button>
-  </form>
-
-{% else %}
-  <!-- PAID EXAM -->
-  <div class="contact-enroll-wrapper">
-    <button class="button is-warning is-small"
-            onclick="toggleEnrollMenu(this)">
-      📞 Contact to Enroll
-    </button>
-
-    <div class="contact-enroll-menu">
-      <a href="https://wa.me/918754795806?text=Hi%20I%20want%20to%20enroll%20in%20{{ item.exam.title }}"
-         target="_blank"
-         onclick="logLead('exam','{{ item.exam.id }}','whatsapp')"
-         class="button is-success is-small is-fullwidth mb-1">
-        WhatsApp
-      </a>
-
-      <a href="viber://chat?number=918754795806"
-         onclick="logLead('exam','{{ item.exam.id }}','viber')"
-         class="button is-link is-small is-fullwidth">
-        Viber
-      </a>
-    </div>
-  </div>
-{% endif %}
-
-
+          <form method="post" action="{% url 'quiz:subscribe_exam' item.exam.id %}">
+            {% csrf_token %}
+            <button class="button is-success is-small">
+              Subscribe Free
+            </button>
+          </form>
         {% else %}
-          <!-- ❌ PAID EXAM -->
           <div class="contact-enroll-wrapper">
             <button class="button is-warning is-small"
                     onclick="toggleEnrollMenu(this)">
@@ -150,8 +123,13 @@
                 WhatsApp
               </a>
 
-              <a href="viber://chat?number=918754795806"
-                 onclick="logLead('exam','{{ item.exam.id }}','viber')"
+              <!-- ✅ UPDATED VIBER -->
+              <a href="javascript:void(0)"
+                 onclick="openViber(
+                   'Hi I want to enroll in {{ item.exam.title }}',
+                   'exam',
+                   '{{ item.exam.id }}'
+                 )"
                  class="button is-link is-small is-fullwidth">
                 Viber
               </a>
@@ -223,6 +201,14 @@ function logLead(type, id, method) {
       method: method
     })
   });
+}
+
+/* ✅ VIBER MESSAGE SUPPORT */
+function openViber(message, type, id) {
+  logLead(type, id, 'viber');
+  const encodedMessage = encodeURIComponent(message);
+  window.location.href =
+    `viber://chat?number=918754795806&text=${encodedMessage}`;
 }
 </script>
 
