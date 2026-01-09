@@ -1138,3 +1138,150 @@ class QuestionQualitySignal(models.Model):
 
     class Meta:
         unique_together = ("question", "user")
+
+
+#########################################################
+
+class ContactMethod(models.Model):
+    """
+    Lookup table for contact methods.
+    """
+    code = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+class EnrollmentLead(models.Model):
+    """
+    User showed intent to enroll in a paid Exam or Track.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="enrollment_leads"
+    )
+
+    track = models.ForeignKey(
+        ExamTrack,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="enrollment_leads"
+    )
+
+    exam = models.ForeignKey(
+        Exam,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="enrollment_leads"
+    )
+
+    contact_method = models.ForeignKey(
+        ContactMethod,
+        on_delete=models.PROTECT
+    )
+
+    is_converted = models.BooleanField(
+        default=False,
+        help_text="Set true once subscription is granted"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def clean(self):
+        """
+        Business rule enforcement (Python-level, safe everywhere)
+        """
+        if self.track and self.exam:
+            raise ValidationError(
+                "EnrollmentLead cannot have both track and exam."
+            )
+
+        if not self.track and not self.exam:
+            raise ValidationError(
+                "EnrollmentLead must have either track or exam."
+            )
+
+    def target_name(self):
+        return self.track.title if self.track else self.exam.title
+
+    def __str__(self):
+        return f"{self.user} → {self.target_name()} ({self.contact_method})"
+
+
+class PaymentRecord(models.Model):
+    """
+    Immutable payment history.
+    One row = one payment.
+    """
+
+    PAYMENT_UPI = "upi"
+    PAYMENT_BANK = "bank"
+    PAYMENT_CASH = "cash"
+    PAYMENT_OTHER = "other"
+
+    PAYMENT_METHOD_CHOICES = [
+        (PAYMENT_UPI, "UPI"),
+        (PAYMENT_BANK, "Bank Transfer"),
+        (PAYMENT_CASH, "Cash"),
+        (PAYMENT_OTHER, "Other"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="payment_records"
+    )
+
+    track = models.ForeignKey(
+        ExamTrack,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    exam = models.ForeignKey(
+        Exam,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    currency = models.CharField(max_length=10, default="INR")
+
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHOD_CHOICES
+    )
+
+    reference_id = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    remarks = models.TextField(blank=True)
+
+    paid_at = models.DateTimeField(auto_now_add=True)
+
+    created_by_admin = models.BooleanField(default=True)
+
+    def clean(self):
+        if self.track and self.exam:
+            raise ValidationError("Payment cannot be for both track and exam.")
+
+        if not self.track and not self.exam:
+            raise ValidationError("Payment must be linked to a track or exam.")
+
+    def target_name(self):
+        return self.track.title if self.track else self.exam.title
+
+    def __str__(self):
+        return f"{self.user} paid {self.amount} for {self.target_name()}"
+

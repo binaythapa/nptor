@@ -315,4 +315,12 @@ path(
         name="delete_question",
     ),
 
+
+    path(
+    "log-enrollment-lead/",
+    log_enrollment_lead,
+    name="log_enrollment_lead"
+),
+
+
 ]

@@ -561,3 +561,47 @@ class QuestionDiscussionAdmin(admin.ModelAdmin):
         self.message_user(request, "🚫 Related questions disabled.")
 
     disable_question.short_description = "🚫 Disable related questions"
+
+
+
+    ##################################################################################
+
+@admin.register(ContactMethod)
+class ContactMethodAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name", "code")
+
+
+@admin.register(EnrollmentLead)
+class EnrollmentLeadAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "target_name",
+        "contact_method",
+        "is_converted",
+        "created_at",
+    )
+    list_filter = ("contact_method", "is_converted", "created_at")
+    search_fields = ("user__username",)
+
+    def target_name(self, obj):
+        return obj.target_name()
+
+
+@admin.register(PaymentRecord)
+class PaymentRecordAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "target_name",
+        "amount",
+        "currency",
+        "payment_method",
+        "paid_at",
+    )
+    list_filter = ("payment_method", "currency")
+    search_fields = ("user__username", "reference_id")
+
+    def target_name(self, obj):
+        return obj.target_name()
+

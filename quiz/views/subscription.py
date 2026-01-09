@@ -156,6 +156,35 @@ def subscribe_track_checkout(request, track_id):
 
 
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+
+from quiz.models import Exam, ExamTrack
+# EnrollmentLead will be added later — for now just log safely
+
+
+@require_POST
+@login_required
+def log_enrollment_lead(request):
+    """
+    Logs 'Contact to Enroll' clicks.
+    Safe no-op version (no DB dependency yet).
+    """
+
+    item_type = request.POST.get("type")   # exam / track
+    item_id = request.POST.get("item_id")
+    method = request.POST.get("method")    # whatsapp / viber
+
+    # ✅ For now, just validate input and return success
+    if item_type not in ("exam", "track"):
+        return JsonResponse({"ok": False}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+
+
 
 
 

@@ -19,25 +19,16 @@
       </p>
     </div>
 
-    <!-- TRACK STATUS BADGE -->
     {% if items.0.is_track_subscribed %}
-      <span class="tag is-success is-light">
-        ✔ Subscribed
-      </span>
-
+      <span class="tag is-success is-light">✔ Subscribed</span>
     {% elif track.is_free %}
-      <span class="tag is-success is-light">
-        🆓 Free (Subscription Required)
-      </span>
-
+      <span class="tag is-success is-light">🆓 Free</span>
     {% else %}
-      <span class="tag is-warning is-light">
-        🔒 Premium
-      </span>
+      <span class="tag is-warning is-light">🔒 Premium</span>
     {% endif %}
   </div>
 
-  <!-- ================= TRACK PRICING / SUBSCRIBE ================= -->
+  <!-- ================= TRACK-LEVEL SUBSCRIPTION ================= -->
   {% if track.subscription_scope == "track" and not items.0.is_track_subscribed %}
   <div class="notification is-light is-info mt-3">
     <strong>{{ track.title }}</strong><br>
@@ -48,9 +39,7 @@
       Unlock all {{ items|length }} levels with a subscription.
     {% endif %}
 
-    <!-- PRICING OPTIONS -->
     <div class="buttons mt-3">
-
       {% if track.is_free %}
         <form method="post" action="{% url 'quiz:subscribe_track' track.id %}">
           {% csrf_token %}
@@ -58,23 +47,28 @@
             Subscribe Free
           </button>
         </form>
-
       {% else %}
-        {% if track.monthly_price %}
-          <button class="button is-link is-small" disabled>
-            Monthly ₹{{ track.monthly_price }}
+        <div class="contact-enroll-wrapper">
+          <button class="button is-warning is-small"
+                  onclick="toggleEnrollMenu(this)">
+            📞 Contact to Enroll
           </button>
-        {% endif %}
 
-        {% if track.lifetime_price %}
-          <button class="button is-primary is-small" disabled>
-            Lifetime ₹{{ track.lifetime_price }}
-          </button>
-        {% endif %}
+          <div class="contact-enroll-menu">
+            <a href="https://wa.me/918754795806?text=Hi%20I%20want%20to%20enroll%20in%20{{ track.title }}"
+               target="_blank"
+               onclick="logLead('track','{{ track.id }}','whatsapp')"
+               class="button is-success is-small is-fullwidth mb-1">
+              WhatsApp
+            </a>
 
-        <p class="is-size-7 has-text-grey mt-1">
-          💡 Payment integration coming soon.
-        </p>
+            <a href="viber://chat?number=918754795806"
+               onclick="logLead('track','{{ track.id }}','viber')"
+               class="button is-link is-small is-fullwidth">
+              Viber
+            </a>
+          </div>
+        </div>
       {% endif %}
     </div>
   </div>
@@ -92,39 +86,144 @@
       {{ item.exam.duration_seconds }} sec
     </div>
 
-    <!-- EXAM-LEVEL SUBSCRIPTION -->
+    <!-- ================= EXAM-LEVEL SUBSCRIPTION ================= -->
     {% if track.subscription_scope == "exam" %}
+
       {% if item.is_exam_subscribed %}
-        <span class="tag is-success is-light">
-          ✔ Subscribed
-        </span>
+        <span class="tag is-success is-light">✔ Subscribed</span>
 
       {% elif item.locked %}
-        <span class="tag is-light">
-          🔒 {{ item.locked_reason }}
-        </span>
+        <span class="tag is-light">🔒 {{ item.locked_reason }}</span>
 
       {% else %}
-        <form method="post"
-              action="{% url 'quiz:subscribe_exam' item.exam.id %}">
-          {% csrf_token %}
-          <button class="button is-primary is-small">
-            {% if track.is_free %}
-              Subscribe Free
-            {% else %}
-              Subscribe
-            {% endif %}
-          </button>
-        </form>
+
+        {% if item.exam.is_free %}
+          <!-- ✅ FREE EXAM -->
+          {% if item.exam.is_free %}
+  <!-- FREE EXAM -->
+  <form method="post" action="{% url 'quiz:subscribe_exam' item.exam.id %}">
+    {% csrf_token %}
+    <button class="button is-success is-small">
+      Subscribe Free
+    </button>
+  </form>
+
+{% else %}
+  <!-- PAID EXAM -->
+  <div class="contact-enroll-wrapper">
+    <button class="button is-warning is-small"
+            onclick="toggleEnrollMenu(this)">
+      📞 Contact to Enroll
+    </button>
+
+    <div class="contact-enroll-menu">
+      <a href="https://wa.me/918754795806?text=Hi%20I%20want%20to%20enroll%20in%20{{ item.exam.title }}"
+         target="_blank"
+         onclick="logLead('exam','{{ item.exam.id }}','whatsapp')"
+         class="button is-success is-small is-fullwidth mb-1">
+        WhatsApp
+      </a>
+
+      <a href="viber://chat?number=918754795806"
+         onclick="logLead('exam','{{ item.exam.id }}','viber')"
+         class="button is-link is-small is-fullwidth">
+        Viber
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+
+        {% else %}
+          <!-- ❌ PAID EXAM -->
+          <div class="contact-enroll-wrapper">
+            <button class="button is-warning is-small"
+                    onclick="toggleEnrollMenu(this)">
+              📞 Contact to Enroll
+            </button>
+
+            <div class="contact-enroll-menu">
+              <a href="https://wa.me/918754795806?text=Hi%20I%20want%20to%20enroll%20in%20{{ item.exam.title }}"
+                 target="_blank"
+                 onclick="logLead('exam','{{ item.exam.id }}','whatsapp')"
+                 class="button is-success is-small is-fullwidth mb-1">
+                WhatsApp
+              </a>
+
+              <a href="viber://chat?number=918754795806"
+                 onclick="logLead('exam','{{ item.exam.id }}','viber')"
+                 class="button is-link is-small is-fullwidth">
+                Viber
+              </a>
+            </div>
+          </div>
+        {% endif %}
+
       {% endif %}
     {% endif %}
 
   </div>
   {% endfor %}
-
 </div>
+
 {% empty %}
 <p>No exams available.</p>
 {% endfor %}
+
+<!-- ================= CSS ================= -->
+<style>
+.contact-enroll-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.contact-enroll-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 110%;
+  background: white;
+  border: 1px solid #dbdbdb;
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  min-width: 160px;
+  z-index: 20;
+}
+
+.contact-enroll-menu.is-active {
+  display: block;
+}
+</style>
+
+<!-- ================= JS ================= -->
+<script>
+function toggleEnrollMenu(btn) {
+  event.stopPropagation();
+  document.querySelectorAll('.contact-enroll-menu')
+    .forEach(m => m.classList.remove('is-active'));
+  btn.nextElementSibling.classList.toggle('is-active');
+}
+
+document.addEventListener('click', function () {
+  document.querySelectorAll('.contact-enroll-menu')
+    .forEach(m => m.classList.remove('is-active'));
+});
+
+function logLead(type, id, method) {
+  fetch("{% url 'quiz:log_enrollment_lead' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": "{{ csrf_token }}",
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      type: type,
+      item_id: id,
+      method: method
+    })
+  });
+}
+</script>
 
 {% endblock %}
