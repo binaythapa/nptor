@@ -594,8 +594,11 @@ def exam_list(request):
                 # exam-level subscription
                 can_subscribe = locked_reason is None
 
+            duration_minutes = exam.duration_seconds // 60
+
             items.append({
                 "exam": exam,
+                "duration_minutes": duration_minutes,
                 "is_exam_subscribed": is_exam_subscribed,
                 "can_subscribe": can_subscribe,
                 "locked_reason": locked_reason,

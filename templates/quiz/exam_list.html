@@ -86,10 +86,10 @@
   <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
 
     <div>
-      <strong>Level {{ item.exam.level }}</strong> •
-      {{ item.exam.question_count }} questions •
-      {{ item.exam.duration_seconds }} sec
-    </div>
+  <strong>Level {{ item.exam.level }}</strong> •
+  {{ item.exam.question_count }} questions •
+  {{ item.duration_minutes }} min
+</div>
 
     {% if track.subscription_scope == "exam" %}
 
