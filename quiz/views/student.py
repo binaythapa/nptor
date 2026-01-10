@@ -70,7 +70,6 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Sum
 from django.http import JsonResponse
-
 def practice(request):
     """
     BASIC PRACTICE (PUBLIC)
@@ -181,6 +180,18 @@ def practice(request):
     choices = question.choices.order_by("order", "id")
 
     # =====================================================
+    # 🆕 SKIP QUESTION (SAFE & ISOLATED)
+    # =====================================================
+    if request.method == "POST" and request.POST.get("skip") == "1":
+        seen.append(question.id)
+        request.session["p_seen"] = seen
+        request.session.pop("p_qid", None)
+
+        return redirect(
+            request.path + "?" + request.META.get("QUERY_STRING", "")
+        )
+
+    # =====================================================
     # FEEDBACK STATUS (UI CONTROL)
     # =====================================================
     feedback_submitted = False
@@ -192,7 +203,7 @@ def practice(request):
         ).exists()
 
     # =====================================================
-    # 🚩 FEEDBACK SUBMIT (MUST BE BEFORE ANSWER LOGIC)
+    # 🚩 FEEDBACK SUBMIT
     # =====================================================
     if (
         request.method == "POST"
@@ -213,7 +224,6 @@ def practice(request):
                 }
             )
 
-        # AJAX response (no page reload)
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({"status": "ok"})
 
@@ -271,17 +281,13 @@ def practice(request):
         )
 
     # =====================================================
-    # DISCUSSIONS (BEST FIRST)
+    # DISCUSSIONS
     # =====================================================
     discussions = (
         QuestionDiscussion.objects
         .filter(question=question, is_deleted=False)
         .annotate(score=Sum("votes__value"))
-        .order_by(
-            "-is_pinned",
-            "-score",
-            "created_at",
-        )
+        .order_by("-is_pinned", "-score", "created_at")
     )
 
     categories = (
@@ -303,25 +309,18 @@ def practice(request):
         "selected_choice_id": selected_choice_id,
         "selected_multi_ids": selected_multi_ids,
         "show_next": show_next,
-
         "explanation": question.explanation,
-
         "discussions": discussions,
-
         "feedback_submitted": feedback_submitted,
-
         "domains": Domain.objects.filter(is_active=True),
         "categories": categories,
         "domain_id": domain_id,
         "category_id": category_id,
         "difficulty": difficulty,
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
-
         "progress_done": len(seen),
         "progress_total": total,
     })
-
-
 
 
 
@@ -595,7 +594,8 @@ def practice_express_next(request):
     # ❌ REMOVED question_type filter
     # -------------------------------
     qs = Question.objects.filter(
-        category__isnull=False
+        category__isnull=False ,
+        is_active= True
     ).prefetch_related("choices")
 
     # -------------------------------

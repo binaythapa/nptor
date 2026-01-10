@@ -168,7 +168,21 @@
 {% if category_id %}<input type="hidden" name="category" value="{{ category_id }}">{% endif %}
 {% if difficulty %}<input type="hidden" name="difficulty" value="{{ difficulty }}">{% endif %}
 
-<p class="mb-4 has-text-weight-semibold">{{ question.text }}</p>
+<p class="mb-2 has-text-weight-semibold">{{ question.text }}</p>
+
+{% if user.is_staff %}
+  <div class="mb-3">
+    <a href="{% url 'admin:quiz_question_change' question.id %}"
+       target="_blank"
+       class="button is-small is-warning is-light">
+      ✏️ Edit Question (Admin)
+    </a>
+    <span class="tag is-light ml-2">
+      ID: {{ question.id }}
+    </span>
+  </div>
+{% endif %}
+
 
 {% if question.question_type != "multi" %}
   {% for c in choices %}
@@ -215,13 +229,33 @@
 {% endif %}
 
 <div class="practice-actions mt-4 is-flex is-justify-content-space-between">
-  {% if show_next %}
-    <button class="button is-link" name="next" value="1">Next →</button>
-  {% else %}
-    <button class="button is-primary">Submit</button>
-  {% endif %}
-  <a href="{% url 'quiz:practice' %}?reset=1" class="button is-light">🔄 Reset</a>
+
+  <div class="is-flex" style="gap:8px;">
+    {% if show_next %}
+      <button class="button is-link" name="next" value="1">
+        Next →
+      </button>
+    {% else %}
+      <button class="button is-primary">
+        Submit
+      </button>
+    {% endif %}
+
+    <!-- 🆕 SKIP BUTTON -->
+    <button class="button is-warning is-light"
+            type="submit"
+            name="skip"
+            value="1">
+      ⏭ Skip
+    </button>
+  </div>
+
+  <a href="{% url 'quiz:practice' %}?reset=1"
+     class="button is-light">
+    🔄 Reset
+  </a>
 </div>
+
 
 </form>
 
