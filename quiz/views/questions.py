@@ -24,7 +24,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 from quiz.models import Question, QuestionDiscussion
 
-
 @staff_member_required
 def question_dashboard(request):
     questions = Question.objects.all().order_by('-updated_at')
@@ -32,7 +31,7 @@ def question_dashboard(request):
     # ================= FILTERS =================
     search = request.GET.get('q', '')
     if search:
-        questions = questions.filter(Q(text__icontains=search))
+        questions = questions.filter(text__icontains=search)
 
     category = request.GET.get('category', '')
     if category:
@@ -41,6 +40,13 @@ def question_dashboard(request):
     difficulty = request.GET.get('difficulty', '')
     if difficulty:
         questions = questions.filter(difficulty=difficulty)
+
+    # ✅ NEW: is_active STATUS FILTER
+    status = request.GET.get('status', '')
+    if status == "active":
+        questions = questions.filter(is_active=True)
+    elif status == "disabled":
+        questions = questions.filter(is_active=False)
 
     only_flagged = request.GET.get('flagged') == "1"
     if only_flagged:
@@ -106,6 +112,7 @@ def question_dashboard(request):
         "search": search,
         "selected_category": category,
         "selected_difficulty": difficulty,
+        "selected_status": status,   # ✅ IMPORTANT
         "categories": categories,
         "only_flagged": only_flagged,
 
@@ -116,7 +123,6 @@ def question_dashboard(request):
     }
 
     return render(request, "questions/dashboard.html", context)
-
 
 
 
