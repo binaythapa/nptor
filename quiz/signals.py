@@ -11,3 +11,5 @@ def _on_category_save(sender, instance, **kwargs):
 @receiver(post_delete, sender=Category)
 def _on_category_delete(sender, instance, **kwargs):
     clear_leaf_category_cache()
+
+

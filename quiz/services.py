@@ -13,3 +13,5 @@ class ExamAccessService:
 
         locked, _ = check_exam_lock(user, exam)
         return not locked
+
+

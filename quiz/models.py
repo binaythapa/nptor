@@ -1285,3 +1285,5 @@ class PaymentRecord(models.Model):
     def __str__(self):
         return f"{self.user} paid {self.amount} for {self.target_name()}"
 
+
+

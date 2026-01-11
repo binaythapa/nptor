@@ -206,3 +206,5 @@ class SafeStrMixin:
 def user_passed_exam(user, exam: "Exam") -> bool:
     # keep your existing logic here
     return True
+
+

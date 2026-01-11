@@ -605,3 +605,4 @@ class PaymentRecordAdmin(admin.ModelAdmin):
     def target_name(self, obj):
         return obj.target_name()
 
+
