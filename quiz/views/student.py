@@ -110,6 +110,7 @@ def practice(request):
                 Question.TRUE_FALSE,
             ],
             is_active=True,
+            is_deleted= False,
         )
         .prefetch_related("choices")
     )

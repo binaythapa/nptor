@@ -36,13 +36,15 @@
 .practice-option:hover { background: #f9fafb; }
 
 .practice-option.correct {
-  background: #ecfdf5;
-  border-color: #34d399;
+  background: #f0fdf4;        /* very soft green */
+  border-color: #86efac;      /* muted green */
+  color: #065f46;             /* deep readable green */
 }
 
 .practice-option.wrong {
-  background: #fef2f2;
-  border-color: #f87171;
+  background: #fef7f7;        /* soft pink, not red */
+  border-color: #fca5a5;      /* muted red */
+  color: #7f1d1d;             /* calm dark red */
 }
 
 /* ================= MOBILE ================= */
@@ -210,10 +212,34 @@
   {% endfor %}
 {% endif %}
 
+
+
 {% if result == "correct" %}
 <div class="notification is-success mt-3">✅ Correct!</div>
 {% elif result == "wrong" %}
-<div class="notification is-danger mt-3">❌ Incorrect</div>
+<div class="notification mt-3"
+     style="background:#fff7f7; border-left:4px solid #fca5a5;">
+
+  <p style="color:#7f1d1d; font-weight:600;">
+    ❌ Incorrect
+  </p>
+
+  <p class="mt-2" style="color:#374151; font-weight:500;">
+    Correct answer:
+  </p>
+
+  <ul class="mt-2 ml-3">
+    {% for c in choices %}
+      {% if c.is_correct %}
+        <li style="color:#065f46;">
+          ✔ {{ c.text }}
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</div>
+
+
 
 {% if explanation %}
 <button type="button" class="button is-small is-info mt-2"

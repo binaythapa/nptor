@@ -94,11 +94,9 @@
 
           <!-- Welcome -->
           <a href="{% url 'quiz:profile' %}" class="welcome-user is-hidden-mobile">
-            <span class="user-avatar">
-              {{ user.username|first|upper }}
-            </span>
+            
             <span class="welcome-text">
-              Welcome, <strong>{{ user.username }}</strong>
+              Welcome, <strong>{{ user.first_name }}</strong>
             </span>
           </a>
 
