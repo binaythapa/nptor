@@ -319,6 +319,21 @@ def practice(request):
         else Category.objects.none()
     )
 
+        # =====================================================
+    # PREVIOUS FEEDBACKS (READ-ONLY)
+    # =====================================================
+    previous_feedbacks = (
+        QuestionDiscussion.objects
+        .filter(
+            question=question,
+            discussion_type=QuestionDiscussion.TYPE_DOUBT,
+            is_deleted=False
+        )
+        .select_related("user")
+        .order_by("-created_at")
+    )
+
+
     # =====================================================
     # RENDER
     # =====================================================
@@ -340,6 +355,8 @@ def practice(request):
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
         "progress_done": len(seen),
         "progress_total": total,
+        "previous_feedbacks": previous_feedbacks,
+
     })
 
 

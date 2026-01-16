@@ -529,6 +529,7 @@ class QuestionDiscussionAdmin(admin.ModelAdmin):
         "is_answer_incorrect",
         "is_staff_verified",
         "created_at",
+        "content",
     )
 
     list_filter = (

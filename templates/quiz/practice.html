@@ -17,6 +17,7 @@
 }
 
 /* ================= OPTIONS ================= */
+
 .practice-option {
   display: flex;
   align-items: flex-start;
@@ -161,23 +162,6 @@
   </div>
 </form>
 
-
-<!-- ================= FREE LIMIT ================= -->
-{% if anon_limit_reached %}
-<div class="notification is-warning">
-    <h3 class="title is-5">Free practice limit reached</h3>
-    <p>
-        You’ve completed {{ anon_limit }} free questions.
-        Please <strong>log in</strong> for unlimited access.
-    </p>
-    <a href="{% url 'login' %}?next={{ request.path }}" class="button is-primary mt-3">
-        Login to Continue
-    </a>
-</div>
-{% endif %}
-
-
-
 <!-- ================= QUESTION ================= -->
 {% if question %}
 <form method="post">
@@ -320,12 +304,14 @@
 
   <input type="hidden" id="answerIncorrect">
 
-  <div class="field mt-2">
-    <textarea id="studentComment"
-              class="textarea is-small"
-              rows="2"
-              placeholder="Optional comment..."></textarea>
-  </div>
+ <div class="field mt-2">
+  <textarea id="studentComment"
+            class="textarea is-small"
+            rows="2"
+            placeholder="Optional comment..."
+            oninput="autoResize(this)"></textarea>
+</div>
+
 
   <button class="button is-small is-link mt-2"
           onclick="submitFeedback()">Submit Feedback</button>
@@ -333,7 +319,45 @@
 </div>
 {% endif %}
 
+
+
 {% endif %}
+
+<!-- ================= PREVIOUS FEEDBACKS ================= -->
+{% if previous_feedbacks %}
+  <hr class="my-3">
+
+  <p class="is-size-7 has-text-grey mb-2">
+    🧾 Comments
+  </p>
+
+  <div class="feedback-list">
+    {% for fb in previous_feedbacks %}
+      <div class="mb-2 pl-3"
+           style="border-left:2px solid #e5e7eb;">
+
+        <p class="is-size-7 has-text-grey-light">
+          {{ fb.user }} · {{ fb.created_at|date:"M d, Y" }}
+        </p>
+
+        {% if fb.content %}
+          <p class="is-size-7 mt-1 has-text-grey"
+             style="word-break: break-word; overflow-wrap:anywhere;">
+            {{ fb.content }}
+          </p>
+        {% else %}
+          <p class="is-size-7 has-text-grey-light">
+            (No comment)
+          </p>
+        {% endif %}
+
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+
+
 </div>
 </div>
 
@@ -373,5 +397,13 @@ function submitFeedback() {
     });
 }
 </script>
+
+<script>
+  function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+</script>
+
 
 {% endblock %}
