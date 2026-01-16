@@ -110,7 +110,7 @@ def practice(request):
                 Question.TRUE_FALSE,
             ],
             is_active=True,
-            is_deleted= False,
+            is_deleted=False,
         )
         .prefetch_related("choices")
     )
@@ -149,9 +149,24 @@ def practice(request):
         request.session["p_seen"] = []
         request.session.pop("p_qid", None)
         request.session["p_total"] = qs.count()
+        request.session["p_anon_count"] = 0
 
     seen = request.session.get("p_seen", [])
     total = request.session.get("p_total", qs.count())
+    anon_count = request.session.get("p_anon_count", 0)
+
+    # =====================================================
+    # 🚫 ANONYMOUS LIMIT CHECK
+    # =====================================================
+    if not request.user.is_authenticated:
+        if anon_count >= settings.BASICS_ANON_LIMIT:
+            return render(request, "quiz/practice.html", {
+                "anon_limit_reached": True,
+                "anon_limit": settings.BASICS_ANON_LIMIT,
+                "domains": Domain.objects.filter(is_active=True),
+                "categories": Category.objects.none(),
+                "difficulty_choices": Question.DIFFICULTY_CHOICES,
+            })
 
     # =====================================================
     # REMAINING QUESTIONS
@@ -181,7 +196,7 @@ def practice(request):
     choices = question.choices.order_by("order", "id")
 
     # =====================================================
-    # 🆕 SKIP QUESTION (SAFE & ISOLATED)
+    # SKIP QUESTION
     # =====================================================
     if request.method == "POST" and request.POST.get("skip") == "1":
         seen.append(question.id)
@@ -193,7 +208,7 @@ def practice(request):
         )
 
     # =====================================================
-    # FEEDBACK STATUS (UI CONTROL)
+    # FEEDBACK STATUS
     # =====================================================
     feedback_submitted = False
     if request.user.is_authenticated:
@@ -204,7 +219,7 @@ def practice(request):
         ).exists()
 
     # =====================================================
-    # 🚩 FEEDBACK SUBMIT
+    # FEEDBACK SUBMIT
     # =====================================================
     if (
         request.method == "POST"
@@ -271,12 +286,16 @@ def practice(request):
             show_next = result == "correct"
 
     # =====================================================
-    # NEXT
+    # NEXT (INCREMENT ANON COUNT HERE)
     # =====================================================
     if request.method == "POST" and request.POST.get("next") == "1":
         seen.append(question.id)
         request.session["p_seen"] = seen
         request.session.pop("p_qid", None)
+
+        if not request.user.is_authenticated:
+            request.session["p_anon_count"] = anon_count + 1
+
         return redirect(
             request.path + "?" + request.META.get("QUERY_STRING", "")
         )
@@ -647,6 +666,10 @@ def practice_express_next(request):
             "progress_done": 0,
             "progress_total": 0,
         })
+
+
+
+
 
     # -------------------------------
     # 🔒 ANON LIMIT (SETTINGS)

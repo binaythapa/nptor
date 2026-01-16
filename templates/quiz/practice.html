@@ -161,6 +161,23 @@
   </div>
 </form>
 
+
+<!-- ================= FREE LIMIT ================= -->
+{% if anon_limit_reached %}
+<div class="notification is-warning">
+    <h3 class="title is-5">Free practice limit reached</h3>
+    <p>
+        You’ve completed {{ anon_limit }} free questions.
+        Please <strong>log in</strong> for unlimited access.
+    </p>
+    <a href="{% url 'login' %}?next={{ request.path }}" class="button is-primary mt-3">
+        Login to Continue
+    </a>
+</div>
+{% endif %}
+
+
+
 <!-- ================= QUESTION ================= -->
 {% if question %}
 <form method="post">
