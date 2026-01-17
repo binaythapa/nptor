@@ -23,12 +23,45 @@ from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
 
 from quiz.models import Question, QuestionDiscussion
-
 @staff_member_required
 def question_dashboard(request):
-    questions = Question.objects.all().order_by('-updated_at')
 
-    # ================= FILTERS =================
+    # ================= BASE QUERY =================
+    questions = (
+        Question.objects
+        .filter(is_deleted=False)
+        .order_by('-updated_at')
+    )
+
+    # ================= ACTIONS (POST) =================
+    if request.method == "POST":
+
+        # Deactivate
+        if "disable_question" in request.POST:
+            qid = request.POST.get("disable_question")
+            Question.objects.filter(id=qid).update(is_active=False)
+            return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+
+        # Activate
+        if "enable_question" in request.POST:
+            qid = request.POST.get("enable_question")
+            Question.objects.filter(id=qid).update(is_active=True)
+            return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+
+        # Delete (soft delete)
+        if "delete_question" in request.POST:
+            if not request.user.is_superuser:
+                return HttpResponseForbidden("Not allowed")
+
+            qid = request.POST.get("delete_question")
+            Question.objects.filter(id=qid).update(
+                is_deleted=True,
+                deleted_by=request.user,
+                deleted_at=timezone.now()
+            )
+            return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+
+    # ================= FILTERS (GET) =================
     search = request.GET.get('q', '')
     if search:
         questions = questions.filter(text__icontains=search)
@@ -41,7 +74,6 @@ def question_dashboard(request):
     if difficulty:
         questions = questions.filter(difficulty=difficulty)
 
-    # ✅ NEW: is_active STATUS FILTER
     status = request.GET.get('status', '')
     if status == "active":
         questions = questions.filter(is_active=True)
@@ -54,13 +86,6 @@ def question_dashboard(request):
             discussions__is_answer_incorrect=True,
             discussions__is_deleted=False
         ).distinct()
-
-    categories = (
-        Question.objects
-        .values_list('category', flat=True)
-        .distinct()
-        .order_by('category')
-    )
 
     # ================= ANNOTATIONS =================
     questions = questions.annotate(
@@ -82,19 +107,26 @@ def question_dashboard(request):
     )
 
     # ================= STATS =================
-    total_questions = Question.objects.count()
-    active_questions = Question.objects.filter(is_active=True).count()
+    total_questions = Question.objects.filter(is_deleted=False).count()
+    active_questions = Question.objects.filter(
+        is_active=True, is_deleted=False
+    ).count()
+    disabled_questions = Question.objects.filter(
+        is_active=False, is_deleted=False
+    ).count()
     flagged_questions = Question.objects.filter(
         discussions__is_answer_incorrect=True,
-        discussions__is_deleted=False
+        discussions__is_deleted=False,
+        is_deleted=False
     ).distinct().count()
-    disabled_questions = Question.objects.filter(is_active=False).count()
 
-    # ================= ACTION: RE-ENABLE =================
-    if request.method == "POST" and request.POST.get("enable_question"):
-        qid = request.POST.get("enable_question")
-        Question.objects.filter(id=qid).update(is_active=True)
-        return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+    categories = (
+        Question.objects
+        .filter(is_deleted=False)
+        .values_list('category', flat=True)
+        .distinct()
+        .order_by('category')
+    )
 
     # ================= PAGINATION =================
     paginator = Paginator(questions, 20)
@@ -112,7 +144,7 @@ def question_dashboard(request):
         "search": search,
         "selected_category": category,
         "selected_difficulty": difficulty,
-        "selected_status": status,   # ✅ IMPORTANT
+        "selected_status": status,
         "categories": categories,
         "only_flagged": only_flagged,
 
@@ -123,9 +155,6 @@ def question_dashboard(request):
     }
 
     return render(request, "questions/dashboard.html", context)
-
-
-
 
 
 

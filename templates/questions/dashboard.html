@@ -166,21 +166,43 @@
 </td>
 
 <td>
+  <!-- Review -->
   <a href="/admin/quiz/question/{{ q.id }}/change/"
      class="button is-small is-link">
     Review
   </a>
 
-  {% if not q.is_active %}
+  <!-- Deactivate / Activate -->
+  {% if q.is_active %}
+  <form method="post" style="display:inline;">
+    {% csrf_token %}
+    <input type="hidden" name="disable_question" value="{{ q.id }}">
+    <button class="button is-small is-warning ml-1"
+            onclick="return confirmDeactivate();">
+      Deactivate
+    </button>
+  </form>
+  {% else %}
   <form method="post" style="display:inline;">
     {% csrf_token %}
     <input type="hidden" name="enable_question" value="{{ q.id }}">
     <button class="button is-small is-success ml-1">
-      Re-enable
+      Activate
     </button>
   </form>
   {% endif %}
+
+  <!-- Delete -->
+  <form method="post" style="display:inline;">
+    {% csrf_token %}
+    <input type="hidden" name="delete_question" value="{{ q.id }}">
+    <button class="button is-small is-danger is-light ml-1"
+            onclick="return confirmDelete();">
+      Delete
+    </button>
+  </form>
 </td>
+
 
 </tr>
 {% empty %}
@@ -197,4 +219,22 @@
 
 </div>
 </section>
+
+<script>
+function confirmDeactivate() {
+  return confirm(
+    "Are you sure you want to deactivate this question?\n\n" +
+    "Users will no longer see it, but it can be re-enabled later."
+  );
+}
+
+function confirmDelete() {
+  return confirm(
+    "⚠️ PERMANENT DELETE ⚠️\n\n" +
+    "This action cannot be undone.\n\n" +
+    "Are you absolutely sure?"
+  );
+}
+</script>
+
 {% endblock %}
