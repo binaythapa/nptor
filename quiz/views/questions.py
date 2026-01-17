@@ -147,7 +147,7 @@ def question_dashboard(request):
 
 
     # ================= PAGINATION =================
-    paginator = Paginator(questions, 1)  # use realistic page size
+    paginator = Paginator(questions, 10)  # use realistic page size
     page_number = request.GET.get("page")
 
     try:
