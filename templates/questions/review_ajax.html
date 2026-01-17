@@ -1,0 +1,33 @@
+<script>
+function post(url, data) {
+  data["csrfmiddlewaretoken"] = "{{ csrf_token }}";
+  return fetch(url, {
+    method: "POST",
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+    body: new URLSearchParams(data)
+  }).then(r => r.json());
+}
+
+function toggleQuestion(id) {
+  post("{% url 'quiz:toggle_question_active' %}", {id}).then(() => location.reload());
+}
+
+function deleteQuestion(id) {
+  if (!confirm("Delete permanently?")) return;
+  post("{% url 'quiz:delete_question_ajax' %}", {id}).then(() => {
+    window.location.href = "{% url 'quiz:question_dashboard' %}";
+  });
+}
+
+function verifyDiscussion(id) {
+  post("{% url 'quiz:verify_discussion' %}", {id}).then(() => location.reload());
+}
+
+function pinDiscussion(id) {
+  post("{% url 'quiz:pin_discussion' %}", {id}).then(() => location.reload());
+}
+
+function deleteDiscussion(id) {
+  post("{% url 'quiz:delete_discussion' %}", {id}).then(() => location.reload());
+}
+</script>

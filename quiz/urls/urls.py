@@ -322,5 +322,36 @@ path(
     name="log_enrollment_lead"
 ),
 
+    # Question Review
+
+    path("staff/questions/<int:pk>/review/",
+     question_review,
+     name="question_review"),
+
+    path("ajax/question/toggle/",
+     toggle_question_active,
+     name="toggle_question_active"),
+
+    path("ajax/question/delete/",
+     delete_question_ajax,
+     name="delete_question_ajax"),
+
+    path("ajax/discussion/verify/",
+     verify_discussion,
+     name="verify_discussion"),
+
+    path("ajax/discussion/pin/",
+     pin_discussion,
+     name="pin_discussion"),
+
+    path("ajax/discussion/delete/",
+     delete_discussion,
+     name="delete_discussion"),
+
+
+
+
+
+
 
 ]

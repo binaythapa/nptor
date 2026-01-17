@@ -33,6 +33,9 @@ def question_dashboard(request):
         .order_by('-updated_at')
     )
 
+    tab = request.GET.get("tab", "all")
+
+
     # ================= ACTIONS (POST) =================
     if request.method == "POST":
 
@@ -87,6 +90,16 @@ def question_dashboard(request):
             discussions__is_deleted=False
         ).distinct()
 
+
+    if tab == "review":
+        questions = questions.filter(
+            discussions__is_answer_incorrect=True,
+            discussions__is_staff_verified=False,
+            discussions__is_deleted=False
+        ).distinct()
+
+
+
     # ================= ANNOTATIONS =================
     questions = questions.annotate(
         discussion_count=Count(
@@ -128,6 +141,14 @@ def question_dashboard(request):
         .order_by('category')
     )
 
+
+    needs_review_count = Question.objects.filter(
+        discussions__is_answer_incorrect=True,
+        discussions__is_staff_verified=False,
+        is_deleted=False
+        ).distinct().count()
+
+
     # ================= PAGINATION =================
     paginator = Paginator(questions, 20)
     page = request.GET.get('page')
@@ -152,6 +173,11 @@ def question_dashboard(request):
         "active_questions": active_questions,
         "flagged_questions": flagged_questions,
         "disabled_questions": disabled_questions,
+
+        "tab": tab,
+        "needs_review_count": needs_review_count,
+
+
     }
 
     return render(request, "questions/dashboard.html", context)
@@ -239,3 +265,120 @@ def delete_question(request, pk):
     question.save()
 
     return redirect("quiz:question_dashboard")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################
+#QUESTION REVIEW##
+###################
+
+
+@staff_member_required
+def question_review(request, pk):
+    question = get_object_or_404(
+        Question,
+        pk=pk,
+        is_deleted=False
+    )
+
+    discussions = (
+        QuestionDiscussion.objects
+        .filter(question=question, is_deleted=False)
+        .order_by("-is_pinned", "-created_at")
+    )
+
+    # ---------- NON-AJAX FALLBACK ----------
+    if request.method == "POST" and not request.headers.get("x-requested-with") == "XMLHttpRequest":
+
+        if "toggle_active" in request.POST:
+            question.is_active = not question.is_active
+            question.updated_by = request.user
+            question.save()
+
+        elif "delete_question" in request.POST and request.user.is_superuser:
+            question.is_deleted = True
+            question.deleted_by = request.user
+            question.deleted_at = timezone.now()
+            question.save()
+            return redirect("quiz:question_dashboard")
+
+        return redirect("quiz:question_review", pk=pk)
+
+    return render(
+        request,
+        "questions/review.html",
+        {
+            "question": question,
+            "discussions": discussions,
+        }
+    )
+from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
+from django.http import JsonResponse, HttpResponseForbidden
+from django.utils import timezone
+
+from quiz.models import Question, QuestionDiscussion
+
+
+@staff_member_required
+@require_POST
+def toggle_question_active(request):
+    q = Question.objects.get(id=request.POST["id"])
+    q.is_active = not q.is_active
+    q.updated_by = request.user
+    q.save()
+    return JsonResponse({"success": True})
+
+
+@staff_member_required
+@require_POST
+def delete_question_ajax(request):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden()
+    q = Question.objects.get(id=request.POST["id"])
+    q.is_deleted = True
+    q.deleted_by = request.user
+    q.deleted_at = timezone.now()
+    q.save()
+    return JsonResponse({"success": True})
+
+
+@staff_member_required
+@require_POST
+def verify_discussion(request):
+    d = QuestionDiscussion.objects.get(id=request.POST["id"])
+    d.is_staff_verified = True
+    d.save()
+    return JsonResponse({"success": True})
+
+
+@staff_member_required
+@require_POST
+def pin_discussion(request):
+    d = QuestionDiscussion.objects.get(id=request.POST["id"])
+    d.is_pinned = not d.is_pinned
+    d.save()
+    return JsonResponse({"success": True})
+
+
+@staff_member_required
+@require_POST
+def delete_discussion(request):
+    d = QuestionDiscussion.objects.get(id=request.POST["id"])
+    d.is_deleted = True
+    d.save()
+    return JsonResponse({"success": True})
+
+
+

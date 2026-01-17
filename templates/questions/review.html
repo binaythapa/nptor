@@ -1,0 +1,98 @@
+{% extends "quiz/base.html" %}
+{% block title %}Question Review{% endblock %}
+
+{% block content %}
+<section class="section">
+<div class="container" style="max-width: 900px;">
+
+<h1 class="title is-4">🧠 Question Review</h1>
+
+<!-- ================= QUESTION ================= -->
+<div class="box">
+  <p class="has-text-weight-semibold">{{ question.text }}</p>
+  <p class="is-size-7 has-text-grey mt-1">
+    {{ question.category }} · {{ question.difficulty }} · {{ question.question_type }}
+  </p>
+
+  {% if question.explanation %}
+    <hr>
+    <p class="is-size-7 has-text-grey">Explanation</p>
+    <div class="content is-small">{{ question.explanation|linebreaks }}</div>
+  {% endif %}
+</div>
+
+<!-- ================= CHOICES ================= -->
+<div class="box">
+  <p class="has-text-weight-semibold mb-2">Choices</p>
+  {% for c in question.choices.all %}
+    <p>
+      {% if c.is_correct %}
+        <span class="has-text-success">✔</span>
+      {% else %}
+        <span class="has-text-grey">✖</span>
+      {% endif %}
+      {{ c.text }}
+    </p>
+  {% endfor %}
+</div>
+
+<!-- ================= ACTIONS ================= -->
+<div class="box">
+  <div class="buttons">
+    <button class="button is-small is-warning"
+            onclick="toggleQuestion({{ question.id }})">
+      {% if question.is_active %}Deactivate{% else %}Activate{% endif %}
+    </button>
+
+    {% if request.user.is_superuser %}
+    <button class="button is-small is-danger is-light"
+            onclick="deleteQuestion({{ question.id }})">
+      Delete
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ================= DISCUSSIONS ================= -->
+<div class="box">
+  <p class="has-text-weight-semibold mb-2">
+    🚩 Feedback & Discussions ({{ discussions.count }})
+  </p>
+
+  {% for d in discussions %}
+  <div class="mb-3 p-2"
+       style="border-left:4px solid {% if d.is_pinned %}#3b82f6{% elif d.is_answer_incorrect %}#f97316{% else %}#e5e7eb{% endif %};">
+
+    <p class="is-size-7 has-text-grey">
+      {{ d.user }} · {{ d.created_at|date:"M d, Y" }} · {{ d.discussion_type }}
+    </p>
+
+    <p class="mt-1">{{ d.content }}</p>
+
+    <div class="buttons mt-2">
+      <button class="button is-small is-success is-light"
+              onclick="verifyDiscussion({{ d.id }})">
+        ✔ Verify
+      </button>
+
+      <button class="button is-small is-info is-light"
+              onclick="pinDiscussion({{ d.id }})">
+        📌 Pin
+      </button>
+
+      <button class="button is-small is-danger is-light"
+              onclick="deleteDiscussion({{ d.id }})">
+        🗑 Remove
+      </button>
+    </div>
+  </div>
+  {% empty %}
+    <p class="has-text-grey is-size-7">No feedback yet</p>
+  {% endfor %}
+</div>
+
+</div>
+</section>
+
+{% include "questions/review_ajax.html" %}
+{% endblock %}

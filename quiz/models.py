@@ -1050,6 +1050,24 @@ class QuestionDiscussion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    is_resolved = models.BooleanField(
+    default=False,
+    help_text="Whether staff has resolved this feedback"
+    )
+
+    SEVERITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ]
+
+    severity = models.CharField(
+        max_length=10,
+        choices=SEVERITY_CHOICES,
+        default="medium"
+    )
+
+
     class Meta:
         indexes = [
             models.Index(fields=["question"]),
