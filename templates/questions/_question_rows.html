@@ -1,0 +1,116 @@
+{% for q in questions %}
+<tr class="question-row"
+    data-review-url="{% url 'quiz:question_review' q.id %}">
+
+  <!-- ID -->
+  <td>{{ q.id }}</td>
+
+  <!-- QUESTION -->
+  <td>
+    <div class="question-cell">
+
+      <div class="question-text collapsed"
+           data-full="{{ q.text|escape }}">
+        {{ q.text|truncatechars:140 }}
+      </div>
+
+      {% if q.text|length > 140 %}
+        <span class="expand-toggle"
+              onclick="toggleQuestionText(event, this)">
+          Show more
+        </span>
+      {% endif %}
+
+      <div class="question-meta">
+        {% if q.category %}
+          <span class="tag is-light is-small">{{ q.category }}</span>
+        {% endif %}
+
+        <span class="tag is-light is-small">
+          {{ q.difficulty|title }}
+        </span>
+
+        {% if q.question_type %}
+          <span class="tag is-dark is-small">
+            {{ q.question_type }}
+          </span>
+        {% endif %}
+      </div>
+
+    </div>
+  </td>
+
+  <!-- 💬 DISCUSSIONS -->
+  <td>{{ q.discussion_count|default:"—" }}</td>
+
+  <!-- 🚩 FLAGS -->
+  <td>
+    {% if q.flag_count > 0 %}
+      <span class="tag is-danger">{{ q.flag_count }}</span>
+    {% else %}
+      —
+    {% endif %}
+  </td>
+
+  <!-- STATUS -->
+  <td>
+    {% if not q.is_active %}
+      <span class="tag is-danger">Disabled</span>
+    {% elif q.flag_count > 0 %}
+      <span class="tag is-warning">Under Review</span>
+    {% else %}
+      <span class="tag is-success">OK</span>
+    {% endif %}
+  </td>
+
+  <!-- ADMIN ACTIONS -->
+  <td onclick="event.stopPropagation();" class="is-nowrap">
+
+    <!-- Review -->
+    <a href="{% url 'quiz:question_review' q.id %}"
+       target="_blank"
+       class="icon-btn"
+       title="Review question">
+      🧠
+    </a>
+
+    <!-- Deactivate / Activate -->
+    {% if q.is_active %}
+      <form method="post" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="disable_question" value="{{ q.id }}">
+        <button type="submit"
+                class="icon-btn"
+                title="Deactivate"
+                onclick="return confirmDeactivate();">
+          🚫
+        </button>
+      </form>
+    {% else %}
+      <form method="post" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="enable_question" value="{{ q.id }}">
+        <button type="submit"
+                class="icon-btn"
+                title="Activate">
+          ✅
+        </button>
+      </form>
+    {% endif %}
+
+    <!-- Delete -->
+    <form method="post" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="delete_question" value="{{ q.id }}">
+      <button type="submit"
+              class="icon-btn"
+              title="Delete permanently"
+              onclick="return confirmDelete();">
+        🗑️
+      </button>
+    </form>
+
+  </td>
+
+</tr>
+{% endfor %}

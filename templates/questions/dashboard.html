@@ -2,6 +2,56 @@
 {% block title %}Question Dashboard{% endblock %}
 
 {% block content %}
+<style>
+/* ================= QUESTION CELL ================= */
+
+.question-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.question-text {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.question-text.collapsed {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expand-toggle {
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.question-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.question-row {
+  cursor: pointer;
+}
+
+.question-row:hover {
+  background: #f9fafb;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+</style>
+
 <section class="section">
 <div class="container">
 
@@ -14,8 +64,7 @@
     </p>
   </div>
 
-  <a href="/admin/quiz/question/add/"
-     class="button is-primary">
+  <a href="/admin/quiz/question/add/" class="button is-primary">
     ➕ Add Question
   </a>
 </div>
@@ -51,45 +100,53 @@
   </div>
 </div>
 
-<!-- ================= FILTERS ================= -->
- <div class="mb-3">
-  <a href="?needs_review=1"
-     class="button is-small is-warning">
-    🚩 Needs Review
-  </a>
-
-  {% if needs_review_count %}
-  <span class="tag is-danger ml-1">
-    {{ needs_review_count }}
-  </span>
-  {% endif %}
+<!-- ================= TABS ================= -->
+<div class="tabs is-toggle is-small mb-4">
+  <ul>
+    <li class="{% if tab == 'all' %}is-active{% endif %}">
+      <a href="?tab=all">📘 All Questions</a>
+    </li>
+    <li class="{% if tab == 'review' %}is-active{% endif %}">
+      <a href="?tab=review">
+        🚩 Needs Review
+        {% if needs_review_count %}
+          <span class="tag is-danger ml-1">{{ needs_review_count }}</span>
+        {% endif %}
+      </a>
+    </li>
+  </ul>
 </div>
 
+<!-- ================= FILTERS ================= -->
 <form method="get" class="box mb-4">
+<input type="hidden" name="tab" value="{{ tab }}">
+
 <div class="columns is-multiline">
 
-  <!-- Search -->
   <div class="column is-3">
     <input class="input" name="q" placeholder="Search question..."
            value="{{ search }}">
   </div>
 
-  <!-- Category -->
   <div class="column is-3">
     <div class="select is-fullwidth">
+
+
       <select name="category">
-        <option value="">All categories</option>
-        {% for cat in categories %}
-          <option value="{{ cat }}"
-            {% if cat == selected_category %}selected{% endif %}>
-            {{ cat }}
-          </option>
-        {% endfor %}
-      </select>
+  <option value="">All categories</option>
+  {% for cat in categories %}
+    <option value="{{ cat.id }}"
+      {% if cat.id|stringformat:"s" == selected_category %}selected{% endif %}>
+      {{ cat.name }}
+    </option>
+  {% endfor %}
+</select>
+
+
+
     </div>
   </div>
 
-  <!-- Difficulty -->
   <div class="column is-2">
     <div class="select is-fullwidth">
       <select name="difficulty">
@@ -101,33 +158,16 @@
     </div>
   </div>
 
-  <!-- ✅ Status (is_active) -->
   <div class="column is-2">
     <div class="select is-fullwidth">
       <select name="status">
         <option value="">All Status</option>
-        <option value="active"
-          {% if selected_status == "active" %}selected{% endif %}>
-          Active
-        </option>
-        <option value="disabled"
-          {% if selected_status == "disabled" %}selected{% endif %}>
-          Disabled
-        </option>
+        <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
+        <option value="disabled" {% if selected_status == "disabled" %}selected{% endif %}>Disabled</option>
       </select>
     </div>
   </div>
 
-  <!-- Flagged -->
-  <div class="column is-2">
-    <label class="checkbox mt-2">
-      <input type="checkbox" name="flagged" value="1"
-             {% if only_flagged %}checked{% endif %}>
-      🚩 Only flagged
-    </label>
-  </div>
-
-  <!-- Submit -->
   <div class="column is-2">
     <button class="button is-link is-fullwidth">Filter</button>
   </div>
@@ -142,7 +182,7 @@
 <thead>
 <tr>
   <th>ID</th>
-  <th>Question</th>
+  <th style="width:55%">Question</th>
   <th>💬</th>
   <th>🚩</th>
   <th>Status</th>
@@ -150,118 +190,98 @@
 </tr>
 </thead>
 
-<tbody>
-{% for q in questions %}
-<tr>
-
-<td>{{ q.id }}</td>
-
-<td title="Last activity: {{ q.latest_comment }}">
-  {{ q.text|truncatechars:70 }}
-</td>
-
-<td>{{ q.discussion_count|default:"—" }}</td>
-
-<td>
-  {% if q.flag_count > 0 %}
-    <span class="tag is-danger">{{ q.flag_count }}</span>
-  {% else %}—{% endif %}
-</td>
-
-<td>
-  {% if not q.is_active %}
-    <span class="tag is-danger">Disabled</span>
-  {% elif q.flag_count > 0 %}
-    <span class="tag is-warning">Under Review</span>
-  {% else %}
-    <span class="tag is-success">OK</span>
-  {% endif %}
-</td>
-
-<td class="is-nowrap">
-
-  <!-- Review -->
-  <a href="{% url 'quiz:question_review' q.id %}"
-   class="icon-btn icon-review"
-   title="Review question"
-   target="_blank"
-   rel="noopener noreferrer">
-  🧠
-</a>
-
-
-
-  <!-- Deactivate / Activate -->
-  {% if q.is_active %}
-  <form method="post" style="display:inline;">
-    {% csrf_token %}
-    <input type="hidden" name="disable_question" value="{{ q.id }}">
-    <button type="submit"
-            class="icon-btn icon-deactivate"
-            title="Deactivate question"
-            onclick="return confirmDeactivate();">
-      🚫
-    </button>
-  </form>
-  {% else %}
-  <form method="post" style="display:inline;">
-    {% csrf_token %}
-    <input type="hidden" name="enable_question" value="{{ q.id }}">
-    <button type="submit"
-            class="icon-btn icon-activate"
-            title="Activate question">
-      ✅
-    </button>
-  </form>
-  {% endif %}
-
-  <!-- Delete -->
-  <form method="post" style="display:inline;">
-    {% csrf_token %}
-    <input type="hidden" name="delete_question" value="{{ q.id }}">
-    <button type="submit"
-            class="icon-btn icon-delete"
-            title="Delete permanently"
-            onclick="return confirmDelete();">
-      🗑️
-    </button>
-  </form>
-
-</td>
-
-
-
-</tr>
-{% empty %}
-<tr>
-  <td colspan="6" class="has-text-centered has-text-grey">
-    No questions found
-  </td>
-</tr>
-{% endfor %}
+<tbody id="question-table-body">
+{% include "questions/_question_rows.html" %}
 </tbody>
 
 </table>
+
+<!-- Loader -->
+<div id="scroll-loader"
+     class="has-text-centered has-text-grey mt-4"
+     style="display:none;">
+  ⏳ Loading more questions...
 </div>
 
+<!-- End of list -->
+<div id="end-of-list"
+     class="has-text-centered has-text-grey mt-4"
+     style="display:none;">
+  🎉 You’ve reached the end of the list
+</div>
+
+</div>
 </div>
 </section>
 
 <script>
-function confirmDeactivate() {
-  return confirm(
-    "Are you sure you want to deactivate this question?\n\n" +
-    "Users will no longer see it, but it can be re-enabled later."
-  );
+let currentPage = {{ questions.number }};
+let hasNext = {{ questions.has_next|yesno:"true,false" }};
+let loading = false;
+
+function loadMoreQuestions() {
+  if (!hasNext || loading) return;
+
+  loading = true;
+  document.getElementById("scroll-loader").style.display = "block";
+  document.getElementById("end-of-list").style.display = "none";
+
+  const url =
+    window.location.href.replace(/(&|\?)page=\d+/, '') +
+    (window.location.search.includes('?') ? '&' : '?') +
+    'page=' + (currentPage + 1);
+
+  fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("question-table-body")
+        .insertAdjacentHTML("beforeend", data.html);
+
+      currentPage++;
+      hasNext = data.has_next;
+      loading = false;
+
+      document.getElementById("scroll-loader").style.display = "none";
+
+      if (!hasNext) {
+        document.getElementById("end-of-list").style.display = "block";
+      }
+    });
 }
 
-function confirmDelete() {
-  return confirm(
-    "⚠️ PERMANENT DELETE ⚠️\n\n" +
-    "This action cannot be undone.\n\n" +
-    "Are you absolutely sure?"
-  );
+// Infinite scroll trigger
+window.addEventListener("scroll", function () {
+  if (
+    window.innerHeight + window.scrollY >=
+    document.body.offsetHeight - 200
+  ) {
+    loadMoreQuestions();
+  }
+});
+
+// Expand / collapse question text
+function toggleQuestionText(e, el) {
+  e.stopPropagation();
+  const text = el.previousElementSibling;
+
+  if (text.classList.contains("collapsed")) {
+    text.textContent = text.dataset.full;
+    text.classList.remove("collapsed");
+    el.textContent = "Show less";
+  } else {
+    text.textContent = text.dataset.full.substring(0, 140) + "...";
+    text.classList.add("collapsed");
+    el.textContent = "Show more";
+  }
 }
+
+// Row click → open review page
+document.addEventListener("click", function (e) {
+  const row = e.target.closest(".question-row");
+  if (!row) return;
+  if (e.target.closest("a") || e.target.closest("button")) return;
+  window.open(row.dataset.reviewUrl, "_blank", "noopener");
+});
 </script>
 
 {% endblock %}

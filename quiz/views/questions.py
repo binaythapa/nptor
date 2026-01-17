@@ -7,6 +7,10 @@ from django.utils import timezone
 from quiz.models import Question
 from quiz.forms import QuestionForm
 
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from quiz.models import Category
+
 
 def staff_required(user):
     return user.is_staff
@@ -33,64 +37,59 @@ def question_dashboard(request):
         .order_by('-updated_at')
     )
 
+    # Active tab (all / review)
     tab = request.GET.get("tab", "all")
-
 
     # ================= ACTIONS (POST) =================
     if request.method == "POST":
 
-        # Deactivate
         if "disable_question" in request.POST:
             qid = request.POST.get("disable_question")
-            Question.objects.filter(id=qid).update(is_active=False)
-            return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+            Question.objects.filter(id=qid, is_deleted=False)\
+                .update(is_active=False)
+            return redirect(request.get_full_path())
 
-        # Activate
         if "enable_question" in request.POST:
             qid = request.POST.get("enable_question")
-            Question.objects.filter(id=qid).update(is_active=True)
-            return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+            Question.objects.filter(id=qid, is_deleted=False)\
+                .update(is_active=True)
+            return redirect(request.get_full_path())
 
-        # Delete (soft delete)
         if "delete_question" in request.POST:
             if not request.user.is_superuser:
                 return HttpResponseForbidden("Not allowed")
 
             qid = request.POST.get("delete_question")
-            Question.objects.filter(id=qid).update(
+            Question.objects.filter(id=qid, is_deleted=False).update(
                 is_deleted=True,
                 deleted_by=request.user,
                 deleted_at=timezone.now()
             )
-            return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
+            return redirect(request.get_full_path())
 
     # ================= FILTERS (GET) =================
-    search = request.GET.get('q', '')
+    search = request.GET.get("q", "")
     if search:
-        questions = questions.filter(text__icontains=search)
+        questions = questions.filter(text__icontains=search)  
 
-    category = request.GET.get('category', '')
+
+    category = request.GET.get("category", "")
     if category:
-        questions = questions.filter(category=category)
+        questions = questions.filter(category_id=category)
 
-    difficulty = request.GET.get('difficulty', '')
+
+
+    difficulty = request.GET.get("difficulty", "")
     if difficulty:
         questions = questions.filter(difficulty=difficulty)
 
-    status = request.GET.get('status', '')
+    status = request.GET.get("status", "")
     if status == "active":
         questions = questions.filter(is_active=True)
     elif status == "disabled":
         questions = questions.filter(is_active=False)
 
-    only_flagged = request.GET.get('flagged') == "1"
-    if only_flagged:
-        questions = questions.filter(
-            discussions__is_answer_incorrect=True,
-            discussions__is_deleted=False
-        ).distinct()
-
-
+    # ================= TAB: NEEDS REVIEW =================
     if tab == "review":
         questions = questions.filter(
             discussions__is_answer_incorrect=True,
@@ -98,23 +97,21 @@ def question_dashboard(request):
             discussions__is_deleted=False
         ).distinct()
 
-
-
     # ================= ANNOTATIONS =================
     questions = questions.annotate(
         discussion_count=Count(
-            'discussions',
+            "discussions",
             filter=Q(discussions__is_deleted=False)
         ),
         flag_count=Count(
-            'discussions',
+            "discussions",
             filter=Q(
                 discussions__is_answer_incorrect=True,
                 discussions__is_deleted=False
             )
         ),
         latest_comment=Max(
-            'discussions__created_at',
+            "discussions__created_at",
             filter=Q(discussions__is_deleted=False)
         )
     )
@@ -133,41 +130,60 @@ def question_dashboard(request):
         is_deleted=False
     ).distinct().count()
 
-    categories = (
-        Question.objects
-        .filter(is_deleted=False)
-        .values_list('category', flat=True)
-        .distinct()
-        .order_by('category')
-    )
-
-
     needs_review_count = Question.objects.filter(
         discussions__is_answer_incorrect=True,
         discussions__is_staff_verified=False,
         is_deleted=False
-        ).distinct().count()
+    ).distinct().count()
+
+ 
+
+    categories = (
+     Category.objects
+    .filter(questions__is_deleted=False)
+    .distinct()
+     .order_by("name")
+)
 
 
     # ================= PAGINATION =================
-    paginator = Paginator(questions, 20)
-    page = request.GET.get('page')
+    paginator = Paginator(questions, 1)  # use realistic page size
+    page_number = request.GET.get("page")
 
     try:
-        questions = paginator.page(page)
+        questions_page = paginator.page(page_number)
     except PageNotAnInteger:
-        questions = paginator.page(1)
+        questions_page = paginator.page(1)
     except EmptyPage:
-        questions = paginator.page(paginator.num_pages)
+        questions_page = paginator.page(paginator.num_pages)
 
+
+
+
+# ================= AJAX INFINITE SCROLL =================
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+     return JsonResponse({
+        "html": render_to_string(
+            "questions/_question_rows.html",
+            {
+                "questions": questions_page,
+                "tab": tab,
+            },
+            request=request
+        ),
+        "has_next": questions_page.has_next()
+    })
+
+
+    # ================= CONTEXT =================
     context = {
-        "questions": questions,
+        "questions": questions_page,
+
         "search": search,
         "selected_category": category,
         "selected_difficulty": difficulty,
         "selected_status": status,
         "categories": categories,
-        "only_flagged": only_flagged,
 
         "total_questions": total_questions,
         "active_questions": active_questions,
@@ -176,8 +192,6 @@ def question_dashboard(request):
 
         "tab": tab,
         "needs_review_count": needs_review_count,
-
-
     }
 
     return render(request, "questions/dashboard.html", context)
