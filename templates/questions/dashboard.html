@@ -4,6 +4,31 @@
 {% block content %}
 <style>
 /* ================= QUESTION CELL ================= */
+.table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.question-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.question-text {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.question-meta {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+
 
 .question-cell {
   display: flex;
