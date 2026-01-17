@@ -460,8 +460,6 @@ function submitFeedback() {
 </script>
 
 
-
-
 <script>
 function updateFilterUI(expanded) {
   const hint = document.getElementById("filterHint");
@@ -478,28 +476,25 @@ function updateFilterUI(expanded) {
 
 function toggleFilters() {
   const body = document.getElementById("filterBody");
-
   const isExpanded =
     body.style.maxHeight && body.style.maxHeight !== "0px";
 
   if (isExpanded) {
     body.style.maxHeight = "0px";
     updateFilterUI(false);
+    localStorage.setItem("filterExpanded", "0");
   } else {
     body.style.maxHeight = body.scrollHeight + "px";
     updateFilterUI(true);
+    localStorage.setItem("filterExpanded", "1");
   }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
   const body = document.getElementById("filterBody");
+  const expanded = localStorage.getItem("filterExpanded") === "1";
 
-  const hasFilter =
-    "{{ domain_id }}" ||
-    "{{ category_id }}" ||
-    "{{ difficulty }}";
-
-  if (hasFilter) {
+  if (expanded) {
     body.style.maxHeight = body.scrollHeight + "px";
     updateFilterUI(true);
   } else {
@@ -508,6 +503,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+
 
 
 {% endblock %}
