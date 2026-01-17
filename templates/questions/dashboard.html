@@ -294,7 +294,7 @@ function toggleQuestionText(e, el) {
     text.classList.remove("collapsed");
     el.textContent = "Show less";
   } else {
-    text.textContent = text.dataset.full.substring(0, 100) + "...";
+    text.textContent = text.dataset.full.substring(0, 50) + "...";
     text.classList.add("collapsed");
     el.textContent = "Show more";
   }
