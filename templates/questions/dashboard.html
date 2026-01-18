@@ -3,6 +3,35 @@
 
 {% block content %}
 <style>
+/* ================= DASHBOARD HEADER ================= */
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap; /* 🔥 important */
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-actions {
+    width: 100%;
+  }
+
+  .dashboard-actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+
 /* ================= QUESTION TEXT CLAMP ================= */
 
 .question-cell {
@@ -112,18 +141,22 @@
 <div class="container">
 
 <!-- ================= HEADER ================= -->
-<div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
-  <div>
+<div class="dashboard-header">
+  <div class="dashboard-title">
     <h1 class="title is-4">🧠 Question Dashboard</h1>
     <p class="has-text-grey is-size-7">
       Review question quality, flags & discussions
     </p>
   </div>
 
-  <a href="/admin/quiz/question/add/" class="button is-primary">
-    ➕ Add Question
-  </a>
+  <div class="dashboard-actions">
+    <a href="{% url 'quiz:add_question' %}"
+       class="button is-success">
+      ➕ Add Question
+    </a>
+  </div>  
 </div>
+
 
 <!-- ================= KPI ================= -->
 <div class="columns is-multiline mb-4">
