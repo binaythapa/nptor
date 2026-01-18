@@ -8,26 +8,73 @@ function post(url, data) {
   }).then(r => r.json());
 }
 
+/* ---------- QUESTION ACTIONS ---------- */
+
 function toggleQuestion(id) {
-  post("{% url 'quiz:toggle_question_active' %}", {id}).then(() => location.reload());
+  post("{% url 'quiz:toggle_question_active' %}", { id })
+    .then(() => location.reload());
 }
 
 function deleteQuestion(id) {
   if (!confirm("Delete permanently?")) return;
-  post("{% url 'quiz:delete_question_ajax' %}", {id}).then(() => {
-    window.location.href = "{% url 'quiz:question_dashboard' %}";
-  });
+  post("{% url 'quiz:delete_question_ajax' %}", { id })
+    .then(() => {
+      window.location.href = "{% url 'quiz:question_dashboard' %}";
+    });
 }
 
+/* ---------- DISCUSSION ACTIONS ---------- */
+
 function verifyDiscussion(id) {
-  post("{% url 'quiz:verify_discussion' %}", {id}).then(() => location.reload());
+  post("{% url 'quiz:verify_discussion' %}", { id })
+    .then(() => location.reload());
 }
 
 function pinDiscussion(id) {
-  post("{% url 'quiz:pin_discussion' %}", {id}).then(() => location.reload());
+  post("{% url 'quiz:pin_discussion' %}", { id })
+    .then(() => location.reload());
 }
 
 function deleteDiscussion(id) {
-  post("{% url 'quiz:delete_discussion' %}", {id}).then(() => location.reload());
+  if (!confirm("Remove this discussion?")) return;
+  post("{% url 'quiz:delete_discussion' %}", { id })
+    .then(() => location.reload());
+}
+
+/* ---------- RESOLVE DISCUSSION (NO RELOAD) ---------- */
+
+function resolveDiscussion(id) {
+  post("{% url 'quiz:resolve_discussion' %}", { id })
+    .then(res => {
+      if (!res.success) return;
+
+      const box = document.getElementById("discussion-" + id);
+      if (!box) return;
+
+      box.classList.add("has-background-success-light");
+
+      const buttons = box.querySelector(".buttons");
+      if (buttons) {
+        buttons.innerHTML =
+          "<span class='tag is-success is-light'>Resolved</span>";
+      }
+    });
+}
+
+/* ---------- EDIT QUESTION MODAL ---------- */
+
+function openEditModal() {
+  fetch("{% url 'quiz:edit_question' question.id %}", {
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("editModalBody").innerHTML = html;
+    document.getElementById("editModal").classList.add("is-active");
+  });
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").classList.remove("is-active");
 }
 </script>

@@ -304,19 +304,6 @@ def admin_dashboard(request):
 
 
 
-from collections import defaultdict
-from django.conf import settings
-from django.shortcuts import render
-from django.utils import timezone
-from django.contrib.auth.decorators import login_required
-
-from quiz.models import (
-    Exam,
-    UserExam,
-    ExamSubscription,
-    ExamTrackSubscription,
-)
-
 @login_required
 def student_dashboard(request):
     user = request.user

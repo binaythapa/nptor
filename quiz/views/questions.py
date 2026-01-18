@@ -10,6 +10,7 @@ from quiz.forms import QuestionForm
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from quiz.models import Category
+from django.views.decorators.http import require_GET, require_POST
 
 
 def staff_required(user):
@@ -242,28 +243,82 @@ def add_question(request):
         }
     )
 
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.forms import inlineformset_factory
+from django.db import transaction
+
+from quiz.models import Question, Choice
+from quiz.forms import QuestionForm, ChoiceForm
+
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.forms import inlineformset_factory
+from django.db import transaction
+
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import get_object_or_404, render, redirect
+from django.forms import inlineformset_factory
+
+from quiz.models import Question, Choice
+from quiz.forms import QuestionForm
+
+
+def staff_required(user):
+    return user.is_staff
 
 
 @login_required
 @user_passes_test(staff_required)
 def edit_question(request, pk):
-    question = get_object_or_404(Question, pk=pk, is_deleted=False)
+    question = get_object_or_404(
+        Question,
+        pk=pk,
+        is_deleted=False
+    )
+
+    ChoiceFormSet = inlineformset_factory(
+        Question,
+        Choice,
+        fields=("text", "is_correct", "order"),
+        extra=0,
+        can_delete=True,
+    )
 
     if request.method == "POST":
         form = QuestionForm(request.POST, instance=question)
-        if form.is_valid():
+        formset = ChoiceFormSet(request.POST, instance=question)
+
+        if form.is_valid() and formset.is_valid():
+            # ✅ Save question
             obj = form.save(commit=False)
             obj.updated_by = request.user
             obj.save()
-            return redirect("quiz:question_dashboard")
+
+            # ✅ Save choices
+            formset.save()
+
+            # ✅ Redirect back to review page
+            return redirect("quiz:question_review", pk=question.pk)
+
+        # ❗ If invalid, fall through and re-render with errors
+
     else:
         form = QuestionForm(instance=question)
+        formset = ChoiceFormSet(instance=question)
 
     return render(
         request,
         "questions/edit_question.html",
-        {"form": form, "question": question}
+        {
+            "form": form,
+            "choice_formset": formset,
+            "question": question,
+        }
     )
+
+
+
 
 
 @login_required
@@ -306,11 +361,12 @@ def question_review(request, pk):
         is_deleted=False
     )
 
-    discussions = (
-        QuestionDiscussion.objects
-        .filter(question=question, is_deleted=False)
-        .order_by("-is_pinned", "-created_at")
-    )
+    discussions = QuestionDiscussion.objects.filter(
+        question=question,
+        is_deleted=False,
+        discussion_type=QuestionDiscussion.TYPE_DOUBT
+    ).order_by("-is_pinned", "-created_at")
+
 
     # ---------- NON-AJAX FALLBACK ----------
     if request.method == "POST" and not request.headers.get("x-requested-with") == "XMLHttpRequest":
@@ -337,6 +393,35 @@ def question_review(request, pk):
             "discussions": discussions,
         }
     )
+
+
+
+
+
+@staff_member_required
+@require_POST
+def resolve_discussion(request):
+    d = get_object_or_404(
+        QuestionDiscussion,
+        id=request.POST["id"],
+        is_deleted=False
+    )
+    d.is_resolved = True
+    d.save()
+    return JsonResponse({"success": True})
+
+
+
+
+
+
+
+
+
+
+
+
+
 from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse, HttpResponseForbidden

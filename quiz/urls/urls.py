@@ -348,6 +348,13 @@ path(
      delete_discussion,
      name="delete_discussion"),
 
+     path(
+    "review/discussion/resolve/",
+    resolve_discussion,
+    name="resolve_discussion"
+),
+
+
 
 
 

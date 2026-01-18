@@ -67,9 +67,6 @@ class EmailOrUsernameLoginForm(AuthenticationForm):
     )
 
 
-from django import forms
-from quiz.models import Question
-
 
 from django import forms
 from quiz.models import Question
@@ -85,5 +82,11 @@ class QuestionForm(forms.ModelForm):
             "explanation",
          
         ]
+
+class ChoiceForm(forms.ModelForm):
+    class Meta:
+        model = Choice
+        fields = ["text", "is_correct", "order"]
+
 
 
