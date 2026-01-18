@@ -3,6 +3,37 @@
 
 {% block content %}
 <style>
+/* ================= QUESTION TEXT CLAMP ================= */
+
+.question-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.question-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;      /* 👈 show only 2 lines */
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.question-text.expanded {
+  -webkit-line-clamp: unset; /* 👈 expand fully */
+}
+
+.expand-toggle {
+  font-size: 0.75rem;
+  color: #2563eb;
+  cursor: pointer;
+  display: none;             /* shown only if overflow */
+}
+
+
+
 /* ================= QUESTION CELL ================= */
 .table {
   table-layout: fixed;
@@ -294,7 +325,7 @@ function toggleQuestionText(e, el) {
     text.classList.remove("collapsed");
     el.textContent = "Show less";
   } else {
-    text.textContent = text.dataset.full.substring(0, 50) + "...";
+    text.textContent = text.dataset.full.substring(0, 140) + "...";
     text.classList.add("collapsed");
     el.textContent = "Show more";
   }
@@ -308,5 +339,46 @@ document.addEventListener("click", function (e) {
   window.open(row.dataset.reviewUrl, "_blank", "noopener");
 });
 </script>
+
+
+<script>
+/* ================= SHOW MORE LOGIC ================= */
+
+// Detect overflow and show toggle
+function initShowMore() {
+  document.querySelectorAll(".question-text").forEach(text => {
+    const toggle = text.nextElementSibling;
+    if (!toggle || !toggle.classList.contains("expand-toggle")) return;
+
+    // If text is visually overflowing (more than 2 lines)
+    if (text.scrollHeight > text.clientHeight + 1) {
+      toggle.style.display = "inline";
+    } else {
+      toggle.style.display = "none";
+    }
+  });
+}
+
+// Toggle expand / collapse
+function toggleQuestionText(e, el) {
+  e.stopPropagation();
+  const text = el.previousElementSibling;
+
+  if (text.classList.contains("expanded")) {
+    text.classList.remove("expanded");
+    el.textContent = "Show more";
+  } else {
+    text.classList.add("expanded");
+    el.textContent = "Show less";
+  }
+}
+
+// Initial load
+document.addEventListener("DOMContentLoaded", initShowMore);
+
+// Re-run after infinite scroll loads new rows
+document.addEventListener("ajaxContentLoaded", initShowMore);
+</script>
+
 
 {% endblock %}
