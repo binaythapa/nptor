@@ -52,7 +52,7 @@ def subscription_admin_panel(request):
         "now": timezone.now(),
     }
 
-    return render(request, "quiz/admin_subscription_panel.html", context)
+    return render(request, "quiz/subscription/admin/dashboard.html", context)
 
 
 # =====================================================
@@ -292,3 +292,237 @@ def admin_add_track_days(request):
     sub.expires_at = (sub.expires_at or timezone.now()) + timedelta(days=int(request.POST["days"]))
     sub.save()
     return JsonResponse({"success": True})
+
+
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django import forms
+
+from quiz.models import (
+    Exam, ExamTrack, Coupon, PaymentRecord
+)
+
+# =====================================================
+# FORMS
+# =====================================================
+
+class ExamForm(forms.ModelForm):
+    class Meta:
+        model = Exam
+        fields = [
+            "title", "track", "question_count", "duration_seconds",
+            "passing_score", "is_free", "price", "currency",
+            "is_published", "max_mock_attempts"
+        ]
+
+
+class TrackForm(forms.ModelForm):
+    class Meta:
+        model = ExamTrack
+        fields = [
+            "title",
+            "slug",
+            "description",
+            "subscription_scope",   # ✅ ADD THIS
+            "pricing_type",
+            "monthly_price",
+            "lifetime_price",
+            "trial_days",
+            "currency",
+            "is_active",
+        ]
+
+
+
+class CouponForm(forms.ModelForm):
+    class Meta:
+        model = Coupon
+        fields = [
+            "code",
+            "percent_off",
+            "flat_off",
+            "track",
+            "exam",
+            "valid_from",
+            "valid_to",
+            "usage_limit",
+            "extra_trial_days",
+            "is_active",
+        ]
+        widgets = {
+            "valid_from": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}
+            ),
+            "valid_to": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}
+            ),
+        }
+
+
+# =====================================================
+# EXAMS
+# =====================================================
+
+@staff_member_required
+def admin_exam_list(request):
+    exams = Exam.objects.select_related("track").order_by("-created_at")
+    return render(
+        request,
+        "quiz/subscription/admin/exam_list.html",
+        {"exams": exams}
+    )
+
+
+@staff_member_required
+def admin_exam_create(request):
+    form = ExamForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect("quiz:admin_exam_list")
+
+    return render(
+        request,
+        "quiz/subscription/admin/exam_form.html",
+        {"form": form, "mode": "create"}
+    )
+
+
+@staff_member_required
+def admin_exam_update(request, pk):
+    exam = get_object_or_404(Exam, pk=pk)
+    form = ExamForm(request.POST or None, instance=exam)
+
+    if form.is_valid():
+        form.save()
+        return redirect("quiz:admin_exam_list")
+
+    return render(
+        request,
+        "quiz/subscription/admin/exam_form.html",
+        {"form": form, "mode": "edit"}
+    )
+
+
+@staff_member_required
+def admin_exam_delete(request, pk):
+    exam = get_object_or_404(Exam, pk=pk)
+    exam.delete()
+    return redirect("quiz:admin_exam_list")
+
+
+# =====================================================
+# TRACKS
+# =====================================================
+
+@staff_member_required
+def admin_track_list(request):
+    tracks = ExamTrack.objects.order_by("-created_at")
+    return render(
+        request,
+        "quiz/subscription/admin/track_list.html",
+        {"tracks": tracks}
+    )
+
+
+@staff_member_required
+def admin_track_create(request):
+    form = TrackForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect("quiz:admin_track_list")
+
+    return render(
+        request,
+        "quiz/subscription/admin/track_form.html",
+        {"form": form, "mode": "create"}
+    )
+
+
+@staff_member_required
+def admin_track_update(request, pk):
+    track = get_object_or_404(ExamTrack, pk=pk)
+    form = TrackForm(request.POST or None, instance=track)
+
+    if form.is_valid():
+        form.save()
+        return redirect("quiz:admin_track_list")
+
+    return render(
+        request,
+        "quiz/subscription/admin/track_form.html",
+        {"form": form, "mode": "edit"}
+    )
+
+
+@staff_member_required
+def admin_track_delete(request, pk):
+    track = get_object_or_404(ExamTrack, pk=pk)
+    track.delete()
+    return redirect("quiz:admin_track_list")
+
+
+# =====================================================
+# COUPONS
+# =====================================================
+
+@staff_member_required
+def admin_coupon_list(request):
+    coupons = Coupon.objects.order_by("-created_at")
+    return render(
+        request,
+        "quiz/subscription/admin/coupon_list.html",
+        {"coupons": coupons}
+    )
+
+
+@staff_member_required
+def admin_coupon_create(request):
+    form = CouponForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect("quiz:admin_coupon_list")
+
+    return render(
+        request,
+        "quiz/subscription/admin/coupon_form.html",
+        {"form": form}
+    )
+
+
+# =====================================================
+# PAYMENTS (READ-ONLY)
+# =====================================================
+
+@staff_member_required
+def admin_payment_list(request):
+    payments = (
+        PaymentRecord.objects
+        .select_related("user", "exam", "track")
+        .order_by("-paid_at")
+    )
+
+    return render(
+        request,
+        "quiz/subscription/admin/payment_list.html",
+        {"payments": payments}
+    )
+
+@staff_member_required
+@require_POST
+def toggle_exam_publish(request):
+    exam_id = request.POST.get("exam_id")
+
+    try:
+        exam = Exam.objects.get(id=exam_id)
+        exam.is_published = not exam.is_published
+        exam.save(update_fields=["is_published"])
+        return JsonResponse({
+            "success": True,
+            "is_published": exam.is_published
+        })
+    except Exam.DoesNotExist:
+        return JsonResponse({"success": False})
+    
+
+

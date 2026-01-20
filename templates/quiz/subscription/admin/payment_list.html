@@ -1,0 +1,32 @@
+{% extends "quiz/base.html" %}
+{% block content %}
+
+<h1 class="title is-4">💳 Payment Records</h1>
+
+<table class="table is-fullwidth is-striped is-hoverable">
+<thead>
+<tr>
+  <th>User</th>
+  <th>Item</th>
+  <th>Amount</th>
+  <th>Method</th>
+  <th>Paid At</th>
+</tr>
+</thead>
+<tbody>
+{% for p in payments %}
+<tr>
+  <td>{{ p.user.username }}</td>
+  <td>
+    {% if p.track %}{{ p.track.title }}
+    {% else %}{{ p.exam.title }}{% endif %}
+  </td>
+  <td>₹{{ p.amount }}</td>
+  <td>{{ p.get_payment_method_display }}</td>
+  <td>{{ p.paid_at|date:"M d, Y H:i" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

@@ -90,3 +90,39 @@ class ChoiceForm(forms.ModelForm):
 
 
 
+from django import forms
+from quiz.models import Exam, ExamTrack
+
+class ExamForm(forms.ModelForm):
+    class Meta:
+        model = Exam
+        fields = [
+            "title",
+            "track",
+            "category",
+            "question_count",
+            "duration_seconds",
+            "level",
+            "passing_score",
+            "is_free",
+            "price",
+            "currency",
+            "is_published",
+            "max_mock_attempts",
+        ]
+
+
+class ExamTrackForm(forms.ModelForm):
+    class Meta:
+        model = ExamTrack
+        fields = [
+            "title",
+            "slug",
+            "description",
+            "pricing_type",
+            "monthly_price",
+            "lifetime_price",
+            "trial_days",
+            "currency",
+            "is_active",
+        ]

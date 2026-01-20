@@ -51,23 +51,83 @@
       Platform health, learning performance & subscription insights
     </p>
   </div>
-
-  {% if user.is_staff %}
-  <div class="buttons">
-    <a href="{% url 'quiz:question_dashboard' %}"
-       class="button is-link">
-      📚 Manage Questions
-    </a>
-
-    <a href="{% url 'quiz:add_question' %}"
-       class="button is-primary">
-      ➕ Add Question
-    </a>
-  </div>
-  {% endif %}
-
 </div>
 
+
+
+<!-- ================================================= -->
+<!-- MOCK MANAGEMENT QUICK ACTIONS -->
+<!-- ================================================= -->
+{% if user.is_staff %}
+<div class="box mb-6">
+
+  <h3 class="title is-5 mb-3">💳 Question and Mock Management</h3>
+  <p class="muted mb-4">
+    Manage Questions and Mock
+  </p>
+  <div class="buttons is-flex-wrap-wrap">
+
+    <a href="{% url 'quiz:admin_mock_attempts' %}"
+       class="button is-link is-light">
+       🧪 Manage Mock Attempts
+    </a>
+
+
+     <a href="{% url 'quiz:question_dashboard' %}"
+       class="button is-link is-light">
+      📚 Manage Questions
+    </a>  
+
+   
+  </div>
+
+</div>
+{% endif %}
+
+
+
+<!-- ================================================= -->
+<!-- SUBSCRIPTION MANAGEMENT QUICK ACTIONS -->
+<!-- ================================================= -->
+{% if user.is_staff %}
+<div class="box mb-6">
+
+  <h3 class="title is-5 mb-3">💳 Subscription Management</h3>
+  <p class="muted mb-4">
+    Manage exams, tracks, pricing, coupons, payments & user access
+  </p>
+
+  <div class="buttons is-flex-wrap-wrap">
+
+    <a href="{% url 'quiz:subscription_admin_panel' %}"
+       class="button is-link is-light">
+      🧾 Subscription Panel
+    </a>
+
+    <a href="{% url 'quiz:admin_exam_list' %}"
+       class="button is-info is-light">
+      📝 Manage Exams
+    </a>
+
+    <a href="{% url 'quiz:admin_track_list' %}"
+       class="button is-primary is-light">
+      📚 Manage Tracks
+    </a>
+
+    <a href="{% url 'quiz:admin_coupon_list' %}"
+       class="button is-warning is-light">
+      🎟 Coupons
+    </a>
+
+    <a href="{% url 'quiz:admin_payment_list' %}"
+       class="button is-success is-light">
+      💰 Payments
+    </a>
+
+  </div>
+
+</div>
+{% endif %}
 
 
 <!-- ================================================= -->
@@ -251,73 +311,5 @@
     </tbody>
   </table>
 </div>
-
-
-<!-- ================================================= -->
-<!-- RESET MOCK ATTEMPTS (ADMIN ONLY) -->
-<!-- ================================================= -->
-<h3 class="title is-5 mt-6 mb-3">🧪 Reset Mock Attempts</h3>
-
-<div class="box">
-  <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="reset_mock">
-
-    <div class="columns is-multiline">
-
-      <!-- STUDENT -->
-      <div class="column is-4">
-        <label class="label">Select Student</label>
-        <div class="control">
-          <div class="select is-fullwidth">
-            <select name="user_id" required>
-              <option value="">-- Select Student --</option>
-              {% for u in students %}
-                <option value="{{ u.id }}">
-                  {{ u.username }} ({{ u.email }})
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- EXAM -->
-      <div class="column is-4">
-        <label class="label">Select Exam</label>
-        <div class="control">
-          <div class="select is-fullwidth">
-            <select name="exam_id" required>
-              <option value="">-- Select Exam --</option>
-              {% for e in exams %}
-                <option value="{{ e.id }}">
-                  {{ e.title }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- ACTION -->
-      <div class="column is-4 is-flex is-align-items-flex-end">
-        <button
-          class="button is-danger is-fullwidth"
-          onclick="return confirm(
-            'This will reset ALL mock attempts for this student and exam. Continue?'
-          )">
-          ♻ Reset Mock Attempts
-        </button>
-      </div>
-
-    </div>
-
-    <p class="help has-text-grey mt-2">
-      ⚠ This will delete <strong>mock exams only</strong>.  
-      Real exam attempts are not affected.
-    </p>
-  </form>
-</div>
-
 
 {% endblock %}

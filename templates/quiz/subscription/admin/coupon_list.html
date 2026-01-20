@@ -1,0 +1,45 @@
+{% extends "quiz/base.html" %}
+{% block content %}
+
+<h1 class="title is-4">🏷 Coupons</h1>
+
+<a href="{% url 'quiz:admin_coupon_create' %}"
+   class="button is-primary mb-4">
+  ➕ Create Coupon
+</a>
+
+<table class="table is-fullwidth is-striped">
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Discount</th>
+  <th>Scope</th>
+  <th>Validity</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody>
+{% for c in coupons %}
+<tr>
+  <td><strong>{{ c.code }}</strong></td>
+  <td>
+    {% if c.percent_off %}{{ c.percent_off }}%
+    {% else %}₹{{ c.flat_off }}{% endif %}
+  </td>
+  <td>
+    {% if c.track %}Track: {{ c.track.title }}
+    {% elif c.exam %}Exam: {{ c.exam.title }}
+    {% else %}All{% endif %}
+  </td>
+  <td>{{ c.valid_to|date:"M d, Y" }}</td>
+  <td>
+    <span class="tag {% if c.is_active %}is-success{% else %}is-danger{% endif %}">
+      {{ c.is_active|yesno:"Active,Disabled" }}
+    </span>
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

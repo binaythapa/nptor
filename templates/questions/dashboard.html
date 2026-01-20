@@ -150,8 +150,15 @@
   </div>
 
   <div class="dashboard-actions">
+
+     <!-- BACK BUTTON -->
+  <a href="{% url 'quiz:admin_dashboard' %}"
+     class="button is-light is-small">
+    ← Back to Dashboard
+  </a>
+
     <a href="{% url 'quiz:add_question' %}"
-       class="button is-success">
+       class="button is-light is-small">
       ➕ Add Question
     </a>
   </div>  

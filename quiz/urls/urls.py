@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from quiz.forms import EmailOrUsernameLoginForm
-from quiz.views.admin import reset_mock_attempts
+from quiz.views.admin import *
 
 # ================================
 # IMPORT VIEWS (FROM views.py)
@@ -15,8 +15,9 @@ from quiz.views.subscription import *
 from quiz.views.admin_subscriptions import *
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
+from quiz.views.mock import *
 from quiz.views.exams import *
-from quiz.views.admin import reset_mock_attempts
+
 
 
 
@@ -225,11 +226,14 @@ urlpatterns = [
     name="ajax_categories_by_domain",
 ),
 
+
 path(
     "dashboard/admin/reset-mock/<int:user_id>/<int:exam_id>/",
     reset_mock_attempts,
     name="reset_mock_attempts",
 ),
+
+
 
 
 
@@ -283,14 +287,71 @@ path(
 ),
 
 
+# ================= ADMIN – SUBSCRIPTION MANAGEMENT =================
 
-
-# ---------------- ADMIN MOCK RESET ----------------
 path(
-    "dashboard/admin/reset-mock/",
-    reset_mock_attempts,
-    name="reset_mock_attempts",
+    "dashboard/admin/exams/",
+    admin_exam_list,
+    name="admin_exam_list",
 ),
+path(
+    "dashboard/admin/exams/add/",
+    admin_exam_create,
+    name="admin_exam_create",
+),
+path(
+    "dashboard/admin/exams/<int:pk>/edit/",
+    admin_exam_update,
+    name="admin_exam_update",
+),
+path(
+    "dashboard/admin/exams/<int:pk>/delete/",
+    admin_exam_delete,
+    name="admin_exam_delete",
+),
+
+path(
+    "dashboard/admin/tracks/",
+    admin_track_list,
+    name="admin_track_list",
+),
+path(
+    "dashboard/admin/tracks/add/",
+    admin_track_create,
+    name="admin_track_create",
+),
+path(
+    "dashboard/admin/tracks/<int:pk>/edit/",
+    admin_track_update,
+    name="admin_track_update",
+),
+
+
+path(
+    "dashboard/admin/tracks/<int:pk>/delete/",
+    admin_track_delete,
+    name="admin_track_delete",
+),
+
+path(
+    "dashboard/admin/coupons/",
+    admin_coupon_list,
+    name="admin_coupon_list",
+),
+path(
+    "dashboard/admin/coupons/add/",
+    admin_coupon_create,
+    name="admin_coupon_create",
+),
+
+path(
+    "dashboard/admin/payments/",
+    admin_payment_list,
+    name="admin_payment_list",
+),
+
+
+
 
 
 # ================= QUESTIONS DASHBOARD =================
@@ -351,14 +412,37 @@ path(
      path(
     "review/discussion/resolve/",
     resolve_discussion,
-    name="resolve_discussion"
+    name="resolve_discussion"),
+
+    path(
+    "dashboard/admin/exam/toggle-publish/",
+    toggle_exam_publish,
+    name="toggle_exam_publish",
 ),
 
 
 
+# ---------------- ADMIN MOCK RESET ----------------
+    path(
+    "dashboard/admin/reset-mock/",
+    reset_mock_attempts,
+    name="reset_mock_attempts",
+),
+    path(
+    "dashboard/admin/mock-attempts/",
+    admin_mock_attempts,
+    name="admin_mock_attempts",
+),
+
+
+path(
+    "dashboard/admin/mock-attempts/history/",
+    admin_mock_attempt_history,
+    name="admin_mock_attempt_history",
+),
 
 
 
-
+     
 
 ]

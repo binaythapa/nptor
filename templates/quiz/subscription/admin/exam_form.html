@@ -1,0 +1,125 @@
+{% extends "quiz/base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+
+<div class="container">
+
+  <!-- ================= HEADER ================= -->
+  <div class="mb-5">
+    <h1 class="title is-4">
+      {% if mode == "edit" %}✏️ Edit Exam{% else %}➕ Create Exam{% endif %}
+    </h1>
+    <p class="subtitle is-6 has-text-grey">
+      Configure exam structure, pricing & publishing
+    </p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="box">
+
+      <!-- TITLE -->
+      <div class="field">
+        <label class="label">Title</label>
+        <div class="control">
+          {% render_field form.title class+="input" %}
+        </div>
+      </div>
+
+      <!-- TRACK -->
+      <div class="field">
+        <label class="label">Track</label>
+        <div class="control">
+          {% render_field form.track class+="select is-fullwidth" %}
+        </div>
+      </div>
+
+      <!-- QUESTION COUNT -->
+      <div class="columns">
+        <div class="column is-4">
+          <label class="label">Questions</label>
+          {% render_field form.question_count class+="input" %}
+        </div>
+
+        <div class="column is-4">
+          <label class="label">Duration (seconds)</label>
+          {% render_field form.duration_seconds class+="input" %}
+        </div>
+
+        <div class="column is-4">
+          <label class="label">Passing Score (%)</label>
+          {% render_field form.passing_score class+="input" %}
+        </div>
+      </div>
+
+      <!-- FREE / PAID -->
+      <div class="field mt-4">
+        <label class="checkbox">
+          {% render_field form.is_free id="is_free_checkbox" %}
+          This exam is free
+        </label>
+      </div>
+
+      <!-- PRICE -->
+      <div id="price-box">
+        <div class="columns">
+          <div class="column is-6">
+            <label class="label">Price</label>
+            {% render_field form.price class+="input" %}
+          </div>
+
+          <div class="column is-6">
+            <label class="label">Currency</label>
+            {% render_field form.currency class+="input" %}
+          </div>
+        </div>
+      </div>
+
+      <!-- PUBLISH -->
+      <div class="field mt-4">
+        <label class="checkbox">
+          {% render_field form.is_published %}
+          Publish exam
+        </label>
+      </div>
+
+      <!-- MOCK -->
+      <div class="field mt-4">
+        <label class="label">Max Mock Attempts</label>
+        {% render_field form.max_mock_attempts class+="input" %}
+      </div>
+
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="field is-grouped mt-5">
+      <div class="control">
+        <a href="{% url 'quiz:admin_exam_list' %}"
+           class="button is-light">
+          Cancel
+        </a>
+      </div>
+      <div class="control">
+        <button class="button is-primary">
+          Save Exam
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- ================= JS ================= -->
+<script>
+function togglePrice() {
+  const isFree = document.getElementById("is_free_checkbox").checked;
+  document.getElementById("price-box").style.display = isFree ? "none" : "block";
+}
+document.getElementById("is_free_checkbox").addEventListener("change", togglePrice);
+togglePrice();
+</script>
+
+{% endblock %}
