@@ -11,11 +11,22 @@ def can_access_exam(user, exam):
 
     now = timezone.now()
 
-    # =====================================================
-    # TRACK-LEVEL SUBSCRIPTION
-    # =====================================================
-    if exam.track and exam.track.subscription_scope == exam.track.TRACK:
+    # -------------------------------------------------
+    # BLOCK UNPUBLISHED EXAMS
+    # -------------------------------------------------
+    if not exam.is_published:
+        return False, "Exam is not published"
 
+    # -------------------------------------------------
+    # FREE EXAM (NO SUBSCRIPTION REQUIRED)
+    # -------------------------------------------------
+    if exam.is_free:
+        return True, None
+
+    # -------------------------------------------------
+    # TRACK-LEVEL SUBSCRIPTION
+    # -------------------------------------------------
+    if exam.track and exam.track.subscription_scope == exam.track.TRACK:
         track = exam.track
 
         sub = ExamTrackSubscription.objects.filter(
@@ -27,23 +38,17 @@ def can_access_exam(user, exam):
         if not sub:
             return False, "Subscription required for this track"
 
-        # ---------- EXPIRY CHECK ----------
         if sub.expires_at and sub.expires_at < now:
             sub.is_active = False
             sub.save(update_fields=["is_active"])
             return False, "Subscription expired"
 
-        # ---------- FREE / TRIAL / PAID ----------
-        # Free track → always accessible
-        if track.pricing_type == track.PRICING_FREE:
-            return True, None
-
-        # Paid track
+        # Track subscription grants access to all exams
         return True, None
 
-    # =====================================================
+    # -------------------------------------------------
     # EXAM-LEVEL SUBSCRIPTION
-    # =====================================================
+    # -------------------------------------------------
     sub = ExamSubscription.objects.filter(
         user=user,
         exam=exam,
@@ -53,7 +58,6 @@ def can_access_exam(user, exam):
     if not sub:
         return False, "Subscription required for this exam"
 
-    # ---------- EXPIRY CHECK ----------
     if sub.expires_at and sub.expires_at < now:
         sub.is_active = False
         sub.save(update_fields=["is_active"])

@@ -441,8 +441,13 @@ path(
     name="admin_mock_attempt_history",
 ),
 
+########PAYMENT#######
 
-
-     
+path(
+    "dashboard/admin/manual-payment/",
+    admin_add_manual_payment,
+    name="admin_add_manual_payment",
+),
+    
 
 ]

@@ -1,90 +1,62 @@
-import math
-import random
-import logging
-from collections import defaultdict
-from datetime import timedelta
 from decimal import Decimal
 
-from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import login, authenticate, get_user_model
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
-from django.contrib.auth.views import (
-    LoginView,
-    LogoutView,
-    PasswordResetView,
-    PasswordResetDoneView,
-    PasswordResetConfirmView,
-    PasswordResetCompleteView,
-)
-from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
-from django.core.paginator import Paginator
-from django.db import IntegrityError, transaction
-from django.db.models import Avg, Count, Q, Sum
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
-from django.utils import timezone
-from django.utils.dateformat import DateFormat
-from django.utils.formats import get_format
-from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
+from django.views.decorators.http import require_POST
 
-# Project-specific imports
-from quiz.forms import *
 from quiz.models import (
     Exam,
     ExamTrack,
-    UserExam,
     ExamSubscription,
     ExamTrackSubscription,
-    Coupon,
 )
-from quiz.services.access import can_access_exam
-from quiz.services.pricing import apply_coupon
-from quiz.services.subscription import has_valid_subscription
-from quiz.utils import get_leaf_category_name
+from quiz.services.payment_service import PaymentService
 
 
-# Re-assign User in case a custom user model is used (overrides the imported User if needed)
-User = get_user_model()
-
-# Logger
-logger = logging.getLogger(__name__)
-
+from quiz.services.subscription_guard import has_active_track_subscription
 
 @login_required
 @require_POST
 def subscribe_track(request, track_id):
     track = get_object_or_404(ExamTrack, id=track_id, is_active=True)
 
-    coupon_code = request.POST.get("coupon")
-    price = track.lifetime_price or Decimal("0")
+    # 🔐 GUARD: already subscribed
+    existing = ExamTrackSubscription.objects.filter(
+        user=request.user,
+        track=track,
+        is_active=True
+    ).first()
 
-    final_price, error = apply_coupon(price, coupon_code)
-    if error:
-        messages.error(request, error)
+    if existing and existing.is_valid():
+        messages.info(request, "You are already subscribed to this track.")
         return redirect("quiz:exam_list")
 
-    sub, created = ExamTrackSubscription.objects.update_or_create(
+    # FREE ONLY — paid handled by admin / contact flow
+    if track.pricing_type != ExamTrack.PRICING_FREE:
+        messages.error(request, "Paid tracks require admin approval.")
+        return redirect("quiz:exam_list")
+
+    ExamTrackSubscription.objects.update_or_create(
         user=request.user,
         track=track,
         defaults={
             "is_active": True,
-            "payment_required": final_price > 0,
-            "amount": final_price,
-            "expires_at": None,   # lifetime
-            "is_trial": False,
+            "payment_required": False,
+            "amount": 0,
+            "expires_at": None,
+            "subscribed_by_admin": False,
         }
     )
 
-    messages.success(request, "Subscription activated successfully.")
+    messages.success(request, "Track subscribed successfully.")
     return redirect("quiz:student_dashboard")
 
+
+
+
+
+from quiz.services.subscription_guard import has_active_exam_subscription
 
 @login_required
 @require_POST
@@ -95,15 +67,31 @@ def subscribe_exam(request, exam_id):
         is_published=True
     )
 
-    sub, created = ExamSubscription.objects.update_or_create(
+    # 🔐 GUARD: already subscribed
+    existing = ExamSubscription.objects.filter(
+        user=request.user,
+        exam=exam,
+        is_active=True
+    ).first()
+
+    if existing and existing.is_valid():
+        messages.info(request, "You are already subscribed to this exam.")
+        return redirect("quiz:exam_list")
+
+    if not exam.is_free:
+        messages.error(request, "Paid exams require admin approval.")
+        return redirect("quiz:exam_list")
+
+    ExamSubscription.objects.update_or_create(
         user=request.user,
         exam=exam,
         defaults={
-            "is_active": True,          # 🔑 re-activate if revoked
+            "is_active": True,
             "payment_required": False,
             "amount": 0,
             "currency": "INR",
-            "expires_at": None,         # lifetime
+            "expires_at": None,
+            "subscribed_by_admin": False,
         }
     )
 
@@ -116,85 +104,81 @@ def subscribe_exam(request, exam_id):
 
 @login_required
 def subscribe_track_checkout(request, track_id):
-    track = get_object_or_404(ExamTrack, id=track_id, is_active=True)
+    """
+    Show checkout for PAID track
+    """
 
-    base_price = track.price or 0
-    coupon_code = request.POST.get("coupon")
-    final_price, coupon = apply_coupon(base_price, coupon_code)
+    track = get_object_or_404(
+        ExamTrack,
+        id=track_id,
+        is_active=True
+    )
 
-    # -------------------------------
-    # ₹0 FLOW (FREE / COUPON / TRIAL)
-    # -------------------------------
-    if final_price == 0:
-        ExamTrackSubscription.objects.update_or_create(
-            user=request.user,
-            track=track,
-            defaults={
-                "is_active": True,
-                "payment_required": False,
-                "amount": 0,
-                "expires_at": timezone.now() + timezone.timedelta(days=7),
-            }
-        )
+    if track.pricing_type == ExamTrack.PRICING_FREE:
+        return redirect("quiz:subscribe_track", track_id=track.id)
 
-        if coupon:
-            coupon.used_count += 1
-            coupon.save()
-
-        messages.success(request, "Subscription activated successfully!")
-        return redirect("quiz:student_dashboard")
-
-    # -------------------------------
-    # PAID FLOW (Razorpay later)
-    # -------------------------------
     return render(request, "quiz/checkout.html", {
         "track": track,
-        "base_price": base_price,
-        "final_price": final_price,
-        "coupon_code": coupon_code,
     })
 
 
 
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-
-from quiz.models import Exam, ExamTrack
-# EnrollmentLead will be added later — for now just log safely
-
-
-@require_POST
 @login_required
+@require_POST
+def finalize_track_subscription(request, track_id):
+    """
+    Final step after checkout
+    Applies coupon, records payment, grants access
+    """
+
+    track = get_object_or_404(
+        ExamTrack,
+        id=track_id,
+        is_active=True
+    )
+
+    coupon_code = request.POST.get("coupon", "").strip().upper()
+
+    try:
+        PaymentService.apply_manual_payment(
+            user=request.user,
+            track=track,
+            coupon=coupon_code and None,  # real coupon object resolved in service
+            reference_id="USER_CHECKOUT",
+        )
+    except Exception as e:
+        messages.error(request, str(e))
+        return redirect("quiz:subscribe_track_checkout", track_id=track.id)
+
+    messages.success(request, "Subscription activated successfully.")
+    return redirect("quiz:student_dashboard")
+
+
+
+@login_required
+@require_POST
 def log_enrollment_lead(request):
     """
-    Logs 'Contact to Enroll' clicks.
-    Safe no-op version (no DB dependency yet).
+    Logs interest for paid items
     """
 
     item_type = request.POST.get("type")   # exam / track
     item_id = request.POST.get("item_id")
-    method = request.POST.get("method")    # whatsapp / viber
 
-    # ✅ For now, just validate input and return success
     if item_type not in ("exam", "track"):
         return JsonResponse({"ok": False}, status=400)
 
     return JsonResponse({"ok": True})
 
 
+@login_required
+def subscribe_track_checkout(request, track_id):
+    track = get_object_or_404(ExamTrack, id=track_id, is_active=True)
 
+    if has_active_track_subscription(request.user, track):
+        messages.info(request, "You already have access to this track.")
+        return redirect("quiz:student_dashboard")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return render(request, "quiz/checkout.html", {
+        "track": track,
+    })

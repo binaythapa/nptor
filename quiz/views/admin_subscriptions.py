@@ -55,6 +55,10 @@ def subscription_admin_panel(request):
     return render(request, "quiz/subscription/admin/dashboard.html", context)
 
 
+
+
+
+
 # =====================================================
 # ADMIN: SUBSCRIBE / REVOKE TRACK
 # =====================================================
@@ -496,17 +500,23 @@ def admin_coupon_create(request):
 
 @staff_member_required
 def admin_payment_list(request):
-    payments = (
-        PaymentRecord.objects
-        .select_related("user", "exam", "track")
-        .order_by("-paid_at")
-    )
-
+    context = {
+        "payments": PaymentRecord.objects.select_related("user", "exam", "track"),
+        "users": User.objects.filter(is_active=True),
+        "exams": Exam.objects.all(),
+        "tracks": ExamTrack.objects.all(),
+        "coupons": Coupon.objects.filter(is_active=True),
+    }
     return render(
         request,
         "quiz/subscription/admin/payment_list.html",
-        {"payments": payments}
+        context
     )
+
+
+
+
+
 
 @staff_member_required
 @require_POST
@@ -526,3 +536,59 @@ def toggle_exam_publish(request):
     
 
 
+#######################
+####Payment#########
+
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+
+from django.contrib.auth import get_user_model
+from quiz.models import Exam, ExamTrack, Coupon
+from quiz.services.payment_service import PaymentService
+
+User = get_user_model()
+
+
+@staff_member_required
+@require_POST
+def admin_add_manual_payment(request):
+    """
+    Admin manually records a payment and grants access
+    """
+
+    user = get_object_or_404(User, id=request.POST.get("user_id"))
+
+    exam_id = request.POST.get("exam_id")
+    track_id = request.POST.get("track_id")
+    coupon_code = request.POST.get("coupon", "").strip().upper()
+    reference_id = request.POST.get("reference_id", "")
+
+    exam = Exam.objects.filter(id=exam_id).first() if exam_id else None
+    track = ExamTrack.objects.filter(id=track_id).first() if track_id else None
+
+    coupon = None
+    if coupon_code:
+        coupon = Coupon.objects.filter(code=coupon_code, is_active=True).first()
+
+    try:
+        PaymentService.apply_manual_payment(
+            user=user,
+            exam=exam,
+            track=track,
+            coupon=coupon,
+            reference_id=reference_id,
+        )
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+    return JsonResponse({"success": True})
+'''
+@staff_member_required
+@require_POST
+def admin_add_manual_payment(request):
+    PaymentService.apply_manual_payment(...)
+    return JsonResponse({"success": True})
+'''

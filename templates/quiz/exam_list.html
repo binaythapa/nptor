@@ -104,9 +104,11 @@
         {% if item.exam.is_free %}
           <form method="post" action="{% url 'quiz:subscribe_exam' item.exam.id %}">
             {% csrf_token %}
-            <button class="button is-success is-small">
-              Subscribe Free
-            </button>
+            <button class="button is-success is-small"
+        {% if items.0.is_track_subscribed %}disabled{% endif %}>
+  Subscribe Free
+</button>
+
           </form>
         {% else %}
           <div class="contact-enroll-wrapper">
