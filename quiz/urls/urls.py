@@ -185,6 +185,13 @@ urlpatterns = [
     # SUBSCRIPTIONS
     # ============================================================
     path(
+        "dashboard/admin/tracks/add/",
+        admin_track_create,
+        name="admin_track_create"
+    ),
+
+    
+    path(
         "subscribe/track/<int:track_id>/",
         subscribe_track,
         name="subscribe_track",

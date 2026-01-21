@@ -62,27 +62,24 @@ def subscription_admin_panel(request):
 # =====================================================
 # ADMIN: SUBSCRIBE / REVOKE TRACK
 # =====================================================
+from quiz.services.subscription_service import SubscriptionService
+
 @staff_member_required
 @require_POST
 def admin_subscribe_track(request):
-    user_id = request.POST.get("user_id")
-    track_id = request.POST.get("track_id")
+    user = get_object_or_404(User, id=request.POST.get("user_id"))
+    track = get_object_or_404(ExamTrack, id=request.POST.get("track_id"))
 
-    track = get_object_or_404(ExamTrack, id=track_id)
-
-    ExamTrackSubscription.objects.update_or_create(
-        user_id=user_id,
+    SubscriptionService.subscribe(
+        user=user,
         track=track,
-        defaults={
-            "is_active": True,
-            "payment_required": False,
-            "amount": 0,
-            "expires_at": None,
-            "subscribed_by_admin": True,
-        }
+        amount=0,
+        payment_required=False,
+        subscribed_by_admin=True,
     )
 
     return JsonResponse({"success": True})
+
 
 
 @staff_member_required
@@ -99,28 +96,24 @@ def admin_revoke_track(request):
 # =====================================================
 # ADMIN: SUBSCRIBE / REVOKE EXAM
 # =====================================================
+from quiz.services.subscription_service import SubscriptionService
+
 @staff_member_required
 @require_POST
 def admin_subscribe_exam(request):
-    user_id = request.POST.get("user_id")
-    exam_id = request.POST.get("exam_id")
+    user = get_object_or_404(User, id=request.POST.get("user_id"))
+    exam = get_object_or_404(Exam, id=request.POST.get("exam_id"))
 
-    exam = get_object_or_404(Exam, id=exam_id)
-
-    ExamSubscription.objects.update_or_create(
-        user_id=user_id,
+    SubscriptionService.subscribe(
+        user=user,
         exam=exam,
-        defaults={
-            "is_active": True,
-            "payment_required": False,
-            "amount": 0,
-            "currency": "INR",
-            "expires_at": None,
-            "subscribed_by_admin": True,
-        }
+        amount=0,
+        payment_required=False,
+        subscribed_by_admin=True,
     )
 
     return JsonResponse({"success": True})
+
 
 
 @staff_member_required
@@ -550,6 +543,10 @@ from quiz.models import Exam, ExamTrack, Coupon
 from quiz.services.payment_service import PaymentService
 
 User = get_user_model()
+# =====================================================
+# ADMIN: MANUAL PAYMENT
+# =====================================================
+from quiz.services.payment_service import PaymentService
 
 
 @staff_member_required
@@ -568,10 +565,10 @@ def admin_add_manual_payment(request):
 
     exam = Exam.objects.filter(id=exam_id).first() if exam_id else None
     track = ExamTrack.objects.filter(id=track_id).first() if track_id else None
-
-    coupon = None
-    if coupon_code:
-        coupon = Coupon.objects.filter(code=coupon_code, is_active=True).first()
+    coupon = Coupon.objects.filter(
+        code=coupon_code,
+        is_active=True
+    ).first() if coupon_code else None
 
     try:
         PaymentService.apply_manual_payment(
@@ -582,13 +579,9 @@ def admin_add_manual_payment(request):
             reference_id=reference_id,
         )
     except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)})
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
 
     return JsonResponse({"success": True})
-'''
-@staff_member_required
-@require_POST
-def admin_add_manual_payment(request):
-    PaymentService.apply_manual_payment(...)
-    return JsonResponse({"success": True})
-'''

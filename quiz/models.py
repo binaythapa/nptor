@@ -1298,10 +1298,22 @@ class PaymentRecord(models.Model):
             raise ValidationError("Payment must be linked to a track or exam.")
 
     def target_name(self):
-        return self.track.title if self.track else self.exam.title
+        if self.track:
+            return self.track.title
+        if self.exam:
+            return self.exam.title
+        return "—"
+
+    
 
     def __str__(self):
-        return f"{self.user} paid {self.amount} for {self.target_name()}"
+        if self.track:
+            return f"{self.user} → {self.track.title}"
+        if self.exam:
+            return f"{self.user} → {self.exam.title}"
+        return f"{self.user} → Payment"
+
+    
 
 
 

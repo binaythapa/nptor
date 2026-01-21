@@ -104,12 +104,7 @@
       🧾 Subscription Panel
     </a>
 
-    <a href="{% url 'quiz:admin_exam_list' %}"
-       class="button is-info is-light">
-      📝 Manage Exams
-    </a>
-
-    <a href="{% url 'quiz:admin_track_list' %}"
+ <a href="{% url 'quiz:admin_track_list' %}"
        class="button is-primary is-light">
       📚 Manage Tracks
     </a>
@@ -118,6 +113,14 @@
        class="button is-warning is-light">
       🎟 Coupons
     </a>
+
+
+    <a href="{% url 'quiz:admin_exam_list' %}"
+       class="button is-info is-light">
+      📝 Manage Exams
+    </a>
+
+   
 
     <a href="{% url 'quiz:admin_payment_list' %}"
        class="button is-success is-light">

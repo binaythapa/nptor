@@ -16,40 +16,21 @@ from quiz.services.payment_service import PaymentService
 
 from quiz.services.subscription_guard import has_active_track_subscription
 
+from quiz.services.subscription_service import SubscriptionService
+
 @login_required
 @require_POST
 def subscribe_track(request, track_id):
     track = get_object_or_404(ExamTrack, id=track_id, is_active=True)
 
-    # 🔐 GUARD: already subscribed
-    existing = ExamTrackSubscription.objects.filter(
+    SubscriptionService.subscribe(
         user=request.user,
         track=track,
-        is_active=True
-    ).first()
-
-    if existing and existing.is_valid():
-        messages.info(request, "You are already subscribed to this track.")
-        return redirect("quiz:exam_list")
-
-    # FREE ONLY — paid handled by admin / contact flow
-    if track.pricing_type != ExamTrack.PRICING_FREE:
-        messages.error(request, "Paid tracks require admin approval.")
-        return redirect("quiz:exam_list")
-
-    ExamTrackSubscription.objects.update_or_create(
-        user=request.user,
-        track=track,
-        defaults={
-            "is_active": True,
-            "payment_required": False,
-            "amount": 0,
-            "expires_at": None,
-            "subscribed_by_admin": False,
-        }
+        amount=0,
+        payment_required=False,
     )
 
-    messages.success(request, "Track subscribed successfully.")
+    messages.success(request, "Subscription activated successfully.")
     return redirect("quiz:student_dashboard")
 
 
