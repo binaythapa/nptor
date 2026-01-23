@@ -319,8 +319,36 @@ class Difficulty(models.Model):
     def __str__(self):
         return self.name
     
+#########################
+####SUBSCRIPTION PLAN
+#########################
+from django.db import models
 
+class SubscriptionPlan(models.Model):
+    """
+    Admin-defined pricing & duration plans
+    """
 
+    name = models.CharField(max_length=100)  
+    duration_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="NULL = lifetime access"
+    )
+
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+    currency = models.CharField(max_length=10, default="INR")
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_lifetime(self):
+        return self.duration_days is None
+
+    def __str__(self):
+        if self.duration_days:
+            return f"{self.name} ({self.duration_days} days)"
+        return f"{self.name} (Lifetime)"
 
 
 
@@ -328,10 +356,34 @@ class Difficulty(models.Model):
 ##########################################################
 ##########EXAM MANAGEMENT
 ##########################################################
+from django.db import models
+from django.core.exceptions import ValidationError
+
+
 class ExamTrack(models.Model):
     TRACK = "track"
     EXAM = "exam"
 
+    # ================= CORE =================
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    description = models.TextField(blank=True)
+
+    subscription_scope = models.CharField(
+        max_length=10,
+        choices=[(TRACK, "Track"), (EXAM, "Exam")],
+        default=TRACK,
+    )
+
+    # ================= DYNAMIC PRICING (PRIMARY) =================
+    subscription_plans = models.ManyToManyField(
+        "SubscriptionPlan",
+        blank=True,
+        related_name="tracks",
+        help_text="Pricing plans available for this track",
+    )
+
+    # ================= LEGACY PRICING (DEPRECATED) =================
     PRICING_FREE = "free"
     PRICING_MONTHLY = "monthly"
     PRICING_LIFETIME = "lifetime"
@@ -342,21 +394,11 @@ class ExamTrack(models.Model):
         (PRICING_LIFETIME, "Lifetime"),
     ]
 
-    title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
-    description = models.TextField(blank=True)
-
-    subscription_scope = models.CharField(
-        max_length=10,
-        choices=[(TRACK, "Track"), (EXAM, "Exam")],
-        default=TRACK
-    )
-
-    # ================= PRICING =================
     pricing_type = models.CharField(
         max_length=20,
         choices=PRICING_TYPE_CHOICES,
-        default=PRICING_FREE
+        default=PRICING_FREE,
+        help_text="⚠ Legacy pricing (do not use with plans)",
     )
 
     monthly_price = models.DecimalField(
@@ -364,7 +406,6 @@ class ExamTrack(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Required if pricing type is Monthly"
     )
 
     lifetime_price = models.DecimalField(
@@ -372,12 +413,11 @@ class ExamTrack(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Required if pricing type is Lifetime"
     )
 
     trial_days = models.PositiveIntegerField(
         default=7,
-        help_text="Free trial duration (days)"
+        help_text="Trial days (legacy only)",
     )
 
     currency = models.CharField(max_length=10, default="INR")
@@ -386,40 +426,41 @@ class ExamTrack(models.Model):
 
     # ================= VALIDATION =================
     def clean(self):
-    # Call parent clean
         super().clean()
 
-        # Monthly pricing validation
-        if self.pricing_type == self.PRICING_MONTHLY:
-            if self.monthly_price is None:
-                raise ValidationError({
-                    "monthly_price": "Monthly price is required for monthly plans."
-                })
+        # ❗ DO NOT validate based on M2M here
+        # Only validate legacy pricing consistency
 
-        # Lifetime pricing validation
-        if self.pricing_type == self.PRICING_LIFETIME:
-            if self.lifetime_price is None:
-                raise ValidationError({
-                    "lifetime_price": "Lifetime price is required for lifetime plans."
-                })
+        if self.pricing_type == self.PRICING_MONTHLY and not self.monthly_price:
+            raise ValidationError({
+                "monthly_price": "Monthly price is required for monthly pricing."
+            })
 
+        if self.pricing_type == self.PRICING_LIFETIME and not self.lifetime_price:
+            raise ValidationError({
+                "lifetime_price": "Lifetime price is required for lifetime pricing."
+            })
 
     # ================= HELPERS =================
-    def is_free(self):
-        return self.pricing_type == self.PRICING_FREE
+    def has_dynamic_plans(self):
+        """
+        Safe to use AFTER save
+        """
+        return self.subscription_plans.filter(is_active=True).exists()
 
-    def display_price(self):
-        if self.pricing_type == self.PRICING_FREE:
-            return "Free"
-        if self.pricing_type == self.PRICING_MONTHLY:
-            return f"{self.currency} {self.monthly_price}/month"
-        return f"{self.currency} {self.lifetime_price} (lifetime)"
+    def is_free(self):
+        """
+        Track is free only if:
+        - No active subscription plans
+        - Legacy pricing is free
+        """
+        if self.has_dynamic_plans():
+            return False
+        return self.pricing_type == self.PRICING_FREE
 
     def __str__(self):
         return self.title
 
-
-    
 
 class ExamTrackSubscription(models.Model):
     """

@@ -3,7 +3,7 @@
 
 <h2 class="title is-4">📚 Available Exam Tracks</h2>
 <p class="has-text-grey mb-4">
-  All exams require subscription. Free tracks require ₹0 subscription.
+  Free content can be subscribed instantly. Paid subscriptions require admin approval.
 </p>
 
 {% for track, items in track_map.items %}
@@ -21,10 +21,10 @@
 
     {% if items.0.is_track_subscribed %}
       <span class="tag is-success is-light">✔ Subscribed</span>
-    {% elif track.is_free %}
-      <span class="tag is-success is-light">🆓 Free</span>
+    {% elif track.has_dynamic_plans %}
+      <span class="tag is-warning is-light">🔒 Subscription</span>
     {% else %}
-      <span class="tag is-warning is-light">🔒 Premium</span>
+      <span class="tag is-success is-light">🆓 Free</span>
     {% endif %}
   </div>
 
@@ -33,14 +33,14 @@
   <div class="notification is-light is-info mt-3">
     <strong>{{ track.title }}</strong><br>
 
-    {% if track.is_free %}
+    {% if not track.has_dynamic_plans %}
       This is a free track. Subscribe to unlock all {{ items|length }} levels.
     {% else %}
-      Unlock all {{ items|length }} levels with a subscription.
+      This track requires a paid subscription. Please contact admin to enroll.
     {% endif %}
 
     <div class="buttons mt-3">
-      {% if track.is_free %}
+      {% if not track.has_dynamic_plans %}
         <form method="post" action="{% url 'quiz:subscribe_track' track.id %}">
           {% csrf_token %}
           <button class="button is-success is-small">
@@ -48,32 +48,10 @@
           </button>
         </form>
       {% else %}
-        <div class="contact-enroll-wrapper">
-          <button class="button is-warning is-small"
-                  onclick="toggleEnrollMenu(this)">
-            📞 Contact to Enroll
-          </button>
-
-          <div class="contact-enroll-menu">
-            <a href="https://wa.me/918754795806?text=Hi%20I%20want%20to%20enroll%20in%20{{ track.title }}"
-               target="_blank"
-               onclick="logLead('track','{{ track.id }}','whatsapp')"
-               class="button is-success is-small is-fullwidth mb-1">
-              WhatsApp
-            </a>
-
-            <!-- ✅ UPDATED VIBER -->
-            <a href="javascript:void(0)"
-               onclick="openViber(
-                 'Hi I want to enroll in {{ track.title }}',
-                 'track',
-                 '{{ track.id }}'
-               )"
-               class="button is-link is-small is-fullwidth">
-              Viber
-            </a>
-          </div>
-        </div>
+        <a href="{% url 'quiz:track_checkout' track.id %}"
+           class="button is-primary is-small">
+          View Plans
+        </a>
       {% endif %}
     </div>
   </div>
@@ -86,10 +64,10 @@
   <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
 
     <div>
-  <strong>Level {{ item.exam.level }}</strong> •
-  {{ item.exam.question_count }} questions •
-  {{ item.duration_minutes }} min
-</div>
+      <strong>Level {{ item.exam.level }}</strong> •
+      {{ item.exam.question_count }} questions •
+      {{ item.duration_minutes }} min
+    </div>
 
     {% if track.subscription_scope == "exam" %}
 
@@ -102,36 +80,30 @@
       {% else %}
 
         {% if item.exam.is_free %}
+          <!-- FREE EXAM -->
           <form method="post" action="{% url 'quiz:subscribe_exam' item.exam.id %}">
             {% csrf_token %}
-            <button class="button is-success is-small"
-        {% if items.0.is_track_subscribed %}disabled{% endif %}>
-  Subscribe Free
-</button>
-
+            <button class="button is-success is-small">
+              Subscribe Free
+            </button>
           </form>
         {% else %}
+          <!-- PAID EXAM -->
           <div class="contact-enroll-wrapper">
             <button class="button is-warning is-small"
-                    onclick="toggleEnrollMenu(this)">
+                    onclick="toggleEnrollMenu(event, this)">
               📞 Contact to Enroll
             </button>
 
             <div class="contact-enroll-menu">
               <a href="https://wa.me/918754795806?text=Hi%20I%20want%20to%20enroll%20in%20{{ item.exam.title }}"
                  target="_blank"
-                 onclick="logLead('exam','{{ item.exam.id }}','whatsapp')"
                  class="button is-success is-small is-fullwidth mb-1">
                 WhatsApp
               </a>
 
-              <!-- ✅ UPDATED VIBER -->
               <a href="javascript:void(0)"
-                 onclick="openViber(
-                   'Hi I want to enroll in {{ item.exam.title }}',
-                   'exam',
-                   '{{ item.exam.id }}'
-                 )"
+                 onclick="openViber('Hi I want to enroll in {{ item.exam.title }}')"
                  class="button is-link is-small is-fullwidth">
                 Viber
               </a>
@@ -141,7 +113,6 @@
 
       {% endif %}
     {% endif %}
-
   </div>
   {% endfor %}
 </div>
@@ -162,7 +133,7 @@
   position: absolute;
   right: 0;
   top: 110%;
-  background: white;
+  background: #fff;
   border: 1px solid #dbdbdb;
   padding: 8px;
   border-radius: 6px;
@@ -178,39 +149,24 @@
 
 <!-- ================= JS ================= -->
 <script>
-function toggleEnrollMenu(btn) {
+function toggleEnrollMenu(event, btn) {
   event.stopPropagation();
+
   document.querySelectorAll('.contact-enroll-menu')
-    .forEach(m => m.classList.remove('is-active'));
+    .forEach(menu => menu.classList.remove('is-active'));
+
   btn.nextElementSibling.classList.toggle('is-active');
 }
 
 document.addEventListener('click', function () {
   document.querySelectorAll('.contact-enroll-menu')
-    .forEach(m => m.classList.remove('is-active'));
+    .forEach(menu => menu.classList.remove('is-active'));
 });
 
-function logLead(type, id, method) {
-  fetch("{% url 'quiz:log_enrollment_lead' %}", {
-    method: "POST",
-    headers: {
-      "X-CSRFToken": "{{ csrf_token }}",
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: new URLSearchParams({
-      type: type,
-      item_id: id,
-      method: method
-    })
-  });
-}
-
-/* ✅ VIBER MESSAGE SUPPORT */
-function openViber(message, type, id) {
-  logLead(type, id, 'viber');
-  const encodedMessage = encodeURIComponent(message);
+function openViber(message) {
+  const encoded = encodeURIComponent(message);
   window.location.href =
-    `viber://chat?number=918754795806&text=${encodedMessage}`;
+    `viber://chat?number=918754795806&text=${encoded}`;
 }
 </script>
 

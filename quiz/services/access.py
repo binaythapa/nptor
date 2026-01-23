@@ -64,3 +64,37 @@ def can_access_exam(user, exam):
         return False, "Subscription expired"
 
     return True, None
+
+
+# quiz/services/access.py
+
+from django.utils import timezone
+from quiz.models import ExamTrackSubscription
+
+
+from django.utils import timezone
+from quiz.models import ExamTrackSubscription
+
+
+def has_active_track_subscription(user, track):
+    """
+    Returns True if user has a valid, active subscription for the track
+    """
+    now = timezone.now()
+
+    sub = ExamTrackSubscription.objects.filter(
+        user=user,
+        track=track,
+        is_active=True
+    ).first()
+
+    if not sub:
+        return False
+
+    if sub.expires_at and sub.expires_at < now:
+        sub.is_active = False
+        sub.save(update_fields=["is_active"])
+        return False
+
+    return True
+

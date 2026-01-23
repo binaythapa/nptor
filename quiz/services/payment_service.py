@@ -2,20 +2,26 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
-from quiz.models import Exam, ExamTrack, Coupon
-from quiz.services.subscription_service import SubscriptionService
-from quiz.models import PaymentRecord
+from quiz.models import (
+    PaymentRecord,
+    Exam,
+    ExamTrack,
+    ExamSubscription,
+    ExamTrackSubscription,
+    SubscriptionPlan,
+    Coupon,
+)
 
 
 class PaymentService:
     """
-    Handles ONLY payment logic.
-    Does NOT directly manage subscriptions.
+    SINGLE SOURCE OF TRUTH
+    Payment → Subscription → Access
     """
 
-    # -------------------------------------------
-    # LOW LEVEL: record payment row
-    # -------------------------------------------
+    # =====================================================
+    # LOW LEVEL: PAYMENT RECORD
+    # =====================================================
     @staticmethod
     def record_payment(
         *,
@@ -24,8 +30,8 @@ class PaymentService:
         exam=None,
         track=None,
         method="manual",
-        reference_id="",
-        created_by_admin=True,
+        reference_id=None,
+        created_by_admin=False,
     ):
         return PaymentRecord.objects.create(
             user=user,
@@ -38,9 +44,9 @@ class PaymentService:
             created_by_admin=created_by_admin,
         )
 
-    # -------------------------------------------
-    # HIGH LEVEL: admin manual payment
-    # -------------------------------------------
+    # =====================================================
+    # HIGH LEVEL: PAYMENT + SUBSCRIPTION
+    # =====================================================
     @staticmethod
     @transaction.atomic
     def apply_manual_payment(
@@ -48,50 +54,34 @@ class PaymentService:
         user,
         exam: Exam = None,
         track: ExamTrack = None,
+        plan: SubscriptionPlan = None,
         coupon: Coupon = None,
-        reference_id: str = "",
+        reference_id="",
     ):
-        """
-        Admin manual payment flow:
-
-        1️⃣ Validate input
-        2️⃣ Calculate base price
-        3️⃣ Apply coupon
-        4️⃣ Record payment (even ₹0)
-        5️⃣ Grant subscription via SubscriptionService
-        """
-
-        # -------------------------------------------------
-        # 1️⃣ VALIDATION
-        # -------------------------------------------------
+        # ---------------- VALIDATION ----------------
         if not exam and not track:
-            raise ValueError("Either exam or track is required")
+            raise ValueError("Exam or Track required")
 
         if exam and track:
-            raise ValueError("Only one of exam or track is allowed")
+            raise ValueError("Cannot pay for both exam and track")
 
-        # -------------------------------------------------
-        # 2️⃣ BASE PRICE
-        # -------------------------------------------------
+        if track and not plan:
+            raise ValueError("Subscription plan is required for track")
+
+        # ---------------- AMOUNT ----------------
         if exam:
             base_amount = Decimal("0") if exam.is_free else Decimal(exam.price or 0)
+            duration_days = None
         else:
-            if track.pricing_type == track.PRICING_FREE:
-                base_amount = Decimal("0")
-            elif track.pricing_type == track.PRICING_MONTHLY:
-                base_amount = Decimal(track.monthly_price or 0)
-            else:
-                base_amount = Decimal(track.lifetime_price or 0)
+            base_amount = Decimal(plan.price)
+            duration_days = plan.duration_days
 
         final_amount = base_amount
-        extra_trial_days = 0
 
-        # -------------------------------------------------
-        # 3️⃣ APPLY COUPON
-        # -------------------------------------------------
+        # ---------------- COUPON ----------------
         if coupon:
             if not coupon.is_valid():
-                raise ValueError("Invalid or expired coupon")
+                raise ValueError("Invalid coupon")
 
             if coupon.percent_off:
                 final_amount -= (final_amount * Decimal(coupon.percent_off) / 100)
@@ -100,12 +90,14 @@ class PaymentService:
                 final_amount -= Decimal(coupon.flat_off)
 
             final_amount = max(final_amount, Decimal("0"))
-            extra_trial_days = coupon.extra_trial_days or 0
             coupon.mark_used()
 
-        # -------------------------------------------------
-        # 4️⃣ RECORD PAYMENT (₹0 INCLUDED)
-        # -------------------------------------------------
+        # ---------------- EXPIRY ----------------
+        expires_at = None
+        if duration_days:
+            expires_at = timezone.now() + timezone.timedelta(days=duration_days)
+
+        # ---------------- PAYMENT RECORD ----------------
         payment = PaymentService.record_payment(
             user=user,
             exam=exam,
@@ -116,24 +108,33 @@ class PaymentService:
             created_by_admin=True,
         )
 
-        # -------------------------------------------------
-        # 5️⃣ GRANT SUBSCRIPTION (delegate)
-        # -------------------------------------------------
-        expires_at = None
-
-        if track and track.pricing_type == track.PRICING_MONTHLY:
-            expires_at = timezone.now() + timezone.timedelta(
-                days=30 + extra_trial_days
+        # ---------------- SUBSCRIPTION ----------------
+        if track:
+            ExamTrackSubscription.objects.update_or_create(
+                user=user,
+                track=track,
+                defaults={
+                    "is_active": True,
+                    "expires_at": expires_at,
+                    "payment_required": final_amount > 0,
+                    "amount": final_amount,
+                    "currency": "INR",
+                    "subscribed_by_admin": True,
+                },
             )
 
-        SubscriptionService.subscribe(
-            user=user,
-            exam=exam,
-            track=track,
-            amount=final_amount,
-            payment_required=final_amount > 0,
-            expires_at=expires_at,
-            subscribed_by_admin=True,
-        )
+        if exam:
+            ExamSubscription.objects.update_or_create(
+                user=user,
+                exam=exam,
+                defaults={
+                    "is_active": True,
+                    "expires_at": expires_at,
+                    "payment_required": final_amount > 0,
+                    "amount": final_amount,
+                    "currency": "INR",
+                    "subscribed_by_admin": True,
+                },
+            )
 
         return payment

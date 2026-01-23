@@ -18,12 +18,23 @@ from quiz.models import User, Exam, UserExam
 
 
 admin.site.register(Client)
-admin.site.register(ExamTrackSubscription)
+
 
 admin.site.register(DiscussionVote)
 admin.site.register(DiscussionReport)
 admin.site.register(QuestionQualitySignal)
+admin.site.register(ExamTrackSubscription)
 
+@admin.register(SubscriptionPlan)
+class SubscriptionPlanAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "price",
+        "duration_days",
+        "is_active",
+    )
+    list_filter = ("is_active",)
+    search_fields = ("name",)
 
 
 class ExamTrackSubscriptionAdmin(admin.ModelAdmin):
@@ -454,12 +465,11 @@ class ExamTrackAdmin(admin.ModelAdmin):
         "is_active",
         "created_at",
     )
-    list_filter = (
-        "subscription_scope",
-        "is_active",
-    )
+    filter_horizontal = ("subscription_plans",)
+    list_filter = ("subscription_scope", "is_active")
     search_fields = ("title", "slug")
     prepopulated_fields = {"slug": ("title",)}
+
 
 # =====================================================
 # COUPONS (NEW)
@@ -598,12 +608,12 @@ class PaymentRecordAdmin(admin.ModelAdmin):
         "amount",
         "currency",
         "payment_method",
+        "created_by_admin",
         "paid_at",
     )
-    list_filter = ("payment_method", "currency")
+    list_filter = ("payment_method", "currency", "created_by_admin")
     search_fields = ("user__username", "reference_id")
+    readonly_fields = ("paid_at",)
 
-    def target_name(self, obj):
-        return obj.target_name()
 
 

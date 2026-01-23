@@ -1,45 +1,76 @@
 {% extends "quiz/base.html" %}
 {% block content %}
 
-<div class="box" style="max-width:500px;margin:auto">
+<section class="section">
+  <div class="container">
 
-  <h2 class="title is-4">Checkout</h2>
+    <h1 class="title is-4">
+      💳 Subscription Plans – {{ track.title }}
+    </h1>
 
-  <p class="mb-3">
-    <strong>{{ track.title }}</strong><br>
-    Pricing:
-    {% if track.pricing_type == "free" %}
-      Free
-    {% elif track.pricing_type == "monthly" %}
-      ₹{{ track.monthly_price }} / month
-    {% else %}
-      ₹{{ track.lifetime_price }} (lifetime)
-    {% endif %}
-  </p>
+    <p class="has-text-grey mb-4">
+      Choose a plan and contact admin to activate your subscription.
+    </p>
 
-  <form method="post"
-        action="{% url 'quiz:finalize_track_subscription' track.id %}">
-    {% csrf_token %}
+    {% for plan in plans %}
+    <div class="box">
+      <div class="is-flex is-justify-content-space-between is-align-items-center">
 
-    <!-- Coupon -->
-    <div class="field">
-      <label class="label">Coupon Code (optional)</label>
-      <div class="control">
-        <input class="input" name="coupon" placeholder="Enter coupon">
+        <div>
+          <strong>{{ plan.name }}</strong><br>
+          {% if plan.duration_days %}
+            <span class="is-size-7 has-text-grey">
+              Valid for {{ plan.duration_days }} days
+            </span>
+          {% else %}
+            <span class="tag is-success is-light">Lifetime</span>
+          {% endif %}
+        </div>
+
+        <div class="has-text-right">
+          <strong>₹{{ plan.price }}</strong>
+        </div>
+      </div>
+
+      <div class="buttons mt-3">
+        <!-- WHATSAPP -->
+        <a class="button is-success is-small"
+           target="_blank"
+           href="https://wa.me/918754795806?text=
+           Hi%20I%20want%20to%20subscribe%20to%20{{ track.title }}%20
+           (%20{{ plan.name }}%20-%20₹{{ plan.price }}%20)">
+          📞 WhatsApp
+        </a>
+
+        <!-- VIBER -->
+        <button class="button is-link is-small"
+                onclick="openViber(
+                  'Hi I want to subscribe to {{ track.title }} ({{ plan.name }} - ₹{{ plan.price }})'
+                )">
+          📩 Viber
+        </button>
       </div>
     </div>
+    {% empty %}
+      <p class="has-text-danger">
+        No active subscription plans available.
+      </p>
+    {% endfor %}
 
-    <div class="field mt-4">
-      <button class="button is-success is-fullwidth">
-        Confirm Subscription
-      </button>
-    </div>
+    <a href="{% url 'quiz:exam_list' %}"
+       class="button is-light mt-4">
+      ← Back to Exams
+    </a>
 
-    <p class="help has-text-grey mt-2">
-      You will get instant access after confirmation.
-    </p>
-  </form>
+  </div>
+</section>
 
-</div>
+<script>
+function openViber(message) {
+  const encoded = encodeURIComponent(message);
+  window.location.href =
+    `viber://chat?number=918754795806&text=${encoded}`;
+}
+</script>
 
 {% endblock %}

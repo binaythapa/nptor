@@ -178,12 +178,33 @@ urlpatterns = [
     practice_next_ajax,
     name="practice_next_ajax"
 ),
+###############################
+
+path(
+    "admin/track/<int:track_id>/plans/",
+    get_track_plans,
+    name="get_track_plans",
+),
 
 
 
     # ============================================================
     # SUBSCRIPTIONS
     # ============================================================
+    path(
+    "subscriptions/history/",
+        subscription_history,
+        name="subscription_history",
+    ),
+
+
+    path(
+        "track/<int:track_id>/checkout/",
+        track_checkout,
+        name="track_checkout"
+    ),
+
+
     path(
         "dashboard/admin/tracks/add/",
         admin_track_create,

@@ -10,6 +10,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from quiz.services.payment_service import PaymentService
+
 
 from quiz.models import (
     Exam,
@@ -313,22 +315,23 @@ class ExamForm(forms.ModelForm):
             "is_published", "max_mock_attempts"
         ]
 
-
 class TrackForm(forms.ModelForm):
     class Meta:
         model = ExamTrack
-        fields = [
-            "title",
-            "slug",
-            "description",
-            "subscription_scope",   # ✅ ADD THIS
-            "pricing_type",
-            "monthly_price",
-            "lifetime_price",
-            "trial_days",
-            "currency",
-            "is_active",
-        ]
+        fields = "__all__"
+
+    def clean(self):
+        cleaned = super().clean()
+        plans = cleaned.get("subscription_plans")
+        pricing_type = cleaned.get("pricing_type")
+
+        if plans and pricing_type != ExamTrack.PRICING_FREE:
+            raise forms.ValidationError(
+                "Do not use legacy pricing when subscription plans are selected."
+            )
+
+        return cleaned
+
 
 
 
@@ -549,39 +552,90 @@ User = get_user_model()
 from quiz.services.payment_service import PaymentService
 
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import get_object_or_404
+
+from quiz.models import (
+    User,
+    Exam,
+    ExamTrack,
+    SubscriptionPlan,
+    Coupon,
+)
+from quiz.services.payment_service import PaymentService
+
+
 @staff_member_required
 @require_POST
 def admin_add_manual_payment(request):
-    """
-    Admin manually records a payment and grants access
-    """
-
-    user = get_object_or_404(User, id=request.POST.get("user_id"))
-
-    exam_id = request.POST.get("exam_id")
-    track_id = request.POST.get("track_id")
-    coupon_code = request.POST.get("coupon", "").strip().upper()
-    reference_id = request.POST.get("reference_id", "")
-
-    exam = Exam.objects.filter(id=exam_id).first() if exam_id else None
-    track = ExamTrack.objects.filter(id=track_id).first() if track_id else None
-    coupon = Coupon.objects.filter(
-        code=coupon_code,
-        is_active=True
-    ).first() if coupon_code else None
-
     try:
+        user_id = request.POST.get("user_id")
+        exam_id = request.POST.get("exam_id")
+        track_id = request.POST.get("track_id")
+        plan_id = request.POST.get("plan_id")
+        coupon_code = request.POST.get("coupon")
+        reference_id = request.POST.get("reference_id", "")
+
+        if not user_id:
+            return JsonResponse({"success": False, "error": "User is required"})
+
+        if exam_id and track_id:
+            return JsonResponse({
+                "success": False,
+                "error": "Select either Exam or Track, not both"
+            })
+
+        user = get_object_or_404(User, id=user_id)
+
+        exam = None
+        track = None
+        plan = None
+
+        if exam_id:
+            exam = get_object_or_404(Exam, id=exam_id)
+
+        if track_id:
+            track = get_object_or_404(ExamTrack, id=track_id)
+
+            if not plan_id:
+                return JsonResponse({
+                    "success": False,
+                    "error": "Subscription plan is required for track"
+                })
+
+            plan = get_object_or_404(
+                SubscriptionPlan,
+                id=plan_id,
+                is_active=True,
+                tracks=track
+            )
+
+        coupon = None
+        if coupon_code:
+            coupon = Coupon.objects.filter(
+                code=coupon_code.strip().upper(),
+                is_active=True
+            ).first()
+
+        # 🔑 SINGLE SOURCE OF TRUTH
         PaymentService.apply_manual_payment(
             user=user,
             exam=exam,
             track=track,
+            plan=plan,
             coupon=coupon,
             reference_id=reference_id,
         )
+
+        return JsonResponse({"success": True})
+
     except Exception as e:
         return JsonResponse({
             "success": False,
             "error": str(e)
-        })
+        }, status=500)
 
-    return JsonResponse({"success": True})
+
+
