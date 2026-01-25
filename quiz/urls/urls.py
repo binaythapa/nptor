@@ -14,7 +14,7 @@ from quiz.views.auth import *
 from quiz.views.subscription import *
 from quiz.views.admin_subscriptions import *
 from quiz.views.notifications import *
-from quiz.views.dashboards import *
+from quiz.views.student_dashboards import *
 from quiz.views.mock import *
 from quiz.views.exams import *
 

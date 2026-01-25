@@ -303,6 +303,19 @@ def admin_dashboard(request):
     })
 
 
+from collections import defaultdict
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.utils import timezone
+from django.conf import settings
+
+from quiz.models import (
+    Exam,
+    UserExam,
+    ExamTrackSubscription,
+    ExamSubscription,
+)
+
 
 @login_required
 def student_dashboard(request):
@@ -329,18 +342,16 @@ def student_dashboard(request):
         user=user, passed=False
     ).count()
 
-    # ---------------- SUBSCRIPTIONS ----------------
-    subscribed_tracks = set(
-        ExamTrackSubscription.objects
-        .filter(user=user, is_active=True)
-        .values_list("track_id", flat=True)
-    )
+    # ---------------- SUBSCRIPTIONS (FULL OBJECTS) ----------------
+    track_subs = {
+        s.track_id: s
+        for s in ExamTrackSubscription.objects.filter(user=user)
+    }
 
-    subscribed_exams = set(
-        ExamSubscription.objects
-        .filter(user=user, is_active=True)
-        .values_list("exam_id", flat=True)
-    )
+    exam_subs = {
+        s.exam_id: s
+        for s in ExamSubscription.objects.filter(user=user)
+    }
 
     # ---------------- GROUP EXAMS BY TRACK ----------------
     track_map = defaultdict(lambda: {
@@ -357,6 +368,7 @@ def student_dashboard(request):
         .order_by("level")
     )
 
+    # ---------------- PASSED LEVELS ----------------
     passed_levels_by_track = defaultdict(set)
 
     passed_attempts = (
@@ -369,22 +381,37 @@ def student_dashboard(request):
         if ue.exam.track:
             passed_levels_by_track[ue.exam.track_id].add(ue.exam.level)
 
+    # ---------------- MAIN LOOP ----------------
     for exam in exams:
         track = exam.track
         if not track:
             continue
 
-        if track.id not in subscribed_tracks and exam.id not in subscribed_exams:
+        track_sub = track_subs.get(track.id)
+        exam_sub = exam_subs.get(exam.id)
+
+        has_valid_subscription = (
+            (track_sub and track_sub.is_valid()) or
+            (exam_sub and exam_sub.is_valid())
+        )
+
+        has_expired_subscription = (
+            (track_sub and not track_sub.is_valid()) or
+            (exam_sub and not exam_sub.is_valid())
+        )
+
+        # Not subscribed at all → hide exam
+        if not has_valid_subscription and not has_expired_subscription:
             continue
 
         # ---------- LEVEL LOCK ----------
         locked = False
-        lock_reason = None   # ✅ ADDED
+        lock_reason = None
 
         if exam.level > 1:
             if (exam.level - 1) not in passed_levels_by_track[track.id]:
                 locked = True
-                lock_reason = f"Complete Level {exam.level - 1} to unlock"  # ✅ ADDED
+                lock_reason = f"Complete Level {exam.level - 1} to unlock"
 
         # ---------- ATTEMPTS ----------
         attempts = list(
@@ -396,7 +423,6 @@ def student_dashboard(request):
         scores = [a.score for a in attempts if a.score is not None]
         last_score = scores[-1] if scores else None
         best_score = max(scores) if scores else None
-
         retry_count = max(0, len(attempts) - 1)
 
         status = None
@@ -432,8 +458,10 @@ def student_dashboard(request):
                     can_retake = False
                     cooldown_remaining = int(remaining)
 
-        # ---------- ACTION ----------
-        if is_passed:
+        # ---------- ACTION (CRITICAL FIX) ----------
+        if has_expired_subscription:
+            action = "renew"
+        elif is_passed:
             action = None
         elif active:
             action = "resume"
@@ -461,6 +489,7 @@ def student_dashboard(request):
         mock_used = mock_attempts.count()
         mock_allowed = exam.max_mock_attempts or 0
 
+        # ---------- APPEND ----------
         track_map[track]["items"].append({
             "exam": exam,
             "status": status,
@@ -472,7 +501,12 @@ def student_dashboard(request):
             "best_score": best_score,
             "cooldown_remaining": cooldown_remaining,
             "locked": locked,
-            "lock_reason": lock_reason,  # ✅ ADDED
+            "lock_reason": lock_reason,
+
+            # subscription
+            "subscription_expired": has_expired_subscription,
+            "track_subscription": track_sub,
+            "exam_subscription": exam_sub,
 
             # mock
             "mock_attempts": list(mock_attempts),

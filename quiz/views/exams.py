@@ -471,6 +471,16 @@ def exam_resume(request, exam_id):
 
     return redirect('quiz:exam_start', exam_id=exam.id)
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+from quiz.models import (
+    ExamTrack,
+    ExamTrackSubscription,
+    ExamSubscription,
+    UserExam,
+)
+
 
 @login_required
 def exam_list(request):
@@ -481,15 +491,21 @@ def exam_list(request):
         track: [
             {
                 "exam": Exam,
+                "duration_minutes": int,
                 "is_exam_subscribed": bool,
                 "can_subscribe": bool,
                 "locked_reason": str | None,
+                "is_track_subscribed": bool,
+                "track_subscription": ExamTrackSubscription | None,
             },
             ...
         ]
     }
     """
 
+    # -------------------------------
+    # Fetch active tracks
+    # -------------------------------
     tracks = (
         ExamTrack.objects
         .filter(is_active=True)
@@ -501,7 +517,7 @@ def exam_list(request):
     )
 
     # -------------------------------
-    # Active track subscriptions
+    # Active TRACK subscriptions
     # -------------------------------
     track_subs = {
         s.track_id: s
@@ -512,7 +528,7 @@ def exam_list(request):
     }
 
     # -------------------------------
-    # Active exam subscriptions
+    # Active EXAM subscriptions
     # -------------------------------
     exam_subs = {
         s.exam_id: s
@@ -544,9 +560,14 @@ def exam_list(request):
         if not exams.exists():
             continue
 
+        # -------------------------------
+        # Track subscription (IMPORTANT FIX)
+        # -------------------------------
+        track_subscription = track_subs.get(track.id)
+
         is_track_subscribed = (
-            track.id in track_subs
-            and track_subs[track.id].is_valid()
+            track_subscription is not None
+            and track_subscription.is_valid()
         )
 
         items = []
@@ -555,13 +576,14 @@ def exam_list(request):
             locked_reason = None
 
             # -------------------------------
-            # Prerequisite exams
+            # Prerequisite exams check
             # -------------------------------
             prereqs = exam.prerequisite_exams.all()
             missing_prereqs = [
                 p.title for p in prereqs
                 if p.id not in passed_exam_ids
             ]
+
             if missing_prereqs:
                 locked_reason = (
                     "Pass prerequisite: " + ", ".join(missing_prereqs)
@@ -576,22 +598,20 @@ def exam_list(request):
                     for e in exams
                 )
                 if not has_prev_level:
-                    locked_reason = (
-                        f"Pass Level {exam.level - 1} first"
-                    )
+                    locked_reason = f"Pass Level {exam.level - 1} first"
 
             # -------------------------------
-            # Subscription checks
+            # Exam subscription
             # -------------------------------
+            exam_subscription = exam_subs.get(exam.id)
+
             is_exam_subscribed = (
-                exam.id in exam_subs
-                and exam_subs[exam.id].is_valid()
+                exam_subscription is not None
+                and exam_subscription.is_valid()
             )
 
             can_subscribe = False
-
             if track.subscription_scope == ExamTrack.EXAM:
-                # exam-level subscription
                 can_subscribe = locked_reason is None
 
             duration_minutes = exam.duration_seconds // 60
@@ -602,17 +622,22 @@ def exam_list(request):
                 "is_exam_subscribed": is_exam_subscribed,
                 "can_subscribe": can_subscribe,
                 "locked_reason": locked_reason,
+                "exam_subscription": exam_subscription,
             })
 
-        # Inject track-level subscription flag
+        # -------------------------------
+        # Inject TRACK-level info into each item
+        # -------------------------------
         for item in items:
             item["is_track_subscribed"] = is_track_subscribed
+            item["track_subscription"] = track_subscription
 
         track_map[track] = items
 
     return render(request, "quiz/exam_list.html", {
         "track_map": track_map,
     })
+
 
 
 

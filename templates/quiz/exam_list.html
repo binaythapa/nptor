@@ -19,13 +19,37 @@
       </p>
     </div>
 
-    {% if items.0.is_track_subscribed %}
-      <span class="tag is-success is-light">✔ Subscribed</span>
-    {% elif track.has_dynamic_plans %}
-      <span class="tag is-warning is-light">🔒 Subscription</span>
-    {% else %}
-      <span class="tag is-success is-light">🆓 Free</span>
+  {% if items.0.is_track_subscribed and items.0.track_subscription %}
+  <div class="has-text-right">
+    <span class="tag is-success is-light mb-1">
+      ✔ Subscribed
+    </span>
+
+    <p class="is-size-7 has-text-grey">
+      Started on: {{ items.0.track_subscription.subscribed_at|date:"d M Y" }} <br>
+      Expires on: {{ items.0.track_subscription.expires_at|date:"d M Y" }}
+    </p>
+
+    {% if items.0.track_subscription.days_remaining %}
+      <p class="is-size-7 has-text-info">
+        ⏳ {{ items.0.track_subscription.days_remaining }} days remaining
+      </p>
     {% endif %}
+  </div>
+
+{% elif not track.has_dynamic_plans %}
+  <span class="tag is-success is-light">
+    🆓 Free
+  </span>
+
+{% else %}
+  <span class="tag is-warning is-light">
+    🔒 Subscription
+  </span>
+{% endif %}
+
+
+
   </div>
 
   <!-- ================= TRACK-LEVEL SUBSCRIPTION ================= -->

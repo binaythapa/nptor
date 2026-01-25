@@ -2,20 +2,21 @@
 {% block content %}
 
 <section class="section">
-  <div class="container">
+  <div class="container" style="max-width: 720px;">
 
     <h1 class="title is-4">
-      💳 Subscription Plans – {{ track.title }}
+      💳 Subscribe to {{ track.title }}
     </h1>
 
     <p class="has-text-grey mb-4">
-      Choose a plan and contact admin to activate your subscription.
+      Choose a plan below and contact admin to activate your subscription.
     </p>
 
     {% for plan in plans %}
     <div class="box">
-      <div class="is-flex is-justify-content-space-between is-align-items-center">
 
+      <!-- PLAN INFO -->
+      <div class="is-flex is-justify-content-space-between is-align-items-center">
         <div>
           <strong>{{ plan.name }}</strong><br>
           {% if plan.duration_days %}
@@ -32,34 +33,46 @@
         </div>
       </div>
 
+      <hr>
+
+      <!-- CONTACT ADMIN -->
       <div class="buttons mt-3">
+
         <!-- WHATSAPP -->
-        <a class="button is-success is-small"
-           target="_blank"
-           href="https://wa.me/918754795806?text=
-           Hi%20I%20want%20to%20subscribe%20to%20{{ track.title }}%20
-           (%20{{ plan.name }}%20-%20₹{{ plan.price }}%20)">
-          📞 WhatsApp
+        <a
+          href="https://wa.me/918754795806?text=
+Hi Admin 👋
+Username: {{ request.user.username }}
+Track: {{ track.title }}
+Plan: {{ plan.name }}
+Price: ₹{{ plan.price }}
+Please activate my subscription.
+          |urlencode"
+          target="_blank"
+          class="button is-success is-small is-fullwidth mb-2">
+          📲 Contact via WhatsApp
         </a>
 
         <!-- VIBER -->
-        <button class="button is-link is-small"
-                onclick="openViber(
-                  'Hi I want to subscribe to {{ track.title }} ({{ plan.name }} - ₹{{ plan.price }})'
-                )">
-          📩 Viber
-        </button>
+        <a href="javascript:void(0)"
+           onclick="openViber(
+'Hi Admin 👋\nUsername: {{ request.user.username }}\nTrack: {{ track.title }}\nPlan: {{ plan.name }}\nPrice: ₹{{ plan.price }}\nPlease activate my subscription.'
+           )"
+           class="button is-link is-small is-fullwidth">
+          📞 Contact via Viber
+        </a>
+
       </div>
     </div>
     {% empty %}
-      <p class="has-text-danger">
-        No active subscription plans available.
-      </p>
+      <div class="notification is-warning">
+        No subscription plans available.
+      </div>
     {% endfor %}
 
     <a href="{% url 'quiz:exam_list' %}"
-       class="button is-light mt-4">
-      ← Back to Exams
+       class="button is-light is-fullwidth mt-4">
+      ← Back to Tracks
     </a>
 
   </div>
@@ -69,7 +82,7 @@
 function openViber(message) {
   const encoded = encodeURIComponent(message);
   window.location.href =
-    `viber://chat?number=918754795806&text=${encoded}`;
+    "viber://chat?number=918754795806&text=" + encoded;
 }
 </script>
 

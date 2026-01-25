@@ -461,6 +461,7 @@ class ExamTrack(models.Model):
     def __str__(self):
         return self.title
 
+from django.utils import timezone
 
 class ExamTrackSubscription(models.Model):
     """
@@ -524,6 +525,14 @@ class ExamTrackSubscription(models.Model):
         if self.expires_at and timezone.now() > self.expires_at:
             return False
         return True
+    
+    
+
+    def days_remaining(self):
+        if not self.expires_at:
+            return None
+        return max((self.expires_at - timezone.now()).days, 0)
+
 
 
 class Exam(models.Model):

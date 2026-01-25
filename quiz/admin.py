@@ -23,7 +23,50 @@ admin.site.register(Client)
 admin.site.register(DiscussionVote)
 admin.site.register(DiscussionReport)
 admin.site.register(QuestionQualitySignal)
-admin.site.register(ExamTrackSubscription)
+
+
+
+# admin.py
+from django.contrib import admin
+from .models import ExamTrackSubscription
+
+
+@admin.register(ExamTrackSubscription)
+class ExamTrackSubscriptionAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "track",
+        "is_active",
+        "is_trial",
+        "payment_required",
+        "amount",
+        "currency",
+        "subscribed_at",
+        "expires_at",
+    )
+
+    list_filter = (
+        "is_active",
+        "is_trial",
+        "payment_required",
+        "currency",
+        "subscribed_by_admin",
+    )
+
+    search_fields = (
+        "user__username",
+        "user__email",
+        "track__name",
+        "payment_id",
+    )
+
+    readonly_fields = (
+        "subscribed_at",
+    )
+
+    ordering = ("-subscribed_at",)
+
+
 
 @admin.register(SubscriptionPlan)
 class SubscriptionPlanAdmin(admin.ModelAdmin):
