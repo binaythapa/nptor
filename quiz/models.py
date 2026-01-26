@@ -84,7 +84,15 @@ class Category(models.Model):
         for c in children:
             ids.extend(c.get_descendants_include_self())
         return ids
- 
+
+
+
+
+
+class QuestionQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_active=True, is_deleted=False)
+
 class Question(models.Model):
     SINGLE = 'single'
     MULTI = 'multi'

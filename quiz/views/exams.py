@@ -49,7 +49,6 @@ from quiz.services.pricing import apply_coupon
 from quiz.services.subscription import has_valid_subscription
 from quiz.utils import get_leaf_category_name
 
-
 from quiz.services.grading import grade_exam
 from quiz.services.answer_persistence import autosave_answers
 
@@ -686,7 +685,10 @@ def allocate_questions_for_exam(exam, seed=None):
     rng = random.Random(seed) if seed is not None else random
     allocations = list(exam.allocations.select_related('category').all())
 
-    base_qs = Question.objects.filter(is_active=True)
+    #base_qs = Question.objects.filter(is_active=True,is_deleted=False)
+    base_qs = Question.objects.active()
+
+
 
 
     selected_qs = []
@@ -802,6 +804,10 @@ def allocate_questions_for_exam(exam, seed=None):
     rng.shuffle(selected_qs)
     return selected_qs[:total_needed]
 
+
+
+
+
 @login_required
 def exam_locked(request, exam_id):
     """
@@ -844,91 +850,5 @@ def exam_locked(request, exam_id):
         "exam": exam,
         "reasons": reasons or ["This exam is currently locked."],
     })
-
-@login_required
-def mock_exam_start(request, exam_id):
-    """
-    Starts a mock exam:
-    - Per-exam mock attempt limit
-    - No prerequisites
-    - No pass/fail impact
-    - Does NOT unlock progression
-    """
-
-    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
-
-    # =====================================================
-    # 🔒 PER-EXAM MOCK LIMIT
-    # =====================================================
-    max_mock = exam.max_mock_attempts or 0
-
-    used_mocks = UserExam.objects.filter(
-        user=request.user,
-        exam=exam,
-        passed__isnull=True,          # 👈 mock attempts
-        submitted_at__isnull=False
-    ).count()
-
-    if max_mock == 0:
-        messages.error(
-            request,
-            "Mock exams are disabled for this exam."
-        )
-        return redirect("quiz:student_dashboard")
-
-    if used_mocks >= max_mock:
-        messages.error(
-            request,
-            f"Mock attempt limit reached ({max_mock})."
-        )
-        return redirect("quiz:student_dashboard")
-
-    # =====================================================
-    # CREATE MOCK ATTEMPT
-    # =====================================================
-    try:
-        with transaction.atomic():
-            ue = UserExam.objects.create(
-                user=request.user,
-                exam=exam,
-                passed=None      # ✅ Explicit mock marker
-            )
-
-            questions = allocate_questions_for_exam(
-                exam,
-                seed=ue.id       # deterministic
-            )
-
-            if not questions:
-                raise ValueError("No questions allocated")
-
-            ue.question_order = [q.id for q in questions]
-            ue.current_index = 0
-            ue.save()
-
-            UserAnswer.objects.bulk_create([
-                UserAnswer(
-                    user_exam=ue,
-                    question=q
-                )
-                for q in questions
-            ])
-
-        # Session marker (optional, safe)
-        request.session[f"mock_exam_{ue.id}"] = True
-
-    except Exception:
-        messages.error(
-            request,
-            "Mock exam is not available at the moment."
-        )
-        return redirect("quiz:student_dashboard")
-
-    return redirect(
-        "quiz:exam_question",
-        user_exam_id=ue.id,
-        index=0
-    )
-
 
 
