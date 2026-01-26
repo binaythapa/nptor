@@ -196,7 +196,6 @@ def autosave(request, user_exam_id):
 
 from quiz.services.grading import grade_exam
 
-
 @login_required
 def exam_submit(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)

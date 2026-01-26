@@ -53,7 +53,6 @@ def reset_mock_attempts(request):
 
 
 
-
 @staff_member_required
 def admin_mock_attempts(request):
     """

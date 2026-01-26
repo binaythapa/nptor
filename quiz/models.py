@@ -212,7 +212,6 @@ class Question(models.Model):
 
 
 
-
     def __str__(self):
         return (self.text[:75] + '...') if len(self.text) > 75 else self.text
     
