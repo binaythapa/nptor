@@ -84,7 +84,15 @@ class Category(models.Model):
         for c in children:
             ids.extend(c.get_descendants_include_self())
         return ids
- 
+
+
+
+
+
+class QuestionQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_active=True, is_deleted=False)
+
 class Question(models.Model):
     SINGLE = 'single'
     MULTI = 'multi'
@@ -210,8 +218,8 @@ class Question(models.Model):
         related_name="questions_deleted"
     )
 
-
-
+   
+    objects = QuestionQuerySet.as_manager()
 
     def __str__(self):
         return (self.text[:75] + '...') if len(self.text) > 75 else self.text

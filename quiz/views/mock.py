@@ -4,10 +4,102 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-
-from quiz.models import Exam, UserExam
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
+from django.db.models import Q
+from quiz.models import UserExam, Exam
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+
+
+
+
+@login_required
+def mock_exam_start(request, exam_id):
+    """
+    Starts a mock exam:
+    - Per-exam mock attempt limit
+    - No prerequisites
+    - No pass/fail impact
+    - Does NOT unlock progression
+    """
+
+    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
+
+    # =====================================================
+    # 🔒 PER-EXAM MOCK LIMIT
+    # =====================================================
+    max_mock = exam.max_mock_attempts or 0
+
+    used_mocks = UserExam.objects.filter(
+        user=request.user,
+        exam=exam,
+        passed__isnull=True,          # 👈 mock attempts
+        submitted_at__isnull=False
+    ).count()
+
+    if max_mock == 0:
+        messages.error(
+            request,
+            "Mock exams are disabled for this exam."
+        )
+        return redirect("quiz:student_dashboard")
+
+    if used_mocks >= max_mock:
+        messages.error(
+            request,
+            f"Mock attempt limit reached ({max_mock})."
+        )
+        return redirect("quiz:student_dashboard")
+
+    # =====================================================
+    # CREATE MOCK ATTEMPT
+    # =====================================================
+    try:
+        with transaction.atomic():
+            ue = UserExam.objects.create(
+                user=request.user,
+                exam=exam,
+                passed=None      # ✅ Explicit mock marker
+            )
+
+            questions = allocate_questions_for_exam(
+                exam,
+                seed=ue.id       # deterministic
+            )
+
+            if not questions:
+                raise ValueError("No questions allocated")
+
+            ue.question_order = [q.id for q in questions]
+            ue.current_index = 0
+            ue.save()
+
+            UserAnswer.objects.bulk_create([
+                UserAnswer(
+                    user_exam=ue,
+                    question=q
+                )
+                for q in questions
+            ])
+
+        # Session marker (optional, safe)
+        request.session[f"mock_exam_{ue.id}"] = True
+
+    except Exception:
+        messages.error(
+            request,
+            "Mock exam is not available at the moment."
+        )
+        return redirect("quiz:student_dashboard")
+
+    return redirect(
+        "quiz:exam_question",
+        user_exam_id=ue.id,
+        index=0
+    )
 
 
 @staff_member_required
@@ -73,15 +165,6 @@ def admin_mock_attempts(request):
     )
 
 
-
-from django.core.paginator import Paginator
-from django.db.models import Q
-from quiz.models import UserExam, Exam
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-
-
 @staff_member_required
 def admin_mock_attempt_history(request):
     """
@@ -141,6 +224,11 @@ def admin_mock_attempt_history(request):
         "quiz/subscription/admin/mock_attempt_history.html",
         context
     )
+
+
+
+
+
 
 
 
