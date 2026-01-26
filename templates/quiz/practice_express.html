@@ -25,42 +25,68 @@
   {% endif %}
 
   <!-- FILTERS -->
-  <div class="columns mb-4">
+  <!-- FILTERS (COLLAPSIBLE) -->
+<div class="box is-light mb-4">
 
-    <!-- DOMAIN -->
-    <div class="column is-4">
-      <div class="select is-fullwidth">
-        <select id="domainSelect">
-          <option value="">All domains</option>
-          {% for d in domains %}
-            <option value="{{ d.id }}">{{ d.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
+  <!-- TOGGLE HEADER -->
+  <div class="is-flex is-justify-content-space-between is-align-items-center"
+       style="cursor:pointer;"
+       onclick="toggleFilters()">
 
-    <!-- CATEGORY -->
-    <div class="column is-4">
-      <div class="select is-fullwidth">
-        <select id="categorySelect" disabled>
-          <option value="">All categories</option>
-        </select>
-      </div>
-    </div>
+    <p class="has-text-weight-semibold mb-0">
+      🔍 Filters
+      <span id="filterHint"
+            class="has-text-grey is-size-7 ml-1">
+        (Click to expand)
+      </span>
+    </p>
 
-    <!-- DIFFICULTY -->
-    <div class="column is-4">
-      <div class="select is-fullwidth">
-        <select id="difficultySelect">
-          <option value="">All difficulties</option>
-          {% for k,l in difficulty_choices %}
-            <option value="{{ k }}">{{ l }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-
+    <span id="filterToggleIcon">▾</span>
   </div>
+
+  <!-- FILTER BODY -->
+  <div id="filterBody"
+       class="mt-3"
+       style="overflow:hidden; transition:max-height 0.3s ease;">
+
+    <div class="columns is-multiline">
+
+      <!-- DOMAIN -->
+      <div class="column is-12-mobile is-4-tablet">
+        <div class="select is-fullwidth">
+          <select id="domainSelect">
+            <option value="">All domains</option>
+            {% for d in domains %}
+              <option value="{{ d.id }}">{{ d.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- CATEGORY -->
+      <div class="column is-12-mobile is-4-tablet">
+        <div class="select is-fullwidth">
+          <select id="categorySelect" disabled>
+            <option value="">All categories</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- DIFFICULTY -->
+      <div class="column is-12-mobile is-4-tablet">
+        <div class="select is-fullwidth">
+          <select id="difficultySelect">
+            <option value="">All difficulties</option>
+            {% for k,l in difficulty_choices %}
+              <option value="{{ k }}">{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
   <!-- STATS -->
   <div class="level">
@@ -311,7 +337,54 @@ const matchedSpan = document.getElementById("matched");
 const totalSpan = document.getElementById("total");
 
 loadQuestion();
+
 </script>
+
+<script>
+function updateFilterUI(expanded) {
+  const hint = document.getElementById("filterHint");
+  const icon = document.getElementById("filterToggleIcon");
+
+  if (expanded) {
+    hint.innerText = "(Click to collapse)";
+    icon.innerText = "▴";
+  } else {
+    hint.innerText = "(Click to expand)";
+    icon.innerText = "▾";
+  }
+}
+
+function toggleFilters() {
+  const body = document.getElementById("filterBody");
+  const isExpanded =
+    body.style.maxHeight && body.style.maxHeight !== "0px";
+
+  if (isExpanded) {
+    body.style.maxHeight = "0px";
+    updateFilterUI(false);
+    localStorage.setItem("expressFilterExpanded", "0");
+  } else {
+    body.style.maxHeight = body.scrollHeight + "px";
+    updateFilterUI(true);
+    localStorage.setItem("expressFilterExpanded", "1");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const body = document.getElementById("filterBody");
+  const expanded =
+    localStorage.getItem("expressFilterExpanded") === "1";
+
+  if (expanded) {
+    body.style.maxHeight = body.scrollHeight + "px";
+    updateFilterUI(true);
+  } else {
+    body.style.maxHeight = "0px";
+    updateFilterUI(false);
+  }
+});
+</script>
+
 
 {% endblock %}
 
