@@ -685,11 +685,7 @@ def allocate_questions_for_exam(exam, seed=None):
     rng = random.Random(seed) if seed is not None else random
     allocations = list(exam.allocations.select_related('category').all())
 
-    #base_qs = Question.objects.filter(is_active=True,is_deleted=False)
-    base_qs = Question.objects.active()
-
-
-
+    base_qs = Question.objects.filter(is_active=True,is_deleted=False)
 
     selected_qs = []
     selected_ids = set()
