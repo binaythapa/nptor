@@ -106,6 +106,9 @@
   </p>
 </div>
 
+
+
+
 <!-- ================= FILTERS (COLLAPSIBLE) ================= -->
 <div class="box is-light mb-4">
 
@@ -133,66 +136,128 @@
          overflow:hidden;
          transition:max-height 0.3s ease;
        ">
+<form method="get">
+  <div class="columns is-mobile is-multiline">
 
-    <form method="get">
-      <div class="columns is-mobile is-multiline">
-
-        <div class="column is-12-mobile is-4-tablet">
-          <div class="select is-small is-fullwidth">
-            <select name="domain" onchange="this.form.submit()">
-              <option value="">All domains</option>
-              {% for d in domains %}
-                <option value="{{ d.id }}"
-                  {% if d.id|stringformat:"s" == domain_id %}selected{% endif %}>
-                  {{ d.name }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-
-        <div class="column is-12-mobile is-4-tablet">
-          <div class="select is-small is-fullwidth">
-            <select name="category" onchange="this.form.submit()"
-                    {% if not domain_id %}disabled{% endif %}>
-              <option value="">All categories</option>
-              {% for cat in categories %}
-                {% if not cat.parent %}
-                  <option value="{{ cat.id }}"
-                    {% if cat.id|stringformat:"s" == category_id %}selected{% endif %}>
-                    {{ cat.name }}
-                  </option>
-                  {% for child in cat.children.all %}
-                    <option value="{{ child.id }}"
-                      {% if child.id|stringformat:"s" == category_id %}selected{% endif %}>
-                      ↳ {{ child.name }}
-                    </option>
-                  {% endfor %}
-                {% endif %}
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-
-        <div class="column is-12-mobile is-4-tablet">
-          <div class="select is-small is-fullwidth">
-            <select name="difficulty" onchange="this.form.submit()">
-              <option value="">All difficulties</option>
-              {% for value, label in difficulty_choices %}
-                <option value="{{ value }}"
-                  {% if value == difficulty %}selected{% endif %}>
-                  {{ label }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-
+    <!-- ================= DOMAIN ================= -->
+    <div class="column is-12-mobile is-4-tablet">
+      <div class="select is-small is-fullwidth">
+        <select name="domain"
+                onchange="this.form.submit()"
+                {% if is_from_course %}disabled{% endif %}>
+          <option value="">All domains</option>
+          {% for d in domains %}
+            <option value="{{ d.id }}"
+              {% if is_from_course %}
+                {% if d.id == locked_filters.domain %}selected{% endif %}
+              {% else %}
+                {% if d.id|stringformat:"s" == domain_id %}selected{% endif %}
+              {% endif %}>
+              {{ d.name }}
+            </option>
+          {% endfor %}
+        </select>
       </div>
-    </form>
+
+      {% if is_from_course %}
+        <input type="hidden" name="domain" value="{{ locked_filters.domain }}">
+      {% endif %}
+    </div>
+
+    <!-- ================= CATEGORY ================= -->
+    <div class="column is-12-mobile is-4-tablet">
+      <div class="select is-small is-fullwidth">
+        <select name="category"
+                onchange="this.form.submit()"
+                {% if is_from_course or not domain_id %}disabled{% endif %}>
+          <option value="">All categories</option>
+
+          {% for cat in categories %}
+            {% if not cat.parent %}
+              <option value="{{ cat.id }}"
+                {% if is_from_course %}
+                  {% if cat.id == locked_filters.category %}selected{% endif %}
+                {% else %}
+                  {% if cat.id|stringformat:"s" == category_id %}selected{% endif %}
+                {% endif %}>
+                {{ cat.name }}
+              </option>
+
+              {% for child in cat.children.all %}
+                <option value="{{ child.id }}"
+                  {% if is_from_course %}
+                    {% if child.id == locked_filters.category %}selected{% endif %}
+                  {% else %}
+                    {% if child.id|stringformat:"s" == category_id %}selected{% endif %}
+                  {% endif %}>
+                  ↳ {{ child.name }}
+                </option>
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if is_from_course %}
+        <input type="hidden" name="category" value="{{ locked_filters.category }}">
+      {% endif %}
+    </div>
+
+    <!-- ================= DIFFICULTY ================= -->
+    <div class="column is-12-mobile is-4-tablet">
+      <div class="select is-small is-fullwidth">
+        <select name="difficulty"
+                onchange="this.form.submit()"
+                {% if is_from_course %}disabled{% endif %}>
+          <option value="">All difficulties</option>
+          {% for value, label in difficulty_choices %}
+            <option value="{{ value }}"
+              {% if is_from_course %}
+                {% if value == locked_filters.difficulty %}selected{% endif %}
+              {% else %}
+                {% if value == difficulty %}selected{% endif %}
+              {% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if is_from_course %}
+        <input type="hidden" name="difficulty" value="{{ locked_filters.difficulty }}">
+      {% endif %}
+    </div>
+
+  </div>
+
+  {% if is_from_course %}
+    <p class="help is-info mt-2">
+      🔒 Filters are locked because this practice is part of a course lesson.
+    </p>
+  {% endif %}
+</form>
+
 
   </div>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

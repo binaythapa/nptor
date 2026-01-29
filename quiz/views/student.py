@@ -70,18 +70,61 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Sum
 from django.http import JsonResponse
+from courses.services.context import get_course_context
+from courses.services.practice_completion import track_practice_completion
+
+
+
+
 def practice(request):
     """
     BASIC PRACTICE (PUBLIC)
+    + COURSE-AWARE PRACTICE (OPTIONAL)
     """
+
+    # =====================================================
+    # COURSE CONTEXT (OPTIONAL)
+    # =====================================================
+    course_slug = request.GET.get("course")
+    lesson_id = request.GET.get("lesson")
+    is_from_course = bool(course_slug and lesson_id)
+
+    lesson = None
+    if is_from_course:
+        from courses.models import Lesson
+        lesson = Lesson.objects.select_related(
+            "practice_domain",
+            "practice_category"
+        ).filter(id=lesson_id).first()
 
     # =====================================================
     # RESET
     # =====================================================
     if request.GET.get("reset") == "1":
-        for k in ["p_seen", "p_qid", "p_filters", "p_total", "p_anon_count"]:
+        for k in [
+            "p_seen",
+            "p_qid",
+            "p_filters",
+            "p_total",
+            "p_anon_count",
+            "course_practice_initialized",
+            "course_practice_count",
+        ]:
             request.session.pop(k, None)
+
         return redirect("quiz:practice")
+
+    # =====================================================
+    # INIT COURSE PRACTICE SESSION (ONCE)
+    # =====================================================
+    if is_from_course and lesson and not request.session.get("course_practice_initialized"):
+        request.session["p_filters"] = {
+            "domain": lesson.practice_domain_id,
+            "category": lesson.practice_category_id,
+            "difficulty": lesson.practice_difficulty,
+        }
+        request.session["course_practice_initialized"] = True
+        request.session["course_practice_count"] = 0
 
     # =====================================================
     # READ FILTERS
@@ -89,6 +132,13 @@ def practice(request):
     domain_id = request.POST.get("domain") or request.GET.get("domain")
     category_id = request.POST.get("category") or request.GET.get("category")
     difficulty = request.POST.get("difficulty") or request.GET.get("difficulty")
+
+    # 🔒 LOCK FILTERS IF FROM COURSE
+    if is_from_course and lesson and lesson.practice_lock_filters:
+        filters = request.session.get("p_filters", {})
+        domain_id = filters.get("domain")
+        category_id = filters.get("category")
+        difficulty = filters.get("difficulty")
 
     filters = {
         "domain": domain_id,
@@ -117,7 +167,7 @@ def practice(request):
 
     selected_domain = None
 
-    if domain_id and domain_id.isdigit():
+    if domain_id and str(domain_id).isdigit():
         selected_domain = Domain.objects.filter(
             id=domain_id,
             is_active=True
@@ -126,7 +176,7 @@ def practice(request):
         if selected_domain:
             qs = qs.filter(category__domain=selected_domain)
 
-    if category_id and category_id.isdigit() and selected_domain:
+    if category_id and str(category_id).isdigit() and selected_domain:
         cat = Category.objects.filter(
             id=category_id,
             domain=selected_domain,
@@ -142,9 +192,9 @@ def practice(request):
         qs = qs.filter(difficulty=difficulty)
 
     # =====================================================
-    # RESET SESSION IF FILTERS CHANGED
+    # RESET SESSION IF FILTERS CHANGED (NON-COURSE ONLY)
     # =====================================================
-    if filters != last_filters:
+    if not is_from_course and filters != last_filters:
         request.session["p_filters"] = filters
         request.session["p_seen"] = []
         request.session.pop("p_qid", None)
@@ -203,52 +253,10 @@ def practice(request):
         request.session["p_seen"] = seen
         request.session.pop("p_qid", None)
 
-        return redirect(
-            request.path + "?" + request.META.get("QUERY_STRING", "")
-        )
+        return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
 
     # =====================================================
-    # FEEDBACK STATUS
-    # =====================================================
-    feedback_submitted = False
-    if request.user.is_authenticated:
-        feedback_submitted = QuestionDiscussion.objects.filter(
-            user=request.user,
-            question=question,
-            discussion_type=QuestionDiscussion.TYPE_DOUBT,
-        ).exists()
-
-    # =====================================================
-    # FEEDBACK SUBMIT
-    # =====================================================
-    if (
-        request.method == "POST"
-        and request.POST.get("feedback_submit") == "1"
-        and request.user.is_authenticated
-    ):
-        content = (request.POST.get("student_comment") or "").strip()
-        is_incorrect = bool(request.POST.get("answer_incorrect"))
-
-        if content or is_incorrect:
-            QuestionDiscussion.objects.get_or_create(
-                user=request.user,
-                question=question,
-                discussion_type=QuestionDiscussion.TYPE_DOUBT,
-                defaults={
-                    "content": content or "Flagged as incorrect/confusing",
-                    "is_answer_incorrect": is_incorrect,
-                }
-            )
-
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({"status": "ok"})
-
-        return redirect(
-            request.path + "?" + request.META.get("QUERY_STRING", "")
-        )
-
-    # =====================================================
-    # STATE
+    # SUBMIT ANSWER
     # =====================================================
     result = None
     show_next = False
@@ -256,39 +264,40 @@ def practice(request):
     selected_choice_id = None
     selected_multi_ids = []
 
-    # =====================================================
-    # SUBMIT ANSWER
-    # =====================================================
     if request.method == "POST" and request.POST.get("next") != "1":
 
         if question.question_type == Question.MULTI:
-            selected_multi_ids = list(
-                map(int, request.POST.getlist("choice_multi"))
-            )
-            correct_ids = list(
-                correct_choices.values_list("id", flat=True)
-            )
-            result = (
-                "correct"
-                if set(selected_multi_ids) == set(correct_ids)
-                else "wrong"
-            )
+            selected_multi_ids = list(map(int, request.POST.getlist("choice_multi")))
+            correct_ids = list(correct_choices.values_list("id", flat=True))
+            result = "correct" if set(selected_multi_ids) == set(correct_ids) else "wrong"
             show_next = result == "correct"
 
         else:
             selected_choice_id = request.POST.get("choice")
             selected = choices.filter(id=selected_choice_id).first()
-            result = (
-                "correct"
-                if selected and selected.is_correct
-                else "wrong"
-            )
+            result = "correct" if selected and selected.is_correct else "wrong"
             show_next = result == "correct"
 
     # =====================================================
-    # NEXT (INCREMENT ANON COUNT HERE)
+    # NEXT (COURSE PRACTICE TRACKING)
     # =====================================================
     if request.method == "POST" and request.POST.get("next") == "1":
+
+        # ================= COURSE PRACTICE TRACKING =================
+        course_slug, lesson, threshold = get_course_context(request)
+
+        if lesson:
+            count = track_practice_completion(request, lesson)
+
+            # 🚫 STOP when threshold reached
+            if threshold and count >= threshold:
+                return redirect(
+                    "courses:course_learn_lesson",
+                    slug=course_slug,
+                    lesson_id=lesson.id
+                )
+
+        # ================= NORMAL PRACTICE FLOW =================
         seen.append(question.id)
         request.session["p_seen"] = seen
         request.session.pop("p_qid", None)
@@ -299,6 +308,7 @@ def practice(request):
         return redirect(
             request.path + "?" + request.META.get("QUERY_STRING", "")
         )
+
 
     # =====================================================
     # DISCUSSIONS
@@ -311,27 +321,19 @@ def practice(request):
     )
 
     categories = (
-        Category.objects.filter(
-            domain=selected_domain,
-            is_active=True,
-        )
-        if selected_domain
-        else Category.objects.none()
+        Category.objects.filter(domain=selected_domain, is_active=True)
+        if selected_domain else Category.objects.none()
     )
 
-        # =====================================================
-    # PREVIOUS FEEDBACKS (READ-ONLY)
-    # =====================================================
-    previous_feedbacks = (
-        QuestionDiscussion.objects
-        .filter(
-            question=question,
-            discussion_type=QuestionDiscussion.TYPE_DOUBT,
-            is_deleted=False
-        )
-        .select_related("user")
-        .order_by("-created_at")
-    )
+
+    locked_filters = {}
+
+    if is_from_course and lesson:
+        locked_filters = {
+            "domain": lesson.practice_domain_id,
+            "category": lesson.practice_category_id,
+            "difficulty": lesson.practice_difficulty,
+        }
 
 
     # =====================================================
@@ -346,7 +348,6 @@ def practice(request):
         "show_next": show_next,
         "explanation": question.explanation,
         "discussions": discussions,
-        "feedback_submitted": feedback_submitted,
         "domains": Domain.objects.filter(is_active=True),
         "categories": categories,
         "domain_id": domain_id,
@@ -355,7 +356,8 @@ def practice(request):
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
         "progress_done": len(seen),
         "progress_total": total,
-        "previous_feedbacks": previous_feedbacks,
+        "locked_filters": locked_filters,
+        "is_from_course": is_from_course,
 
     })
 

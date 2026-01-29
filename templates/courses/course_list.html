@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Courses</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .description {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            text-align: center;
+            padding: 10px;
+            background: #5624d0;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .btn:hover {
+            background: #401b9c;
+        }
+
+        .empty {
+            text-align: center;
+            color: #777;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Available Courses</h1>
+
+{% if courses %}
+    <div class="grid">
+        {% for course in courses %}
+            <div class="card">
+                <div>
+                    <div class="title">{{ course.title }}</div>
+
+                    <div class="meta">
+                        Level: {{ course.level|title }}
+                        {% if course.category %}
+                            | {{ course.category.name }}
+                        {% endif %}
+                    </div>
+
+                    <div class="description">
+                        {{ course.description|truncatechars:120 }}
+                    </div>
+                </div>
+
+                <a href="{% url 'courses:course_detail' course.slug %}" class="btn">
+                    View Course
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">
+        No courses available yet.
+    </div>
+{% endif %}
+
+</body>
+</html>

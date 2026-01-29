@@ -4,6 +4,8 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
+from courses.models import Lesson
+
 
 from django.conf import settings
 from django.contrib import messages
@@ -194,16 +196,13 @@ def autosave(request, user_exam_id):
 
 
 from quiz.services.grading import grade_exam
-
 @login_required
 def exam_submit(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
 
-    # Prevent double submit
     if ue.submitted_at:
         return redirect('quiz:exam_result', user_exam_id=ue.id)
 
-    # Time expired
     if ue.time_remaining() <= 0:
         ue.submitted_at = timezone.now()
         ue.score = 0
@@ -218,10 +217,33 @@ def exam_submit(request, user_exam_id):
             index=ue.current_index
         )
 
-    # ✅ Correct mock detection
     is_mock = request.session.get(f"mock_exam_{ue.id}", False)
 
     grade_exam(ue, request.POST, is_mock=is_mock)
+
+    from courses.services.context import get_course_context
+    from courses.services.exam_completion import handle_exam_completion
+
+    course_slug, lesson_id = get_course_context(request)
+
+    if course_slug and lesson_id:
+         handle_exam_completion(request, ue, lesson_id)
+
+
+    # ✅ COURSE ↔ QUIZ INTEGRATION
+    if not is_mock:
+        from courses.models import Lesson, LessonProgress
+
+        lesson = Lesson.objects.filter(exam=ue.exam).first()
+        if lesson:
+            LessonProgress.objects.update_or_create(
+                user=request.user,
+                lesson=lesson,
+                defaults={
+                    "completed": True,
+                    "completed_at": timezone.now()
+                }
+            )
 
     return redirect('quiz:exam_result', user_exam_id=ue.id)
 
@@ -229,6 +251,19 @@ def exam_submit(request, user_exam_id):
 @login_required
 def exam_result(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
+
+    # -------------------------------------------------
+    # COURSE CONTEXT (if this exam belongs to a course)
+    # -------------------------------------------------
+    lesson = (
+        Lesson.objects
+        .select_related("section__course")
+        .filter(exam=ue.exam)
+        .first()
+    )
+
+    course = lesson.section.course if lesson else None
+
 
     # =====================================================
     # 🧪 MOCK DETECTION
@@ -422,6 +457,10 @@ def exam_result(request, user_exam_id):
 
             # 🧪 MOCK FLAG FOR TEMPLATE
             'is_mock': is_mock,
+
+            # ✅ NEW (course-aware)
+            'course': course,
+            'lesson': lesson,
         }
     )
 

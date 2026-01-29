@@ -61,6 +61,7 @@ INSTALLED_APPS = [
 
     # Local
     "quiz.apps.QuizConfig",
+     "courses",
 ]
 
 SITE_ID = 1

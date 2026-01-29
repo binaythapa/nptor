@@ -8,12 +8,15 @@ from quiz.urls.admin import urlpatterns as admin_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
     
 
     path('accounts/', include('django.contrib.auth.urls')),
 
     # ✅ include quiz urls (folder-based)
     path('quiz/', include('quiz.urls')),
+    path("courses/", include("courses.urls")),
+
 
     path('api/', include('quiz.api_urls')),
 

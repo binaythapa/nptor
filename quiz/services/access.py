@@ -98,3 +98,33 @@ def has_active_track_subscription(user, track):
 
     return True
 
+
+
+
+
+
+
+from django.utils import timezone
+from quiz.models import ExamTrackSubscription
+
+
+def user_has_course_access(user, course) -> bool:
+    """
+    Industry-standard access rules:
+    - Course with NO plans → free
+    - Course with plans → user must have an active subscription
+    """
+
+    plans = course.subscription_plans.filter(is_active=True)
+
+    # Free course
+    if not plans.exists():
+        return True
+
+    # Paid course → active subscription required
+    return ExamTrackSubscription.objects.filter(
+        user=user,
+        is_active=True,
+        expires_at__gt=timezone.now()
+    ).exists()
+

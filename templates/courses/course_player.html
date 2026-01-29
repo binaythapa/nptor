@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ course.title }}</title>
+
+  <style>
+    body { margin: 0; font-family: Arial; }
+    .layout { display: flex; height: 100vh; }
+
+    .sidebar {
+      width: 300px;
+      background: #f8f9fa;
+      overflow-y: auto;
+      border-right: 1px solid #ddd;
+      padding: 12px;
+    }
+
+    .content {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .lesson-link {
+      display: block;
+      padding: 6px 8px;
+      text-decoration: none;
+      color: #333;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+
+    .lesson-link.active {
+      background: #e9ecef;
+      font-weight: bold;
+    }
+
+    .lesson-link.completed {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+
+    .progress-box {
+      margin: 10px 0 20px;
+    }
+
+    .celebration-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .celebration-card {
+      background: white;
+      padding: 40px;
+      width: 420px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .btn-primary {
+      padding: 10px 18px;
+      background: #2e7d32;
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      padding: 10px 18px;
+      background: #e0e0e0;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- LEFT: CURRICULUM -->
+  <div class="sidebar">
+    <h3>{{ course.title }}</h3>
+
+    <div class="progress-box">
+      <strong>Progress: {{ progress }}%</strong>
+      <div style="background:#ddd; border-radius:6px; height:10px;">
+        <div style="width: {{ progress }}%; background:#4caf50; height:10px; border-radius:6px;"></div>
+      </div>
+    </div>
+
+    {% for section in sections %}
+      <h4>{{ section.title }}</h4>
+
+      {% for l in section.lessons.all %}
+        <a href="{% url 'courses:course_learn_lesson' course.slug l.id %}"
+           class="lesson-link
+           {% if lesson.id == l.id %} active{% endif %}
+           {% if l.id in completed_lesson_ids %} completed{% endif %}">
+          {% if l.id in completed_lesson_ids %}✔ {% endif %}
+          {{ l.title }}
+        </a>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- RIGHT: CONTENT -->
+  <div class="content">
+    <h2>{{ lesson.title }}</h2>
+
+    <!-- ================= VIDEO ================= -->
+    {% if lesson.lesson_type == "video" %}
+      {% if video_embed_url %}
+
+      
+          <iframe
+  width="100%"
+  height="420"
+  src="{{ video_embed_url }}"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen
+  referrerpolicy="strict-origin-when-cross-origin">
+</iframe>
+
+        <p id="video-status" style="margin-top:10px;color:#666;">
+          ▶ Watch at least 90% to complete this lesson
+        </p>
+      {% else %}
+        <p>No video available.</p>
+      {% endif %}
+
+    <!-- ================= ARTICLE ================= -->
+    {% elif lesson.lesson_type == "article" %}
+      <div>{{ lesson.article_content|safe }}</div>
+
+    <!-- ================= QUIZ ================= -->
+    {% elif lesson.lesson_type == "quiz" %}
+      <a href="{% url 'quiz:exam_start' lesson.exam.id %}">
+        👉 Start Quiz
+      </a>
+
+    <!-- ================= PRACTICE ================= -->
+    
+      {% elif lesson.lesson_type == "practice" %}
+  <a href="{% url 'quiz:practice' %}?category={{ lesson.practice_category.id }}&course={{ course.slug }}&lesson={{ lesson.id }}">
+    👉 Start Practice
+  </a>
+
+
+    {% endif %}
+
+    <!-- ================= MARK COMPLETED ================= -->
+    <!-- MARK COMPLETED BUTTON (ARTICLE / VIDEO ONLY) -->
+    {% if lesson.lesson_type == "article" or lesson.lesson_type == "video" %}
+      {% if not lesson_progress.completed %}
+        <form method="post"
+              action="{% url 'courses:mark_lesson_completed' course.slug lesson.id %}"
+              style="margin-top:20px;">
+          {% csrf_token %}
+          <button type="submit"
+                  style="
+                    padding:10px 18px;
+                    background:#4caf50;
+                    color:white;
+                    border:none;
+                    border-radius:4px;
+                    cursor:pointer;">
+            ✅ Mark as completed
+          </button>
+        </form>
+      {% else %}
+        <div style="margin-top:20px; color:#2e7d32;">
+          ✔ Lesson completed
+        </div>
+      {% endif %}
+    {% endif %}
+
+  </div>
+</div>
+<!-- ================= CELEBRATION ================= -->
+{% if show_celebration %}
+<div id="celebration-modal" class="celebration-overlay">
+  <div class="celebration-card">
+    <h1>🎉 Congratulations!</h1>
+    <p>You’ve completed <strong>{{ course.title }}</strong></p>
+
+    <a href="{% url 'courses:course_certificate_pdf' course.slug %}"
+       class="btn-primary">
+      📜 Download Certificate
+    </a>
+    <br><br>
+    <button onclick="closeCelebration()" class="btn-secondary">
+      Continue
+    </button>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function closeCelebration() {
+  const modal = document.getElementById("celebration-modal");
+  if (modal) modal.style.display = "none";
+}
+</script>
+
+
+</body>
+</html>

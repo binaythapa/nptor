@@ -13,6 +13,29 @@
 
 <h2 class="title is-4">🎯 Exam Result — {{ user_exam.exam.title }}</h2>
 
+{% if course and lesson %}
+<nav class="breadcrumb mb-4" aria-label="breadcrumbs">
+  <ul>
+    <li>
+      <a href="{% url 'courses:course_detail' course.slug %}">
+        {{ course.title }}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'courses:course_learn' course.slug %}">
+        {{ lesson.title }}
+      </a>
+    </li>
+    <li class="is-active">
+      <a aria-current="page">
+        Quiz Result
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+
+
 <!-- ================= SUMMARY ================= -->
 <div class="box columns is-multiline has-text-centered">
 
@@ -54,7 +77,6 @@
 
   <strong>{{ forloop.counter }}. {{ ans.question.text }}</strong>
 
-  <!-- ===== STATUS ===== -->
   <p class="mt-2">
     {% if ans.is_correct %}
       <span class="has-text-success">✔ Correct</span>
@@ -65,7 +87,6 @@
     {% endif %}
   </p>
 
-  <!-- ===== USER ANSWERS ===== -->
   {% if ans.user_answers_display %}
     <p class="mt-2">
       <strong>Your Answer{{ ans.user_answers_display|length|pluralize }}:</strong>
@@ -81,7 +102,6 @@
     </p>
   {% endif %}
 
-  <!-- ===== CORRECT ANSWERS ===== -->
   {% if ans.correct_answers_display %}
     <p class="mt-2">
       <strong>Correct Answer{{ ans.correct_answers_display|length|pluralize }}:</strong>
@@ -93,7 +113,6 @@
     </p>
   {% endif %}
 
-  <!-- ===== FEEDBACK FORM ===== -->
   {% if not feedback_map|get_item:ans.question.id %}
   <form method="post" class="mt-3">
     {% csrf_token %}
@@ -127,9 +146,19 @@
 {% endfor %}
 
 <!-- ================= ACTIONS ================= -->
-<div class="box mt-5">
+<div class="box mt-5 buttons">
 
-  {# Retake ONLY for real exams #}
+  {# ================= COURSE INTEGRATION ================= #}
+  {% with lesson=user_exam.exam.lesson_set.first %}
+    {% if lesson %}
+      <a href="{% url 'courses:course_learn' lesson.section.course.slug %}"
+         class="button is-primary">
+        ⬅ Continue Course
+      </a>
+    {% endif %}
+  {% endwith %}
+
+  {# ================= RETAKE ================= #}
   {% if not is_mock %}
     {% if can_retake %}
       <a href="{% url 'quiz:exam_start' user_exam.exam.id %}"
@@ -149,8 +178,8 @@
   {% endif %}
 
   <a href="{% url 'quiz:student_dashboard' %}"
-     class="button is-light ml-2">
-    ← Dashboard
+     class="button is-light">
+    ← Quiz Dashboard
   </a>
 
 </div>
@@ -176,5 +205,19 @@ function tick() {
 tick();
 </script>
 {% endif %}
+
+
+{% if course and not is_mock %}
+<script>
+setTimeout(function () {
+  window.location.href = "{% url 'courses:course_learn' course.slug %}";
+}, 5000);
+</script>
+
+<p class="has-text-grey mt-2">
+  You’ll be redirected back to the course in 5 seconds…
+</p>
+{% endif %}
+
 
 {% endblock %}
