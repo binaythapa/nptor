@@ -50,6 +50,8 @@ from quiz.services.subscription import has_valid_subscription
 from quiz.utils import get_leaf_category_name
 
 
+
+
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()
 

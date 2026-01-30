@@ -109,3 +109,6 @@ def get_next_lesson(lesson):
         return lessons[index + 1]
 
     return None
+
+
+

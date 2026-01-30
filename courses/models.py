@@ -115,16 +115,8 @@ class Lesson(models.Model):
     # ---------------- CONTENT ----------------
     video_url = models.URLField(blank=True, null=True)
     article_content = models.TextField(blank=True)
-
-    # ---------------- QUIZ ----------------
-    exam = models.ForeignKey(
-        Exam,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="course_lessons"
-    )
-
+ 
+    
     # ---------------- PRACTICE ----------------
     practice_domain = models.ForeignKey(
         Domain,
@@ -165,6 +157,44 @@ class Lesson(models.Model):
         blank=True,
         help_text="Optional minimum accuracy % to complete practice lesson"
     )
+
+
+    # ---------------- QUIZ LESSON SETTINGS ----------------
+    exam = models.ForeignKey(
+        Exam,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="course_lessons"
+    )
+
+
+    quiz_completion_mode = models.CharField(
+        max_length=20,
+        choices=[
+            ("attempt", "Any attempt"),
+            ("pass", "Must pass"),
+            ("score", "Minimum score"),
+        ],
+        default="attempt"
+    )
+
+    quiz_min_score = models.PositiveIntegerField(
+        default=0,
+        help_text="Used only if completion mode = score"
+    )
+
+    quiz_allow_mock = models.BooleanField(
+        default=False,
+        help_text="Allow mock exam when started from course"
+    )
+
+    quiz_max_attempts = models.PositiveIntegerField(
+        default=0,
+        help_text="0 = unlimited (course-only restriction)"
+    )
+
+
 
     class Meta:
         ordering = ["order"]
@@ -292,12 +322,22 @@ class LessonProgress(models.Model):
             self.completed_at = timezone.now()
             self.save(update_fields=["completed", "completed_at"])
 
+   
+    
+
     def can_mark_complete(self):
-        if self.lesson.lesson_type != "video":
-            return True
-        if self.video_duration <= 0:
+        if self.completed:
             return False
-        return (self.video_seconds_watched / self.video_duration) >= 0.9
+
+        # If duration is missing, trust watched time (fallback)
+        if not self.video_duration or self.video_duration < 60:
+            return self.video_seconds_watched >= 30  # 5 minutes minimum
+
+        return (self.video_seconds_watched / self.video_duration) >= 0.2
+
+
+
+
 
     def __str__(self):
         return f"{self.user} → {self.lesson}"

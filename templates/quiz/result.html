@@ -2,6 +2,8 @@
 {% load dict_extras %}
 {% block content %}
 
+
+ 
 {# ================= MOCK BANNER ================= #}
 {% if is_mock %}
   <div class="notification is-info is-light mb-4">
@@ -11,7 +13,7 @@
   </div>
 {% endif %}
 
-<h2 class="title is-4">🎯 Exam Result — {{ user_exam.exam.title }}</h2>
+<h2 class="title is-4">🎯 Exam Result — {{ user_exam.exam.title }}   </h2>
 
 {% if course and lesson %}
 <nav class="breadcrumb mb-4" aria-label="breadcrumbs">
@@ -158,31 +160,63 @@
     {% endif %}
   {% endwith %}
 
-  {# ================= RETAKE ================= #}
-  {% if not is_mock %}
-    {% if can_retake %}
-      <a href="{% url 'quiz:exam_start' user_exam.exam.id %}"
-         class="button is-link is-light">
+ {# ================= RETAKE / COURSE NAVIGATION ================= #}
+<div class="box mt-5">
+
+  {% if course_context %}
+    <!-- 🟢 Course-launched exam -->
+
+    <!-- Back to course -->
+    <a
+    href="{% url 'courses:course_learn_lesson' course_context.course_slug course_context.lesson_id %}"
+    class="button is-success">
+      ⬅ Back to Course
+    </a>
+
+    <!-- Continue to next lesson -->
+    {% if next_lesson %}
+      <a
+        href="{% url 'courses:course_learn_lesson'
+                  course_context.course_slug
+                  next_lesson.id %}"
+        class="button is-link ml-2">
+        ▶ Continue to Next Lesson
+      </a>
+    {% endif %}
+
+    <!-- Retake (course-aware) -->
+    {% if can_retake and not is_mock %}
+      <a
+        href="{% url 'quiz:exam_start' user_exam.exam.id %}
+              ?course={{ course_context.course_slug }}
+              &lesson={{ course_context.lesson_id }}"
+        class="button is-light ml-2">
         🔁 Retake Exam
       </a>
-    {% else %}
-      <button class="button is-light" disabled>
-        ⏳ Retake locked
-      </button>
-
-      <p class="help mt-2">
-        Retake available in
-        <strong><span id="retake-countdown"></span></strong>
-      </p>
     {% endif %}
+
+  {% else %}
+    <!-- 🟣 Normal quiz behavior -->
+
+    {% if not is_mock and can_retake %}
+      <a
+        href="{% url 'quiz:exam_start' user_exam.exam.id %}"
+        class="button is-link is-light">
+        🔁 Retake Exam
+      </a>
+    {% endif %}
+
+    <a
+      href="{% url 'quiz:student_dashboard' %}"
+      class="button is-light ml-2">
+      ← Dashboard
+    </a>
+
   {% endif %}
 
-  <a href="{% url 'quiz:student_dashboard' %}"
-     class="button is-light">
-    ← Quiz Dashboard
-  </a>
-
 </div>
+
+
 
 <!-- ================= COUNTDOWN SCRIPT ================= -->
 {% if not can_retake and not is_mock %}

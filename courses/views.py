@@ -12,9 +12,7 @@ from courses.services.certificate_pdf import generate_certificate_pdf
 from courses.services.progress import get_next_lesson
 from courses.utils import youtube_embed_url
 from courses.models import LessonProgress
-
-
-
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 
 @login_required
@@ -81,25 +79,23 @@ def youtube_embed(url):
     if not url:
         return None
 
+    from urllib.parse import urlparse, parse_qs
     parsed = urlparse(url)
 
-    # youtu.be/VIDEO_ID
     if "youtu.be" in parsed.netloc:
         video_id = parsed.path.strip("/")
-        return f"https://www.youtube.com/embed/{video_id}"
+        return f"https://www.youtube-nocookie.com/embed/{video_id}"
 
-    # youtube.com/watch?v=VIDEO_ID
     if "youtube.com" in parsed.netloc:
         if parsed.path == "/watch":
             qs = parse_qs(parsed.query)
             video_id = qs.get("v", [None])[0]
             if video_id:
-                return f"https://www.youtube.com/embed/{video_id}"
+                return f"https://www.youtube-nocookie.com/embed/{video_id}"
 
-        # youtube shorts
         if parsed.path.startswith("/shorts/"):
             video_id = parsed.path.split("/shorts/")[-1]
-            return f"https://www.youtube.com/embed/{video_id}"
+            return f"https://www.youtube-nocookie.com/embed/{video_id}"
 
     return None
 
@@ -109,12 +105,20 @@ def youtube_embed(url):
 # COURSE LEARN
 # -------------------------------------------------
 @login_required
-def course_learn(request, slug, lesson_id=None):
+@ensure_csrf_cookie
+def course_learn(request, slug, lesson_id=None):    
+
+    # clear course exam context once user is back
+    request.session.pop("course_exam_context", None)
+
     # 1️⃣ Course
     course = get_object_or_404(Course, slug=slug, is_published=True)
+   
 
     # 2️⃣ Curriculum
     sections = course.sections.prefetch_related("lessons")
+
+    
 
     # 3️⃣ Lesson selection
     if lesson_id:
@@ -172,6 +176,9 @@ def course_learn(request, slug, lesson_id=None):
     if lesson.lesson_type == "video":
         video_embed_url = youtube_embed(lesson.video_url)
 
+    # ✅ correct
+    next_lesson = get_next_lesson(lesson)
+
     return render(
         request,
         "courses/course_player.html",
@@ -180,6 +187,7 @@ def course_learn(request, slug, lesson_id=None):
             "sections": sections,
             "lesson": lesson,
             "lesson_progress": lesson_progress,
+            "next_lesson": next_lesson,
 
             "completed": completed,
             "total": total,
@@ -217,30 +225,6 @@ def mark_lesson_completed(request, slug, lesson_id):
     return redirect("courses:course_learn", slug=slug)
 
 
-# -------------------------------------------------
-# VIDEO PROGRESS TRACKING
-# -------------------------------------------------
-@login_required
-@require_POST
-def track_video_progress(request):
-    lesson_id = request.POST.get("lesson_id")
-    watched = int(request.POST.get("watched", 0))
-    duration = int(request.POST.get("duration", 0))
-
-    lp, _ = LessonProgress.objects.get_or_create(
-        user=request.user,
-        lesson_id=lesson_id
-    )
-
-    lp.video_seconds_watched = max(lp.video_seconds_watched, watched)
-    lp.video_duration = max(lp.video_duration, duration)
-
-    if lp.can_mark_complete():
-        lp.mark_completed()
-
-    lp.save()
-
-    return JsonResponse({"completed": lp.completed})
 
 
 # -------------------------------------------------
@@ -266,3 +250,33 @@ def download_certificate_pdf(request, slug):
         f'attachment; filename="{course.slug}-certificate.pdf"'
     )
     return response
+
+
+
+
+@login_required
+@require_POST
+def track_video_progress(request):
+    print("🔥 track_video_progress HIT")
+
+    lesson_id = request.POST.get("lesson_id")
+    watched = int(request.POST.get("watched", 0))
+    duration = int(request.POST.get("duration", 0))
+
+    print("DATA:", lesson_id, watched, duration)
+
+    lp, _ = LessonProgress.objects.get_or_create(
+        user=request.user,
+        lesson_id=lesson_id
+    )
+
+    lp.video_seconds_watched = max(lp.video_seconds_watched, watched)
+    lp.video_duration = max(lp.video_duration, duration)
+
+    if lp.can_mark_complete():
+        lp.mark_completed()
+
+    lp.save()
+
+    return JsonResponse({"completed": lp.completed})
+

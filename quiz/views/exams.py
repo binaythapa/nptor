@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
 from courses.models import Lesson
+from courses.services.progress import get_next_lesson
 
 
 from django.conf import settings
@@ -53,6 +54,7 @@ from quiz.utils import get_leaf_category_name
 
 from quiz.services.grading import grade_exam
 from quiz.services.answer_persistence import autosave_answers
+from courses.services.quiz_completion import *
 
 
 
@@ -64,19 +66,61 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-
-
 @login_required
 def exam_start(request, exam_id):
     exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
 
+    # --------------------------------------------------
+    # COURSE CONTEXT (optional)
+    # --------------------------------------------------
+    course_slug = request.GET.get("course")
+    lesson_id = request.GET.get("lesson")
+
+    if course_slug and lesson_id:
+        from courses.models import Lesson
+
+        lesson = Lesson.objects.filter(
+            id=lesson_id,
+            lesson_type=Lesson.TYPE_QUIZ,
+            exam=exam
+        ).first()
+
+        if lesson:
+            # ✅ Enforce max attempts ONLY for course quiz
+            attempts = UserExam.objects.filter(
+                user=request.user,
+                exam=exam,
+                submitted_at__isnull=False
+            ).count()
+
+            if lesson.quiz_max_attempts and attempts >= lesson.quiz_max_attempts:
+                messages.error(
+                    request,
+                    f"You have reached the maximum attempts "
+                    f"({lesson.quiz_max_attempts}) for this lesson."
+                )
+                return redirect(
+                    "courses:course_learn_lesson",
+                    slug=course_slug,
+                    lesson_id=lesson.id
+                )
+
+            # Store context for result → lesson completion
+            request.session["course_exam_context"] = {
+                "course_slug": course_slug,
+                "lesson_id": lesson.id,
+            }
+
+    # --------------------------------------------------
+    # EXISTING ACCESS CHECK (unchanged)
+    # --------------------------------------------------
     allowed, reason = can_access_exam(request.user, exam)
     if not allowed:
         messages.info(
             request,
             "This exam is premium. Please subscribe to unlock access."
         )
-        return redirect("quiz:exam_locked", exam_id=exam.id) 
+        return redirect("quiz:exam_locked", exam_id=exam.id)
 
     try:
         with transaction.atomic():
@@ -92,14 +136,13 @@ def exam_start(request, exam_id):
                 return redirect('quiz:exam_take', user_exam_id=existing.id)
 
             # ==================================================
-            # Create attempt FIRST (for deterministic seed)
+            # Create attempt FIRST (deterministic seed)
             # ==================================================
             ue = UserExam.objects.create(
                 user=request.user,
                 exam=exam
             )
 
-            # Deterministic allocation
             questions = allocate_questions_for_exam(exam, seed=ue.id)
             if not questions:
                 raise ValueError("No questions allocated")
@@ -121,7 +164,6 @@ def exam_start(request, exam_id):
         return redirect('quiz:student_dashboard')
 
     return redirect('quiz:exam_question', user_exam_id=ue.id, index=0)
-
 
 
 @login_required
@@ -196,13 +238,16 @@ def autosave(request, user_exam_id):
 
 
 from quiz.services.grading import grade_exam
+
 @login_required
 def exam_submit(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
 
+    # Prevent double submit
     if ue.submitted_at:
         return redirect('quiz:exam_result', user_exam_id=ue.id)
 
+    # Time expired
     if ue.time_remaining() <= 0:
         ue.submitted_at = timezone.now()
         ue.score = 0
@@ -217,57 +262,50 @@ def exam_submit(request, user_exam_id):
             index=ue.current_index
         )
 
+    # ✅ Correct mock detection
     is_mock = request.session.get(f"mock_exam_{ue.id}", False)
 
     grade_exam(ue, request.POST, is_mock=is_mock)
 
-    from courses.services.context import get_course_context
-    from courses.services.exam_completion import handle_exam_completion
-
-    course_slug, lesson_id = get_course_context(request)
-
-    if course_slug and lesson_id:
-         handle_exam_completion(request, ue, lesson_id)
-
-
-    # ✅ COURSE ↔ QUIZ INTEGRATION
-    if not is_mock:
-        from courses.models import Lesson, LessonProgress
-
-        lesson = Lesson.objects.filter(exam=ue.exam).first()
-        if lesson:
-            LessonProgress.objects.update_or_create(
-                user=request.user,
-                lesson=lesson,
-                defaults={
-                    "completed": True,
-                    "completed_at": timezone.now()
-                }
-            )
-
     return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-
 @login_required
 def exam_result(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
 
-    # -------------------------------------------------
-    # COURSE CONTEXT (if this exam belongs to a course)
-    # -------------------------------------------------
-    lesson = (
-        Lesson.objects
-        .select_related("section__course")
-        .filter(exam=ue.exam)
-        .first()
-    )
+    # =====================================================
+    # 🎓 COURSE CONTEXT (if exam launched from course)
+    # =====================================================
+    course_context = request.session.get("course_exam_context")
+    next_lesson = None
 
-    course = lesson.section.course if lesson else None
+    if course_context:
+        from courses.services.quiz_completion import handle_course_quiz_completion
+        from courses.models import Lesson
+        from courses.services.progress import get_next_lesson
+        from courses.models import Course
 
+        # Run completion logic ONLY ONCE
+        if not request.session.get(f"course_exam_handled_{ue.id}"):
+            handle_course_quiz_completion(
+                request=request,
+                user_exam=ue,
+                context=course_context
+            )
+            request.session[f"course_exam_handled_{ue.id}"] = True
+
+        # Resolve next lesson
+        try:
+            course = Course.objects.get(slug=course_context["course_slug"])
+            current_lesson = Lesson.objects.get(
+                id=course_context["lesson_id"],
+                section__course=course
+            )
+            next_lesson = get_next_lesson(course, current_lesson)
+        except Exception:
+            next_lesson = None
 
     # =====================================================
     # 🧪 MOCK DETECTION
-    # passed = None → mock exam
     # =====================================================
     is_mock = ue.passed is None
 
@@ -326,20 +364,16 @@ def exam_result(request, user_exam_id):
     # =====================================================
     for ans in answers:
         q = ans.question
-
         ans.user_answers_display = []
         ans.correct_answers_display = []
 
-        # ---------- SINGLE / DROPDOWN / TRUE-FALSE ----------
         if q.question_type in ('single', 'dropdown', 'tf'):
             if ans.choice:
                 ans.user_answers_display = [ans.choice.text]
-
             correct = q.choices.filter(is_correct=True).first()
             if correct:
                 ans.correct_answers_display = [correct.text]
 
-        # ---------- MULTI SELECT ----------
         elif q.question_type == 'multi':
             selected_ids = set(ans.selections or [])
             correct_ids = set(
@@ -351,28 +385,24 @@ def exam_result(request, user_exam_id):
                 q.choices.filter(id__in=selected_ids)
                 .values_list('text', flat=True)
             )
-
             ans.correct_answers_display = list(
                 q.choices.filter(is_correct=True)
                 .values_list('text', flat=True)
             )
 
-            # ✅ correctness normalization
             if selected_ids == correct_ids:
                 ans.is_correct = True
             elif selected_ids & correct_ids:
-                ans.is_correct = None     # partial
+                ans.is_correct = None
             else:
                 ans.is_correct = False
 
-        # ---------- FILL ----------
         elif q.question_type == 'fill':
             if ans.raw_answer:
                 ans.user_answers_display = [ans.raw_answer]
             if q.correct_text:
                 ans.correct_answers_display = [q.correct_text]
 
-        # ---------- NUMERIC ----------
         elif q.question_type == 'numeric':
             if ans.raw_answer:
                 ans.user_answers_display = [ans.raw_answer]
@@ -384,7 +414,6 @@ def exam_result(request, user_exam_id):
     # =====================================================
     total = len(answers)
     correct_count = sum(1 for a in answers if a.is_correct is True)
-
     accuracy = round((correct_count / total) * 100, 2) if total else 0
 
     best_score = (
@@ -393,7 +422,7 @@ def exam_result(request, user_exam_id):
             user=request.user,
             exam=ue.exam,
             submitted_at__isnull=False,
-            passed__isnull=False      # ❗ exclude mock attempts
+            passed__isnull=False
         )
         .order_by('-score')
         .values_list('score', flat=True)
@@ -401,7 +430,7 @@ def exam_result(request, user_exam_id):
     ) or ue.score
 
     # =====================================================
-    # RETAKE COOLDOWN (REAL EXAMS ONLY)
+    # RETAKE COOLDOWN
     # =====================================================
     cooldown_minutes = getattr(settings, "RETAKE_COOLDOWN_MINUTES", 0)
     cooldown_seconds = 0
@@ -421,7 +450,6 @@ def exam_result(request, user_exam_id):
         user=request.user,
         user_exam=ue
     )
-
     feedback_map = {fb.question_id: fb for fb in feedback_qs}
 
     for ans in answers:
@@ -454,16 +482,13 @@ def exam_result(request, user_exam_id):
             'cooldown_seconds': cooldown_seconds,
             'feedback_map': feedback_map,
             'comments_map': comments_map,
-
-            # 🧪 MOCK FLAG FOR TEMPLATE
             'is_mock': is_mock,
 
-            # ✅ NEW (course-aware)
-            'course': course,
-            'lesson': lesson,
+            # 🎓 COURSE AWARE
+            'course_context': course_context,
+            'next_lesson': next_lesson,
         }
     )
-
 
 
 
