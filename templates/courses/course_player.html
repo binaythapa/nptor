@@ -302,25 +302,49 @@
 
 {% endif %}
 
-
-<!-- ================= CELEBRATION ================= -->
+<!-- ================= CELEBRATION (ONE-TIME) ================= -->
 {% if show_celebration %}
 <div id="celebration-modal" class="celebration-overlay">
   <div class="celebration-card">
     <h1>🎉 Congratulations!</h1>
     <p>You’ve completed <strong>{{ course.title }}</strong></p>
 
-    <a href="{% url 'courses:course_certificate_pdf' course.slug %}"
-       class="btn-primary">
+    <a
+      href="{% url 'courses:course_certificate_pdf' course.slug %}"
+      class="btn-primary">
       📜 Download Certificate
     </a>
+
     <br><br>
-    <button onclick="document.getElementById('celebration-modal').style.display='none'"
-            class="btn-secondary">
+
+    <button
+      type="button"
+      onclick="document.getElementById('celebration-modal').style.display='none'"
+      class="btn-secondary">
       Continue
     </button>
   </div>
 </div>
+{% endif %}
+
+
+<!-- ================= CERTIFICATE (ALWAYS AVAILABLE) ================= -->
+{% if certificate %}
+  <div style="margin-top:40px; text-align:center;">
+    <a
+      href="{% url 'courses:course_certificate_pdf' course.slug %}"
+      style="
+        padding:12px 20px;
+        background:#1565c0;
+        color:white;
+        border-radius:6px;
+        text-decoration:none;
+        font-weight:bold;
+        display:inline-block;
+      ">
+      📜 Download Certificate
+    </a>
+  </div>
 {% endif %}
 
 
