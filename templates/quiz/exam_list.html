@@ -1,6 +1,39 @@
 {% extends "quiz/base.html" %}
 {% block content %}
 
+
+
+
+
+{% if courses %}
+<h2 class="title is-4">🎓 Available Courses</h2>
+<p class="has-text-grey mb-4">
+  All courses are currently <strong>free</strong>. Start learning instantly.
+</p>
+
+<div class="columns is-multiline mb-6">
+  {% for course in courses %}
+    <div class="column is-4">
+      <div class="box">
+
+        <h3 class="title is-5">{{ course.title }}</h3>
+        <p class="is-size-7 has-text-grey mb-3">
+          {{ course.description|truncatewords:20 }}
+        </p>
+
+        <a
+          href="{% url 'courses:course_learn' course.slug %}"
+          class="button is-success is-small is-fullwidth">
+          ▶ Start Course (Free)
+        </a>
+
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+
 <h2 class="title is-4">📚 Available Exam Tracks</h2>
 <p class="has-text-grey mb-4">
   Free content can be subscribed instantly. Paid subscriptions require admin approval.

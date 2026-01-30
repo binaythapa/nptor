@@ -2,12 +2,17 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, redirect, get_object_or_404
 from quiz.models import Exam
 from quiz.forms import ExamForm
-
+from courses.models import Course
 
 @staff_member_required
 def admin_exam_list(request):
     exams = Exam.objects.all().order_by("-created_at")
-    return render(request, "quiz/admin/exam_list.html", {"exams": exams})
+    courses = Course.objects.filter(is_published=True)
+
+    return render(request, "quiz/admin/exam_list.html", {
+    "track_map": track_map,
+    "courses": courses,   # 👈 ADD THIS
+})
 
 
 @staff_member_required

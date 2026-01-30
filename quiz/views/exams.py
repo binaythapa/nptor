@@ -695,12 +695,14 @@ def exam_list(request):
             item["track_subscription"] = track_subscription
 
         track_map[track] = items
+    
+    courses = Course.objects.filter(is_published=True)
 
     return render(request, "quiz/exam_list.html", {
-        "track_map": track_map,
+        "track_map": track_map,"courses": courses,   # 👈 ADD THIS
     })
 
-
+from courses.models import Course
 
 
 @login_required
