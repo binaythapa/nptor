@@ -158,7 +158,8 @@ def course_learn(request, slug, lesson_id=None):
     # 8️⃣ Celebration (once)
     celebration_key = f"celebrated_course_{course.id}"
     show_celebration = False
-    if progress == 100 and certificate and not request.session.get(celebration_key):
+    if progress >= 100 and certificate and not request.session.get(celebration_key):
+
         show_celebration = True
         request.session[celebration_key] = True
 
