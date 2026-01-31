@@ -252,32 +252,64 @@ def download_certificate_pdf(request, slug):
     )
     return response
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+import logging
 
-
+logger = logging.getLogger(__name__)
 
 @login_required
 @require_POST
 def track_video_progress(request):
-    print("🔥 track_video_progress HIT")
+    try:
+        lesson_id = request.POST.get("lesson_id")
+        watched = request.POST.get("watched", "0")
+        duration = request.POST.get("duration", "0")
 
-    lesson_id = request.POST.get("lesson_id")
-    watched = int(request.POST.get("watched", 0))
-    duration = int(request.POST.get("duration", 0))
+        if not lesson_id:
+            return JsonResponse(
+                {"error": "lesson_id missing"},
+                status=400
+            )
 
-    print("DATA:", lesson_id, watched, duration)
+        try:
+            watched = int(watched)
+            duration = int(duration)
+        except ValueError:
+            return JsonResponse(
+                {"error": "Invalid watched or duration"},
+                status=400
+            )
 
-    lp, _ = LessonProgress.objects.get_or_create(
-        user=request.user,
-        lesson_id=lesson_id
-    )
+        lesson = get_object_or_404(Lesson, id=lesson_id)
 
-    lp.video_seconds_watched = max(lp.video_seconds_watched, watched)
-    lp.video_duration = max(lp.video_duration, duration)
+        lp, _ = LessonProgress.objects.get_or_create(
+            user=request.user,
+            lesson=lesson
+        )
 
-    if lp.can_mark_complete():
-        lp.mark_completed()
+        lp.video_seconds_watched = max(
+            lp.video_seconds_watched or 0,
+            watched
+        )
+        lp.video_duration = max(
+            lp.video_duration or 0,
+            duration
+        )
 
-    lp.save()
+        if lp.can_mark_complete():
+            lp.mark_completed()
 
-    return JsonResponse({"completed": lp.completed})
+        lp.save()
+
+        return JsonResponse({"completed": lp.completed})
+
+    except Exception:
+        logger.exception("TRACK VIDEO PROGRESS FAILED")
+        return JsonResponse(
+            {"error": "Internal server error"},
+            status=500
+        )
 

@@ -127,7 +127,7 @@
   <iframe
     width="100%"
     height="420"
-    src="{{ video_embed_url }}"
+    src="{{ video_embed_url }}?enablejsapi=1&origin={{ request.scheme }}://{{ request.get_host }}"
     frameborder="0"
     allowfullscreen
     referrerpolicy="strict-origin-when-cross-origin">

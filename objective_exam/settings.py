@@ -41,6 +41,12 @@ else:
         "nptor.com,www.nptor.com"
     ).split(",")
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://nptor.com",
+    "https://www.nptor.com",
+]
+
+
 # ============================================================
 # APPLICATION DEFINITION
 # ============================================================
@@ -158,6 +164,17 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"   # or Asia/Kathmandu
 USE_I18N = True
 USE_TZ = True
+
+
+# ===============================
+# COOKIES (REQUIRED FOR IFRAME + FETCH)
+# ===============================
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
+
 
 
 # ============================================================
