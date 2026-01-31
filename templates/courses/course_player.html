@@ -77,6 +77,14 @@
       border: none;
       cursor: pointer;
     }
+
+        .description {
+    margin: 20px 0;
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
   </style>
 </head>
 
@@ -154,8 +162,11 @@
 
 
     <!-- ================= ARTICLE ================= -->
-    {% elif lesson.lesson_type == "article" %}
-      <div>{{ lesson.article_content|safe }}</div>
+    {% elif lesson.lesson_type == "article" %}      
+
+        <div class="description">
+        {{ lesson.article_content|safe  }}
+    </div>
 
      {% if not lesson_progress.completed %}
   <form
