@@ -41,10 +41,14 @@
    LESSON CONTENT LAYOUT
    =============================== */
 
+
+
 .lesson-content {
     font-size: 15px;
     line-height: 1.8;
     color: #1f2937;
+    white-space: pre-wrap;   /* ⭐ KEY LINE */
+    word-wrap: break-word;
 }
 
 /* Image alignment */
