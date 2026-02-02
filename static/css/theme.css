@@ -1,4 +1,23 @@
 /* static/css/theme.css -- consolidated polished theme (light + dark) */
+/* Generic disabled state for links & buttons */
+.is-disabled {
+  pointer-events: none;        /* disable clicks */
+  opacity: 0.45;               /* fade */
+  filter: grayscale(80%);      /* desaturate color */
+  cursor: not-allowed;
+}
+
+/* Optional: icons inside disabled links */
+.is-disabled i {
+  opacity: 0.6;
+}
+
+/* Optional: prevent hover styles from firing */
+.is-disabled:hover {
+  background: inherit;
+  color: inherit;
+}
+
 
 /* Typography and variables */
 :root{

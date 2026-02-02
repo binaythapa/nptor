@@ -168,41 +168,49 @@
             </a>
           </li>
 
+<ul class="menu-list">
 
-           {% if not is_from_course %}
-            <li>
-            <a href="{% url 'quiz:practice' %}">
-              <i class="fa fa-pen-to-square"></i> Practice (Basic)
-            </a>
-          </li>
+  <li>
+    <a href="{% if not is_from_course %}{% url 'quiz:practice' %}{% else %}javascript:void(0);{% endif %}"
+       class="{% if is_from_course %}is-disabled{% endif %}"
+       {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+      <i class="fa fa-pen-to-square"></i> Practice (Basic)
+    </a>
+  </li>
 
-          
-          <li>
-            <a href="{% url 'quiz:practice_express' %}">
-              <i class="fa fa-bolt"></i> Practice (Express)
-            </a>
-          </li>        
+  <li>
+    <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}"
+       class="{% if is_from_course %}is-disabled{% endif %}"
+       {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+      <i class="fa fa-bolt"></i> Practice (Express)
+    </a>
+  </li>
 
-          {% if user.is_authenticated %}
-          <li>
-            <a href="{% url 'quiz:notifications_list' %}">
-              <i class="fa fa-bell"></i> Notifications
-            </a>
-          </li>
-          {% endif %}
-        </ul>
+  {% if user.is_authenticated %}
+  <li>
+    <a href="{% if not is_from_course %}{% url 'quiz:notifications_list' %}{% else %}javascript:void(0);{% endif %}"
+       class="{% if is_from_course %}is-disabled{% endif %}"
+       {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+      <i class="fa fa-bell"></i> Notifications
+    </a>
+  </li>
+  {% endif %}
 
-        {% if user.is_authenticated %}
-        <p class="menu-label">Account</p>
-        <ul class="menu-list">
-          <li>
-            <a href="{% url 'quiz:profile' %}">
-              <i class="fa fa-user"></i> Profile
-            </a>
-          </li>
-        </ul>
-        {% endif %}
-         {% endif %}
+</ul>
+
+{% if user.is_authenticated %}
+<p class="menu-label">Account</p>
+<ul class="menu-list">
+  <li>
+    <a href="{% if not is_from_course %}{% url 'quiz:profile' %}{% else %}javascript:void(0);{% endif %}"
+       class="{% if is_from_course %}is-disabled{% endif %}"
+       {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+      <i class="fa fa-user"></i> Profile
+    </a>
+  </li>
+</ul>
+{% endif %}
+
       </nav>
     </aside>
 

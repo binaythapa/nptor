@@ -3,6 +3,25 @@
 
 {% block head_extra %}
 <style>
+/* Generic disabled state for links & buttons */
+.is-disabled {
+  pointer-events: none;        /* disable clicks */
+  opacity: 0.45;               /* fade */
+  filter: grayscale(80%);      /* desaturate color */
+  cursor: not-allowed;
+}
+
+/* Optional: icons inside disabled links */
+.is-disabled i {
+  opacity: 0.6;
+}
+
+/* Optional: prevent hover styles from firing */
+.is-disabled:hover {
+  background: inherit;
+  color: inherit;
+}
+
 /* ================= WRAPPER ================= */
 .practice-wrapper {
   width: 100%;
@@ -89,11 +108,22 @@
 <!-- ================= HEADER ================= -->
 <div class="practice-header is-flex is-align-items-center is-justify-content-space-between mb-3">
   <h1 class="title is-4 mb-0">Practice Question</h1>
-  <div class="links">
-    <a href="{% url 'quiz:practice_express' %}">Express</a>
-    <span class="mx-1">|</span>
-    <a href="{% url 'quiz:exam_list' %}">Pro</a>
-  </div>
+ <div class="links">
+  <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}"
+     class="{% if is_from_course %}is-disabled{% endif %}"
+     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+    Express
+  </a>
+
+  <span class="mx-1">|</span>
+
+  <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"
+     class="{% if is_from_course %}is-disabled{% endif %}"
+     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+    Pro
+  </a>
+</div>
+
 </div>
 
 <!-- ================= PROGRESS ================= -->
@@ -387,24 +417,22 @@
       </button>
     {% endif %}
 
-     {% if not is_from_course %}
-    <!-- 🆕 SKIP BUTTON -->
-    <button class="button is-warning is-light"
-            type="submit"
-            name="skip"
-            value="1">
-      ⏭ Skip
-    </button>
+<!-- 🆕 SKIP BUTTON -->
+<button class="button is-warning is-light"
+        type="submit"
+        name="skip"
+        value="1"
+        {% if is_from_course %}disabled{% endif %}>
+  ⏭ Skip
+</button>
 
+<!-- 🔄 RESET BUTTON -->
+<a href="{% if not is_from_course %}{% url 'quiz:practice' %}?reset=1{% else %}javascript:void(0);{% endif %}"
+   class="button is-light {% if is_from_course %}is-disabled{% endif %}"
+   {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+  🔄 Reset
+</a>
 
-
-   
-                     <a href="{% url 'quiz:practice' %}?reset=1"
-     class="button is-light">
-    🔄 Reset
-  </a>
-                    
-                  {% endif %}
                   
 
 </div>
