@@ -307,6 +307,9 @@
     <!-- ================= QUIZ ================= -->
     <!-- ================= QUIZ ================= -->
 {% elif lesson.lesson_type == lesson.TYPE_QUIZ %}
+ <div class="description">
+        {{ lesson.article_content|safe  }}
+    </div>
 
   <!-- QUIZ ACTION (ALWAYS ALLOWED) -->
   <a
@@ -357,6 +360,9 @@
 
   <!-- ================= PRACTICE ================= -->
 {% elif lesson.lesson_type == lesson.TYPE_PRACTICE %}
+ <div class="description">
+        {{ lesson.article_content|safe  }}
+    </div>
 
   <!-- PRACTICE ACTION (ALWAYS ALLOWED) -->
   <a
