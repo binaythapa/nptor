@@ -387,6 +387,7 @@
       </button>
     {% endif %}
 
+     {% if not is_from_course %}
     <!-- 🆕 SKIP BUTTON -->
     <button class="button is-warning is-light"
             type="submit"
@@ -394,14 +395,20 @@
             value="1">
       ⏭ Skip
     </button>
-  </div>
 
-  <a href="{% url 'quiz:practice' %}?reset=1"
+
+
+   
+                     <a href="{% url 'quiz:practice' %}?reset=1"
      class="button is-light">
     🔄 Reset
   </a>
-</div>
+                    
+                  {% endif %}
+                  
 
+</div>
+  </div>
 
 </form>
 

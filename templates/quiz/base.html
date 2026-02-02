@@ -143,13 +143,15 @@
   <!-- ================= MAIN ================= -->
   <div class="container main-area">
 
+
+  
     <!-- ===== SIDEBAR ===== -->
     <aside id="site-sidebar" class="site-sidebar">
       <nav class="menu">
 
         <p class="menu-label">General</p>
         <ul class="menu-list">
-
+ 
           <li>
             <a href="{% if user.is_authenticated %}
                          {% url 'quiz:dashboard' %}
@@ -159,24 +161,27 @@
               <i class="fa fa-home"></i> Home
             </a>
           </li>
-
-          <li>
-            <a href="{% url 'quiz:practice_express' %}">
-              <i class="fa fa-bolt"></i> Practice (Express)
+          
+           <li>
+            <a href="{% url 'quiz:exam_list' %}">
+              <i class="fa fa-book"></i> Exams
             </a>
           </li>
 
-          <li>
+
+           {% if not is_from_course %}
+            <li>
             <a href="{% url 'quiz:practice' %}">
               <i class="fa fa-pen-to-square"></i> Practice (Basic)
             </a>
           </li>
 
+          
           <li>
-            <a href="{% url 'quiz:exam_list' %}">
-              <i class="fa fa-book"></i> Exams
+            <a href="{% url 'quiz:practice_express' %}">
+              <i class="fa fa-bolt"></i> Practice (Express)
             </a>
-          </li>
+          </li>        
 
           {% if user.is_authenticated %}
           <li>
@@ -197,9 +202,11 @@
           </li>
         </ul>
         {% endif %}
-
+         {% endif %}
       </nav>
     </aside>
+
+
 
     <!-- ===== CONTENT ===== -->
     <main class="site-content">

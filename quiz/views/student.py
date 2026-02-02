@@ -74,8 +74,6 @@ from courses.services.context import get_course_context
 from courses.services.practice_completion import track_practice_completion
 
 
-
-
 def practice(request):
     """
     BASIC PRACTICE (PUBLIC)
@@ -98,6 +96,29 @@ def practice(request):
         ).filter(id=lesson_id).first()
 
     # =====================================================
+    # 🧠 PER-LESSON RESET GUARD
+    # =====================================================
+    if is_from_course and lesson:
+        last_lesson_id = request.session.get("course_practice_lesson_id")
+
+        if last_lesson_id != lesson.id:
+            # new lesson → reset course practice state
+            request.session.pop("course_practice_initialized", None)
+            request.session.pop("course_practice_count", None)
+
+        request.session["course_practice_lesson_id"] = lesson.id  # ✅ ADDED
+
+    # =====================================================
+    # 🎯 FORCE LESSON FILTERS (SESSION OVERRIDE)
+    # =====================================================
+    if is_from_course and lesson:
+        request.session["p_filters"] = {  # ✅ ADDED
+            "domain": lesson.practice_domain_id,
+            "category": lesson.practice_category_id,
+            "difficulty": lesson.practice_difficulty,
+        }
+
+    # =====================================================
     # RESET
     # =====================================================
     if request.GET.get("reset") == "1":
@@ -118,11 +139,6 @@ def practice(request):
     # INIT COURSE PRACTICE SESSION (ONCE)
     # =====================================================
     if is_from_course and lesson and not request.session.get("course_practice_initialized"):
-        request.session["p_filters"] = {
-            "domain": lesson.practice_domain_id,
-            "category": lesson.practice_category_id,
-            "difficulty": lesson.practice_difficulty,
-        }
         request.session["course_practice_initialized"] = True
         request.session["course_practice_count"] = 0
 
@@ -204,6 +220,9 @@ def practice(request):
     seen = request.session.get("p_seen", [])
     total = request.session.get("p_total", qs.count())
     anon_count = request.session.get("p_anon_count", 0)
+
+    # (⬇️ rest of your code remains 100% unchanged ⬇️)
+
 
     # =====================================================
     # 🚫 ANONYMOUS LIMIT CHECK
