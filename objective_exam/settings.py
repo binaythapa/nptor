@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     # Local
     "quiz.apps.QuizConfig",
      "courses",
+     "ckeditor",
+     "ckeditor_uploader",   # optional but recommended
 ]
 
 SITE_ID = 1
@@ -186,6 +188,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+CKEDITOR_UPLOAD_PATH = "uploads/"
 
 STATICFILES_STORAGE = (
     "whitenoise.storage.CompressedManifestStaticFilesStorage"

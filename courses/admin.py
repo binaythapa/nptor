@@ -95,9 +95,18 @@ class CourseSectionAdmin(admin.ModelAdmin):
     ordering = ("course", "order")
     inlines = (LessonInline,)
 
+from django.contrib import admin
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+
+from .models import Lesson
+
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
+    # =========================
+    # LIST VIEW
+    # =========================
     list_display = (
         "title",
         "section",
@@ -105,13 +114,80 @@ class LessonAdmin(admin.ModelAdmin):
         "order",
         "linked_resource",
     )
+
     list_filter = (
         "lesson_type",
         "section__course",
     )
+
     search_fields = ("title",)
     ordering = ("section", "order")
 
+    # =========================
+    # EDIT FORM STRUCTURE
+    # =========================
+    fieldsets = (
+        ("📘 Lesson Info", {
+            "fields": (
+                "section",
+                "title",
+                "lesson_type",
+                "order",
+            )
+        }),
+
+        ("🎥 Video Content", {
+            "fields": ("video_url",),
+            "classes": ("collapse",),
+        }),
+
+        ("📝 Article Content", {
+            "fields": ("article_content", "article_preview"),
+            "description": (
+                "You can paste HTML here. "
+                "Images can be placed anywhere using "
+                "<code>&lt;img&gt;</code> with CSS classes "
+                "(align-left, align-center, img-medium, etc.)"
+            ),
+        }),
+
+        ("🧪 Practice Configuration", {
+            "fields": (
+                "practice_domain",
+                "practice_category",
+                "practice_threshold",
+                "practice_lock_filters",
+                "practice_require_correct",
+                "practice_min_accuracy",
+            ),
+            "classes": ("collapse",),
+        }),
+
+        ("🧠 Quiz Configuration", {
+            "fields": (
+                "exam",
+                "quiz_completion_mode",
+                "quiz_min_score",
+                "quiz_allow_mock",
+                "quiz_max_attempts",
+            ),
+            "classes": ("collapse",),
+        }),
+    )
+
+    readonly_fields = ("article_preview",)
+
+    # =========================
+    # STYLING (YOUR EXISTING CSS)
+    # =========================
+    class Media:
+        css = {
+            "all": ("css/lesson.css",)
+        }
+
+    # =========================
+    # RESOURCE LABEL
+    # =========================
     def linked_resource(self, obj):
         if obj.lesson_type == "quiz" and obj.exam:
             return f"Quiz: {obj.exam.title}"
@@ -124,6 +200,24 @@ class LessonAdmin(admin.ModelAdmin):
         return "—"
 
     linked_resource.short_description = "Resource"
+
+    # =========================
+    # LIVE ARTICLE PREVIEW
+    # =========================
+    def article_preview(self, obj):
+        if not obj.article_content:
+            return "— No content yet —"
+
+        return format_html(
+            '<div class="lesson-content" '
+            'style="max-height:400px; overflow:auto; '
+            'border:1px solid #e5e7eb; padding:16px; '
+            'background:#f9fafb;">{}</div>',
+            mark_safe(obj.article_content),
+        )
+
+    article_preview.short_description = "📖 Article Preview"
+
 
 
 # =========================

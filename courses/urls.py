@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 app_name = "courses"
 
@@ -31,4 +33,4 @@ urlpatterns = [
         name="track_video_progress"
     ),
 
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

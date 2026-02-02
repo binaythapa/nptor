@@ -1,0 +1,97 @@
+.lesson-article img {
+  max-width: 100%;
+  height: auto;
+  margin: 24px 0;
+  border-radius: 10px;
+}
+
+/* POSITION */
+.align-left {
+  float: left;
+  margin-right: 20px;
+}
+
+.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-right {
+  float: right;
+  margin-left: 20px;
+}
+
+/* SIZE */
+.img-small  { max-width: 30%; }
+.img-medium { max-width: 60%; }
+.img-large  { max-width: 90%; }
+.img-full   { max-width: 100%; }
+
+
+.lesson-article figcaption {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+
+/* ===============================
+   LESSON CONTENT LAYOUT
+   =============================== */
+
+.lesson-content {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #1f2937;
+}
+
+/* Image alignment */
+.lesson-content .align-left {
+    float: left;
+    margin: 10px 20px 10px 0;
+}
+
+.lesson-content .align-center {
+    display: block;
+    margin: 24px auto;
+}
+
+.lesson-content .align-right {
+    float: right;
+    margin: 10px 0 10px 20px;
+}
+
+/* Image sizing */
+.lesson-content .img-small {
+    width: 30%;
+}
+
+.lesson-content .img-medium {
+    width: 55%;
+}
+
+.lesson-content .img-large {
+    width: 85%;
+}
+
+/* Image polish */
+.lesson-content img {
+    border-radius: 8px;
+    max-width: 100%;
+}
+
+.lesson-callout {
+    padding: 14px 18px;
+    border-left: 4px solid #3b82f6;
+    background: #eff6ff;
+    margin: 20px 0;
+    border-radius: 6px;
+}
+
+.lesson-warning {
+    border-left-color: #f59e0b;
+    background: #fff7ed;
+}
+

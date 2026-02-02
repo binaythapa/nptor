@@ -3,6 +3,8 @@ from django.contrib.auth import views as auth_views
 
 from quiz.forms import EmailOrUsernameLoginForm
 from quiz.views.admin import *
+from django.conf import settings
+from django.conf.urls.static import static
 
 # ================================
 # IMPORT VIEWS (FROM views.py)
@@ -478,4 +480,4 @@ path(
 ),
     
 
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
