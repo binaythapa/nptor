@@ -2,87 +2,134 @@
 <html>
 <head>
   <title>{{ course.title }}</title>
+<style>
+/* ================= BASE LAYOUT ================= */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
 
-  <style>
-    body { margin: 0; font-family: Arial; }
-    .layout { display: flex; height: 100vh; }
+.layout {
+  display: flex;
+  height: 100vh;
+}
 
-    .sidebar {
-      width: 300px;
-      background: #f8f9fa;
-      overflow-y: auto;
-      border-right: 1px solid #ddd;
-      padding: 12px;
-    }
+/* ================= SIDEBAR ================= */
+.sidebar {
+  width: 300px;
+  background: #f8f9fa;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
+  padding: 12px;
+}
 
-    .content {
-      flex: 1;
-      padding: 20px;
-    }
+/* ================= MAIN CONTENT ================= */
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
 
-    .lesson-link {
-      display: block;
-      padding: 6px 8px;
-      text-decoration: none;
-      color: #333;
-      border-radius: 4px;
-      margin-bottom: 4px;
-    }
+/* ================= LESSON NAV ================= */
+.lesson-link {
+  display: block;
+  padding: 6px 8px;
+  text-decoration: none;
+  color: #333;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
 
-    .lesson-link.active {
-      background: #e9ecef;
-      font-weight: bold;
-    }
+.lesson-link.active {
+  background: #e9ecef;
+  font-weight: bold;
+}
 
-    .lesson-link.completed {
-      color: #2e7d32;
-      font-weight: bold;
-    }
+.lesson-link.completed {
+  color: #2e7d32;
+  font-weight: bold;
+}
 
-    .progress-box {
-      margin: 10px 0 20px;
-    }
+/* ================= PROGRESS ================= */
+.progress-box {
+  margin: 10px 0 20px;
+}
 
-    .celebration-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
+/* ================= LESSON CONTENT (CRITICAL) ================= */
+.lesson-content {
+  margin: 20px 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #1f2937;
 
-    .celebration-card {
-      background: white;
-      padding: 40px;
-      width: 420px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
+  /* ⭐ PRESERVE SPACES, INDENTATION & LINE BREAKS */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
 
-    .btn-primary {
-      padding: 10px 18px;
-      background: #2e7d32;
-      color: white;
-      border-radius: 5px;
-      text-decoration: none;
-    }
+/* Paragraph spacing */
+.lesson-content p {
+  margin: 12px 0;
+}
 
-    .btn-secondary {
-      padding: 10px 18px;
-      background: #e0e0e0;
-      border-radius: 5px;
-      border: none;
-      cursor: pointer;
-    }
+/* Images inside lesson */
+.lesson-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
 
-        .description {
-    margin: 20px 0;
-    font-size: 15px;
-    line-height: 1.6;
-    white-space: pre-line;
+/* Image alignment helpers */
+.lesson-content .align-left {
+  float: left;
+  margin: 10px 20px 10px 0;
+}
+
+.lesson-content .align-center {
+  margin: 24px auto;
+}
+
+.lesson-content .align-right {
+  float: right;
+  margin: 10px 0 10px 20px;
+}
+
+/* Image sizing helpers */
+.lesson-content .img-small {
+  width: 30%;
+}
+
+.lesson-content .img-medium {
+  width: 55%;
+}
+
+.lesson-content .img-large {
+  width: 85%;
+}
+
+/* Code blocks */
+.lesson-content pre {
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 14px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+/* Callout blocks */
+.lesson-callout {
+  padding: 14px 18px;
+  border-left: 4px solid #3b82f6;
+  background: #eff6ff;
+  margin: 20px 0;
+  border-radius: 6px;
+}
+
+.lesson-callout.warning {
+  border-left-color: #f59e0b;
+  background: #fff7ed;
 }
 
 /* ================= TOP NAV ================= */
@@ -118,7 +165,44 @@
   user-select: none;
 }
 
-/* Mobile sidebar toggle */
+/* ================= CELEBRATION ================= */
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.celebration-card {
+  background: white;
+  padding: 40px;
+  width: 420px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+/* ================= BUTTONS ================= */
+.btn-primary {
+  padding: 10px 18px;
+  background: #2e7d32;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+}
+
+.btn-secondary {
+  padding: 10px 18px;
+  background: #e0e0e0;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+/* ================= RESPONSIVE ================= */
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
@@ -139,9 +223,8 @@
     display: none;
   }
 }
+</style>
 
-
-  </style>
 </head>
 
 <body>
