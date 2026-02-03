@@ -265,8 +265,8 @@ class LessonProgress(models.Model):
 
     def can_mark_complete(self):
         if not self.video_duration:
-            return self.video_seconds_watched >= 30
-        return (self.video_seconds_watched / self.video_duration) >= 0.2
+            return self.video_seconds_watched >= 300
+        return (self.video_seconds_watched / self.video_duration) >= 0.9
 
 
     def __str__(self):
