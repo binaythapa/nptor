@@ -113,11 +113,13 @@ class LessonAdmin(admin.ModelAdmin):
         "lesson_type",
         "order",
         "linked_resource",
+        "practice_difficulty",
     )
 
     list_filter = (
         "lesson_type",
         "section__course",
+        "practice_difficulty",
     )
 
     search_fields = ("title",)
@@ -155,6 +157,7 @@ class LessonAdmin(admin.ModelAdmin):
             "fields": (
                 "practice_domain",
                 "practice_category",
+                "practice_difficulty",
                 "practice_threshold",
                 "practice_lock_filters",
                 "practice_require_correct",
