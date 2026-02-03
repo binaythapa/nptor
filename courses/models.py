@@ -133,6 +133,18 @@ class Lesson(models.Model):
         related_name="course_practice_lessons"
     )
 
+    practice_difficulty = models.CharField(
+        max_length=20,
+        choices=(
+            ("easy", "Easy"),
+            ("medium", "Medium"),
+            ("hard", "Hard"),
+        ),
+        null=True,
+        blank=True,
+        help_text="Optional difficulty filter when practice is launched from course"
+    )  
+
     practice_threshold = models.PositiveIntegerField(default=10)
     practice_lock_filters = models.BooleanField(default=True)
     practice_require_correct = models.BooleanField(default=False)
