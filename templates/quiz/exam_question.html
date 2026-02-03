@@ -203,4 +203,41 @@ form.addEventListener('change', function () {
 });
 </script>
 
+
+<script>
+  (function () {
+    let remainingSeconds = Number("{{ remaining }}");
+
+    const timerEl = document.getElementById("timer");
+    if (!timerEl || isNaN(remainingSeconds)) return;
+
+    function formatTime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+
+      return (
+        String(h).padStart(2, "0") + ":" +
+        String(m).padStart(2, "0") + ":" +
+        String(s).padStart(2, "0")
+      );
+    }
+
+    timerEl.textContent = formatTime(remainingSeconds);
+
+    const interval = setInterval(() => {
+      remainingSeconds--;
+
+      if (remainingSeconds < 0) {
+        clearInterval(interval);
+        timerEl.textContent = "00:00:00";
+        return;
+      }
+
+      timerEl.textContent = formatTime(remainingSeconds);
+    }, 1000);
+  })();
+</script>
+
+
 {% endblock %}
