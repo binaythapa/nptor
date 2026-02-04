@@ -11,6 +11,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.core.exceptions import ValidationError
+from ckeditor.fields import RichTextField
 
 
 User = get_user_model()
@@ -130,15 +131,16 @@ class Question(models.Model):
         null=True,
         blank=True
     )
-    text = models.TextField()
+    
     question_type = models.CharField(
         max_length=20,
         choices=QUESTION_TYPES,
         default=SINGLE
     )
 
-    # NEW – detailed explanation / solution, visible on result page
-    explanation = models.TextField(
+    text = RichTextField()
+
+    explanation = RichTextField(
         blank=True,
         null=True,
         help_text='Optional detailed explanation or solution shown on the result page.'
@@ -217,8 +219,6 @@ class Question(models.Model):
         blank=True,
         related_name="questions_deleted"
     )
-
-
 
     def __str__(self):
         return (self.text[:75] + '...') if len(self.text) > 75 else self.text
