@@ -1,0 +1,39 @@
+{% extends "layouts/base.html" %}
+{% block title %}Terms & Conditions – {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-section">
+  <div class="box">
+
+    <h1 class="title is-4">Terms & Conditions</h1>
+    <p class="is-size-7 has-text-grey">
+      Last updated: {{ now|date:"F Y" }}
+    </p>
+
+    <h2 class="title is-6 mt-4">Acceptance of Terms</h2>
+    <p>
+      By accessing or using {{ site_name }}, you agree to comply with
+      these terms and conditions.
+    </p>
+
+    <h2 class="title is-6 mt-4">User Responsibilities</h2>
+    <p>
+      Users must provide accurate information and use the platform
+      responsibly and legally.
+    </p>
+
+    <h2 class="title is-6 mt-4">Account Suspension</h2>
+    <p>
+      We reserve the right to suspend or terminate accounts that
+      violate our policies.
+    </p>
+
+    <h2 class="title is-6 mt-4">Changes to Terms</h2>
+    <p>
+      These terms may be updated periodically. Continued use of the
+      platform indicates acceptance of updated terms.
+    </p>
+
+  </div>
+</section>
+{% endblock %}

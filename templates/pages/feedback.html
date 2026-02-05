@@ -1,0 +1,37 @@
+{% extends "layouts/base.html" %}
+{% block title %}Feedback – {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-section">
+  <div class="box">
+
+    <h1 class="title is-4">Feedback</h1>
+
+    {% if success %}
+      <div class="notification is-success">
+        Thank you for your feedback. We appreciate your input.
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="field">
+        <label class="label">Your Feedback</label>
+        <div class="control">
+          <textarea
+            class="textarea"
+            name="message"
+            placeholder="Share your experience or suggestions"
+            required></textarea>
+        </div>
+      </div>
+
+      <button class="button is-primary">
+        Submit Feedback
+      </button>
+    </form>
+
+  </div>
+</section>
+{% endblock %}

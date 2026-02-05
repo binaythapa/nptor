@@ -1,0 +1,26 @@
+<footer class="site-footer">
+  <div class="container footer-inner">
+
+    <!-- ================= FOOTER LINKS ================= -->
+    <div class="footer-links">
+      <a href="{% url 'pages:about' %}">About Us</a>
+      <span>·</span>
+      <a href="{% url 'pages:privacy' %}">Privacy Policy</a>
+      <span>·</span>
+      <a href="{% url 'pages:terms' %}">Terms & Conditions</a>
+      <span>·</span>
+      <a href="{% url 'pages:contact' %}">Contact</a>
+
+      {% if user.is_authenticated %}
+        <span>·</span>
+        <a href="{% url 'pages:feedback' %}">Feedback</a>
+      {% endif %}
+    </div>
+
+    <!-- ================= FOOTER META ================= -->
+    <div class="footer-meta">
+      © {{ site_name|default:"Nepal Mentor" }} {{ now|date:"Y" }}
+    </div>
+
+  </div>
+</footer>

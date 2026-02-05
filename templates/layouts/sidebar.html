@@ -1,0 +1,51 @@
+<aside id="site-sidebar" class="site-sidebar">
+  <nav class="menu">
+
+    <p class="menu-label">General</p>
+    <ul class="menu-list">
+
+      <li>
+  {% if user.is_authenticated %}
+    <a href="{% url 'quiz:dashboard' %}">
+      <i class="fa fa-home"></i> Dashboard
+    </a>
+  {% else %}
+    <a href="{% url 'pages:home' %}">
+      <i class="fa fa-home"></i> Home
+    </a>
+  {% endif %}
+</li>
+
+
+      <li>
+        <a href="{% url 'quiz:exam_list' %}">
+          <i class="fa fa-book"></i> Exams
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'quiz:practice' %}">
+          <i class="fa fa-pen-to-square"></i> Practice (Basic)
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'quiz:practice_express' %}">
+          <i class="fa fa-bolt"></i> Practice (Express)
+        </a>
+      </li>
+
+      {% if user.is_authenticated %}
+        <p class="menu-label">Account</p>
+        <ul class="menu-list">
+          <li>
+            <a href="{% url 'quiz:profile' %}">
+              <i class="fa fa-user"></i> Profile
+            </a>
+          </li>
+        </ul>
+      {% endif %}
+
+    </ul>
+  </nav>
+</aside>

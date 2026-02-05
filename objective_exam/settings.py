@@ -70,6 +70,8 @@ INSTALLED_APPS = [
     "quiz.apps.QuizConfig",
      "courses",
      "accounts",
+     "pages",
+
      "ckeditor",
      "ckeditor_uploader",   # optional but recommended
      "django_ratelimit",
@@ -118,6 +120,11 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+
+TEMPLATES[0]["OPTIONS"]["context_processors"] += [
+    "pages.context_processors.site_globals",
 ]
 
 
