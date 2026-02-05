@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, get_user_model
+from django.utils import timezone
 
 from accounts.services.otp_service import verify_otp
 from accounts.models import EmailOTP
@@ -12,9 +13,45 @@ def verify_login_otp_view(request):
     """
     Step 2: Verify LOGIN OTP and log user in
     """
-    if request.method == "GET":
-        return render(request, "accounts/auth/verify_otp.html")
 
+    # ======================
+    # GET → show OTP page + countdown
+    # ======================
+    if request.method == "GET":
+        user_id = request.session.get("otp_user_id")
+        expires_in = None
+
+        if user_id:
+            otp = (
+                EmailOTP.objects
+                .filter(
+                    user_id=user_id,
+                    purpose=EmailOTP.PURPOSE_LOGIN,
+                    is_used=False,
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if otp and otp.expires_at:
+                expires_in = int(
+                    (otp.expires_at - timezone.now()).total_seconds()
+                )
+
+                if expires_in < 0:
+                    expires_in = 0
+
+        return render(
+            request,
+            "accounts/auth/verify_otp.html",
+            {
+                "expires_in": expires_in,
+            },
+        )
+
+    # ======================
+    # POST → verify OTP
+    # ======================
     otp_code = request.POST.get("otp")
     user_id = request.session.get("otp_user_id")
 
@@ -22,7 +59,10 @@ def verify_login_otp_view(request):
         return render(
             request,
             "accounts/auth/verify_otp.html",
-            {"error": "OTP session expired"},
+            {
+                "error": "OTP session expired",
+                "expires_in": 0,
+            },
         )
 
     try:
@@ -43,7 +83,7 @@ def verify_login_otp_view(request):
             {"error": "Account locked"},
         )
 
-    # ✅ FIX: use generic OTP verifier with LOGIN purpose
+    # ✅ Verify OTP (LOGIN purpose)
     if not verify_otp(
         user=user,
         code=otp_code,
@@ -53,12 +93,17 @@ def verify_login_otp_view(request):
         return render(
             request,
             "accounts/auth/verify_otp.html",
-            {"error": "Invalid or expired OTP"},
+            {
+                "error": "Invalid or expired OTP",
+                "expires_in": 0,
+            },
         )
 
+    # ======================
+    # SUCCESS
+    # ======================
     lock.reset()
 
-    # IMPORTANT: explicit backend (multiple auth backends configured)
     login(
         request,
         user,
