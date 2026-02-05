@@ -1,0 +1,27 @@
+{% extends "quiz/base.html" %}
+{% block content %}
+
+<section style="max-width:560px;margin:20px auto;">
+  <div class="card-surface" style="padding:20px;">
+    <h1 class="title is-4">Create Account</h1>
+
+    {% if error %}
+      <div class="notification is-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <input class="input mb-2" name="username" placeholder="Username" required>
+      <input class="input mb-2" name="email" placeholder="Email" required>
+      <input class="input mb-2" type="password" name="password" placeholder="Password" required>
+      <input class="input mb-2" type="password" name="confirm_password" placeholder="Confirm password" required>
+
+      <button class="button is-primary">
+        Create Account
+      </button>
+    </form>
+  </div>
+</section>
+
+{% endblock %}

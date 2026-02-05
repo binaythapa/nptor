@@ -3,12 +3,23 @@
 
 <section style="max-width:560px;margin:20px auto;">
   <div class="card-surface" style="padding:20px;">
+
     <h1 class="title is-4">Sign in</h1>
 
     {% if error %}
       <div class="notification is-danger">
         {{ error }}
       </div>
+    {% endif %}
+
+    {% if expires_in is not None %}
+      <p id="otp-timer" class="has-text-grey mb-3">
+        Existing OTP expires in <strong></strong>
+      </p>
+    {% else %}
+      <p class="has-text-grey mb-3">
+        An OTP will be sent to your email and will expire in 5 minutes.
+      </p>
     {% endif %}
 
     <form method="post" action="{% url 'accounts:request-login-otp' %}">
@@ -22,6 +33,7 @@
             name="username"
             class="input"
             required
+            autofocus
           >
         </div>
       </div>
@@ -40,9 +52,9 @@
 
       <div class="field is-flex is-justify-content-space-between is-align-items-center">
         <div>
-      <a href="{% url 'accounts:password-reset-request' %}">
-  Forgot password?
-</a>
+          <a href="{% url 'accounts:password-reset-request' %}">
+            Forgot password?
+          </a>
         </div>
         <div>
           <button class="button is-primary" type="submit">
@@ -53,10 +65,39 @@
     </form>
 
     <div style="margin-top:12px" class="small-muted">
-      Don't have an account?
-      <a href="{% url 'quiz:customer_register' %}">Create one</a>
-    </div>
+  Don't have an account?
+  <a href="{% url 'accounts:register' %}">Create one</a>
+</div>
+
+
   </div>
 </section>
+
+{% if expires_in is not None %}
+<script>
+(function () {
+  let remaining = {{ expires_in }};
+  const timerEl = document.querySelector("#otp-timer strong");
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  }
+
+  function tick() {
+    if (remaining <= 0) {
+      timerEl.textContent = "00:00";
+      return;
+    }
+    timerEl.textContent = formatTime(remaining);
+    remaining--;
+    setTimeout(tick, 1000);
+  }
+
+  tick();
+})();
+</script>
+{% endif %}
 
 {% endblock %}

@@ -1,0 +1,22 @@
+{% extends "quiz/base.html" %}
+{% block content %}
+
+<section style="max-width:400px;margin:20px auto;">
+  <div class="card-surface" style="padding:20px;">
+    <h1 class="title is-4">Verify Email</h1>
+
+    {% if error %}
+      <div class="notification is-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input class="input" name="otp" placeholder="Enter OTP" required>
+      <button class="button is-primary mt-3">
+        Verify
+      </button>
+    </form>
+  </div>
+</section>
+
+{% endblock %}

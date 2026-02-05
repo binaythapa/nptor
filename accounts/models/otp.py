@@ -8,7 +8,12 @@ import random
 class EmailOTP(models.Model):
     PURPOSE_LOGIN = "login"
     PURPOSE_PASSWORD_RESET = "password_reset"
+
+    # ✅ canonical name
     PURPOSE_EMAIL_VERIFICATION = "email_verification"
+
+    # ✅ alias for registration flow (IMPORTANT)
+    PURPOSE_REGISTRATION = PURPOSE_EMAIL_VERIFICATION
 
     PURPOSE_CHOICES = [
         (PURPOSE_LOGIN, "Login"),
@@ -37,14 +42,12 @@ class EmailOTP(models.Model):
     def __str__(self):
         return f"OTP for {self.user} ({self.purpose})"
 
-    # ✅ THIS IS WHERE IT GOES
     @staticmethod
     def create_otp(user, purpose="login", ttl_minutes=5):
         """
         Creates a single valid OTP per user & purpose.
         Invalidates any previous unused OTPs.
         """
-        # Invalidate old OTPs
         EmailOTP.objects.filter(
             user=user,
             purpose=purpose,

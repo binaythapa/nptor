@@ -66,3 +66,18 @@ def verify_otp(*, user, code, purpose):
     otp.is_used = True
     otp.save(update_fields=["is_used"])
     return True
+
+
+def create_registration_otp(*, user):
+    otp = EmailOTP.create_otp(
+        user=user,
+        purpose=EmailOTP.PURPOSE_REGISTRATION,
+        ttl_minutes=10,
+    )
+
+    send_login_otp_email(
+        user=user,
+        otp_code=otp.code,
+    )
+
+    return otp

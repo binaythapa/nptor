@@ -5,6 +5,7 @@ from accounts.views.login import request_login_otp_view
 from accounts.views.auth import verify_login_otp_view
 from accounts.views.security import logout_view
 from accounts.views.password_reset import *
+from accounts.views.register import *
 
 
 
@@ -50,6 +51,19 @@ urlpatterns = [
         "password-reset/success/",
         password_reset_success_view,
         name="password-reset-success",
+    ),
+
+
+    path("register/", register_view, name="register"),
+    path(
+        "register/verify/",
+        verify_registration_otp_view,
+        name="verify-registration-otp",
+    ),
+    path(
+        "register/success/",
+        registration_success_view,
+        name="registration-success",
     ),
 
     
