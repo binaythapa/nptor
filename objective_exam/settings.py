@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "widget_tweaks",
     "phone_field",
+    "django_countries",
 
     # Local
     "quiz.apps.QuizConfig",

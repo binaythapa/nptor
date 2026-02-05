@@ -1,26 +1,116 @@
 {% extends "quiz/base.html" %}
+{% load countries %}
 {% block content %}
 
 <section style="max-width:560px;margin:20px auto;">
   <div class="card-surface" style="padding:20px;">
+
     <h1 class="title is-4">Create Account</h1>
 
     {% if error %}
-      <div class="notification is-danger">{{ error }}</div>
+      <div class="notification is-danger">
+        {{ error }}
+      </div>
     {% endif %}
 
     <form method="post">
       {% csrf_token %}
 
-      <input class="input mb-2" name="username" placeholder="Username" required>
-      <input class="input mb-2" name="email" placeholder="Email" required>
-      <input class="input mb-2" type="password" name="password" placeholder="Password" required>
-      <input class="input mb-2" type="password" name="confirm_password" placeholder="Confirm password" required>
+      <!-- Username -->
+      <div class="field">
+        <label class="label">Username</label>
+        <div class="control">
+          <input class="input" name="username" placeholder="Username" required>
+        </div>
+      </div>
 
-      <button class="button is-primary">
-        Create Account
-      </button>
+      <!-- Email -->
+      <div class="field">
+        <label class="label">Email</label>
+        <div class="control">
+          <input class="input" type="email" name="email" placeholder="Email" required>
+        </div>
+      </div>
+
+      <!-- Country (DROPDOWN) -->
+      <div class="field">
+        <label class="label">Country</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="country" required>
+              <option value="">Select country</option>
+              {% get_countries as countries %}
+              {% for country in countries %}
+                <option value="{{ country.code }}">
+                  {{ country.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div class="field">
+        <label class="label">Phone Number</label>
+        <div class="control">
+          <input class="input" name="phone" placeholder="Phone number" required>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="field">
+        <label class="label">Password</label>
+        <div class="control">
+          <input
+            class="input"
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+          >
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="field">
+        <label class="label">Confirm Password</label>
+        <div class="control">
+          <input
+            class="input"
+            type="password"
+            name="confirm_password"
+            placeholder="Confirm password"
+            required
+          >
+        </div>
+      </div>
+
+      <!-- Terms & Policy -->
+      <div class="field">
+        <div class="control">
+          <label class="checkbox">
+            <input type="checkbox" name="accepted_policy" required>
+            I accept the
+            <a href="#" target="_blank">Terms & Privacy Policy</a>
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="field mt-4">
+        <button class="button is-primary is-fullwidth">
+          Create Account
+        </button>
+      </div>
+
     </form>
+
+    <div style="margin-top:12px" class="small-muted has-text-centered">
+      Already have an account?
+      <a href="{% url 'accounts:request-login-otp' %}">Login</a>
+    </div>
+
   </div>
 </section>
 

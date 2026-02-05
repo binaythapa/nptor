@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from phone_field import PhoneField
+from django_countries.fields import CountryField
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(
@@ -9,10 +11,27 @@ class UserProfile(models.Model):
         related_name="profile"
     )
 
-    phone = PhoneField(blank=True, null=True)
-    address = models.CharField(max_length=200, blank=True, null=True)
+    # ✅ NEW
+    
+    country = CountryField(blank=True, null=True)
 
-    accepted_policy = models.BooleanField(default=False)
+    # ✅ EXISTING (renamed only in comment, not field)
+    phone = PhoneField(
+        blank=True,
+        null=True,
+        help_text="Contact phone number",
+    )
+
+    address = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+    )
+
+    accepted_policy = models.BooleanField(
+        default=False,
+        help_text="User accepted terms & privacy policy",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
