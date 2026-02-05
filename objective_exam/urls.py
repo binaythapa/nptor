@@ -7,29 +7,36 @@ from django.conf.urls.static import static
 from quiz.urls.admin import urlpatterns as admin_urls
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
 
-    
-
-    path('accounts/', include('django.contrib.auth.urls')),
-
-    # ✅ include quiz urls (folder-based)
-    path('quiz/', include('quiz.urls')),
+    # ==============================
+    # APPS
+    # ==============================
+    path("accounts/", include("accounts.urls")),   # ✅ OTP login
+    path("quiz/", include("quiz.urls")),
     path("courses/", include("courses.urls")),
 
+    path("api/", include("quiz.api_urls")),
 
-    path('api/', include('quiz.api_urls')),
-
-    # Default redirect
-    path('', RedirectView.as_view(
-        pattern_name='quiz:practice',
-        permanent=False
-    )),
+    # ==============================
+    # DEFAULT REDIRECT
+    # ==============================
+    path(
+        "",
+        RedirectView.as_view(
+            pattern_name="quiz:practice",
+            permanent=False
+        ),
+    ),
 ]
 
-# extra admin urls
+# ==============================
+# EXTRA ADMIN URLS
+# ==============================
 urlpatterns += admin_urls
 
-# static & media
+# ==============================
+# STATIC & MEDIA
+# ==============================
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

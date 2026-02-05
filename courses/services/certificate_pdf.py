@@ -5,6 +5,39 @@ from reportlab.lib.units import cm
 from reportlab.lib.colors import grey
 
 
+# -------------------------------------------------
+# TEXT SANITIZER (CRITICAL FOR REPORTLAB)
+# -------------------------------------------------
+def sanitize_certificate_text(text: str) -> str:
+    """
+    Converts unsupported Unicode characters to
+    ASCII-safe equivalents for ReportLab.
+    """
+    if not text:
+        return ""
+
+    replacements = {
+        "Ⓡ": "(R)",
+        "®": "(R)",
+        "™": "(TM)",
+        "©": "(C)",
+        "“": '"',
+        "”": '"',
+        "‘": "'",
+        "’": "'",
+        "–": "-",
+        "—": "-",
+    }
+
+    for bad, good in replacements.items():
+        text = text.replace(bad, good)
+
+    return text
+
+
+# -------------------------------------------------
+# CERTIFICATE GENERATOR
+# -------------------------------------------------
 def generate_certificate_pdf(user, course, certificate):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
@@ -14,7 +47,11 @@ def generate_certificate_pdf(user, course, certificate):
 
     # ================= TITLE =================
     c.setFont("Helvetica-Bold", 28)
-    c.drawCentredString(center_x, height - 3 * cm, "Certificate of Course Completion")
+    c.drawCentredString(
+        center_x,
+        height - 3 * cm,
+        "Certificate of Course Completion"
+    )
 
     # ================= MAIN BODY =================
     y = height - 6 * cm
@@ -22,11 +59,15 @@ def generate_certificate_pdf(user, course, certificate):
     c.setFont("Helvetica", 14)
     c.drawCentredString(center_x, y, "This is to certify that")
 
+    # User Name
     y -= 2 * cm
-    name = user.get_full_name() or user.username
+    name = sanitize_certificate_text(
+        user.get_full_name() or user.username
+    )
     c.setFont("Helvetica-Bold", 22)
     c.drawCentredString(center_x, y, name)
 
+    # Completion text
     y -= 2 * cm
     c.setFont("Helvetica", 14)
     c.drawCentredString(
@@ -35,10 +76,17 @@ def generate_certificate_pdf(user, course, certificate):
         "has successfully completed the online training course"
     )
 
+    # Course Title (SANITIZED)
     y -= 2 * cm
+    course_title = sanitize_certificate_text(course.title)
     c.setFont("Helvetica-Bold", 20)
-    c.drawCentredString(center_x, y, f"“{course.title}”")
+    c.drawCentredString(
+        center_x,
+        y,
+        f'"{course_title}"'
+    )
 
+    # Provider
     y -= 1.5 * cm
     c.setFont("Helvetica", 14)
     c.drawCentredString(center_x, y, "conducted by nptor.com")
@@ -47,12 +95,17 @@ def generate_certificate_pdf(user, course, certificate):
     box_top = 7 * cm
     box_left = 2.5 * cm
     box_width = width - 5 * cm
-    box_height = 3.2 * cm
+    box_height = 3.4 * cm
 
     c.setStrokeColor(grey)
-    c.rect(box_left, box_top - box_height, box_width, box_height)
+    c.rect(
+        box_left,
+        box_top - box_height,
+        box_width,
+        box_height
+    )
 
-    disclaimer_text = (
+    disclaimer_text = sanitize_certificate_text(
         "Disclaimer: This certificate is issued by nptor.com as proof of successful "
         "completion of an online training course. It is not an official certification "
         "issued by Snowflake Inc., Microsoft, or any other vendor, and does not imply "
@@ -65,17 +118,27 @@ def generate_certificate_pdf(user, course, certificate):
     text.setLeading(14)
     text.setFillColor(grey)
 
-    # Proper text wrapping
+    # Word-safe wrapping
     max_chars = 95
-    for i in range(0, len(disclaimer_text), max_chars):
-        text.textLine(disclaimer_text[i:i + max_chars])
+    words = disclaimer_text.split(" ")
+    line = ""
+
+    for word in words:
+        if len(line + word) <= max_chars:
+            line += word + " "
+        else:
+            text.textLine(line.strip())
+            line = word + " "
+
+    if line:
+        text.textLine(line.strip())
 
     c.drawText(text)
 
     # ================= FOOTER =================
     c.setFillColorRGB(0, 0, 0)
-    c.setFont("Helvetica", 11)
 
+    c.setFont("Helvetica", 11)
     c.drawString(
         3 * cm,
         2.8 * cm,

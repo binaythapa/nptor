@@ -68,8 +68,11 @@ INSTALLED_APPS = [
     # Local
     "quiz.apps.QuizConfig",
      "courses",
+     "accounts",
      "ckeditor",
      "ckeditor_uploader",   # optional but recommended
+     "django_ratelimit",
+    
 ]
 
 SITE_ID = 1
@@ -152,11 +155,14 @@ DATABASES = {
 # PASSWORD VALIDATION
 # ============================================================
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 10},},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
 ]
+
+
 
 
 # ============================================================
@@ -177,6 +183,13 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
 
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
 
 
 # ============================================================
@@ -197,18 +210,21 @@ STATICFILES_STORAGE = (
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 # ============================================================
 # AUTHENTICATION
 # ============================================================
-LOGIN_URL = "quiz:login"
+
+LOGIN_URL = "accounts:request-login-otp"
 LOGIN_REDIRECT_URL = "quiz:dashboard"
-LOGOUT_REDIRECT_URL = "quiz:login"
+LOGOUT_REDIRECT_URL = "accounts:request-login-otp"
 
 AUTHENTICATION_BACKENDS = [
     "quiz.auth_backends.EmailOrUsernameModelBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
+
+#AUTH_BACKEND = "django.contrib.auth.backends.ModelBackend"
+
 
 
 # ============================================================
@@ -265,6 +281,15 @@ EXPRESS_ANON_LIMIT = 5
 RETAKE_COOLDOWN_MINUTES = 240
 
 QUESTION_AUTO_DISABLE_THRESHOLD = 3
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+    }
+}
+
 
 
 
