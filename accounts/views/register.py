@@ -20,11 +20,27 @@ from accounts.models import EmailOTP
 
 User = get_user_model()
 
+from accounts.services.cleanup import delete_expired_unverified_users
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+
+from accounts.services.otp_service import create_registration_otp
+from accounts.services.cleanup import delete_expired_unverified_users
+
+User = get_user_model()
+
 
 def register_view(request):
     """
-    Step 1: Create inactive user, save profile info & send OTP
+    Step 1: Create inactive user OR reuse existing inactive user and send OTP
     """
+
+    # 🧹 Clean abandoned registrations
+    delete_expired_unverified_users(minutes=30)
+
     if request.method == "GET":
         return render(request, "accounts/auth/register.html")
 
@@ -64,18 +80,33 @@ def register_view(request):
             {"error": "Passwords do not match"},
         )
 
-    if User.objects.filter(username=username).exists():
+    # ----------------------
+    # Check existing user by email
+    # ----------------------
+    existing_user = User.objects.filter(email=email).first()
+
+    if existing_user:
+        if existing_user.is_active:
+            return render(
+                request,
+                "accounts/auth/register.html",
+                {"error": "Email already registered"},
+            )
+
+        # 🔁 Existing but NOT verified → resend OTP
+        create_registration_otp(user=existing_user)
+        request.session["registration_user_id"] = existing_user.id
+
+        return redirect("accounts:verify-registration-otp")
+
+    # ----------------------
+    # Check username conflict (active users only)
+    # ----------------------
+    if User.objects.filter(username=username, is_active=True).exists():
         return render(
             request,
             "accounts/auth/register.html",
             {"error": "Username already taken"},
-        )
-
-    if User.objects.filter(email=email).exists():
-        return render(
-            request,
-            "accounts/auth/register.html",
-            {"error": "Email already registered"},
         )
 
     # ----------------------
@@ -85,7 +116,7 @@ def register_view(request):
         username=username,
         email=email,
         password=make_password(password),
-        is_active=False,  # 🔐 activate after OTP verification
+        is_active=False,
     )
 
     # ----------------------
@@ -106,13 +137,16 @@ def register_view(request):
     return redirect("accounts:verify-registration-otp")
 
 
-    create_registration_otp(user=user)
-    request.session["registration_user_id"] = user.id
-
-    return redirect("accounts:verify-registration-otp")
-
 from django.utils import timezone
 from accounts.models import EmailOTP
+
+
+
+
+
+
+
+
 
 
 def verify_registration_otp_view(request):
