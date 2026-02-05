@@ -258,7 +258,9 @@ REST_FRAMEWORK = {
 # ============================================================
 # MISC
 # ============================================================
-SITE_NAME = os.environ.get("SITE_NAME", "Objective Exam")
+SITE_NAME = os.environ.get("SITE_NAME", "nptor.com")
+SITE_URL = "https://nptor.com"
+
 
 
 # ============================================================

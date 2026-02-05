@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to {{ site_name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body style="
+  margin:0;
+  padding:0;
+  background-color:#f6f8fa;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+">
+
+  <!-- Wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- Card -->
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="
+                 max-width:560px;
+                 background:#ffffff;
+                 border-radius:8px;
+                 padding:32px;
+               ">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding-bottom:16px;">
+              <h2 style="
+                margin:0;
+                font-size:22px;
+                font-weight:600;
+                color:#111827;
+              ">
+                🎉 Welcome to {{ site_name }}
+              </h2>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding-bottom:12px; color:#374151; font-size:15px;">
+              Hi <strong>{{ user.username }}</strong>,
+            </td>
+          </tr>
+
+          <!-- Message -->
+          <tr>
+            <td style="padding-bottom:20px; color:#374151; font-size:15px; line-height:1.6;">
+              Your account has been successfully created.
+              You can now sign in and start using {{ site_name }}.
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding-bottom:24px;">
+              <a href="{{ login_url }}"
+                 style="
+                   display:inline-block;
+                   padding:12px 20px;
+                   background:#2563eb;
+                   color:#ffffff;
+                   text-decoration:none;
+                   border-radius:6px;
+                   font-weight:500;
+                   font-size:14px;
+                 ">
+                Log in to your account
+              </a>
+            </td>
+          </tr>
+
+          <!-- Help text -->
+          <tr>
+            <td style="padding-bottom:20px; color:#6b7280; font-size:14px; line-height:1.6;">
+              If you did not create this account or need help,
+              please contact our support team.
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="
+              border-top:1px solid #e5e7eb;
+              padding-top:16px;
+              color:#6b7280;
+              font-size:13px;
+            ">
+              — Team {{ site_name }} <br>
+              <a href="{{ site_url }}"
+                 style="color:#2563eb; text-decoration:none;">
+                {{ site_url }}
+              </a>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Card -->
+
+      </td>
+    </tr>
+  </table>
+  <!-- /Wrapper -->
+
+</body>
+</html>

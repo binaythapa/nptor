@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from accounts.utils.email import send_registration_success_email
 
 from accounts.services.otp_service import (
     create_registration_otp,
@@ -214,6 +215,9 @@ def verify_registration_otp_view(request):
 
     user.is_active = True
     user.save(update_fields=["is_active"])
+
+    # 📧 Send confirmation email
+    send_registration_success_email(user=user)
 
     request.session.pop("registration_user_id", None)
 
