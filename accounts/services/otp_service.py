@@ -2,9 +2,13 @@ from accounts.models import EmailOTP
 from accounts.utils.email import send_login_otp_email
 
 
+# ============================
+# CREATE OTPs
+# ============================
+
 def create_login_otp(*, user):
     """
-    Create OTP and send login email.
+    Create and email OTP for login.
     """
     otp = EmailOTP.create_otp(
         user=user,
@@ -20,15 +24,37 @@ def create_login_otp(*, user):
     return otp
 
 
-def verify_login_otp(*, user, code):
+def create_password_reset_otp(*, user):
     """
-    Verify OTP for login.
+    Create and email OTP for password reset.
+    """
+    otp = EmailOTP.create_otp(
+        user=user,
+        purpose=EmailOTP.PURPOSE_PASSWORD_RESET,
+        ttl_minutes=10,
+    )
+
+    send_login_otp_email(
+        user=user,
+        otp_code=otp.code,
+    )
+
+    return otp
+
+
+# ============================
+# VERIFY OTP (GENERIC)
+# ============================
+
+def verify_otp(*, user, code, purpose):
+    """
+    Verify OTP for a specific purpose (login / password reset).
     """
     try:
         otp = EmailOTP.objects.get(
             user=user,
             code=code,
-            purpose=EmailOTP.PURPOSE_LOGIN,
+            purpose=purpose,
             is_used=False,
         )
     except EmailOTP.DoesNotExist:

@@ -4,9 +4,6 @@ from django.conf import settings
 
 
 def send_login_otp_email(*, user, otp_code):
-    """
-    Sends branded HTML OTP email for login.
-    """
     subject = "Your Login OTP"
     from_email = settings.DEFAULT_FROM_EMAIL
     to = [user.email]

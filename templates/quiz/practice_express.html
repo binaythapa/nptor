@@ -187,7 +187,8 @@ function loadQuestion(){
           <p class="has-text-weight-semibold">🔒 Free limit reached</p>
           <p>${d.message}</p>
           <div class="buttons mt-3">
-            <a href="{% url 'quiz:login' %}" class="button is-primary">Login</a>
+           <a href="{% url 'accounts:request-login-otp' %}" class="button is-primary">Login</a>
+
             <a href="{% url 'quiz:practice' %}" class="button is-light">Try Basics</a>
           </div>
         `;

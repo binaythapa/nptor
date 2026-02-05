@@ -1,14 +1,17 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
 from django.contrib.auth import login, get_user_model
 
-from accounts.services.otp_service import verify_login_otp
+from accounts.services.otp_service import verify_otp
+from accounts.models import EmailOTP
 from accounts.models.security import AccountLock
 
 User = get_user_model()
 
 
 def verify_login_otp_view(request):
+    """
+    Step 2: Verify LOGIN OTP and log user in
+    """
     if request.method == "GET":
         return render(request, "accounts/auth/verify_otp.html")
 
@@ -40,7 +43,12 @@ def verify_login_otp_view(request):
             {"error": "Account locked"},
         )
 
-    if not verify_login_otp(user=user, code=otp_code):
+    # ✅ FIX: use generic OTP verifier with LOGIN purpose
+    if not verify_otp(
+        user=user,
+        code=otp_code,
+        purpose=EmailOTP.PURPOSE_LOGIN,
+    ):
         lock.register_failure()
         return render(
             request,
@@ -48,15 +56,15 @@ def verify_login_otp_view(request):
             {"error": "Invalid or expired OTP"},
         )
 
-    # 🔑 login with explicit backend
+    lock.reset()
+
+    # IMPORTANT: explicit backend (multiple auth backends configured)
     login(
         request,
         user,
         backend="django.contrib.auth.backends.ModelBackend",
     )
 
-    lock.reset()
     request.session.pop("otp_user_id", None)
 
-    # ✅ redirect user
     return redirect("quiz:dashboard")
