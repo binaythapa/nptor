@@ -79,7 +79,46 @@
 
 </div>
 
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div class="modal" id="logout-modal">
+  <div class="modal-background"></div>
+
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Confirm Logout</p>
+      <button class="delete" aria-label="close" onclick="closeLogoutModal()"></button>
+    </header>
+
+    <section class="modal-card-body">
+      <p>Are you sure you want to log out?</p>
+    </section>
+
+    <footer class="modal-card-foot">
+      <button class="button is-light" onclick="closeLogoutModal()">
+        Cancel
+      </button>
+
+      <button class="button is-danger"
+              onclick="document.getElementById('logout-form').submit();">
+        Logout
+      </button>
+    </footer>
+  </div>
+</div>
+
+
 <script src="{% static 'js/ui.js' %}"></script>
+
+<script>
+function openLogoutModal() {
+  document.getElementById("logout-modal").classList.add("is-active");
+}
+
+function closeLogoutModal() {
+  document.getElementById("logout-modal").classList.remove("is-active");
+}
+</script>
+
 {% block scripts_extra %}{% endblock %}
 </body>
 </html>

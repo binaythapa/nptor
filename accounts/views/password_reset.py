@@ -53,17 +53,22 @@ def request_password_reset_otp_view(request):
     return redirect("accounts:password-reset-verify")
 
 
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.utils import timezone
+
+from accounts.services.otp_service import verify_otp
+from accounts.models import EmailOTP
+
+User = get_user_model()
+
+
 def verify_password_reset_otp_view(request):
     """
     Step 2: Verify PASSWORD RESET OTP and set new password
     """
-    if request.method == "GET":
-        return render(request, "accounts/auth/password_reset_verify.html")
-
-    otp = request.POST.get("otp")
-    password = request.POST.get("password")
-    confirm = request.POST.get("confirm_password")
-
     user_id = request.session.get("pwd_reset_user_id")
 
     if not user_id:
@@ -73,23 +78,87 @@ def verify_password_reset_otp_view(request):
             {"error": "Session expired"},
         )
 
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return render(
+            request,
+            "accounts/auth/password_reset_verify.html",
+            {"error": "Invalid session"},
+        )
+
+    # 🔐 Fetch latest unused PASSWORD_RESET OTP
+    otp_obj = (
+        EmailOTP.objects
+        .filter(
+            user=user,
+            purpose=EmailOTP.PURPOSE_PASSWORD_RESET,
+            is_used=False,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+
+    if not otp_obj:
+        return render(
+            request,
+            "accounts/auth/password_reset_verify.html",
+            {"error": "OTP session expired"},
+        )
+
+    # ⏱ Remaining time (for countdown)
+    expires_in = int((otp_obj.expires_at - timezone.now()).total_seconds())
+    expires_in = max(expires_in, 0)
+
+    # ==========================
+    # GET → show form + timer
+    # ==========================
+    if request.method == "GET":
+        return render(
+            request,
+            "accounts/auth/password_reset_verify.html",
+            {"expires_in": expires_in},
+        )
+
+    # ==========================
+    # POST → validate inputs
+    # ==========================
+    otp = request.POST.get("otp")
+    password = request.POST.get("password")
+    confirm = request.POST.get("confirm_password")
+
     if not otp or not password or not confirm:
         return render(
             request,
             "accounts/auth/password_reset_verify.html",
-            {"error": "All fields are required"},
+            {
+                "error": "All fields are required",
+                "expires_in": expires_in,
+            },
         )
 
     if password != confirm:
         return render(
             request,
             "accounts/auth/password_reset_verify.html",
-            {"error": "Passwords do not match"},
+            {
+                "error": "Passwords do not match",
+                "expires_in": expires_in,
+            },
         )
 
-    user = User.objects.get(id=user_id)
+    # ❌ Block expired OTP (server-side enforcement)
+    if expires_in <= 0:
+        return render(
+            request,
+            "accounts/auth/password_reset_verify.html",
+            {
+                "error": "OTP has expired",
+                "expires_in": 0,
+            },
+        )
 
-    # ✅ FIX: verify OTP with PASSWORD_RESET purpose
+    # ✅ Verify OTP (correct purpose)
     if not verify_otp(
         user=user,
         code=otp,
@@ -98,12 +167,17 @@ def verify_password_reset_otp_view(request):
         return render(
             request,
             "accounts/auth/password_reset_verify.html",
-            {"error": "Invalid or expired OTP"},
+            {
+                "error": "Invalid or expired OTP",
+                "expires_in": expires_in,
+            },
         )
 
+    # 🔐 Update password
     user.password = make_password(password)
     user.save(update_fields=["password"])
 
+    # 🧹 Cleanup session
     request.session.pop("pwd_reset_user_id", None)
 
     return redirect("accounts:password-reset-success")

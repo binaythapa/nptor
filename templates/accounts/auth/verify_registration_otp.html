@@ -7,7 +7,9 @@
     <h1 class="title is-4">Verify Email</h1>
 
     {% if error %}
-      <div class="notification is-danger">{{ error }}</div>
+      <div class="notification is-danger">
+        {{ error }}
+      </div>
     {% endif %}
 
     {% if expires_in is not None %}
@@ -16,24 +18,36 @@
       </p>
     {% endif %}
 
-    <form method="post">
+    <form method="post" id="otp-form">
       {% csrf_token %}
+
       <input
         class="input"
         name="otp"
-        placeholder="Enter OTP"
+        id="otp-input"
+        placeholder="Enter 6-digit OTP"
         required
         autofocus
+        inputmode="numeric"
+        pattern="[0-9]{6}"
+        maxlength="6"
       >
 
-      <button class="button is-primary mt-3">
+      <button
+        class="button is-primary mt-3"
+        type="submit"
+        id="verify-btn"
+      >
         Verify
       </button>
     </form>
 
     <p id="otp-expired-msg"
        class="has-text-danger mt-3 is-hidden">
-      OTP has expired. Please register again.
+      OTP has expired.
+      <a href="{% url 'accounts:register' %}">
+        Please register again.
+      </a>
     </p>
 
   </div>
@@ -45,6 +59,8 @@
   let remaining = {{ expires_in }};
   const timerEl = document.querySelector("#otp-timer strong");
   const expiredMsg = document.getElementById("otp-expired-msg");
+  const otpInput = document.getElementById("otp-input");
+  const verifyBtn = document.getElementById("verify-btn");
 
   function formatTime(s) {
     const m = Math.floor(s / 60);
@@ -52,10 +68,17 @@
     return `${m}:${sec.toString().padStart(2, "0")}`;
   }
 
+  function expire() {
+    timerEl.textContent = "00:00";
+    expiredMsg.classList.remove("is-hidden");
+    otpInput.disabled = true;
+    verifyBtn.disabled = true;
+    verifyBtn.classList.add("is-light");
+  }
+
   function tick() {
     if (remaining <= 0) {
-      timerEl.textContent = "00:00";
-      expiredMsg.classList.remove("is-hidden");
+      expire();
       return;
     }
     timerEl.textContent = formatTime(remaining);
