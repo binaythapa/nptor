@@ -33,4 +33,10 @@ urlpatterns = [
         name="track_video_progress"
     ),
 
+    path(
+    "subscribe/<int:course_id>/",
+    views.subscribe_course,
+    name="subscribe_course",
+),
+
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

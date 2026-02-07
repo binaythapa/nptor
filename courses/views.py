@@ -313,3 +313,62 @@ def track_video_progress(request):
             status=500
         )
 
+
+
+@login_required
+def enroll_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+
+    # Check access
+    has_access = (
+        StudentCourseSubscription.objects.filter(
+            user=request.user, course=course, is_active=True
+        ).exists()
+        or
+        CourseAssignment.objects.filter(
+            student=request.user, course=course
+        ).exists()
+    )
+
+    if not has_access:
+        return HttpResponseForbidden()
+
+    CourseEnrollment.objects.get_or_create(
+        user=request.user,
+        course=course
+    )
+
+    return redirect("course_detail", course_id=course.id)
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_POST
+
+from .models import Course, CourseSubscription
+
+
+@login_required
+@require_POST
+def subscribe_course(request, course_id):
+    course = get_object_or_404(
+        Course,
+        id=course_id,
+        is_published=True
+    )
+
+    # Create or reactivate subscription
+    sub, created = CourseSubscription.objects.get_or_create(
+        user=request.user,
+        course=course,
+        defaults={
+            "is_active": True,
+            "source": "quiz",   # important
+        }
+    )
+
+    if not created and not sub.is_active:
+        sub.is_active = True
+        sub.save(update_fields=["is_active"])
+
+    return redirect("quiz:exam_list")

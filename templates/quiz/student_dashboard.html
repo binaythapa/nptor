@@ -645,6 +645,65 @@ body {
   {% endif %}
 
 
+
+
+
+{% if courses %}
+<div class="mb-5">
+  <h2 class="title is-4">🎓 My Courses</h2>
+
+  <div class="columns is-multiline">
+    {% for item in courses %}
+    <div class="column is-4">
+      <div class="box">
+
+        <h3 class="title is-5">
+          {{ item.course.title }}
+        </h3>
+
+        <p class="is-size-7 has-text-grey">
+          Progress: {{ item.progress }}%
+          ({{ item.completed }}/{{ item.total }} lessons)
+        </p>
+
+        {% if item.progress == 100 %}
+          <a href="{% url 'courses:course_learn' item.course.slug %}"
+             class="button is-success is-small is-fullwidth">
+            ✔ Review Course
+          </a>
+
+        {% elif item.progress > 0 %}
+          <a href="{% url 'courses:course_learn' item.course.slug %}"
+             class="button is-primary is-small is-fullwidth">
+            ▶ Resume Learning
+          </a>
+
+        {% else %}
+          <a href="{% url 'courses:course_learn' item.course.slug %}"
+             class="button is-link is-small is-fullwidth">
+            ▶ Start Course
+          </a>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
   <!-- Tracks -->
   {% for track, data in track_map.items %}
   <div class="track-section">

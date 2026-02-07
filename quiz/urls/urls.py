@@ -25,6 +25,7 @@ from quiz.views.exams import *
 
 
 
+
 from django.urls import path
 from django.views.generic import RedirectView
 from django.conf import settings

@@ -478,7 +478,19 @@ class ExamTrack(models.Model):
 
 from django.utils import timezone
 
-class ExamTrackSubscription(models.Model):
+
+
+
+
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import User
+
+from core.models.subscription_base import BaseSubscription
+from quiz.models import ExamTrack
+
+
+class ExamTrackSubscription(BaseSubscription):
     """
     Represents user's access to an ExamTrack.
     Subscribing to a track unlocks ALL exams (levels) under it.
@@ -496,33 +508,8 @@ class ExamTrackSubscription(models.Model):
         related_name="subscriptions"
     )
 
-    # Access control
-    is_active = models.BooleanField(
-        default=True,
-        help_text="Deactivate to revoke access without deleting history"
-    )
-
-    # Timing (future: paid plans)
-    subscribed_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(null=True, blank=True)
-
-    # Payment future-proofing
-    payment_required = models.BooleanField(default=False)
-    payment_id = models.CharField(max_length=100, null=True, blank=True)
-    amount = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
-        null=True,
-        blank=True
-    )
-    currency = models.CharField(max_length=10, default="INR")
+    # Track-specific flags
     is_trial = models.BooleanField(default=False)
-    subscribed_by_admin = models.BooleanField(
-        default=False,
-        help_text="Granted manually by admin"
-    )
-
-
 
     class Meta:
         unique_together = ("user", "track")
@@ -534,20 +521,10 @@ class ExamTrackSubscription(models.Model):
     def __str__(self):
         return f"{self.user} → {self.track}"
 
-    def is_valid(self):
-        if not self.is_active:
-            return False
-        if self.expires_at and timezone.now() > self.expires_at:
-            return False
-        return True
-    
-    
-
     def days_remaining(self):
         if not self.expires_at:
             return None
         return max((self.expires_at - timezone.now()).days, 0)
-
 
 
 class Exam(models.Model):
@@ -620,9 +597,18 @@ class Exam(models.Model):
 
     def __str__(self):
         return self.title
-    
 
-class ExamSubscription(models.Model):
+
+
+
+from django.db import models
+from django.contrib.auth.models import User
+
+from core.models.subscription_base import BaseSubscription
+from quiz.models import Exam
+
+
+class ExamSubscription(BaseSubscription):
     """
     Represents user's access permission to an exam.
     This is NOT an attempt.
@@ -642,48 +628,6 @@ class ExamSubscription(models.Model):
         related_name="subscriptions"
     )
 
-    # Access control
-    is_active = models.BooleanField(
-        default=True,
-        help_text="Deactivate to revoke access without deleting history"
-    )
-
-    # Timing (future use)
-    subscribed_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Optional expiry for paid / time-limited access"
-    )
-
-    # Payment future-proofing
-    payment_required = models.BooleanField(
-        default=False,
-        help_text="Was payment required for this subscription"
-    )
-    payment_id = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        help_text="Gateway payment reference (Razorpay/Stripe)"
-    )
-    amount = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
-        null=True,
-        blank=True
-    )
-    currency = models.CharField(
-        max_length=10,
-        default="INR"
-    )
-
-    subscribed_by_admin = models.BooleanField(
-        default=False,
-        help_text="Granted manually by admin"
-    )
-
-
     class Meta:
         unique_together = ("user", "exam")
         indexes = [
@@ -694,16 +638,6 @@ class ExamSubscription(models.Model):
     def __str__(self):
         return f"{self.user} → {self.exam}"
 
-    def is_valid(self):
-        """
-        Returns True if subscription is active and not expired.
-        Safe to use later in views.
-        """
-        if not self.is_active:
-            return False
-        if self.expires_at and timezone.now() > self.expires_at:
-            return False
-        return True
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError

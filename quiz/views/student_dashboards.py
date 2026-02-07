@@ -6,6 +6,7 @@ from datetime import timedelta
 from decimal import Decimal
 from collections import defaultdict
 from organizations.models import CourseAccess
+from courses.models import Course, CourseSubscription,LessonProgress
 
 
 from django.conf import settings
@@ -543,6 +544,52 @@ def student_dashboard(request):
     for access in course_access_qs:
         org_courses[access.organization].append(access)
 
+
+
+    # ---------------- COURSE SUBSCRIPTIONS ----------------
+    course_subs = (
+        CourseSubscription.objects
+        .filter(user=user, is_active=True)
+        .select_related("course")
+        
+    )
+
+    courses_data = []
+
+    for sub in course_subs:
+        course = sub.course
+
+        # Total lessons
+        total_lessons = course.sections.count() and sum(
+            s.lessons.count() for s in course.sections.all()
+        )
+
+        # Completed lessons
+        completed_lessons = LessonProgress.objects.filter(
+            user=user,
+            lesson__section__course=course,
+            completed=True
+        ).count()
+
+        progress = 0
+        if total_lessons:
+            progress = int((completed_lessons / total_lessons) * 100)
+
+        courses_data.append({
+            "course": course,
+            "progress": progress,
+            "completed": completed_lessons,
+            "total": total_lessons,
+        })
+
+
+
+
+
+
+
+
+
     return render(request, "quiz/student_dashboard.html", {
         "active_attempt": active_attempt,
         "total_attempts": total_attempts,
@@ -552,4 +599,5 @@ def student_dashboard(request):
 
         # 👇 NEW (courses)
         "org_courses": dict(org_courses),
+        "courses": courses_data,
     })

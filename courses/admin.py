@@ -1,14 +1,14 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.contrib import admin
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from django.contrib import admin
+from django.utils import timezone
 
-from .models import (
-    Course,
-    CourseSection,
-    Lesson,
-    CourseEnrollment,
-    LessonProgress,
-)
+from courses.models import *
 
+#from .models import *
 
 # =========================
 # INLINE CONFIGS
@@ -117,11 +117,7 @@ class CourseSectionAdmin(admin.ModelAdmin):
     ordering = ("course", "order")
     inlines = (LessonInline,)
 
-from django.contrib import admin
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 
-from .models import Lesson
 
 
 @admin.register(Lesson)
@@ -273,3 +269,103 @@ class LessonProgressAdmin(admin.ModelAdmin):
     list_filter = ("completed", "lesson__section__course")
     search_fields = ("user__username", "lesson__title")
     readonly_fields = ("completed_at",)
+
+
+
+
+
+@admin.register(CourseSubscription)
+class CourseSubscriptionAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "course",
+        "is_active",
+        "expires_at",
+        "payment_required",
+        "amount",
+        "currency",
+        "subscribed_by_admin",
+        "subscribed_at",
+    )
+
+    list_filter = (
+        "is_active",
+        "payment_required",
+        "subscribed_by_admin",
+        "currency",
+        "course",
+    )
+
+    search_fields = (
+        "user__username",
+        "user__email",
+        "course__title",
+        "payment_id",
+    )
+
+    autocomplete_fields = ("user", "course")
+
+    ordering = ("-subscribed_at",)
+
+    readonly_fields = (
+        "subscribed_at",
+    )
+
+    fieldsets = (
+        ("📘 Subscription Info", {
+            "fields": (
+                "user",
+                "course",
+                "is_active",
+            )
+        }),
+
+        ("⏳ Validity", {
+            "fields": (
+                "subscribed_at",
+                "expires_at",
+            )
+        }),
+
+        ("💳 Payment Details", {
+            "fields": (
+                "payment_required",
+                "amount",
+                "currency",
+                "payment_id",
+            )
+        }),
+
+        ("🛠 Admin Control", {
+            "fields": (
+                "subscribed_by_admin",
+            )
+        }),
+    )
+
+    actions = [
+        "activate_subscription",
+        "deactivate_subscription",
+        "extend_subscription_30_days",
+    ]
+
+    # ================= ADMIN ACTIONS =================
+
+    @admin.action(description="✅ Activate selected subscriptions")
+    def activate_subscription(self, request, queryset):
+        queryset.update(is_active=True)
+
+    @admin.action(description="⛔ Deactivate selected subscriptions")
+    def deactivate_subscription(self, request, queryset):
+        queryset.update(is_active=False)
+
+    @admin.action(description="⏳ Extend subscription by 30 days")
+    def extend_subscription_30_days(self, request, queryset):
+        now = timezone.now()
+        for sub in queryset:
+            if sub.expires_at and sub.expires_at > now:
+                sub.expires_at += timezone.timedelta(days=30)
+            else:
+                sub.expires_at = now + timezone.timedelta(days=30)
+            sub.is_active = True
+            sub.save()
