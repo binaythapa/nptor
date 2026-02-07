@@ -4,10 +4,6 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
-from collections import defaultdict
-from organizations.models import CourseAccess
-from courses.models import Course, CourseSubscription,LessonProgress
-
 
 from django.conf import settings
 from django.contrib import messages
@@ -39,6 +35,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
 # Project-specific imports
+from courses.models import Course, CourseSubscription, LessonProgress
+from organizations.models import CourseAccess
 from quiz.forms import *
 from quiz.models import (
     Exam,
@@ -53,17 +51,14 @@ from quiz.services.pricing import apply_coupon
 from quiz.services.subscription import has_valid_subscription
 from quiz.utils import get_leaf_category_name
 
-
-
-
-# Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()
+
 
 # Logger
 logger = logging.getLogger(__name__)
 
 
-
+'''
 # -------------------------
 # Generic dashboards
 # -------------------------
@@ -83,7 +78,7 @@ def dashboard(request):
         'my_attempts': my_attempts,
     }
     return render(request, 'quiz/dashboard.html', context)
-
+'''
 
 @login_required
 def dashboard_dispatch(request):
@@ -93,24 +88,6 @@ def dashboard_dispatch(request):
     if request.user.is_staff or request.user.is_superuser:
         return redirect('quiz:admin_dashboard')
     return redirect('quiz:student_dashboard')
-
-
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib import messages
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from django.db.models import Avg, Count, Sum, Q
-from datetime import timedelta
-
-from django.contrib.auth import get_user_model
-from quiz.models import (
-    UserExam,
-    Exam,
-    ExamTrack,
-    ExamTrackSubscription,
-)
-
-User = get_user_model()
 
 
 @staff_member_required
@@ -307,28 +284,6 @@ def admin_dashboard(request):
         "total_questions" : Question.objects.filter(is_deleted=False).count()
 
     })
-
-
-from collections import defaultdict
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.utils import timezone
-from django.conf import settings
-
-from quiz.models import (
-    Exam,
-    UserExam,
-    ExamTrackSubscription,
-    ExamSubscription,
-)
-
-from collections import defaultdict
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.conf import settings
-from django.utils import timezone
-
-from organizations.models import CourseAccess
 
 
 @login_required
@@ -544,8 +499,6 @@ def student_dashboard(request):
     for access in course_access_qs:
         org_courses[access.organization].append(access)
 
-
-
     # ---------------- COURSE SUBSCRIPTIONS ----------------
     course_subs = (
         CourseSubscription.objects
@@ -581,14 +534,6 @@ def student_dashboard(request):
             "completed": completed_lessons,
             "total": total_lessons,
         })
-
-
-
-
-
-
-
-
 
     return render(request, "quiz/student_dashboard.html", {
         "active_attempt": active_attempt,

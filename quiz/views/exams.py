@@ -4,9 +4,6 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
-from courses.models import Lesson
-from courses.services.progress import get_next_lesson
-
 
 from django.conf import settings
 from django.contrib import messages
@@ -38,6 +35,9 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
 # Project-specific imports
+from courses.models import Course, Lesson
+from courses.services.progress import get_next_lesson
+from courses.services.quiz_completion import *
 from quiz.forms import *
 from quiz.models import (
     Exam,
@@ -51,10 +51,8 @@ from quiz.services.access import can_access_exam
 from quiz.services.pricing import apply_coupon
 from quiz.services.subscription import has_valid_subscription
 from quiz.utils import get_leaf_category_name
-
 from quiz.services.grading import grade_exam
 from quiz.services.answer_persistence import autosave_answers
-from courses.services.quiz_completion import *
 
 
 
@@ -237,8 +235,6 @@ def autosave(request, user_exam_id):
     return JsonResponse({"status": "ok"})
 
 
-from quiz.services.grading import grade_exam
-
 @login_required
 def exam_submit(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
@@ -268,6 +264,9 @@ def exam_submit(request, user_exam_id):
     grade_exam(ue, request.POST, is_mock=is_mock)
 
     return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+
+
 @login_required
 def exam_result(request, user_exam_id):
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
@@ -512,6 +511,8 @@ def exam_expired(request, user_exam_id):
         "user_exam": ue,
     })
 
+
+
 @login_required
 def exam_resume(request, exam_id):
     exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
@@ -533,18 +534,7 @@ def exam_resume(request, exam_id):
 
     return redirect('quiz:exam_start', exam_id=exam.id)
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
 
-from quiz.models import (
-    ExamTrack,
-    ExamTrackSubscription,
-    ExamSubscription,
-    UserExam,
-)
-
-
-from courses.models import Course
 
 
 @login_required
@@ -845,145 +835,3 @@ def mock_exam_start(request, exam_id):
     )
 
 
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from quiz.models import (
-    ExamTrack,
-    ExamSubscription,
-    ExamTrackSubscription,
-    UserExam,
-)
-from courses.models import Course, CourseSubscription
-@login_required
-def exam_list(request):
-    user = request.user
-
-    # ================================
-    # COURSES (PLATFORM ONLY)
-    # ================================
-    courses_qs = Course.objects.filter(
-        is_published=True,
-        organization__isnull=True,   # ✅ THIS is the key filter
-    ).order_by("-created_at")
-
-    subscribed_course_ids = set(
-        CourseSubscription.objects.filter(
-            user=user,
-            is_active=True,
-            course__organization__isnull=True
-        ).values_list("course_id", flat=True)
-    )
-
-    courses = [
-        {
-            "course": course,
-            "is_subscribed": course.id in subscribed_course_ids,
-        }
-        for course in courses_qs
-    ]
-
-    # ================================
-    # EXAM TRACKS
-    # ================================
-    tracks = (
-        ExamTrack.objects
-        .filter(is_active=True)
-        .prefetch_related(
-            "exams",
-            "exams__prerequisite_exams"
-        )
-        .order_by("title")
-    )
-
-    track_subs = {
-        s.track_id: s
-        for s in ExamTrackSubscription.objects.filter(
-            user=user,
-            is_active=True
-        )
-    }
-
-    exam_subs = {
-        s.exam_id: s
-        for s in ExamSubscription.objects.filter(
-            user=user,
-            is_active=True
-        )
-    }
-
-    passed_exam_ids = set(
-        UserExam.objects.filter(
-            user=user,
-            passed=True
-        ).values_list("exam_id", flat=True)
-    )
-
-    track_map = {}
-
-    for track in tracks:
-        exams = (
-            track.exams
-            .filter(is_published=True)
-            .order_by("level", "title")
-        )
-
-        if not exams.exists():
-            continue
-
-        track_subscription = track_subs.get(track.id)
-        is_track_subscribed = (
-            track_subscription is not None
-            and track_subscription.is_valid()
-        )
-
-        items = []
-
-        for exam in exams:
-            locked_reason = None
-
-            prereqs = exam.prerequisite_exams.all()
-            missing = [
-                p.title for p in prereqs
-                if p.id not in passed_exam_ids
-            ]
-            if missing:
-                locked_reason = "Pass prerequisite: " + ", ".join(missing)
-
-            if not locked_reason and exam.level and exam.level > 1:
-                has_prev = any(
-                    e.level == exam.level - 1 and e.id in passed_exam_ids
-                    for e in exams
-                )
-                if not has_prev:
-                    locked_reason = f"Pass Level {exam.level - 1} first"
-
-            exam_subscription = exam_subs.get(exam.id)
-            is_exam_subscribed = (
-                exam_subscription is not None
-                and exam_subscription.is_valid()
-            )
-
-            can_subscribe = (
-                track.subscription_scope == ExamTrack.EXAM
-                and locked_reason is None
-            )
-
-            items.append({
-                "exam": exam,
-                "duration_minutes": exam.duration_seconds // 60,
-                "is_exam_subscribed": is_exam_subscribed,
-                "can_subscribe": can_subscribe,
-                "locked_reason": locked_reason,
-                "exam_subscription": exam_subscription,
-                "is_track_subscribed": is_track_subscribed,
-                "track_subscription": track_subscription,
-            })
-
-        track_map[track] = items
-
-    return render(request, "quiz/exam_list.html", {
-        "courses": courses,        # ✅ platform courses only
-        "track_map": track_map,
-    })

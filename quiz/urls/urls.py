@@ -1,16 +1,15 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-
-from quiz.forms import EmailOrUsernameLoginForm
-from quiz.views.admin import *
+from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
-from quiz.views.subscription import *
 
+from quiz.forms import EmailOrUsernameLoginForm
 
 # ================================
-# IMPORT VIEWS (FROM views.py)
+# IMPORT QUIZ VIEWS
 # ================================
+from quiz.views.admin import *
 from quiz.views.questions import *
 from quiz.views.views import *
 from quiz.views.student import *
@@ -18,49 +17,10 @@ from quiz.views.auth import *
 from quiz.views.subscription import *
 from quiz.views.admin_subscriptions import *
 from quiz.views.notifications import *
-from quiz.views.student_dashboards import *
+from quiz.views.dashboards import *
 from quiz.views.mock import *
 from quiz.views.exams import *
-
-
-
-
-
-from django.urls import path
-from django.views.generic import RedirectView
-from django.conf import settings
-from django.conf.urls.static import static
-
-# ================================
-# IMPORT QUIZ VIEWS
-# ================================
-from quiz.views.questions import *
-from quiz.views.views import *
-from quiz.views.student import *
-from quiz.views.subscription import *
-from quiz.views.admin_subscriptions import *
-from quiz.views.notifications import *
-from quiz.views.student_dashboards import *
-from quiz.views.mock import *
-from quiz.views.exams import *
-from quiz.views.admin import *
-
-
-from django.urls import path
-
-# ================================
-# IMPORT VIEWS
-# ================================
-from quiz.views.admin import *
-from quiz.views.questions import *
-from quiz.views.views import *
-from quiz.views.student import *
-from quiz.views.subscription import *
-from quiz.views.admin_subscriptions import *
-from quiz.views.notifications import *
-from quiz.views.student_dashboards import *
-from quiz.views.mock import *
-from quiz.views.exams import *
+from quiz.views.exam_list import *
 
 
 app_name = "quiz"

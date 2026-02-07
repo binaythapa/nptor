@@ -35,6 +35,9 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
 # Project-specific imports
+from courses.models import Course, Lesson
+from courses.services.progress import get_next_lesson
+from courses.services.quiz_completion import *
 from quiz.forms import *
 from quiz.models import (
     Exam,
@@ -45,10 +48,11 @@ from quiz.models import (
     Coupon,
 )
 from quiz.services.access import can_access_exam
+from quiz.services.answer_persistence import autosave_answers
+from quiz.services.grading import grade_exam
 from quiz.services.pricing import apply_coupon
 from quiz.services.subscription import has_valid_subscription
 from quiz.utils import get_leaf_category_name
-
 
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()

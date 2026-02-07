@@ -5,17 +5,16 @@
     <ul class="menu-list">
 
       <li>
-  {% if user.is_authenticated %}
-    <a href="{% url 'quiz:dashboard' %}">
-      <i class="fa fa-home"></i> Dashboard
-    </a>
-  {% else %}
-    <a href="{% url 'pages:home' %}">
-      <i class="fa fa-home"></i> Home
-    </a>
-  {% endif %}
-</li>
-
+        {% if user.is_authenticated %}
+          <a href="{% url 'quiz:dashboard' %}">
+            <i class="fa fa-home"></i> Dashboard
+          </a>
+        {% else %}
+          <a href="{% url 'pages:home' %}">
+            <i class="fa fa-home"></i> Home
+          </a>
+        {% endif %}
+      </li>
 
       <li>
         <a href="{% url 'quiz:exam_list' %}">
@@ -35,17 +34,35 @@
         </a>
       </li>
 
-      {% if user.is_authenticated %}
-        <p class="menu-label">Account</p>
-        <ul class="menu-list">
-          <li>
-            <a href="{% url 'quiz:profile' %}">
-              <i class="fa fa-user"></i> Profile
-            </a>
-          </li>
-        </ul>
-      {% endif %}
-
     </ul>
+
+    {% if user.is_authenticated %}
+      <p class="menu-label">Account</p>
+      <ul class="menu-list">
+        <li>
+          <a href="{% url 'quiz:profile' %}">
+            <i class="fa fa-user"></i> Profile
+          </a>
+        </li>
+      </ul>
+    {% endif %}
+
+    {# ================= ORGANIZATION ADMIN ================= #}
+{% if user.is_authenticated and request.active_org and request.org_role == "org_admin" %}
+
+  <p class="menu-label">Organization</p>
+  <ul class="menu-list">
+    <li>
+      <a href="{% url 'organizations_admin:dashboard' %}">
+        <i class="fa fa-building"></i>
+        Org Dashboard
+      </a>
+    </li>
+  </ul>
+
+{% endif %}
+
+
+
   </nav>
 </aside>
