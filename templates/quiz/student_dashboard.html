@@ -580,6 +580,71 @@ body {
     </div>
   </div>
 
+    <!-- ===============================
+       ORGANIZATION ASSIGNED COURSES
+       =============================== -->
+  {% if org_courses %}
+    <div class="mt-4 mb-4">
+      <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
+        🎓 Assigned Courses
+      </h2>
+
+      {% for org, accesses in org_courses.items %}
+        <div class="track-section">
+
+          <!-- Org Header -->
+          <div class="track-header" style="cursor:default;">
+            <div class="track-title">
+              {% if org.logo %}
+                <img src="{{ org.logo.url }}"
+                     alt="{{ org.name }}"
+                     style="height:28px; border-radius:4px;">
+              {% else %}
+                <span class="track-icon">🏫</span>
+              {% endif %}
+              {{ org.name }}
+            </div>
+
+            <div class="track-meta">
+              <span class="track-count">
+                {{ accesses|length }} course{{ accesses|length|pluralize }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Courses -->
+          <div class="exams-container">
+            {% for access in accesses %}
+              <div class="exam-item">
+
+                <div class="exam-header">
+                  <div class="exam-title">
+                    {{ access.course.title }}
+                  </div>
+
+                  <div class="exam-details">
+                    Level: {{ access.course.get_level_display }}
+                  </div>
+                </div>
+
+                <div class="action-buttons">
+                 <a href="{% url 'courses:course_learn' access.course.slug %}"
+   class="action-btn btn-primary">
+  Continue Course
+</a>
+
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+
   <!-- Tracks -->
   {% for track, data in track_map.items %}
   <div class="track-section">

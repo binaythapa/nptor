@@ -4,6 +4,9 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
+from collections import defaultdict
+from organizations.models import CourseAccess
+
 
 from django.conf import settings
 from django.contrib import messages
@@ -318,6 +321,14 @@ from quiz.models import (
     ExamSubscription,
 )
 
+from collections import defaultdict
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.conf import settings
+from django.utils import timezone
+
+from organizations.models import CourseAccess
+
 
 @login_required
 def student_dashboard(request):
@@ -402,7 +413,6 @@ def student_dashboard(request):
             (exam_sub and not exam_sub.is_valid())
         )
 
-        # Not subscribed at all → hide exam
         if not has_valid_subscription and not has_expired_subscription:
             continue
 
@@ -460,7 +470,7 @@ def student_dashboard(request):
                     can_retake = False
                     cooldown_remaining = int(remaining)
 
-        # ---------- ACTION (CRITICAL FIX) ----------
+        # ---------- ACTION ----------
         if has_expired_subscription:
             action = "renew"
         elif is_passed:
@@ -504,17 +514,34 @@ def student_dashboard(request):
             "cooldown_remaining": cooldown_remaining,
             "locked": locked,
             "lock_reason": lock_reason,
-
-            # subscription
             "subscription_expired": has_expired_subscription,
             "track_subscription": track_sub,
             "exam_subscription": exam_sub,
-
-            # mock
             "mock_attempts": list(mock_attempts),
             "mock_used": mock_used,
             "mock_allowed": mock_allowed,
         })
+
+    # =====================================================
+    # ORGANIZATION-ASSIGNED COURSES (NO PUBLIC COURSES)
+    # =====================================================
+    course_access_qs = (
+        CourseAccess.objects
+        .filter(
+            user=user,
+            is_active=True,
+            source="organization",          # 🚫 excludes public & individual
+            organization__isnull=False,
+            course__is_published=True
+        )
+        .select_related("course", "organization")
+        .order_by("-granted_at")
+    )
+
+    org_courses = defaultdict(list)
+
+    for access in course_access_qs:
+        org_courses[access.organization].append(access)
 
     return render(request, "quiz/student_dashboard.html", {
         "active_attempt": active_attempt,
@@ -522,4 +549,7 @@ def student_dashboard(request):
         "passed_count": passed_count,
         "failed_count": failed_count,
         "track_map": dict(track_map),
+
+        # 👇 NEW (courses)
+        "org_courses": dict(org_courses),
     })
