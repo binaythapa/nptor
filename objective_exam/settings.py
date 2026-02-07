@@ -65,16 +65,16 @@ INSTALLED_APPS = [
     "widget_tweaks",
     "phone_field",
     "django_countries",
+    "ckeditor",
+    "ckeditor_uploader",   # optional but recommended
+    "django_ratelimit",
 
-    # Local
+    # Apps
     "quiz.apps.QuizConfig",
      "courses",
      "accounts",
      "pages",
-
-     "ckeditor",
-     "ckeditor_uploader",   # optional but recommended
-     "django_ratelimit",
+     'organizations',    
     
 ]
 
@@ -94,6 +94,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'organizations.middleware.ActiveOrganizationMiddleware',
+    
 ]
 
 

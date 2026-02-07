@@ -39,23 +39,33 @@ class CourseSectionInline(admin.StackedInline):
 # =========================
 # MAIN ADMINS
 # =========================
-
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = (
         "title",
+        "organization",        # ✅ ADDED
         "level",
         "is_published",
         "created_at",
     )
+
     list_filter = (
+        "organization",        # ✅ ADDED
         "is_published",
         "level",
         "created_at",
     )
-    search_fields = ("title", "description")
+
+    search_fields = (
+        "title",
+        "description",
+        "organization__name",  # ✅ ADDED
+    )
+
     prepopulated_fields = {"slug": ("title",)}
+
     filter_horizontal = ("subscription_plans",)
+
     inlines = (CourseSectionInline,)
 
     fieldsets = (
@@ -68,6 +78,17 @@ class CourseAdmin(admin.ModelAdmin):
                 "thumbnail",
             )
         }),
+
+        ("Ownership", {        # ✅ NEW SECTION
+            "fields": (
+                "organization",
+            ),
+            "description": (
+                "Leave empty for public/platform courses. "
+                "Select an organization for org-owned courses."
+            )
+        }),
+
         ("Level & Access", {
             "fields": (
                 "level",
@@ -75,6 +96,7 @@ class CourseAdmin(admin.ModelAdmin):
                 "is_published",
             )
         }),
+
         ("Meta", {
             "fields": ("created_at",),
         }),

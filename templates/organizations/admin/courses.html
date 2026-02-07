@@ -1,0 +1,15 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+<h1 class="title">Courses</h1>
+
+{% if courses %}
+  <ul>
+    {% for course in courses %}
+      <li>{{ course.title }}</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No courses available.</p>
+{% endif %}
+{% endblock %}

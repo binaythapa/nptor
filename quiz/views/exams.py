@@ -696,7 +696,11 @@ def exam_list(request):
 
         track_map[track] = items
     
-    courses = Course.objects.filter(is_published=True)
+        courses = Course.objects.filter(
+            is_published=True,
+            organization__isnull=True
+            )
+
 
     return render(request, "quiz/exam_list.html", {
         "track_map": track_map,"courses": courses,   # 👈 ADD THIS

@@ -50,6 +50,28 @@ class Course(models.Model):
     is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+    ###########ORG############
+    OWNER_CHOICES = (
+        ("platform", "Platform"),
+        ("organization", "Organization"),
+    )
+
+    owner_type = models.CharField(
+        max_length=20,
+        choices=OWNER_CHOICES,
+        default="platform"
+    )
+
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE
+    )
+
+    is_public = models.BooleanField(default=True)
+
     class Meta:
         ordering = ["-created_at"]
 

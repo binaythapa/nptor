@@ -1,0 +1,17 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block org_content %}
+<h2 class="title is-4">Organization Dashboard</h2>
+
+<div class="columns">
+  <div class="column">
+    <div class="box">👩‍🎓 Students<br><strong>{{ stats.students }}</strong></div>
+  </div>
+  <div class="column">
+    <div class="box">📚 Courses<br><strong>{{ stats.courses }}</strong></div>
+  </div>
+  <div class="column">
+    <div class="box">📝 Assignments<br><strong>{{ stats.assignments }}</strong></div>
+  </div>
+</div>
+{% endblock %}

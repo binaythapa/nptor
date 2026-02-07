@@ -1,0 +1,59 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="columns">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="column is-3">
+    <div class="menu box">
+
+      <!-- Organization Name -->
+      <p class="menu-label">
+        {{ org.name }}
+      </p>
+
+      <!-- Admin Navigation -->
+      <ul class="menu-list">
+        <li>
+          <a href="{% url 'organizations_admin:dashboard' %}">
+            Dashboard
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'organizations_admin:courses' %}">
+            Courses
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'organizations_admin:students' %}">
+            Students
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'organizations_admin:assignments' %}">
+            Assignments
+          </a>
+        </li>
+
+        <li>
+          <a href="{% url 'organizations_admin:settings' %}">
+            Settings
+          </a>
+        </li>
+      </ul>
+
+    </div>
+  </aside>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="column is-9">
+    {% block org_content %}
+    <!-- child templates render here -->
+    {% endblock %}
+  </main>
+
+</div>
+{% endblock %}

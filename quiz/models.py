@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from ckeditor.fields import RichTextField
 
 
+
 User = get_user_model()
 
 from django.conf import settings
@@ -123,6 +124,13 @@ class Question(models.Model):
         max_length=10,
         choices=DIFFICULTY_CHOICES,      
     ) 
+
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE
+    )
 
     category = models.ForeignKey(
         Category,
