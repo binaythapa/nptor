@@ -1,0 +1,26 @@
+<h2 class="title is-4">➕ Add Student</h2>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="field">
+    <label class="label">User Email</label>
+    <div class="control">
+      <input class="input" type="email" name="email" required>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Role</label>
+    <div class="control">
+      <div class="select">
+        <select name="role">
+          <option value="student">Student</option>
+          <option value="staff">Staff</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <button class="button is-success">Add</button>
+</form>

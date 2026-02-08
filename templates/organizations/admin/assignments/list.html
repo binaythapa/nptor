@@ -1,0 +1,38 @@
+<h2 class="title is-4">📝 Assignments</h2>
+
+<a href="{% url 'organizations_admin:assignment_create' %}"
+   class="button is-primary mb-4">
+  ➕ Assign Course
+</a>
+
+<table class="table is-fullwidth">
+  <thead>
+    <tr>
+      <th>Student</th>
+      <th>Course</th>
+      <th>Assigned On</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for a in assignments %}
+    <tr>
+      <td>{{ a.student.email }}</td>
+      <td>{{ a.course.title }}</td>
+      <td>{{ a.assigned_at|date:"d M Y" }}</td>
+      <td>
+        <a href="{% url 'organizations_admin:assignment_remove' a.id %}"
+           class="button is-danger is-small"
+           onclick="return confirm('Remove assignment?')">
+          Remove
+        </a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="4">No assignments yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

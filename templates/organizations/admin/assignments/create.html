@@ -1,0 +1,39 @@
+<h2 class="title is-4">➕ Assign Course</h2>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="field">
+    <label class="label">Student</label>
+    <div class="control">
+      <div class="select is-fullwidth">
+        <select name="student_id" required>
+          {% for s in students %}
+            <option value="{{ s.id }}">
+              {{ s.user.get_full_name|default:s.user.email }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Course</label>
+    <div class="control">
+      <div class="select is-fullwidth">
+        <select name="course_id" required>
+          {% for c in courses %}
+            <option value="{{ c.id }}">
+              {{ c.title }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <button class="button is-success">
+    Assign
+  </button>
+</form>
