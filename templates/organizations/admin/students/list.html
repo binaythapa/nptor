@@ -1,3 +1,9 @@
+
+
+{% extends "organizations/admin/base.html" %}
+
+
+{% block content %}
 <h2 class="title is-4">👩‍🎓 Students</h2>
 
 <a href="{% url 'organizations_admin:student_add' %}"
@@ -47,3 +53,4 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
