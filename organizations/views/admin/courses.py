@@ -29,7 +29,8 @@ def org_courses(request):
     # All published platform courses
     all_courses = Course.objects.filter(
         is_published=True,
-        owner_type="platform"
+        owner_type="platform",
+        organization=request.active_org
     ).order_by("title")
 
     # Courses already attached to org
@@ -53,6 +54,11 @@ def org_courses(request):
         "organizations/admin/courses/list.html",
         {"courses": courses}
     )
+
+
+
+
+
 
 
 @org_admin_required
