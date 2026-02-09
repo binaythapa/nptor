@@ -8,6 +8,7 @@ from organizations.permissions import org_admin_required
 from organizations.models.subscription import OrganizationCourseSubscription
 from courses.models import Course
 from organizations.models.membership import OrganizationMember
+from organizations.models.role import OrganizationRole
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -24,6 +25,9 @@ from django.db.models import Q
 from django.utils import timezone
 
 
+from django.shortcuts import render
+from django.db.models import Q
+from django.utils import timezone
 
 
 @org_admin_required
@@ -40,15 +44,19 @@ def org_courses(request):
     )
 
     # --------------------------------------------------
-    # 2️⃣ Courses subscribed by org users (ACTIVE only)
+    # 2️⃣ ORG ADMIN users of this organization
     # --------------------------------------------------
-    org_user_ids = OrganizationMember.objects.filter(
+    org_admin_user_ids = OrganizationMember.objects.filter(
         organization=org,
+        role=OrganizationRole.ORG_ADMIN,
         is_active=True,
     ).values_list("user_id", flat=True)
 
+    # --------------------------------------------------
+    # 3️⃣ Courses subscribed by ORG ADMINS (ACTIVE only)
+    # --------------------------------------------------
     subscribed_courses_qs = Course.objects.filter(
-        subscriptions__user_id__in=org_user_ids,
+        subscriptions__user_id__in=org_admin_user_ids,
         subscriptions__is_active=True,
         is_published=True,
     ).filter(
@@ -57,7 +65,7 @@ def org_courses(request):
     )
 
     # --------------------------------------------------
-    # 3️⃣ Union of visible courses
+    # 4️⃣ Union of visible courses
     # --------------------------------------------------
     visible_courses = (
         org_courses_qs
@@ -65,7 +73,7 @@ def org_courses(request):
     ).distinct().order_by("title")
 
     # --------------------------------------------------
-    # 4️⃣ Attached courses (ORG-level only)
+    # 5️⃣ Attached courses (ORG-level only)
     # --------------------------------------------------
     attached_course_ids = set(
         OrganizationCourseSubscription.objects.filter(
@@ -75,7 +83,7 @@ def org_courses(request):
     )
 
     # --------------------------------------------------
-    # 5️⃣ UI context
+    # 6️⃣ UI context
     # --------------------------------------------------
     courses = [
         {
