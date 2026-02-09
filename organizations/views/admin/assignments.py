@@ -14,20 +14,6 @@ from courses.models import Course
 
 @org_admin_required
 def org_assignments(request):
-    assignments = (
-        CourseAssignment.objects
-        .filter(organization=request.active_org)
-        .select_related("student", "course")
-    )
-
-    return render(
-        request,
-        "organizations/admin/assignments.html",
-        {"assignments": assignments}
-    )
-
-@org_admin_required
-def org_assignments(request):
     org = request.active_org
 
     assignments = (
@@ -43,6 +29,7 @@ def org_assignments(request):
         {"assignments": assignments}
     )
 
+from organizations.models.access import CourseAccess
 
 @org_admin_required
 def org_assignment_create(request):
@@ -78,11 +65,26 @@ def org_assignment_create(request):
             organization_subscriptions__organization=org
         )
 
+        # 1️⃣ Create course assignment
         CourseAssignment.objects.get_or_create(
             student=student.user,
             organization=org,
             course=course,
         )
+
+        # 2️⃣ Enable course access
+        access, created = CourseAccess.objects.get_or_create(
+            user=student.user,
+            course=course,
+            source="organization",
+            organization=org,
+            defaults={"is_active": True},
+        )
+
+        # If access already existed but was inactive → reactivate
+        if not created and not access.is_active:
+            access.is_active = True
+            access.save(update_fields=["is_active"])
 
         messages.success(
             request,
@@ -99,7 +101,6 @@ def org_assignment_create(request):
             "courses": courses,
         }
     )
-
 
 @org_admin_required
 def org_assignment_remove(request, assignment_id):
