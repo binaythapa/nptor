@@ -1,13 +1,21 @@
 from django.shortcuts import render
 from organizations.permissions import org_admin_required
-from organizations.models import OrganizationMember
+from organizations.models.membership import OrganizationMember
 from organizations.models.assignment import CourseAssignment
 from courses.models import Course
 from courses.models.progress import LessonProgress
 
 
+import logging
+from core.utils.memory import get_memory_usage_mb
+
+logger = logging.getLogger("django")
+
+
 @org_admin_required
 def org_dashboard(request):
+    mem = get_memory_usage_mb()
+    logger.info(f"Organization Dashboard memory usage: {mem} MB")
     org = request.active_org
 
     # =========================

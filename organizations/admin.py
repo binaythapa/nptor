@@ -1,9 +1,15 @@
 from django.contrib import admin
-from organizations.models import *
+from django.shortcuts import redirect, render
+
+# Explicit model imports (IMPORTANT)
+from organizations.models.organization import Organization
+from organizations.models.membership import OrganizationMember
+from organizations.models.assignment import CourseAssignment
+from organizations.models.subscription import OrganizationCourseSubscription
+from organizations.models.access import CourseAccess
 
 from courses.models import Course
 from organizations.permissions import org_admin_required
-
 
 
 # =========================
@@ -35,12 +41,11 @@ class CourseAssignmentAdmin(admin.ModelAdmin):
     list_display = ("student", "course", "organization", "assigned_at")
     list_filter = ("organization",)
     search_fields = ("student__username", "course__title")
-
     autocomplete_fields = ("student", "course", "organization")
 
 
 # =========================
-# ⭐ ORGANIZATION COURSE SUBSCRIPTIONS ⭐
+# ORGANIZATION COURSE SUBSCRIPTIONS
 # =========================
 @admin.register(OrganizationCourseSubscription)
 class OrganizationCourseSubscriptionAdmin(admin.ModelAdmin):
@@ -52,23 +57,15 @@ class OrganizationCourseSubscriptionAdmin(admin.ModelAdmin):
         "expires_at",
         "payment_required",
     )
-
-    list_filter = (
-        "is_active",
-        "organization",
-    )
-
-    search_fields = (
-        "organization__name",
-        "course__title",
-    )
-
+    list_filter = ("is_active", "organization")
+    search_fields = ("organization__name", "course__title")
     autocomplete_fields = ("organization", "course")
     readonly_fields = ("subscribed_at",)
 
 
-
-
+# =========================
+# COURSE ACCESS
+# =========================
 @admin.register(CourseAccess)
 class CourseAccessAdmin(admin.ModelAdmin):
     list_display = (
@@ -79,28 +76,19 @@ class CourseAccessAdmin(admin.ModelAdmin):
         "is_active",
         "granted_at",
     )
-
-    list_filter = (
-        "source",
-        "is_active",
-        "organization",
-    )
-
+    list_filter = ("source", "is_active", "organization")
     search_fields = (
         "user__username",
         "course__title",
         "organization__name",
     )
-
-    autocomplete_fields = (
-        "user",
-        "course",
-        "organization",
-    )
-
+    autocomplete_fields = ("user", "course", "organization")
     readonly_fields = ("granted_at",)
 
 
+# =========================
+# ADMIN COURSE CREATE (custom)
+# =========================
 @org_admin_required
 def course_create(request):
     if request.method == "POST":

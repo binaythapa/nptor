@@ -4,9 +4,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from quiz.urls.admin import urlpatterns as admin_urls
+from core.views.health import health_check
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("health/", health_check, name="health-check"),
 
     # ==============================
     # APPS

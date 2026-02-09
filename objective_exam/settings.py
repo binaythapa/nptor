@@ -9,6 +9,10 @@ try:
 except Exception:
     pass
 
+# objective_exam/settings.py
+import os
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
 
 # ============================================================
 # BASE DIRECTORY
@@ -24,22 +28,12 @@ SECRET_KEY = os.environ.get(
     "django-insecure-change-me-please"
 )
 
-# ===============================
-# DEBUG (env-based)
-# ===============================
 DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
 
-
-# ===============================
-# ALLOWED HOSTS (env-based)
-# ===============================
 if DEBUG:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 else:
-    ALLOWED_HOSTS = os.environ.get(
-        "DJANGO_ALLOWED_HOSTS",
-        "nptor.com,www.nptor.com"
-    ).split(",")
+    ALLOWED_HOSTS = ["nptor.com", "www.nptor.com"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://nptor.com",
@@ -51,7 +45,6 @@ CSRF_TRUSTED_ORIGINS = [
 # APPLICATION DEFINITION
 # ============================================================
 INSTALLED_APPS = [
-    # Django core
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -66,16 +59,15 @@ INSTALLED_APPS = [
     "phone_field",
     "django_countries",
     "ckeditor",
-    "ckeditor_uploader",   # optional but recommended
+    "ckeditor_uploader",
     "django_ratelimit",
 
     # Apps
     "quiz.apps.QuizConfig",
-     "courses",
-     "accounts",
-     "pages",
-     'organizations',    
-    
+    "courses",
+    "accounts",
+    "pages",
+    "organizations",
 ]
 
 SITE_ID = 1
@@ -94,12 +86,16 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'organizations.middleware.ActiveOrganizationMiddleware',
-    
+
+    "organizations.middleware.ActiveOrganizationMiddleware",
 ]
 
 
+# ============================================================
+# URL / WSGI
+# ============================================================
 ROOT_URLCONF = "objective_exam.urls"
+WSGI_APPLICATION = "objective_exam.wsgi.application"
 
 
 # ============================================================
@@ -116,28 +112,16 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-
-                # Custom
                 "quiz.context_processors.unread_notifications_count",
+                "pages.context_processors.site_globals",
             ],
         },
     },
 ]
 
 
-TEMPLATES[0]["OPTIONS"]["context_processors"] += [
-    "pages.context_processors.site_globals",
-]
-
-
 # ============================================================
-# WSGI
-# ============================================================
-WSGI_APPLICATION = "objective_exam.wsgi.application"
-
-
-# ============================================================
-# DATABASE
+# DATABASE (safe for Passenger)
 # ============================================================
 DATABASES = {
     "default": {
@@ -146,52 +130,48 @@ DATABASES = {
         "USER": os.environ.get("DB_USER", "root"),
         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
         "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "3306"),
-        "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", 60)),
+        "PORT": "3306",
+        "CONN_MAX_AGE": 60,
         "OPTIONS": {
             "charset": "utf8mb4",
-            "use_unicode": True,
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
 
 
-
-
-
-
 # ============================================================
 # PASSWORD VALIDATION
 # ============================================================
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 10},},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
+     "OPTIONS": {"min_length": 10}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
-
-
 
 
 # ============================================================
 # INTERNATIONALIZATION
 # ============================================================
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Asia/Kolkata"   # or Asia/Kathmandu
+TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
 
-# ===============================
-# COOKIES (REQUIRED FOR IFRAME + FETCH)
-# ===============================
-SESSION_COOKIE_SAMESITE = "None"
+# ============================================================
+# COOKIES & SECURITY (OTP safe)
+# ============================================================
 SESSION_COOKIE_SECURE = True
-
-CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
+
+SESSION_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = "None"
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_COOKIE_AGE = 300  # 5 minutes (perfect for OTP)
 
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
@@ -212,18 +192,15 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 CKEDITOR_UPLOAD_PATH = "uploads/"
-
-STATICFILES_STORAGE = (
-    "whitenoise.storage.CompressedManifestStaticFilesStorage"
-)
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 
 # ============================================================
 # AUTHENTICATION
 # ============================================================
-
 LOGIN_URL = "accounts:request-login-otp"
 LOGIN_REDIRECT_URL = "quiz:dashboard"
 LOGOUT_REDIRECT_URL = "accounts:request-login-otp"
@@ -233,22 +210,17 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-#AUTH_BACKEND = "django.contrib.auth.backends.ModelBackend"
-
-
 
 # ============================================================
-# EMAIL CONFIGURATION
+# EMAIL (OTP — keep async in code)
 # ============================================================
-
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tbinay5@gmail.com'
-EMAIL_HOST_PASSWORD = 'ykex bzxs lesd zwke'  # ← no quotes if spaces
-DEFAULT_FROM_EMAIL = 'Nepal Mentor <tbinay5@gmail.com>'
+EMAIL_HOST_USER = "tbinay5@gmail.com"
+EMAIL_HOST_PASSWORD = 'ykex bzxs lesd zwke'
+DEFAULT_FROM_EMAIL = "Nepal Mentor <tbinay5@gmail.com>"
 
 
 # ============================================================
@@ -265,45 +237,88 @@ REST_FRAMEWORK = {
 
 
 # ============================================================
-# MISC
+# CACHE (cPanel-safe, OTP-safe)
 # ============================================================
-SITE_NAME = os.environ.get("SITE_NAME", "nptor.com")
-SITE_URL = "https://nptor.com"
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "dev-cache",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "prod-cache",
+        }
+    }
+
+RATELIMIT_USE_CACHE = "default"
 
 
 
+
 # ============================================================
-# LOGGING
+# LOGGING (AUTO-ROTATING, NO TERMINAL FREEZE)
 # ============================================================
+LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {"class": "logging.StreamHandler"},
+
+    "formatters": {
+        "standard": {
+            "format": "[%(asctime)s] %(levelname)s %(name)s: %(message)s"
+        },
     },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
+
+    "handlers": {
+        "app_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "django.log",
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 3,
+            "formatter": "standard",
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "errors.log",
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "standard",
+        },
+    },
+
+    "loggers": {
+        "django": {
+            "handlers": ["app_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["error_file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
     },
 }
 
+
+# ============================================================
+# BUSINESS CONSTANTS
+# ============================================================
 BASICS_ANON_LIMIT = 2
 EXPRESS_ANON_LIMIT = 5
-
 RETAKE_COOLDOWN_MINUTES = 240
-
 QUESTION_AUTO_DISABLE_THRESHOLD = 3
 
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-    }
-}
-
-
-
-
-
-
+SILENCED_SYSTEM_CHECKS = [
+    "django_ratelimit.E003",
+    "django_ratelimit.W001",
+]

@@ -5,6 +5,10 @@ from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
 
+
+from organizations.models.access import CourseAccess
+
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -36,7 +40,8 @@ from django.views.generic import CreateView, DetailView, TemplateView, UpdateVie
 
 # Project-specific imports
 from courses.models import Course, CourseSubscription, LessonProgress
-from organizations.models import CourseAccess
+from organizations.models.access import CourseAccess
+
 from quiz.forms import *
 from quiz.models import (
     Exam,
@@ -54,8 +59,12 @@ from quiz.utils import get_leaf_category_name
 User = get_user_model()
 
 
-# Logger
-logger = logging.getLogger(__name__)
+
+
+import logging
+from core.utils.memory import get_memory_usage_mb
+
+logger = logging.getLogger("django")
 
 
 '''
@@ -93,6 +102,9 @@ def dashboard_dispatch(request):
 @staff_member_required
 def admin_dashboard(request):
     now = timezone.now()
+
+    mem = get_memory_usage_mb()
+    logger.info(f"Admin Dashboard memory usage: {mem} MB")
 
     # =====================================================
     # RESET MOCK ATTEMPTS (ADMIN ACTION)
@@ -288,6 +300,8 @@ def admin_dashboard(request):
 
 @login_required
 def student_dashboard(request):
+    mem = get_memory_usage_mb()
+    logger.info(f"Student Dashboard memory usage: {mem} MB")
     user = request.user
 
     # ---------------- ACTIVE ATTEMPT ----------------

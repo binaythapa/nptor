@@ -73,12 +73,29 @@ from django.http import JsonResponse
 from courses.services.context import get_course_context
 from courses.services.practice_completion import track_practice_completion
 
+import logging
+from core.utils.memory import get_memory_usage_mb
+
+logger = logging.getLogger("django")
+
+
 
 def practice(request):
+
     """
     BASIC PRACTICE (PUBLIC)
     + COURSE-AWARE PRACTICE (OPTIONAL)
     """
+    
+
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        if mem > 350:  # adjust for your server
+            logger.warning(f"⚠ Practice page high memory usage: {mem} MB")
+        else:
+            logger.info(f"Practice page memory usage: {mem} MB")
+
+
 
     # =====================================================
     # COURSE CONTEXT (OPTIONAL)

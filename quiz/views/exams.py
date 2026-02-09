@@ -60,12 +60,18 @@ from quiz.services.answer_persistence import autosave_answers
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()
 
-# Logger
-logger = logging.getLogger(__name__)
+import logging
+from core.utils.memory import get_memory_usage_mb
+
+logger = logging.getLogger("django")
+
 
 
 @login_required
 def exam_start(request, exam_id):
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        logger.info(f"Exam Start page memory usage: {mem} MB")
     exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
 
     # --------------------------------------------------
@@ -166,6 +172,9 @@ def exam_start(request, exam_id):
 
 @login_required
 def exam_take(request, user_exam_id):
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        logger.info(f"Exam Take page memory usage: {mem} MB")
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
     return redirect('quiz:exam_question', user_exam_id=ue.id, index=ue.current_index or 0)
 
@@ -174,6 +183,9 @@ def exam_take(request, user_exam_id):
 
 @login_required
 def exam_question(request, user_exam_id, index):
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        logger.info(f"Exam Question page memory usage: {mem} MB")
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
     if ue.submitted_at:
         return redirect('quiz:exam_result', user_exam_id=ue.id)
@@ -237,6 +249,9 @@ def autosave(request, user_exam_id):
 
 @login_required
 def exam_submit(request, user_exam_id):
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        logger.info(f"Exam Submit page memory usage: {mem} MB")
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
 
     # Prevent double submit
@@ -269,6 +284,9 @@ def exam_submit(request, user_exam_id):
 
 @login_required
 def exam_result(request, user_exam_id):
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        logger.info(f"Exam Result page memory usage: {mem} MB")
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
 
     # =====================================================
@@ -493,6 +511,9 @@ def exam_result(request, user_exam_id):
 
 @login_required
 def exam_expired(request, user_exam_id):
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        logger.info(f"Exam Expire page memory usage: {mem} MB")
     """
     Called when exam time expires.
     Safely finalizes attempt if not already submitted.
@@ -568,6 +589,9 @@ def start_trial(request, track_id):
 
 
 def allocate_questions_for_exam(exam, seed=None):
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        logger.info(f"Allocate Question for Exam page memory usage: {mem} MB")
     """
     Enterprise-grade allocation engine.
     - Supports fixed + percentage allocation

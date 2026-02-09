@@ -6,9 +6,20 @@ from django.utils import timezone
 from accounts.services.otp_service import create_login_otp
 from accounts.models import EmailOTP
 
+import logging
+from core.utils.memory import get_memory_usage_mb
+
+logger = logging.getLogger("django")
+
 
 @csrf_protect
 def request_login_otp_view(request):
+    # ---- lightweight memory telemetry ----
+   
+    mem = get_memory_usage_mb()
+    if mem is not None:
+        logger.info(f"Login OTP view memory usage: {mem} MB")
+
     """
     Step 1: Username + password → send OTP
     """
@@ -36,15 +47,12 @@ def request_login_otp_view(request):
                 expires_in = int(
                     (otp.expires_at - timezone.now()).total_seconds()
                 )
-                if expires_in < 0:
-                    expires_in = 0
+                expires_in = max(expires_in, 0)
 
         return render(
             request,
             "accounts/auth/login.html",
-            {
-                "expires_in": expires_in,
-            },
+            {"expires_in": expires_in},
         )
 
     # ======================
@@ -76,6 +84,26 @@ def request_login_otp_view(request):
             {"error": "No email associated with this account"},
         )
 
+    # ---- OTP cooldown (prevents abuse & load) ----
+    recent_otp = (
+        EmailOTP.objects
+        .filter(
+            user=user,
+            purpose=EmailOTP.PURPOSE_LOGIN,
+            is_used=False,
+            created_at__gte=timezone.now() - timezone.timedelta(seconds=30),
+        )
+        .exists()
+    )
+
+    if recent_otp:
+        return render(
+            request,
+            "accounts/auth/login.html",
+            {"error": "Please wait before requesting another OTP"},
+        )
+
+    # ---- create OTP (async sending inside service) ----
     create_login_otp(user=user)
     request.session["otp_user_id"] = user.id
 
