@@ -122,7 +122,9 @@
   <div id="qText" class="question-text mb-4"></div>
 
   <form onsubmit="submitAnswer(); return false;">
+    <p id="choiceHint" class="is-size-7 has-text-grey mb-2"></p>
     <div id="choices" class="choice-list mb-4"></div>
+
     <button type="submit" class="button is-success">Submit</button>
   </form>
 
@@ -234,9 +236,10 @@ d.choices.forEach((c, index) => {
         name="ans"
         value="${c.id}"
       >
-      <span class="choice-marker">
-        ${String.fromCharCode(65 + index)}
-      </span>
+     <span class="choice-marker ${type === 'checkbox' ? 'is-checkbox' : 'is-radio'}">
+  ${String.fromCharCode(65 + index)}
+</span>
+
       <div class="choice-content">
         ${c.text}
       </div>
@@ -428,7 +431,7 @@ document.addEventListener("DOMContentLoaded", function () {
   border-radius: 8px;
   cursor: pointer;
   background: #fff;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .choice-item:hover {
@@ -439,28 +442,30 @@ document.addEventListener("DOMContentLoaded", function () {
   display: none;
 }
 
+/* ---------- MARKER BASE ---------- */
 .choice-marker {
   min-width: 28px;
   height: 28px;
-  border-radius: 50%;
-  border: 2px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   color: #475569;
   flex-shrink: 0;
+  border: 2px solid #cbd5e1;
 }
 
-.choice-content {
-  width: 100%;
+/* ---------- SINGLE SELECT (RADIO) ---------- */
+.choice-marker.is-radio {
+  border-radius: 50%;
 }
 
-.choice-content p {
-  margin: 0;
+/* ---------- MULTI SELECT (CHECKBOX) ---------- */
+.choice-marker.is-checkbox {
+  border-radius: 6px;
 }
 
-/* SELECTED STATE */
+/* ---------- SELECTED STATE ---------- */
 .choice-item input:checked + .choice-marker {
   background: #2563eb;
   border-color: #2563eb;
@@ -470,6 +475,17 @@ document.addEventListener("DOMContentLoaded", function () {
 .choice-item input:checked ~ .choice-content {
   font-weight: 600;
 }
+
+/* ---------- CONTENT ---------- */
+.choice-content {
+  width: 100%;
+}
+
+.choice-content p {
+  margin: 0;
+}
+
+
 </style>
 {% endblock %}
 
