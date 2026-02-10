@@ -14,6 +14,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from quiz.models import User, Exam, UserExam
+from django.utils.html import strip_tags
+
 
 
 
@@ -259,9 +261,15 @@ class QuestionAdmin(admin.ModelAdmin):
         )
 
     # ================= HELPERS =================
+    
+
+
     def short_text(self, obj):
-        return obj.text[:60] + ('...' if len(obj.text) > 60 else '') if obj.text else ''
-    short_text.short_description = "Question"
+        if not obj.text:
+            return ""
+        text = strip_tags(obj.text)
+        return text[:60] + ("..." if len(text) > 60 else "")
+
 
     def feedback_count(self, obj):
         return obj.feedbacks.count()
