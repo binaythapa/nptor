@@ -320,7 +320,7 @@
 {% if category_id %}<input type="hidden" name="category" value="{{ category_id }}">{% endif %}
 {% if difficulty %}<input type="hidden" name="difficulty" value="{{ difficulty }}">{% endif %}
 
-<p class="mb-2 has-text-weight-semibold">{{ question.text }}</p>
+<p class="mb-2 has-text-weight-semibold">{{ question.text|safe }}</p>
 
 {% if user.is_staff %}
   <div class="mb-3">
