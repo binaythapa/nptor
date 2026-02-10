@@ -411,45 +411,56 @@ document.addEventListener("DOMContentLoaded", function () {
    QUESTION
 ================================ */
 .question-text p {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;   /* slightly tighter */
 }
 
 /* ===============================
-   CHOICES – INDUSTRY STANDARD
+   CHOICES – COMPACT / EXPRESS
 ================================ */
 .choice-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;                /* reduced gap */
 }
 
+/* Main choice container */
 .choice-item {
   display: flex;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;               /* reduced gap */
+  padding: 10px 12px;     /* reduced padding */
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 6px;     /* slightly sharper */
   cursor: pointer;
   background: #fff;
+  font-size: 0.88rem;     /* reduced font size */
+  line-height: 1.35;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+/* Limit width so it doesn’t feel too wide */
+.choice-item {
+  max-width: 520px;
+}
+
+/* Hover */
 .choice-item:hover {
   background: #f9fafb;
 }
 
+/* Hide native input (still accessible) */
 .choice-item input {
   display: none;
 }
 
 /* ---------- MARKER BASE ---------- */
 .choice-marker {
-  min-width: 28px;
-  height: 28px;
+  min-width: 24px;        /* reduced size */
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  font-size: 0.75rem;
   color: #475569;
   flex-shrink: 0;
   border: 2px solid #cbd5e1;
@@ -462,7 +473,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 /* ---------- MULTI SELECT (CHECKBOX) ---------- */
 .choice-marker.is-checkbox {
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 /* ---------- SELECTED STATE ---------- */
@@ -483,6 +494,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
 .choice-content p {
   margin: 0;
+}
+
+/* ===============================
+   MOBILE REFINEMENT
+================================ */
+@media (max-width: 768px) {
+  .choice-item {
+    font-size: 0.85rem;
+    padding: 9px 10px;
+  }
+
+  .choice-marker {
+    min-width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
 }
 
 
