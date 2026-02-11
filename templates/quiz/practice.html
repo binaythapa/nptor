@@ -295,11 +295,13 @@
 {% if anon_limit_reached %}
 <div class="notification is-warning">
     <h3 class="title is-5">Free practice limit reached</h3>
-    <p>
-        You’ve completed {{ anon_limit }} free questions.
-        Please <strong>log in</strong> for unlimited access.
-    </p>
-    <a href="{% url 'login' %}?next={{ request.path }}" class="button is-primary mt-3">
+ <p>
+  🚀 Great progress! You’ve completed {{ anon_limit }} questions and unlocked a new milestone.
+  <strong>Log in</strong> to keep going without limits.
+</p>
+
+
+    <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}" class="button is-primary mt-3">
         Login to Continue
     </a>
 </div>

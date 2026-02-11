@@ -1,7 +1,7 @@
 from django.db import models
-from quiz.models import Category
+from quiz.models import Category,SubscriptionPlan
 from organizations.models.organization import Organization
-from .plan import SubscriptionPlan
+#from .plan import SubscriptionPlan
 
 
 

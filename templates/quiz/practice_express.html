@@ -20,7 +20,14 @@
 
   {% if not user.is_authenticated %}
     <div class="notification is-info is-light">
-      Free users have limited questions. Login to unlock unlimited access.
+    <p>
+  🚀 Great progress! You’ve completed {{ anon_limit }} questions and unlocked a new milestone.
+  <strong>Log in</strong> to keep going without limits.
+</p>
+ <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}" class="button is-primary mt-3">
+        Login to Continue
+    </a>
+
     </div>
   {% endif %}
 
@@ -193,7 +200,7 @@ function loadQuestion(){
       if(d.limit_reached){
         endMessage.classList.remove("is-hidden");
         endMessage.innerHTML = `
-          <p class="has-text-weight-semibold">🔒 Free limit reached</p>
+          <p class="has-text-weight-semibold">🌟 Well done! You’ve achieved a new milestone.</p>
           <p>${d.message}</p>
           <div class="buttons mt-3">
            <a href="{% url 'accounts:request-login-otp' %}" class="button is-primary">Login</a>
