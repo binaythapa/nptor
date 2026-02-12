@@ -18,20 +18,18 @@
     </div>
   </div>
 
-  {% if not user.is_authenticated %}
-    <div class="notification is-info is-light">
-    <p>
-  🚀 Great progress! You’ve completed {{ anon_limit }} questions and unlocked a new milestone.
-  <strong>Log in</strong> to keep going without limits.
-</p>
- <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}" class="button is-primary mt-3">
-        Login to Continue
-    </a>
+  <!-- Limited Access Message -->
+{% if not user.is_authenticated %}
+  <div class="is-size-7 has-text-grey" style="line-height:1;">
+    <span class="has-text-danger has-text-weight-semibold">Limited access</span>
+    — <a href="{% url 'accounts:request-login-otp' %}" class="has-text-link has-text-weight-semibold">log in</a> for full access.
+  </div>
+{% endif %}
 
-    </div>
-  {% endif %}
 
-  <!-- FILTERS -->
+
+
+
   <!-- FILTERS (COLLAPSIBLE) -->
 <div class="box is-light mb-4">
 
@@ -95,30 +93,45 @@
   </div>
 </div>
 
-  <!-- STATS -->
-  <div class="level">
-    <div class="level-left">
-      <div>
-        <p><strong>Matched:</strong> <span id="matched">0</span> / <span id="total">0</span></p>
-        <p><strong>Accuracy:</strong> <span id="accuracy">0%</span></p>
+  <!-- COMPACT STATS -->
+<div class="level is-mobile is-size-7 mb-2">
 
-        <p class="is-size-7 has-text-grey">
-          Progress:
-          <span id="pDone">0</span> /
-          <span id="pTotal">0</span>
-        </p>
+  <div class="level-left">
 
-        <progress id="pBar" class="progress is-small is-link" value="0" max="0"></progress>
-      </div>
-    </div>
+    <span class="mr-3">
+      🎯 <strong><span id="matched">0</span>/<span id="total">0</span></strong>
+    </span>
 
-    <div class="level-right">
-      <span class="tag is-warning is-light mr-3">
-        ⏱ <span id="timer">30</span>s
-      </span>
-      <button id="resetBtn" class="button is-small is-light">🔄 Restart</button>
-    </div>
+    <span class="mr-3">
+      📊 <span id="accuracy">0%</span>
+    </span>
+
+    <span class="mr-3">
+      📈 <span id="pDone">0</span>/<span id="pTotal">0</span>
+    </span>
+
+    <progress id="pBar"
+              class="progress is-link is-small"
+              value="0"
+              max="100"
+              style="width:100px; height:6px;">
+    </progress>
+
   </div>
+
+  <div class="level-right">
+
+    <span class="tag is-warning is-light mr-2 is-small">
+      ⏱ <span id="timer">30</span>s
+    </span>
+
+    <button id="resetBtn"
+            class="button is-small is-light">
+      🔄
+    </button>
+
+  </div>
+
 </div>
 
 
@@ -215,7 +228,10 @@ function loadQuestion(){
       if(d.completed){
         endMessage.classList.remove("is-hidden");
         endMessage.innerHTML = `
-          <p class="has-text-weight-semibold">🎉 Practice completed!</p>
+          <p>
+  🚀 Great progress! You’ve completed {{ anon_limit }} questions and unlocked a new milestone.
+  <strong>Log in</strong> to keep going without limits.
+</p>
           <div class="buttons mt-3">
             <a href="{% url 'quiz:exam_list' %}" class="button is-link">Go Pro</a>
             <a href="{% url 'quiz:practice' %}" class="button is-light">Try Basics</a>

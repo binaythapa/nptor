@@ -114,30 +114,23 @@
      {% if is_from_course %}title="Disabled during course practice"{% endif %}>
     Express
   </a>
-
   <span class="mx-1">|</span>
-
   <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"
      class="{% if is_from_course %}is-disabled{% endif %}"
      {% if is_from_course %}title="Disabled during course practice"{% endif %}>
     Pro
   </a>
 </div>
-
-</div>
-
-<!-- ================= PROGRESS ================= -->
-<div class="mb-3">
-  <progress class="progress is-small is-primary"
-            value="{{ progress_done }}"
-            max="{{ progress_total }}"></progress>
-  <p class="has-text-grey is-size-7">
-    Progress: {{ progress_done }} / {{ progress_total }}
-  </p>
 </div>
 
 
-
+  <!-- Limited Access Message -->
+{% if not user.is_authenticated %}
+  <div class="is-size-7 has-text-grey" style="line-height:1;">
+    <span class="has-text-danger has-text-weight-semibold">Limited access</span>
+    — <a href="{% url 'accounts:request-login-otp' %}" class="has-text-link has-text-weight-semibold">log in</a> for full access.
+  </div>
+{% endif %}
 
 <!-- ================= FILTERS (COLLAPSIBLE) ================= -->
 <div class="box is-light mb-4">
@@ -266,26 +259,22 @@
     </p>
   {% endif %}
 </form>
-
-
   </div>
 </div>
 
 
 
+<!-- ================= PROGRESS ================= -->
+<div class="mb-3">
+<p class="has-text-grey is-size-7">
+    Progress: {{ progress_done }} / {{ progress_total }}
+  </p>
 
-
-
-
-
-
-
-
-
-
-
-
-
+  <progress class="progress is-small is-primary"
+            value="{{ progress_done }}"
+            max="{{ progress_total }}"></progress>
+  
+</div>
 
 
 
