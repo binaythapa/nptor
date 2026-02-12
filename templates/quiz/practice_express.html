@@ -380,9 +380,26 @@ function showFeedback(isCorrect, timeout){
     : (timeout ? "⏰ Time up!" : "❌ Incorrect");
 }
 
+
+
 /* ===============================
    RESET
 ================================ */
+function resetStats(){
+  clearInterval(timerInterval);
+  matched = 0;
+  total = 0;
+  matchedSpan.innerText = "0";
+  totalSpan.innerText = "0";
+  accuracy.innerText = "0%";
+  pDone.innerText = "0";
+  pTotal.innerText = "0";
+  pBar.value = 0;
+  pBar.max = 0;
+  endMessage.classList.add("is-hidden");
+}
+
+
 function resetPractice(){
   window.location.href = "{% url 'quiz:practice_express' %}?reset=1";
 }
@@ -392,11 +409,15 @@ function resetPractice(){
    DOMAIN → CATEGORY
 ================================ */
 domainSelect.onchange = () => {
-  resetPractice();
+
   categorySelect.innerHTML = '<option value="">All categories</option>';
   categorySelect.disabled = true;
 
-  if(!domainSelect.value) return;
+  if(!domainSelect.value){
+    resetStats();
+    loadQuestion();
+    return;
+  }
 
   fetch("{% url 'quiz:ajax_categories_by_domain' %}?domain=" + domainSelect.value)
     .then(r => r.json())
@@ -408,12 +429,24 @@ domainSelect.onchange = () => {
         );
       });
       categorySelect.disabled = false;
+
+      resetStats();
+      loadQuestion();
     });
 };
 
-categorySelect.onchange = resetPractice;
-difficultySelect.onchange = resetPractice;
+categorySelect.onchange = () => {
+  resetStats();
+  loadQuestion();
+};
+
+difficultySelect.onchange = () => {
+  resetStats();
+  loadQuestion();
+};
+
 resetBtn.onclick = resetPractice;
+
 
 /* ===============================
    INIT
