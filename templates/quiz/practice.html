@@ -127,13 +127,24 @@
 </div>
 
 
-  <!-- Limited Access Message -->
+<!-- Limited Access Message -->
 {% if not user.is_authenticated %}
-  <div class="is-size-7 has-text-grey" style="line-height:1;">
-    <span class="has-text-danger has-text-weight-semibold">Limited access</span>
-    — <a href="{% url 'accounts:request-login-otp' %}" class="has-text-link has-text-weight-semibold">log in</a> for full access.
+  <div class="notification is-light is-warning py-2 px-3 mt-2"
+       style="font-size: 0.75rem; line-height: 1.3;">
+
+    <span class="has-text-weight-semibold">
+      Limited access.
+    </span>
+
+    <a href="{% url 'accounts:request-login-otp' %}"
+       class="has-text-link has-text-weight-semibold ml-1">
+      Log in
+    </a>
+    to unlock full features.
+
   </div>
 {% endif %}
+
 
 <!-- ================= FILTERS (COLLAPSIBLE) ================= -->
 <div class="box mb-3 p-3">
@@ -288,19 +299,26 @@
 
 <!-- ================= FREE LIMIT ================= -->
 {% if anon_limit_reached %}
-<div class="notification is-warning">
-    <h3 class="title is-5">Free practice limit reached</h3>
- <p>
-  🚀 Great progress! You’ve completed {{ anon_limit }} questions and unlocked a new milestone.
-  <strong>Log in</strong> to keep going without limits.
-</p>
+<div class="notification is-warning is-light p-4 mb-4">
 
+  <h3 class="title is-6 mb-2">
+    Free Practice Limit Reached
+  </h3>
 
-    <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}" class="button is-primary mt-3">
-        Login to Continue
-    </a>
+  <p class="is-size-7 mb-3" style="line-height:1.4;">
+    🚀 Great progress! You've completed 
+    <strong>{{ anon_limit }}</strong> questions.
+    Log in to continue practicing without limits.
+  </p>
+
+  <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}"
+     class="button is-warning is-small is-fullwidth-mobile">
+    Login to Continue
+  </a>
+
 </div>
 {% endif %}
+
 
 
 
