@@ -8,7 +8,6 @@
 <!-- ================= STICKY EXAM HEADER ================= -->
 <div class="exam-header">
   <div class="exam-header-inner">
-
     <div class="exam-title">
       {{ user_exam.exam.title }}
     </div>
@@ -19,175 +18,100 @@
         00:00:00
       </div>
     </div>
-
   </div>
 </div>
-
-
 
 <!-- PROGRESS -->
 <progress class="progress is-primary" value="{{ progress }}" max="100">
   {{ progress }}%
 </progress>
 
-<form id="qform" method="post" action="{% url 'quiz:exam_submit' user_exam.id %}">
+<!-- ✅ FIXED FORM (POSTS TO SAME PAGE) -->
+<form method="post">
   {% csrf_token %}
 
   <div class="box">
 
-    <!-- ================= QUESTION ================= -->
+    <!-- QUESTION -->
     <div class="mb-4 question-text">
-      <span class="has-text-weight-semibold">
-        Q{{ index|add:1 }}.
-      </span>
-      <span>
-        {{ question.text|safe }}
-      </span>
+      <strong>Q{{ index|add:1 }}.</strong>
+      {{ question.text|safe }}
     </div>
 
-    <!-- ================= SINGLE / DROPDOWN ================= -->
-    {% if question.question_type == 'single' or question.question_type == 'dropdown' %}
+    <!-- SINGLE / DROPDOWN / TF -->
+    {% if question.question_type in 'single dropdown tf' %}
       {% for c in choices %}
         <div class="mb-2">
           <label class="option-label">
-
-            <input
-              type="radio"
-              name="question_{{ question.id }}"
-              value="{{ c.id }}"
-              class="mr-2"
-              {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
-            >
+            <input type="radio"
+                   name="question_{{ question.id }}"
+                   value="{{ c.id }}"
+                   {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}>
             <span>{{ c.text|safe }}</span>
           </label>
         </div>
       {% endfor %}
-
-    <!-- ================= TRUE/FALSE ================= -->
-    {% elif question.question_type == 'tf' %}
-  {% for c in choices %}
-    <div class="mb-2">
-      <label class="option-label">
-        <input
-          type="radio"
-          name="question_{{ question.id }}"
-          value="{{ c.id }}"
-          {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}
-        >
-        <span>{{ c.text|safe }}</span>
-      </label>
-    </div>
-  {% endfor %}
-
-    <!-- ================= MULTI ================= -->
-    {% elif question.question_type == 'multi' %}
-  {% for c in choices %}
-    <div class="mb-2">
-      <label class="option-label">
-        <input
-          type="checkbox"
-          name="question_{{ question.id }}"
-          value="{{ c.id }}"
-          {% if ua.selections and c.id|stringformat:"s" in ua.selections|join:"," %}
-            checked
-          {% endif %}
-        >
-        <span>{{ c.text|safe }}</span>
-      </label>
-    </div>
-  {% endfor %}
-
-    <!-- ================= FILL ================= -->
-    {% elif question.question_type == 'fill' %}
-      <input
-        class="input"
-        type="text"
-        name="question_{{ question.id }}"
-        value="{{ ua.raw_answer|default_if_none:'' }}"
-      >
-
-    <!-- ================= NUMERIC ================= -->
-    {% elif question.question_type == 'numeric' %}
-      <input
-        class="input"
-        type="text"
-        name="question_{{ question.id }}"
-        value="{{ ua.raw_answer|default_if_none:'' }}"
-      >
-      <p class="help">Tolerance ± {{ question.numeric_tolerance }}</p>
-
-    <!-- ================= MATCH ================= -->
-    {% elif question.question_type == 'match' %}
-      {% for pair in question.matching_pairs %}
-        {% with li=forloop.counter0 %}
-          <div class="mb-3">
-            <strong>{{ pair.left }}</strong>
-            <div class="select is-fullwidth mt-1">
-              <select name="match_{{ question.id }}_{{ li }}">
-                <option value="">-- pick --</option>
-                {% for opt in question.matching_pairs %}
-                  <option
-                    value="{{ opt.right }}"
-                    {% if ua.selections and ua.selections|dict_get:li|stringformat:"s" == opt.right|stringformat:"s" %}
-                      selected
-                    {% endif %}
-                  >
-                    {{ opt.right }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-        {% endwith %}
-      {% endfor %}
-
-    <!-- ================= ORDER ================= -->
-    {% elif question.question_type == 'order' %}
-      <input
-        class="input"
-        name="question_{{ question.id }}"
-        value="{{ ua.raw_answer|default_if_none:'' }}"
-      >
-      <p class="help">
-        Canonical: {{ question.ordering_items|join:", " }}
-      </p>
-
-    {% else %}
-      <p class="has-text-danger">
-        Unsupported question type
-      </p>
     {% endif %}
+
+    <!-- MULTI -->
+    {% if question.question_type == 'multi' %}
+      {% for c in choices %}
+        <div class="mb-2">
+          <label class="option-label">
+            <input type="checkbox"
+                   name="question_{{ question.id }}"
+                   value="{{ c.id }}"
+                   {% if ua.selections and c.id in ua.selections %}
+                     checked
+                   {% endif %}>
+            <span>{{ c.text|safe }}</span>
+          </label>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- FILL / NUMERIC / ORDER -->
+    {% if question.question_type in 'fill numeric order' %}
+      <input class="input"
+             type="text"
+             name="question_{{ question.id }}"
+             value="{{ ua.raw_answer|default_if_none:'' }}">
+    {% endif %}
+
   </div>
 
   <!-- ================= NAVIGATION ================= -->
   <div class="buttons mt-4">
+
     {% if index > 0 %}
-      <a class="button"
-         href="{% url 'quiz:exam_question' user_exam.id index|add:-1 %}">
+      <button type="submit"
+              name="nav"
+              value="prev"
+              class="button">
         Previous
-      </a>
+      </button>
     {% endif %}
 
     {% if index < total|add:-1 %}
-      <a class="button is-primary"
-         href="{% url 'quiz:exam_question' user_exam.id index|add:1 %}">
+      <button type="submit"
+              name="nav"
+              value="next"
+              class="button is-primary">
         Next
-      </a>
+      </button>
     {% else %}
       <button type="submit"
-              class="button is-success"
-              id="submitBtn">
-        Submit Exam
+              name="nav"
+              value="review"
+              class="button is-warning">
+        Review & Submit
       </button>
-
-      <a href="{% url 'quiz:exam_review' user_exam.id %}"
-   class="button is-warning">
-   Review & Submit
-</a>
-
     {% endif %}
+
   </div>
+
 </form>
+
 
 <style>
 /* ================= GLOBAL CLEANUP ================= */

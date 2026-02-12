@@ -12,6 +12,9 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from ckeditor.fields import RichTextField
+from datetime import timedelta
+from django.utils import timezone
+
 
 
 
@@ -810,6 +813,8 @@ class UserExam(SafeStrMixin, models.Model):
     score = models.FloatField(null=True, blank=True)
     passed = models.BooleanField(null=True, blank=True)
 
+   
+
     class Meta:
         indexes = [
             models.Index(fields=["user", "exam"]),
@@ -859,6 +864,20 @@ class UserExam(SafeStrMixin, models.Model):
             
             # Now delete the object
             super().delete(*args, **kwargs)
+
+
+    def is_expired(self):
+     if self.submitted_at:
+        return False  # already submitted
+
+     if not self.exam.duration_seconds:
+        return False  # no timer configured
+
+     expiry_time = self.started_at + timedelta(
+        seconds=self.exam.duration_seconds
+     )
+
+     return timezone.now() > expiry_time
 
     
 

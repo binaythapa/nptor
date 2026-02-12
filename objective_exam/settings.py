@@ -341,8 +341,8 @@ LOGGING = {
 # ============================================================
 # BUSINESS CONSTANTS
 # ============================================================
-BASICS_ANON_LIMIT = 20
-EXPRESS_ANON_LIMIT = 20
+BASICS_ANON_LIMIT = 2
+EXPRESS_ANON_LIMIT = 2
 RETAKE_COOLDOWN_MINUTES = 240
 QUESTION_AUTO_DISABLE_THRESHOLD = 3
 

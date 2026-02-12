@@ -1,0 +1,138 @@
+{% extends "layouts/base.html" %}
+{% load dict_extras %}
+
+{% block content %}
+
+<h2 class="title is-4">Final Review</h2>
+
+<div class="notification is-light mb-4">
+  <strong>Total:</strong> {{ total_questions }} |
+  <span class="has-text-success">
+    <strong>Answered:</strong> {{ answered_count }}
+  </span> |
+  <span class="has-text-danger">
+    <strong>Unanswered:</strong> {{ unanswered_count }}
+  </span>
+</div>
+
+<form method="post" action="{% url 'quiz:exam_submit' user_exam.id %}">
+  {% csrf_token %}
+
+  {% for question in questions %}
+    {% with ua=user_answers|dict_get:question.id %}
+
+    <div class="box mb-4
+        {% if not ua %}
+            unanswered
+        {% elif question.question_type in "single tf dropdown" and not ua.choice %}
+            unanswered
+        {% elif question.question_type == "multi" and not ua.selections %}
+            unanswered
+        {% elif question.question_type in "fill numeric order" and not ua.raw_answer %}
+            unanswered
+        {% elif question.question_type == "match" and not ua.selections %}
+            unanswered
+        {% endif %}
+    ">
+
+      <p><strong>Q{{ forloop.counter }}.</strong> {{ question.text|safe }}</p>
+
+      <!-- SINGLE / TF / DROPDOWN -->
+      {% if question.question_type in "single tf dropdown" %}
+        {% for c in question.choices.all %}
+          <label class="option-label">
+            <input type="radio"
+                   name="question_{{ question.id }}"
+                   value="{{ c.id }}"
+                   {% if ua and ua.choice and ua.choice.id == c.id %}
+                     checked
+                   {% endif %}>
+            {{ c.text|safe }}
+          </label>
+        {% endfor %}
+      {% endif %}
+
+      <!-- MULTI -->
+      {% if question.question_type == "multi" %}
+        {% for c in question.choices.all %}
+          <label class="option-label">
+            <input type="checkbox"
+                   name="question_{{ question.id }}"
+                   value="{{ c.id }}"
+                   {% if ua and ua.selections and c.id|stringformat:"s" in ua.selections|stringformat:"s" %}
+                     checked
+                   {% endif %}>
+            {{ c.text|safe }}
+          </label>
+        {% endfor %}
+      {% endif %}
+
+      <!-- TEXT BASED -->
+      {% if question.question_type in "fill numeric order" %}
+        <input class="input mt-2"
+               type="text"
+               name="question_{{ question.id }}"
+               value="{{ ua.raw_answer|default_if_none:'' }}">
+      {% endif %}
+
+      <!-- MATCH -->
+      {% if question.question_type == "match" %}
+        {% for pair in question.matching_pairs %}
+          {% with idx=forloop.counter0 %}
+          <div class="mt-2">
+            <strong>{{ pair.left }}</strong>
+            <div class="select is-fullwidth mt-1">
+              <select name="match_{{ question.id }}_{{ idx }}">
+                <option value="">-- pick --</option>
+                {% for opt in question.matching_pairs %}
+                  <option value="{{ opt.right }}"
+                    {% if ua and ua.selections and ua.selections|dict_get:idx == opt.right %}
+                      selected
+                    {% endif %}>
+                    {{ opt.right }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          {% endwith %}
+        {% endfor %}
+      {% endif %}
+
+      {% if not ua %}
+        <p class="has-text-danger is-size-7 mt-2">Not Answered</p>
+      {% endif %}
+
+    </div>
+
+    {% endwith %}
+  {% endfor %}
+
+  <div class="has-text-centered mt-5">
+    <button type="submit" class="button is-success is-medium">
+      Confirm & Submit Exam
+    </button>
+  </div>
+
+</form>
+
+<style>
+.option-label {
+  display: block;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.option-label:hover {
+  background: #f5f5f5;
+}
+
+.unanswered {
+  border: 1px solid #ff3860;
+  background: #fff5f5;
+}
+</style>
+
+{% endblock %}

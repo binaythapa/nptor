@@ -170,4 +170,11 @@ urlpatterns = [
     name="toggle_exam_publish",
 ),
 
+
+    path(
+        "exam/attempt/<int:user_exam_id>/review/",
+        exam_review,
+        name="exam_review"
+    ),
+
 ]

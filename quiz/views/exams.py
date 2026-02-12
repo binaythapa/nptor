@@ -179,14 +179,14 @@ def exam_take(request, user_exam_id):
     return redirect('quiz:exam_question', user_exam_id=ue.id, index=ue.current_index or 0)
 
 
-
-
 @login_required
 def exam_question(request, user_exam_id, index):
     mem = get_memory_usage_mb()
     if mem is not None:
         logger.info(f"Exam Question page memory usage: {mem} MB")
+
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
+
     if ue.submitted_at:
         return redirect('quiz:exam_result', user_exam_id=ue.id)
 
@@ -194,8 +194,8 @@ def exam_question(request, user_exam_id, index):
     if remaining <= 0:
         return redirect('quiz:exam_expired', user_exam_id=ue.id)
 
-
     q_ids = ue.question_order or []
+
     if index < 0 or index >= len(q_ids):
         return redirect('quiz:exam_take', user_exam_id=ue.id)
 
@@ -203,12 +203,58 @@ def exam_question(request, user_exam_id, index):
     ua = ue.answers.get(question_id=q_id)
     q = ua.question
 
+    # -------------------------------
+    # ✅ SAVE ANSWER (POST HANDLING)
+    # -------------------------------
+    if request.method == "POST":
+
+        # SINGLE / TF / DROPDOWN
+        if q.question_type in ['single', 'tf', 'dropdown']:
+            choice_id = request.POST.get(f"question_{q.id}")
+            if choice_id:
+                ua.choice_id = int(choice_id)
+            else:
+                ua.choice = None
+            ua.selections = None
+            ua.raw_answer = None
+
+        # MULTI
+        elif q.question_type == 'multi':
+            selected = request.POST.getlist(f"question_{q.id}")
+            ua.selections = [int(x) for x in selected] if selected else []
+            ua.choice = None
+            ua.raw_answer = None
+
+        # TEXT BASED
+        elif q.question_type in ['fill', 'numeric', 'order']:
+            ua.raw_answer = request.POST.get(f"question_{q.id}", "").strip()
+            ua.choice = None
+            ua.selections = None
+
+        ua.save()
+
+        nav = request.POST.get("nav")
+
+        if nav == "next":
+            return redirect('quiz:exam_question', ue.id, index + 1)
+
+        elif nav == "prev":
+            return redirect('quiz:exam_question', ue.id, index - 1)
+
+        elif nav == "review":
+            return redirect('quiz:exam_review', ue.id)
+
+    # -------------------------------
+    # DISPLAY QUESTION
+    # -------------------------------
+
     choices = list(q.choices.all()) if q.question_type in ('single', 'multi', 'tf', 'dropdown') else []
     if choices:
         random.shuffle(choices)
 
     ue.current_index = index
     ue.save()
+
     progress = int(((index + 1) / len(q_ids)) * 100) if q_ids else 0
 
     return render(request, 'quiz/exam_question.html', {
@@ -221,8 +267,6 @@ def exam_question(request, user_exam_id, index):
         'remaining': remaining,
         'progress': progress,
     })
-
-
 
 
 @login_required
@@ -857,5 +901,95 @@ def mock_exam_start(request, exam_id):
         user_exam_id=ue.id,
         index=0
     )
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from datetime import timedelta
+from django.utils import timezone
+
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from datetime import timedelta
 
 
+@login_required
+def exam_review(request, user_exam_id):
+
+    user_exam = get_object_or_404(
+        UserExam.objects.select_related("exam"),
+        id=user_exam_id,
+        user=request.user
+    )
+
+    # Prevent access after submission
+    if user_exam.submitted_at:
+        return redirect("quiz:exam_result", user_exam.id)
+
+    # Expiration check
+    if user_exam.exam.duration_seconds:
+        expiry_time = user_exam.started_at + timedelta(
+            seconds=user_exam.exam.duration_seconds
+        )
+        if timezone.now() > expiry_time:
+            return redirect("quiz:exam_expired", user_exam.id)
+
+    question_ids = user_exam.question_order or []
+    if not question_ids:
+        return redirect("quiz:exam_question", user_exam.id, 0)
+
+    # Fetch questions with choices
+    questions = (
+        Question.objects
+        .filter(id__in=question_ids)
+        .prefetch_related("choices")
+    )
+
+    # Preserve order
+    question_map = {q.id: q for q in questions}
+    ordered_questions = [
+        question_map[qid]
+        for qid in question_ids
+        if qid in question_map
+    ]
+
+    # Fetch answers
+    user_answers = {
+        ua.question_id: ua
+        for ua in user_exam.answers.all()
+    }
+
+    answered_count = 0
+
+    for q in ordered_questions:
+        ua = user_answers.get(q.id)
+
+        if not ua:
+            continue
+
+        if q.question_type in ["single", "tf", "dropdown"]:
+            if ua.choice:
+                answered_count += 1
+
+        elif q.question_type == "multi":
+            if ua.selections and len(ua.selections) > 0:
+                answered_count += 1
+
+        elif q.question_type in ["fill", "numeric", "order"]:
+            if ua.raw_answer and ua.raw_answer.strip():
+                answered_count += 1
+
+        elif q.question_type == "match":
+            if ua.selections and len(ua.selections) > 0:
+                answered_count += 1
+
+    total = len(ordered_questions)
+    unanswered_count = total - answered_count
+
+    return render(request, "quiz/exam_review.html", {
+        "user_exam": user_exam,
+        "questions": ordered_questions,
+        "user_answers": user_answers,
+        "answered_count": answered_count,
+        "unanswered_count": unanswered_count,
+        "total_questions": total,
+    })
