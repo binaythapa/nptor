@@ -845,12 +845,20 @@ def ajax_categories_by_domain(request):
 # =====================================================
 # PRACTICE EXPRESS – PAGE
 # =====================================================
-from django.shortcuts import render, redirect
-
 def practice_express(request):
 
-    # ✅ SAFE RESET (no session flush)
+    # SAFE HARD RESET (only express keys)
     if request.GET.get("reset") == "1":
+        for key in [
+            "pe_seen",
+            "pe_qid",
+            "pe_filters",
+            "pe_total",
+            "pe_progress",
+        ]:
+            request.session.pop(key, None)
+
+        request.session.modified = True
         return redirect("quiz:practice_express")
 
     return render(request, "quiz/practice_express.html", {
