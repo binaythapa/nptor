@@ -1,79 +1,97 @@
 <aside id="site-sidebar" class="site-sidebar">
-  <nav class="menu">
+  <nav class="menu is-size-7">
 
-    <p class="menu-label">General</p>
+    <!-- ================= GENERAL ================= -->
+    <p class="menu-label has-text-grey-light mb-1">General</p>
     <ul class="menu-list">
 
       <li>
         {% if user.is_authenticated %}
           <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}"
-             class="{% if is_from_course %}is-disabled{% endif %}"
+             class="py-1 {% if is_from_course %}is-disabled{% endif %}"
              {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-            <i class="fa fa-home"></i> Dashboard
+            <span class="icon is-small mr-1"><i class="fa fa-home"></i></span>
+            Dashboard
           </a>
         {% else %}
           <a href="{% if not is_from_course %}{% url 'pages:home' %}{% else %}javascript:void(0);{% endif %}"
-             class="{% if is_from_course %}is-disabled{% endif %}"
+             class="py-1 {% if is_from_course %}is-disabled{% endif %}"
              {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-            <i class="fa fa-home"></i> Home
+            <span class="icon is-small mr-1"><i class="fa fa-home"></i></span>
+            Home
           </a>
         {% endif %}
       </li>
 
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"
-           class="{% if is_from_course %}is-disabled{% endif %}"
-           {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-          <i class="fa fa-book"></i> Exams
-        </a>
-      </li>
+    </ul>
 
+    <!-- ================= LEARNING PATH ================= -->
+    <p class="menu-label has-text-grey-light mt-3 mb-1">Learning Path</p>
+    <ul class="menu-list">
+
+      <!-- Step 1: Practice -->
       <li>
         <a href="{% if not is_from_course %}{% url 'quiz:practice' %}{% else %}javascript:void(0);{% endif %}"
-           class="{% if is_from_course %}is-disabled{% endif %}"
+           class="py-1 {% if is_from_course %}is-disabled{% endif %}"
            {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-          <i class="fa fa-pen-to-square"></i> Practice (Basic)
+          <span class="icon is-small mr-1"><i class="fa fa-pen-to-square"></i></span>
+          ① Practice
+          <span class="tag is-success is-light is-small ml-2">Start</span>
         </a>
       </li>
 
+      <!-- Step 2: Express -->
       <li>
         <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}"
-           class="{% if is_from_course %}is-disabled{% endif %}"
+           class="py-1 {% if is_from_course %}is-disabled{% endif %}"
            {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-          <i class="fa fa-bolt"></i> Practice (Express)
+          <span class="icon is-small mr-1"><i class="fa fa-bolt"></i></span>
+          ② Express
+          <span class="tag is-warning is-light is-small ml-2">Test</span>
+        </a>
+      </li>
+
+      <!-- Step 3: Courses & Exams (UPDATED NAME) -->
+      <li>
+        <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"
+           class="py-1 {% if is_from_course %}is-disabled{% endif %}"
+           {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+          <span class="icon is-small mr-1"><i class="fa fa-book-open"></i></span>
+          ③ Courses & Exams
+          <span class="tag is-link is-light is-small ml-2">Enroll</span>
         </a>
       </li>
 
     </ul>
 
+    <!-- ================= ACCOUNT ================= -->
     {% if user.is_authenticated %}
-      <p class="menu-label">Account</p>
+      <p class="menu-label has-text-grey-light mt-3 mb-1">Account</p>
       <ul class="menu-list">
         <li>
           <a href="{% if not is_from_course %}{% url 'quiz:profile' %}{% else %}javascript:void(0);{% endif %}"
-             class="{% if is_from_course %}is-disabled{% endif %}"
+             class="py-1 {% if is_from_course %}is-disabled{% endif %}"
              {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-            <i class="fa fa-user"></i> Profile
+            <span class="icon is-small mr-1"><i class="fa fa-user"></i></span>
+            Profile
           </a>
         </li>
       </ul>
     {% endif %}
 
-    {# ================= ORGANIZATION ADMIN ================= #}
+    <!-- ================= ORGANIZATION ADMIN ================= -->
     {% if user.is_authenticated and request.active_org and request.org_role == "org_admin" %}
-
-      <p class="menu-label">Organization</p>
+      <p class="menu-label has-text-grey-light mt-3 mb-1">Organization</p>
       <ul class="menu-list">
         <li>
           <a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' %}{% else %}javascript:void(0);{% endif %}"
-             class="{% if is_from_course %}is-disabled{% endif %}"
+             class="py-1 {% if is_from_course %}is-disabled{% endif %}"
              {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-            <i class="fa fa-building"></i>
+            <span class="icon is-small mr-1"><i class="fa fa-building"></i></span>
             Org Dashboard
           </a>
         </li>
       </ul>
-
     {% endif %}
 
   </nav>

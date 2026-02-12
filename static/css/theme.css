@@ -723,4 +723,21 @@ body[data-theme="dark"] #copy-toast {
   .footer-actions {
     justify-content: center;
   }
+
+
+  /*sidebar */
+  .site-sidebar .menu-list a {
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.site-sidebar .menu-list a:hover {
+  background-color: #f5f5f5;
+  padding-left: 12px;
+}
+.site-sidebar .menu-list a:hover {
+  background-color: #f5f5f5 !important;
+}
+
+
 }
