@@ -269,18 +269,19 @@ function loadQuestion(){
               🚀 Great Progress!
             </p>
             <p class="is-size-7 mb-3">
-              You've completed ${d.progress_done} questions.
-              Log in to continue without limits.
+            Amazing work! You've completed ${d.progress_done} questions — keep pushing forward and conquer more courses & exams!
+              
             </p>
             <div class="buttons is-centered">
               <a href="{% url 'quiz:exam_list' %}"
                  class="button is-link is-small">
                  Explore Courses & Exams
               </a>
-              <a href="{% url 'quiz:practice' %}"
-                 class="button is-light is-small">
-                 Practice Basics
-              </a>
+               <button id="resetBtn"
+                  onclick="resetPractice()"
+                  class="button is-small is-light">
+                    🔄Reset 
+                </button>
             </div>
           </div>
         `;

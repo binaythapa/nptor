@@ -102,8 +102,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="practice-wrapper">
-<div class="practice-card box">
+<div class="box">
+
 
 <!-- ================= HEADER ================= -->
 <div class="practice-header is-flex is-align-items-center is-justify-content-space-between mb-3">
@@ -327,6 +327,31 @@
 {% endif %}
 
 
+{% if completed %}
+<div id="endMessage">
+  <div class="notification is-info is-light p-4">
+    <p class="has-text-weight-semibold mb-2">
+      🚀 Great Progress!
+    </p>
+
+    <p class="is-size-7 mb-3">
+      Amazing work! You've completed {{ progress_done }} questions — keep pushing forward and conquer more courses & exams!
+    </p>
+
+    <div class="buttons is-centered">
+      <a href="{% url 'quiz:exam_list' %}"
+         class="button is-link is-small">
+         Explore Courses & Exams
+      </a>
+
+      <a href="{% url 'quiz:practice' %}?reset=1"
+         class="button is-small is-light">
+         🔄Reset
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 
 
@@ -536,7 +561,7 @@
 
 
 </div>
-</div>
+
 
 <script>
 function toggleExplanation() {
