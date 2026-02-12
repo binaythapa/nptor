@@ -34,12 +34,18 @@ from accounts.services.cleanup import delete_expired_unverified_users
 User = get_user_model()
 
 
+
+
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
+
+
 def register_view(request):
     """
     Step 1: Create inactive user OR reuse existing inactive user and send OTP
     """
 
-    # 🧹 Clean abandoned registrations
     delete_expired_unverified_users(minutes=30)
 
     if request.method == "GET":
@@ -48,37 +54,52 @@ def register_view(request):
     # ----------------------
     # Read form data
     # ----------------------
-    username = request.POST.get("username")
-    email = request.POST.get("email")
+    first_name = request.POST.get("first_name", "").strip()
+    last_name = request.POST.get("last_name", "").strip()
+    email = request.POST.get("email", "").strip().lower()
     password = request.POST.get("password")
     confirm = request.POST.get("confirm_password")
 
-    country = request.POST.get("country")
-    phone = request.POST.get("phone")
+    country = request.POST.get("country") or None
+    phone = request.POST.get("phone") or None
     accepted_policy = request.POST.get("accepted_policy")
 
     # ----------------------
     # Validation
     # ----------------------
-    if not all([username, email, password, confirm, country, phone]):
+
+    if not first_name or not last_name or not email or not password or not confirm:
         return render(
             request,
             "accounts/auth/register.html",
-            {"error": "All fields are required"},
+            {"error": "Please fill all required fields."},
+        )
+
+    if "@" not in email:
+        return render(
+            request,
+            "accounts/auth/register.html",
+            {"error": "Enter a valid email address."},
+        )
+
+        return render(
+            request,
+            "accounts/auth/register.html",
+            {"error": "Please fill all required fields."},
         )
 
     if not accepted_policy:
         return render(
             request,
             "accounts/auth/register.html",
-            {"error": "You must accept the Terms & Privacy Policy"},
+            {"error": "You must accept the Terms & Privacy Policy."},
         )
 
     if password != confirm:
         return render(
             request,
             "accounts/auth/register.html",
-            {"error": "Passwords do not match"},
+            {"error": "Passwords do not match."},
         )
 
     # ----------------------
@@ -91,30 +112,21 @@ def register_view(request):
             return render(
                 request,
                 "accounts/auth/register.html",
-                {"error": "Email already registered"},
+                {"error": "Email already registered."},
             )
 
-        # 🔁 Existing but NOT verified → resend OTP
+        # Resend OTP for unverified user
         create_registration_otp(user=existing_user)
         request.session["registration_user_id"] = existing_user.id
-
         return redirect("accounts:verify-registration-otp")
-
-    # ----------------------
-    # Check username conflict (active users only)
-    # ----------------------
-    if User.objects.filter(username=username, is_active=True).exists():
-        return render(
-            request,
-            "accounts/auth/register.html",
-            {"error": "Username already taken"},
-        )
 
     # ----------------------
     # Create inactive user
     # ----------------------
     user = User.objects.create(
-        username=username,
+        username=email,   # 🔥 EMAIL AS USERNAME
+        first_name=first_name.title(),
+        last_name=last_name.title(),
         email=email,
         password=make_password(password),
         is_active=False,
@@ -127,7 +139,8 @@ def register_view(request):
     profile.country = country
     profile.phone = phone
     profile.accepted_policy = True
-    profile.save(update_fields=["country", "phone", "accepted_policy"])
+    profile.email_verified = False
+    profile.save()
 
     # ----------------------
     # Send registration OTP
@@ -136,6 +149,40 @@ def register_view(request):
     request.session["registration_user_id"] = user.id
 
     return redirect("accounts:verify-registration-otp")
+
+
+from django.http import JsonResponse
+from django.contrib.auth.models import User
+
+
+from django.http import JsonResponse
+from django.contrib.auth.models import User
+
+
+def check_email_availability(request):
+    email = request.GET.get("email", "").strip().lower()
+
+    if not email:
+        return JsonResponse({"available": False})
+
+    exists = User.objects.filter(email=email, is_active=True).exists()
+
+    return JsonResponse({
+        "available": not exists
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 from django.utils import timezone

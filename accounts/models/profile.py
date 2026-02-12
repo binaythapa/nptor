@@ -11,23 +11,30 @@ class UserProfile(models.Model):
         related_name="profile"
     )
 
-    # ✅ NEW
-    
+    # 🌍 Optional Country
     country = CountryField(blank=True, null=True)
 
-    # ✅ EXISTING (renamed only in comment, not field)
+    # 📱 Optional Mobile (Future OTP Ready)
     phone = PhoneField(
         blank=True,
         null=True,
         help_text="Contact phone number",
     )
 
+    # 🔐 Future OTP Support
+    phone_verified = models.BooleanField(
+        default=False,
+        help_text="Has user verified mobile number via OTP?"
+    )
+
+    # 📍 Optional Address
     address = models.CharField(
         max_length=200,
         blank=True,
         null=True,
     )
 
+    # 📜 Required During Registration
     accepted_policy = models.BooleanField(
         default=False,
         help_text="User accepted terms & privacy policy",

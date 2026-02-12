@@ -23,6 +23,9 @@ urlpatterns = [
     ),
 
     path("login/otp/request/", request_login_otp_view, name="request-login-otp"),
+    path("check-email/", check_email_availability, name="check_email"),
+    
+
     path("login/otp/verify/", verify_login_otp_view, name="verify-login-otp"),
     path("logout/", logout_view, name="logout"),
 
