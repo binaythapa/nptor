@@ -49,23 +49,18 @@ from quiz.services.pricing import apply_coupon
 from quiz.services.subscription import has_valid_subscription
 from quiz.utils import get_leaf_category_name
 
-
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()
-
-
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Sum
-
 from quiz.models import (
     Question,
     Category,
     Domain,
     QuestionDiscussion,
 )
-
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Sum
