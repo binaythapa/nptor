@@ -850,8 +850,17 @@ def ajax_categories_by_domain(request):
 # =====================================================
 # PRACTICE EXPRESS – PAGE
 # =====================================================
+from django.shortcuts import render, redirect
+
+from django.shortcuts import render, redirect
 
 def practice_express(request):
+
+    # ✅ HARD RESET (DESTROY SESSION)
+    if request.GET.get("reset") == "1":
+        request.session.flush()   # completely clears session
+        return redirect("quiz:practice_express")
+
     return render(request, "quiz/practice_express.html", {
         "domains": Domain.objects.filter(is_active=True),
         "categories": Category.objects.none(),

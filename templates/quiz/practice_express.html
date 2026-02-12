@@ -142,12 +142,14 @@
 
     <span class="tag is-warning is-light mr-2 is-small">
       ⏱ <span id="timer">30</span>s
-    </span>
+    </span>    
 
     <button id="resetBtn"
-            class="button is-small is-light">
-      🔄
-    </button>
+        onclick="resetPractice()"
+        class="button is-small is-light">
+  🔄 
+</button>
+
 
   </div>
 
@@ -246,10 +248,11 @@ function loadQuestion(){
                  class="button is-warning is-small">
                  Login to Continue
               </a>
-              <a href="{% url 'quiz:practice' %}"
-                 class="button is-light is-small">
-                 Practice Basics
-              </a>
+               <button id="resetBtn"
+        onclick="resetPractice()"
+        class="button is-small is-light">
+  🔄Reset 
+</button>
             </div>
           </div>
         `;
@@ -381,15 +384,9 @@ function showFeedback(isCorrect, timeout){
    RESET
 ================================ */
 function resetPractice(){
-  clearInterval(timerInterval);
-  matched = total = 0;
-  matchedSpan.innerText = totalSpan.innerText = "0";
-  accuracy.innerText = "0%";
-  pDone.innerText = pTotal.innerText = "0";
-  pBar.value = pBar.max = 0;
-  endMessage.classList.add("is-hidden");
-  loadQuestion();
+  window.location.href = "{% url 'quiz:practice_express' %}?reset=1";
 }
+
 
 /* ===============================
    DOMAIN → CATEGORY
@@ -425,6 +422,9 @@ const matchedSpan = document.getElementById("matched");
 const totalSpan = document.getElementById("total");
 
 loadQuestion();
+
+
+
 
 </script>
 

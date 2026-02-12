@@ -316,6 +316,13 @@
     Login to Continue
   </a>
 
+  <a href="{% if not is_from_course %}{% url 'quiz:practice' %}?reset=1{% if domain_id %}&domain={{ domain_id }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}{% else %}javascript:void(0);{% endif %}"
+   class="button is-light {% if is_from_course %}is-disabled{% endif %}"
+   {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+  🔄 Reset
+</a>
+
+
 </div>
 {% endif %}
 
@@ -442,11 +449,12 @@
 </button>
 
 <!-- 🔄 RESET BUTTON -->
-<a href="{% if not is_from_course %}{% url 'quiz:practice' %}?reset=1{% else %}javascript:void(0);{% endif %}"
+<a href="{% if not is_from_course %}{% url 'quiz:practice' %}?reset=1{% if domain_id %}&domain={{ domain_id }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}{% else %}javascript:void(0);{% endif %}"
    class="button is-light {% if is_from_course %}is-disabled{% endif %}"
    {% if is_from_course %}title="Disabled during course practice"{% endif %}>
   🔄 Reset
 </a>
+
 
                   
 
