@@ -142,14 +142,7 @@
 
     <span class="tag is-warning is-light mr-2 is-small">
       ⏱ <span id="timer">30</span>s
-    </span>    
-
-    <button id="resetBtn"
-        onclick="resetPractice()"
-        class="button is-small is-light">
-  🔄 
-</button>
-
+    </span>   
 
   </div>
 
@@ -162,12 +155,23 @@
 <div class="box">
   <div id="qText" class="question-text mb-4"></div>
 
-  <form onsubmit="submitAnswer(); return false;">
-    <p id="choiceHint" class="is-size-7 has-text-grey mb-2"></p>
-    <div id="choices" class="choice-list mb-4"></div>
+<form onsubmit="submitAnswer(); return false;">
+  <p id="choiceHint" class="is-size-7 has-text-grey mb-2"></p>
+  <div id="choices" class="choice-list mb-4"></div>
 
-    <button type="submit" class="button is-success">Submit</button>
-  </form>
+  <div class="button-group">
+    <button type="submit" class="button is-success">
+      Submit
+    </button>
+
+    <button type="button"
+            id="resetBtn"
+            onclick="resetPractice()"
+            class="button is-light">
+      🔄 Reset
+    </button>
+  </div>
+</form>
 
   <div id="feedback" class="notification is-hidden mt-4"></div>
 </div>
