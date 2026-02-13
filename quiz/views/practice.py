@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
+from quiz.models import QuestionFeedback
 
 from django.conf import settings
 from django.contrib import messages
@@ -73,7 +74,7 @@ from core.utils.memory import get_memory_usage_mb
 
 logger = logging.getLogger("django")
 
-
+from django.template.loader import render_to_string
 
 
 def practice(request):
@@ -82,20 +83,15 @@ def practice(request):
     BASIC PRACTICE (PUBLIC)
     + COURSE-AWARE PRACTICE (OPTIONAL)
     """
-    
 
     mem = get_memory_usage_mb()
     if mem is not None:
-        if mem > 350:  # adjust for your server
+        if mem > 350:
             logger.warning(f"⚠ Practice page high memory usage: {mem} MB")
         else:
             logger.info(f"Practice page memory usage: {mem} MB")
 
-
-
-    # =====================================================
-    # COURSE CONTEXT (OPTIONAL)
-    # =====================================================
+    # ================= COURSE CONTEXT =================
     course_slug = request.GET.get("course")
     lesson_id = request.GET.get("lesson")
     is_from_course = bool(course_slug and lesson_id)
@@ -108,32 +104,25 @@ def practice(request):
             "practice_category"
         ).filter(id=lesson_id).first()
 
-    # =====================================================
-    # 🧠 PER-LESSON RESET GUARD
-    # =====================================================
+    # ================= PER LESSON RESET =================
     if is_from_course and lesson:
         last_lesson_id = request.session.get("course_practice_lesson_id")
 
         if last_lesson_id != lesson.id:
-            # new lesson → reset course practice state
             request.session.pop("course_practice_initialized", None)
             request.session.pop("course_practice_count", None)
 
-        request.session["course_practice_lesson_id"] = lesson.id  # ✅ ADDED
+        request.session["course_practice_lesson_id"] = lesson.id
 
-    # =====================================================
-    # 🎯 FORCE LESSON FILTERS (SESSION OVERRIDE)
-    # =====================================================
+    # ================= FORCE FILTERS =================
     if is_from_course and lesson:
-        request.session["p_filters"] = {  # ✅ ADDED
+        request.session["p_filters"] = {
             "domain": lesson.practice_domain_id,
             "category": lesson.practice_category_id,
             "difficulty": lesson.practice_difficulty,
         }
 
-    # =====================================================
-    # RESET
-    # =====================================================
+    # ================= RESET =================
     if request.GET.get("reset") == "1":
         for k in [
             "p_seen",
@@ -148,21 +137,11 @@ def practice(request):
 
         return redirect("quiz:practice")
 
-    # =====================================================
-    # INIT COURSE PRACTICE SESSION (ONCE)
-    # =====================================================
-    if is_from_course and lesson and not request.session.get("course_practice_initialized"):
-        request.session["course_practice_initialized"] = True
-        request.session["course_practice_count"] = 0
-
-    # =====================================================
-    # READ FILTERS
-    # =====================================================
+    # ================= READ FILTERS =================
     domain_id = request.POST.get("domain") or request.GET.get("domain")
     category_id = request.POST.get("category") or request.GET.get("category")
     difficulty = request.POST.get("difficulty") or request.GET.get("difficulty")
 
-    # 🔒 LOCK FILTERS IF FROM COURSE
     if is_from_course and lesson and lesson.practice_lock_filters:
         filters = request.session.get("p_filters", {})
         domain_id = filters.get("domain")
@@ -177,9 +156,7 @@ def practice(request):
 
     last_filters = request.session.get("p_filters")
 
-    # =====================================================
-    # BASE QUERYSET
-    # =====================================================
+    # ================= BASE QUERYSET =================
     qs = (
         Question.objects
         .filter(
@@ -220,9 +197,7 @@ def practice(request):
     if difficulty:
         qs = qs.filter(difficulty=difficulty)
 
-    # =====================================================
-    # RESET SESSION IF FILTERS CHANGED (NON-COURSE ONLY)
-    # =====================================================
+    # ================= RESET IF FILTERS CHANGED =================
     if not is_from_course and filters != last_filters:
         request.session["p_filters"] = filters
         request.session["p_seen"] = []
@@ -234,12 +209,7 @@ def practice(request):
     total = request.session.get("p_total", qs.count())
     anon_count = request.session.get("p_anon_count", 0)
 
-    # (⬇️ rest of your code remains 100% unchanged ⬇️)
-
-
-    # =====================================================
-    # 🚫 ANONYMOUS LIMIT CHECK
-    # =====================================================
+    # ================= ANONYMOUS LIMIT =================
     if not request.user.is_authenticated:
         if anon_count >= settings.BASICS_ANON_LIMIT:
             return render(request, "quiz/practice/practice.html", {
@@ -250,9 +220,7 @@ def practice(request):
                 "difficulty_choices": Question.DIFFICULTY_CHOICES,
             })
 
-    # =====================================================
-    # REMAINING QUESTIONS
-    # =====================================================
+    # ================= REMAINING =================
     remaining = qs.exclude(id__in=seen)
 
     if not remaining.exists():
@@ -265,9 +233,7 @@ def practice(request):
             "difficulty_choices": Question.DIFFICULTY_CHOICES,
         })
 
-    # =====================================================
-    # PICK QUESTION
-    # =====================================================
+    # ================= PICK QUESTION =================
     qid = request.session.get("p_qid")
     question = remaining.filter(id=qid).first() if qid else None
 
@@ -277,51 +243,41 @@ def practice(request):
 
     choices = question.choices.order_by("order", "id")
 
-    # =====================================================
-    # SKIP QUESTION
-    # =====================================================
+    # ================= SKIP =================
     if request.method == "POST" and request.POST.get("skip") == "1":
         seen.append(question.id)
         request.session["p_seen"] = seen
         request.session.pop("p_qid", None)
-
         return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
 
-    # =====================================================
-    # SUBMIT ANSWER
-    # =====================================================
+    # ================= ANSWER CHECK =================
     result = None
     show_next = False
-    correct_choices = choices.filter(is_correct=True)
     selected_choice_id = None
     selected_multi_ids = []
 
     if request.method == "POST" and request.POST.get("next") != "1":
+
+        correct_choices = choices.filter(is_correct=True)
 
         if question.question_type == Question.MULTI:
             selected_multi_ids = list(map(int, request.POST.getlist("choice_multi")))
             correct_ids = list(correct_choices.values_list("id", flat=True))
             result = "correct" if set(selected_multi_ids) == set(correct_ids) else "wrong"
             show_next = result == "correct"
-
         else:
             selected_choice_id = request.POST.get("choice")
             selected = choices.filter(id=selected_choice_id).first()
             result = "correct" if selected and selected.is_correct else "wrong"
             show_next = result == "correct"
 
-    # =====================================================
-    # NEXT (COURSE PRACTICE TRACKING)
-    # =====================================================
+    # ================= NEXT =================
     if request.method == "POST" and request.POST.get("next") == "1":
 
-        # ================= COURSE PRACTICE TRACKING =================
         course_slug, lesson, threshold = get_course_context(request)
 
         if lesson:
             count = track_practice_completion(request, lesson)
-
-            # 🚫 STOP when threshold reached
             if threshold and count >= threshold:
                 return redirect(
                     "courses:course_learn_lesson",
@@ -329,7 +285,6 @@ def practice(request):
                     lesson_id=lesson.id
                 )
 
-        # ================= NORMAL PRACTICE FLOW =================
         seen.append(question.id)
         request.session["p_seen"] = seen
         request.session.pop("p_qid", None)
@@ -337,14 +292,9 @@ def practice(request):
         if not request.user.is_authenticated:
             request.session["p_anon_count"] = anon_count + 1
 
-        return redirect(
-            request.path + "?" + request.META.get("QUERY_STRING", "")
-        )
+        return redirect(request.path + "?" + request.META.get("QUERY_STRING", ""))
 
-
-    # =====================================================
-    # DISCUSSIONS
-    # =====================================================
+    # ================= DISCUSSIONS =================
     discussions = (
         QuestionDiscussion.objects
         .filter(question=question, is_deleted=False)
@@ -357,9 +307,7 @@ def practice(request):
         if selected_domain else Category.objects.none()
     )
 
-
     locked_filters = {}
-
     if is_from_course and lesson:
         locked_filters = {
             "domain": lesson.practice_domain_id,
@@ -368,9 +316,20 @@ def practice(request):
         }
 
 
-    # =====================================================
-    # RENDER
-    # =====================================================
+   
+
+    previous_feedbacks = QuestionFeedback.objects.filter(
+        question=question
+        ).select_related("user").order_by("-created_at")
+
+
+    feedback_submitted = False
+    if request.user.is_authenticated:
+        feedback_submitted = previous_feedbacks.filter(
+            user=request.user
+        ).exists()
+
+
     return render(request, "quiz/practice/practice.html", {
         "question": question,
         "choices": choices,
@@ -391,46 +350,61 @@ def practice(request):
         "locked_filters": locked_filters,
         "is_from_course": is_from_course,
 
+        "previous_feedbacks": previous_feedbacks,
+       
     })
-
 
 
 @require_POST
 @login_required
 def practice_feedback_ajax(request):
-    question_id = request.POST.get("question_id")
-    comment = (request.POST.get("student_comment") or "").strip()
-    is_incorrect = request.POST.get("answer_incorrect") == "on"
 
-    if not question_id or not comment:
+    try:
+        question_id = request.POST.get("question_id")
+        comment = (request.POST.get("student_comment") or "").strip()
+        is_incorrect = request.POST.get("answer_incorrect") in ["1", "true", "on"]
+
+        if not question_id:
+            return JsonResponse({
+                "success": False,
+                "message": "Invalid question."
+            })
+
+        if not comment and not is_incorrect:
+            return JsonResponse({
+                "success": False,
+                "message": "Please write a comment or mark as incorrect/confusing."
+            })
+
+        question = Question.objects.get(id=question_id)
+
+        QuestionFeedback.objects.create(
+            user=request.user,
+            question=question,
+            comment=comment,
+            is_answer_incorrect=is_incorrect
+        )
+
         return JsonResponse({
-            "success": False,
-            "message": "Comment cannot be empty."
+            "success": True,
+            "message": "Feedback submitted successfully."
         })
 
-    question = get_object_or_404(Question, id=question_id)
-
-    # Prevent duplicate feedback by same user
-    if QuestionFeedback.objects.filter(
-        user=request.user,
-        question=question
-    ).exists():
+    except Question.DoesNotExist:
         return JsonResponse({
             "success": False,
-            "message": "You already submitted feedback for this question."
+            "message": "Question not found."
         })
 
-    QuestionFeedback.objects.create(
-        user=request.user,
-        question=question,
-        comment=comment,
-        is_answer_incorrect=is_incorrect
-    )
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": f"Server error: {str(e)}"
+        })
 
-    return JsonResponse({
-        "success": True,
-        "message": "Thank you! Your feedback was submitted."
-    })
+
+
+
 
 
 
@@ -438,19 +412,25 @@ from django.http import JsonResponse
 from django.db.models import Sum
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-
 @require_POST
 @login_required
 def discussion_vote(request):
     discussion_id = request.POST.get("discussion_id")
-    value = int(request.POST.get("value"))
+    value = request.POST.get("value")
 
-    discussion = get_object_or_404(QuestionDiscussion, id=discussion_id)
+    if not discussion_id or value not in ["1", "-1"]:
+        return JsonResponse({"success": False})
+
+    discussion = get_object_or_404(
+        QuestionDiscussion,
+        id=discussion_id,
+        is_deleted=False
+    )
 
     DiscussionVote.objects.update_or_create(
         user=request.user,
         discussion=discussion,
-        defaults={"value": value}
+        defaults={"value": int(value)}
     )
 
     score = discussion.votes.aggregate(
@@ -464,13 +444,18 @@ def discussion_vote(request):
 
 
 
-# ============================================
-# AJAX ANSWER SUBMIT
-# ============================================
+
 @require_POST
 def practice_answer_ajax(request):
     question_id = request.POST.get("question_id")
-    question = get_object_or_404(Question, id=question_id)
+
+    question = get_object_or_404(
+        Question,
+        id=question_id,
+        is_active=True,
+        is_deleted=False
+    )
+
     choices = question.choices.order_by("order", "id")
 
     result = "wrong"
@@ -479,7 +464,8 @@ def practice_answer_ajax(request):
     selected_multi_ids = []
 
     correct_ids = list(
-        choices.filter(is_correct=True).values_list("id", flat=True)
+        choices.filter(is_correct=True)
+        .values_list("id", flat=True)
     )
 
     if question.question_type == Question.MULTI:
@@ -489,7 +475,6 @@ def practice_answer_ajax(request):
         if set(selected_multi_ids) == set(correct_ids):
             result = "correct"
             show_next = True
-
     else:
         selected_choice_id = request.POST.get("choice")
         if selected_choice_id and int(selected_choice_id) in correct_ids:
@@ -497,7 +482,7 @@ def practice_answer_ajax(request):
             show_next = True
 
     html = render_to_string(
-        "quiz/_answer_result.html",
+        "quiz/practice/_answer_result.html",
         {
             "question": question,
             "choices": choices,
@@ -505,29 +490,37 @@ def practice_answer_ajax(request):
             "selected_choice_id": selected_choice_id,
             "selected_multi_ids": selected_multi_ids,
             "show_next": show_next,
+            "explanation": question.explanation,   # 👈 MUST BE HERE
         },
         request=request
     )
 
     return JsonResponse({
         "success": True,
-        "result": result,
-        "show_next": show_next,
         "html": html
     })
+
+
+
+
 
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.template.loader import render_to_string
+from django.urls import reverse
 
 @require_POST
 def practice_next_ajax(request):
     """
-    AJAX: Move to next practice question safely
+    AJAX: Move to next question
+    Handles:
+    - Course threshold logic
+    - Session tracking
+    - Filter persistence
     """
 
     # ===============================
-    # SESSION STATE (same as practice)
+    # SESSION STATE UPDATE FIRST
     # ===============================
     seen = request.session.get("p_seen", [])
     qid = request.session.get("p_qid")
@@ -538,19 +531,46 @@ def practice_next_ajax(request):
         request.session.pop("p_qid", None)
 
     # ===============================
-    # REBUILD QUERYSET (same filters)
+    # COURSE THRESHOLD CHECK
     # ===============================
-    domain_id = request.session.get("p_filters", {}).get("domain")
-    category_id = request.session.get("p_filters", {}).get("category")
-    difficulty = request.session.get("p_filters", {}).get("difficulty")
+    course_slug, lesson, threshold = get_course_context(request)
 
-    qs = Question.objects.filter(
-        question_type__in=[
-            Question.SINGLE,
-            Question.MULTI,
-            Question.TRUE_FALSE,
-        ]
-    ).prefetch_related("choices")
+    if lesson:
+        count = track_practice_completion(request, lesson)
+
+        if threshold and count >= threshold:
+            return JsonResponse({
+                "success": True,
+                "redirect": reverse(
+                    "courses:course_learn_lesson",
+                    kwargs={
+                        "slug": course_slug,
+                        "lesson_id": lesson.id
+                    }
+                )
+            })
+
+    # ===============================
+    # REBUILD FILTERS FROM SESSION
+    # ===============================
+    filters = request.session.get("p_filters", {})
+    domain_id = filters.get("domain")
+    category_id = filters.get("category")
+    difficulty = filters.get("difficulty")
+
+    qs = (
+        Question.objects
+        .filter(
+            question_type__in=[
+                Question.SINGLE,
+                Question.MULTI,
+                Question.TRUE_FALSE,
+            ],
+            is_active=True,
+            is_deleted=False,
+        )
+        .prefetch_related("choices")
+    )
 
     if domain_id and str(domain_id).isdigit():
         qs = qs.filter(category__domain_id=domain_id)
@@ -564,11 +584,11 @@ def practice_next_ajax(request):
     remaining = qs.exclude(id__in=seen)
 
     # ===============================
-    # NO MORE QUESTIONS
+    # COMPLETED (NO MORE QUESTIONS)
     # ===============================
     if not remaining.exists():
         html = render_to_string(
-            "quiz/_practice_completed.html",
+            "quiz/practice/_practice_completed.html",
             {},
             request=request
         )
@@ -581,7 +601,7 @@ def practice_next_ajax(request):
     request.session["p_qid"] = question.id
 
     html = render_to_string(
-        "quiz/_practice_question.html",
+        "quiz/practice/_practice_question.html",
         {
             "question": question,
             "choices": question.choices.order_by("order", "id"),
@@ -596,9 +616,11 @@ def practice_next_ajax(request):
     })
 
 
-# ============================================
-# AJAX DISCUSSION SUBMIT (COMMENT / REPLY)
-# ============================================
+
+
+
+
+
 @require_POST
 @login_required
 def discussion_submit_ajax(request):
@@ -609,15 +631,30 @@ def discussion_submit_ajax(request):
     if not content:
         return JsonResponse({"success": False, "message": "Empty comment"})
 
+    question = get_object_or_404(
+        Question,
+        id=question_id,
+        is_active=True,
+        is_deleted=False
+    )
+
+    parent = None
+    if parent_id:
+        parent = QuestionDiscussion.objects.filter(
+            id=parent_id,
+            question=question,
+            is_deleted=False
+        ).first()
+
     discussion = QuestionDiscussion.objects.create(
         user=request.user,
-        question_id=question_id,
-        parent_id=parent_id or None,
+        question=question,
+        parent=parent,
         content=content
     )
 
     html = render_to_string(
-        "quiz/_discussion_item.html",
+        "quiz/practice/_discussion_item.html",   # ✅ updated path
         {"d": discussion},
         request=request
     )

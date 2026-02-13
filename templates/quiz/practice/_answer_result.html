@@ -1,0 +1,74 @@
+<div id="practiceContainer">
+
+<form method="post" id="practiceForm">
+{% csrf_token %}
+
+<input type="hidden" name="question_id" value="{{ question.id }}">
+
+<p class="mb-2 has-text-weight-semibold">
+  {{ question.text|safe }}
+</p>
+
+{% for c in choices %}
+<label class="practice-option
+  {% if result and c.is_correct %}correct{% endif %}
+  {% if result == 'wrong' and c.id|stringformat:'s' == selected_choice_id %}wrong{% endif %}">
+  <input type="radio" disabled>
+  <span>{{ c.text }}</span>
+</label>
+{% endfor %}
+
+{% if result == "correct" %}
+  <div class="notification is-success mt-3">✅ Correct!</div>
+{% elif result == "wrong" %}
+  <div class="notification mt-3"
+       style="background:#fff7f7; border-left:4px solid #fca5a5;">
+    <p style="color:#7f1d1d; font-weight:600;">
+      ❌ Incorrect
+    </p>
+
+    <p class="mt-2" style="color:#374151; font-weight:500;">
+      Correct answer:
+    </p>
+
+    <ul class="mt-2 ml-3">
+      {% for c in choices %}
+        {% if c.is_correct %}
+          <li style="color:#065f46;">
+            ✔ {{ c.text }}
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+
+  {% if explanation %}
+    <button type="button"
+            class="button is-small is-info mt-2"
+            onclick="toggleExplanation()"
+            id="explanationToggleBtn">
+      📘 Show Explanation
+    </button>
+
+    <div id="explanationBox"
+         class="notification is-info mt-3"
+         style="display:none;">
+      {{ explanation|linebreaks }}
+    </div>
+  {% endif %}
+{% endif %}
+
+<div class="practice-actions mt-4">
+  {% if show_next %}
+    <button type="submit"
+            name="next"
+            value="1"
+            class="button is-link">
+      Next →
+    </button>
+  {% endif %}
+</div>
+
+</form>
+
+</div>

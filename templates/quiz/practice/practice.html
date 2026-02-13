@@ -3,6 +3,17 @@
 
 {% block head_extra %}
 <style>
+
+  #filterBody {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.25s ease;
+}
+
+#filterBody.is-open {
+  max-height: 500px;
+}
+
 /* Generic disabled state for links & buttons */
 .is-disabled {
   pointer-events: none;        /* disable clicks */
@@ -40,18 +51,21 @@
 .practice-option {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  gap: 6px;                /* smaller spacing */
+  padding: 6px 8px;        /* compact padding */
+  border-radius: 6px;
+  margin-bottom: 6px;      /* less vertical gap */
   border: 1px solid #e5e7eb;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 0.82rem;      /* smaller text */
+  line-height: 1.25;
 }
 
 .practice-option input {
-  margin-top: 3px;
+  margin-top: 2px;
+  transform: scale(0.9);   /* slightly smaller radio/checkbox */
 }
+
 
 .practice-option:hover { background: #f9fafb; }
 
@@ -360,7 +374,10 @@
 
 <!-- ================= QUESTION ================= -->
 {% if question %}
-<form method="post">
+<div id="practiceContainer">
+<form method="post" id="practiceForm" data-qid="{{ question.id }}">
+
+
 {% csrf_token %}
 
 {% if domain_id %}<input type="hidden" name="domain" value="{{ domain_id }}">{% endif %}
@@ -493,33 +510,33 @@
 <hr class="my-4">
 
 <div id="feedbackBox" class="box is-light">
-{% if feedback_submitted %}
-  <div class="notification is-success is-light">
-    ✅ Feedback already submitted. Thanks!
-  </div>
-{% else %}
+
   <p class="has-text-weight-semibold mb-2">🗣️ Feedback</p>
 
-  <button type="button" id="flagBtn"
-          class="button is-small"
-          onclick="toggleFlag()">⚠️ Incorrect / Confusing</button>
+  <div class="field">
+    <textarea id="studentComment"
+              class="textarea is-small"
+              rows="2"
+              placeholder="Write your comment..."></textarea>
+  </div>
 
-  <input type="hidden" id="answerIncorrect">
+  <label class="checkbox mt-2">
+    <input type="checkbox" id="answerIncorrect">
+    ⚠️ Incorrect / Confusing
+  </label>
 
- <div class="field mt-2">
-  <textarea id="studentComment"
-            class="textarea is-small"
-            rows="2"
-            placeholder="Optional comment..."
-            oninput="autoResize(this)"></textarea>
+  <br>
+
+ <button type="button"
+        class="button is-small is-link mt-2"
+        id="feedbackSubmitBtn">
+    Submit Feedback
+</button>
+
+
 </div>
-
-
-  <button class="button is-small is-link mt-2"
-          onclick="submitFeedback()">Submit Feedback</button>
 {% endif %}
-</div>
-{% endif %}
+
 
 
 
@@ -527,40 +544,50 @@
 
 <!-- ================= PREVIOUS FEEDBACKS ================= -->
 {% if previous_feedbacks %}
-  <hr class="my-3">
+<hr class="my-3">
 
-  <p class="is-size-7 has-text-grey mb-2">
-    🧾 Comments
-  </p>
+<p class="is-size-7 has-text-grey mb-2">
+  🧾 Comments
+</p>
 
-  <div class="feedback-list">
-    {% for fb in previous_feedbacks %}
-      <div class="mb-2 pl-3"
-           style="border-left:2px solid #e5e7eb;">
+<div class="feedback-list">
 
-        <p class="is-size-7 has-text-grey-light">
-          {{ fb.user }} · {{ fb.created_at|date:"M d, Y" }}
-        </p>
+  {% for fb in previous_feedbacks %}
+  <div class="mb-3 p-3"
+       style="border-left:3px solid #e5e7eb;
+              background:#fafafa;
+              border-radius:6px;">
 
-        {% if fb.content %}
-          <p class="is-size-7 mt-1 has-text-grey"
-             style="word-break: break-word; overflow-wrap:anywhere;">
-            {{ fb.content }}
-          </p>
-        {% else %}
-          <p class="is-size-7 has-text-grey-light">
-            (No comment)
-          </p>
-        {% endif %}
+    <p class="is-size-7 has-text-grey-light mb-1">
+      {{ fb.user }} · {{ fb.created_at|date:"M d, Y H:i" }}
+    </p>
 
-      </div>
-    {% endfor %}
+    {% if fb.is_answer_incorrect %}
+      <span class="tag is-warning is-light is-small mb-1">
+        ⚠ Marked Incorrect / Confusing
+      </span>
+    {% endif %}
+
+    {% if fb.comment %}
+      <p class="is-size-7 mt-1">
+        {{ fb.comment }}
+      </p>
+    {% endif %}
+
   </div>
+  {% endfor %}
+
+</div>
 {% endif %}
 
 
-
 </div>
+
+
+
+
+
+
 
 
 <script>
@@ -568,50 +595,187 @@ function toggleExplanation() {
   const box = document.getElementById("explanationBox");
   const btn = document.getElementById("explanationToggleBtn");
   if (!box || !btn) return;
-  box.style.display = box.style.display === "none" ? "block" : "none";
-  btn.innerText = box.style.display === "block"
-    ? "📘 Hide Explanation"
-    : "📘 Show Explanation";
+
+  box.style.display =
+    box.style.display === "none" ? "block" : "none";
+
+  btn.innerText =
+    box.style.display === "block"
+      ? "📘 Hide Explanation"
+      : "📘 Show Explanation";
 }
 
-let flagged = false;
-function toggleFlag() {
-  flagged = !flagged;
-  document.getElementById("flagBtn")
-    .classList.toggle("is-warning", flagged);
-  document.getElementById("answerIncorrect").value = flagged ? "1" : "";
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
-function submitFeedback() {
-  const data = new FormData();
-  data.append("feedback_submit", "1");
-  data.append("student_comment",
-              document.getElementById("studentComment").value);
-  if (flagged) data.append("answer_incorrect", "1");
-  data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+/* =====================================
+   GLOBAL CLICK HANDLER (CLEAN VERSION)
+===================================== */
+document.addEventListener("click", function(e) {
 
-  fetch(window.location.href, { method: "POST", body: data })
-    .then(() => {
-      document.getElementById("feedbackBox").innerHTML =
-        `<div class="notification is-success is-light">
-          ✅ Feedback already submitted. Thanks!
-        </div>`;
+  /* ===============================
+     ANSWER / NEXT HANDLER
+  =============================== */
+  const submitBtn = e.target.closest("#practiceForm button[type='submit']");
+  if (submitBtn) {
+
+    const form = document.getElementById("practiceForm");
+    if (!form) return;
+
+    // Skip button → allow normal submit
+    if (submitBtn.name === "skip") return;
+
+    e.preventDefault();
+
+    // Next button
+    if (submitBtn.name === "next") {
+      loadNextQuestion();
+      return;
+    }
+
+    // Submit answer
+    const formData = new FormData(form);
+
+    fetch("{% url 'quiz:practice_answer_ajax' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById("practiceContainer").innerHTML = data.html;
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      alert("Error submitting answer.");
     });
-}
-</script>
 
-<script>
-  function autoResize(textarea) {
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
+    return;
   }
+
+  /* ===============================
+     FEEDBACK HANDLER
+  =============================== */
+  if (e.target && e.target.id === "feedbackSubmitBtn") {
+
+    const form = document.getElementById("practiceForm");
+    if (!form) {
+        alert("Practice form not found.");
+        return;
+    }
+
+    // 🔥 Clean way: use data attribute
+    const questionId = form.dataset.qid;
+    if (!questionId) {
+        alert("Question ID missing.");
+        return;
+    }
+
+    const comment = document.getElementById("studentComment")?.value.trim();
+    const isIncorrect = document.getElementById("answerIncorrect")?.checked;
+
+    if (!comment && !isIncorrect) {
+        alert("Please write a comment or mark as incorrect/confusing.");
+        return;
+    }
+
+    const data = new FormData();
+    data.append("question_id", questionId);
+    data.append("student_comment", comment || "");
+
+    if (isIncorrect) {
+        data.append("answer_incorrect", "1");
+    }
+
+    fetch("{% url 'quiz:practice_feedback_ajax' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: data
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        alert("Server error occurred.");
+    });
+  }
+
+});
+
+/* ===============================
+   LOAD NEXT QUESTION
+=============================== */
+function loadNextQuestion() {
+  fetch("{% url 'quiz:practice_next_ajax' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (data.redirect) {
+      window.location.href = data.redirect;
+      return;
+    }
+
+    if (data.success) {
+      document.getElementById("practiceContainer").innerHTML = data.html;
+    }
+  })
+  .catch(error => {
+    console.error(error);
+    alert("Error loading next question.");
+  });
+}
+
 </script>
 
 
+
 <script>
+function toggleFilters() {
+  const body = document.getElementById("filterBody");
+
+  body.classList.toggle("is-open");
+
+  const expanded = body.classList.contains("is-open");
+
+  localStorage.setItem("filterExpanded", expanded ? "1" : "0");
+
+  updateFilterUI(expanded);
+}
+
 function updateFilterUI(expanded) {
   const hint = document.getElementById("filterHint");
   const icon = document.getElementById("filterToggleIcon");
+
+  if (!hint || !icon) return;
 
   if (expanded) {
     hint.innerText = "(Click to collapse)";
@@ -622,36 +786,19 @@ function updateFilterUI(expanded) {
   }
 }
 
-function toggleFilters() {
-  const body = document.getElementById("filterBody");
-  const isExpanded =
-    body.style.maxHeight && body.style.maxHeight !== "0px";
-
-  if (isExpanded) {
-    body.style.maxHeight = "0px";
-    updateFilterUI(false);
-    localStorage.setItem("filterExpanded", "0");
-  } else {
-    body.style.maxHeight = body.scrollHeight + "px";
-    updateFilterUI(true);
-    localStorage.setItem("filterExpanded", "1");
-  }
-}
-
 document.addEventListener("DOMContentLoaded", function () {
   const body = document.getElementById("filterBody");
+  if (!body) return;
+
   const expanded = localStorage.getItem("filterExpanded") === "1";
 
   if (expanded) {
-    body.style.maxHeight = body.scrollHeight + "px";
-    updateFilterUI(true);
-  } else {
-    body.style.maxHeight = "0px";
-    updateFilterUI(false);
+    body.classList.add("is-open");
   }
+
+  updateFilterUI(expanded);
 });
 </script>
-
 
 
 {% endblock %}
