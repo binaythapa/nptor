@@ -426,48 +426,6 @@
   {% endfor %}
 {% endif %}
 
-
-
-{% if result == "correct" %}
-<div class="notification is-success mt-3">✅ Correct!</div>
-{% elif result == "wrong" %}
-<div class="notification mt-3"
-     style="background:#fff7f7; border-left:4px solid #fca5a5;">
-
-  <p style="color:#7f1d1d; font-weight:600;">
-    ❌ Incorrect
-  </p>
-
-  <p class="mt-2" style="color:#374151; font-weight:500;">
-    Correct answer:
-  </p>
-
-  <ul class="mt-2 ml-3">
-    {% for c in choices %}
-      {% if c.is_correct %}
-        <li style="color:#065f46;">
-          ✔ {{ c.text }}
-        </li>
-      {% endif %}
-    {% endfor %}
-  </ul>
-</div>
-
-
-
-{% if explanation %}
-<button type="button" class="button is-small is-info mt-2"
-        onclick="toggleExplanation()" id="explanationToggleBtn">
-  📘 Show Explanation
-</button>
-
-<div id="explanationBox" class="notification is-info mt-3"
-     style="display:none;">
-  {{ explanation|linebreaks }}
-</div>
-{% endif %}
-{% endif %}
-
 <div class="practice-actions mt-4 is-flex is-justify-content-space-between">
 
   <div class="is-flex" style="gap:8px;">
@@ -505,6 +463,45 @@
 
 </form>
 
+
+
+{% if result == "correct" %}
+<div class="notification is-success mt-3">✅ Correct!</div>
+{% elif result == "wrong" %}
+<div class="notification mt-3"
+     style="background:#fff7f7; border-left:4px solid #fca5a5;">
+
+  <p style="color:#7f1d1d; font-weight:600;">
+    ❌ Incorrect
+  </p>
+
+  <p class="mt-2" style="color:#374151; font-weight:500;">
+    Correct answer:
+  </p>
+
+  <ul class="mt-2 ml-3">
+    {% for c in choices %}
+      {% if c.is_correct %}
+        <li style="color:#065f46;">
+          ✔ {{ c.text }}
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</div>
+
+{% if explanation %}
+<button type="button" class="button is-small is-info mt-2"
+        onclick="toggleExplanation()" id="explanationToggleBtn">
+  📘 Show Explanation
+</button>
+
+<div id="explanationBox" class="notification is-info mt-3"
+     style="display:none;">
+  {{ explanation|linebreaks }}
+</div>
+{% endif %}
+{% endif %}
 <!-- ================= FEEDBACK ================= -->
 {% if user.is_authenticated %}
 <hr class="my-4">
