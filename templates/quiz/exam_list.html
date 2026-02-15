@@ -12,22 +12,22 @@
     <div class="column is-4">
       <div class="box course-card">
 
-        <div class="card-content">
+        <div class="course-body">
 
-          <!-- Smaller Title -->
-          <h3 class="title is-6 mb-2 course-title">
+          <!-- Smaller & Controlled Title -->
+          <h3 class="course-title">
             {{ item.course.title }}
           </h3>
 
           <!-- Fixed Description Area -->
-          <p class="is-size-7 has-text-grey mb-4 course-description">
-            {{ item.course.description|truncatewords:20 }}
+          <p class="course-description">
+            {{ item.course.description|truncatewords:25 }}
           </p>
 
         </div>
 
-        <!-- Button always at bottom -->
-        <div class="card-footer">
+        <!-- Button Always at Bottom -->
+        <div class="course-footer">
           {% if item.is_subscribed %}
             <button
               class="button is-success is-small is-fullwidth"
@@ -228,29 +228,56 @@
   display: block;
 }
 
+/* ================= COURSE CARD DESIGN ================= */
 
 .course-card {
+  height: 280px;                 /* Fixed equal height */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 250px; /* Fixed height */
+  border-radius: 12px;
+  transition: all 0.25s ease;
 }
 
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+}
+
+.course-body {
+  flex-grow: 1;
+}
+
+/* Smaller Title */
 .course-title {
-  min-height: 40px; /* keeps title area steady */
+  font-size: 1rem;               /* Smaller than Bulma title */
+  font-weight: 600;
+  margin-bottom: 12px;
+  min-height: 48px;              /* Fixed title space */
   overflow: hidden;
 }
 
+/* Fixed Description Area */
 .course-description {
-  min-height: 60px; /* fixed description space */
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+  min-height: 72px;              /* Fixed description space */
   overflow: hidden;
 }
 
-.card-footer {
+/* Button alignment */
+.course-footer {
   margin-top: auto;
 }
 
+/* Remove default Bulma card spacing conflict */
+.card-content {
+  padding-bottom: 0;
+}
+
 </style>
+
 
 <!-- ================= JS ================= -->
 <script>
