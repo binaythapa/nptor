@@ -1,6 +1,7 @@
 from django.db import models
 from quiz.models import Category,SubscriptionPlan
 from organizations.models.organization import Organization
+from django.conf import settings
 #from .plan import SubscriptionPlan
 
 
@@ -13,6 +14,8 @@ class Course(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
     description = models.TextField()
+
+
 
     category = models.ForeignKey(
         Category,
@@ -67,6 +70,14 @@ class Course(models.Model):
     )
 
     is_public = models.BooleanField(default=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="courses_created"
+        )
+
 
     class Meta:
         ordering = ["-created_at"]

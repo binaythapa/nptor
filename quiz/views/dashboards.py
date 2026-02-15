@@ -265,7 +265,7 @@ def admin_dashboard(request):
             "drop_exam": "—",
         })
 
-    return render(request, "quiz/admin_dashboard.html", {
+    return render(request, "quiz/dashboard/admin_dashboard.html", {
         # KPIs
         "total_users": total_users,
         "total_attempts": total_attempts,
@@ -549,7 +549,7 @@ def student_dashboard(request):
             "total": total_lessons,
         })
 
-    return render(request, "quiz/student_dashboard.html", {
+    return render(request, "quiz/dashboard/student_dashboard.html", {
         "active_attempt": active_attempt,
         "total_attempts": total_attempts,
         "passed_count": passed_count,

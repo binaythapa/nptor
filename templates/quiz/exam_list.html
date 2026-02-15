@@ -10,34 +10,40 @@
 <div class="columns is-multiline mb-6">
   {% for item in courses %}
     <div class="column is-4">
-      <div class="box">
+      <div class="box course-card">
 
-        <h3 class="title is-5">
-          {{ item.course.title }}
-        </h3>
+        <div class="card-content">
 
-        <p class="is-size-7 has-text-grey mb-3">
-          {{ item.course.description|truncatewords:20 }}
-        </p>
+          <!-- Smaller Title -->
+          <h3 class="title is-6 mb-2 course-title">
+            {{ item.course.title }}
+          </h3>
 
-        {% if item.is_subscribed %}
-          <!-- ALREADY SUBSCRIBED -->
-          <button
-            class="button is-success is-small is-fullwidth"
-            disabled
-            title="You are already subscribed">
-            ✔ Subscribed
-          </button>
-        {% else %}
-          <!-- SUBSCRIBE -->
-          <form method="post"
-                action="{% url 'courses:subscribe_course' item.course.id %}">
-            {% csrf_token %}
-            <button class="button is-primary is-small is-fullwidth">
-              💳 Subscribe Now
+          <!-- Fixed Description Area -->
+          <p class="is-size-7 has-text-grey mb-4 course-description">
+            {{ item.course.description|truncatewords:20 }}
+          </p>
+
+        </div>
+
+        <!-- Button always at bottom -->
+        <div class="card-footer">
+          {% if item.is_subscribed %}
+            <button
+              class="button is-success is-small is-fullwidth"
+              disabled>
+              ✔ Subscribed
             </button>
-          </form>
-        {% endif %}
+          {% else %}
+            <form method="post"
+                  action="{% url 'courses:subscribe_course' item.course.id %}">
+              {% csrf_token %}
+              <button class="button is-primary is-small is-fullwidth">
+                💳 Subscribe Now
+              </button>
+            </form>
+          {% endif %}
+        </div>
 
       </div>
     </div>
@@ -49,6 +55,7 @@
     No courses available at the moment.
   </p>
 {% endif %}
+
 
 
 
@@ -220,6 +227,29 @@
 .contact-enroll-menu.is-active {
   display: block;
 }
+
+
+.course-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 250px; /* Fixed height */
+}
+
+.course-title {
+  min-height: 40px; /* keeps title area steady */
+  overflow: hidden;
+}
+
+.course-description {
+  min-height: 60px; /* fixed description space */
+  overflow: hidden;
+}
+
+.card-footer {
+  margin-top: auto;
+}
+
 </style>
 
 <!-- ================= JS ================= -->
