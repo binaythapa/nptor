@@ -105,10 +105,11 @@
     🔒 Subscription
   </span>
 {% endif %}
-
-
-
   </div>
+
+
+
+
 
   <!-- ================= TRACK-LEVEL SUBSCRIPTION ================= -->
   {% if track.subscription_scope == "track" and not items.0.is_track_subscribed %}
@@ -141,38 +142,59 @@
 
   <hr>
 
-  <!-- ================= EXAMS ================= -->
-  {% for item in items %}
-  <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
 
-    <div>
-      <strong>Level {{ item.exam.level }}</strong> •
-      {{ item.exam.question_count }} questions •
-      {{ item.duration_minutes }} min
+
+  
+<!-- ================= EXAMS ================= -->
+{% for item in items %}
+
+<div class="exam-card">
+  <div class="exam-left">
+    <div class="exam-title">
+      Level {{ item.exam.level }}
     </div>
+
+    <div class="exam-meta">
+      <span class="tag is-light is-rounded">
+        {{ item.exam.question_count }} Questions
+      </span>
+
+      <span class="tag is-light is-rounded">
+        {{ item.duration_minutes }} Minutes
+      </span>
+    </div>
+  </div>
+
+  <div class="exam-right">
 
     {% if track.subscription_scope == "exam" %}
 
       {% if item.is_exam_subscribed %}
-        <span class="tag is-success is-light">✔ Subscribed</span>
+        <span class="tag is-success is-light is-medium">
+          ✔ Subscribed
+        </span>
 
       {% elif item.locked %}
-        <span class="tag is-light">🔒 {{ item.locked_reason }}</span>
+        <span class="tag is-light is-medium">
+          🔒 {{ item.locked_reason }}
+        </span>
 
       {% else %}
 
         {% if item.exam.is_free %}
           <!-- FREE EXAM -->
-          <form method="post" action="{% url 'quiz:subscribe_exam' item.exam.id %}">
+          <form method="post"
+                action="{% url 'quiz:subscribe_exam' item.exam.id %}">
             {% csrf_token %}
-            <button class="button is-success is-small">
+            <button class="button is-success is-small is-rounded">
               Subscribe Free
             </button>
           </form>
+
         {% else %}
           <!-- PAID EXAM -->
           <div class="contact-enroll-wrapper">
-            <button class="button is-warning is-small"
+            <button class="button is-warning is-small is-rounded"
                     onclick="toggleEnrollMenu(event, this)">
               📞 Contact to Enroll
             </button>
@@ -180,7 +202,7 @@
             <div class="contact-enroll-menu">
               <a href="https://wa.me/918754795806?text=Hi%20I%20want%20to%20enroll%20in%20{{ item.exam.title }}"
                  target="_blank"
-                 class="button is-success is-small is-fullwidth mb-1">
+                 class="button is-success is-small is-fullwidth mb-2">
                 WhatsApp
               </a>
 
@@ -195,16 +217,21 @@
 
       {% endif %}
     {% endif %}
+
   </div>
-  {% endfor %}
 </div>
 
 {% empty %}
-<p>No exams available.</p>
+<p class="has-text-grey">No exams available.</p>
 {% endfor %}
 
 <!-- ================= CSS ================= -->
 <style>
+
+.contact-enroll-wrapper {
+  position: relative;
+}
+
 .contact-enroll-wrapper {
   position: relative;
   display: inline-block;
@@ -275,6 +302,74 @@
 .card-content {
   padding-bottom: 0;
 }
+
+/* ================= EXAM CARD ================= */
+
+.exam-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.exam-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  transform: translateY(-3px);
+}
+
+.exam-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exam-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.exam-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exam-right {
+  display: flex;
+  align-items: center;
+}
+
+/* Improve dropdown */
+.contact-enroll-menu {
+  min-width: 170px;
+  border-radius: 8px;
+}
+@media (max-width: 768px) {
+  .exam-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .exam-right {
+    width: 100%;
+  }
+
+  .exam-right .button,
+  .exam-right form {
+    width: 100%;
+  }
+}
+.exam-card,
+.course-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
 
 </style>
 
