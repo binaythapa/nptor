@@ -13,6 +13,7 @@ from courses.models import (
     Lesson,
     LessonProgress,
     CourseEnrollment,
+    CourseSubscription
 )
 
 from quiz.models import Exam
