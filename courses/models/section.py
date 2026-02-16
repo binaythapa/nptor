@@ -14,7 +14,6 @@ from .course import *
 # =====================================================
 # COURSE SECTION
 # =====================================================
-
 class CourseSection(models.Model):
     course = models.ForeignKey(
         Course,
@@ -23,7 +22,18 @@ class CourseSection(models.Model):
     )
 
     title = models.CharField(max_length=255)
-    order = models.PositiveIntegerField()
+
+    order = models.PositiveIntegerField(default=1)
+
+    # 🔥 Soft delete
+    is_deleted = models.BooleanField(default=False)
+
+    # 🔥 Visibility
+    is_visible = models.BooleanField(default=True)
+
+    # 🔥 Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["order"]

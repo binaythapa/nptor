@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}LMS{% endblock %}</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="/static/css/main.css">
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+  <!-- ================= HEADER ================= -->
+  <header style="background:#1a1a1a;padding:12px 20px;color:white;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <strong>LMS</strong>
+
+      <nav>
+         <a href="{% url 'quiz:dashboard' %}" style="color:white;margin-right:12px;">Home</a>
+          <a href="{% url 'quiz:exam_list' %}" style="color:white;margin-right:12px;">Exam</a>
+        <a href="{% url 'courses:course_list' %}" style="color:white;margin-right:12px;">Courses</a>
+        
+        
+      </nav>
+    </div>
+  </header>
+
+  <!-- ================= CONTENT ================= -->
+  <main style="min-height: calc(100vh - 120px);">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer style="background:#f5f5f5;padding:12px;text-align:center;font-size:13px;">
+    © {{ now|date:"Y" }} LMS • All rights reserved
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>

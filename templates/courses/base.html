@@ -1,45 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{% block title %}LMS{% endblock %}</title>
+    <meta charset="UTF-8">
+    <title>{% block title %}LMS Platform{% endblock %}</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f4f6f9;
+        }
 
-  <!-- Global CSS -->
-  <link rel="stylesheet" href="/static/css/main.css">
+        nav {
+            background: #1f2937;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-  {% block extra_head %}{% endblock %}
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 15px;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        button {
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        input, select {
+            padding: 6px;
+            margin: 5px 0;
+        }
+
+        hr {
+            margin: 20px 0;
+        }
+
+        .nav-left a {
+            margin-right: 15px;
+        }
+
+        .nav-right {
+            color: white;
+        }
+    </style>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    {% block extra_head %}{% endblock %}
 </head>
-
 <body>
 
-  <!-- ================= HEADER ================= -->
-  <header style="background:#1a1a1a;padding:12px 20px;color:white;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <strong>LMS</strong>
+<!-- ================= NAVIGATION ================= -->
+<nav>
+    <div class="nav-left">
 
-      <nav>
-         <a href="{% url 'quiz:dashboard' %}" style="color:white;margin-right:12px;">Home</a>
-          <a href="{% url 'quiz:exam_list' %}" style="color:white;margin-right:12px;">Exam</a>
-        <a href="{% url 'courses:course_list' %}" style="color:white;margin-right:12px;">Courses</a>
-        
-        
-      </nav>
+        <!-- ================= STUDENT ================= -->
+
+        <a href="{% url 'courses:course_list' %}">Courses</a>
+
+        {% if user.is_authenticated %}
+
+            <!-- ================= INSTRUCTOR ================= -->
+
+            <a href="{% url 'courses:instructor_dashboard' %}">
+                Instructor Dashboard
+            </a>
+
+            <a href="{% url 'courses:course_create' %}">
+                + Create Course
+            </a>
+
+            <!-- If course context exists -->
+            {% if course %}
+                <a href="{% url 'courses:course_detail' course.slug %}">
+                    View Course
+                </a>
+
+                <a href="{% url 'courses:course_builder' course.slug %}">
+                    Curriculum Builder
+                </a>
+
+                <a href="{% url 'courses:course_edit' course.slug %}">
+                    Edit Course
+                </a>
+
+                <a href="{% url 'courses:publish_course' course.slug %}">
+                    Publish
+                </a>
+            {% endif %}
+
+            <!-- If lesson context exists -->
+            {% if lesson %}
+                <a href="{% url 'courses:lesson_edit' lesson.id %}">
+                    Edit Lesson
+                </a>
+            {% endif %}
+
+        {% endif %}
     </div>
-  </header>
 
-  <!-- ================= CONTENT ================= -->
-  <main style="min-height: calc(100vh - 120px);">
-    {% block content %}{% endblock %}
-  </main>
+    <div class="nav-right">
+        {% if user.is_authenticated %}
+            Hi, {{ user.username }} |
 
-  <!-- ================= FOOTER ================= -->
-  <footer style="background:#f5f5f5;padding:12px;text-align:center;font-size:13px;">
-    © {{ now|date:"Y" }} LMS • All rights reserved
-  </footer>
+            <a href="#"
+               onclick="event.preventDefault();
+                        document.getElementById('logout-form').submit();">
+                Logout
+            </a>
 
-  {% block extra_js %}{% endblock %}
+            <form id="logout-form"
+                  method="post"
+                  action="{% url 'accounts:logout' %}"
+                  style="display:none;">
+                {% csrf_token %}
+            </form>
+
+        {% else %}
+            <a href="{% url 'accounts:request-login-otp' %}">
+                Login
+            </a>
+        {% endif %}
+    </div>
+</nav>
+
+
+<!-- ================= MAIN CONTENT ================= -->
+
+<div class="container">
+    {% block content %}
+    {% endblock %}
+</div>
+<script>
+document.body.addEventListener('htmx:configRequest', function(event) {
+    event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+});
+</script>
 
 </body>
 </html>

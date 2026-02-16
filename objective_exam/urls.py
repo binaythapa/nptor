@@ -10,6 +10,7 @@ from core.views.health import health_check
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health-check"),
+    path("ckeditor/", include("ckeditor_uploader.urls")),
 
     # ==============================
     # APPS

@@ -1,0 +1,220 @@
+{% extends "courses/base.html" %}
+
+{% block title %}Course Builder{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+<style>
+.section-card {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    background: #fff;
+}
+
+.section-header {
+    padding: 10px;
+    background: #f4f6f9;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lesson-item {
+    padding: 6px;
+    margin: 5px 0;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-chosen {
+    background: #e0f2ff !important;
+}
+
+.sortable-drag {
+    background: #c7e9ff !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h2>{{ course.title }}</h2>
+
+<!-- ================= ADD SECTION ================= -->
+
+<form 
+    hx-post="{% url 'courses:api_create_section' %}"
+    hx-target="#section-container"
+    hx-swap="innerHTML"
+>
+    {% csrf_token %}
+    <input type="hidden" name="course_id" value="{{ course.id }}">
+    <input type="text" name="title" placeholder="New Section Title" required>
+    <button type="submit">Add Section</button>
+</form>
+
+<hr>
+
+<div id="section-container">
+    {% include "courses/instructor/partials/section_list.html" %}
+</div>
+
+<script>
+
+// ================= INITIALIZE SORTABLE =================
+
+function initSortable() {
+
+    const sectionContainer = document.getElementById('section-container');
+
+    if (sectionContainer && !sectionContainer.dataset.sortableInitialized) {
+        new Sortable(sectionContainer, {
+            animation: 200,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            onEnd: updateOrder
+        });
+
+        sectionContainer.dataset.sortableInitialized = true;
+    }
+
+    document.querySelectorAll(".lesson-list").forEach(function(el) {
+
+        if (!el.dataset.sortableInitialized) {
+            new Sortable(el, {
+                animation: 200,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                onEnd: updateOrder
+            });
+
+            el.dataset.sortableInitialized = true;
+        }
+    });
+}
+
+// ================= UPDATE ORDER =================
+
+function updateOrder() {
+
+    let items = [];
+
+    document.querySelectorAll(".section-card").forEach((section, sIndex) => {
+
+        items.push({
+            type: "section",
+            id: section.dataset.id,
+            order: sIndex + 1
+        });
+
+        section.querySelectorAll(".lesson-item").forEach((lesson, lIndex) => {
+            items.push({
+                type: "lesson",
+                id: lesson.dataset.id,
+                order: lIndex + 1
+            });
+        });
+
+    });
+
+    fetch("{% url 'courses:api_update_order' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({ items: items })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert("Order update failed.");
+        }
+    })
+    .catch(() => alert("Error updating order"));
+}
+
+// ================= TOGGLE SECTION =================
+
+function toggleSection(sectionId) {
+    const body = document.getElementById("section-body-" + sectionId);
+    if (body) {
+        body.style.display = body.style.display === "none" ? "block" : "none";
+    }
+}
+
+// ================= CONDITIONAL LESSON FIELDS =================
+
+function toggleLessonFields(select, sectionId) {
+
+    const video = document.getElementById("video-fields-" + sectionId);
+    const article = document.getElementById("article-fields-" + sectionId);
+
+    if (video) video.style.display = "none";
+    if (article) article.style.display = "none";
+
+    if (select.value === "video" && video) {
+        video.style.display = "block";
+    }
+
+    if (select.value === "article" && article) {
+        article.style.display = "block";
+    }
+}
+
+// ================= INLINE EDIT =================
+
+function editLesson(lessonId) {
+
+    const newTitle = prompt("Enter new lesson title:");
+    if (!newTitle) return;
+
+    fetch("{% url 'courses:api_edit_lesson' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: `lesson_id=${lessonId}&title=${encodeURIComponent(newTitle)}`
+    })
+    .then(() => location.reload());
+}
+
+// ================= INIT EVENTS =================
+
+document.addEventListener("htmx:afterSwap", initSortable);
+document.addEventListener("DOMContentLoaded", initSortable);
+
+
+
+// Toggle section collapse
+function toggleSection(sectionId) {
+    const body = document.getElementById("section-body-" + sectionId);
+    if (!body) return;
+
+    body.style.display = body.style.display === "none" ? "block" : "none";
+}
+
+// Toggle lesson form
+function toggleLessonForm(sectionId) {
+    const form = document.getElementById("lesson-form-" + sectionId);
+    if (!form) return;
+
+    form.style.display = form.style.display === "none" ? "block" : "none";
+}
+
+
+
+</script>
+
+{% endblock %}

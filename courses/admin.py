@@ -41,17 +41,20 @@ class CourseSectionInline(admin.StackedInline):
 # =========================
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
+
     list_display = (
         "title",
-        "organization",        # ✅ ADDED
+        "organization",
         "level",
         "is_published",
+        "is_deleted",      # ✅ ADDED
         "created_at",
     )
 
     list_filter = (
-        "organization",        # ✅ ADDED
+        "organization",
         "is_published",
+        "is_deleted",      # ✅ ADDED
         "level",
         "created_at",
     )
@@ -59,7 +62,7 @@ class CourseAdmin(admin.ModelAdmin):
     search_fields = (
         "title",
         "description",
-        "organization__name",  # ✅ ADDED
+        "organization__name",
     )
 
     prepopulated_fields = {"slug": ("title",)}
@@ -69,6 +72,7 @@ class CourseAdmin(admin.ModelAdmin):
     inlines = (CourseSectionInline,)
 
     fieldsets = (
+
         ("Basic Info", {
             "fields": (
                 "title",
@@ -79,7 +83,7 @@ class CourseAdmin(admin.ModelAdmin):
             )
         }),
 
-        ("Ownership", {        # ✅ NEW SECTION
+        ("Ownership", {
             "fields": (
                 "organization",
             ),
@@ -94,6 +98,7 @@ class CourseAdmin(admin.ModelAdmin):
                 "level",
                 "subscription_plans",
                 "is_published",
+                "is_deleted",    # ✅ ADDED HERE
             )
         }),
 
@@ -107,21 +112,31 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(CourseSection)
 class CourseSectionAdmin(admin.ModelAdmin):
+
     list_display = (
         "title",
         "course",
         "order",
+        "is_deleted",   # ✅ ADDED
+        "created_at",   # optional if you added it
     )
-    list_filter = ("course",)
+
+    list_filter = (
+        "course",
+        "is_deleted",   # ✅ ADDED
+    )
+
     search_fields = ("title",)
+
     ordering = ("course", "order")
+
     inlines = (LessonInline,)
 
-
-
+    readonly_fields = ("created_at", "updated_at")  # optional
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
+
     # =========================
     # LIST VIEW
     # =========================
@@ -130,6 +145,7 @@ class LessonAdmin(admin.ModelAdmin):
         "section",
         "lesson_type",
         "order",
+        "is_deleted",          # ✅ ADDED
         "linked_resource",
         "practice_difficulty",
     )
@@ -138,6 +154,7 @@ class LessonAdmin(admin.ModelAdmin):
         "lesson_type",
         "section__course",
         "practice_difficulty",
+        "is_deleted",          # ✅ ADDED
     )
 
     search_fields = ("title",)
@@ -153,6 +170,7 @@ class LessonAdmin(admin.ModelAdmin):
                 "title",
                 "lesson_type",
                 "order",
+                "is_deleted",    # ✅ ADDED HERE
             )
         }),
 
@@ -199,7 +217,7 @@ class LessonAdmin(admin.ModelAdmin):
     readonly_fields = ("article_preview",)
 
     # =========================
-    # STYLING (YOUR EXISTING CSS)
+    # STYLING
     # =========================
     class Media:
         css = {
@@ -238,6 +256,14 @@ class LessonAdmin(admin.ModelAdmin):
         )
 
     article_preview.short_description = "📖 Article Preview"
+
+
+    actions = ["restore_lessons"]
+
+    def restore_lessons(self, request, queryset):
+        queryset.update(is_deleted=False)
+
+    restore_lessons.short_description = "Restore selected lessons"
 
 
 

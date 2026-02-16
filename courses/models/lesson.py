@@ -1,10 +1,6 @@
 from django.db import models
 from .section import *
-
-
-# =====================================================
-# LESSON
-# =====================================================
+from ckeditor_uploader.fields import RichTextUploadingField
 
 class Lesson(models.Model):
 
@@ -30,11 +26,17 @@ class Lesson(models.Model):
     lesson_type = models.CharField(max_length=20, choices=LESSON_TYPES)
     order = models.PositiveIntegerField()
 
+    # 🔥 SOFT DELETE
+    is_deleted = models.BooleanField(default=False)
+
+    # 🔥 OPTIONAL (recommended for audit)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     # ================= CONTENT =================
     video_url = models.URLField(blank=True, null=True)
 
-    # 🎯 Rich content with inline images, code, diagrams
-    article_content = RichTextField(
+    article_content = RichTextUploadingField(
         blank=True,
         help_text="Supports text, images, code blocks, diagrams"
     )
@@ -63,9 +65,8 @@ class Lesson(models.Model):
             ("hard", "Hard"),
         ),
         null=True,
-        blank=True,
-        help_text="Optional difficulty filter when practice is launched from course"
-    )  
+        blank=True
+    )
 
     practice_threshold = models.PositiveIntegerField(default=10)
     practice_lock_filters = models.BooleanField(default=True)
@@ -103,9 +104,7 @@ class Lesson(models.Model):
         ordering = ["order"]
         unique_together = ("section", "order")
 
-    # ================= VALIDATION =================
     def clean(self):
-
         if self.lesson_type == self.TYPE_QUIZ and not self.exam:
             raise ValidationError("Quiz lesson must be linked to an exam.")
 
@@ -125,4 +124,3 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.section.course.title} → {self.title}"
-

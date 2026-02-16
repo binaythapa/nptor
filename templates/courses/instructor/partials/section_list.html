@@ -1,0 +1,80 @@
+{% if sections %}
+    {% for section in sections %}
+        <div class="section-card" data-id="{{ section.id }}">
+
+            <!-- SECTION HEADER -->
+            <div class="section-header"
+                 onclick="toggleSection('{{ section.id }}')"
+                 style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f4f6f9; cursor:pointer;">
+
+                <strong>{{ section.title }}</strong>
+
+                <div>
+                    <button type="button"
+                            onclick="event.stopPropagation(); toggleLessonForm('{{ section.id }}')">
+                        + Add Lesson
+                    </button>
+
+                    <button type="button"
+                            hx-post="{% url 'courses:api_delete_section' section.id %}"
+                            hx-target="#section-container"
+                            hx-swap="innerHTML"
+                            hx-confirm="Are you sure you want to delete this section?"
+                            onclick="event.stopPropagation();"
+                            style="background:#ffe5e5;">
+                        Delete
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION BODY -->
+            <div id="section-body-{{ section.id }}"
+                 style="padding:10px; display:none;">
+
+                <!-- ADD LESSON FORM -->
+                <div id="lesson-form-{{ section.id }}"
+                     style="display:none; margin-bottom:10px; padding:10px; border:1px solid #ddd; border-radius:5px; background:#f9f9f9;">
+
+                    <form
+                        hx-post="{% url 'courses:api_create_lesson' %}"
+                        hx-target="#lessons-{{ section.id }}"
+                        hx-swap="innerHTML"
+                        hx-on="htmx:afterRequest: this.reset()"
+                    >
+                        {% csrf_token %}
+
+                        <input type="hidden"
+                               name="section_id"
+                               value="{{ section.id }}">
+
+                        <input type="text"
+                               name="title"
+                               placeholder="Lesson Title"
+                               required>
+
+                        <select name="lesson_type">
+                            <option value="video">Video</option>
+                            <option value="article">Article</option>
+                            <option value="quiz">Quiz</option>
+                            <option value="practice">Practice</option>
+                        </select>
+
+                        <button type="submit">Save</button>
+                    </form>
+                </div>
+
+                <!-- LESSON LIST -->
+               <div id="lessons-{{ section.id }}"
+     class="lesson-list">
+
+    {% include "courses/instructor/partials/lesson_list.html" %}
+
+</div>
+
+
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <p style="color:#777;">No sections yet.</p>
+{% endif %}

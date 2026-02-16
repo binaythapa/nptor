@@ -1,0 +1,29 @@
+{% if section %}
+    {% for lesson in section.lessons.all %}
+        <div class="lesson-item"
+             data-id="{{ lesson.id }}"
+             style="padding:6px; margin:5px 0; background:#fafafa; border:1px solid #ddd; border-radius:4px;">
+
+            {{ lesson.title }} ({{ lesson.lesson_type }})
+
+            <div style="float:right;">
+                {% if lesson.id %}
+                    <a href="{% url 'courses:lesson_edit' lesson.id %}"
+                       style="margin-right:5px;">
+                        Edit
+                    </a>
+                {% endif %}
+
+                <button
+                    hx-post="{% url 'courses:api_delete_lesson' lesson.id %}"
+                    hx-target="#lessons-{{ section.id }}"
+                    hx-swap="innerHTML">
+                    Delete
+                </button>
+            </div>
+
+        </div>
+    {% empty %}
+        <p>No lessons yet.</p>
+    {% endfor %}
+{% endif %}

@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     "ckeditor_uploader",
     "django_ratelimit",
 
+    
+
     # Apps
     "quiz.apps.QuizConfig",
     "courses",
@@ -227,6 +229,7 @@ CKEDITOR_UPLOAD_PATH = "uploads/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+CKEDITOR_ALLOW_NONIMAGE_FILES = True
 # ============================================================
 # AUTHENTICATION
 # ============================================================
@@ -351,3 +354,45 @@ SILENCED_SYSTEM_CHECKS = [
     "django_ratelimit.E003",
     "django_ratelimit.W001",
 ]
+
+
+
+
+
+CKEDITOR_ALLOW_NONIMAGE_FILES = True
+CKEDITOR_IMAGE_BACKEND = "pillow"
+
+
+CKEDITOR_UPLOAD_PATH = "lesson_uploads/"
+
+CKEDITOR_CONFIGS = {
+    "default": {
+        "toolbar": "Custom",
+        "height": 400,
+        "width": "auto",
+        "extraPlugins": ",".join([
+            "uploadimage",
+            "image2",
+            "codesnippet",
+            "autogrow",
+        ]),
+        "removePlugins": "stylesheetparser",
+
+        "toolbar_Custom": [
+            ["Format", "Font", "FontSize"],
+            ["Bold", "Italic", "Underline", "Strike"],
+            ["TextColor", "BGColor"],
+            ["NumberedList", "BulletedList"],
+            ["Outdent", "Indent"],
+            ["JustifyLeft", "JustifyCenter", "JustifyRight", "JustifyBlock"],
+            ["Link", "Unlink"],
+            ["Image", "UploadImage", "Table"],
+            ["HorizontalRule", "Smiley", "SpecialChar"],
+            ["CodeSnippet"],
+            ["RemoveFormat"],
+            ["Undo", "Redo"],
+        ],
+
+        "codeSnippet_theme": "monokai_sublime",
+    }
+}

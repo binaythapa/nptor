@@ -1,0 +1,98 @@
+{% extends "courses/base.html" %}
+
+{% block title %}Instructor Dashboard{% endblock %}
+
+{% block content %}
+
+<h2 style="margin-bottom:20px;">Instructor Dashboard</h2>
+
+<div style="margin-bottom:20px;">
+    <a href="{% url 'courses:course_create' %}"
+       style="padding:8px 14px;
+              background:#5624d0;
+              color:white;
+              text-decoration:none;
+              border-radius:4px;">
+        + Create New Course
+    </a>
+</div>
+
+{% if courses %}
+
+    <div style="
+        display:grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap:20px;
+    ">
+
+        {% for course in courses %}
+            <div style="
+                border:1px solid #e5e7eb;
+                border-radius:8px;
+                padding:16px;
+                background:#fff;
+                box-shadow:0 2px 6px rgba(0,0,0,0.05);
+            ">
+
+                <!-- TITLE -->
+                <h3 style="margin:0 0 8px 0;">
+                    {{ course.title }}
+                </h3>
+
+                <!-- STATUS -->
+                <div style="margin-bottom:12px;">
+                    {% if course.is_published %}
+                        <span style="color:green; font-size:14px;">
+                            Published ✅
+                        </span>
+                    {% else %}
+                        <span style="color:#b45309; font-size:14px;">
+                            Draft
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- ACTIONS -->
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+
+                    {% if not course.is_published %}
+                        <a href="{% url 'courses:publish_course' course.slug %}"
+                           style="font-size:13px;">
+                            Publish
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'courses:course_edit' course.slug %}"
+                       style="font-size:13px;">
+                        Edit Details
+                    </a>
+
+                    <a href="{% url 'courses:course_builder' course.slug %}"
+                       style="font-size:13px;">
+                        Curriculum Builder
+                    </a>
+
+                    <!-- Delete (POST safer than GET) -->
+                    <form method="post"
+                          action="{% url 'courses:course_delete' course.slug %}"
+                          onsubmit="return confirm('Delete this course?');"
+                          style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit"
+                                style="font-size:13px; color:red; background:none; border:none; cursor:pointer;">
+                            Delete
+                        </button>
+                    </form>
+
+                </div>
+
+            </div>
+        {% endfor %}
+
+    </div>
+
+{% else %}
+    <p style="color:#777;">No courses created yet.</p>
+{% endif %}
+
+{% endblock %}

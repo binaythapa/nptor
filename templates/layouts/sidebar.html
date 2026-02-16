@@ -94,5 +94,27 @@
       </ul>
     {% endif %}
 
+
+    <!-- ================= INSTRUCTOR ================= -->
+{% if user.is_authenticated %}
+  <p class="menu-label has-text-grey-light mt-3 mb-1">Instructor</p>
+  <ul class="menu-list">
+
+    <li>
+      <a href="{% if not is_from_course %}{% url 'courses:instructor_dashboard' %}{% else %}javascript:void(0);{% endif %}"
+         class="py-1 {% if is_from_course %}is-disabled{% endif %}"
+         {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+        <span class="icon is-small mr-1">
+          <i class="fa fa-chalkboard-teacher"></i>
+        </span>
+        Course Dashboard
+        <span class="tag is-info is-light is-small ml-2">Manage</span>
+      </a>
+    </li>
+
+  </ul>
+{% endif %}
+
+
   </nav>
 </aside>

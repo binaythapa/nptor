@@ -1,0 +1,199 @@
+{% extends "courses/base.html" %}
+
+{% block title %}Create Course{% endblock %}
+
+{% block extra_head %}
+<style>
+
+/* ================= GLOBAL FORM STYLE ================= */
+
+.form-card {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    margin-bottom: 25px;
+}
+
+.form-card h3 {
+    margin-bottom: 15px;
+}
+
+.form-card input,
+.form-card select,
+.form-card textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.form-card input:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+    outline: none;
+    border-color: #5624d0;
+    box-shadow: 0 0 0 2px rgba(86,36,208,0.15);
+}
+
+/* ================= BUTTONS ================= */
+
+.btn-primary {
+    background: #5624d0;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: #401b9c;
+}
+
+.btn-outline {
+    background: white;
+    border: 1px solid #5624d0;
+    color: #5624d0;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-danger {
+    background: #ffe5e5;
+    border: 1px solid #f87171;
+    color: #b91c1c;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.section-form {
+    position: relative;
+    padding: 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: #f9fafb;
+    transition: all 0.25s ease;
+}
+
+.remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h2>Create Course</h2>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- COURSE DETAILS -->
+    <div class="form-card">
+        <h3>Course Details</h3>
+        {{ form.as_p }}
+    </div>
+
+    <!-- SECTIONS -->
+    <div class="form-card">
+        <h3>Sections</h3>
+
+        {{ formset.management_form }}
+
+        <div id="section-formset">
+            {% for form in formset %}
+                <div class="section-form">
+                    {{ form.id }}
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+
+                    <button type="button"
+                            class="btn-danger remove-btn"
+                            onclick="removeSection(this)">
+                        Remove
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+
+        <button type="button"
+                class="btn-outline"
+                onclick="addSection()">
+            + Add Section
+        </button>
+    </div>
+
+    <button type="submit" class="btn-primary">
+        Create Course
+    </button>
+
+</form>
+
+<script>
+
+function addSection() {
+
+    const formsetDiv = document.getElementById("section-formset");
+    const totalFormsInput = document.getElementById("id_sections-TOTAL_FORMS");
+
+    const formIndex = parseInt(totalFormsInput.value);
+
+    const template = `{{ formset.empty_form.as_p|escapejs }}`;
+
+    const newFormHtml = template.replace(/__prefix__/g, formIndex);
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "section-form";
+    wrapper.innerHTML = newFormHtml + `
+        <button type="button"
+                class="btn-danger remove-btn"
+                onclick="removeSection(this)">
+            Remove
+        </button>
+    `;
+
+    formsetDiv.appendChild(wrapper);
+
+    totalFormsInput.value = formIndex + 1;
+}
+
+function removeSection(button) {
+
+    const formDiv = button.closest(".section-form");
+    formDiv.remove();
+
+    const totalFormsInput = document.getElementById("id_sections-TOTAL_FORMS");
+    const forms = document.querySelectorAll(".section-form");
+
+    totalFormsInput.value = forms.length;
+
+    forms.forEach((form, index) => {
+        form.querySelectorAll("input, label").forEach(el => {
+            if (el.name)
+                el.name = el.name.replace(/sections-\d+-/, `sections-${index}-`);
+            if (el.id)
+                el.id = el.id.replace(/sections-\d+-/, `sections-${index}-`);
+            if (el.htmlFor)
+                el.htmlFor = el.htmlFor.replace(/sections-\d+-/, `sections-${index}-`);
+        });
+    });
+}
+
+</script>
+
+{% endblock %}
