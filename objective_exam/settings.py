@@ -222,12 +222,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 
-if DEBUG:
-    # Local development
-    MEDIA_ROOT = BASE_DIR / "media"
-else:
-    # Production (cPanel)
-    MEDIA_ROOT = Path("/home/nptorcom/public_html/media")
+
+MEDIA_ROOT = BASE_DIR / "media"
+
+
 
 
 
