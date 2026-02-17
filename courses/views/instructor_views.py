@@ -93,47 +93,53 @@ from django.shortcuts import render
 from courses.models import Course
 
 
+from django.db.models import Count
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from courses.models import Course
+
+
 @login_required
 def instructor_dashboard(request):
 
-    # ----------------------------
-    # Base Queryset (permission logic)
-    # ----------------------------
-    if request.user.is_superuser:
-        queryset = Course.objects.filter(is_deleted=False)
-
-    elif hasattr(request.user, "organization") and request.user.organization:
-        queryset = Course.objects.filter(
-            organization=request.user.organization,
-            is_deleted=False
-        )
-
-    else:
-        queryset = Course.objects.filter(
-            created_by=request.user,
-            is_deleted=False
-        )
-
-    # ----------------------------
-    # Optimizations & Annotations
-    # ----------------------------
-    courses = (
-        queryset
+    base_queryset = (
+        Course.objects
+        .filter(is_deleted=False)
         .select_related("created_by", "organization")
         .annotate(
             total_lessons=Count("sections__lessons", distinct=True),
             total_enrollments=Count("enrollments", distinct=True),
         )
-        .order_by("-updated_at")
+        .order_by("-created_at")
+    )
+
+    # -----------------------------
+    # Group Courses
+    # -----------------------------
+
+    organization_courses = base_queryset.filter(
+        organization__isnull=False
+    )
+
+    admin_courses = base_queryset.filter(
+        owner_type="platform"
+    )
+
+    my_courses = base_queryset.filter(
+        created_by=request.user,
+        organization__isnull=True
     )
 
     return render(
         request,
         "courses/instructor/dashboard.html",
         {
-            "courses": courses
+            "organization_courses": organization_courses,
+            "admin_courses": admin_courses,
+            "my_courses": my_courses,
         }
     )
+
 
 
 # ======================================================
