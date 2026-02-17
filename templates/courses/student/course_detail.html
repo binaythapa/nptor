@@ -6,117 +6,97 @@
 
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 40px 20px;
-            background: #f4f6f9;
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f9f9f9;
         }
 
         .card {
             background: #ffffff;
-            padding: 35px;
+            padding: 30px;
             max-width: 900px;
             margin: auto;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         h1 {
             margin-bottom: 10px;
-            font-size: 26px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .badge-draft {
-            background: #fff4e5;
-            color: #92400e;
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 600;
         }
 
         .meta {
-            color: #6b7280;
+            color: #666;
             margin-bottom: 20px;
             font-size: 14px;
         }
 
         .description {
-            margin: 25px 0;
+            margin: 20px 0;
             font-size: 15px;
-            line-height: 1.7;
-            white-space: pre-line;
-            color: #374151;
+            line-height: 1.6;
         }
 
-        /* ================= PROGRESS ================= */
-
+        /* Progress bar */
         .progress-wrapper {
-            margin: 30px 0;
+            margin: 25px 0;
         }
 
         .progress-label {
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-weight: bold;
+            margin-bottom: 6px;
         }
 
         .progress-bar-bg {
-            background: #e5e7eb;
-            border-radius: 8px;
-            height: 16px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            height: 14px;
             overflow: hidden;
         }
 
         .progress-bar-fill {
-            height: 16px;
-            background: linear-gradient(90deg, #22c55e, #16a34a);
+            height: 14px;
+            background: #4caf50;
             width: {{ progress }}%;
-            border-radius: 8px;
-            transition: width 0.4s ease;
+            border-radius: 6px;
         }
 
         .progress-meta {
-            margin-top: 8px;
+            margin-top: 6px;
             font-size: 13px;
-            color: #6b7280;
+            color: #555;
         }
 
-        /* ================= BUTTONS ================= */
-
+        /* Buttons */
         .btn {
             display: inline-block;
-            padding: 12px 24px;
+            padding: 12px 22px;
             background: #5624d0;
             color: #ffffff;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 4px;
+            margin-top: 25px;
             font-size: 15px;
-            font-weight: 500;
-            transition: all 0.2s ease;
         }
 
         .btn:hover {
             background: #401b9c;
-            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: #16a34a;
+            background: #2e7d32;
         }
 
         .btn-secondary:hover {
-            background: #15803d;
+            background: #1b5e20;
         }
 
-        .btn-disabled {
-            background: #d1d5db;
-            cursor: not-allowed;
-            pointer-events: none;
-            color: #6b7280;
-        }
+        .description {
+    margin: 20px 0;
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
     </style>
 </head>
 
@@ -124,18 +104,10 @@
 
 <div class="card">
 
-    <!-- Course Title -->
-    <h1>
-        {{ course.title }}
+    <!-- Course title -->
+    <h1>{{ course.title }}</h1>
 
-        {% if not course.is_published %}
-            <span class="badge-draft">
-                Draft (Private)
-            </span>
-        {% endif %}
-    </h1>
-
-    <!-- Meta Info -->
+    <!-- Meta info -->
     <div class="meta">
         Level: <strong>{{ course.level|title }}</strong>
         {% if course.category %}
@@ -143,55 +115,39 @@
         {% endif %}
     </div>
 
-    <!-- Progress (only if enrolled) -->
-    {% if is_enrolled %}
-        <div class="progress-wrapper">
-
-            <div class="progress-label">
-                Progress: {{ progress }}%
-            </div>
-
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill"></div>
-            </div>
-
-            <div class="progress-meta">
-                {{ completed }} of {{ total }} lessons completed
-            </div>
-
+    <!-- Progress -->
+    <div class="progress-wrapper">
+        <div class="progress-label">
+            Progress: {{ progress }}%
         </div>
-    {% endif %}
+
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill"></div>
+        </div>
+
+        <div class="progress-meta">
+            {{ completed }} of {{ total }} lessons completed
+        </div>
+    </div>
 
     <!-- Description -->
     <div class="description">
         {{ course.description }}
     </div>
 
-    <!-- ================= ACTION BUTTON ================= -->
-
-    {% if not is_enrolled %}
-        <a class="btn btn-disabled">
-            Enroll to Start Learning
+    <!-- Action button (INDUSTRY STANDARD LOGIC) -->
+    {% if progress == 100 %}
+        <a href="{% url 'courses:course_learn' course.slug %}" class="btn btn-secondary">
+            ✔ Review Course
         </a>
-
+    {% elif progress > 0 %}
+        <a href="{% url 'courses:course_learn' course.slug %}" class="btn">
+            ▶ Resume Learning
+        </a>
     {% else %}
-
-        {% if progress == 100 %}
-            <a href="{% url 'courses:course_learn' course.slug %}" class="btn btn-secondary">
-                ✔ Review Course
-            </a>
-
-        {% elif progress > 0 %}
-            <a href="{% url 'courses:course_learn' course.slug %}" class="btn">
-                ▶ Resume Learning
-            </a>
-
-        {% else %}
-            <a href="{% url 'courses:course_learn' course.slug %}" class="btn">
-                Start Course
-            </a>
-        {% endif %}
-
+        <a href="{% url 'courses:course_learn' course.slug %}" class="btn">
+            Start Course
+        </a>
     {% endif %}
 
 </div>

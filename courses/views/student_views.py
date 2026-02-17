@@ -40,66 +40,17 @@ def course_list(request):
     courses = Course.objects.filter(is_published=True)
     return render(request, "courses/instructor/course_list.html", {"courses": courses})
 
-
-
-
-
-
 @login_required
 def course_detail(request, slug):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
 
-    course = get_object_or_404(
-        Course,
-        slug=slug,
-        is_deleted=False
-    )
+    is_enrolled = CourseEnrollment.objects.filter(
+        user=request.user,
+        course=course,
+        is_active=True
+    ).exists()
 
-    # ------------------------------------------------
-    # Check if user is course owner / admin
-    # ------------------------------------------------
-    is_owner = False
-
-    if request.user.is_superuser:
-        is_owner = True
-
-    elif course.created_by == request.user:
-        is_owner = True
-
-    elif (
-        hasattr(request.user, "organization")
-        and request.user.organization
-        and course.organization == request.user.organization
-    ):
-        is_owner = True
-
-    # ------------------------------------------------
-    # Access Control
-    # ------------------------------------------------
-    if not course.is_published and not is_owner:
-        raise Http404("Course not available")
-
-    # ------------------------------------------------
-    # Enrollment Logic
-    # ------------------------------------------------
-
-    # If instructor → treat as enrolled automatically
-    if is_owner:
-        is_enrolled = True
-    else:
-        is_enrolled = CourseEnrollment.objects.filter(
-            user=request.user,
-            course=course,
-            is_active=True
-        ).exists()
-
-    # ------------------------------------------------
-    # Progress Logic
-    # ------------------------------------------------
-
-    completed = total = progress = 0
-
-    if is_enrolled:
-        completed, total, progress = get_course_progress(request.user, course)
+    completed, total, progress = get_course_progress(request.user, course)
 
     return render(request, "courses/student/course_detail.html", {
         "course": course,
@@ -107,9 +58,7 @@ def course_detail(request, slug):
         "completed": completed,
         "total": total,
         "progress": progress,
-        "is_owner": is_owner,
     })
-
 
 
 
@@ -172,69 +121,21 @@ def youtube_embed(url):
 # -------------------------------------------------
 @login_required
 @ensure_csrf_cookie
-def course_learn(request, slug, lesson_id=None):
+def course_learn(request, slug, lesson_id=None):    
 
     # clear course exam context once user is back
     request.session.pop("course_exam_context", None)
 
-    # -------------------------------------------------
-    # 1️⃣ Course (remove is_published=True)
-    # -------------------------------------------------
-    course = get_object_or_404(
-        Course,
-        slug=slug,
-        is_deleted=False
-    )
+    # 1️⃣ Course
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+   
 
-    # -------------------------------------------------
-    # 2️⃣ Owner / Admin Check
-    # -------------------------------------------------
-    is_owner = False
+    # 2️⃣ Curriculum
+    sections = course.sections.prefetch_related("lessons")
 
-    if request.user.is_superuser:
-        is_owner = True
+    
 
-    elif course.created_by == request.user:
-        is_owner = True
-
-    elif (
-        hasattr(request.user, "organization")
-        and request.user.organization
-        and course.organization == request.user.organization
-    ):
-        is_owner = True
-
-    # -------------------------------------------------
-    # 3️⃣ Access Control
-    # -------------------------------------------------
-    if not course.is_published and not is_owner:
-        raise Http404("Course not available")
-
-    # -------------------------------------------------
-    # 4️⃣ Enrollment Logic
-    # -------------------------------------------------
-    if is_owner:
-        is_enrolled = True
-    else:
-        is_enrolled = CourseEnrollment.objects.filter(
-            user=request.user,
-            course=course,
-            is_active=True
-        ).exists()
-
-    if not is_enrolled:
-        return redirect("courses:course_detail", slug=slug)
-
-    # -------------------------------------------------
-    # 5️⃣ Curriculum
-    # -------------------------------------------------
-    sections = course.sections.filter(
-        is_deleted=False
-    ).prefetch_related("lessons")
-
-    # -------------------------------------------------
-    # 6️⃣ Lesson Selection
-    # -------------------------------------------------
+    # 3️⃣ Lesson selection
     if lesson_id:
         lesson = get_object_or_404(
             Lesson,
@@ -246,50 +147,38 @@ def course_learn(request, slug, lesson_id=None):
         if not lesson:
             return redirect("courses:course_detail", slug=slug)
 
-    # -------------------------------------------------
-    # 7️⃣ Sequential Lock
-    # -------------------------------------------------
+    # 4️⃣ Sequential lock
     if not is_lesson_unlocked(request.user, lesson):
         return redirect("courses:course_learn", slug=slug)
 
-    # -------------------------------------------------
-    # 8️⃣ Progress Row
-    # -------------------------------------------------
+    # 5️⃣ Progress row
     lesson_progress, _ = LessonProgress.objects.get_or_create(
         user=request.user,
         lesson=lesson
     )
 
-    # -------------------------------------------------
-    # 9️⃣ Course Progress
-    # -------------------------------------------------
+    # 6️⃣ Course progress
     completed, total, progress = get_course_progress(
         request.user,
         course
     )
 
-    # -------------------------------------------------
-    # 🔟 Certificate
-    # -------------------------------------------------
+    # 7️⃣ Certificate
     certificate = issue_certificate_if_eligible(
         request.user,
         course,
         progress
     )
 
-    # -------------------------------------------------
-    # 1️⃣1️⃣ Celebration (once)
-    # -------------------------------------------------
+    # 8️⃣ Celebration (once)
     celebration_key = f"celebrated_course_{course.id}"
     show_celebration = False
-
     if progress >= 100 and certificate and not request.session.get(celebration_key):
+
         show_celebration = True
         request.session[celebration_key] = True
 
-    # -------------------------------------------------
-    # 1️⃣2️⃣ Completed lessons
-    # -------------------------------------------------
+    # 9️⃣ Completed lessons
     completed_lesson_ids = set(
         LessonProgress.objects.filter(
             user=request.user,
@@ -298,16 +187,12 @@ def course_learn(request, slug, lesson_id=None):
         ).values_list("lesson_id", flat=True)
     )
 
-    # -------------------------------------------------
-    # 1️⃣3️⃣ Video embed
-    # -------------------------------------------------
+    # 🔟 Video embed
     video_embed_url = None
     if lesson.lesson_type == "video":
         video_embed_url = youtube_embed(lesson.video_url)
 
-    # -------------------------------------------------
-    # 1️⃣4️⃣ Next lesson
-    # -------------------------------------------------
+    # ✅ correct
     next_lesson = get_next_lesson(lesson)
 
     return render(
@@ -319,14 +204,16 @@ def course_learn(request, slug, lesson_id=None):
             "lesson": lesson,
             "lesson_progress": lesson_progress,
             "next_lesson": next_lesson,
+
             "completed": completed,
             "total": total,
             "progress": progress,
+
             "completed_lesson_ids": completed_lesson_ids,
             "certificate": certificate,
             "show_celebration": show_celebration,
+
             "video_embed_url": video_embed_url,
-            "is_owner": is_owner,
         }
     )
 
