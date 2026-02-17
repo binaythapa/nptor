@@ -5,61 +5,136 @@
     <title>{% block title %}LMS Platform{% endblock %}</title>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: #f4f6f9;
-        }
 
-        nav {
-            background: #1f2937;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+/* ================= BODY ================= */
 
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-right: 15px;
-            font-weight: 500;
-        }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f9;
+}
 
-        nav a:hover {
-            text-decoration: underline;
-        }
+/* ================= NAVBAR ================= */
 
-        .container {
-            max-width: 1100px;
-            margin: 30px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 6px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
-        }
+nav {
+    background: #111827;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        button {
-            padding: 6px 10px;
-            cursor: pointer;
-        }
+/* Left & Right sections */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
 
-        input, select {
-            padding: 6px;
-            margin: 5px 0;
-        }
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #e5e7eb;
+}
 
-        hr {
-            margin: 20px 0;
-        }
+/* Base nav links */
+nav a {
+    color: #e5e7eb;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
 
-        .nav-left a {
-            margin-right: 15px;
-        }
+nav a:hover {
+    color: #ffffff;
+}
 
-        .nav-right {
-            color: white;
-        }
+/* Divider between groups */
+.nav-divider {
+    height: 20px;
+    width: 1px;
+    background: #374151;
+}
+
+/* ================= COURSE CONTEXT MENU ================= */
+
+.course-menu {
+    display: flex;
+    gap: 8px;
+    padding-left: 15px;
+    border-left: 1px solid #374151;
+}
+
+/* Pill base */
+.menu-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+/* Builder */
+.menu-builder {
+    background: #1e3a8a;
+    color: #c7d2fe;
+}
+.menu-builder:hover {
+    background: #2563eb;
+    color: white;
+}
+
+/* Edit */
+.menu-edit {
+    background: #374151;
+    color: #e5e7eb;
+}
+.menu-edit:hover {
+    background: #4b5563;
+}
+
+/* View */
+.menu-view {
+    background: #065f46;
+    color: #d1fae5;
+}
+.menu-view:hover {
+    background: #047857;
+    color: white;
+}
+
+/* ================= USER SECTION ================= */
+
+.nav-user {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.logout-link {
+    color: #f87171;
+}
+.logout-link:hover {
+    color: #ef4444;
+}
+
+/* ================= MAIN CONTAINER ================= */
+
+.container {
+    max-width: 1100px;
+    margin: 30px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+hr {
+    margin: 20px 0;
+}
+
     </style>
 
     <!-- HTMX -->
@@ -71,43 +146,48 @@
 
 <!-- ================= NAVIGATION ================= -->
 <nav>
+
     <div class="nav-left">
-
-        <!-- ================= STUDENT ================= 
-
-        <a href="{% url 'courses:course_list' %}">Courses</a>   -->
 
         {% if user.is_authenticated %}
 
-            <!-- ================= INSTRUCTOR ================= -->
+            <!-- GLOBAL -->
+            <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}">
+                ← Back To Home
+            </a>
 
+            <div class="nav-divider"></div>
+
+            <!-- INSTRUCTOR -->
             <a href="{% url 'courses:instructor_dashboard' %}">
-                Instructor Dashboard
+                Courses
             </a>
 
-            <a href="{% url 'courses:course_create' %}">
-                + Create Course
-            </a>
-
-            <!-- If course context exists -->
+            <!-- COURSE CONTEXT -->
             {% if course %}
-                <a href="{% url 'courses:course_detail' course.slug %}">
-                    View Course
-                </a>
+                <div class="course-menu">
 
-                <a href="{% url 'courses:course_builder' course.slug %}">
-                    Curriculum Builder
-                </a>
+                    <a href="{% url 'courses:course_builder' course.slug %}"
+                       class="menu-btn menu-builder">
+                        Sections
+                    </a>
 
-                <a href="{% url 'courses:course_edit' course.slug %}">
-                    Edit Course
-                </a>
+                    <a href="{% url 'courses:course_edit' course.slug %}"
+                       class="menu-btn menu-edit">
+                        Edit
+                    </a>
 
-               
+                    <a href="{% url 'courses:course_detail' course.slug %}"
+                       class="menu-btn menu-view">
+                        Preview
+                    </a>
+
+                </div>
             {% endif %}
 
-            <!-- If lesson context exists -->
+            <!-- LESSON CONTEXT -->
             {% if lesson %}
+                <div class="nav-divider"></div>
                 <a href="{% url 'courses:lesson_edit' lesson.id %}">
                     Edit Lesson
                 </a>
@@ -116,11 +196,16 @@
         {% endif %}
     </div>
 
+    <!-- RIGHT SIDE -->
     <div class="nav-right">
+
         {% if user.is_authenticated %}
-            Hi, {{ user.username }} |
+            <span class="nav-user">
+                {{ user.username }}
+            </span>
 
             <a href="#"
+               class="logout-link"
                onclick="event.preventDefault();
                         document.getElementById('logout-form').submit();">
                 Logout
@@ -132,15 +217,15 @@
                   style="display:none;">
                 {% csrf_token %}
             </form>
-
         {% else %}
             <a href="{% url 'accounts:request-login-otp' %}">
                 Login
             </a>
         {% endif %}
-    </div>
-</nav>
 
+    </div>
+
+</nav>
 
 <!-- ================= MAIN CONTENT ================= -->
 
@@ -148,6 +233,7 @@
     {% block content %}
     {% endblock %}
 </div>
+
 <script>
 document.body.addEventListener('htmx:configRequest', function(event) {
     event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
