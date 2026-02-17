@@ -87,28 +87,52 @@ def toggle_publish_course(request, slug):
 # INSTRUCTOR DASHBOARD
 # ======================================================
 
+from django.db.models import Count
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from courses.models import Course
+
+
 @login_required
 def instructor_dashboard(request):
 
+    # ----------------------------
+    # Base Queryset (permission logic)
+    # ----------------------------
     if request.user.is_superuser:
-        courses = Course.objects.filter(is_deleted=False)
+        queryset = Course.objects.filter(is_deleted=False)
 
     elif hasattr(request.user, "organization") and request.user.organization:
-        courses = Course.objects.filter(
+        queryset = Course.objects.filter(
             organization=request.user.organization,
             is_deleted=False
         )
 
     else:
-        courses = Course.objects.filter(
+        queryset = Course.objects.filter(
             created_by=request.user,
             is_deleted=False
         )
 
+    # ----------------------------
+    # Optimizations & Annotations
+    # ----------------------------
+    courses = (
+        queryset
+        .select_related("created_by", "organization")
+        .annotate(
+            total_lessons=Count("sections__lessons", distinct=True),
+            total_enrollments=Count("enrollments", distinct=True),
+        )
+        .order_by("-updated_at")
+    )
+
     return render(
         request,
         "courses/instructor/dashboard.html",
-        {"courses": courses}
+        {
+            "courses": courses
+        }
     )
 
 
