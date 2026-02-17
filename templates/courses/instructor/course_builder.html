@@ -30,23 +30,40 @@
     border-radius: 4px;
 }
 
-.sortable-ghost {
-    opacity: 0.4;
-}
+.sortable-ghost { opacity: 0.4; }
+.sortable-chosen { background: #e0f2ff !important; }
+.sortable-drag { background: #c7e9ff !important; }
 
-.sortable-chosen {
-    background: #e0f2ff !important;
+.publish-badge {
+    padding: 6px 12px;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
 }
-
-.sortable-drag {
-    background: #c7e9ff !important;
-}
+.published { background: #28a745; }
+.unpublished { background: #dc3545; }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<h2>{{ course.title }}</h2>
+<h2>
+    {{ course.title }}
+
+    <span 
+        id="publish-toggle"
+        hx-post="{% url 'courses:toggle_publish_course' course.slug %}"
+        hx-target="#publish-toggle"
+        hx-swap="outerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+        style="cursor:pointer; margin-left:10px;"
+    >
+        {% include "courses/instructor/partials/publish_button.html" %}
+    </span>
+</h2>
+
+<hr>
 
 <!-- ================= ADD SECTION ================= -->
 
@@ -70,7 +87,6 @@
 <script>
 
 // ================= INITIALIZE SORTABLE =================
-
 function initSortable() {
 
     const sectionContainer = document.getElementById('section-container');
@@ -103,8 +119,8 @@ function initSortable() {
     });
 }
 
-// ================= UPDATE ORDER =================
 
+// ================= UPDATE ORDER =================
 function updateOrder() {
 
     let items = [];
@@ -144,36 +160,26 @@ function updateOrder() {
     .catch(() => alert("Error updating order"));
 }
 
-// ================= TOGGLE SECTION =================
 
+// ================= TOGGLE SECTION =================
 function toggleSection(sectionId) {
     const body = document.getElementById("section-body-" + sectionId);
-    if (body) {
-        body.style.display = body.style.display === "none" ? "block" : "none";
-    }
+    if (!body) return;
+
+    body.style.display = body.style.display === "none" ? "block" : "none";
 }
 
-// ================= CONDITIONAL LESSON FIELDS =================
 
-function toggleLessonFields(select, sectionId) {
+// ================= TOGGLE LESSON FORM =================
+function toggleLessonForm(sectionId) {
+    const form = document.getElementById("lesson-form-" + sectionId);
+    if (!form) return;
 
-    const video = document.getElementById("video-fields-" + sectionId);
-    const article = document.getElementById("article-fields-" + sectionId);
-
-    if (video) video.style.display = "none";
-    if (article) article.style.display = "none";
-
-    if (select.value === "video" && video) {
-        video.style.display = "block";
-    }
-
-    if (select.value === "article" && article) {
-        article.style.display = "block";
-    }
+    form.style.display = form.style.display === "none" ? "block" : "none";
 }
 
-// ================= INLINE EDIT =================
 
+// ================= INLINE EDIT LESSON =================
 function editLesson(lessonId) {
 
     const newTitle = prompt("Enter new lesson title:");
@@ -190,30 +196,10 @@ function editLesson(lessonId) {
     .then(() => location.reload());
 }
 
-// ================= INIT EVENTS =================
 
+// ================= INIT EVENTS =================
 document.addEventListener("htmx:afterSwap", initSortable);
 document.addEventListener("DOMContentLoaded", initSortable);
-
-
-
-// Toggle section collapse
-function toggleSection(sectionId) {
-    const body = document.getElementById("section-body-" + sectionId);
-    if (!body) return;
-
-    body.style.display = body.style.display === "none" ? "block" : "none";
-}
-
-// Toggle lesson form
-function toggleLessonForm(sectionId) {
-    const form = document.getElementById("lesson-form-" + sectionId);
-    if (!form) return;
-
-    form.style.display = form.style.display === "none" ? "block" : "none";
-}
-
-
 
 </script>
 

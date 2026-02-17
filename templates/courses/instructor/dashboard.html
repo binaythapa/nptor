@@ -2,84 +2,242 @@
 
 {% block title %}Instructor Dashboard{% endblock %}
 
+{% block extra_head %}
+<style>
+
+/* ================= PAGE HEADER ================= */
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.dashboard-header h2 {
+    margin: 0;
+}
+
+/* ================= CREATE BUTTON ================= */
+
+.btn-create {
+    background: #5624d0;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+
+.btn-create:hover {
+    background: #401b9c;
+}
+
+/* ================= GRID ================= */
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* ================= CARD ================= */
+
+.course-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 20px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.course-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.course-title {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* ================= PUBLISH TOGGLE ================= */
+
+.publish-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+/* Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #d1d5db;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+    background-color: #22c55e;
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.publish-text strong {
+    display: block;
+    font-size: 14px;
+}
+
+.publish-text small {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+/* ================= ACTION BUTTONS ================= */
+
+.course-actions {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    text-decoration: none;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    color: #374151;
+    transition: background 0.2s ease;
+}
+
+.action-btn:hover {
+    background: #eef2ff;
+}
+
+.delete-btn {
+    background: #fff1f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+}
+
+.delete-btn:hover {
+    background: #ffe4e6;
+}
+
+.empty-state {
+    color: #6b7280;
+    font-style: italic;
+}
+
+</style>
+{% endblock %}
+
 {% block content %}
 
-<h2 style="margin-bottom:20px;">Instructor Dashboard</h2>
+<div class="dashboard-header">
+    <h2>Instructor Dashboard</h2>
 
-<div style="margin-bottom:20px;">
-    <a href="{% url 'courses:course_create' %}"
-       style="padding:8px 14px;
-              background:#5624d0;
-              color:white;
-              text-decoration:none;
-              border-radius:4px;">
+    <a href="{% url 'courses:course_create' %}" class="btn-create">
         + Create New Course
     </a>
 </div>
 
 {% if courses %}
 
-    <div style="
-        display:grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap:20px;
-    ">
+    <div class="course-grid">
 
         {% for course in courses %}
-            <div style="
-                border:1px solid #e5e7eb;
-                border-radius:8px;
-                padding:16px;
-                background:#fff;
-                box-shadow:0 2px 6px rgba(0,0,0,0.05);
-            ">
+            <div class="course-card">
 
                 <!-- TITLE -->
-                <h3 style="margin:0 0 8px 0;">
+                <div class="course-title">
                     {{ course.title }}
-                </h3>
+                </div>
 
-                <!-- STATUS -->
-                <div style="margin-bottom:12px;">
-                    {% if course.is_published %}
-                        <span style="color:green; font-size:14px;">
-                            Published ✅
-                        </span>
-                    {% else %}
-                        <span style="color:#b45309; font-size:14px;">
-                            Draft
-                        </span>
-                    {% endif %}
+                <!-- STATUS TOGGLE -->
+                <div class="publish-control"
+                     id="publish-toggle-{{ course.id }}"
+                     hx-post="{% url 'courses:toggle_publish_course' course.slug %}"
+                     hx-target="#publish-toggle-{{ course.id }}"
+                     hx-swap="outerHTML"
+                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+                    <label class="switch">
+                        <input type="checkbox" {% if course.is_published %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+
+                    <div class="publish-text">
+                        {% if course.is_published %}
+                            <strong>Published</strong>
+                            <small>Course is visible to students</small>
+                        {% else %}
+                            <strong>Draft</strong>
+                            <small>Only you can see this course</small>
+                        {% endif %}
+                    </div>
+
                 </div>
 
                 <!-- ACTIONS -->
-                <div style="display:flex; flex-wrap:wrap; gap:8px;">
-
-                    {% if not course.is_published %}
-                        <a href="{% url 'courses:publish_course' course.slug %}"
-                           style="font-size:13px;">
-                            Publish
-                        </a>
-                    {% endif %}
+                <div class="course-actions">
 
                     <a href="{% url 'courses:course_edit' course.slug %}"
-                       style="font-size:13px;">
-                        Edit Details
+                       class="action-btn">
+                        Edit
                     </a>
 
                     <a href="{% url 'courses:course_builder' course.slug %}"
-                       style="font-size:13px;">
-                        Curriculum Builder
+                       class="action-btn">
+                        Curriculum
                     </a>
 
-                    <!-- Delete (POST safer than GET) -->
                     <form method="post"
                           action="{% url 'courses:course_delete' course.slug %}"
                           onsubmit="return confirm('Delete this course?');"
                           style="display:inline;">
                         {% csrf_token %}
                         <button type="submit"
-                                style="font-size:13px; color:red; background:none; border:none; cursor:pointer;">
+                                class="action-btn delete-btn">
                             Delete
                         </button>
                     </form>
@@ -92,7 +250,7 @@
     </div>
 
 {% else %}
-    <p style="color:#777;">No courses created yet.</p>
+    <p class="empty-state">No courses created yet.</p>
 {% endif %}
 
 {% endblock %}

@@ -59,7 +59,7 @@ def course_builder(request, slug):
 # ======================================================
 
 @login_required
-def publish_course(request, slug):
+def toggle_publish_course(request, slug):
 
     course = get_object_or_404(
         Course,
@@ -70,10 +70,17 @@ def publish_course(request, slug):
     if not can_edit_course(request.user, course):
         return HttpResponseForbidden()
 
-    course.is_published = True
+    # 🔥 Toggle status
+    course.is_published = not course.is_published
     course.save(update_fields=["is_published"])
 
-    return redirect("courses:course_builder", slug=course.slug)
+    # Return only button partial (for HTMX)
+    return render(
+        request,
+        "courses/instructor/partials/publish_button.html",
+        {"course": course}
+    )
+
 
 
 # ======================================================
@@ -108,59 +115,47 @@ def instructor_dashboard(request):
 # ======================================================
 # CREATE COURSE
 # ======================================================
-
 @login_required
 def course_create(request):
 
     if request.method == "POST":
         form = CourseForm(request.POST, request.FILES)
-        formset = CourseSectionFormSet(request.POST, prefix="sections")
+        formset = CourseSectionFormSet(request.POST)
 
         if form.is_valid() and formset.is_valid():
 
             course = form.save(commit=False)
             course.created_by = request.user
+            course.save()  # 🔥 MUST SAVE FIRST
 
-            if hasattr(request.user, "organization") and request.user.organization:
-                course.organization = request.user.organization
-                course.owner_type = "organization"
-            else:
-                course.organization = None
-                course.owner_type = "platform"
-
-            course.save()
             form.save_m2m()
 
             sections = formset.save(commit=False)
 
-            for index, section in enumerate(sections, start=1):
+            for section in sections:
                 section.course = course
-                section.order = index
                 section.save()
 
-            return redirect(
-                "courses:course_builder",
-                slug=course.slug
-            )
+            return redirect("courses:course_builder", slug=course.slug)
 
     else:
         form = CourseForm()
-        formset = CourseSectionFormSet(prefix="sections")
+        formset = CourseSectionFormSet()
 
-    return render(
-        request,
-        "courses/instructor/course_create.html",
-        {
-            "form": form,
-            "formset": formset
-        }
-    )
+    return render(request, "courses/instructor/course_create.html", {
+        "form": form,
+        "formset": formset
+    })
 
 
-# ======================================================
-# EDIT COURSE
-# ======================================================
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponseForbidden
 
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
 @login_required
 def course_edit(request, slug):
 
@@ -175,9 +170,11 @@ def course_edit(request, slug):
 
     if request.method == "POST":
         form = CourseForm(request.POST, request.FILES, instance=course)
+
         formset = CourseSectionFormSet(
             request.POST,
             instance=course,
+            queryset=course.sections.filter(is_deleted=False),
             prefix="sections"
         )
 
@@ -197,16 +194,19 @@ def course_edit(request, slug):
                 course.save()
                 form.save_m2m()
 
+                # Handle delete
+                for form_obj in formset.forms:
+                    if form_obj.cleaned_data.get("DELETE"):
+                        section = form_obj.instance
+                        if section.pk:
+                            section.is_deleted = True
+                            section.save(update_fields=["is_deleted"])
+
+                # Save sections normally (order already provided)
                 sections = formset.save(commit=False)
 
-                # 🔥 SOFT DELETE instead of hard delete
-                for obj in formset.deleted_objects:
-                    obj.is_deleted = True
-                    obj.save(update_fields=["is_deleted"])
-
-                for index, section in enumerate(sections, start=1):
+                for section in sections:
                     section.course = course
-                    section.order = index
                     section.save()
 
             return redirect(
@@ -218,6 +218,7 @@ def course_edit(request, slug):
         form = CourseForm(instance=course)
         formset = CourseSectionFormSet(
             instance=course,
+            queryset=course.sections.filter(is_deleted=False),
             prefix="sections"
         )
 
@@ -230,6 +231,7 @@ def course_edit(request, slug):
             "course": course
         }
     )
+
 
 
 # ======================================================

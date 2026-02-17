@@ -4,101 +4,164 @@
 
 {% block extra_head %}
 <style>
-    h1 {
-        text-align: center;
-        margin-bottom: 30px;
-    }
 
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-        max-width: 1200px;
-        margin: auto;
-    }
+/* ================= PAGE HEADER ================= */
 
-    .card {
-        background: #fff;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
 
-    .title {
-        font-size: 18px;
-        font-weight: bold;
-        margin-bottom: 8px;
-    }
+.page-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+}
 
-    .meta {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 12px;
-    }
+.page-header p {
+    color: #6b7280;
+    margin-top: 8px;
+    font-size: 15px;
+}
 
-    .description {
-        font-size: 14px;
-        color: #333;
-        margin-bottom: 15px;
-    }
+/* ================= CONTAINER ================= */
 
-    .btn {
-        text-align: center;
-        padding: 10px;
-        background: #5624d0;
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-    }
+.course-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+}
 
-    .btn:hover {
-        background: #401b9c;
-    }
+/* ================= GRID ================= */
 
-    .empty {
-        text-align: center;
-        color: #777;
-        margin-top: 50px;
-    }
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+/* ================= CARD ================= */
+
+.course-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #f3f4f6;
+}
+
+.course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+}
+
+/* ================= TITLE ================= */
+
+.course-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #111827;
+}
+
+/* ================= META ================= */
+
+.course-meta {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+
+/* ================= DESCRIPTION ================= */
+
+.course-description {
+    font-size: 14px;
+    color: #374151;
+    margin-bottom: 18px;
+    line-height: 1.5;
+}
+
+/* ================= BUTTON ================= */
+
+.btn-view {
+    display: inline-block;
+    text-align: center;
+    padding: 10px 14px;
+    background: #5624d0;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.btn-view:hover {
+    background: #401b9c;
+    transform: translateY(-1px);
+}
+
+/* ================= EMPTY STATE ================= */
+
+.empty-state {
+    text-align: center;
+    color: #6b7280;
+    margin-top: 60px;
+    font-size: 15px;
+}
+
 </style>
 {% endblock %}
 
 {% block content %}
 
-<h1>Available Courses</h1>
+<div class="page-header">
+    <h1>Available Courses</h1>
+    <p>Explore our curated learning programs and start building your skills.</p>
+</div>
 
-{% if courses %}
-    <div class="grid">
-        {% for course in courses %}
-            <div class="card">
-                <div>
-                    <div class="title">{{ course.title }}</div>
+<div class="course-container">
 
-                    <div class="meta">
-                        Level: {{ course.level|title }}
-                        {% if course.category %}
-                            | {{ course.category.name }}
-                        {% endif %}
+    {% if courses %}
+        <div class="course-grid">
+            {% for course in courses %}
+                <div class="course-card">
+
+                    <div>
+                        <div class="course-title">
+                            {{ course.title }}
+                        </div>
+
+                        <div class="course-meta">
+                            {{ course.level|title }}
+                            {% if course.category %}
+                                • {{ course.category.name }}
+                            {% endif %}
+                        </div>
+
+                        <div class="course-description">
+                            {{ course.description|truncatechars:130 }}
+                        </div>
                     </div>
 
-                    <div class="description">
-                        {{ course.description|truncatechars:120 }}
-                    </div>
+                    <a href="{% url 'courses:course_detail' course.slug %}"
+                       class="btn-view">
+                        View Course
+                    </a>
+
                 </div>
+            {% endfor %}
+        </div>
 
-                <a href="{% url 'courses:course_detail' course.slug %}" class="btn">
-                    View Course
-                </a>
-            </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <div class="empty">
-        No courses available yet.
-    </div>
-{% endif %}
+    {% else %}
+        <div class="empty-state">
+            No courses available yet. Please check back soon.
+        </div>
+    {% endif %}
+
+</div>
 
 {% endblock %}

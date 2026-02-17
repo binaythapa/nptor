@@ -6,6 +6,7 @@
 {{ form.media }}   <!-- 🔥 REQUIRED FOR CKEDITOR -->
 
 <style>
+/* ================= FORM CARD ================= */
 
 .form-card {
     background: #ffffff;
@@ -15,7 +16,12 @@
     margin-bottom: 20px;
 }
 
-.form-card input,
+/* Only text-like inputs should be full width */
+.form-card input[type="text"],
+.form-card input[type="number"],
+.form-card input[type="email"],
+.form-card input[type="file"],
+.form-card input[type="url"],
 .form-card select,
 .form-card textarea {
     width: 100%;
@@ -23,7 +29,38 @@
     border: 1px solid #d1d5db;
     border-radius: 6px;
     margin-bottom: 12px;
+    font-size: 14px;
 }
+
+/* Focus styling */
+.form-card input:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+    outline: none;
+    border-color: #5624d0;
+    box-shadow: 0 0 0 2px rgba(86,36,208,0.15);
+}
+
+/* ================= CHECKBOX FIX ================= */
+
+/* Prevent checkbox stretching */
+.form-card input[type="checkbox"] {
+    width: auto !important;
+    margin-right: 8px;
+    padding: 0;
+    vertical-align: middle;
+    transform: scale(1.1);
+}
+
+/* Checkbox + label alignment */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+/* ================= BUTTONS ================= */
 
 .btn-primary {
     background: #5624d0;
@@ -32,6 +69,7 @@
     border-radius: 6px;
     border: none;
     cursor: pointer;
+    font-size: 14px;
 }
 
 .btn-primary:hover {
@@ -45,7 +83,10 @@
     border-radius: 6px;
     border: 1px solid #d1d5db;
     color: #374151;
+    font-size: 14px;
 }
+
+/* ================= CONDITIONAL GROUPS ================= */
 
 .section-group {
     display: none;
@@ -54,6 +95,7 @@
 .section-group.active {
     display: block;
 }
+
 
 </style>
 {% endblock %}
@@ -102,47 +144,69 @@
     </div>
 
     <!-- ================= PRACTICE CONFIG ================= -->
+<div class="form-card section-group" id="practice-group">
+    <h3>Practice Settings</h3>
 
-    <div class="form-card section-group" id="practice-group">
-        <h3>Practice Settings</h3>
+    {{ form.practice_domain.label_tag }}
+    {{ form.practice_domain }}
 
-        {{ form.practice_domain.label_tag }}
-        {{ form.practice_domain }}
+    {{ form.practice_category.label_tag }}
+    {{ form.practice_category }}
 
-        {{ form.practice_category.label_tag }}
-        {{ form.practice_category }}
+    {{ form.practice_difficulty.label_tag }}
+    {{ form.practice_difficulty }}
 
-        {{ form.practice_difficulty.label_tag }}
-        {{ form.practice_difficulty }}
+    {{ form.practice_threshold.label_tag }}
+    {{ form.practice_threshold }}
 
-        {{ form.practice_threshold.label_tag }}
-        {{ form.practice_threshold }}
-
+    <div class="checkbox-group">
         {{ form.practice_lock_filters }}
-        {{ form.practice_require_correct }}
-
-        {{ form.practice_min_accuracy.label_tag }}
-        {{ form.practice_min_accuracy }}
+        <label for="{{ form.practice_lock_filters.id_for_label }}">
+            Lock filters
+        </label>
     </div>
+
+    <div class="checkbox-group">
+        {{ form.practice_require_correct }}
+        <label for="{{ form.practice_require_correct.id_for_label }}">
+            Require correct answers
+        </label>
+    </div>
+
+    <div class="checkbox-group">
+        {{ form.practice_min_accuracy }}
+        <label for="{{ form.practice_min_accuracy.id_for_label }}">
+            Require minimum accuracy
+        </label>
+    </div>
+
+</div>
 
     <!-- ================= QUIZ CONFIG ================= -->
 
-    <div class="form-card section-group" id="quiz-group">
-        <h3>Quiz Settings</h3>
+   <div class="form-card section-group" id="quiz-group">
+    <h3>Quiz Settings</h3>
 
-        {{ form.exam.label_tag }}
-        {{ form.exam }}
+    {{ form.exam.label_tag }}
+    {{ form.exam }}
 
-        {{ form.quiz_completion_mode.label_tag }}
-        {{ form.quiz_completion_mode }}
+    {{ form.quiz_completion_mode.label_tag }}
+    {{ form.quiz_completion_mode }}
 
-        {{ form.quiz_min_score.label_tag }}
-        {{ form.quiz_min_score }}
+    {{ form.quiz_min_score.label_tag }}
+    {{ form.quiz_min_score }}
 
+    <div class="checkbox-group">
         {{ form.quiz_allow_mock }}
-        {{ form.quiz_max_attempts.label_tag }}
-        {{ form.quiz_max_attempts }}
+        <label for="{{ form.quiz_allow_mock.id_for_label }}">
+            Allow mock attempts
+        </label>
     </div>
+
+    {{ form.quiz_max_attempts.label_tag }}
+    {{ form.quiz_max_attempts }}
+</div>
+
 
     <button type="submit" class="btn-primary">
         Save Changes

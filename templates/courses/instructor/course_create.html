@@ -5,28 +5,61 @@
 {% block extra_head %}
 <style>
 
-/* ================= GLOBAL FORM STYLE ================= */
+/* ================= PAGE HEADER ================= */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.back-link {
+    text-decoration: none;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.back-link:hover {
+    color: #111827;
+}
+
+/* ================= FORM CARD ================= */
 
 .form-card {
     background: #ffffff;
     padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
     margin-bottom: 25px;
 }
 
 .form-card h3 {
-    margin-bottom: 15px;
+    margin-bottom: 18px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-.form-card input,
+/* ================= INPUT STYLING ================= */
+
+.form-card input[type="text"],
+.form-card input[type="number"],
+.form-card input[type="email"],
+.form-card input[type="file"],
+.form-card input[type="url"],
 .form-card select,
 .form-card textarea {
     width: 100%;
-    padding: 10px;
+    padding: 10px 12px;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
-    margin-bottom: 12px;
+    border-radius: 8px;
+    margin-bottom: 14px;
     font-size: 14px;
 }
 
@@ -35,7 +68,55 @@
 .form-card textarea:focus {
     outline: none;
     border-color: #5624d0;
-    box-shadow: 0 0 0 2px rgba(86,36,208,0.15);
+    box-shadow: 0 0 0 3px rgba(86,36,208,0.12);
+}
+
+/* ================= SECTION BLOCK ================= */
+
+.section-form {
+    position: relative;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.section-form:hover {
+    background: #f3f4f6;
+}
+
+.section-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.section-title {
+    flex: 1;
+}
+
+.section-order {
+    width: 100px;
+}
+
+/* Remove button */
+.remove-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #fff1f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.remove-btn:hover {
+    background: #ffe4e6;
 }
 
 /* ================= BUTTONS ================= */
@@ -44,9 +125,10 @@
     background: #5624d0;
     color: white;
     padding: 10px 18px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
+    font-weight: 500;
 }
 
 .btn-primary:hover {
@@ -58,37 +140,22 @@
     border: 1px solid #5624d0;
     color: #5624d0;
     padding: 8px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.btn-danger {
-    background: #ffe5e5;
-    border: 1px solid #f87171;
-    color: #b91c1c;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.section-form {
-    position: relative;
-    padding: 15px;
-    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    margin-bottom: 12px;
-    background: #f9fafb;
-    transition: all 0.25s ease;
+    cursor: pointer;
 }
 
-.remove-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+.btn-outline:hover {
+    background: #f3f0ff;
 }
 
-.page-header {
-    margin-bottom: 30px;
+/* Sticky action bar */
+.action-bar {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 15px 0;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 20px;
 }
 
 </style>
@@ -97,19 +164,24 @@
 {% block content %}
 
 <div class="page-header">
-    <h2>Create Course</h2>
+    <h2>Create New Course</h2>
+    <a href="{% url 'courses:instructor_dashboard' %}" class="back-link">
+        ← Back to Dashboard
+    </a>
 </div>
 
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
-    <!-- COURSE DETAILS -->
+    <!-- ================= COURSE DETAILS ================= -->
+
     <div class="form-card">
         <h3>Course Details</h3>
         {{ form.as_p }}
     </div>
 
-    <!-- SECTIONS -->
+    <!-- ================= SECTIONS ================= -->
+
     <div class="form-card">
         <h3>Sections</h3>
 
@@ -119,11 +191,21 @@
             {% for form in formset %}
                 <div class="section-form">
                     {{ form.id }}
-                    {{ form.title.label_tag }}
-                    {{ form.title }}
+
+                    <div class="section-row">
+                        <div class="section-title">
+                            {{ form.title.label_tag }}
+                            {{ form.title }}
+                        </div>
+
+                        <div class="section-order">
+                            {{ form.order.label_tag }}
+                            {{ form.order }}
+                        </div>
+                    </div>
 
                     <button type="button"
-                            class="btn-danger remove-btn"
+                            class="remove-btn"
                             onclick="removeSection(this)">
                         Remove
                     </button>
@@ -138,9 +220,11 @@
         </button>
     </div>
 
-    <button type="submit" class="btn-primary">
-        Create Course
-    </button>
+    <div class="action-bar">
+        <button type="submit" class="btn-primary">
+            Create Course
+        </button>
+    </div>
 
 </form>
 
@@ -150,48 +234,45 @@ function addSection() {
 
     const formsetDiv = document.getElementById("section-formset");
     const totalFormsInput = document.getElementById("id_sections-TOTAL_FORMS");
-
     const formIndex = parseInt(totalFormsInput.value);
 
-    const template = `{{ formset.empty_form.as_p|escapejs }}`;
+    const template = `
+        <div class="section-form">
+            {{ formset.empty_form.id|escapejs }}
+
+            <div class="section-row">
+                <div class="section-title">
+                    {{ formset.empty_form.title.label_tag|escapejs }}
+                    {{ formset.empty_form.title|escapejs }}
+                </div>
+
+                <div class="section-order">
+                    {{ formset.empty_form.order.label_tag|escapejs }}
+                    {{ formset.empty_form.order|escapejs }}
+                </div>
+            </div>
+
+            <button type="button"
+                    class="remove-btn"
+                    onclick="removeSection(this)">
+                Remove
+            </button>
+        </div>
+    `;
 
     const newFormHtml = template.replace(/__prefix__/g, formIndex);
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "section-form";
-    wrapper.innerHTML = newFormHtml + `
-        <button type="button"
-                class="btn-danger remove-btn"
-                onclick="removeSection(this)">
-            Remove
-        </button>
-    `;
-
-    formsetDiv.appendChild(wrapper);
-
+    formsetDiv.insertAdjacentHTML('beforeend', newFormHtml);
     totalFormsInput.value = formIndex + 1;
 }
 
 function removeSection(button) {
-
     const formDiv = button.closest(".section-form");
     formDiv.remove();
 
     const totalFormsInput = document.getElementById("id_sections-TOTAL_FORMS");
-    const forms = document.querySelectorAll(".section-form");
-
-    totalFormsInput.value = forms.length;
-
-    forms.forEach((form, index) => {
-        form.querySelectorAll("input, label").forEach(el => {
-            if (el.name)
-                el.name = el.name.replace(/sections-\d+-/, `sections-${index}-`);
-            if (el.id)
-                el.id = el.id.replace(/sections-\d+-/, `sections-${index}-`);
-            if (el.htmlFor)
-                el.htmlFor = el.htmlFor.replace(/sections-\d+-/, `sections-${index}-`);
-        });
-    });
+    totalFormsInput.value =
+        document.querySelectorAll(".section-form").length;
 }
 
 </script>

@@ -5,28 +5,60 @@
 {% block extra_head %}
 <style>
 
-/* ================= GLOBAL FORM STYLE ================= */
+/* ================= PAGE HEADER ================= */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.back-link {
+    text-decoration: none;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.back-link:hover {
+    color: #111827;
+}
+
+/* ================= FORM CARD ================= */
 
 .form-card {
     background: #ffffff;
     padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
     margin-bottom: 25px;
 }
 
 .form-card h3 {
-    margin-bottom: 15px;
+    margin-bottom: 18px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-.form-card input,
+/* ================= INPUT STYLING ================= */
+
+.form-card input[type="text"],
+.form-card input[type="number"],
+.form-card input[type="email"],
+.form-card input[type="file"],
+.form-card input[type="url"],
 .form-card select,
 .form-card textarea {
     width: 100%;
-    padding: 10px;
+    padding: 10px 12px;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
-    margin-bottom: 12px;
+    border-radius: 8px;
+    margin-bottom: 14px;
     font-size: 14px;
 }
 
@@ -35,7 +67,43 @@
 .form-card textarea:focus {
     outline: none;
     border-color: #5624d0;
-    box-shadow: 0 0 0 2px rgba(86,36,208,0.15);
+    box-shadow: 0 0 0 3px rgba(86,36,208,0.12);
+}
+
+/* ================= CHECKBOX ================= */
+
+.form-card input[type="checkbox"] {
+    width: auto !important;
+    margin-right: 6px;
+    transform: scale(1.05);
+}
+
+.delete-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #b91c1c;
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+/* ================= SECTION BLOCK ================= */
+
+.section-form {
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.section-form:hover {
+    background: #f3f4f6;
+}
+
+.order-field {
+    width: 90px;
 }
 
 /* ================= BUTTONS ================= */
@@ -44,9 +112,10 @@
     background: #5624d0;
     color: white;
     padding: 10px 18px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
+    font-weight: 500;
 }
 
 .btn-primary:hover {
@@ -58,42 +127,22 @@
     border: 1px solid #5624d0;
     color: #5624d0;
     padding: 8px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.btn-danger {
-    background: #ffe5e5;
-    border: 1px solid #f87171;
-    color: #b91c1c;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-/* ================= SECTION BLOCK ================= */
-
-.section-form {
-    position: relative;
-    padding: 15px;
-    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    margin-bottom: 12px;
-    background: #f9fafb;
-    transition: all 0.25s ease;
+    cursor: pointer;
 }
 
-.section-form:hover {
-    background: #f3f4f6;
+.btn-outline:hover {
+    background: #f3f0ff;
 }
 
-.delete-checkbox {
-    margin-top: 8px;
-    color: #b91c1c;
-}
-
-.page-header {
-    margin-bottom: 30px;
+/* Sticky action bar */
+.action-bar {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 15px 0;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 20px;
 }
 
 </style>
@@ -102,7 +151,10 @@
 {% block content %}
 
 <div class="page-header">
-    <h2>Edit Course: {{ course.title }}</h2>
+    <h2>Edit Course</h2>
+    <a href="{% url 'courses:course_builder' course.slug %}" class="back-link">
+        ← Back to Builder
+    </a>
 </div>
 
 <form method="post" enctype="multipart/form-data">
@@ -112,7 +164,32 @@
 
     <div class="form-card">
         <h3>Course Details</h3>
-        {{ form.as_p }}
+
+        {{ form.title.label_tag }}
+        {{ form.title }}
+
+        {{ form.description.label_tag }}
+        {{ form.description }}
+
+        {{ form.category.label_tag }}
+        {{ form.category }}
+
+        {{ form.thumbnail.label_tag }}
+        {{ form.thumbnail }}
+
+        {{ form.level.label_tag }}
+        {{ form.level }}
+
+        {{ form.subscription_plans.label_tag }}
+        {{ form.subscription_plans }}
+
+        <div class="delete-checkbox">
+            {{ form.is_public }}
+            <label for="{{ form.is_public.id_for_label }}">
+                Publicly visible
+            </label>
+        </div>
+
     </div>
 
     <!-- ================= SECTIONS ================= -->
@@ -129,11 +206,19 @@
 
                     {{ form.id }}
 
-                    {{ form.title.label_tag }}
+                    <label>Section Title</label>
                     {{ form.title }}
 
+                    <label>Display Order</label>
+                    <div class="order-field">
+                        {{ form.order }}
+                    </div>
+
                     <div class="delete-checkbox">
-                        {{ form.DELETE }} Mark for deletion
+                        {{ form.DELETE }}
+                        <label for="{{ form.DELETE.id_for_label }}">
+                            Mark for deletion
+                        </label>
                     </div>
 
                 </div>
@@ -148,39 +233,49 @@
         </button>
     </div>
 
-    <button type="submit" class="btn-primary">
-        Update Course
-    </button>
+    <div class="action-bar">
+        <button type="submit" class="btn-primary">
+            Save Changes
+        </button>
+    </div>
 
 </form>
 
 <script>
-
 function addSection() {
 
     const formsetDiv = document.getElementById("section-formset");
     const totalFormsInput = document.getElementById("id_sections-TOTAL_FORMS");
-
     const formIndex = parseInt(totalFormsInput.value);
 
-    const template = `{{ formset.empty_form.as_p|escapejs }}`;
+    const template = `
+        <div class="section-form">
+            {{ formset.empty_form.id|escapejs }}
+
+            <label>Section Title</label>
+            {{ formset.empty_form.title|escapejs }}
+
+            <label>Display Order</label>
+            <div class="order-field">
+                {{ formset.empty_form.order|escapejs }}
+            </div>
+
+            <div class="delete-checkbox">
+                {{ formset.empty_form.DELETE|escapejs }}
+                <label>Mark for deletion</label>
+            </div>
+        </div>
+    `;
 
     const newFormHtml = template.replace(/__prefix__/g, formIndex);
 
     const wrapper = document.createElement("div");
-    wrapper.className = "section-form";
     wrapper.innerHTML = newFormHtml;
 
-    formsetDiv.appendChild(wrapper);
+    formsetDiv.appendChild(wrapper.firstElementChild);
 
     totalFormsInput.value = formIndex + 1;
-
-    wrapper.style.opacity = 0;
-    setTimeout(() => {
-        wrapper.style.opacity = 1;
-    }, 10);
 }
-
 </script>
 
 {% endblock %}

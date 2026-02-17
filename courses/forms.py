@@ -22,29 +22,15 @@ class CourseForm(forms.ModelForm):
 
 
 
+
 from django.forms import inlineformset_factory
-from .models import Course, CourseSection
-
-class CourseForm(forms.ModelForm):
-    class Meta:
-        model = Course
-        fields = [
-            "title",
-            "description",
-            "category",
-            "thumbnail",
-            "level",
-            "subscription_plans",
-            "is_public",
-        ]
-
 
 CourseSectionFormSet = inlineformset_factory(
     Course,
     CourseSection,
-    fields=("title",),
-    extra=0,          # 👈 important
-    can_delete=True
+    fields=("title", "order"),  # 👈 add order here
+    extra=1,
+    can_delete=True   # 🔥 ADD THIS
 )
 
 

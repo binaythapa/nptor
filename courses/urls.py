@@ -34,7 +34,12 @@ urlpatterns = [
     path("instructor/course/<slug:slug>/edit/", instructor_views.course_edit, name="course_edit"),
     path("instructor/course/<slug:slug>/delete/", instructor_views.course_delete, name="course_delete"),
     path("instructor/course/<slug:slug>/builder/", instructor_views.course_builder, name="course_builder"),
-    path("instructor/course/<slug:slug>/publish/", instructor_views.publish_course, name="publish_course"),
+    path(
+        "instructor/course/<slug:slug>/toggle-publish/",
+        instructor_views.toggle_publish_course,
+        name="toggle_publish_course"
+        ),
+
     # 🔥 Lesson edit
     path(
         "instructor/lesson/<int:lesson_id>/edit/",
@@ -42,7 +47,7 @@ urlpatterns = [
      name="lesson_edit"
     ),
 
-
+    
 
     # ================= API =================
 
