@@ -51,6 +51,11 @@
     background: #ffffff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    display: flex;              /* 🔥 important */
+    flex-direction: column;     /* 🔥 vertical layout */
+    justify-content: space-between; /* 🔥 push bottom section down */
+    min-height: 220px;          /* optional but improves alignment */
 }
 
 .course-card:hover {
@@ -71,7 +76,7 @@
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 /* Switch */
@@ -132,7 +137,6 @@
 /* ================= ACTION BUTTONS ================= */
 
 .course-actions {
-    margin-top: 10px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -168,6 +172,10 @@
     font-style: italic;
 }
 
+.bottom-section {
+    margin-top: 20px; /* spacing from title */
+}
+
 </style>
 {% endblock %}
 
@@ -188,59 +196,66 @@
         {% for course in courses %}
             <div class="course-card">
 
-                <!-- TITLE -->
-                <div class="course-title">
-                    {{ course.title }}
+                <!-- TOP -->
+                <div>
+                    <div class="course-title">
+                        {{ course.title }}
+                    </div>
                 </div>
 
-                <!-- STATUS TOGGLE -->
-                <div class="publish-control"
-                     id="publish-toggle-{{ course.id }}"
-                     hx-post="{% url 'courses:toggle_publish_course' course.slug %}"
-                     hx-target="#publish-toggle-{{ course.id }}"
-                     hx-swap="outerHTML"
-                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                <!-- BOTTOM (STICKS DOWN) -->
+                <div class="bottom-section">
 
-                    <label class="switch">
-                        <input type="checkbox" {% if course.is_published %}checked{% endif %}>
-                        <span class="slider"></span>
-                    </label>
+                    <!-- STATUS TOGGLE -->
+                    <div class="publish-control"
+                         id="publish-toggle-{{ course.id }}"
+                         hx-post="{% url 'courses:toggle_publish_course' course.slug %}"
+                         hx-target="#publish-toggle-{{ course.id }}"
+                         hx-swap="outerHTML"
+                         hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
-                    <div class="publish-text">
-                        {% if course.is_published %}
-                            <strong>Published</strong>
-                            <small>Course is visible to students</small>
-                        {% else %}
-                            <strong>Draft</strong>
-                            <small>Only you can see this course</small>
-                        {% endif %}
+                        <label class="switch">
+                            <input type="checkbox" {% if course.is_published %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+
+                        <div class="publish-text">
+                            {% if course.is_published %}
+                                <strong>Published</strong>
+                                <small>Course is visible to students</small>
+                            {% else %}
+                                <strong>Draft</strong>
+                                <small>Only you can see this course</small>
+                            {% endif %}
+                        </div>
+
                     </div>
 
-                </div>
+                    <!-- ACTIONS -->
+                    <div class="course-actions">
 
-                <!-- ACTIONS -->
-                <div class="course-actions">
+                        <a href="{% url 'courses:course_edit' course.slug %}"
+                           class="action-btn">
+                            Edit
+                        </a>
 
-                    <a href="{% url 'courses:course_edit' course.slug %}"
-                       class="action-btn">
-                        Edit
-                    </a>
+                        <a href="{% url 'courses:course_builder' course.slug %}"
+                           class="action-btn">
+                            Curriculum
+                        </a>
 
-                    <a href="{% url 'courses:course_builder' course.slug %}"
-                       class="action-btn">
-                        Curriculum
-                    </a>
+                        <form method="post"
+                              action="{% url 'courses:course_delete' course.slug %}"
+                              onsubmit="return confirm('Delete this course?');"
+                              style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="action-btn delete-btn">
+                                Delete
+                            </button>
+                        </form>
 
-                    <form method="post"
-                          action="{% url 'courses:course_delete' course.slug %}"
-                          onsubmit="return confirm('Delete this course?');"
-                          style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit"
-                                class="action-btn delete-btn">
-                            Delete
-                        </button>
-                    </form>
+                    </div>
 
                 </div>
 
