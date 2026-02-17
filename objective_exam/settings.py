@@ -221,7 +221,13 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+if DEBUG:
+    # Local development
+    MEDIA_ROOT = BASE_DIR / "media"
+else:
+    # Production (cPanel / public_html)
+    MEDIA_ROOT = BASE_DIR.parent / "public_html" / "media"
+
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
