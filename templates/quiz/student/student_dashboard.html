@@ -585,20 +585,8 @@ body {
 
 <div class="container">
   <!-- Header -->
-  <!-- ================= HEADER ================= -->
-  <div class="dashboard-header">
-
-    <div>
-      <h1 class="title is-4 mb-1">Student Dashboard</h1>
-      <p class="has-text-grey is-size-7">
-        Track your learning progress & exam performance
-      </p>
-      <p class="has-text-grey-light is-size-7">
-        Member since {{ user.date_joined|date:"d M Y" }}
-      </p>
-    </div>
-
-  </div>
+  <div class="header">
+    <h1>Student Dashboard</h1>
 
     {% if active_attempt %}
       <div class="active-alert">
