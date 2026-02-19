@@ -136,7 +136,7 @@ def exam_list(request):
 
         track_map[track] = items
 
-    return render(request, "quiz/exam_list.html", {
+    return render(request, "quiz/student/exam/exam_list.html", {
         "courses": courses,        # ✅ platform courses only
         "track_map": track_map,
     })

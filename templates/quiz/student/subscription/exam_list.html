@@ -1,0 +1,170 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block content %}
+
+<div class="container">
+
+  <!-- ================= HEADER ================= -->
+  <div class="mb-5 is-flex is-justify-content-space-between is-align-items-center">
+    <div>
+      <h1 class="title is-4">📝 Exams</h1>
+      <p class="subtitle is-6 has-text-grey">
+        Manage exams, pricing, publishing & limits
+      </p>
+    </div>
+
+    <div class="buttons">
+      <a href="{% url 'quiz:subscription_admin_panel' %}"
+         class="button is-light">
+        ← Dashboard
+      </a>
+
+      <a href="{% url 'quiz:admin_exam_create' %}"
+         class="button is-primary">
+        ➕ Create Exam
+      </a>
+    </div>
+  </div>
+
+  <!-- ================= TABLE ================= -->
+  <div class="box">
+    <div class="table-container">
+      <table class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Track</th>
+            <th>Questions</th>
+            <th>Duration</th>
+            <th>Pricing</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th class="has-text-centered">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        {% for exam in exams %}
+          <tr>
+
+            <!-- TITLE -->
+            <td>
+  <button class="button is-small"
+          onclick="togglePublish('{{ exam.id }}', this)">
+    {% if exam.is_published %}
+      <span class="tag is-success">Published</span>
+    {% else %}
+      <span class="tag is-danger">Hidden</span>
+    {% endif %}
+  </button>
+</td>
+
+
+            <!-- TRACK -->
+            <td>
+              {% if exam.track %}
+                {{ exam.track.title }}
+              {% else %}
+                <span class="has-text-grey">—</span>
+              {% endif %}
+            </td>
+
+            <!-- QUESTION COUNT -->
+            <td>
+              {{ exam.question_count }}
+            </td>
+
+            <!-- DURATION -->
+            <td>
+              {{ exam.duration_seconds|divisibleby:60 }}
+              min
+            </td>
+
+            <!-- PRICING -->
+            <td>
+              {% if exam.is_free %}
+                <span class="tag is-success">Free</span>
+              {% else %}
+                <span class="tag is-warning">
+                  {{ exam.currency }} {{ exam.price }}
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- STATUS -->
+            <td>
+              {% if exam.is_published %}
+                <span class="tag is-success">Published</span>
+              {% else %}
+                <span class="tag is-danger">Hidden</span>
+              {% endif %}
+            </td>
+
+            <!-- CREATED -->
+            <td>
+              {{ exam.created_at|date:"M d, Y" }}
+            </td>
+
+            <!-- ACTIONS -->
+            <td class="has-text-centered">
+              <div class="buttons are-small is-centered">
+
+                <a href="{% url 'quiz:admin_exam_update' exam.id %}"
+                   class="button is-info is-light"
+                   title="Edit">
+                  ✏️ Edit
+                </a>
+
+                <a href="{% url 'quiz:admin_exam_delete' exam.id %}"
+                   class="button is-danger is-light"
+                   onclick="return confirm('Delete this exam? This cannot be undone.')"
+                   title="Delete">
+                  🗑 Delete
+                </a>
+
+              </div>
+            </td>
+
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8"
+                class="has-text-centered has-text-grey">
+              No exams created yet
+            </td>
+          </tr>
+        {% endfor %}
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function csrf(){
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function togglePublish(id, btn){
+  fetch("{% url 'quiz:toggle_exam_publish' %}",{
+    method:"POST",
+    headers:{
+      "X-CSRFToken": csrf(),
+      "Content-Type":"application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({ exam_id:id })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.success){
+      btn.innerHTML = data.is_published
+        ? '<span class="tag is-success">Published</span>'
+        : '<span class="tag is-danger">Hidden</span>';
+    }
+  });
+}
+</script>
+
+{% endblock %}

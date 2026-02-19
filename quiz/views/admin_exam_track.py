@@ -9,7 +9,7 @@ def admin_exam_list(request):
     exams = Exam.objects.all().order_by("-created_at")
     courses = Course.objects.filter(is_published=True)
 
-    return render(request, "quiz/admin/exam_list.html", {
+    return render(request, "quiz/student/subscription/exam_list.html", {
     "track_map": track_map,
     "courses": courses,   # 👈 ADD THIS
 })
@@ -25,7 +25,7 @@ def admin_exam_create(request):
     else:
         form = ExamForm()
 
-    return render(request, "quiz/admin/exam_form.html", {
+    return render(request, "quiz/student/subscription/exam_form.html", {
         "form": form,
         "title": "Create Exam",
     })
@@ -43,7 +43,7 @@ def admin_exam_update(request, pk):
     else:
         form = ExamForm(instance=exam)
 
-    return render(request, "quiz/admin/exam_form.html", {
+    return render(request, "quiz/student/subscription/exam_form.html", {
         "form": form,
         "title": "Edit Exam",
     })
@@ -63,7 +63,7 @@ from quiz.forms import ExamTrackForm
 @staff_member_required
 def admin_track_list(request):
     tracks = ExamTrack.objects.all().order_by("-created_at")
-    return render(request, "quiz/admin/track_list.html", {"tracks": tracks})
+    return render(request, "quiz/student/subscription/track_list.html", {"tracks": tracks})
 
 
 @staff_member_required
@@ -76,7 +76,7 @@ def admin_track_create(request):
     else:
         form = ExamTrackForm()
 
-    return render(request, "quiz/admin/track_form.html", {
+    return render(request, "quiz/student/subscription/track_form.html", {
         "form": form,
         "title": "Create Track",
     })
@@ -94,7 +94,7 @@ def admin_track_update(request, pk):
     else:
         form = ExamTrackForm(instance=track)
 
-    return render(request, "quiz/admin/track_form.html", {
+    return render(request, "quiz/student/subscription/track_form.html", {
         "form": form,
         "title": "Edit Track",
     })

@@ -70,7 +70,7 @@ def admin_mock_attempts(request):
 
     return render(
         request,
-        "quiz/subscription/admin/mock_attempts.html",
+        "quiz/student/subscription/mock_attempts.html",
         context
     )
 
@@ -131,7 +131,7 @@ def admin_mock_attempt_history(request):
 
     return render(
         request,
-        "quiz/subscription/admin/mock_attempt_history.html",
+        "quiz/student/subscription/mock_attempt_history.html",
         context
     )
 

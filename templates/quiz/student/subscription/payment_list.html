@@ -1,0 +1,260 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% block content %}
+
+<div class="mb-4 is-flex is-justify-content-space-between is-align-items-center">
+  <h1 class="title is-4">💳 Payment Records</h1>
+
+  <button class="button is-primary" onclick="openPaymentModal()">
+    ➕ Add Manual Payment
+  </button>
+</div>
+
+<!-- ===================== PAYMENTS TABLE ===================== -->
+<table class="table is-fullwidth is-striped is-hoverable">
+  <thead>
+    <tr>
+      <th>User</th>
+      <th>Item</th>
+      <th>Amount</th>
+      <th>Method</th>
+      <th>Paid At</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in payments %}
+    <tr>
+      <td>{{ p.user.username }}</td>
+      <td>
+        {% if p.track %}
+          {{ p.track.title }}
+        {% else %}
+          {{ p.exam.title }}
+        {% endif %}
+      </td>
+      <td>₹{{ p.amount }}</td>
+      <td>{{ p.get_payment_method_display }}</td>
+      <td>{{ p.paid_at|date:"M d, Y H:i" }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5" class="has-text-centered has-text-grey">
+        No payment records found
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- ===================== MODAL ===================== -->
+<div class="modal" id="paymentModal">
+  <div class="modal-background" onclick="closePaymentModal()"></div>
+
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Add Manual Payment</p>
+      <button class="delete" onclick="closePaymentModal()"></button>
+    </header>
+
+    <section class="modal-card-body">
+
+      <!-- CSRF -->
+      <form>{% csrf_token %}</form>
+
+      <!-- USER -->
+      <div class="field">
+        <label class="label">User <span class="has-text-danger">*</span></label>
+        <div class="select is-fullwidth">
+          <select id="user">
+            <option value="">-- Select User --</option>
+            {% for u in users %}
+              <option value="{{ u.id }}">{{ u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- EXAM -->
+      <div class="field">
+        <label class="label">Exam (optional)</label>
+        <div class="select is-fullwidth">
+          <select id="exam">
+            <option value="">---</option>
+            {% for e in exams %}
+              <option value="{{ e.id }}">{{ e.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- TRACK -->
+      <div class="field">
+        <label class="label">Track (optional)</label>
+        <div class="select is-fullwidth">
+          <select id="track">
+            <option value="">---</option>
+            {% for t in tracks %}
+              <option value="{{ t.id }}">{{ t.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- PLAN (REQUIRED FOR TRACK) -->
+      <div class="field">
+        <label class="label">
+          Subscription Plan
+          <span class="has-text-danger">(required for track)</span>
+        </label>
+        <div class="select is-fullwidth">
+          <select id="plan">
+            <option value="">-- Select Plan --</option>
+            {% for plan in plans %}
+              <option value="{{ plan.id }}">
+                {{ plan.name }} — ₹{{ plan.price }}
+                {% if plan.duration_days %}
+                  / {{ plan.duration_days }} days
+                {% else %}
+                  (Lifetime)
+                {% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- COUPON -->
+      <div class="field">
+        <label class="label">Coupon (optional)</label>
+        <input class="input" id="coupon" placeholder="COUPON2025">
+      </div>
+
+      <!-- REFERENCE -->
+      <div class="field">
+        <label class="label">Reference ID</label>
+        <input class="input" id="reference" placeholder="UPI / Txn Ref">
+      </div>
+
+    </section>
+
+    <footer class="modal-card-foot">
+      <button class="button is-success" onclick="submitPayment()">
+        Save Payment
+      </button>
+      <button class="button" onclick="closePaymentModal()">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== SCRIPT ===================== -->
+<script>
+function getCSRF() {
+  return document.querySelector("input[name=csrfmiddlewaretoken]").value;
+}
+
+function openPaymentModal() {
+  document.getElementById("paymentModal").classList.add("is-active");
+}
+
+function closePaymentModal() {
+  document.getElementById("paymentModal").classList.remove("is-active");
+}
+
+/* =============================
+   AUTO-LOAD PLANS ON TRACK CHANGE
+   ============================= */
+document.getElementById("track").addEventListener("change", function () {
+  const trackId = this.value;
+  const planSelect = document.getElementById("plan");
+
+  planSelect.innerHTML = '<option value="">-- Select Plan --</option>';
+  planSelect.disabled = true;
+
+  // Disable exam if track selected
+  document.getElementById("exam").disabled = !!trackId;
+
+  if (!trackId) return;
+
+  fetch(`/quiz/admin/track/${trackId}/plans/`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data.plans.length) {
+        alert("No active subscription plans for this track");
+        return;
+      }
+
+      data.plans.forEach(p => {
+        const label = p.duration_days
+          ? `${p.name} — ₹${p.price} / ${p.duration_days} days`
+          : `${p.name} — ₹${p.price} (Lifetime)`;
+
+        planSelect.insertAdjacentHTML(
+          "beforeend",
+          `<option value="${p.id}">${label}</option>`
+        );
+      });
+
+      planSelect.disabled = false;
+    });
+});
+
+/* =============================
+   EXAM CHANGE → DISABLE TRACK+PLAN
+   ============================= */
+document.getElementById("exam").addEventListener("change", function () {
+  const hasExam = !!this.value;
+
+  document.getElementById("track").disabled = hasExam;
+  document.getElementById("plan").disabled = hasExam;
+});
+
+/* =============================
+   SUBMIT PAYMENT
+   ============================= */
+function submitPayment() {
+  const user = document.getElementById("user").value;
+  const exam = document.getElementById("exam").value;
+  const track = document.getElementById("track").value;
+  const plan = document.getElementById("plan").value;
+
+  if (!user) {
+    alert("User is required");
+    return;
+  }
+
+  if (exam && track) {
+    alert("Select either Exam OR Track");
+    return;
+  }
+
+  if (track && !plan) {
+    alert("Subscription plan is required for track");
+    return;
+  }
+
+  fetch("{% url 'quiz:admin_add_manual_payment' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCSRF(),
+    },
+    body: new URLSearchParams({
+      user_id: user,
+      exam_id: exam,
+      track_id: track,
+      plan_id: plan,
+      coupon: document.getElementById("coupon").value,
+      reference_id: document.getElementById("reference").value,
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.error || "Payment failed");
+    }
+  });
+}
+</script>
+
+
+{% endblock %}

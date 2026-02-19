@@ -6,6 +6,7 @@ from accounts.views.auth import verify_login_otp_view
 from accounts.views.security import logout_view
 from accounts.views.password_reset import *
 from accounts.views.register import *
+from accounts.views.monitoring import *
 
 
 
@@ -69,6 +70,8 @@ urlpatterns = [
         name="registration-success",
     ),
 
+
+    path("admin/users/", user_monitoring, name="user_monitoring"),
     
 ]
 

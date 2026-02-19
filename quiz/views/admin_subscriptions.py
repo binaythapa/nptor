@@ -54,7 +54,7 @@ def subscription_admin_panel(request):
         "now": timezone.now(),
     }
 
-    return render(request, "quiz/subscription/admin/dashboard.html", context)
+    return render(request, "quiz/student/subscription/dashboard.html", context)
 
 
 
@@ -369,7 +369,7 @@ def admin_exam_list(request):
     exams = Exam.objects.select_related("track").order_by("-created_at")
     return render(
         request,
-        "quiz/subscription/admin/exam_list.html",
+        "quiz/student/subscription/exam_list.html",
         {"exams": exams}
     )
 
@@ -383,7 +383,7 @@ def admin_exam_create(request):
 
     return render(
         request,
-        "quiz/subscription/admin/exam_form.html",
+        "quiz/student/subscription/exam_form.html",
         {"form": form, "mode": "create"}
     )
 
@@ -399,7 +399,7 @@ def admin_exam_update(request, pk):
 
     return render(
         request,
-        "quiz/subscription/admin/exam_form.html",
+        "quiz/student/subscription/exam_form.html",
         {"form": form, "mode": "edit"}
     )
 
@@ -420,7 +420,7 @@ def admin_track_list(request):
     tracks = ExamTrack.objects.order_by("-created_at")
     return render(
         request,
-        "quiz/subscription/admin/track_list.html",
+        "quiz/student/subscription/track_list.html",
         {"tracks": tracks}
     )
 
@@ -434,7 +434,7 @@ def admin_track_create(request):
 
     return render(
         request,
-        "quiz/subscription/admin/track_form.html",
+        "quiz/student/subscription/track_form.html",
         {"form": form, "mode": "create"}
     )
 
@@ -450,7 +450,7 @@ def admin_track_update(request, pk):
 
     return render(
         request,
-        "quiz/subscription/admin/track_form.html",
+        "quiz/student/subscription/track_form.html",
         {"form": form, "mode": "edit"}
     )
 
@@ -471,7 +471,7 @@ def admin_coupon_list(request):
     coupons = Coupon.objects.order_by("-created_at")
     return render(
         request,
-        "quiz/subscription/admin/coupon_list.html",
+        "quiz/student/subscription/coupon_list.html",
         {"coupons": coupons}
     )
 
@@ -485,7 +485,7 @@ def admin_coupon_create(request):
 
     return render(
         request,
-        "quiz/subscription/admin/coupon_form.html",
+        "quiz/student/subscription/coupon_form.html",
         {"form": form}
     )
 
@@ -505,7 +505,7 @@ def admin_payment_list(request):
     }
     return render(
         request,
-        "quiz/subscription/admin/payment_list.html",
+        "quiz/student/subscription/payment_list.html",
         context
     )
 

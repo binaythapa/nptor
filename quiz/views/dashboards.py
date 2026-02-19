@@ -4,6 +4,8 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
+from courses.models import CourseSubscription
+from django.db.models import Count
 
 
 from organizations.models.access import CourseAccess
@@ -67,27 +69,7 @@ from core.utils.memory import get_memory_usage_mb
 logger = logging.getLogger("django")
 
 
-'''
-# -------------------------
-# Generic dashboards
-# -------------------------
-@login_required
-def dashboard(request):
-    exams_count = Exam.objects.count()
-    published = Exam.objects.filter(is_published=True).count()
-    active_attempts = UserExam.objects.filter(submitted_at__isnull=True).count()
-    users_count = User.objects.count()
-    my_attempts = UserExam.objects.filter(user=request.user).order_by('-started_at')[:5]
 
-    context = {
-        'exams_count': exams_count,
-        'published_count': published,
-        'active_attempts': active_attempts,
-        'users_count': users_count,
-        'my_attempts': my_attempts,
-    }
-    return render(request, 'quiz/dashboard.html', context)
-'''
 
 @login_required
 def dashboard_dispatch(request):
@@ -98,50 +80,50 @@ def dashboard_dispatch(request):
         return redirect('quiz:admin_dashboard')
     return redirect('quiz:student_dashboard')
 
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Count, Sum, Avg, Q, F
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from datetime import timedelta
+
+from django.contrib.auth.models import User
+from quiz.models import (
+    UserExam,
+    Exam,
+    ExamTrack,
+    ExamTrackSubscription,
+)
+from courses.models import Course, CourseEnrollment
+from organizations.models.organization import Organization
+from organizations.models.membership import OrganizationMember
+
 
 @staff_member_required
 def admin_dashboard(request):
     now = timezone.now()
-
-    mem = get_memory_usage_mb()
-    logger.info(f"Admin Dashboard memory usage: {mem} MB")
-
-    # =====================================================
-    # RESET MOCK ATTEMPTS (ADMIN ACTION)
-    # =====================================================
-    if request.method == "POST" and request.POST.get("action") == "reset_mock":
-        user_id = request.POST.get("user_id")
-        exam_id = request.POST.get("exam_id")
-
-        if not user_id or not exam_id:
-            messages.error(request, "Please select both student and exam.")
-            return redirect("quiz:admin_dashboard")
-
-        try:
-            user = User.objects.get(id=user_id)
-            exam = Exam.objects.get(id=exam_id)
-        except (User.DoesNotExist, Exam.DoesNotExist):
-            messages.error(request, "Invalid student or exam selected.")
-            return redirect("quiz:admin_dashboard")
-
-        # Delete ONLY mock attempts
-        deleted_count, _ = UserExam.objects.filter(
-            user=user,
-            exam=exam,
-            passed__isnull=True  # ✅ mock attempts only
-        ).delete()
-
-        messages.success(
-            request,
-            f"Reset {deleted_count} mock attempt(s) for {user.username} – {exam.title}"
-        )
-        return redirect("quiz:admin_dashboard")
+    seven_days_ago = now - timedelta(days=7)
+    thirty_days_ago = now - timedelta(days=30)
 
     # =====================================================
-    # GLOBAL KPIs
+    # USER INTELLIGENCE
     # =====================================================
     total_users = User.objects.count()
 
+    active_users_7d = User.objects.filter(
+        last_login__gte=seven_days_ago
+    ).count()
+
+    new_users_7d = User.objects.filter(
+        date_joined__gte=seven_days_ago
+    ).count()
+
+    users_with_no_attempts = User.objects.annotate(
+        attempts=Count("exam_attempts")
+    ).filter(attempts=0).count()
+
+    # =====================================================
+    # EXAM INTELLIGENCE
+    # =====================================================
     total_attempts = UserExam.objects.filter(
         submitted_at__isnull=False
     ).count()
@@ -150,24 +132,82 @@ def admin_dashboard(request):
         passed=True
     ).count()
 
-    avg_score = (
-        UserExam.objects
-        .filter(score__isnull=False)
-        .aggregate(avg=Avg("score"))["avg"]
-    )
+    avg_score = UserExam.objects.aggregate(
+        avg=Avg("score")
+    )["avg"]
 
     pass_rate = (
         (passed_attempts / total_attempts) * 100
         if total_attempts else 0
     )
 
+    most_attempted_exam = (
+        Exam.objects
+        .annotate(attempts=Count("userexam"))
+        .order_by("-attempts")
+        .first()
+    )
+
     # =====================================================
-    # SUBSCRIPTIONS
+    # COURSE INTELLIGENCE
+    # =====================================================
+    total_courses = Course.objects.filter(
+        is_deleted=False
+    ).count()
+
+    published_courses = Course.objects.filter(
+        is_published=True,
+        is_deleted=False
+    ).count()
+
+    platform_courses = Course.objects.filter(
+        owner_type="platform"
+    ).count()
+
+    org_courses = Course.objects.filter(
+        owner_type="organization"
+    ).count()
+
+    total_enrollments = CourseEnrollment.objects.count()
+
+    most_popular_course = (
+        Course.objects
+        .annotate(enroll_count=Count("enrollments"))
+        .order_by("-enroll_count")
+        .first()
+    )
+
+    # =====================================================
+    # ORGANIZATION INTELLIGENCE
+    # =====================================================
+    total_orgs = Organization.objects.count()
+
+    active_orgs = Organization.objects.filter(
+        is_active=True
+    ).count()
+
+    total_org_members = OrganizationMember.objects.filter(
+        is_active=True
+    ).count()
+
+    org_student_count = OrganizationMember.objects.filter(
+        role="student",
+        is_active=True
+    ).count()
+
+    org_admin_count = OrganizationMember.objects.filter(
+        role="org_admin",
+        is_active=True
+    ).count()
+
+    # =====================================================
+    # SUBSCRIPTION INTELLIGENCE
     # =====================================================
     total_track_subs = ExamTrackSubscription.objects.count()
 
     active_track_subs = ExamTrackSubscription.objects.filter(
-        is_active=True
+        is_active=True,
+        expires_at__gte=now
     ).count()
 
     expired_track_subs = ExamTrackSubscription.objects.filter(
@@ -189,7 +229,7 @@ def admin_dashboard(request):
     )
 
     # =====================================================
-    # REVENUE
+    # REVENUE INTELLIGENCE
     # =====================================================
     total_revenue = (
         ExamTrackSubscription.objects
@@ -197,82 +237,142 @@ def admin_dashboard(request):
         .aggregate(total=Sum("amount"))["total"]
     ) or 0
 
+    revenue_30d = (
+        ExamTrackSubscription.objects
+        .filter(
+            payment_required=True,
+            subscribed_at__gte=thirty_days_ago
+        )
+        .aggregate(total=Sum("amount"))["total"]
+    ) or 0
+
     arpu = total_revenue / paid_subs if paid_subs else 0
 
     # =====================================================
-    # EXPIRING SOON
+    # BUSINESS HEALTH
     # =====================================================
-    expiring_soon = ExamTrackSubscription.objects.filter(
-        is_active=True,
-        expires_at__isnull=False,
-        expires_at__lte=now + timedelta(days=7),
-        expires_at__gte=now
-    ).count()
+    churn_risk_users = User.objects.filter(
+        track_subscriptions__is_active=True,
+        last_login__lt=thirty_days_ago
+    ).distinct().count()
 
     # =====================================================
-    # TRACK ANALYTICS
+    # TRACK ANALYTICS (Optimized)
     # =====================================================
-    track_rows = []
-    tracks = ExamTrack.objects.filter(is_active=True)
-
-    for track in tracks:
-        exams = Exam.objects.filter(track=track, is_published=True)
-        exam_count = exams.count()
-
-        enrolled_users = (
-            ExamTrackSubscription.objects
-            .filter(track=track, is_active=True)
-            .values("user")
-            .distinct()
-            .count()
-        )
-
-        completed_users = 0
-        if exam_count:
-            completed_users = (
-                UserExam.objects
-                .filter(exam__in=exams, passed=True)
-                .values("user")
-                .annotate(cnt=Count("exam", distinct=True))
-                .filter(cnt=exam_count)
-                .count()
+    tracks = (
+        ExamTrack.objects
+        .annotate(
+            enrolled=Count(
+                "subscriptions__user",
+                filter=Q(subscriptions__is_active=True),
+                distinct=True
+            ),
+            revenue=Sum(
+                "subscriptions__amount",
+                filter=Q(subscriptions__payment_required=True)
             )
-
-        completion_rate = (
-            (completed_users / enrolled_users) * 100
-            if enrolled_users else 0
         )
+    )
 
-        avg_track_score = (
-            UserExam.objects
-            .filter(exam__in=exams, score__isnull=False)
-            .aggregate(avg=Avg("score"))["avg"]
-        )
-
-        revenue_by_track = (
-            ExamTrackSubscription.objects
-            .filter(track=track, payment_required=True)
-            .aggregate(total=Sum("amount"))["total"]
-        ) or 0
-
+    track_rows = []
+    for track in tracks:
         track_rows.append({
             "track": track,
-            "enrolled": enrolled_users,
-            "completed": completed_users,
-            "completion_rate": round(completion_rate, 2),
-            "avg_score": round(avg_track_score, 2) if avg_track_score else None,
-            "revenue": revenue_by_track,
-            "drop_exam": "—",
+            "enrolled": track.enrolled,
+            "revenue": track.revenue or 0,
         })
 
-    return render(request, "quiz/dashboard/admin_dashboard.html", {
-        # KPIs
+
+
+
+
+    # =====================================================
+    # COURSE SUBSCRIPTIONS
+    # =====================================================
+
+    total_course_subs = CourseSubscription.objects.count()
+
+    active_course_subs = CourseSubscription.objects.filter(
+        is_active=True
+    ).count()
+
+    expired_course_subs = CourseSubscription.objects.filter(
+        is_active=True,
+        expires_at__lt=now
+    ).count()   
+
+
+    trial_course_subs = CourseSubscription.objects.filter(
+        payment_required=False
+    ).count()
+
+
+    paid_course_subs = CourseSubscription.objects.filter(
+        payment_required=True
+    ).count()
+
+    course_conversion_rate = (
+        (paid_course_subs / trial_course_subs) * 100
+        if trial_course_subs else 0
+    )
+
+    course_revenue = (
+        CourseSubscription.objects
+        .filter(payment_required=True)
+        .aggregate(total=Sum("amount"))["total"]
+    ) or 0
+
+
+    source_breakdown = (
+        CourseSubscription.objects
+        .values("source")
+        .annotate(count=Count("id"))
+        )
+    
+ 
+
+    most_subscribed_course = (
+        Course.objects
+        .annotate(sub_count=Count("subscriptions"))
+        .order_by("-sub_count")
+        .first()
+    )
+
+
+
+
+    # =====================================================
+    # CONTEXT
+    # =====================================================
+    context = {
+        # User Intelligence
         "total_users": total_users,
+        "active_users_7d": active_users_7d,
+        "new_users_7d": new_users_7d,
+        "users_with_no_attempts": users_with_no_attempts,
+
+        # Exam Intelligence
         "total_attempts": total_attempts,
         "pass_rate": round(pass_rate, 2),
         "avg_score": round(avg_score, 2) if avg_score else None,
+        "most_attempted_exam": most_attempted_exam,
 
-        # Subscriptions
+        # Course Intelligence
+        "total_courses": total_courses,
+        "published_courses": published_courses,
+        "platform_courses": platform_courses,
+        "org_courses": org_courses,
+        "total_enrollments": total_enrollments,
+        "most_popular_course": most_popular_course,
+
+        # Organization Intelligence
+        "total_orgs": total_orgs,
+        "active_orgs": active_orgs,
+        "total_org_members": total_org_members,
+        "org_student_count": org_student_count,
+        "org_admin_count": org_admin_count,
+
+        # Subscription Intelligence
         "total_track_subs": total_track_subs,
         "active_track_subs": active_track_subs,
         "expired_track_subs": expired_track_subs,
@@ -282,20 +382,30 @@ def admin_dashboard(request):
 
         # Revenue
         "total_revenue": total_revenue,
+        "revenue_30d": revenue_30d,
         "arpu": round(arpu, 2),
 
-        # Alerts
-        "expiring_soon": expiring_soon,
+        # Business Health
+        "churn_risk_users": churn_risk_users,
 
-        # Track table
+        # Tracks
         "track_rows": track_rows,
 
-        # NEW: Reset form data
-        "students": User.objects.order_by("username"),
-        "exams": Exam.objects.filter(is_published=True),
-        "total_questions" : Question.objects.filter(is_deleted=False).count()
+        # Course Subscription KPIs
+        "total_course_subs": total_course_subs,
+        "active_course_subs": active_course_subs,
+        "expired_course_subs": expired_course_subs,
+        "trial_course_subs": trial_course_subs,
+        "paid_course_subs": paid_course_subs,
+        "course_conversion_rate": round(course_conversion_rate, 2),
+        "course_revenue": course_revenue,
+        "source_breakdown": source_breakdown,
+        "most_subscribed_course": most_subscribed_course,
 
-    })
+    }
+
+    return render(request, "quiz/admin/admin_dashboard.html", context)
+
 
 
 @login_required
@@ -549,7 +659,7 @@ def student_dashboard(request):
             "total": total_lessons,
         })
 
-    return render(request, "quiz/dashboard/student_dashboard.html", {
+    return render(request, "quiz/student/student_dashboard.html", {
         "active_attempt": active_attempt,
         "total_attempts": total_attempts,
         "passed_count": passed_count,

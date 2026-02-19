@@ -1,0 +1,633 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}Practice Express{% endblock %}
+
+{% block content %}
+
+<div class="box">
+
+  <!-- HEADER -->
+  <div class="is-flex is-align-items-center is-justify-content-space-between mb-3">
+    <h1 class="title is-5 mb-0 has-text-weight-semibold">
+  Practice Express
+</h1>
+
+    <div class="practice-modes">
+      <a href="{% url 'quiz:practice' %}" class="practice-link">Basics</a>
+      <span class="mx-1 has-text-grey">|</span>
+      <a href="{% url 'quiz:exam_list' %}" class="practice-link">Pro</a>
+    </div>
+  </div>
+
+<!-- Limited Access Message -->
+{% if not user.is_authenticated %}
+  <div class="notification is-light is-warning py-2 px-3 mt-2"
+       style="font-size: 0.75rem; line-height: 1.3;">
+
+    <span class="has-text-weight-semibold">
+      Limited access.
+    </span>
+
+    <a href="{% url 'accounts:request-login-otp' %}"
+       class="has-text-link has-text-weight-semibold ml-1">
+      Log in
+    </a>
+    to unlock full features.
+
+  </div>
+{% endif %}
+
+
+
+
+<!-- FILTERS (COLLAPSIBLE) -->
+<div class="box mb-3 p-3">
+
+  <!-- TOGGLE HEADER -->
+  <div class="is-flex is-justify-content-space-between is-align-items-center mb-2"
+       style="cursor:pointer;"
+       onclick="toggleFilters()">
+
+    <p class="has-text-weight-semibold is-size-7 mb-0">
+      Filters
+      <span id="filterHint"
+            class="has-text-grey is-size-7 ml-1">
+        (Expand)
+      </span>
+    </p>
+
+    <span id="filterToggleIcon" class="has-text-grey is-size-7">▾</span>
+  </div>
+
+  <!-- FILTER BODY -->
+  <div id="filterBody"
+       style="overflow:hidden; transition:max-height 0.25s ease;">
+
+    <div class="columns is-mobile is-multiline is-variable is-1">
+
+      <!-- DOMAIN -->
+      <div class="column is-12-mobile is-4-tablet">
+        <div class="field">
+          <label class="label is-size-7 mb-1 has-text-grey">Domain</label>
+          <div class="select is-small is-fullwidth">
+            <select id="domainSelect">
+              <option value="">All Domains</option>
+              {% for d in domains %}
+                <option value="{{ d.id }}">{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORY -->
+      <div class="column is-12-mobile is-4-tablet">
+        <div class="field">
+          <label class="label is-size-7 mb-1 has-text-grey">Category</label>
+          <div class="select is-small is-fullwidth">
+            <select id="categorySelect" disabled>
+              <option value="">All Categories</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIFFICULTY -->
+      <div class="column is-12-mobile is-4-tablet">
+        <div class="field">
+          <label class="label is-size-7 mb-1 has-text-grey">Difficulty</label>
+          <div class="select is-small is-fullwidth">
+            <select id="difficultySelect">
+              <option value="">All Difficulty</option>
+              {% for k,l in difficulty_choices %}
+                <option value="{{ k }}">{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+  <!-- COMPACT STATS -->
+<div class="level is-mobile is-size-7 mb-2">
+
+  <div class="level-left">
+
+    <span class="mr-3">
+      🎯 <strong><span id="matched">0</span>/<span id="total">0</span></strong>
+    </span>
+
+    <span class="mr-3">
+      📊 <span id="accuracy">0%</span>
+    </span>
+
+    <span class="mr-3">
+      📈 <span id="pDone">0</span>/<span id="pTotal">0</span>
+    </span>
+
+    <progress id="pBar"
+              class="progress is-link is-small"
+              value="0"
+              max="100"
+              style="width:100px; height:6px;">
+    </progress>
+
+  </div>
+
+  <div class="level-right">
+
+    <span class="tag is-warning is-light mr-2 is-small">
+      ⏱ <span id="timer">30</span>s
+    </span>   
+
+  </div>
+
+</div>
+
+
+
+
+<!-- QUESTION -->
+<div class="box">
+  <div id="qText" class="question-text mb-4"></div>
+
+<form onsubmit="submitAnswer(); return false;">
+  <p id="choiceHint" class="is-size-7 has-text-grey mb-2"></p>
+  <div id="choices" class="choice-list mb-4"></div>
+
+  <div class="button-group">
+    <button type="submit" class="button is-success">
+      Submit
+    </button>
+
+    <button type="button"
+            id="resetBtn"
+            onclick="resetPractice()"
+            class="button is-light">
+      🔄 Reset
+    </button>
+  </div>
+</form>
+
+  <div id="feedback" class="notification is-hidden mt-4"></div>
+</div>
+
+
+
+
+
+<!-- END / LIMIT -->
+<div id="endMessage" class="notification is-info is-light is-hidden mt-4"></div>
+
+<script>
+/* ===============================
+   STATE
+================================ */
+let questionType = "single";
+let correctChoices = [];
+let matched = 0;
+let total = 0;
+
+let timerInterval = null;
+let timeLeft = 30;
+
+/* ===============================
+   TIMER
+================================ */
+function startTimer(){
+  clearInterval(timerInterval);
+  timeLeft = 60;
+  timer.innerText = timeLeft;
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    timer.innerText = timeLeft;
+    if(timeLeft <= 0){
+      clearInterval(timerInterval);
+      handleTimeout();
+    }
+  }, 1000);
+}
+
+function handleTimeout(){
+  total++;
+  totalSpan.innerText = total;
+  showFeedback(false, true);
+  setTimeout(loadQuestion, 1200);
+}
+
+
+/* ===============================
+   LOAD QUESTION
+================================ */
+function loadQuestion(){
+  clearInterval(timerInterval);
+
+  const params = new URLSearchParams();
+  if(domainSelect.value) params.append("domain", domainSelect.value);
+  if(categorySelect.value) params.append("category", categorySelect.value);
+  if(difficultySelect.value) params.append("difficulty", difficultySelect.value);
+
+  fetch("{% url 'quiz:practice_express_next' %}?" + params.toString())
+    .then(r => r.json())
+    .then(d => {
+
+      /* ================= LIMIT REACHED ================= */
+      if(d.limit_reached){
+        endMessage.classList.remove("is-hidden");
+        endMessage.innerHTML = `
+          <div class="notification is-warning is-light p-4">
+            <p class="has-text-weight-semibold mb-2">
+              🌟 Milestone Achieved!
+            </p>
+            <p class="is-size-7 mb-3">
+              ${d.message}
+            </p>
+            <div class="buttons is-centered">
+              <a href="{% url 'accounts:request-login-otp' %}"
+                 class="button is-warning is-small">
+                 Login to Continue
+              </a>
+               <button id="resetBtn"
+        onclick="resetPractice()"
+        class="button is-small is-light">
+  🔄Reset 
+</button>
+            </div>
+          </div>
+        `;
+        updateProgress(d.progress_done, d.progress_total);
+        return;
+      }
+
+      /* ================= COMPLETED ================= */
+      if(d.completed){
+        endMessage.classList.remove("is-hidden");
+        endMessage.innerHTML = `
+          <div class="notification is-info is-light p-4">
+            <p class="has-text-weight-semibold mb-2">
+              🚀 Great Progress!
+            </p>
+            <p class="is-size-7 mb-3">
+            Amazing work! You've completed ${d.progress_done} questions — keep pushing forward and conquer more courses & exams!
+              
+            </p>
+            <div class="buttons is-centered">
+              <a href="{% url 'quiz:exam_list' %}"
+                 class="button is-link is-small">
+                 Explore Courses & Exams
+              </a>
+               <button id="resetBtn"
+                  onclick="resetPractice()"
+                  class="button is-small is-light">
+                    🔄Reset 
+                </button>
+            </div>
+          </div>
+        `;
+        updateProgress(d.progress_done, d.progress_total);
+        return;
+      }
+
+      /* ================= NORMAL QUESTION ================= */
+      questionType = d.question_type;
+      correctChoices = d.correct_choices;
+
+      qText.innerHTML = d.text;
+      choices.innerHTML = "";
+      feedback.classList.add("is-hidden");
+
+      d.choices.forEach((c, index) => {
+        const type = (questionType === "multi") ? "checkbox" : "radio";
+
+        choices.insertAdjacentHTML("beforeend", `
+          <label class="choice-item">
+            <input
+              type="${type}"
+              name="ans"
+              value="${c.id}"
+            >
+            <span class="choice-marker ${type === 'checkbox' ? 'is-checkbox' : 'is-radio'}">
+              ${String.fromCharCode(65 + index)}
+            </span>
+            <div class="choice-content">
+              ${c.text}
+            </div>
+          </label>
+        `);
+      });
+
+      updateProgress(d.progress_done, d.progress_total);
+      startTimer();
+    });
+}
+
+
+/* ===============================
+   SUBMIT
+================================ */
+function submitAnswer(){
+  clearInterval(timerInterval);
+
+  const selected = [...document.querySelectorAll('input[name="ans"]:checked')]
+                    .map(i => Number(i.value));
+
+  if(selected.length === 0){
+    alert("Select an option");
+    return;
+  }
+
+  total++;
+  totalSpan.innerText = total;
+
+  let isCorrect = false;
+
+  if(questionType === "multi"){
+    isCorrect =
+      selected.length === correctChoices.length &&
+      selected.every(v => correctChoices.includes(v));
+  } else {
+    isCorrect = correctChoices.includes(selected[0]);
+  }
+
+  if(isCorrect) matched++;
+  matchedSpan.innerText = matched;
+  updateAccuracy();
+
+  showFeedback(isCorrect, false);
+  setTimeout(loadQuestion, 1200);
+}
+
+/* ===============================
+   HELPERS
+================================ */
+function updateProgress(done, total){
+  pDone.innerText = done;
+  pTotal.innerText = total;
+  pBar.max = total;
+  pBar.value = done;
+}
+
+function updateAccuracy(){
+  accuracy.innerText =
+    total === 0 ? "0%" : Math.round((matched / total) * 100) + "%";
+}
+
+function showFeedback(isCorrect, timeout){
+  feedback.classList.remove("is-hidden","is-success","is-danger");
+  feedback.classList.add(isCorrect ? "is-success" : "is-danger");
+  feedback.innerText = isCorrect
+    ? "✅ Correct!"
+    : (timeout ? "⏰ Time up!" : "❌ Incorrect");
+}
+
+
+
+/* ===============================
+   RESET
+================================ */
+function resetStats(){
+  clearInterval(timerInterval);
+  matched = 0;
+  total = 0;
+  matchedSpan.innerText = "0";
+  totalSpan.innerText = "0";
+  accuracy.innerText = "0%";
+  pDone.innerText = "0";
+  pTotal.innerText = "0";
+  pBar.value = 0;
+  pBar.max = 0;
+  endMessage.classList.add("is-hidden");
+}
+
+
+function resetPractice(){
+  window.location.href = "{% url 'quiz:practice_express' %}?reset=1";
+}
+
+
+/* ===============================
+   DOMAIN → CATEGORY
+================================ */
+domainSelect.onchange = () => {
+
+  categorySelect.innerHTML = '<option value="">All categories</option>';
+  categorySelect.disabled = true;
+
+  if(!domainSelect.value){
+    resetStats();
+    loadQuestion();
+    return;
+  }
+
+  fetch("{% url 'quiz:ajax_categories_by_domain' %}?domain=" + domainSelect.value)
+    .then(r => r.json())
+    .then(d => {
+      d.categories.forEach(c => {
+        categorySelect.insertAdjacentHTML(
+          "beforeend",
+          `<option value="${c.id}">${c.parent_id ? "↳ " : ""}${c.name}</option>`
+        );
+      });
+      categorySelect.disabled = false;
+
+      resetStats();
+      loadQuestion();
+    });
+};
+
+categorySelect.onchange = () => {
+  resetStats();
+  loadQuestion();
+};
+
+difficultySelect.onchange = () => {
+  resetStats();
+  loadQuestion();
+};
+
+resetBtn.onclick = resetPractice;
+
+
+/* ===============================
+   INIT
+================================ */
+const matchedSpan = document.getElementById("matched");
+const totalSpan = document.getElementById("total");
+
+loadQuestion();
+
+
+
+
+</script>
+
+<script>
+function updateFilterUI(expanded) {
+  const hint = document.getElementById("filterHint");
+  const icon = document.getElementById("filterToggleIcon");
+
+  if (expanded) {
+    hint.innerText = "(Click to collapse)";
+    icon.innerText = "▴";
+  } else {
+    hint.innerText = "(Click to expand)";
+    icon.innerText = "▾";
+  }
+}
+
+function toggleFilters() {
+  const body = document.getElementById("filterBody");
+  const isExpanded =
+    body.style.maxHeight && body.style.maxHeight !== "0px";
+
+  if (isExpanded) {
+    body.style.maxHeight = "0px";
+    updateFilterUI(false);
+    localStorage.setItem("expressFilterExpanded", "0");
+  } else {
+    body.style.maxHeight = body.scrollHeight + "px";
+    updateFilterUI(true);
+    localStorage.setItem("expressFilterExpanded", "1");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const body = document.getElementById("filterBody");
+  const expanded =
+    localStorage.getItem("expressFilterExpanded") === "1";
+
+  if (expanded) {
+    body.style.maxHeight = body.scrollHeight + "px";
+    updateFilterUI(true);
+  } else {
+    body.style.maxHeight = "0px";
+    updateFilterUI(false);
+  }
+});
+</script>
+<style>
+/* ===============================
+   QUESTION
+================================ */
+.question-text p {
+  margin-bottom: 0.6rem;   /* slightly tighter */
+}
+
+/* ===============================
+   CHOICES – COMPACT / EXPRESS
+================================ */
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;                /* reduced gap */
+}
+
+/* Main choice container */
+.choice-item {
+  display: flex;
+  gap: 10px;               /* reduced gap */
+  padding: 10px 12px;     /* reduced padding */
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;     /* slightly sharper */
+  cursor: pointer;
+  background: #fff;
+  font-size: 0.88rem;     /* reduced font size */
+  line-height: 1.35;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* Limit width so it doesn’t feel too wide */
+.choice-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #fff;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  width: 100%;          /* 🔥 full width */
+}
+
+
+/* Hover */
+.choice-item:hover {
+  background: #f9fafb;
+}
+
+/* Hide native input (still accessible) */
+.choice-item input {
+  display: none;
+}
+
+/* ---------- MARKER BASE ---------- */
+.choice-marker {
+  min-width: 24px;        /* reduced size */
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #475569;
+  flex-shrink: 0;
+  border: 2px solid #cbd5e1;
+}
+
+/* ---------- SINGLE SELECT (RADIO) ---------- */
+.choice-marker.is-radio {
+  border-radius: 50%;
+}
+
+/* ---------- MULTI SELECT (CHECKBOX) ---------- */
+.choice-marker.is-checkbox {
+  border-radius: 4px;
+}
+
+/* ---------- SELECTED STATE ---------- */
+.choice-item input:checked + .choice-marker {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.choice-item input:checked ~ .choice-content {
+  font-weight: 600;
+}
+
+/* ---------- CONTENT ---------- */
+.choice-content {
+  width: 100%;
+}
+
+.choice-content p {
+  margin: 0;
+}
+
+/* ===============================
+   MOBILE REFINEMENT
+================================ */
+@media (max-width: 768px) {
+  .choice-item {
+    font-size: 0.85rem;
+    padding: 9px 10px;
+  }
+
+  .choice-marker {
+    min-width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
+}
+
+
+</style>
+{% endblock %}
+

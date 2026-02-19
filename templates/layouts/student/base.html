@@ -1,0 +1,137 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="32x32">
+  <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="48x48">
+
+
+  <!-- ================= SEO TITLE ================= -->
+  <title>
+    {% block title %}
+      {{ site_name|default:"Nepal Mentor" }} – Online Exams & Practice Platform
+    {% endblock %}
+  </title>
+
+  <!-- ================= BASIC SEO ================= -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description"
+        content="{% block meta_description %}
+        Practice exams, mock tests, and improve skills with {{ site_name|default:"Nepal Mentor" }}.
+        {% endblock %}">
+  <meta name="robots" content="index, follow">
+
+  <!-- ================= CANONICAL ================= -->
+  <link rel="canonical"
+        href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+
+  <!-- ================= OPEN GRAPH ================= -->
+  <meta property="og:title"
+        content="{% block og_title %}
+        {{ site_name|default:"Nepal Mentor" }} – Online Exam Platform
+        {% endblock %}">
+  <meta property="og:description"
+        content="{% block og_description %}
+        Practice exams, mock tests, and improve skills.
+        {% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:image"
+        content="{% block og_image %}{% static 'images/logo.jpg' %}{% endblock %}">
+
+  <!-- ================= STYLES ================= -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+
+  {% block head_extra %}{% endblock %}
+</head>
+
+<body {% if request.COOKIES.darkmode == '1' %} data-theme="dark"{% endif %}>
+<div id="app" class="app-layout">
+
+  <!-- ================= HEADER ================= -->
+  {% include "layouts/student/header.html" %}
+
+  <!-- ================= MAIN ================= -->
+ <!-- ================= MAIN ================= -->
+<div class="container main-area">
+
+  <!-- SIDEBAR -->
+  {% include "layouts/student/sidebar.html" %}
+
+  <!-- CONTENT -->
+  <main class="site-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+  <!-- ================= FOOTER ================= -->
+  {% include "layouts/student/footer.html" %}
+
+  <!-- LOGOUT FORM -->
+  {% if user.is_authenticated %}
+  <form id="logout-form" method="post"
+        action="{% url 'accounts:logout' %}"
+        style="display:none;">
+    {% csrf_token %}
+  </form>
+  {% endif %}
+
+</div>
+
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div class="modal" id="logout-modal">
+  <div class="modal-background"></div>
+
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Confirm Logout</p>
+      <button class="delete" aria-label="close" onclick="closeLogoutModal()"></button>
+    </header>
+
+    <section class="modal-card-body">
+      <p>Are you sure you want to log out?</p>
+    </section>
+
+    <footer class="modal-card-foot">
+      <button class="button is-light" onclick="closeLogoutModal()">
+        Cancel
+      </button>
+
+      <button class="button is-danger"
+              onclick="document.getElementById('logout-form').submit();">
+        Logout
+      </button>
+    </footer>
+  </div>
+</div>
+
+
+<script src="{% static 'js/ui.js' %}"></script>
+
+<script>
+function openLogoutModal() {
+  document.getElementById("logout-modal").classList.add("is-active");
+}
+
+function closeLogoutModal() {
+  document.getElementById("logout-modal").classList.remove("is-active");
+}
+</script>
+
+
+<!-- ================= GOOGLE ANALYTICS ================= -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0VP1Z2NB44"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-0VP1Z2NB44');
+</script>
+
+{% block scripts_extra %}{% endblock %}
+</body>
+</html>

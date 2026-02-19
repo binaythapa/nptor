@@ -791,7 +791,13 @@ class UserExam(SafeStrMixin, models.Model):
     # 🔐 SafeStrMixin config
     STR_FIELDS = ("user", "exam")
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    user = models.ForeignKey(
+    User,
+    on_delete=models.CASCADE,
+    related_name="exam_attempts"   # ✅ add this
+)
+
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
 
     status = models.CharField(

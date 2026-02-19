@@ -121,7 +121,7 @@ def practice_express(request):
         request.session.modified = True
         return redirect("quiz:practice_express")
 
-    return render(request, "quiz/practice_express/practice_express.html", {
+    return render(request, "quiz/student/practice_express/practice_express.html", {
         "domains": Domain.objects.filter(is_active=True),
         "categories": Category.objects.none(),
         "difficulty_choices": Question.DIFFICULTY_CHOICES,

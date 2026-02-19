@@ -165,7 +165,7 @@ def question_dashboard(request):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
      return JsonResponse({
         "html": render_to_string(
-            "questions/_question_rows.html",
+            "quiz/admin/questions/_question_rows.html",
             {
                 "questions": questions_page,
                 "tab": tab,
@@ -195,7 +195,7 @@ def question_dashboard(request):
         "needs_review_count": needs_review_count,
     }
 
-    return render(request, "questions/dashboard.html", context)
+    return render(request, "quiz/admin/questions/dashboard.html", context)
 
 
 
@@ -236,7 +236,7 @@ def add_question(request):
 
     return render(
         request,
-        "questions/add_question.html",
+        "quiz/admin/questions/add_question.html",
         {
             "form": form,
             "choice_formset": formset,
@@ -309,7 +309,7 @@ def edit_question(request, pk):
 
     return render(
         request,
-        "questions/edit_question.html",
+        "quiz/admin/questions/edit_question.html",
         {
             "form": form,
             "choice_formset": formset,
@@ -387,7 +387,7 @@ def question_review(request, pk):
 
     return render(
         request,
-        "questions/review.html",
+        "quiz/admin/questions/review.html",
         {
             "question": question,
             "discussions": discussions,

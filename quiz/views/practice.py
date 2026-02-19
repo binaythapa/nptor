@@ -224,7 +224,7 @@ def practice(request):
     remaining = qs.exclude(id__in=seen)
 
     if not remaining.exists():
-        return render(request, "quiz/practice/practice.html", {
+        return render(request, "quiz/student/practice/practice.html", {
             "completed": True,
             "progress_done": total,
             "progress_total": total,
@@ -330,7 +330,7 @@ def practice(request):
         ).exists()
 
 
-    return render(request, "quiz/practice/practice.html", {
+    return render(request, "quiz/student/practice/practice.html", {
         "question": question,
         "choices": choices,
         "result": result,

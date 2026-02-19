@@ -257,7 +257,7 @@ def exam_question(request, user_exam_id, index):
 
     progress = int(((index + 1) / len(q_ids)) * 100) if q_ids else 0
 
-    return render(request, 'quiz/exam_question.html', {
+    return render(request, 'quiz/student/exam/exam_question.html', {
         'user_exam': ue,
         'ua': ua,
         'question': q,
@@ -533,7 +533,7 @@ def exam_result(request, user_exam_id):
     # =====================================================
     return render(
         request,
-        'quiz/result.html',
+        'quiz/student/exam/result.html',
         {
             'user_exam': ue,
             'answers': answers,
@@ -572,7 +572,7 @@ def exam_expired(request, user_exam_id):
     ue.passed = False
     ue.save()
 
-    return render(request, "quiz/exam_expired.html", {
+    return render(request, "quiz/student/exam/exam_expired.html", {
         "user_exam": ue,
     })
 
@@ -808,7 +808,7 @@ def exam_locked(request, exam_id):
                 f"You must pass at least one Level {exam.level - 1} exam."
             )
 
-    return render(request, "quiz/exam_locked.html", {
+    return render(request, "quiz/student/exam/exam_locked.html", {
         "exam": exam,
         "reasons": reasons or ["This exam is currently locked."],
     })
@@ -985,7 +985,7 @@ def exam_review(request, user_exam_id):
     total = len(ordered_questions)
     unanswered_count = total - answered_count
 
-    return render(request, "quiz/exam_review.html", {
+    return render(request, "quiz/student/exam/exam_review.html", {
         "user_exam": user_exam,
         "questions": ordered_questions,
         "user_answers": user_answers,

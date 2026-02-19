@@ -1,0 +1,102 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% block content %}
+
+<div class="container">
+
+  <!-- ================= HEADER ================= -->
+  <div class="mb-5">
+    <h2 class="title is-4">🧪 Manage Mock Attempts</h2>
+    <p class="has-text-grey">
+      Reset mock exam attempts for students. Real exam attempts are never affected.
+    </p>
+  </div>
+
+
+<div class="buttons mb-4">
+  <a href="{% url 'quiz:admin_mock_attempt_history' %}"
+     class="button is-link is-light">
+    📜 View Mock Attempt History
+  </a>
+</div>
+
+
+
+  <!-- ================= RESET CARD ================= -->
+  <div class="box">
+
+    <h3 class="title is-6 mb-4">♻ Reset Mock Attempts</h3>
+
+    <form
+      method="post"
+      action="{% url 'quiz:reset_mock_attempts' %}"
+      onsubmit="return confirmReset()"
+    >
+      {% csrf_token %}
+
+      <div class="columns is-multiline">
+
+        <!-- STUDENT -->
+        <div class="column is-4">
+          <label class="label">Select Student</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="user_id" required>
+                <option value="">-- Select Student --</option>
+                {% for u in students %}
+                <option value="{{ u.id }}">
+                  {{ u.username }} ({{ u.email }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXAM -->
+        <div class="column is-4">
+          <label class="label">Select Exam</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="exam_id" required>
+                <option value="">-- Select Exam --</option>
+                {% for e in exams %}
+                <option value="{{ e.id }}">{{ e.title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION -->
+        <div class="column is-4 is-flex is-align-items-flex-end">
+          <button class="button is-danger is-fullwidth">
+            ♻ Reset Mock Attempts
+          </button>
+        </div>
+
+      </div>
+
+      <article class="message is-warning mt-4">
+        <div class="message-body">
+          ⚠ <strong>Warning</strong><br>
+          • Deletes <strong>mock exams only</strong><br>
+          • Real exam attempts are <strong>NOT affected</strong><br>
+          • Action cannot be undone
+        </div>
+      </article>
+
+    </form>
+
+  </div>
+
+</div>
+
+<script>
+function confirmReset(){
+  return confirm(
+    "This will permanently delete ALL mock attempts for this student and exam.\n\nContinue?"
+  );
+}
+</script>
+
+{% endblock %}

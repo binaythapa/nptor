@@ -1,0 +1,266 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% block content %}
+
+<!-- ============================= -->
+<!-- 1️⃣ PLATFORM HEALTH -->
+<!-- ============================= -->
+<div class="admin-section">
+  <div class="admin-section-title">📊 Platform Health</div>
+
+  <div class="admin-kpi-grid">
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ total_users }}</div>
+          <div class="admin-kpi-label">Total Users</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ active_users_7d }}</div>
+          <div class="admin-kpi-label">Active (7 days)</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ new_users_7d }}</div>
+          <div class="admin-kpi-label">New Users (7 days)</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value admin-danger">
+              {{ churn_risk_users }}
+          </div>
+          <div class="admin-kpi-label">Churn Risk Users</div>
+      </div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- 2️⃣ EXAM INTELLIGENCE -->
+<!-- ============================= -->
+<div class="admin-section">
+  <div class="admin-section-title">📝 Exam Intelligence</div>
+
+  <div class="admin-kpi-grid">
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ total_attempts }}</div>
+          <div class="admin-kpi-label">Total Attempts</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ pass_rate }}%</div>
+          <div class="admin-kpi-label">Pass Rate</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">
+              {% if avg_score %}{{ avg_score }}%{% else %}—{% endif %}
+          </div>
+          <div class="admin-kpi-label">Average Score</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">
+              {% if most_attempted_exam %}
+                  {{ most_attempted_exam.title }}
+              {% else %}—{% endif %}
+          </div>
+          <div class="admin-kpi-label">Most Attempted Exam</div>
+      </div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- 3️⃣ REVENUE & SUBSCRIPTIONS -->
+<!-- ============================= -->
+<div class="admin-section">
+  <div class="admin-section-title">💰 Revenue & Subscriptions</div>
+
+  <div class="admin-kpi-grid">
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">₹{{ total_revenue }}</div>
+          <div class="admin-kpi-label">Total Revenue</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">₹{{ revenue_30d }}</div>
+          <div class="admin-kpi-label">Revenue (30 days)</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ conversion_rate }}%</div>
+          <div class="admin-kpi-label">Conversion Rate</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">₹{{ arpu }}</div>
+          <div class="admin-kpi-label">ARPU</div>
+      </div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- 4️⃣ COURSE INTELLIGENCE -->
+<!-- ============================= -->
+<div class="admin-section">
+  <div class="admin-section-title">📚 Course Intelligence</div>
+
+  <div class="admin-kpi-grid">
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ total_courses }}</div>
+          <div class="admin-kpi-label">Total Courses</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ published_courses }}</div>
+          <div class="admin-kpi-label">Published</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ total_enrollments }}</div>
+          <div class="admin-kpi-label">Total Enrollments</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">
+              {% if most_popular_course %}
+                  {{ most_popular_course.title }}
+              {% else %}—{% endif %}
+          </div>
+          <div class="admin-kpi-label">Most Popular Course</div>
+      </div>
+  </div>
+</div>
+
+
+
+<!-- ============================= -->
+<!-- 📚 COURSE SUBSCRIPTION INTELLIGENCE -->
+<!-- ============================= -->
+<div class="admin-section">
+  <div class="admin-section-title">📚 Course Subscriptions</div>
+
+  <div class="admin-kpi-grid">
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ total_course_subs }}</div>
+          <div class="admin-kpi-label">Total Subscriptions</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ active_course_subs }}</div>
+          <div class="admin-kpi-label">Active</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ paid_course_subs }}</div>
+          <div class="admin-kpi-label">Paid</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ course_conversion_rate }}%</div>
+          <div class="admin-kpi-label">Conversion Rate</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">₹{{ course_revenue }}</div>
+          <div class="admin-kpi-label">Course Revenue</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">
+              {% if most_subscribed_course %}
+                {{ most_subscribed_course.title }}
+              {% else %}—
+              {% endif %}
+          </div>
+          <div class="admin-kpi-label">Most Subscribed Course</div>
+      </div>
+
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- 📚 Add Source Breakdown Table -->
+<!-- ============================= -->
+
+<div class="admin-section">
+  <div class="admin-section-title">📊 Subscription Source Breakdown</div>
+
+  <div class="table-container">
+    <table class="table is-fullwidth is-striped">
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Subscriptions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in source_breakdown %}
+        <tr>
+          <td>{{ row.source|title }}</td>
+          <td>{{ row.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+
+<!-- ============================= -->
+<!-- 5️⃣ ORGANIZATION INTELLIGENCE -->
+<!-- ============================= -->
+<div class="admin-section">
+  <div class="admin-section-title">🏢 Organization Intelligence</div>
+
+  <div class="admin-kpi-grid">
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ total_orgs }}</div>
+          <div class="admin-kpi-label">Total Organizations</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ active_orgs }}</div>
+          <div class="admin-kpi-label">Active Organizations</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ org_student_count }}</div>
+          <div class="admin-kpi-label">Org Students</div>
+      </div>
+
+      <div class="admin-kpi-card">
+          <div class="admin-kpi-value">{{ org_admin_count }}</div>
+          <div class="admin-kpi-label">Org Admins</div>
+      </div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- 6️⃣ TRACK TABLE -->
+<!-- ============================= -->
+<div class="admin-section">
+  <div class="admin-section-title">📊 Track Revenue Overview</div>
+
+  <div class="table-container">
+    <table class="table is-fullwidth is-striped is-hoverable">
+      <thead>
+        <tr>
+          <th>Track</th>
+          <th>Enrolled</th>
+          <th>Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in track_rows %}
+        <tr>
+          <td>{{ row.track.title }}</td>
+          <td>{{ row.enrolled }}</td>
+          <td>₹{{ row.revenue }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

@@ -209,7 +209,7 @@ def profile(request):
             request.user.username = new_username
             request.user.save()
             messages.success(request, 'Profile updated.')
-    return render(request, 'quiz/profile.html', {'user': request.user})
+    return render(request, 'quiz/student/profile.html', {'user': request.user})
 
 
 
