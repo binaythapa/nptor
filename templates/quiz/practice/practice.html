@@ -36,6 +36,9 @@
   transform: translateY(0);
 }
 
+.box.mb-3.p-3 {
+  transition: none !important;
+}
 
 
 
@@ -689,7 +692,19 @@ document.addEventListener("click", function(e) {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        document.getElementById("practiceContainer").innerHTML = data.html;
+        const filterBox = document.querySelector(".box.mb-3.p-3");
+const filterHeight = filterBox.offsetHeight;
+
+// Lock height to prevent reflow blink
+filterBox.style.height = filterHeight + "px";
+
+document.getElementById("practiceContainer").innerHTML = data.html;
+
+// Release height after DOM stabilizes
+setTimeout(() => {
+  filterBox.style.height = "auto";
+}, 50);
+
       }
     })
     .catch(error => {
@@ -776,7 +791,19 @@ function loadNextQuestion() {
     }
 
     if (data.success) {
-      document.getElementById("practiceContainer").innerHTML = data.html;
+      const filterBox = document.querySelector(".box.mb-3.p-3");
+const filterHeight = filterBox.offsetHeight;
+
+// Lock height to prevent reflow blink
+filterBox.style.height = filterHeight + "px";
+
+document.getElementById("practiceContainer").innerHTML = data.html;
+
+// Release height after DOM stabilizes
+setTimeout(() => {
+  filterBox.style.height = "auto";
+}, 50);
+
     }
   })
   .catch(error => {
