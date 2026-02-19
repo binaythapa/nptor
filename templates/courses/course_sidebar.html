@@ -1,0 +1,97 @@
+<aside id="course-sidebar" class="course-sidebar">
+  <nav class="menu is-size-7">
+
+    <!-- ================= HOME ================= -->
+    {% if user.is_authenticated %}
+    <p class="menu-label">Home</p>
+    <ul class="menu-list">
+      <li>
+        <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}">
+          ← Back To Home
+        </a>
+      </li>
+    </ul>
+
+    <!-- ================= INSTRUCTOR ================= -->
+    <p class="menu-label">Instructor</p>
+    <ul class="menu-list">
+      <li>
+        <a href="{% url 'courses:instructor_dashboard' %}">
+          Courses
+        </a>
+      </li>
+    </ul>
+
+    <!-- ================= COURSE CONTEXT ================= -->
+    {% if course %}
+    <p class="menu-label">Course</p>
+    <ul class="menu-list">
+
+      <li>
+        <a href="{% url 'courses:course_builder' course.slug %}">
+          Sections
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'courses:course_edit' course.slug %}">
+          Edit Course
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'courses:course_detail' course.slug %}">
+          Preview
+        </a>
+      </li>
+
+    </ul>
+    {% endif %}
+
+    <!-- ================= LESSON CONTEXT ================= -->
+    {% if lesson %}
+    <p class="menu-label">Lesson</p>
+    <ul class="menu-list">
+      <li>
+        <a href="{% url 'courses:lesson_edit' lesson.id %}">
+          Edit Lesson
+        </a>
+      </li>
+    </ul>
+    {% endif %}
+
+    <!-- ================= ACCOUNT ================= -->
+    <p class="menu-label">Account</p>
+    <ul class="menu-list">
+      <li>
+        <a href="#"
+           onclick="event.preventDefault();
+                    document.getElementById('logout-form').submit();">
+          Logout
+        </a>
+
+        <form id="logout-form"
+              method="post"
+              action="{% url 'accounts:logout' %}"
+              style="display:none;">
+          {% csrf_token %}
+        </form>
+      </li>
+    </ul>
+
+    {% else %}
+
+    <!-- ================= GUEST ================= -->
+    <p class="menu-label">Account</p>
+    <ul class="menu-list">
+      <li>
+        <a href="{% url 'accounts:request-login-otp' %}">
+          Login
+        </a>
+      </li>
+    </ul>
+
+    {% endif %}
+
+  </nav>
+</aside>

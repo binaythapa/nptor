@@ -1,78 +1,67 @@
 {% load static %}
 
-<header class="site-header">
-  <div class="container header-inner">
+<header class="admin-header">
+  <div class="admin-header-inner">
 
     <!-- LEFT -->
-    <div class="header-left">
+    <div class="admin-header-left">
 
-      <button id="sidebar-toggle" class="button is-white is-hidden-desktop">
-        <i class="fa fa-bars"></i>
+      <!-- SIDEBAR TOGGLE -->
+      <button class="button is-white is-small mr-3"
+              onclick="toggleSidebar()">
+          <i class="fa fa-bars"></i>
       </button>
 
-      <div class="brand-group">
-        <a class="brand"
-           href="{% if user.is_authenticated %}
-                    {% url 'quiz:dashboard' %}
-                 {% else %}
-                    {% url 'quiz:practice' %}
-                 {% endif %}">
-          <img src="{% static 'images/logo.jpg' %}"
-               class="brand-logo"
-               alt="{{ site_name }}">
-          <span class="brand-text">
-            {{ site_name|default:"Nepal Mentor" }}
-          </span>
-        </a>
-      </div>
+      <!-- BRAND -->
+      <a class="admin-brand"
+         href="{% if user.is_authenticated %}
+                  {% url 'quiz:dashboard' %}
+               {% else %}
+                  {% url 'quiz:practice' %}
+               {% endif %}">
+        <img src="{% static 'images/logo.jpg' %}"
+             class="admin-logo"
+             alt="{{ site_name }}">
+        <span class="admin-brand-text">
+          Student Panel
+        </span>
+      </a>
 
-      {% if user.is_authenticated %}
-      <form action="{% url 'quiz:exam_list' %}"
-            method="get"
-            class="header-search">
-        <input class="input"
-               name="q"
-               placeholder="Search exams, questions...">
-        <button class="button is-white search-btn">
-          <i class="fa fa-search"></i>
-        </button>
-      </form>
-      {% endif %}
     </div>
 
     <!-- RIGHT -->
-    <div class="header-right">
+    <div class="admin-header-right">
 
       {% if user.is_authenticated %}
 
-        <a href="{% url 'quiz:profile' %}"
-           class="welcome-user is-hidden-mobile">
-          Welcome,
+        <span class="admin-user is-hidden-mobile">
           <strong>{{ user.first_name|default:user.username }}</strong>
-        </a>
+        </span>
 
-        <a href="{% url 'quiz:notifications_list' %}" class="icon-btn">
-          <i class="fa fa-bell"></i>
-          {% if unread_count|default:0 > 0 %}
-            <span class="notif-badge">{{ unread_count }}</span>
-          {% endif %}
+        <a href="{% url 'quiz:notifications_list' %}"
+           class="button is-white is-small mr-2">
+          <span class="icon">
+            <i class="fa fa-bell"></i>
+          </span>
         </a>
 
         <a href="#"
-           class="button is-light"
+           class="button is-light is-small"
            onclick="event.preventDefault();
                     document.getElementById('logout-form').submit();">
-          <i class="fa fa-right-from-bracket"></i>&nbsp; Logout
+          <i class="fa fa-right-from-bracket"></i>
         </a>
 
       {% else %}
+
         <a href="{% url 'accounts:request-login-otp' %}"
-           class="button is-primary">
+           class="button is-primary is-small">
           Login
         </a>
+
       {% endif %}
 
-      <button id="theme-toggle" class="button is-white">
+      <button id="theme-toggle" class="button is-white is-small">
         <i class="fa fa-moon"></i>
       </button>
 

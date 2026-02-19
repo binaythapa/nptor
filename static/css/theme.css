@@ -176,17 +176,21 @@ body{
 /* show user-menu when container has .open (ui.js toggles this) */
 .user-dropdown.open .user-menu { display:block; }
 
-/* layout */
-.container.main-area {
-  display:grid;
+/* STUDENT LAYOUT ONLY */
+.app-layout .container.main-area {
+  display: grid;
   grid-template-columns: 260px 1fr;
-  gap:20px;
-  padding:18px 20px;
-  width:100%;
-  max-width:1200px;
-  margin:18px auto;
-  box-sizing:border-box;
+  gap: 20px;
+  padding: 18px 20px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 18px auto;
+  box-sizing: border-box;
 }
+
+
+
+
 .site-sidebar { background:transparent; padding:10px 8px; position:sticky; top:12px; height:calc(100vh - 140px); overflow:auto; }
 .site-content { background:transparent; }
 .page-top { margin-bottom:12px; }
@@ -756,13 +760,10 @@ img {
   height: auto;
   display: block;
 }
-.admin-layout {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
 
-.admin-content {
-  flex: 1;
-  overflow-x: auto;
+
+
+/* Prevent grid layout affecting admin */
+.admin-layout .container {
+  display: block;
 }
