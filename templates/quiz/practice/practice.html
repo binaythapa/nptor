@@ -4,34 +4,50 @@
 {% block head_extra %}
 <style>
 
-  #filterBody {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.25s ease;
+/* ================= FIXED RESULT AREA ================= */
+#resultArea {
+  min-height: 130px;              /* Reserved space */
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#resultArea.has-result {
+  opacity: 1;
+}
+
+
+/* ================= FILTER BODY (NO BLINK VERSION) ================= */
+#filterBody {
+  display: none;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 #filterBody.is-open {
-  max-height: 500px;
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* Generic disabled state for links & buttons */
+
+/* ================= DISABLED STATE ================= */
 .is-disabled {
-  pointer-events: none;        /* disable clicks */
-  opacity: 0.45;               /* fade */
-  filter: grayscale(80%);      /* desaturate color */
+  pointer-events: none;
+  opacity: 0.45;
+  filter: grayscale(80%);
   cursor: not-allowed;
 }
 
-/* Optional: icons inside disabled links */
 .is-disabled i {
   opacity: 0.6;
 }
 
-/* Optional: prevent hover styles from firing */
 .is-disabled:hover {
   background: inherit;
   color: inherit;
 }
+
 
 /* ================= WRAPPER ================= */
 .practice-wrapper {
@@ -39,50 +55,52 @@
   padding: 16px;
 }
 
-/* Card stays INSIDE base container */
 .practice-card {
   width: 100%;
   max-width: 520px;
-  margin: 0 auto;   /* 👈 keeps it centered inside base */
+  margin: 0 auto;
 }
 
-/* ================= OPTIONS ================= */
 
+/* ================= OPTIONS (NO BORDER VERSION) ================= */
 .practice-option {
   display: flex;
   align-items: flex-start;
-  gap: 6px;                /* smaller spacing */
-  padding: 6px 8px;        /* compact padding */
+  gap: 6px;
+  padding: 6px 8px;
   border-radius: 6px;
-  margin-bottom: 6px;      /* less vertical gap */
-  border: 1px solid #e5e7eb;
+  margin-bottom: 6px;
+  border: none;                   /* 🔥 border removed */
   cursor: pointer;
-  font-size: 0.82rem;      /* smaller text */
+  font-size: 0.82rem;
   line-height: 1.25;
+  background: #f9fafb;            /* subtle background instead */
+  transition: background 0.15s ease;
 }
 
 .practice-option input {
   margin-top: 2px;
-  transform: scale(0.9);   /* slightly smaller radio/checkbox */
+  transform: scale(0.9);
 }
 
-
-.practice-option:hover { background: #f9fafb; }
+.practice-option:hover {
+  background: #f3f4f6;
+}
 
 .practice-option.correct {
-  background: #f0fdf4;        /* very soft green */
-  border-color: #86efac;      /* muted green */
-  color: #065f46;             /* deep readable green */
+  background: #f0fdf4;
+  color: #065f46;
 }
 
 .practice-option.wrong {
-  background: #fef7f7;        /* soft pink, not red */
-  border-color: #fca5a5;      /* muted red */
-  color: #7f1d1d;             /* calm dark red */
+  background: #fef7f7;
+  color: #7f1d1d;
 }
+
 
 /* ================= MOBILE ================= */
 @media (max-width: 768px) {
+
   .practice-wrapper {
     padding: 12px;
   }
@@ -111,7 +129,13 @@
     gap: 6px;
   }
 }
+
 </style>
+
+
+
+
+
 
 {% endblock %}
 
@@ -385,6 +409,7 @@
 {% if difficulty %}<input type="hidden" name="difficulty" value="{{ difficulty }}">{% endif %}
 
 <p class="mb-2 has-text-weight-semibold">{{ question.text|safe }}</p>
+
 
 {% if user.is_staff %}
   <div class="mb-3">
@@ -758,15 +783,33 @@ function loadNextQuestion() {
 <script>
 function toggleFilters() {
   const body = document.getElementById("filterBody");
+  if (!body) return;
 
-  body.classList.toggle("is-open");
+  const isOpen = body.classList.contains("is-open");
 
-  const expanded = body.classList.contains("is-open");
-
-  localStorage.setItem("filterExpanded", expanded ? "1" : "0");
-
-  updateFilterUI(expanded);
+  if (isOpen) {
+    body.classList.remove("is-open");
+    setTimeout(() => {
+      body.style.display = "none";
+    }, 200);
+    localStorage.setItem("filterExpanded", "0");
+    updateFilterUI(false);
+  } else {
+    body.style.display = "block";
+    requestAnimationFrame(() => {
+      body.classList.add("is-open");
+    });
+    localStorage.setItem("filterExpanded", "1");
+    updateFilterUI(true);
+  }
 }
+
+
+
+
+
+
+
 
 function updateFilterUI(expanded) {
   const hint = document.getElementById("filterHint");
