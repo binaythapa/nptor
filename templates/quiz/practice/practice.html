@@ -17,18 +17,27 @@
 
 
 /* ================= FILTER BODY (NO BLINK VERSION) ================= */
+/* ================= FILTER BODY (STABLE COLLAPSIBLE) ================= */
 #filterBody {
-  display: none;
+  max-height: 0;
+  overflow: hidden;
   opacity: 0;
   transform: translateY(-5px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  will-change: max-height, opacity;
 }
 
 #filterBody.is-open {
-  display: block;
+  max-height: 600px;   /* large enough for content */
   opacity: 1;
   transform: translateY(0);
 }
+
+
+
 
 
 /* ================= DISABLED STATE ================= */
@@ -785,23 +794,10 @@ function toggleFilters() {
   const body = document.getElementById("filterBody");
   if (!body) return;
 
-  const isOpen = body.classList.contains("is-open");
+  const isOpen = body.classList.toggle("is-open");
 
-  if (isOpen) {
-    body.classList.remove("is-open");
-    setTimeout(() => {
-      body.style.display = "none";
-    }, 200);
-    localStorage.setItem("filterExpanded", "0");
-    updateFilterUI(false);
-  } else {
-    body.style.display = "block";
-    requestAnimationFrame(() => {
-      body.classList.add("is-open");
-    });
-    localStorage.setItem("filterExpanded", "1");
-    updateFilterUI(true);
-  }
+  localStorage.setItem("filterExpanded", isOpen ? "1" : "0");
+  updateFilterUI(isOpen);
 }
 
 
@@ -832,9 +828,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const expanded = localStorage.getItem("filterExpanded") === "1";
 
-  if (expanded) {
-    body.classList.add("is-open");
-  }
+ body.classList.toggle("is-open", expanded);
+
 
   updateFilterUI(expanded);
 });
