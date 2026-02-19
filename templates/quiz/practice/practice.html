@@ -75,38 +75,39 @@
 
 
 /* ================= OPTIONS (NO BORDER VERSION) ================= */
+/* ================= OPTIONS ================= */
 .practice-option {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 6px;                 /* smaller spacing */
+  padding: 6px 8px;         /* compact padding */
   border-radius: 6px;
-  margin-bottom: 6px;
-  border: none;                   /* 🔥 border removed */
+  margin-bottom: 6px;       /* less vertical gap */
+  border: 1px solid #e5e7eb;
   cursor: pointer;
-  font-size: 0.82rem;
+  font-size: 0.82rem;       /* smaller text */
   line-height: 1.25;
-  background: #f9fafb;            /* subtle background instead */
-  transition: background 0.15s ease;
 }
 
 .practice-option input {
   margin-top: 2px;
-  transform: scale(0.9);
+  transform: scale(0.9);    /* slightly smaller radio/checkbox */
 }
 
 .practice-option:hover {
-  background: #f3f4f6;
+  background: #f9fafb;
 }
 
 .practice-option.correct {
-  background: #f0fdf4;
-  color: #065f46;
+  background: #f0fdf4;      /* very soft green */
+  border-color: #86efac;    /* muted green */
+  color: #065f46;           /* deep readable green */
 }
 
 .practice-option.wrong {
-  background: #fef7f7;
-  color: #7f1d1d;
+  background: #fef7f7;      /* soft pink, not red */
+  border-color: #fca5a5;    /* muted red */
+  color: #7f1d1d;           /* calm dark red */
 }
 
 
