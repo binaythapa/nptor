@@ -3,6 +3,7 @@
 
 {% block content %}
 <style>
+
 /* ================= DASHBOARD HEADER ================= */
 
 .dashboard-header {
@@ -10,10 +11,9 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap; /* 🔥 important */
+  flex-wrap: wrap;
 }
 
-/* Mobile */
 @media (max-width: 768px) {
   .dashboard-header {
     flex-direction: column;
@@ -30,9 +30,16 @@
   }
 }
 
+/* ================= TABLE IMPROVEMENTS ================= */
 
+.table {
+  table-layout: fixed;
+  width: 100%;
+}
 
-/* ================= QUESTION TEXT CLAMP ================= */
+.table td {
+  vertical-align: middle;
+}
 
 .question-cell {
   display: flex;
@@ -44,73 +51,21 @@
 .question-text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;      /* 👈 show only 2 lines */
+  -webkit-line-clamp: 2;
   overflow: hidden;
   white-space: normal;
   word-break: break-word;
 }
 
 .question-text.expanded {
-  -webkit-line-clamp: unset; /* 👈 expand fully */
+  -webkit-line-clamp: unset;
 }
 
 .expand-toggle {
   font-size: 0.75rem;
   color: #2563eb;
   cursor: pointer;
-  display: none;             /* shown only if overflow */
-}
-
-
-
-/* ================= QUESTION CELL ================= */
-.table {
-  table-layout: fixed;
-  width: 100%;
-}
-
-.question-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.question-text {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-.question-meta {
-  max-width: 100%;
-  flex-wrap: wrap;
-}
-
-
-
-.question-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.question-text {
-  font-size: 0.95rem;
-  line-height: 1.4;
-}
-
-.question-text.collapsed {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.expand-toggle {
-  color: #2563eb;
-  cursor: pointer;
-  font-size: 0.75rem;
+  display: none;
 }
 
 .question-meta {
@@ -128,13 +83,14 @@
   background: #f9fafb;
 }
 
-.icon-btn {
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  font-size: 1rem;
+.action-buttons .button {
+  padding: 4px 6px;
 }
+
+.duplicate-tag {
+  font-size: 0.7rem;
+}
+
 </style>
 
 <section class="section">
@@ -142,31 +98,29 @@
 
 <!-- ================= HEADER ================= -->
 <div class="dashboard-header">
-  <div class="dashboard-title">
+  <div>
     <h1 class="title is-4">🧠 Question Dashboard</h1>
     <p class="has-text-grey is-size-7">
-      Review question quality, flags & discussions
+      Review question quality, flags, duplicates & discussions
     </p>
   </div>
 
   <div class="dashboard-actions">
-
-     <!-- BACK BUTTON -->
-  <a href="{% url 'quiz:admin_dashboard' %}"
-     class="button is-light is-small">
-    ← Back to Dashboard
-  </a>
+    <a href="{% url 'quiz:admin_dashboard' %}"
+       class="button is-light is-small">
+      ← Back to Dashboard
+    </a>
 
     <a href="{% url 'quiz:add_question' %}"
        class="button is-light is-small">
       ➕ Add Question
     </a>
-  </div>  
+  </div>
 </div>
 
-
-<!-- ================= KPI ================= -->
+<!-- ================= KPI BLOCKS ================= -->
 <div class="columns is-multiline mb-4">
+
   <div class="column is-3">
     <div class="box has-text-centered">
       <p class="heading">📘 Total</p>
@@ -194,6 +148,15 @@
       <p class="title">{{ disabled_questions }}</p>
     </div>
   </div>
+
+  <!-- 🔁 NEW DUPLICATE KPI -->
+  <div class="column is-3">
+    <div class="box has-text-centered has-text-danger">
+      <p class="heading">🔁 Duplicates</p>
+      <p class="title">{{ duplicate_questions_count }}</p>
+    </div>
+  </div>
+
 </div>
 
 <!-- ================= TABS ================= -->
@@ -202,6 +165,7 @@
     <li class="{% if tab == 'all' %}is-active{% endif %}">
       <a href="?tab=all">📘 All Questions</a>
     </li>
+
     <li class="{% if tab == 'review' %}is-active{% endif %}">
       <a href="?tab=review">
         🚩 Needs Review
@@ -210,13 +174,25 @@
         {% endif %}
       </a>
     </li>
+
+    <!-- 🔁 DUPLICATES TAB -->
+    <li class="{% if tab == 'duplicates' %}is-active{% endif %}">
+      <a href="?tab=duplicates">
+        🔁 Duplicates
+        {% if duplicate_questions_count %}
+          <span class="tag is-danger ml-1">
+            {{ duplicate_questions_count }}
+          </span>
+        {% endif %}
+      </a>
+    </li>
+
   </ul>
 </div>
 
-<!-- ================= FILTERS ================= -->
+<!-- ================= FILTERS (UNCHANGED) ================= -->
 <form method="get" class="box mb-4">
 <input type="hidden" name="tab" value="{{ tab }}">
-
 <div class="columns is-multiline">
 
   <div class="column is-3">
@@ -226,20 +202,15 @@
 
   <div class="column is-3">
     <div class="select is-fullwidth">
-
-
       <select name="category">
-  <option value="">All categories</option>
-  {% for cat in categories %}
-    <option value="{{ cat.id }}"
-      {% if cat.id|stringformat:"s" == selected_category %}selected{% endif %}>
-      {{ cat.name }}
-    </option>
-  {% endfor %}
-</select>
-
-
-
+        <option value="">All categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}"
+            {% if cat.id|stringformat:"s" == selected_category %}selected{% endif %}>
+            {{ cat.name }}
+          </option>
+        {% endfor %}
+      </select>
     </div>
   </div>
 
@@ -277,12 +248,13 @@
 
 <thead>
 <tr>
-  <th>ID</th>
-  <th style="width:55%">Question</th>
+  <th style="width:60px;">ID</th>
+  <th style="width:45%">Question</th>
+  <th>🔁</th>
   <th>💬</th>
   <th>🚩</th>
   <th>Status</th>
-  <th>Admin</th>
+  <th style="width:150px;">Actions</th>
 </tr>
 </thead>
 
@@ -292,14 +264,12 @@
 
 </table>
 
-<!-- Loader -->
 <div id="scroll-loader"
      class="has-text-centered has-text-grey mt-4"
      style="display:none;">
   ⏳ Loading more questions...
 </div>
 
-<!-- End of list -->
 <div id="end-of-list"
      class="has-text-centered has-text-grey mt-4"
      style="display:none;">
@@ -315,12 +285,22 @@ let currentPage = {{ questions.number }};
 let hasNext = {{ questions.has_next|yesno:"true,false" }};
 let loading = false;
 
+/* ROW CLICK */
+document.addEventListener("click", function (e) {
+  const row = e.target.closest(".question-row");
+  if (!row) return;
+
+  if (e.target.closest("a") || e.target.closest("button") || e.target.closest("form")) return;
+
+  window.location.href = row.dataset.reviewUrl;
+});
+
+/* Infinite Scroll */
 function loadMoreQuestions() {
   if (!hasNext || loading) return;
 
   loading = true;
   document.getElementById("scroll-loader").style.display = "block";
-  document.getElementById("end-of-list").style.display = "none";
 
   const url =
     window.location.href.replace(/(&|\?)page=\d+/, '') +
@@ -345,80 +325,22 @@ function loadMoreQuestions() {
     });
 }
 
-// Infinite scroll trigger
 window.addEventListener("scroll", function () {
-  if (
-    window.innerHeight + window.scrollY >=
-    document.body.offsetHeight - 200
-  ) {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
     loadMoreQuestions();
   }
 });
-
-// Expand / collapse question text
-function toggleQuestionText(e, el) {
-  e.stopPropagation();
-  const text = el.previousElementSibling;
-
-  if (text.classList.contains("collapsed")) {
-    text.textContent = text.dataset.full;
-    text.classList.remove("collapsed");
-    el.textContent = "Show less";
-  } else {
-    text.textContent = text.dataset.full.substring(0, 140) + "...";
-    text.classList.add("collapsed");
-    el.textContent = "Show more";
-  }
-}
-
-// Row click → open review page
-document.addEventListener("click", function (e) {
-  const row = e.target.closest(".question-row");
-  if (!row) return;
-  if (e.target.closest("a") || e.target.closest("button")) return;
-  window.open(row.dataset.reviewUrl, "_blank", "noopener");
-});
 </script>
-
 
 <script>
-/* ================= SHOW MORE LOGIC ================= */
-
-// Detect overflow and show toggle
-function initShowMore() {
-  document.querySelectorAll(".question-text").forEach(text => {
-    const toggle = text.nextElementSibling;
-    if (!toggle || !toggle.classList.contains("expand-toggle")) return;
-
-    // If text is visually overflowing (more than 2 lines)
-    if (text.scrollHeight > text.clientHeight + 1) {
-      toggle.style.display = "inline";
-    } else {
-      toggle.style.display = "none";
-    }
-  });
-}
-
-// Toggle expand / collapse
-function toggleQuestionText(e, el) {
+function confirmDelete(e, id) {
   e.stopPropagation();
-  const text = el.previousElementSibling;
 
-  if (text.classList.contains("expanded")) {
-    text.classList.remove("expanded");
-    el.textContent = "Show more";
-  } else {
-    text.classList.add("expanded");
-    el.textContent = "Show less";
-  }
+  return confirm(
+    "⚠️ Are you sure you want to delete this question?\n\n" +
+    "This action will soft-delete the question and hide it from users."
+  );
 }
-
-// Initial load
-document.addEventListener("DOMContentLoaded", initShowMore);
-
-// Re-run after infinite scroll loads new rows
-document.addEventListener("ajaxContentLoaded", initShowMore);
 </script>
-
 
 {% endblock %}

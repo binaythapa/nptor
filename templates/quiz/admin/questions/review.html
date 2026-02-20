@@ -5,26 +5,44 @@
 <section class="section">
 <div class="container" style="max-width: 900px;">
 
-<h1 class="title is-4">🧠 Question Review</h1>
+<!-- ================= HEADER WITH BACK ================= -->
+<div class="is-flex is-align-items-center mb-4"
+     style="gap: 10px; flex-wrap: wrap;">
+
+  <!-- Back Button -->
+  <a href="#"
+   onclick="history.back(); return false;"
+   class="button is-light is-small">
+   ← Back
+</a>
+
+  <h1 class="title is-4 mb-0">
+    🧠 Question Review
+  </h1>
+
+</div>
 
 <!-- ================= QUESTION ================= -->
 <div class="box">
-  <p class="has-text-weight-semibold">{{ question.text }}</p>
+  <div class="content">
+    {{ question.text|safe }}
+  </div>
 
   <p class="is-size-7 has-text-grey mt-1">
     {{ question.category }} · {{ question.difficulty }} · {{ question.question_type }}
   </p>
 
-  <button class="button is-small is-link mt-2"
-          onclick="openEditModal()">
-    ✏️ Edit Question
-  </button>
+  <!-- EDIT BUTTON (Now Redirects Properly) -->
+  <a href="{% url 'quiz:edit_question' question.id %}"
+     class="button is-small is-link mt-2">
+     ✏️ Edit Question
+  </a>
 
   {% if question.explanation %}
     <hr>
     <p class="is-size-7 has-text-grey">Explanation</p>
     <div class="content is-small">
-      {{ question.explanation|linebreaks }}
+      {{ question.explanation|safe }}
     </div>
   {% endif %}
 </div>
@@ -44,7 +62,7 @@
   {% endfor %}
 </div>
 
-<!-- ================= QUESTION ACTIONS ================= -->
+<!-- ================= QUESTION ACTIONS (KEPT) ================= -->
 <div class="box">
   <div class="buttons">
     <button class="button is-small is-warning"
@@ -61,7 +79,7 @@
   </div>
 </div>
 
-<!-- ================= DISCUSSIONS ================= -->
+<!-- ================= DISCUSSIONS (KEPT FULLY) ================= -->
 <div class="box">
   <p class="has-text-weight-semibold mb-2">
     🚩 User Feedback & Issues ({{ discussions.count }})
@@ -118,22 +136,4 @@
 
 </div>
 </section>
-
-<!-- ================= EDIT MODAL ================= -->
-<div class="modal" id="editModal">
-  <div class="modal-background" onclick="closeEditModal()"></div>
-
-  <div class="modal-card" style="width:95%; max-width:900px;">
-    <header class="modal-card-head">
-      <p class="modal-card-title">Edit Question</p>
-      <button class="delete" onclick="closeEditModal()"></button>
-    </header>
-
-    <section class="modal-card-body" id="editModalBody">
-      <!-- edit_question.html loads here -->
-    </section>
-  </div>
-</div>
-
-{% include "quiz/admin/questions/review_ajax.html" %}
 {% endblock %}

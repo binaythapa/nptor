@@ -9,17 +9,9 @@
   <td>
     <div class="question-cell">
 
-      <!-- QUESTION TEXT -->
-      <div class="question-text"
-           data-question-id="{{ q.id }}">
-        {{ q.text }}
+      <div class="question-text">
+        {{ q.text|safe }}
       </div>
-
-      <!-- SHOW MORE / LESS -->
-      <span class="expand-toggle"
-            onclick="toggleQuestionText(event, this)">
-        Show more
-      </span>
 
       <!-- META -->
       <div class="question-meta">
@@ -27,19 +19,30 @@
           <span class="tag is-light is-small">{{ q.category }}</span>
         {% endif %}
         <span class="tag is-light is-small">{{ q.difficulty|title }}</span>
-        {% if q.question_type %}
-          <span class="tag is-dark is-small">{{ q.question_type }}</span>
-        {% endif %}
+        <span class="tag is-dark is-small">{{ q.question_type }}</span>
       </div>
 
     </div>
   </td>
 
+  <!-- 🔁 DUPLICATE COLUMN (NEW) -->
+  <td class="has-text-centered">
+    {% if q.duplicate_count > 1 %}
+      <span class="tag is-danger is-light">
+        {{ q.duplicate_count }}
+      </span>
+    {% else %}
+      —
+    {% endif %}
+  </td>
+
   <!-- 💬 DISCUSSIONS -->
-  <td>{{ q.discussion_count|default:"—" }}</td>
+  <td class="has-text-centered">
+    {{ q.discussion_count|default:"—" }}
+  </td>
 
   <!-- 🚩 FLAGS -->
-  <td>
+  <td class="has-text-centered">
     {% if q.flag_count > 0 %}
       <span class="tag is-danger">{{ q.flag_count }}</span>
     {% else %}
@@ -48,7 +51,7 @@
   </td>
 
   <!-- STATUS -->
-  <td>
+  <td class="has-text-centered">
     {% if not q.is_active %}
       <span class="tag is-danger">Disabled</span>
     {% elif q.flag_count > 0 %}
@@ -58,27 +61,31 @@
     {% endif %}
   </td>
 
-  <!-- ADMIN ACTIONS -->
-  <td class="is-nowrap"
+  <!-- ACTIONS -->
+  <td class="has-text-centered"
       onclick="event.stopPropagation();">
 
     <!-- Review -->
     <a href="{% url 'quiz:question_review' q.id %}"
-       target="_blank"
-       class="icon-btn"
-       title="Review question">
-      🧠
+       class="button is-small is-light"
+       title="Review">
+       🧠
     </a>
 
-    <!-- Deactivate / Activate -->
+    <!-- Edit -->
+    <a href="{% url 'quiz:edit_question' q.id %}"
+       class="button is-small is-info is-light"
+       title="Edit">
+       ✏️
+    </a>
+
+    <!-- Toggle Active -->
     {% if q.is_active %}
       <form method="post" style="display:inline;">
         {% csrf_token %}
         <input type="hidden" name="disable_question" value="{{ q.id }}">
         <button type="submit"
-                class="icon-btn"
-                title="Deactivate question"
-                onclick="return confirmDeactivate();">
+                class="button is-small is-warning is-light">
           🚫
         </button>
       </form>
@@ -87,8 +94,7 @@
         {% csrf_token %}
         <input type="hidden" name="enable_question" value="{{ q.id }}">
         <button type="submit"
-                class="icon-btn"
-                title="Activate question">
+                class="button is-small is-success is-light">
           ✅
         </button>
       </form>
@@ -99,11 +105,10 @@
       {% csrf_token %}
       <input type="hidden" name="delete_question" value="{{ q.id }}">
       <button type="submit"
-              class="icon-btn"
-              title="Delete question"
-              onclick="return confirmDelete();">
-        🗑️
-      </button>
+        class="button is-small is-danger is-light"
+        onclick="return confirmDelete(event, {{ q.id }});">
+  🗑
+</button>
     </form>
 
   </td>

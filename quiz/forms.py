@@ -67,21 +67,22 @@ class EmailOrUsernameLoginForm(AuthenticationForm):
     )
 
 
-
 from django import forms
-from quiz.models import Question
+from .models import Question, Choice
+
 
 class QuestionForm(forms.ModelForm):
+
     class Meta:
         model = Question
         fields = [
             "category",
             "difficulty",
-            "question_type", 
-            "text",                       
+            "question_type",
+            "text",
             "explanation",
-         
         ]
+
 
 class ChoiceForm(forms.ModelForm):
     class Meta:

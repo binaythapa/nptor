@@ -28,6 +28,15 @@ from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
 
 from quiz.models import Question, QuestionDiscussion
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpResponseForbidden
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Count, Q, Max, OuterRef, Subquery
+from django.utils import timezone
+from django.template.loader import render_to_string
+
+
 @staff_member_required
 def question_dashboard(request):
 
@@ -38,7 +47,6 @@ def question_dashboard(request):
         .order_by('-updated_at')
     )
 
-    # Active tab (all / review)
     tab = request.GET.get("tab", "all")
 
     # ================= ACTIONS (POST) =================
@@ -68,17 +76,14 @@ def question_dashboard(request):
             )
             return redirect(request.get_full_path())
 
-    # ================= FILTERS (GET) =================
+    # ================= FILTERS =================
     search = request.GET.get("q", "")
     if search:
-        questions = questions.filter(text__icontains=search)  
-
+        questions = questions.filter(text__icontains=search)
 
     category = request.GET.get("category", "")
     if category:
         questions = questions.filter(category_id=category)
-
-
 
     difficulty = request.GET.get("difficulty", "")
     if difficulty:
@@ -90,13 +95,17 @@ def question_dashboard(request):
     elif status == "disabled":
         questions = questions.filter(is_active=False)
 
-    # ================= TAB: NEEDS REVIEW =================
-    if tab == "review":
-        questions = questions.filter(
-            discussions__is_answer_incorrect=True,
-            discussions__is_staff_verified=False,
-            discussions__is_deleted=False
-        ).distinct()
+    # ================= DUPLICATE SUBQUERY =================
+    duplicate_subquery = (
+        Question.objects
+        .filter(
+            is_deleted=False,
+            text=OuterRef("text")
+        )
+        .values("text")
+        .annotate(c=Count("id"))
+        .values("c")[:1]
+    )
 
     # ================= ANNOTATIONS =================
     questions = questions.annotate(
@@ -114,17 +123,35 @@ def question_dashboard(request):
         latest_comment=Max(
             "discussions__created_at",
             filter=Q(discussions__is_deleted=False)
-        )
+        ),
+        duplicate_count=Subquery(duplicate_subquery)
     )
+
+    # ================= TAB: NEEDS REVIEW =================
+    if tab == "review":
+        questions = questions.filter(
+            discussions__is_answer_incorrect=True,
+            discussions__is_staff_verified=False,
+            discussions__is_deleted=False
+        ).distinct()
+
+    # ================= TAB: DUPLICATES =================
+    if tab == "duplicates":
+        questions = questions.filter(duplicate_count__gt=1)
 
     # ================= STATS =================
     total_questions = Question.objects.filter(is_deleted=False).count()
+
     active_questions = Question.objects.filter(
-        is_active=True, is_deleted=False
+        is_active=True,
+        is_deleted=False
     ).count()
+
     disabled_questions = Question.objects.filter(
-        is_active=False, is_deleted=False
+        is_active=False,
+        is_deleted=False
     ).count()
+
     flagged_questions = Question.objects.filter(
         discussions__is_answer_incorrect=True,
         discussions__is_deleted=False,
@@ -137,18 +164,26 @@ def question_dashboard(request):
         is_deleted=False
     ).distinct().count()
 
- 
+    # ================= DUPLICATE KPI =================
+    duplicate_questions_count = (
+        Question.objects
+        .filter(is_deleted=False)
+        .values("text")
+        .annotate(c=Count("id"))
+        .filter(c__gt=1)
+        .count()
+    )
 
+    # ================= CATEGORIES =================
     categories = (
-     Category.objects
-    .filter(questions__is_deleted=False)
-    .distinct()
-     .order_by("name")
-)
-
+        Category.objects
+        .filter(questions__is_deleted=False)
+        .distinct()
+        .order_by("name")
+    )
 
     # ================= PAGINATION =================
-    paginator = Paginator(questions, 10)  # use realistic page size
+    paginator = Paginator(questions, 10)
     page_number = request.GET.get("page")
 
     try:
@@ -158,28 +193,23 @@ def question_dashboard(request):
     except EmptyPage:
         questions_page = paginator.page(paginator.num_pages)
 
-
-
-
-# ================= AJAX INFINITE SCROLL =================
+    # ================= AJAX INFINITE SCROLL =================
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
-     return JsonResponse({
-        "html": render_to_string(
-            "quiz/admin/questions/_question_rows.html",
-            {
-                "questions": questions_page,
-                "tab": tab,
-            },
-            request=request
-        ),
-        "has_next": questions_page.has_next()
-    })
-
+        return JsonResponse({
+            "html": render_to_string(
+                "quiz/admin/questions/_question_rows.html",
+                {
+                    "questions": questions_page,
+                    "tab": tab,
+                },
+                request=request
+            ),
+            "has_next": questions_page.has_next()
+        })
 
     # ================= CONTEXT =================
     context = {
         "questions": questions_page,
-
         "search": search,
         "selected_category": category,
         "selected_difficulty": difficulty,
@@ -191,15 +221,17 @@ def question_dashboard(request):
         "flagged_questions": flagged_questions,
         "disabled_questions": disabled_questions,
 
+        "duplicate_questions_count": duplicate_questions_count,
+
         "tab": tab,
         "needs_review_count": needs_review_count,
     }
 
-    return render(request, "quiz/admin/questions/dashboard.html", context)
-
-
-
-
+    return render(
+        request,
+        "quiz/admin/questions/dashboard.html",
+        context
+    )
 # views/questions.py
 
 from django.forms import inlineformset_factory
@@ -267,10 +299,16 @@ from quiz.forms import QuestionForm
 def staff_required(user):
     return user.is_staff
 
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.forms import inlineformset_factory
+from django.db import transaction
 
 @login_required
 @user_passes_test(staff_required)
+@transaction.atomic
 def edit_question(request, pk):
+
     question = get_object_or_404(
         Question,
         pk=pk,
@@ -286,26 +324,35 @@ def edit_question(request, pk):
     )
 
     if request.method == "POST":
+
         form = QuestionForm(request.POST, instance=question)
-        formset = ChoiceFormSet(request.POST, instance=question)
+        formset = ChoiceFormSet(
+            request.POST,
+            instance=question,
+            prefix="choices"   # ✅ IMPORTANT
+        )
 
         if form.is_valid() and formset.is_valid():
-            # ✅ Save question
-            obj = form.save(commit=False)
-            obj.updated_by = request.user
-            obj.save()
 
-            # ✅ Save choices
+            # Save Question
+            updated_question = form.save(commit=False)
+            updated_question.updated_by = request.user
+            updated_question.save()
+
+            # Save Choices
             formset.save()
 
-            # ✅ Redirect back to review page
-            return redirect("quiz:question_review", pk=question.pk)
-
-        # ❗ If invalid, fall through and re-render with errors
+            return redirect(
+                "quiz:question_review",
+                pk=question.pk
+            )
 
     else:
         form = QuestionForm(instance=question)
-        formset = ChoiceFormSet(instance=question)
+        formset = ChoiceFormSet(
+            instance=question,
+            prefix="choices"   # ✅ IMPORTANT
+        )
 
     return render(
         request,
@@ -316,8 +363,6 @@ def edit_question(request, pk):
             "question": question,
         }
     )
-
-
 
 
 

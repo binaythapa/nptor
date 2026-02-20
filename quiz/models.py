@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from ckeditor.fields import RichTextField
 from datetime import timedelta
 from django.utils import timezone
+from ckeditor_uploader.fields import RichTextUploadingField
 
 
 
@@ -149,12 +150,14 @@ class Question(models.Model):
         default=SINGLE
     )
 
-    text = RichTextField()
+    text = RichTextUploadingField(
+     help_text="Enter the main question text."
+        )  
 
-    explanation = RichTextField(
+    explanation = RichTextUploadingField(
         blank=True,
         null=True,
-        help_text='Optional detailed explanation or solution shown on the result page.'
+        help_text="Optional detailed explanation or solution shown on the result page."
     )
 
     correct_text = models.TextField(
