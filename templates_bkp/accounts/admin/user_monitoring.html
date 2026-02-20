@@ -1,0 +1,206 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}User Monitoring – Admin{% endblock %}
+
+{% block content %}
+
+<h2 class="title is-4 mb-4">👥 User Monitoring</h2>
+
+<!-- 🔎 SEARCH -->
+<form method="get" class="mb-4">
+    <div class="field has-addons">
+        <div class="control is-expanded">
+            <input class="input"
+                   type="text"
+                   name="q"
+                   placeholder="Search user..."
+                   value="{{ search_query }}">
+        </div>
+        <div class="control">
+            <button class="button is-link">Search</button>
+        </div>
+    </div>
+</form>
+
+<p class="mb-4">
+    <strong>Total Results:</strong> {{ page_obj.paginator.count }}
+</p>
+
+<hr>
+
+<!-- ================================================= -->
+<!-- 📊 GLOBAL KPI SUMMARY -->
+<!-- ================================================= -->
+
+<h3 class="title is-5 mt-5 mb-3">📊 Platform KPI Overview</h3>
+
+<div class="columns is-multiline mb-5">
+
+    <div class="column is-3">
+        <div class="box has-text-centered">
+            <p class="heading">Total Users</p>
+            <p class="title is-5">{{ total_users }}</p>
+        </div>
+    </div>
+
+    <div class="column is-3">
+        <div class="box has-text-centered">
+            <p class="heading">Active Users</p>
+            <p class="title is-5">{{ active_users }}</p>
+        </div>
+    </div>
+
+    <div class="column is-3">
+        <div class="box has-text-centered">
+            <p class="heading">Total Attempts</p>
+            <p class="title is-5">{{ total_attempts_all }}</p>
+        </div>
+    </div>
+
+    <div class="column is-3">
+        <div class="box has-text-centered">
+            <p class="heading">Avg Score</p>
+            <p class="title is-5">
+                {% if avg_score_all %}
+                    {{ avg_score_all|floatformat:1 }}%
+                {% else %}
+                    —
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<hr>
+
+<!-- ================================================= -->
+<!-- 👥 USER TABLE -->
+<!-- ================================================= -->
+
+<div class="table-container">
+<table class="table is-fullwidth is-striped is-hoverable">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Exam Sub</th>
+            <th>Track Sub</th>
+            <th>Course Subs</th>
+            <th>Attempts</th>
+            <th>Avg Score</th>
+            <th>Last Attempt</th>
+            <th>Active</th>
+            <th>Joined</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for user in page_obj %}
+        <tr>
+            <td>{{ user.username }}</td>
+
+            <td>
+                {% if user.get_full_name %}
+                    {{ user.get_full_name }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+            <td>{{ user.email }}</td>
+
+            <td>
+                {% if user.is_superuser %}
+                    <span class="tag is-danger">Admin</span>
+                {% elif user.is_staff %}
+                    <span class="tag is-info">Instructor</span>
+                {% else %}
+                    <span class="tag is-light">Student</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {% if user.has_exam_subscription %}
+                    <span class="tag is-success">Active</span>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+            <td>
+                {% if user.has_track_subscription %}
+                    <span class="tag is-success">Active</span>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+            <td>{{ user.total_course_subs }}</td>
+            <td>{{ user.total_attempts }}</td>
+
+            <td>
+                {% if user.avg_score %}
+                    {{ user.avg_score|floatformat:1 }}%
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+            <td>
+                {% if user.last_attempt %}
+                    {{ user.last_attempt|date:"Y-m-d H:i" }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+            <td>
+                {% if user.is_active %}
+                    <span class="tag is-success">Yes</span>
+                {% else %}
+                    <span class="tag is-danger">No</span>
+                {% endif %}
+            </td>
+
+            <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+        </tr>
+
+    {% empty %}
+        <tr>
+            <td colspan="12" class="has-text-centered">
+                No users found.
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- 📄 PAGINATION -->
+
+<nav class="pagination is-centered mt-5" role="navigation">
+
+    {% if page_obj.has_previous %}
+        <a class="pagination-previous"
+           href="?q={{ search_query }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.previous_page_number }}">
+           Previous
+        </a>
+    {% else %}
+        <a class="pagination-previous" disabled>Previous</a>
+    {% endif %}
+
+    {% if page_obj.has_next %}
+        <a class="pagination-next"
+           href="?q={{ search_query }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.next_page_number }}">
+           Next
+        </a>
+    {% else %}
+        <a class="pagination-next" disabled>Next</a>
+    {% endif %}
+
+</nav>
+
+{% endblock %}

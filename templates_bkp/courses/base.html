@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}LMS Platform{% endblock %}</title>
+
+    <style>
+
+/* ================= BODY ================= */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f9;
+}
+
+/* ================= NAVBAR ================= */
+
+nav {
+    background: #1f2937;              /* softer dark (matches student header feel) */
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* Left & Right sections */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #e5e7eb;
+}
+
+/* Base nav links */
+/* Base nav links */
+nav a {
+    color: #e5e7eb;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+nav a:hover {
+    background: rgba(255,255,255,0.08);
+    color: #ffffff;
+}
+
+/* Divider between groups */
+.nav-divider {
+    height: 20px;
+    width: 1px;
+    background: #374151;
+}
+
+/* ================= COURSE CONTEXT MENU ================= */
+
+.course-menu {
+    display: flex;
+    gap: 8px;
+    padding-left: 15px;
+    border-left: 1px solid #374151;
+}
+
+/* Pill base */
+.menu-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+/* Builder */
+.menu-builder {
+    background: #1e3a8a;
+    color: #c7d2fe;
+}
+.menu-builder:hover {
+    background: #2563eb;
+    color: white;
+}
+
+/* Edit */
+.menu-edit {
+    background: #374151;
+    color: #e5e7eb;
+}
+.menu-edit:hover {
+    background: #4b5563;
+}
+
+/* View */
+.menu-view {
+    background: #065f46;
+    color: #d1fae5;
+}
+.menu-view:hover {
+    background: #047857;
+    color: white;
+}
+
+/* ================= USER SECTION ================= */
+
+.nav-user {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.logout-link {
+    color: #f87171;
+}
+.logout-link:hover {
+    color: #ef4444;
+}
+
+/* ================= MAIN CONTAINER ================= */
+
+.container {
+    max-width: 1100px;
+    margin: 30px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+hr {
+    margin: 20px 0;
+}
+
+    </style>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ================= NAVIGATION ================= -->
+<nav>
+
+    <div class="nav-left">
+
+        {% if user.is_authenticated %}
+
+            <!-- GLOBAL -->
+            <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}">
+                ← Back To Home
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <!-- INSTRUCTOR -->
+            <a href="{% url 'courses:instructor_dashboard' %}">
+                Courses
+            </a>
+
+            <!-- COURSE CONTEXT -->
+            {% if course %}
+                <div class="course-menu">
+
+                    <a href="{% url 'courses:course_builder' course.slug %}"
+                       class="menu-btn menu-builder">
+                        Sections
+                    </a>
+
+                    <a href="{% url 'courses:course_edit' course.slug %}"
+                       class="menu-btn menu-edit">
+                        Edit
+                    </a>
+
+                    <a href="{% url 'courses:course_detail' course.slug %}"
+                       class="menu-btn menu-view">
+                        Preview
+                    </a>
+
+                </div>
+            {% endif %}
+
+            <!-- LESSON CONTEXT -->
+            {% if lesson %}
+                <div class="nav-divider"></div>
+                <a href="{% url 'courses:lesson_edit' lesson.id %}">
+                    Edit Lesson
+                </a>
+            {% endif %}
+
+        {% endif %}
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="nav-right">
+
+        {% if user.is_authenticated %}
+            <span class="nav-user">
+                {{ user.username }}
+            </span>
+
+            <a href="#"
+               class="logout-link"
+               onclick="event.preventDefault();
+                        document.getElementById('logout-form').submit();">
+                Logout
+            </a>
+
+            <form id="logout-form"
+                  method="post"
+                  action="{% url 'accounts:logout' %}"
+                  style="display:none;">
+                {% csrf_token %}
+            </form>
+        {% else %}
+            <a href="{% url 'accounts:request-login-otp' %}">
+                Login
+            </a>
+        {% endif %}
+
+    </div>
+
+</nav>
+
+<!-- ================= MAIN CONTENT ================= -->
+
+<div class="container">
+    {% block content %}
+    {% endblock %}
+</div>
+
+<script>
+document.body.addEventListener('htmx:configRequest', function(event) {
+    event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+});
+</script>
+
+</body>
+</html>

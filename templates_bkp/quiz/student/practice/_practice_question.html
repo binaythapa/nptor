@@ -1,0 +1,41 @@
+<form method="post" id="practiceForm">
+
+  {% csrf_token %}
+  <input type="hidden" name="question_id" value="{{ question.id }}">
+
+  <p class="mb-2 has-text-weight-semibold">
+    {{ question.text|safe }}
+  </p>
+
+  {% if question.question_type != "multi" %}
+    {% for c in choices %}
+    <label class="practice-option">
+      <input type="radio"
+             name="choice"
+             value="{{ c.id }}"
+             required>
+      <span>{{ c.text }}</span>
+    </label>
+    {% endfor %}
+  {% endif %}
+
+  {% if question.question_type == "multi" %}
+    {% for c in choices %}
+    <label class="practice-option">
+      <input type="checkbox"
+             name="choice_multi"
+             value="{{ c.id }}">
+      <span>{{ c.text }}</span>
+    </label>
+    {% endfor %}
+  {% endif %}
+
+  <div class="practice-actions mt-4 is-flex is-justify-content-space-between">
+    <div class="is-flex" style="gap:8px;">
+      <button type="submit" class="button is-primary">
+        Submit
+      </button>
+    </div>
+  </div>
+
+</form>

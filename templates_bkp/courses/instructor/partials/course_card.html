@@ -1,0 +1,93 @@
+<div class="course-card">
+
+    <!-- THUMBNAIL -->
+    <div class="course-thumb">
+        {% if course.thumbnail %}
+            <img src="{{ course.thumbnail.url }}">
+        {% else %}
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;">
+                No Thumbnail
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- BODY -->
+    <div class="course-body">
+
+        <div>
+            <div class="course-title">{{ course.title }}</div>
+
+            <div class="course-meta">
+                Instructor: {{ course.created_by.username }} <br>
+                Created: {{ course.created_at|date:"M d, Y" }}
+            </div>
+
+            <!-- STATS -->
+            <div class="course-stats">
+                <span class="stat-badge stat-lessons">
+                    📚 {{ course.total_lessons }} Lessons
+                </span>
+
+                <span class="stat-badge stat-enrollments">
+                    👥 {{ course.total_enrollments }} Enrollments
+                </span>
+            </div>
+        </div>
+
+        <div>
+
+            <!-- PUBLISH TOGGLE -->
+            <div class="publish-control"
+                 id="publish-toggle-{{ course.id }}"
+                 hx-post="{% url 'courses:toggle_publish_course' course.slug %}"
+                 hx-target="#publish-toggle-{{ course.id }}"
+                 hx-swap="outerHTML"
+                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+                <label class="switch">
+                    <input type="checkbox" {% if course.is_published %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+
+                <div>
+                    {% if course.is_published %}
+                        <strong>Published</strong>
+                    {% else %}
+                        <strong>Draft</strong>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="course-actions">
+
+                <a href="{% url 'courses:course_detail' course.slug %}"
+                   class="action-btn">
+                    Preview
+                </a>
+
+                <a href="{% url 'courses:course_edit' course.slug %}"
+                   class="action-btn">
+                    Edit
+                </a>
+
+                <a href="{% url 'courses:course_builder' course.slug %}"
+                   class="action-btn">
+                    Curriculum
+                </a>
+
+                <form method="post"
+                      action="{% url 'courses:course_delete' course.slug %}"
+                      style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn delete-btn">
+                        Delete
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>

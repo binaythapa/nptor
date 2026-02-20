@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ course.title }}</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f9f9f9;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 30px;
+            max-width: 900px;
+            margin: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .description {
+            margin: 20px 0;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Progress bar */
+        .progress-wrapper {
+            margin: 25px 0;
+        }
+
+        .progress-label {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar-bg {
+            background: #e0e0e0;
+            border-radius: 6px;
+            height: 14px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 14px;
+            background: #4caf50;
+            width: {{ progress }}%;
+            border-radius: 6px;
+        }
+
+        .progress-meta {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 12px 22px;
+            background: #5624d0;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 25px;
+            font-size: 15px;
+        }
+
+        .btn:hover {
+            background: #401b9c;
+        }
+
+        .btn-secondary {
+            background: #2e7d32;
+        }
+
+        .btn-secondary:hover {
+            background: #1b5e20;
+        }
+
+        .description {
+    margin: 20px 0;
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <!-- Course title -->
+    <h1>{{ course.title }}</h1>
+
+    <!-- Meta info -->
+    <div class="meta">
+        Level: <strong>{{ course.level|title }}</strong>
+        {% if course.category %}
+            | Category: <strong>{{ course.category.name }}</strong>
+        {% endif %}
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrapper">
+        <div class="progress-label">
+            Progress: {{ progress }}%
+        </div>
+
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill"></div>
+        </div>
+
+        <div class="progress-meta">
+            {{ completed }} of {{ total }} lessons completed
+        </div>
+    </div>
+
+    <!-- Description -->
+    <div class="description">
+        {{ course.description }}
+    </div>
+
+    <!-- Action button (INDUSTRY STANDARD LOGIC) -->
+    {% if progress == 100 %}
+        <a href="{% url 'courses:course_learn' course.slug %}" class="btn btn-secondary">
+            ✔ Review Course
+        </a>
+    {% elif progress > 0 %}
+        <a href="{% url 'courses:course_learn' course.slug %}" class="btn">
+            ▶ Resume Learning
+        </a>
+    {% else %}
+        <a href="{% url 'courses:course_learn' course.slug %}" class="btn">
+            Start Course
+        </a>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

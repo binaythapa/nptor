@@ -1,0 +1,867 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Practice{% endblock %}
+
+{% block head_extra %}
+<style>
+
+/* ================= FIXED RESULT AREA ================= */
+#resultArea {
+  min-height: 130px;              /* Reserved space */
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#resultArea.has-result {
+  opacity: 1;
+}
+
+
+/* ================= FILTER BODY (NO BLINK VERSION) ================= */
+/* ================= FILTER BODY (STABLE COLLAPSIBLE) ================= */
+#filterBody {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  will-change: max-height, opacity;
+}
+
+#filterBody.is-open {
+  max-height: 600px;   /* large enough for content */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.box.mb-3.p-3 {
+  transition: none !important;
+}
+
+
+
+
+/* ================= DISABLED STATE ================= */
+.is-disabled {
+  pointer-events: none;
+  opacity: 0.45;
+  filter: grayscale(80%);
+  cursor: not-allowed;
+}
+
+.is-disabled i {
+  opacity: 0.6;
+}
+
+.is-disabled:hover {
+  background: inherit;
+  color: inherit;
+}
+
+
+/* ================= WRAPPER ================= */
+.practice-wrapper {
+  width: 100%;
+  padding: 16px;
+}
+
+.practice-card {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+
+/* ================= OPTIONS (NO BORDER VERSION) ================= */
+/* ================= OPTIONS ================= */
+.practice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;                 /* smaller spacing */
+  padding: 6px 8px;         /* compact padding */
+  border-radius: 6px;
+  margin-bottom: 6px;       /* less vertical gap */
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  font-size: 0.82rem;       /* smaller text */
+  line-height: 1.25;
+}
+
+.practice-option input {
+  margin-top: 2px;
+  transform: scale(0.9);    /* slightly smaller radio/checkbox */
+}
+
+.practice-option:hover {
+  background: #f9fafb;
+}
+
+.practice-option.correct {
+  background: #f0fdf4;      /* very soft green */
+  border-color: #86efac;    /* muted green */
+  color: #065f46;           /* deep readable green */
+}
+
+.practice-option.wrong {
+  background: #fef7f7;      /* soft pink, not red */
+  border-color: #fca5a5;    /* muted red */
+  color: #7f1d1d;           /* calm dark red */
+}
+
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+  .practice-wrapper {
+    padding: 12px;
+  }
+
+  .practice-card {
+    max-width: 100%;
+  }
+
+  .practice-option {
+    padding: 14px;
+    font-size: 0.95rem;
+  }
+
+  .practice-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .practice-actions .button {
+    width: 100%;
+  }
+
+  .practice-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+</style>
+
+
+
+
+
+
+{% endblock %}
+
+{% block content %}
+<div class="box">
+
+
+<!-- ================= HEADER ================= -->
+<div class="practice-header is-flex is-align-items-center is-justify-content-space-between mb-3">
+<h1 class="title is-5 mb-0 has-text-weight-semibold">
+  Practice Basics
+</h1>
+
+ <div class="links">
+  <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}"
+     class="{% if is_from_course %}is-disabled{% endif %}"
+     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+    Express
+  </a>
+  <span class="mx-1">|</span>
+  <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"
+     class="{% if is_from_course %}is-disabled{% endif %}"
+     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+    Pro
+  </a>
+</div>
+</div>
+
+
+<!-- Limited Access Message -->
+{% if not user.is_authenticated %}
+  <div class="notification is-light is-warning py-2 px-3 mt-2"
+       style="font-size: 0.75rem; line-height: 1.3;">
+
+    <span class="has-text-weight-semibold">
+      Limited access.
+    </span>
+
+    <a href="{% url 'accounts:request-login-otp' %}"
+       class="has-text-link has-text-weight-semibold ml-1">
+      Log in
+    </a>
+    to unlock full features.
+
+  </div>
+{% endif %}
+
+
+<!-- ================= FILTERS (COLLAPSIBLE) ================= -->
+<div class="box mb-3 p-3">
+
+  <!-- TOGGLE HEADER -->
+  <div class="is-flex is-justify-content-space-between is-align-items-center mb-2"
+       style="cursor:pointer;"
+       onclick="toggleFilters()">
+
+    <p class="has-text-weight-semibold is-size-7 mb-0">
+      Filters
+      <span id="filterHint"
+            class="has-text-grey is-size-7 ml-1">
+        (Expand)
+      </span>
+    </p>
+
+    <span id="filterToggleIcon" class="has-text-grey is-size-7">▾</span>
+  </div>
+
+  <!-- FILTER BODY -->
+  <div id="filterBody"
+       style="
+         overflow:hidden;
+         transition:max-height 0.25s ease;
+       ">
+
+<form method="get">
+  <div class="columns is-mobile is-multiline is-variable is-1">
+
+    <!-- ================= DOMAIN ================= -->
+    <div class="column is-12-mobile is-4-tablet">
+      <div class="select is-small is-fullwidth">
+        <select name="domain"
+                onchange="this.form.submit()"
+                {% if is_from_course %}disabled{% endif %}>
+          <option value="">All Domains</option>
+          {% for d in domains %}
+            <option value="{{ d.id }}"
+              {% if is_from_course %}
+                {% if d.id == locked_filters.domain %}selected{% endif %}
+              {% else %}
+                {% if d.id|stringformat:"s" == domain_id %}selected{% endif %}
+              {% endif %}>
+              {{ d.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if is_from_course %}
+        <input type="hidden" name="domain" value="{{ locked_filters.domain }}">
+      {% endif %}
+    </div>
+
+    <!-- ================= CATEGORY ================= -->
+    <div class="column is-12-mobile is-4-tablet">
+      <div class="select is-small is-fullwidth">
+        <select name="category"
+                onchange="this.form.submit()"
+                {% if is_from_course or not domain_id %}disabled{% endif %}>
+          <option value="">All Categories</option>
+
+          {% for cat in categories %}
+            {% if not cat.parent %}
+              <option value="{{ cat.id }}"
+                {% if is_from_course %}
+                  {% if cat.id == locked_filters.category %}selected{% endif %}
+                {% else %}
+                  {% if cat.id|stringformat:"s" == category_id %}selected{% endif %}
+                {% endif %}>
+                {{ cat.name }}
+              </option>
+
+              {% for child in cat.children.all %}
+                <option value="{{ child.id }}"
+                  {% if is_from_course %}
+                    {% if child.id == locked_filters.category %}selected{% endif %}
+                  {% else %}
+                    {% if child.id|stringformat:"s" == category_id %}selected{% endif %}
+                  {% endif %}>
+                  ↳ {{ child.name }}
+                </option>
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if is_from_course %}
+        <input type="hidden" name="category" value="{{ locked_filters.category }}">
+      {% endif %}
+    </div>
+
+    <!-- ================= DIFFICULTY ================= -->
+    <div class="column is-12-mobile is-4-tablet">
+      <div class="select is-small is-fullwidth">
+        <select name="difficulty"
+                onchange="this.form.submit()"
+                {% if is_from_course %}disabled{% endif %}>
+          <option value="">All Difficulty</option>
+          {% for value, label in difficulty_choices %}
+            <option value="{{ value }}"
+              {% if is_from_course %}
+                {% if value == locked_filters.difficulty %}selected{% endif %}
+              {% else %}
+                {% if value == difficulty %}selected{% endif %}
+              {% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if is_from_course %}
+        <input type="hidden" name="difficulty" value="{{ locked_filters.difficulty }}">
+      {% endif %}
+    </div>
+
+  </div>
+
+  {% if is_from_course %}
+    <p class="help is-info is-size-7 mt-2">
+      🔒 Filters locked — part of course lesson.
+    </p>
+  {% endif %}
+
+</form>
+  </div>
+</div>
+
+
+
+
+
+
+<!-- ================= PROGRESS ================= -->
+<div class="mb-3">
+<p class="has-text-grey is-size-7">
+    Progress: {{ progress_done }} / {{ progress_total }}
+  </p>
+
+  <progress class="progress is-small is-primary"
+            value="{{ progress_done }}"
+            max="{{ progress_total }}"></progress>
+  
+</div>
+
+
+
+
+
+<!-- ================= FREE LIMIT ================= -->
+{% if anon_limit_reached %}
+<div class="notification is-warning is-light p-4 mb-4">
+
+  <h3 class="title is-6 mb-2">
+    Free Practice Limit Reached
+  </h3>
+
+  <p class="is-size-7 mb-3" style="line-height:1.4;">
+    🚀 Great progress! You've completed 
+    <strong>{{ anon_limit }}</strong> questions.
+    Log in to continue practicing without limits.
+  </p>
+
+  <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}"
+     class="button is-warning is-small is-fullwidth-mobile">
+    Login to Continue
+  </a>
+
+  <a href="{% if not is_from_course %}{% url 'quiz:practice' %}?reset=1{% if domain_id %}&domain={{ domain_id }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}{% else %}javascript:void(0);{% endif %}"
+   class="button is-light {% if is_from_course %}is-disabled{% endif %}"
+   {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+  🔄 Reset
+</a>
+
+
+</div>
+{% endif %}
+
+
+{% if completed %}
+<div id="endMessage">
+  <div class="notification is-info is-light p-4">
+    <p class="has-text-weight-semibold mb-2">
+      🚀 Great Progress!
+    </p>
+
+    <p class="is-size-7 mb-3">
+      Amazing work! You've completed {{ progress_done }} questions — keep pushing forward and conquer more courses & exams!
+    </p>
+
+    <div class="buttons is-centered">
+      <a href="{% url 'quiz:exam_list' %}"
+         class="button is-link is-small">
+         Explore Courses & Exams
+      </a>
+
+      <a href="{% url 'quiz:practice' %}?reset=1"
+         class="button is-small is-light">
+         🔄Reset
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+
+
+
+
+<!-- ================= QUESTION ================= -->
+{% if question %}
+<div id="practiceContainer">
+<form method="post" id="practiceForm" data-qid="{{ question.id }}">
+
+
+{% csrf_token %}
+
+{% if domain_id %}<input type="hidden" name="domain" value="{{ domain_id }}">{% endif %}
+{% if category_id %}<input type="hidden" name="category" value="{{ category_id }}">{% endif %}
+{% if difficulty %}<input type="hidden" name="difficulty" value="{{ difficulty }}">{% endif %}
+
+<p class="mb-2 has-text-weight-semibold">{{ question.text|safe }}</p>
+
+
+{% if user.is_staff %}
+  <div class="mb-3">
+    <a href="{% url 'admin:quiz_question_change' question.id %}"
+       target="_blank"
+       class="button is-small is-warning is-light">
+      ✏️ Edit Question (Admin)
+    </a>
+    <span class="tag is-light ml-2">
+      ID: {{ question.id }}
+    </span>
+  </div>
+{% endif %}
+
+
+{% if question.question_type != "multi" %}
+  {% for c in choices %}
+  <label class="practice-option
+    {% if result and c.is_correct %}correct{% endif %}
+    {% if result == 'wrong' and c.id|stringformat:'s' == selected_choice_id %}wrong{% endif %}">
+    <input type="radio" name="choice" value="{{ c.id }}"
+           {% if c.id|stringformat:'s' == selected_choice_id %}checked{% endif %}
+           {% if show_next %}disabled{% endif %} required>
+    <span>{{ c.text }}</span>
+  </label>
+  {% endfor %}
+{% endif %}
+
+{% if question.question_type == "multi" %}
+  {% for c in choices %}
+  <label class="practice-option
+    {% if result and c.is_correct %}correct{% endif %}
+    {% if result == 'wrong' and c.id in selected_multi_ids %}wrong{% endif %}">
+    <input type="checkbox" name="choice_multi" value="{{ c.id }}"
+           {% if c.id in selected_multi_ids %}checked{% endif %}
+           {% if show_next %}disabled{% endif %}>
+    <span>{{ c.text }}</span>
+  </label>
+  {% endfor %}
+{% endif %}
+
+<div class="practice-actions mt-4 is-flex is-justify-content-space-between">
+
+  <div class="is-flex" style="gap:8px;">
+    {% if show_next %}
+      <button class="button is-link" name="next" value="1">
+        Next →
+      </button>
+    {% else %}
+      <button class="button is-primary">
+        Submit
+      </button>
+    {% endif %}
+
+<!-- 🆕 SKIP BUTTON -->
+<button class="button is-warning is-light"
+        type="submit"
+        name="skip"
+        value="1"
+        {% if is_from_course %}disabled{% endif %}>
+  ⏭ Skip
+</button>
+
+<!-- 🔄 RESET BUTTON -->
+<a href="{% if not is_from_course %}{% url 'quiz:practice' %}?reset=1{% if domain_id %}&domain={{ domain_id }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}{% else %}javascript:void(0);{% endif %}"
+   class="button is-light {% if is_from_course %}is-disabled{% endif %}"
+   {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+  🔄 Reset
+</a>
+
+
+                  
+
+</div>
+  </div>
+
+</form>
+
+
+
+{% if result == "correct" %}
+<div class="notification is-success mt-3">✅ Correct!</div>
+{% elif result == "wrong" %}
+<div class="notification mt-3"
+     style="background:#fff7f7; border-left:4px solid #fca5a5;">
+
+  <p style="color:#7f1d1d; font-weight:600;">
+    ❌ Incorrect
+  </p>
+
+  <p class="mt-2" style="color:#374151; font-weight:500;">
+    Correct answer:
+  </p>
+
+  <ul class="mt-2 ml-3">
+    {% for c in choices %}
+      {% if c.is_correct %}
+        <li style="color:#065f46;">
+          ✔ {{ c.text }}
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</div>
+
+{% if explanation %}
+<button type="button" class="button is-small is-info mt-2"
+        onclick="toggleExplanation()" id="explanationToggleBtn">
+  📘 Show Explanation
+</button>
+
+<div id="explanationBox" class="notification is-info mt-3"
+     style="display:none;">
+  {{ explanation|linebreaks }}
+</div>
+{% endif %}
+{% endif %}
+<!-- ================= FEEDBACK ================= -->
+{% if user.is_authenticated %}
+<hr class="my-4">
+
+<div id="feedbackBox" class="box is-light">
+
+  <p class="has-text-weight-semibold mb-2">🗣️ Feedback</p>
+
+  <div class="field">
+    <textarea id="studentComment"
+              class="textarea is-small"
+              rows="2"
+              placeholder="Write your comment..."></textarea>
+  </div>
+
+  <label class="checkbox mt-2">
+    <input type="checkbox" id="answerIncorrect">
+    ⚠️ Incorrect / Confusing
+  </label>
+
+  <br>
+
+ <button type="button"
+        class="button is-small is-link mt-2"
+        id="feedbackSubmitBtn">
+    Submit Feedback
+</button>
+
+
+</div>
+{% endif %}
+
+
+
+
+{% endif %}
+
+<!-- ================= PREVIOUS FEEDBACKS ================= -->
+{% if previous_feedbacks %}
+<hr class="my-3">
+
+<p class="is-size-7 has-text-grey mb-2">
+  🧾 Comments
+</p>
+
+<div class="feedback-list">
+
+  {% for fb in previous_feedbacks %}
+  <div class="mb-3 p-3"
+       style="border-left:3px solid #e5e7eb;
+              background:#fafafa;
+              border-radius:6px;">
+
+    <p class="is-size-7 has-text-grey-light mb-1">
+      {{ fb.user }} · {{ fb.created_at|date:"M d, Y H:i" }}
+    </p>
+
+    {% if fb.is_answer_incorrect %}
+      <span class="tag is-warning is-light is-small mb-1">
+        ⚠ Marked Incorrect / Confusing
+      </span>
+    {% endif %}
+
+    {% if fb.comment %}
+      <p class="is-size-7 mt-1">
+        {{ fb.comment }}
+      </p>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+
+</div>
+{% endif %}
+
+
+</div>
+
+
+
+
+
+
+
+
+<script>
+function toggleExplanation() {
+  const box = document.getElementById("explanationBox");
+  const btn = document.getElementById("explanationToggleBtn");
+  if (!box || !btn) return;
+
+  box.style.display =
+    box.style.display === "none" ? "block" : "none";
+
+  btn.innerText =
+    box.style.display === "block"
+      ? "📘 Hide Explanation"
+      : "📘 Show Explanation";
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+/* =====================================
+   GLOBAL CLICK HANDLER (CLEAN VERSION)
+===================================== */
+document.addEventListener("click", function(e) {
+
+  /* ===============================
+     ANSWER / NEXT HANDLER
+  =============================== */
+  const submitBtn = e.target.closest("#practiceForm button[type='submit']");
+  if (submitBtn) {
+
+    const form = document.getElementById("practiceForm");
+    if (!form) return;
+
+    // Skip button → allow normal submit
+    if (submitBtn.name === "skip") return;
+
+    e.preventDefault();
+
+    // Next button
+    if (submitBtn.name === "next") {
+      loadNextQuestion();
+      return;
+    }
+
+    // Submit answer
+    const formData = new FormData(form);
+
+    fetch("{% url 'quiz:practice_answer_ajax' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const filterBox = document.querySelector(".box.mb-3.p-3");
+const filterHeight = filterBox.offsetHeight;
+
+// Lock height to prevent reflow blink
+filterBox.style.height = filterHeight + "px";
+
+document.getElementById("practiceContainer").innerHTML = data.html;
+
+// Release height after DOM stabilizes
+setTimeout(() => {
+  filterBox.style.height = "auto";
+}, 50);
+
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      alert("Error submitting answer.");
+    });
+
+    return;
+  }
+
+  /* ===============================
+     FEEDBACK HANDLER
+  =============================== */
+  if (e.target && e.target.id === "feedbackSubmitBtn") {
+
+    const form = document.getElementById("practiceForm");
+    if (!form) {
+        alert("Practice form not found.");
+        return;
+    }
+
+    // 🔥 Clean way: use data attribute
+    const questionId = form.dataset.qid;
+    if (!questionId) {
+        alert("Question ID missing.");
+        return;
+    }
+
+    const comment = document.getElementById("studentComment")?.value.trim();
+    const isIncorrect = document.getElementById("answerIncorrect")?.checked;
+
+    if (!comment && !isIncorrect) {
+        alert("Please write a comment or mark as incorrect/confusing.");
+        return;
+    }
+
+    const data = new FormData();
+    data.append("question_id", questionId);
+    data.append("student_comment", comment || "");
+
+    if (isIncorrect) {
+        data.append("answer_incorrect", "1");
+    }
+
+    fetch("{% url 'quiz:practice_feedback_ajax' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: data
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        alert("Server error occurred.");
+    });
+  }
+
+});
+
+/* ===============================
+   LOAD NEXT QUESTION
+=============================== */
+function loadNextQuestion() {
+  fetch("{% url 'quiz:practice_next_ajax' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (data.redirect) {
+      window.location.href = data.redirect;
+      return;
+    }
+
+    if (data.success) {
+      const filterBox = document.querySelector(".box.mb-3.p-3");
+const filterHeight = filterBox.offsetHeight;
+
+// Lock height to prevent reflow blink
+filterBox.style.height = filterHeight + "px";
+
+document.getElementById("practiceContainer").innerHTML = data.html;
+
+// Release height after DOM stabilizes
+setTimeout(() => {
+  filterBox.style.height = "auto";
+}, 50);
+
+    }
+  })
+  .catch(error => {
+    console.error(error);
+    alert("Error loading next question.");
+  });
+}
+
+</script>
+
+
+
+<script>
+function toggleFilters() {
+  const body = document.getElementById("filterBody");
+  if (!body) return;
+
+  const isOpen = body.classList.toggle("is-open");
+
+  localStorage.setItem("filterExpanded", isOpen ? "1" : "0");
+  updateFilterUI(isOpen);
+}
+
+
+
+
+
+
+
+
+function updateFilterUI(expanded) {
+  const hint = document.getElementById("filterHint");
+  const icon = document.getElementById("filterToggleIcon");
+
+  if (!hint || !icon) return;
+
+  if (expanded) {
+    hint.innerText = "(Click to collapse)";
+    icon.innerText = "▴";
+  } else {
+    hint.innerText = "(Click to expand)";
+    icon.innerText = "▾";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const body = document.getElementById("filterBody");
+  if (!body) return;
+
+  const expanded = localStorage.getItem("filterExpanded") === "1";
+
+ body.classList.toggle("is-open", expanded);
+
+
+  updateFilterUI(expanded);
+});
+</script>
+
+
+{% endblock %}

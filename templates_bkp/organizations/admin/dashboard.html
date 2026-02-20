@@ -1,0 +1,28 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+<h2 class="title is-4 mb-4">🏢 Organization Dashboard</h2>
+
+<div class="columns is-multiline">
+  <div class="column is-4">
+    <div class="box has-text-centered">
+      <p class="heading">Students</p>
+      <p class="title is-3">👩‍🎓 {{ stats.students }}</p>
+    </div>
+  </div>
+
+  <div class="column is-4">
+    <div class="box has-text-centered">
+      <p class="heading">Courses</p>
+      <p class="title is-3">📚 {{ stats.courses }}</p>
+    </div>
+  </div>
+
+  <div class="column is-4">
+    <div class="box has-text-centered">
+      <p class="heading">Assignments</p>
+      <p class="title is-3">📝 {{ stats.assignments }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

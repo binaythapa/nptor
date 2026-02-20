@@ -1,0 +1,107 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>
+    {% block title %}Organization Dashboard{% endblock %}
+  </title>
+
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet"
+        href="{% static 'css/theme.css' %}">
+</head>
+
+<body>
+
+<!-- ================= ORG TOP BAR ================= -->
+<nav class="navbar is-light">
+  <div class="navbar-brand">
+    <a class="navbar-item"
+       href="{% url 'organizations_admin:dashboard' %}">
+      🏢 {{ request.active_org.name }}
+    </a>
+  </div>
+
+  <div class="navbar-end">
+    <div class="navbar-item">
+      <span class="tag is-info is-light mr-2">
+        Org Admin
+      </span>
+
+      <a href="{% url 'quiz:dashboard' %}"
+         class="button is-small is-outlined">
+        Back to Platform
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ================= MAIN LAYOUT ================= -->
+<section class="section pt-4">
+  <div class="container">
+    <div class="columns">
+
+      <!-- ===== ORG SIDEBAR ===== -->
+      <aside class="column is-3">
+        <nav class="menu">
+
+          <p class="menu-label">Organization</p>
+          <ul class="menu-list">
+
+            <li>
+              <a href="{% url 'organizations_admin:dashboard' %}">
+                <i class="fa fa-chart-line mr-1"></i>
+                Dashboard
+              </a>
+            </li>
+
+            <li>
+              <a href="{% url 'organizations_admin:students' %}">
+                <i class="fa fa-user-graduate mr-1"></i>
+                Students
+              </a>
+            </li>
+
+            <li>
+              <a href="{% url 'organizations_admin:courses' %}">
+                <i class="fa fa-book mr-1"></i>
+                Courses
+              </a>
+            </li>
+
+            <li>
+              <a href="{% url 'organizations_admin:assignments' %}">
+                <i class="fa fa-tasks mr-1"></i>
+                Assignments
+              </a>
+            </li>
+
+            <li>
+              <a href="{% url 'organizations_admin:settings' %}">
+                <i class="fa fa-gear mr-1"></i>
+                Settings
+              </a>
+            </li>
+
+          </ul>
+
+        </nav>
+      </aside>
+
+      <!-- ===== ORG CONTENT ===== -->
+      <main class="column is-9">
+        {% block content %}{% endblock %}
+      </main>
+
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

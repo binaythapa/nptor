@@ -741,3 +741,28 @@ body[data-theme="dark"] #copy-toast {
 
 
 }
+
+
+/* ================= ADMIN ROOT FIX ================= */
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+.admin-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-content {
+  flex: 1;
+  overflow-x: auto;
+}

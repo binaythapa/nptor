@@ -1,0 +1,19 @@
+{% extends 'layouts/student/base.html' %}
+{% block content %}
+<h1 class="title">Profile</h1>
+<div class="box">
+  <form method="post">{% csrf_token %}
+    <div class="field">
+      <label class="label">Username</label>
+      <div class="control"><input class="input" name="username" value="{{ user.username }}"></div>
+    </div>
+    <div class="field">
+      <label class="label">Email</label>
+      <div class="control"><input class="input" value="{{ user.email }}" disabled></div>
+    </div>
+    <div class="field">
+      <button class="button is-primary" type="submit">Save</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

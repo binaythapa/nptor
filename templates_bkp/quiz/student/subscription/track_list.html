@@ -1,0 +1,72 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% block content %}
+
+<h1 class="title is-4">📚 Tracks</h1>
+<div class="mb-4 is-flex is-justify-content-space-between is-align-items-center">
+  <h2 class="title is-4">📦 Tracks</h2>
+
+  <a href="{% url 'quiz:admin_track_create' %}"
+     class="button is-primary">
+    ➕ Add New Track
+  </a>
+</div>
+
+<table class="table is-fullwidth is-striped">
+<thead>
+<tr>
+  <th>Title</th>
+  <th>Pricing</th>
+  <th>Status</th>
+  <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+
+{% csrf_token %}
+
+{% for t in tracks %}
+<tr>
+  <td>{{ t.title }}</td>
+  <td>
+    <div class="select is-small">
+      <select onchange="updatePricing('{{ t.id }}', this.value)">
+        <option value="free" {% if t.pricing_type == "free" %}selected{% endif %}>Free</option>
+        <option value="monthly" {% if t.pricing_type == "monthly" %}selected{% endif %}>Monthly</option>
+        <option value="lifetime" {% if t.pricing_type == "lifetime" %}selected{% endif %}>Lifetime</option>
+      </select>
+    </div>
+  </td>
+  <td>
+    <span class="tag {% if t.is_active %}is-success{% else %}is-danger{% endif %}">
+      {{ t.is_active|yesno:"Active,Inactive" }}
+    </span>
+  </td>
+  <td>
+    <a href="{% url 'quiz:admin_track_update' t.id %}"
+       class="button is-small is-link">Edit</a>
+  </td>
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+<script>
+function csrf(){return document.querySelector('[name=csrfmiddlewaretoken]').value;}
+
+function updatePricing(trackId, pricingType){
+  fetch("{% url 'quiz:update_track_pricing_type' %}",{
+    method:"POST",
+    headers:{
+      "X-CSRFToken": csrf(),
+      "Content-Type":"application/x-www-form-urlencoded"
+    },
+    body:new URLSearchParams({
+      track_id:trackId,
+      pricing_type:pricingType
+    })
+  });
+}
+</script>
+
+{% endblock %}

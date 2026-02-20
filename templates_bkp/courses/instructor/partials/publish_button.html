@@ -1,0 +1,23 @@
+{% if course.is_published %}
+    <span style="
+        padding:4px 10px;
+        background:#28a745;
+        color:white;
+        border-radius:4px;
+        font-size:13px;
+        font-weight:600;
+    ">
+        ✔ Published
+    </span>
+{% else %}
+    <span style="
+        padding:4px 10px;
+        background:#b45309;
+        color:white;
+        border-radius:4px;
+        font-size:13px;
+        font-weight:600;
+    ">
+        Draft
+    </span>
+{% endif %}

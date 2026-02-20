@@ -1,0 +1,354 @@
+{% extends "layouts/student/base.html" %}
+{% load countries %}
+
+{% block content %}
+
+<section style="max-width:560px;margin:20px auto;">
+  <div class="card-surface" style="padding:20px;">
+
+    <h1 class="title is-4">Create Account</h1>
+
+    {% if error %}
+      <div class="notification is-danger">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- First Name -->
+      <div class="field">
+        <label class="label">First Name</label>
+        <div class="control">
+          <input class="input"
+                 name="first_name"
+                 id="id_first_name"
+                 placeholder="First Name"
+                 required>
+        </div>
+        <p id="first-name-feedback" class="is-size-7 mt-1"></p>
+      </div>
+
+      <!-- Last Name -->
+      <div class="field">
+        <label class="label">Last Name</label>
+        <div class="control">
+          <input class="input"
+                 name="last_name"
+                 id="id_last_name"
+                 placeholder="Last Name"
+                 required>
+        </div>
+        <p id="last-name-feedback" class="is-size-7 mt-1"></p>
+      </div>
+
+      <!-- Email -->
+      <div class="field">
+        <label class="label">Email</label>
+        <div class="control">
+          <input class="input"
+                 type="email"
+                 name="email"
+                 id="id_email"
+                 placeholder="Email"
+                 required>
+        </div>
+        <p id="email-feedback" class="is-size-7 mt-1"></p>
+      </div>
+
+      <!-- Country (Optional) -->
+      <div class="field">
+        <label class="label">Country (Optional)</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="country">
+              <option value="">Select country</option>
+              {% get_countries as countries %}
+              {% for country in countries %}
+                <option value="{{ country.code }}">
+                  {{ country.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone (Optional) -->
+      <div class="field">
+        <label class="label">Phone Number (Optional)</label>
+        <div class="control">
+          <input class="input"
+                 name="phone"
+                 placeholder="Phone number">
+        </div>
+      </div>
+
+      <!-- Password -->
+    <!-- Password -->
+<div class="field">
+  <label class="label">Password</label>
+
+  <div class="control has-icons-right">
+    <input class="input"
+           type="password"
+           name="password"
+           id="id_password"
+           placeholder="Password"
+           required>
+
+    <button type="button"
+            class="button is-white is-small"
+            style="position:absolute; right:5px; top:5px;"
+            onclick="togglePassword('id_password', this)">
+      👁
+    </button>
+  </div>
+
+  <progress id="password-strength-bar"
+            class="progress mt-2"
+            value="0"
+            max="100"
+            style="height:6px;"></progress>
+
+  <p id="password-strength-text"
+     class="is-size-7 mt-1"></p>
+</div>
+
+
+   <!-- Confirm Password -->
+<div class="field">
+  <label class="label">Confirm Password</label>
+
+  <div class="control has-icons-right">
+    <input class="input"
+           type="password"
+           name="confirm_password"
+           id="id_confirm_password"
+           placeholder="Confirm password"
+           required>
+
+    <button type="button"
+            class="button is-white is-small"
+            style="position:absolute; right:5px; top:5px;"
+            onclick="togglePassword('id_confirm_password', this)">
+      👁
+    </button>
+  </div>
+
+  <p id="password-match-feedback"
+     class="is-size-7 mt-1"></p>
+</div>
+
+
+
+      <!-- Terms & Policy -->
+      <div class="field">
+        <div class="control">
+          <label class="checkbox">
+            <input type="checkbox" name="accepted_policy" required>
+            I accept the
+            <a href="{% url 'pages:terms' %}" target="_blank">
+              Terms & Privacy Policy
+            </a>
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="field mt-4">
+        <button id="registerBtn"
+                class="button is-primary is-fullwidth">
+          Create Account
+        </button>
+      </div>
+
+    </form>
+
+    <div style="margin-top:12px"
+         class="small-muted has-text-centered">
+      Already have an account?
+      <a href="{% url 'accounts:request-login-otp' %}">Login</a>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- =========================
+     JAVASCRIPT (FINAL CLEAN)
+========================== -->
+<script>
+
+// ================================
+// EMAIL LIVE VALIDATION (FIXED)
+// ================================
+const emailInput = document.getElementById("id_email");
+const emailFeedback = document.getElementById("email-feedback");
+const registerBtn = document.getElementById("registerBtn");
+
+let emailTimeout = null;
+
+emailInput.addEventListener("input", function () {
+
+    clearTimeout(emailTimeout);
+    const email = this.value.trim();
+
+    if (email.length < 5 || !email.includes("@")) {
+        emailFeedback.textContent = "";
+        registerBtn.disabled = false;
+        return;
+    }
+
+    emailTimeout = setTimeout(() => {
+
+        fetch("{% url 'accounts:check_email' %}?email=" + encodeURIComponent(email))
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+
+                if (data.available) {
+                    emailFeedback.textContent = "Email is available ✔";
+                    emailFeedback.style.color = "green";
+                    registerBtn.disabled = false;
+                } else {
+                    emailFeedback.textContent = "Email already registered ✖";
+                    emailFeedback.style.color = "red";
+                    registerBtn.disabled = true;
+                }
+
+            })
+            .catch((error) => {
+                console.error("Email check error:", error);
+                emailFeedback.textContent = "Error checking email";
+                emailFeedback.style.color = "red";
+            });
+
+    }, 400);
+});
+
+
+// ================================
+// PASSWORD STRENGTH CHECK
+// ================================
+const passwordInput = document.getElementById("id_password");
+const strengthBar = document.getElementById("password-strength-bar");
+const strengthText = document.getElementById("password-strength-text");
+
+passwordInput.addEventListener("input", function () {
+
+    const password = this.value;
+    let score = 0;
+
+    if (password.length >= 8) score += 25;
+    if (/[A-Z]/.test(password)) score += 20;
+    if (/[0-9]/.test(password)) score += 20;
+    if (/[^A-Za-z0-9]/.test(password)) score += 20;
+    if (password.length >= 12) score += 15;
+
+    strengthBar.value = score;
+
+    if (score < 40) {
+        strengthBar.className = "progress is-danger mt-2";
+        strengthText.textContent = "Weak password";
+        strengthText.style.color = "red";
+    } else if (score < 70) {
+        strengthBar.className = "progress is-warning mt-2";
+        strengthText.textContent = "Moderate password";
+        strengthText.style.color = "orange";
+    } else {
+        strengthBar.className = "progress is-success mt-2";
+        strengthText.textContent = "Strong password";
+        strengthText.style.color = "green";
+    }
+
+});
+
+
+// ================================
+// NAME VALIDATION
+// ================================
+function validateName(inputId, feedbackId) {
+
+    const input = document.getElementById(inputId);
+    const feedback = document.getElementById(feedbackId);
+
+    input.addEventListener("input", function () {
+
+        const value = this.value.trim();
+
+        if (!/^[A-Za-z]+$/.test(value)) {
+            feedback.textContent = "Only letters allowed";
+            feedback.style.color = "red";
+        } else if (value.length < 2) {
+            feedback.textContent = "Minimum 2 characters required";
+            feedback.style.color = "orange";
+        } else {
+            feedback.textContent = "Looks good ✔";
+            feedback.style.color = "green";
+        }
+
+    });
+}
+
+validateName("id_first_name", "first-name-feedback");
+validateName("id_last_name", "last-name-feedback");
+
+</script>
+<script>
+
+// ================================
+// PASSWORD SHOW / HIDE TOGGLE
+// ================================
+function togglePassword(fieldId, iconElement) {
+
+    const input = document.getElementById(fieldId);
+
+    if (input.type === "password") {
+        input.type = "text";
+        iconElement.textContent = "🙈";
+    } else {
+        input.type = "password";
+        iconElement.textContent = "👁";
+    }
+}
+
+
+// ================================
+// PASSWORD MATCH CHECK
+// ================================
+const passwordField = document.getElementById("id_password");
+const confirmField = document.getElementById("id_confirm_password");
+const matchFeedback = document.getElementById("password-match-feedback");
+
+function checkPasswordMatch() {
+
+    const password = passwordField.value;
+    const confirm = confirmField.value;
+
+    if (!confirm) {
+        matchFeedback.textContent = "";
+        return;
+    }
+
+    if (password === confirm) {
+        matchFeedback.textContent = "Passwords match ✔";
+        matchFeedback.style.color = "green";
+    } else {
+        matchFeedback.textContent = "Passwords do not match ✖";
+        matchFeedback.style.color = "red";
+    }
+}
+
+passwordField.addEventListener("input", checkPasswordMatch);
+confirmField.addEventListener("input", checkPasswordMatch);
+
+</script>
+
+
+{% endblock %}

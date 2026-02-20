@@ -1,0 +1,24 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+
+<section style="max-width:480px;margin:40px auto;">
+  <div class="card-surface has-text-centered" style="padding:24px;">
+
+    <i class="fa fa-circle-check has-text-success" style="font-size:48px;"></i>
+
+    <h1 class="title is-4 mt-3">
+      Account Created Successfully
+    </h1>
+
+    <p class="mb-4">
+      Your account has been verified. You can now log in.
+    </p>
+
+    <a href="{% url 'accounts:request-login-otp' %}" class="button is-primary">
+      Go to Login
+    </a>
+
+  </div>
+</section>
+
+{% endblock %}

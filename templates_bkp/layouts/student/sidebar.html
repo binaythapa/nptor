@@ -1,0 +1,105 @@
+<aside id="admin-sidebar" class="admin-sidebar">
+  <nav class="menu is-size-7">
+
+    <!-- ================= DASHBOARD ================= -->
+    <p class="menu-label">Dashboard</p>
+    <ul class="menu-list">
+      <li>
+        {% if user.is_authenticated %}
+        <a href="{% url 'quiz:dashboard' %}">
+          <span class="icon is-small">
+            <i class="fa fa-chart-line"></i>
+          </span>
+          <span class="menu-text">Dashboard</span>
+        </a>
+        {% else %}
+        <a href="{% url 'pages:home' %}">
+          <span class="icon is-small">
+            <i class="fa fa-chart-line"></i>
+          </span>
+          <span class="menu-text">Home</span>
+        </a>
+        {% endif %}
+      </li>
+    </ul>
+
+  
+
+    <!-- ================= CONTENT ================= -->
+    <p class="menu-label">Content</p>
+    <ul class="menu-list">
+
+      <li>
+        <a href="{% url 'quiz:practice' %}">
+          <span class="icon is-small">
+            <i class="fa fa-file-alt"></i>
+          </span>
+          <span class="menu-text">Practice</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'quiz:practice_express' %}">
+          <span class="icon is-small">
+            <i class="fa fa-layer-group"></i>
+          </span>
+          <span class="menu-text">Express</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'quiz:exam_list' %}">
+          <span class="icon is-small">
+            <i class="fa fa-question-circle"></i>
+          </span>
+          <span class="menu-text">Courses & Exams</span>
+        </a>
+      </li>
+
+    </ul>
+
+    <!-- ================= REVENUE ================= -->
+    <p class="menu-label">Profile</p>
+    <ul class="menu-list">
+      <li>
+        <a href="{% url 'quiz:profile' %}">
+          <span class="icon is-small">
+            <i class="fa fa-credit-card"></i>
+          </span>
+          <span class="menu-text">Profile</span>
+        </a>
+      </li>
+    </ul>
+
+    
+
+    <!-- ================= Org ================= -->
+    <p class="menu-label">Org</p>
+    <ul class="menu-list">
+      <li>
+        <a href="{% url 'organizations_admin:dashboard' %}">
+          <span class="icon is-small">
+            <i class="fa fa-users"></i>
+          </span>
+          <span class="menu-text">Org Dashboard</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- ================= Course ================= -->
+    <p class="menu-label">Course</p>
+    <ul class="menu-list">
+      <li>
+        <a href="{% url 'courses:instructor_dashboard' %}">
+          <span class="icon is-small">
+            <i class="fa fa-users"></i>
+          </span>
+          <span class="menu-text">Course Dashboard</span>
+        </a>
+      </li>
+    </ul>
+
+   
+
+  </nav>
+</aside>

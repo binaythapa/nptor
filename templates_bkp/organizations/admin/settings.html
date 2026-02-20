@@ -1,0 +1,14 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+<h1 class="title">Organization Settings</h1>
+
+<div class="box">
+  <p><strong>Name:</strong> {{ org.name }}</p>
+  <p><strong>Status:</strong> {{ org.is_active|yesno:"Active,Inactive" }}</p>
+</div>
+
+<p class="has-text-grey">
+  More settings (branding, users, permissions) can be added here.
+</p>
+{% endblock %}

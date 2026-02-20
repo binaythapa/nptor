@@ -1,0 +1,105 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container">
+
+  <h1 class="title is-4">🎟 Create Coupon</h1>
+  <p class="subtitle is-6 has-text-grey">
+    Discounts, validity & trial extensions
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="box">
+
+      <!-- CODE -->
+      <div class="field">
+        <label class="label">Coupon Code</label>
+        {% render_field form.code class+="input" %}
+      </div>
+
+      <!-- DISCOUNT -->
+      <div class="columns">
+        <div class="column">
+          <label class="label">Percent Off (%)</label>
+          {% render_field form.percent_off class+="input" %}
+        </div>
+        <div class="column">
+          <label class="label">Flat Off</label>
+          {% render_field form.flat_off class+="input" %}
+        </div>
+      </div>
+
+      <!-- TARGET -->
+      <div class="columns">
+        <div class="column">
+          <label class="label">Track (optional)</label>
+          <div class="select is-fullwidth">
+            {% render_field form.track %}
+          </div>
+        </div>
+        <div class="column">
+          <label class="label">Exam (optional)</label>
+          <div class="select is-fullwidth">
+            {% render_field form.exam %}
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- 📅 DATE PICKERS -->
+      <div class="columns">
+        <div class="column">
+          <label class="label">Valid From</label>
+          {% render_field form.valid_from class+="input" %}
+        </div>
+        <div class="column">
+          <label class="label">Valid To</label>
+          {% render_field form.valid_to class+="input" %}
+        </div>
+      </div>
+
+      <p class="help">
+        📅 Click the input to open calendar & time picker
+      </p>
+
+      <!-- LIMITS -->
+      <div class="columns">
+        <div class="column">
+          <label class="label">Usage Limit</label>
+          {% render_field form.usage_limit class+="input" %}
+        </div>
+        <div class="column">
+          <label class="label">Extra Trial Days</label>
+          {% render_field form.extra_trial_days class+="input" %}
+        </div>
+      </div>
+
+      <!-- ACTIVE -->
+      <div class="field">
+        <label class="checkbox">
+          {% render_field form.is_active %}
+          Active
+        </label>
+      </div>
+
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="field is-grouped mt-4">
+      <a href="{% url 'quiz:admin_coupon_list' %}" class="button is-light">
+        Cancel
+      </a>
+      <button class="button is-primary">
+        Save Coupon
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

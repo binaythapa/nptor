@@ -1,0 +1,52 @@
+
+
+
+
+{% extends "organizations/admin/base.html" %}
+
+
+{% block content %}
+
+<h2 class="title is-4">📚 Courses</h2>
+
+<table class="table is-fullwidth">
+  <thead>
+    <tr>
+      <th>Course</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for item in courses %}
+    <tr>
+      <td>{{ item.course.title }}</td>
+
+      <td>
+        {% if item.is_attached %}
+          <span class="tag is-success">Attached</span>
+        {% else %}
+          <span class="tag is-light">Not attached</span>
+        {% endif %}
+      </td>
+
+      <td>
+        {% if item.is_attached %}
+          <a href="{% url 'organizations_admin:course_detach' item.course.id %}"
+             class="button is-danger is-small"
+             onclick="return confirm('Detach this course?')">
+            Detach
+          </a>
+        {% else %}
+          <a href="{% url 'organizations_admin:course_attach' item.course.id %}"
+             class="button is-primary is-small">
+            Attach
+          </a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

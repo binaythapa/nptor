@@ -1,0 +1,22 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Contact Us – {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-section">
+  <div class="box">
+
+    <h1 class="title is-4">Contact Us</h1>
+
+    <p>
+      If you have questions, issues, or suggestions, feel free to reach out.
+      We aim to respond within 24–48 hours.
+    </p>
+
+    <ul class="mt-4">
+      <li><strong>Email:</strong> support@{{ site_name|lower }}.com</li>
+      <li><strong>Hours:</strong> Monday – Friday, 9:00 AM – 6:00 PM</li>
+    </ul>
+
+  </div>
+</section>
+{% endblock %}

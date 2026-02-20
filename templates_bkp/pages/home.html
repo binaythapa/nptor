@@ -1,0 +1,100 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}
+{{ site_name }} – Prepare Smarter for Exams
+{% endblock %}
+
+{% block content %}
+
+<!-- ================= HERO ================= -->
+<section class="section">
+  <div class="container has-text-centered">
+
+    <h1 class="title is-2">
+      Prepare Smarter with {{ site_name }}
+    </h1>
+
+    <p class="subtitle is-5 mt-3">
+      Practice exams, take mock tests, and improve your skills with confidence.
+    </p>
+
+    <div class="buttons is-centered mt-5">
+      <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">
+        Start Practicing
+      </a>
+
+      <a href="{% url 'accounts:request-login-otp' %}" class="button is-light is-medium">
+        Login / Sign up
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section class="section has-background-light">
+  <div class="container">
+
+    <div class="columns is-multiline">
+
+      <div class="column is-3">
+        <div class="box has-text-centered">
+          <i class="fa fa-pen fa-2x mb-3"></i>
+          <h3 class="title is-6">Practice Questions</h3>
+          <p class="is-size-7">
+            Practice curated questions designed for real exams.
+          </p>
+        </div>
+      </div>
+
+      <div class="column is-3">
+        <div class="box has-text-centered">
+          <i class="fa fa-clock fa-2x mb-3"></i>
+          <h3 class="title is-6">Mock Exams</h3>
+          <p class="is-size-7">
+            Simulate real exam conditions and test your readiness.
+          </p>
+        </div>
+      </div>
+
+      <div class="column is-3">
+        <div class="box has-text-centered">
+          <i class="fa fa-chart-line fa-2x mb-3"></i>
+          <h3 class="title is-6">Track Progress</h3>
+          <p class="is-size-7">
+            Analyze performance and focus on weak areas.
+          </p>
+        </div>
+      </div>
+
+      <div class="column is-3">
+        <div class="box has-text-centered">
+          <i class="fa fa-user-graduate fa-2x mb-3"></i>
+          <h3 class="title is-6">Learn Smarter</h3>
+          <p class="is-size-7">
+            Structured learning built for serious aspirants.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="section">
+  <div class="container has-text-centered">
+    <h2 class="title is-4">
+      Start your preparation today
+    </h2>
+
+    <div class="buttons is-centered mt-4">
+      <a href="{% url 'quiz:practice' %}" class="button is-primary">
+        Practice Now
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

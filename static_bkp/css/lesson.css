@@ -1,0 +1,118 @@
+/* ===============================
+   IMAGES
+   =============================== */
+
+.lesson-article img {
+  max-width: 100%;
+  height: auto;
+  margin: 24px 0;
+  border-radius: 10px;
+}
+
+/* Image Position */
+.align-left {
+  float: left;
+  margin: 10px 20px 10px 0;
+}
+
+.align-center {
+  display: block;
+  margin: 24px auto;
+}
+
+.align-right {
+  float: right;
+  margin: 10px 0 10px 20px;
+}
+
+/* Image Size */
+.img-small  { max-width: 30%; }
+.img-medium { max-width: 60%; }
+.img-large  { max-width: 90%; }
+.img-full   { max-width: 100%; }
+
+/* Caption */
+.lesson-article figcaption {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+/* ===============================
+   LESSON CONTENT
+   =============================== */
+
+.lesson-content {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #1f2937;
+
+  /* 🔥 FIX: prevent auto spacing from editor */
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Paragraph spacing */
+.lesson-content p {
+  margin: 0.6em 0;
+}
+
+/* Lists */
+.lesson-content ul,
+.lesson-content ol {
+  margin: 0.5em 0;
+  padding-left: 1.2em;
+}
+
+.lesson-content li {
+  margin: 0.25em 0;
+}
+
+/* Headings */
+.lesson-content h1,
+.lesson-content h2,
+.lesson-content h3,
+.lesson-content h4 {
+  margin: 1em 0 0.5em;
+  line-height: 1.3;
+}
+
+/* Images inside content */
+.lesson-content img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+/* Callouts */
+.lesson-callout {
+  padding: 14px 18px;
+  border-left: 4px solid #3b82f6;
+  background: #eff6ff;
+  margin: 20px 0;
+  border-radius: 6px;
+}
+
+.lesson-warning {
+  border-left-color: #f59e0b;
+  background: #fff7ed;
+}
+
+/* Code blocks */
+.lesson-content pre {
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 14px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+/* Inline code */
+.lesson-content code {
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}

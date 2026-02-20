@@ -1,0 +1,70 @@
+{% load static %}
+
+<header class="admin-header">
+  <div class="admin-header-inner">
+
+    <!-- LEFT -->
+    <div class="admin-header-left">
+
+      <!-- SIDEBAR TOGGLE -->
+      <button class="button is-white is-small mr-3"
+              onclick="toggleSidebar()">
+          <i class="fa fa-bars"></i>
+      </button>
+
+      <!-- BRAND -->
+      <a class="admin-brand"
+         href="{% if user.is_authenticated %}
+                  {% url 'quiz:dashboard' %}
+               {% else %}
+                  {% url 'quiz:practice' %}
+               {% endif %}">
+        <img src="{% static 'images/logo.jpg' %}"
+             class="admin-logo"
+             alt="{{ site_name }}">
+        <span class="admin-brand-text">
+          Student Panel
+        </span>
+      </a>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="admin-header-right">
+
+      {% if user.is_authenticated %}
+
+        <span class="admin-user is-hidden-mobile">
+          <strong>{{ user.first_name|default:user.username }}</strong>
+        </span>
+
+        <a href="{% url 'quiz:notifications_list' %}"
+           class="button is-white is-small mr-2">
+          <span class="icon">
+            <i class="fa fa-bell"></i>
+          </span>
+        </a>
+
+        <a href="#"
+           class="button is-light is-small"
+           onclick="event.preventDefault();
+                    document.getElementById('logout-form').submit();">
+          <i class="fa fa-right-from-bracket"></i>
+        </a>
+
+      {% else %}
+
+        <a href="{% url 'accounts:request-login-otp' %}"
+           class="button is-primary is-small">
+          Login
+        </a>
+
+      {% endif %}
+
+      <button id="theme-toggle" class="button is-white is-small">
+        <i class="fa fa-moon"></i>
+      </button>
+
+    </div>
+  </div>
+</header>

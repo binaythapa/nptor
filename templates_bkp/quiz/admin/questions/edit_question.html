@@ -1,0 +1,227 @@
+
+{% load widget_tweaks %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 900px;">
+
+  <!-- ================= HEADER ================= -->
+  <div class="mb-6">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+      <ul>
+        <li><a href="{% url 'quiz:question_dashboard' %}">Dashboard</a></li>
+        <li class="is-active"><a href="#">Edit Question</a></li>
+      </ul>
+    </nav>
+
+    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+      <h1 class="title is-3 has-text-weight-semibold">✏️ Edit Question</h1>
+      <span class="tag is-info is-light">
+        {{ question.get_question_type_display }}
+      </span>
+    </div>
+
+    <p class="subtitle is-6 has-text-grey">
+      Update question, choices, and explanation
+    </p>
+  </div>
+
+  <form method="post" id="question-form">
+    {% csrf_token %}
+
+    <!-- ================= QUESTION ================= -->
+    <div class="card mb-5">
+      <header class="card-header">
+        <p class="card-header-title">
+          <i class="fas fa-question-circle mr-2"></i>
+          Question Details
+        </p>
+      </header>
+
+      <div class="card-content">
+
+        {% for field in form %}
+          {% if field.name != "explanation" %}
+          <div class="field mb-4">
+            <label class="label">
+              {{ field.label }}
+              {% if field.field.required %}
+                <span class="has-text-danger">*</span>
+              {% endif %}
+            </label>
+
+            <div class="control">
+              {% render_field field class+="input" %}
+            </div>
+
+            {% if field.errors %}
+              <p class="help is-danger">{{ field.errors.0 }}</p>
+            {% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- ================= EXPLANATION ================= -->
+        {% with field=form.explanation %}
+        <div class="field mb-4">
+          <label class="label">
+            {{ field.label }}
+            <span class="tag is-light is-small ml-2">Supports formatting</span>
+          </label>
+
+          <div class="buttons are-small mb-2">
+            <button type="button" class="button is-light" onclick="wrapText('strong')">
+              <i class="fas fa-bold"></i>
+            </button>
+            <button type="button" class="button is-light" onclick="wrapText('em')">
+              <i class="fas fa-italic"></i>
+            </button>
+            <button type="button" class="button is-light" onclick="wrapText('u')">
+              <i class="fas fa-underline"></i>
+            </button>
+            <button type="button" class="button is-light" onclick="wrapText('ul')">
+              <i class="fas fa-list-ul"></i>
+            </button>
+            <button type="button" class="button is-light" onclick="wrapText('ol')">
+              <i class="fas fa-list-ol"></i>
+            </button>
+            <button type="button" class="button is-light" onclick="insertLink()">
+              <i class="fas fa-link"></i>
+            </button>
+          </div>
+
+          <div class="control">
+            {% render_field field class+="textarea" rows="8" %}
+          </div>
+
+          {% if field.errors %}
+            <p class="help is-danger">{{ field.errors.0 }}</p>
+          {% endif %}
+        </div>
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- ================= CHOICES ================= -->
+    <div class="card mb-5">
+      <header class="card-header">
+        <p class="card-header-title">
+          <i class="fas fa-list-check mr-2"></i>
+          Answer Choices
+        </p>
+      </header>
+
+      <div class="card-content">
+
+        {{ choice_formset.management_form }}
+
+        {% if choice_formset.non_form_errors %}
+          <div class="notification is-danger is-light">
+            {{ choice_formset.non_form_errors }}
+          </div>
+        {% endif %}
+
+        <div class="table-container">
+          <table class="table is-fullwidth is-hoverable">
+            <thead>
+              <tr>
+                <th>Choice</th>
+                <th class="has-text-centered">Correct</th>
+                <th class="has-text-centered">Order</th>
+                <th class="has-text-centered">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cform in choice_formset %}
+              <tr>
+                <td>
+                  {% render_field cform.text class+="input is-small" %}
+                  {{ cform.id }}
+                  {% if cform.text.errors %}
+                    <p class="help is-danger">{{ cform.text.errors.0 }}</p>
+                  {% endif %}
+                </td>
+
+                <td class="has-text-centered">
+                  {% render_field cform.is_correct %}
+                </td>
+
+                <td class="has-text-centered">
+                  {% render_field cform.order class+="input is-small has-text-centered" %}
+                </td>
+
+                <td class="has-text-centered">
+                  <label class="checkbox">
+                    {% render_field cform.DELETE %}
+                    Delete
+                  </label>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= ACTIONS ================= -->
+   <div class="field is-grouped is-grouped-centered mt-6">
+  <div class="control">
+    <a href="{% url 'quiz:question_review' question.id %}"
+       class="button is-light is-medium">
+      Cancel
+    </a>
+  </div>
+  <div class="control">
+    <button type="submit" class="button is-primary is-medium">
+      <i class="fas fa-save mr-1"></i>
+      Update Question
+    </button>
+  </div>
+</div>
+
+
+  </form>
+</div>
+
+<script>
+function wrapText(tag) {
+  const ta = document.querySelector("textarea");
+  if (!ta) return;
+
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const text = ta.value;
+
+  if (start === end) return;
+
+  const selected = text.substring(start, end);
+  let wrapped = "";
+
+  if (tag === "ul" || tag === "ol") {
+    wrapped = `<${tag}><li>${selected}</li></${tag}>`;
+  } else {
+    wrapped = `<${tag}>${selected}</${tag}>`;
+  }
+
+  ta.value = text.substring(0, start) + wrapped + text.substring(end);
+}
+
+function insertLink() {
+  const ta = document.querySelector("textarea");
+  if (!ta) return;
+
+  const url = prompt("Enter URL");
+  if (!url) return;
+
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const text = ta.value.substring(start, end) || url;
+
+  ta.value =
+    ta.value.substring(0, start) +
+    `<a href="${url}">${text}</a>` +
+    ta.value.substring(end);
+}
+</script>
+{% endblock %}

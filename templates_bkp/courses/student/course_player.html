@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ course.title }}</title>
+<style>
+/* ================= BASE LAYOUT ================= */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  width: 300px;
+  background: #f8f9fa;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
+  padding: 12px;
+}
+
+/* ================= MAIN CONTENT ================= */
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* ================= LESSON NAV ================= */
+.lesson-link {
+  display: block;
+  padding: 6px 8px;
+  text-decoration: none;
+  color: #333;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.lesson-link.active {
+  background: #e9ecef;
+  font-weight: bold;
+}
+
+.lesson-link.completed {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+/* ================= PROGRESS ================= */
+.progress-box {
+  margin: 10px 0 20px;
+}
+
+/* ================= LESSON CONTENT (CRITICAL) ================= */
+.lesson-content {
+  margin: 20px 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #1f2937;
+
+  /* ⭐ PRESERVE SPACES, INDENTATION & LINE BREAKS */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Paragraph spacing */
+.lesson-content p {
+  margin: 12px 0;
+}
+
+/* Images inside lesson */
+.lesson-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Image alignment helpers */
+.lesson-content .align-left {
+  float: left;
+  margin: 10px 20px 10px 0;
+}
+
+.lesson-content .align-center {
+  margin: 24px auto;
+}
+
+.lesson-content .align-right {
+  float: right;
+  margin: 10px 0 10px 20px;
+}
+
+/* Image sizing helpers */
+.lesson-content .img-small {
+  width: 30%;
+}
+
+.lesson-content .img-medium {
+  width: 55%;
+}
+
+.lesson-content .img-large {
+  width: 85%;
+}
+
+/* Code blocks */
+.lesson-content pre {
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 14px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+/* Callout blocks */
+.lesson-callout {
+  padding: 14px 18px;
+  border-left: 4px solid #3b82f6;
+  background: #eff6ff;
+  margin: 20px 0;
+  border-radius: 6px;
+}
+
+.lesson-callout.warning {
+  border-left-color: #f59e0b;
+  background: #fff7ed;
+}
+
+/* ================= TOP NAV ================= */
+.topbar {
+  height: 52px;
+  background: #1e293b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.topbar a:hover {
+  opacity: 0.8;
+}
+
+.menu-btn {
+  cursor: pointer;
+  font-size: 22px;
+  user-select: none;
+}
+
+/* ================= CELEBRATION ================= */
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.celebration-card {
+  background: white;
+  padding: 40px;
+  width: 420px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+/* ================= BUTTONS ================= */
+.btn-primary {
+  padding: 10px 18px;
+  background: #2e7d32;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+}
+
+.btn-secondary {
+  padding: 10px 18px;
+  background: #e0e0e0;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -320px;
+    top: 52px;
+    height: calc(100% - 52px);
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  #quote-rotator {
+    display: none;
+  }
+}
+</style>
+
+</head>
+
+<body>
+<!-- ================= TOP BAR ================= -->
+<div class="topbar">
+  <div class="topbar-left">
+   
+
+    <a href="{% url 'quiz:student_dashboard' %}" title="Home">
+      🏠
+    </a>
+
+    <strong style="font-size:14px;">
+      {{ course.title }}
+    </strong>
+  </div>
+  <div>
+
+<div
+  id="quote-rotator"
+  style="
+    font-size:13px;
+    font-style: italic;
+    opacity: 0.9;
+    max-width: 520px;
+    margin: 0 auto;
+    text-align: center;
+    transition: opacity 0.6s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  "
+>
+  One lesson today is one step closer to your goal.
+</div>
+
+   
+  </div>
+</div>
+
+
+
+
+
+<div class="layout">
+
+  <!-- LEFT: CURRICULUM -->
+  <div class="sidebar">
+  
+
+    <div class="progress-box">
+      <strong>Progress: {{ progress }}%</strong>
+      <div style="background:#ddd; border-radius:6px; height:10px;">
+        <div style="width: {{ progress }}%; background:#4caf50; height:10px; border-radius:6px;"></div>
+      </div>
+    </div>
+
+    {% for section in sections %}
+      <h4>{{ section.title }}</h4>
+
+      {% for l in section.lessons.all %}
+        <a href="{% url 'courses:course_learn_lesson' course.slug l.id %}"
+           class="lesson-link
+           {% if lesson.id == l.id %} active{% endif %}
+           {% if l.id in completed_lesson_ids %} completed{% endif %}">
+          {% if l.id in completed_lesson_ids %}✔ {% endif %}
+          {{ l.title }}
+        </a>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- RIGHT: CONTENT -->
+  <div class="content">
+    <h2>{{ lesson.title }}</h2>
+
+    <!-- ================= VIDEO ================= -->
+ {% if lesson.lesson_type == lesson.TYPE_VIDEO %}
+  <iframe
+    width="100%"
+    height="420"
+    src="{{ video_embed_url }}?enablejsapi=1&origin={{ request.scheme }}://{{ request.get_host }}"
+    frameborder="0"
+    allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin">
+  </iframe>
+
+
+<p id="video-status" style="margin-top:10px;color:#666;">
+  {% if lesson_progress.completed %}
+    ✔ Lesson completed
+  {% else %}
+    ▶ Keep watching to complete this lesson
+  {% endif %}
+</p>
+
+{% if lesson_progress.completed and next_lesson %}
+  <div style="margin-top:30px;">
+    <a
+      href="{% url 'courses:course_learn_lesson' course.slug next_lesson.id %}"
+      style="
+        padding:12px 20px;
+        background:#2e7d32;
+        color:white;
+        border-radius:6px;
+        text-decoration:none;
+        font-weight:bold;
+        display:inline-block;
+      ">
+      ▶ Continue to Next Lesson
+    </a>
+  </div>
+{% endif %}
+
+
+    <!-- ================= ARTICLE ================= -->
+    {% elif lesson.lesson_type == "article" %}      
+
+        <div class="description">
+        {{ lesson.article_content|safe  }}
+    </div>
+
+     {% if not lesson_progress.completed %}
+  <form
+    method="post"
+    action="{% url 'courses:mark_lesson_completed' course.slug lesson.id %}"
+    style="margin-top:20px;">
+    {% csrf_token %}
+    <button
+      type="submit"
+      style="
+        padding:10px 18px;
+        background:#4caf50;
+        color:white;
+        border:none;
+        border-radius:4px;
+        cursor:pointer;
+      ">
+      ✅ Mark as completed
+    </button>
+  </form>
+{% else %}
+  <p style="margin-top:20px;color:#2e7d32;font-weight:bold;">
+    ✔ Lesson completed
+  </p>
+
+  {% if next_lesson %}
+    <div style="margin-top:30px;">
+      <a
+        href="{% url 'courses:course_learn_lesson' course.slug next_lesson.id %}"
+        style="
+          padding:12px 20px;
+          background:#2e7d32;
+          color:white;
+          border-radius:6px;
+          text-decoration:none;
+          font-weight:bold;
+          display:inline-block;
+        ">
+        ▶ Continue to Next Lesson
+      </a>
+    </div>
+  {% endif %}
+{% endif %}
+
+
+    <!-- ================= QUIZ ================= -->
+    <!-- ================= QUIZ ================= -->
+{% elif lesson.lesson_type == lesson.TYPE_QUIZ %}
+ <div class="description">
+        {{ lesson.article_content|safe  }}
+    </div>
+
+  <!-- QUIZ ACTION (ALWAYS ALLOWED) -->
+  <a
+    href="{% url 'quiz:exam_start' lesson.exam.id %}?course={{ course.slug }}&lesson={{ lesson.id }}"
+    style="
+      padding:12px 20px;
+      background:{% if lesson_progress.completed %}#455a64{% else %}#7b1fa2{% endif %};
+      color:white;
+      border-radius:6px;
+      text-decoration:none;
+      font-weight:bold;
+      display:inline-block;
+    ">
+    {% if lesson_progress.completed %}
+      🔁 Re-attempt Quiz
+    {% else %}
+      👉 Start Quiz
+    {% endif %}
+  </a>
+
+  <!-- COMPLETION STATUS -->
+  {% if lesson_progress.completed %}
+    <p style="margin-top:10px;color:#2e7d32;font-weight:bold;">
+      ✔ Quiz completed
+    </p>
+  {% endif %}
+
+  <!-- NEXT LESSON -->
+  {% if lesson_progress.completed and next_lesson %}
+    <div style="margin-top:30px;">
+      <a
+        href="{% url 'courses:course_learn_lesson' course.slug next_lesson.id %}"
+        style="
+          padding:12px 20px;
+          background:#2e7d32;
+          color:white;
+          border-radius:6px;
+          text-decoration:none;
+          font-weight:bold;
+          display:inline-block;
+        ">
+        ▶ Continue to Next Lesson
+      </a>
+    </div>
+  {% endif %}
+
+
+
+  <!-- ================= PRACTICE ================= -->
+{% elif lesson.lesson_type == lesson.TYPE_PRACTICE %}
+ <div class="description">
+        {{ lesson.article_content|safe  }}
+    </div>
+
+  <!-- PRACTICE ACTION (ALWAYS ALLOWED) -->
+  <a
+    href="{% url 'quiz:practice' %}?category={{ lesson.practice_category.id }}&course={{ course.slug }}&lesson={{ lesson.id }}"
+    style="
+      padding:12px 20px;
+      background:{% if lesson_progress.completed %}#455a64{% else %}#1976d2{% endif %};
+      color:white;
+      border-radius:6px;
+      text-decoration:none;
+      font-weight:bold;
+      display:inline-block;
+    ">
+    {% if lesson_progress.completed %}
+      🔁 Re-practice
+    {% else %}
+      👉 Start Practice
+    {% endif %}
+  </a>
+
+  <!-- COMPLETION STATUS -->
+  {% if lesson_progress.completed %}
+    <p style="margin-top:10px;color:#2e7d32;font-weight:bold;">
+      ✔ Practice completed
+    </p>
+  {% endif %}
+
+  <!-- NEXT LESSON -->
+  {% if lesson_progress.completed and next_lesson %}
+    <div style="margin-top:30px;">
+      <a
+        href="{% url 'courses:course_learn_lesson' course.slug next_lesson.id %}"
+        style="
+          padding:12px 20px;
+          background:#2e7d32;
+          color:white;
+          border-radius:6px;
+          text-decoration:none;
+          font-weight:bold;
+          display:inline-block;
+        ">
+        ▶ Continue to Next Lesson
+      </a>
+    </div>
+  {% endif %}
+
+{% endif %}
+
+<!-- ================= CELEBRATION (ONE-TIME) ================= -->
+{% if show_celebration %}
+<div id="celebration-modal" class="celebration-overlay">
+  <div class="celebration-card">
+    <h1>🎉 Congratulations!</h1>
+    <p>You’ve completed <strong>{{ course.title }}</strong></p>
+
+    <a
+      href="{% url 'courses:course_certificate_pdf' course.slug %}"
+      class="btn-primary">
+      📜 Download Certificate
+    </a>
+
+    <br><br>
+
+    <button
+      type="button"
+      onclick="document.getElementById('celebration-modal').style.display='none'"
+      class="btn-secondary">
+      Continue
+    </button>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- ================= CERTIFICATE (ALWAYS AVAILABLE) ================= -->
+{% if certificate %}
+  <div style="margin-top:40px; text-align:center;">
+    <a
+      href="{% url 'courses:course_certificate_pdf' course.slug %}"
+      style="
+        padding:12px 20px;
+        background:#1565c0;
+        color:white;
+        border-radius:6px;
+        text-decoration:none;
+        font-weight:bold;
+        display:inline-block;
+      ">
+      📜 Download Certificate
+    </a>
+  </div>
+{% endif %}
+
+
+
+
+<!-- ================= VIDEO AUTO-COMPLETE (ROBUST) ================= -->
+{% if lesson.lesson_type == lesson.TYPE_VIDEO and not lesson_progress.completed %}
+<script>
+console.log("✅ VIDEO TRACKING JS RUNNING");
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+let watchedSeconds = 0;
+let duration = 390; // fallback
+let completed = false;
+
+setInterval(() => {
+  watchedSeconds += 5;
+
+  fetch("{% url 'courses:track_video_progress' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken"),
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      lesson_id: "{{ lesson.id }}",
+      watched: watchedSeconds,
+      duration: duration
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.completed && !completed) {
+      completed = true;
+      document.getElementById("video-status").innerText =
+        "✔ Video watched. Lesson completed";
+    }
+  });
+}, 5000);
+</script>
+{% endif %}
+
+
+
+<script>
+const quotes = [
+  "One lesson today is one step closer to your goal.",
+  "Consistency beats talent. Keep going.",
+  "Every minute you study is an investment in your future.",
+  "Progress, not perfection.",
+  "Small effort today → big results tomorrow.",
+  "You don’t need motivation. You need momentum.",
+  "Learn a little more than yesterday.",
+  "This lesson is building your next opportunity.",
+  "Stay curious. Stay committed.",
+  "Your future self will thank you for this."
+];
+
+let quoteIndex = 0;
+const quoteEl = document.getElementById("quote-rotator");
+
+// change interval (milliseconds)
+const ROTATE_EVERY = 5000; // 10 seconds
+
+setInterval(() => {
+  if (!quoteEl) return;
+
+  // fade out
+  quoteEl.style.opacity = 0;
+
+  setTimeout(() => {
+    quoteIndex = Math.floor(Math.random() * quotes.length);
+    quoteEl.textContent = quotes[quoteIndex];
+    quoteEl.style.opacity = 1;
+  }, 600);
+
+}, ROTATE_EVERY);
+</script>
+
+
+
+</body>
+</html>

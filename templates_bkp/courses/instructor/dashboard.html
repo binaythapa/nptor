@@ -1,0 +1,258 @@
+{% extends "courses/base.html" %}
+
+{% block title %}Instructor Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+
+/* ================= HEADER ================= */
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.btn-create {
+    background: #5624d0;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.btn-create:hover {
+    background: #401b9c;
+}
+
+/* ================= GRID ================= */
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+/* ================= CARD ================= */
+
+.course-card {
+    background: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease;
+}
+
+.course-card:hover {
+    transform: translateY(-4px);
+}
+
+/* ================= THUMBNAIL ================= */
+
+.course-thumb {
+    height: 160px;
+    background: #f3f4f6;
+    overflow: hidden;
+}
+
+.course-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ================= BODY ================= */
+
+.course-body {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+}
+
+.course-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.course-meta {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+
+/* ================= STATS BADGES ================= */
+
+.course-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.stat-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.stat-lessons {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.stat-enrollments {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.stat-updated {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* ================= PUBLISH SWITCH ================= */
+
+.publish-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    cursor: pointer;
+}
+
+.switch {
+    position: relative;
+    width: 42px;
+    height: 22px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    inset: 0;
+    background: #d1d5db;
+    border-radius: 20px;
+    transition: 0.3s;
+}
+
+.slider:before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 2px;
+    top: 2px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.switch input:checked + .slider {
+    background: #22c55e;
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* ================= ACTIONS ================= */
+
+.course-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    text-decoration: none;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    color: #374151;
+}
+
+.action-btn:hover {
+    background: #eef2ff;
+}
+
+.delete-btn {
+    background: #fff1f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+}
+
+.empty-state {
+    text-align: center;
+    color: #6b7280;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-header">
+    <h2>Instructor Dashboard</h2>
+    <a href="{% url 'courses:course_create' %}" class="btn-create">
+        + Create Course
+    </a>
+</div>
+
+
+{# ================= ORGANIZATION COURSES ================= #}
+{% if organization_courses %}
+<h3 style="margin:40px 0 20px;">🏢 Organization Courses</h3>
+
+<div class="course-grid">
+{% for course in organization_courses %}
+    {% include "courses/instructor/partials/course_card.html" %}
+{% endfor %}
+</div>
+{% endif %}
+
+
+{# ================= ADMIN COURSES ================= #}
+{% if admin_courses %}
+<h3 style="margin:50px 0 20px;">👑 Platform / Admin Courses</h3>
+
+<div class="course-grid">
+{% for course in admin_courses %}
+    {% include "courses/instructor/partials/course_card.html" %}
+{% endfor %}
+</div>
+{% endif %}
+
+
+{# ================= MY COURSES ================= #}
+{% if my_courses %}
+<h3 style="margin:50px 0 20px;">👤 My Courses</h3>
+
+<div class="course-grid">
+{% for course in my_courses %}
+    {% include "courses/instructor/partials/course_card.html" %}
+{% endfor %}
+</div>
+{% endif %}
+
+
+{% if not organization_courses and not admin_courses and not my_courses %}
+<p class="empty-state">No courses available.</p>
+{% endif %}
+
+{% endblock %}

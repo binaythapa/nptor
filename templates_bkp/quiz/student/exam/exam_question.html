@@ -1,0 +1,343 @@
+{% extends 'layouts/student/base.html' %}
+{% load dict_extras %}
+
+{% block content %}
+
+<h2 class="subtitle">{{ user_exam.exam.title }}</h2>
+
+<!-- ================= STICKY EXAM HEADER ================= -->
+<div class="exam-header">
+  <div class="exam-header-inner">
+    <div class="exam-title">
+      {{ user_exam.exam.title }}
+    </div>
+
+    <div class="exam-timer">
+      <div class="timer-label">Time Remaining</div>
+      <div class="timer-value" id="timer">
+        00:00:00
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<progress class="progress is-primary" value="{{ progress }}" max="100">
+  {{ progress }}%
+</progress>
+
+<!-- ✅ FIXED FORM (POSTS TO SAME PAGE) -->
+<form method="post">
+  {% csrf_token %}
+
+  <div class="box">
+
+    <!-- QUESTION -->
+    <div class="mb-4 question-text">
+      <strong>Q{{ index|add:1 }}.</strong>
+      {{ question.text|safe }}
+    </div>
+
+    <!-- SINGLE / DROPDOWN / TF -->
+    {% if question.question_type in 'single dropdown tf' %}
+      {% for c in choices %}
+        <div class="mb-2">
+          <label class="option-label">
+            <input type="radio"
+                   name="question_{{ question.id }}"
+                   value="{{ c.id }}"
+                   {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}>
+            <span>{{ c.text|safe }}</span>
+          </label>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- MULTI -->
+    {% if question.question_type == 'multi' %}
+      {% for c in choices %}
+        <div class="mb-2">
+          <label class="option-label">
+            <input type="checkbox"
+                   name="question_{{ question.id }}"
+                   value="{{ c.id }}"
+                   {% if ua.selections and c.id in ua.selections %}
+                     checked
+                   {% endif %}>
+            <span>{{ c.text|safe }}</span>
+          </label>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- FILL / NUMERIC / ORDER -->
+    {% if question.question_type in 'fill numeric order' %}
+      <input class="input"
+             type="text"
+             name="question_{{ question.id }}"
+             value="{{ ua.raw_answer|default_if_none:'' }}">
+    {% endif %}
+
+  </div>
+
+  <!-- ================= NAVIGATION ================= -->
+  <div class="buttons mt-4">
+
+    {% if index > 0 %}
+      <button type="submit"
+              name="nav"
+              value="prev"
+              class="button">
+        Previous
+      </button>
+    {% endif %}
+
+    {% if index < total|add:-1 %}
+      <button type="submit"
+              name="nav"
+              value="next"
+              class="button is-primary">
+        Next
+      </button>
+    {% else %}
+      <button type="submit"
+              name="nav"
+              value="review"
+              class="button is-warning">
+        Review & Submit
+      </button>
+    {% endif %}
+
+  </div>
+
+</form>
+
+
+<style>
+/* ================= GLOBAL CLEANUP ================= */
+
+body {
+  background: #f8fafc;
+}
+
+/* ================= STICKY HEADER ================= */
+
+.exam-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.exam-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+}
+
+.exam-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #363636;
+}
+
+/* ================= TIMER ================= */
+
+.exam-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: #f5f7fa;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border-left: 4px solid #3273dc;
+  min-width: 110px;
+}
+
+.timer-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.timer-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: #3273dc;
+  transition: color 0.3s ease;
+}
+
+/* ================= TIMER WARNING STATES ================= */
+
+.timer-warning {
+  color: #ff9800 !important;
+}
+
+.timer-danger {
+  color: #ff3860 !important;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* ================= QUESTION FIX ================= */
+
+.question-text p {
+  display: inline;
+  margin: 0;
+}
+
+/* ================= OPTION STYLING ================= */
+
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 0.5px solid #e5e7eb;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+/* Hover effect (steady, no movement) */
+.option-label:hover {
+  background: #f3f6fb;
+  border-color: #dbe3f0;
+}
+
+/* Radio / Checkbox styling */
+.option-label input {
+  margin: 0;
+  accent-color: #3273dc;
+}
+
+/* Full-row selected highlight (modern browsers) */
+.option-label:has(input:checked) {
+  background: #e8f0fe;
+  border-color: #3273dc;
+  box-shadow: 0 0 0 1px #3273dc inset;
+}
+
+/* Option text */
+.option-label span {
+  flex: 1;
+}
+
+/* ================= BUTTON POLISH ================= */
+
+button,
+.button {
+  transition: all 0.2s ease;
+}
+
+button:hover,
+.button:hover {
+  transform: translateY(-1px);
+}
+
+/* ================= CONTENT SPACING ================= */
+
+.exam-container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* ================= TEXT INPUT STYLE ================= */
+
+.input {
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  border-color: #3273dc;
+  box-shadow: 0 0 0 1px #3273dc inset;
+}
+select {
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+select:focus {
+  border-color: #3273dc;
+}
+
+
+</style>
+
+
+
+<script>
+(function () {
+  let remainingSeconds = Number("{{ remaining }}");
+  const timerEl = document.getElementById("timer");
+
+  if (!timerEl || isNaN(remainingSeconds)) return;
+
+  function formatTime(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+
+    return (
+      String(h).padStart(2, "0") + ":" +
+      String(m).padStart(2, "0") + ":" +
+      String(s).padStart(2, "0")
+    );
+  }
+
+  function updateColor(seconds) {
+    if (seconds <= 60) {
+      timerEl.classList.remove("timer-warning");
+      timerEl.classList.add("timer-danger");
+    } else if (seconds <= 300) {
+      timerEl.classList.add("timer-warning");
+      timerEl.classList.remove("timer-danger");
+    }
+  }
+
+  timerEl.textContent = formatTime(remainingSeconds);
+
+  const interval = setInterval(() => {
+    remainingSeconds--;
+
+    if (remainingSeconds < 0) {
+      clearInterval(interval);
+      window.location.href = "{% url 'quiz:exam_expired' user_exam.id %}";
+      return;
+    }
+
+    timerEl.textContent = formatTime(remainingSeconds);
+    updateColor(remainingSeconds);
+
+  }, 1000);
+})();
+</script>
+
+<script>
+window.addEventListener("scroll", function () {
+  const header = document.querySelector(".exam-header");
+  if (window.scrollY > 5) {
+    header.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+  } else {
+    header.style.boxShadow = "none";
+  }
+});
+</script>
+
+
+
+{% endblock %}

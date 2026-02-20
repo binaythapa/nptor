@@ -1,0 +1,89 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+
+<section class="section">
+  <div class="container" style="max-width: 720px;">
+
+    <h1 class="title is-4">
+      💳 Subscribe to {{ track.title }}
+    </h1>
+
+    <p class="has-text-grey mb-4">
+      Choose a plan below and contact admin to activate your subscription.
+    </p>
+
+    {% for plan in plans %}
+    <div class="box">
+
+      <!-- PLAN INFO -->
+      <div class="is-flex is-justify-content-space-between is-align-items-center">
+        <div>
+          <strong>{{ plan.name }}</strong><br>
+          {% if plan.duration_days %}
+            <span class="is-size-7 has-text-grey">
+              Valid for {{ plan.duration_days }} days
+            </span>
+          {% else %}
+            <span class="tag is-success is-light">Lifetime</span>
+          {% endif %}
+        </div>
+
+        <div class="has-text-right">
+          <strong>₹{{ plan.price }}</strong>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- CONTACT ADMIN -->
+      <div class="buttons mt-3">
+
+        <!-- WHATSAPP -->
+        <a
+          href="https://wa.me/918754795806?text=
+Hi Admin 👋
+Username: {{ request.user.username }}
+Track: {{ track.title }}
+Plan: {{ plan.name }}
+Price: ₹{{ plan.price }}
+Please activate my subscription.
+          |urlencode"
+          target="_blank"
+          class="button is-success is-small is-fullwidth mb-2">
+          📲 Contact via WhatsApp
+        </a>
+
+        <!-- VIBER -->
+        <a href="javascript:void(0)"
+           onclick="openViber(
+'Hi Admin 👋\nUsername: {{ request.user.username }}\nTrack: {{ track.title }}\nPlan: {{ plan.name }}\nPrice: ₹{{ plan.price }}\nPlease activate my subscription.'
+           )"
+           class="button is-link is-small is-fullwidth">
+          📞 Contact via Viber
+        </a>
+
+      </div>
+    </div>
+    {% empty %}
+      <div class="notification is-warning">
+        No subscription plans available.
+      </div>
+    {% endfor %}
+
+    <a href="{% url 'quiz:exam_list' %}"
+       class="button is-light is-fullwidth mt-4">
+      ← Back to Tracks
+    </a>
+
+  </div>
+</section>
+
+<script>
+function openViber(message) {
+  const encoded = encodeURIComponent(message);
+  window.location.href =
+    "viber://chat?number=918754795806&text=" + encoded;
+}
+</script>
+
+{% endblock %}

@@ -1,308 +1,918 @@
 {% extends "layouts/student/base.html" %}
-{% load static %}
 {% block content %}
 
-<div class="dashboard-wrapper">
+<style>
 
-  <!-- ================= HEADER ================= -->
-  <div class="dashboard-header">
+.course-card {
+  height: 220px;                 /* Equal height */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 14px;
+}
 
-    <div>
-      <h1 class="title is-4 mb-1">Student Dashboard</h1>
-      <p class="has-text-grey is-size-7">
-        Track your learning progress & exam performance
-      </p>
-      <p class="has-text-grey-light is-size-7">
-        Member since {{ user.date_joined|date:"d M Y" }}
-      </p>
-    </div>
+/* Title area */
+.course-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  min-height: 60px;              /* Keeps long titles balanced */
+  overflow: hidden;
+}
 
+/* Bottom section stays fixed */
+.course-footer {
+  margin-top: auto;
+}
+
+/* Progress text */
+.course-progress {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+/* Spacing between progress bar and button */
+.course-footer progress {
+  margin-bottom: 10px;
+}
+
+
+
+/* 🔥 NEW: EXPIRY STYLES */
+.expiry-info {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 6px;
+  border: 1px dashed #ced4da;
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.expiry-soon {
+  background: #fff3cd;
+  border-color: #ffeeba;
+  color: #856404;
+}
+
+.expiry-expired {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.expiry-warning {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background: #f8f9fa;
+  padding: 0;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+/* Header */
+.header {
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+/* Active Exam Alert */
+.active-alert {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.alert-text {
+  font-size: 14px;
+  color: #856404;
+  font-weight: 500;
+}
+
+.resume-btn {
+  background: #343a40;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.resume-btn:hover {
+  background: #23272b;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border: 1px solid #e9ecef;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.stat-passed .stat-value {
+  color: #28a745;
+}
+
+.stat-failed .stat-value {
+  color: #dc3545;
+}
+
+/* Track Section */
+.track-section {
+  margin-bottom: 20px;
+}
+
+.track-header {
+  width: 100%;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.track-header:hover {
+  border-color: #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.track-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.track-icon {
+  font-size: 20px;
+}
+
+.track-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.track-count {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.track-stats {
+  display: flex;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.track-passed {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.track-failed {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+/* Exams Container */
+.exams-container {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+}
+
+.exam-item {
+  padding: 20px;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.exam-item:last-child {
+  border-bottom: none;
+}
+
+.exam-header {
+  margin-bottom: 16px;
+}
+
+.exam-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 4px;
+}
+
+.exam-details {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.exam-status {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.status-passed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Actions */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.action-btn {
+  display: block;
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-warning {
+  background: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover {
+  background: #e0a800;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #138496;
+}
+
+.btn-disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Tags */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin: 2px 0;
+}
+
+.tag-danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.tag-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.tag-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.tag-light {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+/* Countdown */
+.countdown-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.countdown-text {
+  font-weight: 600;
+  color: #856404;
+}
+
+/* Mock Attempts */
+.mock-attempts {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 16px;
+  border-left: 3px solid #6c757d;
+}
+
+.mock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mock-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.mock-count {
+  background: #6c757d;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.mock-scores {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.score-badge {
+  background: white;
+  color: #495057;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px 12px;
+  }
+  
+  .header h1 {
+    font-size: 20px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 14px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .active-alert {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .resume-btn {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .track-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .track-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .exam-item {
+    padding: 16px;
+  }
+  
+  .action-btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .action-btn {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* Utility */
+.hidden {
+  display: none;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+
+.mb-1 { margin-bottom: 4px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 12px; }
+.mb-4 { margin-bottom: 16px; }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.exam-item {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ===============================
+   🔥 NEW: EXPIRY STYLES (ADDED)
+   =============================== */
+.expiry-info {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 6px;
+  border: 1px dashed #ced4da;
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.expiry-soon {
+  background: #fff3cd;
+  border-color: #ffeeba;
+  color: #856404;
+}
+
+.expiry-expired {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.expiry-warning {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+</style>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Student Dashboard</h1>
+
+    {% if active_attempt %}
+      <div class="active-alert">
+        <div class="alert-text">
+          Active Exam: {{ active_attempt.exam.title }}
+        </div>
+        <a href="{% url 'quiz:exam_take' active_attempt.id %}" class="resume-btn">
+          Resume Exam
+        </a>
+      </div>
+    {% endif %}
   </div>
 
-  <!-- ================= ACTIVE ALERT ================= -->
-  {% if active_attempt %}
-  <div class="notification is-warning is-light">
-    <div class="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap">
-      <div>
-        <strong>Active Exam:</strong> {{ active_attempt.exam.title }}
-      </div>
-      <a href="{% url 'quiz:exam_take' active_attempt.id %}"
-         class="button is-warning is-small">
-        Resume Exam
-      </a>
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_attempts }}</div>
+      <div class="stat-label">Total Attempts</div>
+    </div>
+    <div class="stat-card stat-passed">
+      <div class="stat-value">{{ passed_count }}</div>
+      <div class="stat-label">Passed</div>
+    </div>
+    <div class="stat-card stat-failed">
+      <div class="stat-value">{{ failed_count }}</div>
+      <div class="stat-label">Failed</div>
     </div>
   </div>
-  {% endif %}
 
-  <!-- ================= STATS ================= -->
-  <div class="columns is-multiline mb-5">
-
-    <div class="column is-4">
-      <div class="box stat-card has-text-centered">
-        <p class="stat-number">{{ total_attempts }}</p>
-        <p class="stat-label">Total Attempts</p>
-      </div>
-    </div>
-
-    <div class="column is-4">
-      <div class="box stat-card has-text-centered">
-        <p class="stat-number has-text-success">{{ passed_count }}</p>
-        <p class="stat-label">Passed</p>
-      </div>
-    </div>
-
-    <div class="column is-4">
-      <div class="box stat-card has-text-centered">
-        <p class="stat-number has-text-danger">{{ failed_count }}</p>
-        <p class="stat-label">Failed</p>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ================= ORG COURSES ================= -->
+    <!-- ===============================
+       ORGANIZATION ASSIGNED COURSES
+       =============================== -->
   {% if org_courses %}
-  <div class="mb-6">
-    <h2 class="title is-5 mb-4">🎓 Assigned Courses</h2>
+    <div class="mt-4 mb-4">
+      <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
+        🎓 Assigned Courses
+      </h2>
 
-    {% for org, accesses in org_courses.items %}
-    <div class="box mb-5">
+      {% for org, accesses in org_courses.items %}
+        <div class="track-section">
 
-      <!-- ORG HEADER -->
-      <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
-        <div class="is-flex is-align-items-center">
-          {% if org.logo %}
-            <img src="{{ org.logo.url }}"
-                 alt="{{ org.name }}"
-                 class="org-logo mr-2">
-          {% else %}
-            <span class="mr-2">🏫</span>
-          {% endif %}
-          <strong>{{ org.name }}</strong>
-        </div>
+          <!-- Org Header -->
+          <div class="track-header" style="cursor:default;">
+            <div class="track-title">
+              {% if org.logo %}
+                <img src="{{ org.logo.url }}"
+                     alt="{{ org.name }}"
+                     style="height:28px; border-radius:4px;">
+              {% else %}
+                <span class="track-icon">🏫</span>
+              {% endif %}
+              {{ org.name }}
+            </div>
 
-        <span class="tag is-info is-light">
-          {{ accesses|length }} course{{ accesses|length|pluralize }}
-        </span>
-      </div>
-
-      <!-- COURSE GRID -->
-      <div class="columns is-multiline">
-        {% for access in accesses %}
-        <div class="column is-4">
-          <div class="box course-card-modern">
-
-            <h3 class="course-title-modern">
-              {{ access.course.title }}
-            </h3>
-
-            <p class="is-size-7 has-text-grey mb-3">
-              Level: {{ access.course.get_level_display }}
-            </p>
-
-            <a href="{% url 'courses:course_learn' access.course.slug %}"
-               class="button is-primary is-light is-small is-fullwidth">
-              Continue Course
-            </a>
-
+            <div class="track-meta">
+              <span class="track-count">
+                {{ accesses|length }} course{{ accesses|length|pluralize }}
+              </span>
+            </div>
           </div>
-        </div>
-        {% endfor %}
-      </div>
 
+          <!-- Courses -->
+          <div class="exams-container">
+            {% for access in accesses %}
+              <div class="exam-item">
+
+                <div class="exam-header">
+                  <div class="exam-title">
+                    {{ access.course.title }}
+                  </div>
+
+                  <div class="exam-details">
+                    Level: {{ access.course.get_level_display }}
+                  </div>
+                </div>
+
+                <div class="action-buttons">
+                 <a href="{% url 'courses:course_learn' access.course.slug %}"
+   class="action-btn btn-primary">
+  Continue Course
+</a>
+
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
+
+        </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
   {% endif %}
 
-  <!-- ================= MY COURSES ================= -->
-  {% if courses %}
-  <div class="mb-6">
-    <h2 class="title is-5 mb-4">📚 My Courses</h2>
 
-    <div class="columns is-multiline">
-      {% for item in courses %}
-      <div class="column is-4">
-        <div class="box course-card-modern">
 
-          <h3 class="course-title-modern">
+{% if courses %}
+<div class="mb-5">
+  <h2 class="title is-4">🎓 My Courses</h2>
+
+  <div class="columns is-multiline">
+    {% for item in courses %}
+    <div class="column is-4">
+      <div class="box course-card">
+
+        <!-- Top Section -->
+        <div class="course-content">
+          <h3 class="course-title">
             {{ item.course.title }}
           </h3>
+        </div>
 
-          <div class="is-flex is-justify-content-space-between is-size-7 has-text-grey mb-1">
-            <span>{{ item.completed }}/{{ item.total }} lessons</span>
-            <span>{{ item.progress }}%</span>
-          </div>
+        <!-- Bottom Section (Progress + Button Together) -->
+        <div class="course-footer">
 
-          <progress class="progress is-primary is-small"
+          <p class="course-progress">
+            <strong>{{ item.progress }}%</strong>
+            ({{ item.completed }}/{{ item.total }} lessons)
+          </p>
+
+          <progress class="progress is-small is-primary"
                     value="{{ item.progress }}"
                     max="100">
+            {{ item.progress }}%
           </progress>
 
           {% if item.progress == 100 %}
             <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-success is-small is-fullwidth">
+               class="button is-success is-small is-fullwidth is-rounded">
               ✔ Review Course
             </a>
+
           {% elif item.progress > 0 %}
             <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-primary is-small is-fullwidth">
+               class="button is-primary is-small is-fullwidth is-rounded">
               ▶ Resume Learning
             </a>
+
           {% else %}
             <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-link is-small is-fullwidth">
+               class="button is-link is-small is-fullwidth is-rounded">
               ▶ Start Course
             </a>
           {% endif %}
 
         </div>
+
       </div>
-      {% endfor %}
     </div>
+    {% endfor %}
   </div>
-  {% endif %}
+</div>
+{% endif %}
 
-  <!-- ================= TRACKS ================= -->
+
+
+
+
+
+
+
+
+  <!-- Tracks -->
   {% for track, data in track_map.items %}
-  <div class="box mb-4">
-
-    <button class="button is-white is-fullwidth is-justify-content-space-between"
-            onclick="toggleExams(this)">
-      <span>
-        📘 <strong>{{ track.title }}</strong>
-      </span>
-
-      <span>
-        <span class="tag is-light">
-          {{ data.items|length }} exams
-        </span>
-
-        {% if data.passed %}
-          <span class="tag is-success is-light">
-            ✓ {{ data.passed }}
-          </span>
+  <div class="track-section">
+    <button class="track-header" onclick="toggleExams(this)">
+      <div class="track-title">
+        <span class="track-icon">📘</span>
+        {{ track.title }}
+      </div>
+      <div class="track-meta">
+        <span class="track-count">{{ data.items|length }} exams</span>
+        {% if data.attempted %}
+          <div class="track-stats">
+            {% if data.passed %}<span class="track-passed">✓ {{ data.passed }}</span>{% endif %}
+            {% if data.failed %}<span class="track-failed">✗ {{ data.failed }}</span>{% endif %}
+          </div>
         {% endif %}
-
-        {% if data.failed %}
-          <span class="tag is-danger is-light">
-            ✗ {{ data.failed }}
-          </span>
-        {% endif %}
-
-        <span class="ml-2">▼</span>
-      </span>
+        <span>▼</span>
+      </div>
     </button>
 
-    <div class="hidden mt-4">
+    <div class="exams-container hidden">
       {% for item in data.items %}
-      <div class="box mb-4">
+      <div class="exam-item">
 
-        <h3 class="is-size-6 has-text-weight-semibold">
-          {{ item.exam.title }}
-        </h3>
+        <!-- Exam Header -->
+        <div class="exam-header">
+          <div class="exam-title">{{ item.exam.title }}</div>
+          <div class="exam-details">
+            Level {{ item.exam.level }} • {{ item.exam.question_count }} Questions
+          </div>
 
-        <p class="is-size-7 has-text-grey mb-2">
-          Level {{ item.exam.level }} • {{ item.exam.question_count }} Questions
-        </p>
+          {% if item.last_score is not None %}
+            <div class="exam-status {% if item.status == 'passed' %}status-passed{% else %}status-failed{% endif %}">
+              {% if item.status == "passed" %}
+                Passed ({{ item.last_score }}%)
+              {% else %}
+                Failed ({{ item.last_score }}%)
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
 
-        {% if item.last_score is not None %}
-        <span class="tag {% if item.status == 'passed' %}is-success{% else %}is-danger{% endif %}">
-          {{ item.status|capfirst }} ({{ item.last_score }}%)
-        </span>
-        {% endif %}
-
-        <div class="mt-3">
+        <!-- ACTIONS -->
+        <div class="action-buttons">
 
           {% if item.action == "renew" %}
-            <span class="tag is-danger is-light mb-2">
-              🔴 Subscription Expired
-            </span>
+            <div class="tag tag-danger">🔴 Subscription Expired</div>
 
             {% if item.track_subscription %}
-            <p class="is-size-7 has-text-grey">
-              Expired on {{ item.track_subscription.expires_at|date:"d M Y" }}
-            </p>
+              <div class="tag tag-light">
+                Expired on: {{ item.track_subscription.expires_at|date:"d M Y" }}
+              </div>
             {% endif %}
 
             <a href="{% url 'quiz:track_checkout' item.exam.track.id %}"
-               class="button is-warning is-small mt-2">
-              Renew Subscription
+               class="action-btn btn-warning">
+              🔁 Renew Subscription
             </a>
 
           {% elif item.action == "locked" %}
-            <span class="tag is-danger is-light">
-              🔒 {{ item.lock_reason }}
-            </span>
+            <div class="tag tag-danger">🔒 {{ item.lock_reason }}</div>
 
           {% elif item.is_passed %}
-            <span class="tag is-success is-light">
-              ✔ Exam Completed
-            </span>
+            <div class="tag tag-success">✔ Exam Completed</div>
 
           {% elif item.action == "resume" %}
             <a href="{% url 'quiz:exam_take' item.last_attempt.id %}"
-               class="button is-warning is-small">
+               class="action-btn btn-warning">
               Resume Exam
             </a>
 
           {% elif item.action == "cooldown" %}
-            <div class="notification is-warning is-light">
-              Retry in
-              <strong class="countdown-text"
-                      data-seconds="{{ item.cooldown_remaining }}"></strong>
+            <div class="countdown-container">
+              <span>Retry in</span>
+              <span class="countdown-text"
+                    data-seconds="{{ item.cooldown_remaining }}"></span>
             </div>
 
           {% elif item.action == "retake" %}
             <a href="{% url 'quiz:exam_start' item.exam.id %}"
-               class="button is-primary is-small">
+               class="action-btn btn-primary">
               Retake Exam
             </a>
 
           {% elif item.action == "start" %}
             <a href="{% url 'quiz:exam_start' item.exam.id %}"
-               class="button is-primary is-small">
+               class="action-btn btn-primary">
               Start Exam
             </a>
           {% endif %}
 
+          <!-- MOCK EXAMS (unchanged, but blocked when expired) -->
+          {% if not item.is_passed and item.status == "failed" and item.action != "renew" %}
+            {% if item.mock_used < item.mock_allowed %}
+              <a href="{% url 'quiz:mock_exam_start' item.exam.id %}"
+                 class="action-btn btn-info">
+                Take Mock Exam
+              </a>
+            {% else %}
+              <div class="tag tag-light">
+                <a href="https://api.whatsapp.com/send?phone=919600639802"
+                   target="_blank">
+                  <i class="fa fa-whatsapp"></i>
+                  Mock limit reached, Contact admin for reset.
+                </a>
+              </div>
+            {% endif %}
+          {% endif %}
         </div>
+
+        <!-- Mock Attempts -->
+        {% if not item.is_passed and item.mock_attempts %}
+          <div class="mock-attempts">
+            <div class="mock-header">
+              <span class="mock-title">Mock Attempts</span>
+              <span class="mock-count">{{ item.mock_used }}/{{ item.mock_allowed }}</span>
+            </div>
+            <div class="mock-scores">
+              {% for m in item.mock_attempts %}
+                <span class="score-badge">{{ m.score }}%</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
 
       </div>
       {% endfor %}
     </div>
-
   </div>
   {% endfor %}
-
 </div>
 
 <script>
+/* JS unchanged – exactly your original */
 function toggleExams(button) {
-  const container = button.parentElement.querySelector('.hidden, .mt-4');
-  const arrow = button.querySelector('span:last-child span:last-child');
+  const container = button.nextElementSibling;
+  const arrow = button.querySelector('.track-meta span:last-child');
   container.classList.toggle('hidden');
   arrow.textContent = container.classList.contains('hidden') ? '▼' : '▲';
 }
 function updateCountdown() {
   document.querySelectorAll('.countdown-text[data-seconds]').forEach(el => {
     let seconds = parseInt(el.dataset.seconds, 10);
+
     if (isNaN(seconds) || seconds <= 0) {
-      el.textContent = "00:00:00";
+      el.textContent = "00:00:00";   // or "Now!" if you prefer
       el.dataset.seconds = 0;
       return;
     }
-    seconds--;
+
+    seconds--;   // decrease first
     el.dataset.seconds = seconds;
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+
     el.textContent =
       String(hours).padStart(2, '0') + ":" +
       String(minutes).padStart(2, '0') + ":" +
       String(secs).padStart(2, '0');
   });
 }
+
+
 document.addEventListener('DOMContentLoaded', function () {
   setInterval(updateCountdown, 1000);
   updateCountdown();

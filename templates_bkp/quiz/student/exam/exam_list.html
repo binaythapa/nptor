@@ -1,0 +1,400 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+
+{% if courses %}
+<h2 class="title is-4">🎓 Available Courses</h2>
+<p class="has-text-grey mb-4">
+  Subscribe to a course to start learning.
+</p>
+
+<div class="columns is-multiline mb-6">
+  {% for item in courses %}
+    <div class="column is-4">
+      <div class="box course-card">
+
+        <div class="course-body">
+
+          <!-- Smaller & Controlled Title -->
+          <h3 class="course-title">
+            {{ item.course.title }}
+          </h3>
+
+          <!-- Fixed Description Area -->
+          <p class="course-description">
+            {{ item.course.description|truncatewords:25 }}
+          </p>
+
+        </div>
+
+        <!-- Button Always at Bottom -->
+        <div class="course-footer">
+          {% if item.is_subscribed %}
+            <button
+              class="button is-success is-small is-fullwidth"
+              disabled>
+              ✔ Subscribed
+            </button>
+          {% else %}
+            <form method="post"
+                  action="{% url 'courses:subscribe_course' item.course.id %}">
+              {% csrf_token %}
+              <button class="button is-primary is-small is-fullwidth">
+                💳 Subscribe Now
+              </button>
+            </form>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+{% else %}
+  <p class="has-text-grey">
+    No courses available at the moment.
+  </p>
+{% endif %}
+
+
+
+
+<h2 class="title is-4">📚 Available Exam Tracks</h2>
+<p class="has-text-grey mb-4">
+  Free content can be subscribed instantly. Paid subscriptions require admin approval.
+</p>
+
+{% for track, items in track_map.items %}
+<div class="box">
+
+  <!-- ================= TRACK HEADER ================= -->
+  <div class="is-flex is-justify-content-space-between is-align-items-center">
+    <div>
+      <h3 class="title is-5 mb-1">{{ track.title }}</h3>
+      <p class="is-size-7 has-text-grey">
+        {{ items|length }} Levels • Subscription:
+        {{ track.subscription_scope|title }}
+      </p>
+    </div>
+
+  {% if items.0.is_track_subscribed and items.0.track_subscription %}
+  <div class="has-text-right">
+    <span class="tag is-success is-light mb-1">
+      ✔ Subscribed
+    </span>
+
+    <p class="is-size-7 has-text-grey">
+      Started on: {{ items.0.track_subscription.subscribed_at|date:"d M Y" }} <br>
+      Expires on: {{ items.0.track_subscription.expires_at|date:"d M Y" }}
+    </p>
+
+    {% if items.0.track_subscription.days_remaining %}
+      <p class="is-size-7 has-text-info">
+        ⏳ {{ items.0.track_subscription.days_remaining }} days remaining
+      </p>
+    {% endif %}
+  </div>
+
+{% elif not track.has_dynamic_plans %}
+  <span class="tag is-success is-light">
+    🆓 Free
+  </span>
+
+{% else %}
+  <span class="tag is-warning is-light">
+    🔒 Subscription
+  </span>
+{% endif %}
+  </div>
+
+
+
+
+
+  <!-- ================= TRACK-LEVEL SUBSCRIPTION ================= -->
+  {% if track.subscription_scope == "track" and not items.0.is_track_subscribed %}
+  <div class="notification is-light is-info mt-3">
+    <strong>{{ track.title }}</strong><br>
+
+    {% if not track.has_dynamic_plans %}
+      This is a free track. Subscribe to unlock all {{ items|length }} levels.
+    {% else %}
+      This track requires a paid subscription. Please contact admin to enroll.
+    {% endif %}
+
+    <div class="buttons mt-3">
+      {% if not track.has_dynamic_plans %}
+        <form method="post" action="{% url 'quiz:subscribe_track' track.id %}">
+          {% csrf_token %}
+          <button class="button is-success is-small">
+            Subscribe Free
+          </button>
+        </form>
+      {% else %}
+        <a href="{% url 'quiz:track_checkout' track.id %}"
+           class="button is-primary is-small">
+          View Plans
+        </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <hr>
+
+
+
+
+<!-- ================= EXAMS ================= -->
+{% for item in items %}
+
+<div class="exam-card">
+  <div class="exam-left">
+    <div class="exam-title">
+      Level {{ item.exam.level }}
+    </div>
+
+    <div class="exam-meta">
+      <span class="tag is-light is-rounded">
+        {{ item.exam.question_count }} Questions
+      </span>
+
+      <span class="tag is-light is-rounded">
+        {{ item.duration_minutes }} Minutes
+      </span>
+    </div>
+  </div>
+
+  <div class="exam-right">
+
+    {% if track.subscription_scope == "exam" %}
+
+      {% if item.is_exam_subscribed %}
+        <span class="tag is-success is-light is-medium">
+          ✔ Subscribed
+        </span>
+
+      {% elif item.locked %}
+        <span class="tag is-light is-medium">
+          🔒 {{ item.locked_reason }}
+        </span>
+
+      {% else %}
+
+        {% if item.exam.is_free %}
+          <!-- FREE EXAM -->
+          <form method="post"
+                action="{% url 'quiz:subscribe_exam' item.exam.id %}">
+            {% csrf_token %}
+            <button class="button is-success is-small is-rounded">
+              Subscribe Free
+            </button>
+          </form>
+
+        {% else %}
+          <!-- PAID EXAM -->
+          <div class="contact-enroll-wrapper">
+            <button class="button is-warning is-small is-rounded"
+                    onclick="toggleEnrollMenu(event, this)">
+              📞 Contact to Enroll
+            </button>
+
+            <div class="contact-enroll-menu">
+              <a href="https://wa.me/918754795806?text=Hi%20I%20want%20to%20enroll%20in%20{{ item.exam.title }}"
+                 target="_blank"
+                 class="button is-success is-small is-fullwidth mb-2">
+                WhatsApp
+              </a>
+
+              <a href="javascript:void(0)"
+                 onclick="openViber('Hi I want to enroll in {{ item.exam.title }}')"
+                 class="button is-link is-small is-fullwidth">
+                Viber
+              </a>
+            </div>
+          </div>
+        {% endif %}
+
+      {% endif %}
+    {% endif %}
+
+  </div>
+</div>
+
+{% empty %}
+<p class="has-text-grey">No exams available.</p>
+{% endfor %}
+{% endfor %}
+<!-- ================= CSS ================= -->
+<style>
+
+.contact-enroll-wrapper {
+  position: relative;
+}
+
+.contact-enroll-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.contact-enroll-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 110%;
+  background: #fff;
+  border: 1px solid #dbdbdb;
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  min-width: 160px;
+  z-index: 20;
+}
+
+.contact-enroll-menu.is-active {
+  display: block;
+}
+
+/* ================= COURSE CARD DESIGN ================= */
+
+.course-card {
+  height: 280px;                 /* Fixed equal height */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 12px;
+  transition: all 0.25s ease;
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+}
+
+.course-body {
+  flex-grow: 1;
+}
+
+/* Smaller Title */
+.course-title {
+  font-size: 1rem;               /* Smaller than Bulma title */
+  font-weight: 600;
+  margin-bottom: 12px;
+  min-height: 48px;              /* Fixed title space */
+  overflow: hidden;
+}
+
+/* Fixed Description Area */
+.course-description {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+  min-height: 72px;              /* Fixed description space */
+  overflow: hidden;
+}
+
+/* Button alignment */
+.course-footer {
+  margin-top: auto;
+}
+
+/* Remove default Bulma card spacing conflict */
+.card-content {
+  padding-bottom: 0;
+}
+
+/* ================= EXAM CARD ================= */
+
+.exam-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.exam-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  transform: translateY(-3px);
+}
+
+.exam-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exam-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.exam-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exam-right {
+  display: flex;
+  align-items: center;
+}
+
+/* Improve dropdown */
+.contact-enroll-menu {
+  min-width: 170px;
+  border-radius: 8px;
+}
+@media (max-width: 768px) {
+  .exam-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .exam-right {
+    width: 100%;
+  }
+
+  .exam-right .button,
+  .exam-right form {
+    width: 100%;
+  }
+}
+.exam-card,
+.course-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+
+</style>
+
+
+<!-- ================= JS ================= -->
+<script>
+function toggleEnrollMenu(event, btn) {
+  event.stopPropagation();
+
+  document.querySelectorAll('.contact-enroll-menu')
+    .forEach(menu => menu.classList.remove('is-active'));
+
+  btn.nextElementSibling.classList.toggle('is-active');
+}
+
+document.addEventListener('click', function () {
+  document.querySelectorAll('.contact-enroll-menu')
+    .forEach(menu => menu.classList.remove('is-active'));
+});
+
+function openViber(message) {
+  const encoded = encodeURIComponent(message);
+  window.location.href =
+    `viber://chat?number=918754795806&text=${encoded}`;
+}
+</script>
+
+{% endblock %}

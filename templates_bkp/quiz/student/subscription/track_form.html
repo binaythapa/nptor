@@ -1,0 +1,128 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="mb-5">
+    <h1 class="title is-4">
+      {% if mode == "edit" %}✏️ Edit Track{% else %}➕ Create Track{% endif %}
+    </h1>
+    <p class="subtitle is-6 has-text-grey">
+      Control scope, pricing, trials & availability
+    </p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="box">
+
+      <!-- TITLE -->
+      <div class="field">
+        <label class="label">Title</label>
+        {% render_field form.title class+="input" %}
+      </div>
+
+      <!-- SLUG -->
+      <div class="field">
+        <label class="label">Slug</label>
+        {% render_field form.slug class+="input" %}
+        <p class="help">Used in URLs, must be unique</p>
+      </div>
+
+      <!-- DESCRIPTION -->
+      <div class="field">
+        <label class="label">Description</label>
+        {% render_field form.description class+="textarea" rows="3" %}
+      </div>
+
+      <!-- SUBSCRIPTION SCOPE -->
+      <div class="field">
+        <label class="label">Subscription Scope</label>
+        <div class="select is-fullwidth">
+          {% render_field form.subscription_scope %}
+        </div>
+        <p class="help">
+          <strong>Track</strong> → unlocks all exams under this track<br>
+          <strong>Exam</strong> → subscription applies per exam
+        </p>
+      </div>
+
+      <hr>
+
+      <!-- PRICING TYPE -->
+      <div class="field">
+        <label class="label">Pricing Type</label>
+        <div class="select is-fullwidth">
+          {% render_field form.pricing_type id="pricing_type" %}
+        </div>
+      </div>
+
+      <!-- MONTHLY PRICE -->
+      <div class="field pricing pricing-monthly">
+        <label class="label">Monthly Price</label>
+        {% render_field form.monthly_price class+="input" %}
+      </div>
+
+      <!-- LIFETIME PRICE -->
+      <div class="field pricing pricing-lifetime">
+        <label class="label">Lifetime Price</label>
+        {% render_field form.lifetime_price class+="input" %}
+      </div>
+
+      <!-- TRIAL DAYS -->
+      <div class="field">
+        <label class="label">Trial Days</label>
+        {% render_field form.trial_days class+="input" %}
+      </div>
+
+      <!-- CURRENCY -->
+      <div class="field">
+        <label class="label">Currency</label>
+        {% render_field form.currency class+="input" %}
+      </div>
+
+      <!-- ACTIVE -->
+      <div class="field">
+        <label class="checkbox">
+          {% render_field form.is_active %}
+          Active
+        </label>
+      </div>
+
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="field is-grouped mt-5">
+      <a href="{% url 'quiz:admin_track_list' %}" class="button is-light">
+        Cancel
+      </a>
+      <button class="button is-primary">
+        Save Track
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<!-- ================= JS ================= -->
+<script>
+function togglePricing(){
+  const type = document.getElementById("pricing_type").value;
+  document.querySelectorAll(".pricing").forEach(el => el.style.display = "none");
+
+  if(type === "monthly"){
+    document.querySelector(".pricing-monthly").style.display = "block";
+  }
+  if(type === "lifetime"){
+    document.querySelector(".pricing-lifetime").style.display = "block";
+  }
+}
+
+document.getElementById("pricing_type").addEventListener("change", togglePricing);
+togglePricing();
+</script>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+<h4 class="title is-6">Reset Mock Exam</h4>
+
+<p class="mb-3">
+  This will reset mock exam attempts for selected users.
+</p>
+
+<form method="post">
+  {% csrf_token %}
+  <button class="button is-danger">
+    🔄 Reset Mock Exam
+  </button>
+</form>

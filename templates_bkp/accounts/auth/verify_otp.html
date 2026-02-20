@@ -1,0 +1,72 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+
+<section style="max-width:400px;margin:20px auto;">
+  <div class="card-surface" style="padding:20px;">
+
+    <h1 class="title is-4">Verify OTP</h1>
+
+    {% if error %}
+      <div class="notification is-danger">{{ error }}</div>
+    {% endif %}
+
+    {% if expires_in %}
+      <p id="otp-timer" class="has-text-grey mb-3">
+        OTP expires in <strong></strong>
+      </p>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input
+        class="input"
+        name="otp"
+        placeholder="Enter OTP"
+        required
+        autofocus
+      >
+
+      <button class="button is-primary mt-3">
+        Verify
+      </button>
+    </form>
+
+    <p id="otp-expired-msg"
+       class="has-text-danger mt-3 is-hidden">
+      OTP has expired. Please request a new one.
+    </p>
+
+  </div>
+</section>
+
+<script>
+(function () {
+  const seconds = {{ expires_in|default:"null" }};
+  if (seconds === null) return;
+
+  let remaining = seconds;
+  const timerEl = document.querySelector("#otp-timer strong");
+  const expiredMsg = document.getElementById("otp-expired-msg");
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  }
+
+  function tick() {
+    if (remaining <= 0) {
+      timerEl.textContent = "00:00";
+      expiredMsg.classList.remove("is-hidden");
+      return;
+    }
+    timerEl.textContent = formatTime(remaining);
+    remaining--;
+    setTimeout(tick, 1000);
+  }
+
+  tick();
+})();
+</script>
+
+{% endblock %}

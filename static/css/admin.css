@@ -218,21 +218,3 @@
 .admin-danger {
     color: #dc2626;
 }
-
-
-/* ===============================
-   ADMIN LAYOUT
-================================ */
-
-.admin-layout {
-  display: flex;
-  flex: 1;
-  min-height: calc(100vh - 60px);
-}
-
-.admin-content {
-  flex: 1;
-  padding: 24px;
-  overflow-x: auto;
-}
-

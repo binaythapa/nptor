@@ -1,0 +1,61 @@
+
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block content %}
+
+<h1 class="title" style="margin-bottom:18px;">Notifications</h1>
+
+<div class="level" style="margin-bottom:12px;">
+  <div class="level-left"></div>
+  <div class="level-right">
+    <a href="{% url 'quiz:notifications_mark_all' %}" 
+       class="button is-small is-light">
+       <i class="fa fa-check-double"></i>&nbsp; Mark all as read
+    </a>
+  </div>
+</div>
+
+<div class="card" style="overflow:hidden;">
+
+  {% for n in notifications %}
+    <div class="notif-item"
+         style="
+            padding:14px 16px;
+            border-bottom:1px solid rgba(0,0,0,0.05);
+            background: {% if n.is_unread %} var(--surface-2) {% else %} var(--card) {% endif %};
+         ">
+
+      <div class="level">
+        <div class="level-left">
+          <strong>{{ n.title }}</strong>
+        </div>
+        <div class="level-right">
+          <span class="small-muted">
+            <i class="fa fa-clock"></i>
+            {{ n.created_at|date:"SHORT_DATETIME_FORMAT" }}
+          </span>
+        </div>
+      </div>
+
+      <div style="margin-top:6px;">
+        {{ n.message }}
+      </div>
+
+      <div style="margin-top:10px;">
+        <a href="{% url 'quiz:notification_detail' n.id %}"
+           class="button is-small is-link">
+          <i class="fa fa-envelope-open"></i>&nbsp; Open
+        </a>
+      </div>
+
+    </div>
+  {% empty %}
+    <div style="padding:18px; text-align:center; color:var(--muted);">
+      <i class="fa fa-bell-slash" style="font-size:1.4rem; margin-bottom:6px;"></i>
+      <div>No notifications yet</div>
+    </div>
+  {% endfor %}
+
+</div>
+
+{% endblock %}

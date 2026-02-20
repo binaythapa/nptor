@@ -1,0 +1,312 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- ================= HEADER ================= -->
+  <div class="dashboard-header">
+
+    <div>
+      <h1 class="title is-4 mb-1">Student Dashboard</h1>
+      <p class="has-text-grey is-size-7">
+        Track your learning progress & exam performance
+      </p>
+      <p class="has-text-grey-light is-size-7">
+        Member since {{ user.date_joined|date:"d M Y" }}
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ================= ACTIVE ALERT ================= -->
+  {% if active_attempt %}
+  <div class="notification is-warning is-light">
+    <div class="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap">
+      <div>
+        <strong>Active Exam:</strong> {{ active_attempt.exam.title }}
+      </div>
+      <a href="{% url 'quiz:exam_take' active_attempt.id %}"
+         class="button is-warning is-small">
+        Resume Exam
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ================= STATS ================= -->
+  <div class="columns is-multiline mb-5">
+
+    <div class="column is-4">
+      <div class="box stat-card has-text-centered">
+        <p class="stat-number">{{ total_attempts }}</p>
+        <p class="stat-label">Total Attempts</p>
+      </div>
+    </div>
+
+    <div class="column is-4">
+      <div class="box stat-card has-text-centered">
+        <p class="stat-number has-text-success">{{ passed_count }}</p>
+        <p class="stat-label">Passed</p>
+      </div>
+    </div>
+
+    <div class="column is-4">
+      <div class="box stat-card has-text-centered">
+        <p class="stat-number has-text-danger">{{ failed_count }}</p>
+        <p class="stat-label">Failed</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= ORG COURSES ================= -->
+  {% if org_courses %}
+  <div class="mb-6">
+    <h2 class="title is-5 mb-4">🎓 Assigned Courses</h2>
+
+    {% for org, accesses in org_courses.items %}
+    <div class="box mb-5">
+
+      <!-- ORG HEADER -->
+      <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+        <div class="is-flex is-align-items-center">
+          {% if org.logo %}
+            <img src="{{ org.logo.url }}"
+                 alt="{{ org.name }}"
+                 class="org-logo mr-2">
+          {% else %}
+            <span class="mr-2">🏫</span>
+          {% endif %}
+          <strong>{{ org.name }}</strong>
+        </div>
+
+        <span class="tag is-info is-light">
+          {{ accesses|length }} course{{ accesses|length|pluralize }}
+        </span>
+      </div>
+
+      <!-- COURSE GRID -->
+      <div class="columns is-multiline">
+        {% for access in accesses %}
+        <div class="column is-4">
+          <div class="box course-card-modern">
+
+            <h3 class="course-title-modern">
+              {{ access.course.title }}
+            </h3>
+
+            <p class="is-size-7 has-text-grey mb-3">
+              Level: {{ access.course.get_level_display }}
+            </p>
+
+            <a href="{% url 'courses:course_learn' access.course.slug %}"
+               class="button is-primary is-light is-small is-fullwidth">
+              Continue Course
+            </a>
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ================= MY COURSES ================= -->
+  {% if courses %}
+  <div class="mb-6">
+    <h2 class="title is-5 mb-4">📚 My Courses</h2>
+
+    <div class="columns is-multiline">
+      {% for item in courses %}
+      <div class="column is-4">
+        <div class="box course-card-modern">
+
+          <h3 class="course-title-modern">
+            {{ item.course.title }}
+          </h3>
+
+          <div class="is-flex is-justify-content-space-between is-size-7 has-text-grey mb-1">
+            <span>{{ item.completed }}/{{ item.total }} lessons</span>
+            <span>{{ item.progress }}%</span>
+          </div>
+
+          <progress class="progress is-primary is-small"
+                    value="{{ item.progress }}"
+                    max="100">
+          </progress>
+
+          {% if item.progress == 100 %}
+            <a href="{% url 'courses:course_learn' item.course.slug %}"
+               class="button is-success is-small is-fullwidth">
+              ✔ Review Course
+            </a>
+          {% elif item.progress > 0 %}
+            <a href="{% url 'courses:course_learn' item.course.slug %}"
+               class="button is-primary is-small is-fullwidth">
+              ▶ Resume Learning
+            </a>
+          {% else %}
+            <a href="{% url 'courses:course_learn' item.course.slug %}"
+               class="button is-link is-small is-fullwidth">
+              ▶ Start Course
+            </a>
+          {% endif %}
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ================= TRACKS ================= -->
+  {% for track, data in track_map.items %}
+  <div class="box mb-4">
+
+    <button class="button is-white is-fullwidth is-justify-content-space-between"
+            onclick="toggleExams(this)">
+      <span>
+        📘 <strong>{{ track.title }}</strong>
+      </span>
+
+      <span>
+        <span class="tag is-light">
+          {{ data.items|length }} exams
+        </span>
+
+        {% if data.passed %}
+          <span class="tag is-success is-light">
+            ✓ {{ data.passed }}
+          </span>
+        {% endif %}
+
+        {% if data.failed %}
+          <span class="tag is-danger is-light">
+            ✗ {{ data.failed }}
+          </span>
+        {% endif %}
+
+        <span class="ml-2">▼</span>
+      </span>
+    </button>
+
+    <div class="hidden mt-4">
+      {% for item in data.items %}
+      <div class="box mb-4">
+
+        <h3 class="is-size-6 has-text-weight-semibold">
+          {{ item.exam.title }}
+        </h3>
+
+        <p class="is-size-7 has-text-grey mb-2">
+          Level {{ item.exam.level }} • {{ item.exam.question_count }} Questions
+        </p>
+
+        {% if item.last_score is not None %}
+        <span class="tag {% if item.status == 'passed' %}is-success{% else %}is-danger{% endif %}">
+          {{ item.status|capfirst }} ({{ item.last_score }}%)
+        </span>
+        {% endif %}
+
+        <div class="mt-3">
+
+          {% if item.action == "renew" %}
+            <span class="tag is-danger is-light mb-2">
+              🔴 Subscription Expired
+            </span>
+
+            {% if item.track_subscription %}
+            <p class="is-size-7 has-text-grey">
+              Expired on {{ item.track_subscription.expires_at|date:"d M Y" }}
+            </p>
+            {% endif %}
+
+            <a href="{% url 'quiz:track_checkout' item.exam.track.id %}"
+               class="button is-warning is-small mt-2">
+              Renew Subscription
+            </a>
+
+          {% elif item.action == "locked" %}
+            <span class="tag is-danger is-light">
+              🔒 {{ item.lock_reason }}
+            </span>
+
+          {% elif item.is_passed %}
+            <span class="tag is-success is-light">
+              ✔ Exam Completed
+            </span>
+
+          {% elif item.action == "resume" %}
+            <a href="{% url 'quiz:exam_take' item.last_attempt.id %}"
+               class="button is-warning is-small">
+              Resume Exam
+            </a>
+
+          {% elif item.action == "cooldown" %}
+            <div class="notification is-warning is-light">
+              Retry in
+              <strong class="countdown-text"
+                      data-seconds="{{ item.cooldown_remaining }}"></strong>
+            </div>
+
+          {% elif item.action == "retake" %}
+            <a href="{% url 'quiz:exam_start' item.exam.id %}"
+               class="button is-primary is-small">
+              Retake Exam
+            </a>
+
+          {% elif item.action == "start" %}
+            <a href="{% url 'quiz:exam_start' item.exam.id %}"
+               class="button is-primary is-small">
+              Start Exam
+            </a>
+          {% endif %}
+
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>
+
+<script>
+function toggleExams(button) {
+  const container = button.parentElement.querySelector('.hidden, .mt-4');
+  const arrow = button.querySelector('span:last-child span:last-child');
+  container.classList.toggle('hidden');
+  arrow.textContent = container.classList.contains('hidden') ? '▼' : '▲';
+}
+function updateCountdown() {
+  document.querySelectorAll('.countdown-text[data-seconds]').forEach(el => {
+    let seconds = parseInt(el.dataset.seconds, 10);
+    if (isNaN(seconds) || seconds <= 0) {
+      el.textContent = "00:00:00";
+      el.dataset.seconds = 0;
+      return;
+    }
+    seconds--;
+    el.dataset.seconds = seconds;
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    el.textContent =
+      String(hours).padStart(2, '0') + ":" +
+      String(minutes).padStart(2, '0') + ":" +
+      String(secs).padStart(2, '0');
+  });
+}
+document.addEventListener('DOMContentLoaded', function () {
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
+});
+</script>
+
+{% endblock %}

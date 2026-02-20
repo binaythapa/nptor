@@ -1,0 +1,56 @@
+
+
+{% extends "organizations/admin/base.html" %}
+
+
+{% block content %}
+<h2 class="title is-4">👩‍🎓 Students</h2>
+
+<a href="{% url 'organizations_admin:student_add' %}"
+   class="button is-primary mb-4">
+  ➕ Add Student
+</a>
+
+<table class="table is-fullwidth">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for m in members %}
+    <tr>
+      <td>{{ m.user.get_full_name|default:m.user.username }}</td>
+      <td>{{ m.user.email }}</td>
+      <td>
+        <form method="post"
+              action="{% url 'organizations_admin:student_role' m.id %}">
+          {% csrf_token %}
+          <div class="select is-small">
+            <select name="role" onchange="this.form.submit()">
+              <option value="student" {% if m.role == "student" %}selected{% endif %}>
+                Student
+              </option>
+              <option value="staff" {% if m.role == "staff" %}selected{% endif %}>
+                Staff
+              </option>
+            </select>
+          </div>
+        </form>
+      </td>
+      <td>
+        <a href="{% url 'organizations_admin:student_remove' m.id %}"
+           class="button is-danger is-small"
+           onclick="return confirm('Remove this student?')">
+          Remove
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

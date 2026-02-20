@@ -6,6 +6,7 @@
   <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="32x32">
   <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="48x48">
 
+
   <!-- ================= SEO TITLE ================= -->
   <title>
     {% block title %}
@@ -40,66 +41,55 @@
         content="{% block og_image %}{% static 'images/logo.jpg' %}{% endblock %}">
 
   <!-- ================= STYLES ================= -->
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
-<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
 
   {% block head_extra %}{% endblock %}
 </head>
 
-<body {% if request.COOKIES.darkmode == '1' %}data-theme="dark"{% endif %}>
-
-<div id="app">
+<body {% if request.COOKIES.darkmode == '1' %} data-theme="dark"{% endif %}>
+<div id="app" class="app-layout">
 
   <!-- ================= HEADER ================= -->
   {% include "layouts/student/header.html" %}
 
-  <!-- ================= FLEX LAYOUT (SAME AS ADMIN) ================= -->
-  <div class="admin-layout" id="admin-layout">
+  <!-- ================= MAIN ================= -->
+ <!-- ================= MAIN ================= -->
+<div class="container main-area">
 
-      <!-- SIDEBAR (NOW ADMIN STYLE) -->
-      {% include "layouts/student/sidebar.html" %}
+  <!-- SIDEBAR -->
+  {% include "layouts/student/sidebar.html" %}
 
-      <!-- MAIN CONTENT -->
-      <main class="admin-content">
-          <section class="section">
-              <div class="container">
-                  {% block content %}{% endblock %}
-              </div>
-          </section>
-      </main>
+  <!-- CONTENT -->
+  <main class="site-content">
+    {% block content %}{% endblock %}
+  </main>
 
-  </div>
+</div>
 
   <!-- ================= FOOTER ================= -->
   {% include "layouts/student/footer.html" %}
 
   <!-- LOGOUT FORM -->
   {% if user.is_authenticated %}
-  <form id="logout-form"
-        method="post"
+  <form id="logout-form" method="post"
         action="{% url 'accounts:logout' %}"
         style="display:none;">
-      {% csrf_token %}
+    {% csrf_token %}
   </form>
   {% endif %}
 
 </div>
 
-<!-- ================= LOGOUT CONFIRMATION MODAL ================= -->
+<!-- LOGOUT CONFIRMATION MODAL -->
 <div class="modal" id="logout-modal">
   <div class="modal-background"></div>
 
   <div class="modal-card">
     <header class="modal-card-head">
       <p class="modal-card-title">Confirm Logout</p>
-      <button class="delete"
-              aria-label="close"
-              onclick="closeLogoutModal()"></button>
+      <button class="delete" aria-label="close" onclick="closeLogoutModal()"></button>
     </header>
 
     <section class="modal-card-body">
@@ -107,8 +97,7 @@
     </section>
 
     <footer class="modal-card-foot">
-      <button class="button is-light"
-              onclick="closeLogoutModal()">
+      <button class="button is-light" onclick="closeLogoutModal()">
         Cancel
       </button>
 
@@ -120,7 +109,7 @@
   </div>
 </div>
 
-<!-- ================= SCRIPTS ================= -->
+
 <script src="{% static 'js/ui.js' %}"></script>
 
 <script>
@@ -134,27 +123,6 @@ function closeLogoutModal() {
 </script>
 
 
-<script>
-function toggleSidebar() {
-    const layout = document.getElementById("admin-layout");
-    layout.classList.toggle("collapsed");
-
-    localStorage.setItem(
-        "adminSidebarCollapsed",
-        layout.classList.contains("collapsed")
-    );
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-    const collapsed = localStorage.getItem("adminSidebarCollapsed");
-    if (collapsed === "true") {
-        document.getElementById("admin-layout")
-                .classList.add("collapsed");
-    }
-});
-</script>
-
-
 <!-- ================= GOOGLE ANALYTICS ================= -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-0VP1Z2NB44"></script>
 <script>
@@ -165,6 +133,5 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 {% block scripts_extra %}{% endblock %}
-
 </body>
 </html>
