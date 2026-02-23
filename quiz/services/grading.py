@@ -16,58 +16,55 @@ def normalize_text(s: str) -> str:
     return " ".join((s or "").lower().split())
 
 
-# --------------------------------------------------
-# Grade ONE answer
-# --------------------------------------------------
-
 def grade_answer(
     ua: UserAnswer,
-    post_data,
+    post_data=None,
 ) -> float:
+
     q: Question = ua.question
     score = 0.0
+
+    # Detect if grading from POST or from saved DB
+    use_post = post_data is not None
 
     # -----------------------------
     # SINGLE / DROPDOWN / TRUE-FALSE
     # -----------------------------
     if q.question_type in ("single", "dropdown", "tf"):
-        choice_id = post_data.get(f"question_{q.id}")
 
-        if choice_id is None:
-            if ua.choice and ua.is_correct:
-                return 1.0
-            return 0.0
+        if use_post:
+            choice_id = post_data.get(f"question_{q.id}")
+            if choice_id:
+                try:
+                    ch = Choice.objects.get(pk=int(choice_id), question=q)
+                    ua.choice = ch
+                except Exception:
+                    pass
 
-        try:
-            ch = Choice.objects.get(pk=int(choice_id), question=q)
-            ua.choice = ch
-            ua.is_correct = bool(ch.is_correct)
-            ua.selections = None
-            ua.raw_answer = None
-            if ua.is_correct:
-                score = 1.0
-        except Exception:
-            if ua.choice and ua.is_correct:
-                score = 1.0
+        # Grade from saved choice
+        if ua.choice:
+            ua.is_correct = bool(ua.choice.is_correct)
+            score = 1.0 if ua.is_correct else 0.0
+        else:
+            ua.is_correct = False
+            score = 0.0
+
+        ua.selections = None
+        ua.raw_answer = None
 
     # -----------------------------
-    # MULTI SELECT ✅ FIXED
+    # MULTI SELECT
     # -----------------------------
     elif q.question_type == "multi":
-        posted_selections = post_data.getlist(f"question_{q.id}")
 
-        # ✅ fallback to autosaved data
-        if posted_selections:
+        if use_post:
+            posted_selections = post_data.getlist(f"question_{q.id}")
             try:
-                sel_ids = [int(x) for x in posted_selections if x]
+                ua.selections = [int(x) for x in posted_selections if x]
             except ValueError:
-                sel_ids = []
-            ua.selections = sel_ids
-        else:
-            sel_ids = ua.selections or []
+                ua.selections = []
 
-        ua.choice = None
-        ua.raw_answer = None
+        sel_ids = ua.selections or []
 
         correct_ids = list(
             q.choices.filter(is_correct=True)
@@ -99,14 +96,19 @@ def grade_answer(
                 / max(1, len(correct_set))
             )
 
+        ua.choice = None
+        ua.raw_answer = None
+
     # -----------------------------
     # FILL IN THE BLANK
     # -----------------------------
     elif q.question_type == "fill":
-        raw = (post_data.get(f"question_{q.id}") or "").strip()
-        ua.raw_answer = raw
-        ua.choice = None
-        ua.selections = None
+
+        if use_post:
+            raw = (post_data.get(f"question_{q.id}") or "").strip()
+            ua.raw_answer = raw
+
+        raw = (ua.raw_answer or "").strip()
 
         if q.correct_text and normalize_text(raw) == normalize_text(q.correct_text):
             ua.is_correct = True
@@ -114,14 +116,19 @@ def grade_answer(
         else:
             ua.is_correct = False
 
+        ua.choice = None
+        ua.selections = None
+
     # -----------------------------
     # NUMERIC
     # -----------------------------
     elif q.question_type == "numeric":
-        raw = (post_data.get(f"question_{q.id}") or "").strip()
-        ua.raw_answer = raw
-        ua.choice = None
-        ua.selections = None
+
+        if use_post:
+            raw = (post_data.get(f"question_{q.id}") or "").strip()
+            ua.raw_answer = raw
+
+        raw = (ua.raw_answer or "").strip()
 
         try:
             val = float(raw)
@@ -134,13 +141,15 @@ def grade_answer(
         except Exception:
             ua.is_correct = False
 
+        ua.choice = None
+        ua.selections = None
+
     ua.save()
     return score
 
 
-# --------------------------------------------------
-# Grade FULL exam
-# --------------------------------------------------
+from django.http import QueryDict
+
 
 def grade_exam(
     ue: UserExam,
@@ -149,7 +158,6 @@ def grade_exam(
     is_mock: bool = False,
 ) -> Tuple[float, bool]:
 
-    # Canonical question order
     if ue.question_order:
         qids = [int(x) for x in ue.question_order]
     else:
@@ -165,6 +173,7 @@ def grade_exam(
             user_exam=ue,
             question_id=qid
         )
+
         total += 1
         score_acc += grade_answer(ua, post_data)
 

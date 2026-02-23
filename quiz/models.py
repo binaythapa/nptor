@@ -601,6 +601,21 @@ class Exam(models.Model):
         help_text="Number of mock attempts allowed for this exam (0 = no mock)"
     )
 
+    allow_review = models.BooleanField(
+    default=True,
+    help_text="If enabled, students can review answers before final submission."
+)
+    
+    # ---------------------------------
+    # 🔐 Behavior Helpers (Industry Clean)
+    # ---------------------------------
+
+    def is_practice_mode(self):
+        return self.allow_review is True
+
+    def is_certification_mode(self):
+        return self.allow_review is False
+
     def __str__(self):
         return self.title
 

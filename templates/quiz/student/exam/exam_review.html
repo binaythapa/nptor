@@ -3,6 +3,22 @@
 
 {% block content %}
 
+<!-- ================= STICKY EXAM HEADER ================= -->
+<div class="exam-header">
+  <div class="exam-header-inner">
+    <div class="exam-title">
+      Final Review
+    </div>
+
+    <div class="exam-timer">
+      <div class="timer-label">Time Remaining</div>
+      <div class="timer-value" id="timer">
+        00:00:00
+      </div>
+    </div>
+  </div>
+</div>
+
 <h2 class="title is-4">Final Review</h2>
 
 <div class="notification is-light mb-4">
@@ -134,5 +150,56 @@
   background: #fff5f5;
 }
 </style>
+
+<script>
+(function () {
+
+  let remainingSeconds = Number("{{ remaining }}");
+  const timerEl = document.getElementById("timer");
+  const form = document.querySelector("form");
+
+  if (!timerEl || isNaN(remainingSeconds)) return;
+
+  function formatTime(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+
+    return (
+      String(h).padStart(2, "0") + ":" +
+      String(m).padStart(2, "0") + ":" +
+      String(s).padStart(2, "0")
+    );
+  }
+
+  function updateColor(seconds) {
+    if (seconds <= 60) {
+      timerEl.style.color = "#ff3860";
+    } else if (seconds <= 300) {
+      timerEl.style.color = "#ff9800";
+    }
+  }
+
+  timerEl.textContent = formatTime(remainingSeconds);
+
+  const interval = setInterval(() => {
+
+    remainingSeconds--;
+
+    if (remainingSeconds <= 0) {
+      clearInterval(interval);
+
+      // Auto submit exam
+      form.submit();
+      return;
+    }
+
+    timerEl.textContent = formatTime(remainingSeconds);
+    updateColor(remainingSeconds);
+
+  }, 1000);
+
+})();
+</script>
 
 {% endblock %}

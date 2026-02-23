@@ -192,7 +192,7 @@ def exam_question(request, user_exam_id, index):
 
     remaining = ue.time_remaining()
     if remaining <= 0:
-        return redirect('quiz:exam_expired', user_exam_id=ue.id)
+       return redirect('quiz:exam_submit', user_exam_id=ue.id)
 
     q_ids = ue.question_order or []
 
@@ -289,41 +289,22 @@ def autosave(request, user_exam_id):
     autosave_answers(ue, request.POST)
 
     return JsonResponse({"status": "ok"})
-
-
 @login_required
 def exam_submit(request, user_exam_id):
-    mem = get_memory_usage_mb()
-    if mem is not None:
-        logger.info(f"Exam Submit page memory usage: {mem} MB")
+
     ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
 
-    # Prevent double submit
     if ue.submitted_at:
         return redirect('quiz:exam_result', user_exam_id=ue.id)
 
-    # Time expired
-    if ue.time_remaining() <= 0:
-        ue.submitted_at = timezone.now()
-        ue.score = 0
-        ue.passed = False
-        ue.save()
-        return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-    if request.method != 'POST':
-        return redirect(
-            'quiz:exam_question',
-            user_exam_id=ue.id,
-            index=ue.current_index
-        )
-
-    # ✅ Correct mock detection
     is_mock = request.session.get(f"mock_exam_{ue.id}", False)
 
-    grade_exam(ue, request.POST, is_mock=is_mock)
+    if request.method == "POST":
+        grade_exam(ue, request.POST, is_mock=is_mock)
+    else:
+        grade_exam(ue, None, is_mock=is_mock)
 
     return redirect('quiz:exam_result', user_exam_id=ue.id)
-
 
 
 @login_required
@@ -552,29 +533,10 @@ def exam_result(request, user_exam_id):
     )
 
 
-
 @login_required
 def exam_expired(request, user_exam_id):
-    mem = get_memory_usage_mb()
-    if mem is not None:
-        logger.info(f"Exam Expire page memory usage: {mem} MB")
-    """
-    Called when exam time expires.
-    Safely finalizes attempt if not already submitted.
-    """
-    ue = get_object_or_404(UserExam, pk=user_exam_id, user=request.user)
+    return redirect('quiz:exam_submit', user_exam_id=user_exam_id)
 
-    if ue.submitted_at:
-        return redirect('quiz:exam_result', user_exam_id=ue.id)
-
-    ue.submitted_at = timezone.now()
-    ue.score = ue.score or 0.0
-    ue.passed = False
-    ue.save()
-
-    return render(request, "quiz/student/exam/exam_expired.html", {
-        "user_exam": ue,
-    })
 
 
 
@@ -914,12 +876,15 @@ from datetime import timedelta
 
 @login_required
 def exam_review(request, user_exam_id):
+   
 
     user_exam = get_object_or_404(
         UserExam.objects.select_related("exam"),
         id=user_exam_id,
         user=request.user
     )
+
+    remaining = user_exam.time_remaining()
 
     # Prevent access after submission
     if user_exam.submitted_at:
@@ -992,4 +957,5 @@ def exam_review(request, user_exam_id):
         "answered_count": answered_count,
         "unanswered_count": unanswered_count,
         "total_questions": total,
+        "remaining": remaining,  # ✅ ADD THIS
     })
