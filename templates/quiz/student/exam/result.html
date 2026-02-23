@@ -77,7 +77,14 @@
 {% for ans in answers %}
 <div class="box">
 
-  <strong>{{ forloop.counter }}. {{ ans.question.text }}</strong>
+<div class="question-row">
+  <span class="question-number">
+    {{ forloop.counter }}.
+  </span>
+  <span class="question-text">
+    {{ ans.question.text|safe }}
+  </span>
+</div>
 
   <p class="mt-2">
     {% if ans.is_correct %}
@@ -253,5 +260,19 @@ setTimeout(function () {
 </p>
 {% endif %}
 
+<style>.question-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.question-number {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.question-text {
+  flex: 1;
+}</style>
 
 {% endblock %}
