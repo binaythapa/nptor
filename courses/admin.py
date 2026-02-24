@@ -5,6 +5,8 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.contrib import admin
 from django.utils import timezone
+from django.db import transaction
+from django.db.models import F
 
 from courses.models import *
 
@@ -47,14 +49,14 @@ class CourseAdmin(admin.ModelAdmin):
         "organization",
         "level",
         "is_published",
-        "is_deleted",      # ✅ ADDED
+       
         "created_at",
     )
 
     list_filter = (
         "organization",
         "is_published",
-        "is_deleted",      # ✅ ADDED
+        
         "level",
         "created_at",
     )
@@ -98,7 +100,7 @@ class CourseAdmin(admin.ModelAdmin):
                 "level",
                 "subscription_plans",
                 "is_published",
-                "is_deleted",    # ✅ ADDED HERE
+                
             )
         }),
 
@@ -117,13 +119,13 @@ class CourseSectionAdmin(admin.ModelAdmin):
         "title",
         "course",
         "order",
-        "is_deleted",   # ✅ ADDED
+      
         "created_at",   # optional if you added it
     )
 
     list_filter = (
         "course",
-        "is_deleted",   # ✅ ADDED
+        
     )
 
     search_fields = ("title",)
@@ -133,7 +135,6 @@ class CourseSectionAdmin(admin.ModelAdmin):
     inlines = (LessonInline,)
 
     readonly_fields = ("created_at", "updated_at")  # optional
-
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
 
@@ -145,7 +146,6 @@ class LessonAdmin(admin.ModelAdmin):
         "section",
         "lesson_type",
         "order",
-        "is_deleted",          # ✅ ADDED
         "linked_resource",
         "practice_difficulty",
     )
@@ -154,7 +154,6 @@ class LessonAdmin(admin.ModelAdmin):
         "lesson_type",
         "section__course",
         "practice_difficulty",
-        "is_deleted",          # ✅ ADDED
     )
 
     search_fields = ("title",)
@@ -170,7 +169,6 @@ class LessonAdmin(admin.ModelAdmin):
                 "title",
                 "lesson_type",
                 "order",
-                "is_deleted",    # ✅ ADDED HERE
             )
         }),
 
@@ -216,9 +214,6 @@ class LessonAdmin(admin.ModelAdmin):
 
     readonly_fields = ("article_preview",)
 
-    # =========================
-    # STYLING
-    # =========================
     class Media:
         css = {
             "all": ("css/lesson.css",)
@@ -258,12 +253,46 @@ class LessonAdmin(admin.ModelAdmin):
     article_preview.short_description = "📖 Article Preview"
 
 
-    actions = ["restore_lessons"]
+    # -------------------------------------------------
+    # Auto Reorder After Single Delete
+    # -------------------------------------------------
+    def delete_model(self, request, obj):
+        with transaction.atomic():
+            section = obj.section
+            deleted_order = obj.order
 
-    def restore_lessons(self, request, queryset):
-        queryset.update(is_deleted=False)
+            super().delete_model(request, obj)
 
-    restore_lessons.short_description = "Restore selected lessons"
+            Lesson.objects.filter(
+                section=section,
+                order__gt=deleted_order
+            ).update(order=F("order") - 1)
+
+    # -------------------------------------------------
+    # Auto Reorder After Bulk Delete
+    # -------------------------------------------------
+    def delete_queryset(self, request, queryset):
+        with transaction.atomic():
+            # Group deletions by section
+            sections = {}
+
+            for lesson in queryset:
+                sections.setdefault(lesson.section_id, []).append(lesson.order)
+
+            super().delete_queryset(request, queryset)
+
+            # Reorder each affected section
+            for section_id in sections.keys():
+                lessons = (
+                    Lesson.objects
+                    .filter(section_id=section_id)
+                    .order_by("order")
+                )
+
+                for index, lesson in enumerate(lessons, start=1):
+                    if lesson.order != index:
+                        lesson.order = index
+                        lesson.save(update_fields=["order"])
 
 
 

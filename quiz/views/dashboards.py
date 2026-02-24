@@ -151,13 +151,12 @@ def admin_dashboard(request):
     # =====================================================
     # COURSE INTELLIGENCE
     # =====================================================
-    total_courses = Course.objects.filter(
-        is_deleted=False
+    total_courses = Course.objects.filter(       
     ).count()
 
     published_courses = Course.objects.filter(
         is_published=True,
-        is_deleted=False
+        
     ).count()
 
     platform_courses = Course.objects.filter(

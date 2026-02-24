@@ -1,12 +1,7 @@
 from django.db import models
-from quiz.models import Category,SubscriptionPlan
-from organizations.models.organization import Organization
+from quiz.models import Category, SubscriptionPlan
 from django.conf import settings
-#from .plan import SubscriptionPlan
 from django.utils.text import slugify
-import uuid
-
-
 
 
 # =====================================================
@@ -14,11 +9,10 @@ import uuid
 # =====================================================
 
 class Course(models.Model):
-    title = models.CharField(max_length=255)    
+
+    title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField()
-
-
 
     category = models.ForeignKey(
         Category,
@@ -50,13 +44,11 @@ class Course(models.Model):
     )
 
     is_published = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  # 🔥 ADD THIS
-    is_deleted = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
-
-
-    ###########ORG############
+    # ---------------- ORG ----------------
     OWNER_CHOICES = (
         ("platform", "Platform"),
         ("organization", "Organization"),
@@ -82,15 +74,13 @@ class Course(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="courses_created"
-        )
-
+    )
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
         return self.title
-    
 
     def save(self, *args, **kwargs):
         if not self.slug:

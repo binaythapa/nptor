@@ -97,6 +97,7 @@ function initSortable() {
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
+            handle: '.section-header',   // drag only via header
             onEnd: updateOrder
         });
 
@@ -183,7 +184,7 @@ function toggleLessonForm(sectionId) {
 function editLesson(lessonId) {
 
     const newTitle = prompt("Enter new lesson title:");
-    if (!newTitle) return;
+    if (!newTitle || newTitle.trim() === "") return;
 
     fetch("{% url 'courses:api_edit_lesson' %}", {
         method: "POST",
@@ -193,7 +194,13 @@ function editLesson(lessonId) {
         },
         body: `lesson_id=${lessonId}&title=${encodeURIComponent(newTitle)}`
     })
-    .then(() => location.reload());
+    .then(response => {
+        if (!response.ok) {
+            alert("Failed to update lesson.");
+            return;
+        }
+        location.reload();
+    });
 }
 
 

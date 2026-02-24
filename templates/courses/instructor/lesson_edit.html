@@ -3,11 +3,9 @@
 {% block title %}Edit Lesson{% endblock %}
 
 {% block extra_head %}
-{{ form.media }}   <!-- 🔥 REQUIRED FOR CKEDITOR -->
+{{ form.media }}
 
 <style>
-/* ================= FORM CARD ================= */
-
 .form-card {
     background: #ffffff;
     padding: 25px;
@@ -16,7 +14,6 @@
     margin-bottom: 20px;
 }
 
-/* Only text-like inputs should be full width */
 .form-card input[type="text"],
 .form-card input[type="number"],
 .form-card input[type="email"],
@@ -32,7 +29,6 @@
     font-size: 14px;
 }
 
-/* Focus styling */
 .form-card input:focus,
 .form-card select:focus,
 .form-card textarea:focus {
@@ -41,26 +37,12 @@
     box-shadow: 0 0 0 2px rgba(86,36,208,0.15);
 }
 
-/* ================= CHECKBOX FIX ================= */
-
-/* Prevent checkbox stretching */
-.form-card input[type="checkbox"] {
-    width: auto !important;
-    margin-right: 8px;
-    padding: 0;
-    vertical-align: middle;
-    transform: scale(1.1);
-}
-
-/* Checkbox + label alignment */
 .checkbox-group {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 12px;
 }
-
-/* ================= BUTTONS ================= */
 
 .btn-primary {
     background: #5624d0;
@@ -86,8 +68,6 @@
     font-size: 14px;
 }
 
-/* ================= CONDITIONAL GROUPS ================= */
-
 .section-group {
     display: none;
 }
@@ -96,7 +76,14 @@
     display: block;
 }
 
-
+.error-box {
+    background: #ffe5e5;
+    border: 1px solid #ffb3b3;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    color: #a94442;
+}
 </style>
 {% endblock %}
 
@@ -109,7 +96,17 @@
     Section: {{ lesson.section.title }}
 </p>
 
-<form method="post" enctype="multipart/form-data">  <!-- 🔥 REQUIRED -->
+{% if form.errors %}
+<div class="error-box">
+    <strong>Please fix the following errors:</strong>
+    {{ form.errors }}
+</div>
+{% endif %}
+
+<form method="post"
+      action="{% url 'courses:lesson_edit' lesson.id %}"
+      enctype="multipart/form-data">
+
     {% csrf_token %}
 
     <!-- ================= BASIC INFO ================= -->
@@ -127,7 +124,7 @@
         {{ form.order }}
     </div>
 
-    <!-- ================= MAIN CONTENT ================= -->
+    <!-- ================= ARTICLE CONTENT ================= -->
 
     <div class="form-card">
         <h3>Lesson Content</h3>
@@ -144,69 +141,64 @@
     </div>
 
     <!-- ================= PRACTICE CONFIG ================= -->
-<div class="form-card section-group" id="practice-group">
-    <h3>Practice Settings</h3>
 
-    {{ form.practice_domain.label_tag }}
-    {{ form.practice_domain }}
+    <div class="form-card section-group" id="practice-group">
+        <h3>Practice Settings</h3>
 
-    {{ form.practice_category.label_tag }}
-    {{ form.practice_category }}
+        {{ form.practice_domain.label_tag }}
+        {{ form.practice_domain }}
 
-    {{ form.practice_difficulty.label_tag }}
-    {{ form.practice_difficulty }}
+        {{ form.practice_category.label_tag }}
+        {{ form.practice_category }}
 
-    {{ form.practice_threshold.label_tag }}
-    {{ form.practice_threshold }}
+        {{ form.practice_difficulty.label_tag }}
+        {{ form.practice_difficulty }}
 
-    <div class="checkbox-group">
-        {{ form.practice_lock_filters }}
-        <label for="{{ form.practice_lock_filters.id_for_label }}">
-            Lock filters
-        </label>
-    </div>
+        {{ form.practice_threshold.label_tag }}
+        {{ form.practice_threshold }}
 
-    <div class="checkbox-group">
-        {{ form.practice_require_correct }}
-        <label for="{{ form.practice_require_correct.id_for_label }}">
-            Require correct answers
-        </label>
-    </div>
+        <div class="checkbox-group">
+            {{ form.practice_lock_filters }}
+            <label for="{{ form.practice_lock_filters.id_for_label }}">
+                Lock filters
+            </label>
+        </div>
 
-    <div class="checkbox-group">
+        <div class="checkbox-group">
+            {{ form.practice_require_correct }}
+            <label for="{{ form.practice_require_correct.id_for_label }}">
+                Require correct answers
+            </label>
+        </div>
+
+        {{ form.practice_min_accuracy.label_tag }}
         {{ form.practice_min_accuracy }}
-        <label for="{{ form.practice_min_accuracy.id_for_label }}">
-            Require minimum accuracy
-        </label>
     </div>
-
-</div>
 
     <!-- ================= QUIZ CONFIG ================= -->
 
-   <div class="form-card section-group" id="quiz-group">
-    <h3>Quiz Settings</h3>
+    <div class="form-card section-group" id="quiz-group">
+        <h3>Quiz Settings</h3>
 
-    {{ form.exam.label_tag }}
-    {{ form.exam }}
+        {{ form.exam.label_tag }}
+        {{ form.exam }}
 
-    {{ form.quiz_completion_mode.label_tag }}
-    {{ form.quiz_completion_mode }}
+        {{ form.quiz_completion_mode.label_tag }}
+        {{ form.quiz_completion_mode }}
 
-    {{ form.quiz_min_score.label_tag }}
-    {{ form.quiz_min_score }}
+        {{ form.quiz_min_score.label_tag }}
+        {{ form.quiz_min_score }}
 
-    <div class="checkbox-group">
-        {{ form.quiz_allow_mock }}
-        <label for="{{ form.quiz_allow_mock.id_for_label }}">
-            Allow mock attempts
-        </label>
+        <div class="checkbox-group">
+            {{ form.quiz_allow_mock }}
+            <label for="{{ form.quiz_allow_mock.id_for_label }}">
+                Allow mock attempts
+            </label>
+        </div>
+
+        {{ form.quiz_max_attempts.label_tag }}
+        {{ form.quiz_max_attempts }}
     </div>
-
-    {{ form.quiz_max_attempts.label_tag }}
-    {{ form.quiz_max_attempts }}
-</div>
-
 
     <button type="submit" class="btn-primary">
         Save Changes
@@ -220,31 +212,36 @@
 </form>
 
 <script>
-
 function toggleSections() {
 
     const typeSelect = document.getElementById("id_lesson_type");
+    if (!typeSelect) return;
+
     const value = typeSelect.value;
 
     document.querySelectorAll(".section-group")
         .forEach(el => el.classList.remove("active"));
 
     if (value === "video")
-        document.getElementById("video-group").classList.add("active");
+        document.getElementById("video-group")?.classList.add("active");
 
     if (value === "practice")
-        document.getElementById("practice-group").classList.add("active");
+        document.getElementById("practice-group")?.classList.add("active");
 
     if (value === "quiz")
-        document.getElementById("quiz-group").classList.add("active");
+        document.getElementById("quiz-group")?.classList.add("active");
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    toggleSections();
-    document.getElementById("id_lesson_type")
-            .addEventListener("change", toggleSections);
-});
 
+    toggleSections();
+
+    const typeSelect = document.getElementById("id_lesson_type");
+    if (typeSelect) {
+        typeSelect.addEventListener("change", toggleSections);
+    }
+
+});
 </script>
 
 {% endblock %}

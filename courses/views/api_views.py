@@ -16,10 +16,6 @@ from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.db import transaction
 
-
-# -------------------------------------------------
-# EDIT LESSON (HTMX INLINE TITLE UPDATE)
-# -------------------------------------------------
 @login_required
 @require_POST
 def edit_lesson(request):
@@ -32,42 +28,21 @@ def edit_lesson(request):
 
     lesson = get_object_or_404(
         Lesson.objects.select_related("section__course"),
-        id=lesson_id,
-        is_deleted=False
+        id=lesson_id
     )
 
-    course = lesson.section.course
-
-    # 🔐 STRICT ACCESS CONTROL
-    if request.user.is_superuser:
-        pass
-
-    elif course.created_by == request.user:
-        pass
-
-    elif (
-        hasattr(request.user, "organization")
-        and request.user.organization
-        and course.organization == request.user.organization
-    ):
-        pass
-
-    else:
+    if not can_edit_course(request.user, lesson.section.course):
         return HttpResponseForbidden("You are not allowed to edit this lesson.")
 
-    # 🛑 Validate title
     if not title:
         return HttpResponseBadRequest("Lesson title cannot be empty.")
 
-    # 💾 Atomic save
     with transaction.atomic():
         lesson.title = title
         lesson.save(update_fields=["title"])
 
-    # 🔄 Refresh lesson list
     lessons = (
         lesson.section.lessons
-        .filter(is_deleted=False)
         .order_by("order")
     )
 
@@ -80,17 +55,8 @@ def edit_lesson(request):
         }
     )
 
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseForbidden, HttpResponseBadRequest
-from django.db import transaction
-from django.db.models import Max
 
 
-# -------------------------------------------------
-# CREATE SECTION (HTMX)
-# -------------------------------------------------
 @login_required
 @require_POST
 def create_section(request):
@@ -106,20 +72,16 @@ def create_section(request):
 
     course = get_object_or_404(
         Course.objects.select_related("created_by", "organization"),
-        id=course_id,
-        is_deleted=False
+        id=course_id
     )
 
-    # 🔐 STRICT ACCESS CONTROL
     if not can_edit_course(request.user, course):
         return HttpResponseForbidden("You are not allowed to edit this course.")
 
-    # 🛡 Atomic to prevent duplicate order issues
     with transaction.atomic():
-
         max_order = (
             CourseSection.objects
-            .filter(course=course, is_deleted=False)
+            .filter(course=course)
             .aggregate(Max("order"))["order__max"] or 0
         )
 
@@ -129,10 +91,8 @@ def create_section(request):
             order=max_order + 1
         )
 
-    # 🔄 Refresh sections
     sections = (
         course.sections
-        .filter(is_deleted=False)
         .prefetch_related("lessons")
         .order_by("order")
     )
@@ -143,61 +103,48 @@ def create_section(request):
         {"sections": sections}
     )
 
-# -------------------------------------------------
-# DELETE SECTION (SOFT DELETE)
-# -------------------------------------------------
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseForbidden
+
+
 from django.db import transaction
-from django.db.models import F
 
-
-# -------------------------------------------------
-# DELETE SECTION (HTMX)
-# -------------------------------------------------
 @login_required
 @require_POST
 def delete_section(request, section_id):
 
     section = get_object_or_404(
         CourseSection.objects.select_related("course"),
-        id=section_id,
-        is_deleted=False
+        id=section_id
     )
 
-    # 🔐 STRICT PERMISSION CHECK
     if not can_edit_course(request.user, section.course):
-        return HttpResponseForbidden("You are not allowed to edit this course.")
+        return HttpResponseForbidden()
 
     with transaction.atomic():
 
-        # 1️⃣ Soft delete
-        section.is_deleted = True
-        section.save(update_fields=["is_deleted"])
+        course = section.course
 
-        # 2️⃣ Reorder safely (no collision)
+        # 1️⃣ Delete first
+        section.delete()
+
+        # 2️⃣ Reorder safely (collision-proof)
         remaining = (
             CourseSection.objects
-            .filter(course=section.course, is_deleted=False)
+            .filter(course=course)
             .order_by("order")
         )
 
-        # Step A: Move to temp space to avoid unique conflict
+        # Move to safe temporary range
         for sec in remaining:
-            sec.order = sec.order + 1000
+            sec.order += 1000
             sec.save(update_fields=["order"])
 
-        # Step B: Assign clean sequential order
+        # Assign clean sequence
         for index, sec in enumerate(remaining, start=1):
             sec.order = index
             sec.save(update_fields=["order"])
 
-    # 3️⃣ Reload sections
     updated_sections = (
-        section.course.sections
-        .filter(is_deleted=False)
+        course.sections
         .prefetch_related("lessons")
         .order_by("order")
     )
@@ -209,20 +156,12 @@ def delete_section(request, section_id):
     )
 
 
-# -------------------------------------------------
-# CREATE LESSON
-# -------------------------------------------------
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
-from django.db import transaction
-from django.db.models import Max
 
 
-# -------------------------------------------------
-# CREATE LESSON (HTMX SAFE)
-# -------------------------------------------------
+
+
+
+
 @login_required
 @require_POST
 def create_lesson(request):
@@ -236,26 +175,18 @@ def create_lesson(request):
 
     section = get_object_or_404(
         CourseSection.objects.select_related("course"),
-        id=section_id,
-        is_deleted=False
+        id=section_id
     )
 
-    # 🔐 Strict permission
     if not can_edit_course(request.user, section.course):
         return HttpResponseForbidden("You are not allowed to edit this course.")
 
     with transaction.atomic():
-
-        # 🔒 Lock existing lessons in this section
-        existing_lessons = (
+        max_order = (
             Lesson.objects
-            .select_for_update()
-            .filter(section=section, is_deleted=False)
+            .filter(section=section)
+            .aggregate(Max("order"))["order__max"] or 0
         )
-
-        max_order = existing_lessons.aggregate(
-            Max("order")
-        )["order__max"] or 0
 
         Lesson.objects.create(
             section=section,
@@ -264,12 +195,7 @@ def create_lesson(request):
             order=max_order + 1
         )
 
-    # Reload clean list
-    lessons = (
-        section.lessons
-        .filter(is_deleted=False)
-        .order_by("order")
-    )
+    lessons = section.lessons.order_by("order")
 
     return render(
         request,
@@ -281,9 +207,11 @@ def create_lesson(request):
     )
 
 
-# -------------------------------------------------
-# DELETE LESSON (SOFT DELETE)
-# -------------------------------------------------
+
+
+
+
+
 from django.db import transaction
 
 @login_required
@@ -292,42 +220,37 @@ def delete_lesson(request, lesson_id):
 
     lesson = get_object_or_404(
         Lesson.objects.select_related("section__course"),
-        id=lesson_id,
-        is_deleted=False
+        id=lesson_id
     )
 
     if not can_edit_course(request.user, lesson.section.course):
-        return HttpResponseForbidden("Not allowed")
-
-    section = lesson.section
+        return HttpResponseForbidden()
 
     with transaction.atomic():
 
-        # 🔒 lock all lessons in section
-        lessons = (
+        section = lesson.section
+
+        # 1️⃣ Delete lesson first
+        lesson.delete()
+
+        # 2️⃣ Reorder safely
+        remaining = (
             Lesson.objects
-            .select_for_update()
-            .filter(section=section, is_deleted=False)
+            .filter(section=section)
             .order_by("order")
         )
 
-        # Soft delete
-        lesson.is_deleted = True
-        lesson.save(update_fields=["is_deleted"])
+        # Move to safe temporary range
+        for l in remaining:
+            l.order += 1000
+            l.save(update_fields=["order"])
 
-        # Reindex remaining
-        remaining = lessons.exclude(id=lesson.id)
-
+        # Reindex cleanly
         for index, l in enumerate(remaining, start=1):
-            if l.order != index:
-                l.order = index
-                l.save(update_fields=["order"])
+            l.order = index
+            l.save(update_fields=["order"])
 
-    updated_lessons = (
-        section.lessons
-        .filter(is_deleted=False)
-        .order_by("order")
-    )
+    updated_lessons = section.lessons.order_by("order")
 
     return render(
         request,
@@ -339,9 +262,10 @@ def delete_lesson(request, lesson_id):
     )
 
 
-import json
-from django.db import transaction
-from django.http import JsonResponse, HttpResponseForbidden
+
+
+
+
 
 @login_required
 @require_POST
@@ -353,43 +277,34 @@ def update_order(request):
 
         with transaction.atomic():
 
-            # Step 1️⃣ Move everything to safe temporary space
+            # Step 1️⃣ Move everything temporarily
             for item in items:
 
                 if item["type"] == "section":
-                    obj = CourseSection.objects.select_for_update().get(
-                        id=item["id"]
-                    )
+                    obj = CourseSection.objects.select_for_update().get(id=item["id"])
 
                     if not can_edit_course(request.user, obj.course):
                         return HttpResponseForbidden()
 
-                    obj.order += 1000
-                    obj.save(update_fields=["order"])
-
                 elif item["type"] == "lesson":
-                    obj = Lesson.objects.select_for_update().get(
-                        id=item["id"]
-                    )
+                    obj = Lesson.objects.select_for_update().get(id=item["id"])
 
                     if not can_edit_course(request.user, obj.section.course):
                         return HttpResponseForbidden()
 
-                    obj.order += 1000
-                    obj.save(update_fields=["order"])
+                obj.order += 1000
+                obj.save(update_fields=["order"])
 
-            # Step 2️⃣ Apply final clean order
+            # Step 2️⃣ Apply final order
             for item in items:
 
                 if item["type"] == "section":
                     obj = CourseSection.objects.get(id=item["id"])
-                    obj.order = item["order"]
-                    obj.save(update_fields=["order"])
-
-                elif item["type"] == "lesson":
+                else:
                     obj = Lesson.objects.get(id=item["id"])
-                    obj.order = item["order"]
-                    obj.save(update_fields=["order"])
+
+                obj.order = item["order"]
+                obj.save(update_fields=["order"])
 
         return JsonResponse({"success": True})
 

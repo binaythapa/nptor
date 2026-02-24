@@ -1,6 +1,9 @@
 from django.db import models
-from .section import *
+from django.core.exceptions import ValidationError
+from .section import CourseSection
 from ckeditor_uploader.fields import RichTextUploadingField
+from django.db.models import Max
+
 
 class Lesson(models.Model):
 
@@ -26,10 +29,6 @@ class Lesson(models.Model):
     lesson_type = models.CharField(max_length=20, choices=LESSON_TYPES)
     order = models.PositiveIntegerField()
 
-    # 🔥 SOFT DELETE
-    is_deleted = models.BooleanField(default=False)
-
-    # 🔥 OPTIONAL (recommended for audit)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -43,14 +42,14 @@ class Lesson(models.Model):
 
     # ================= PRACTICE =================
     practice_domain = models.ForeignKey(
-        Domain,
+        "quiz.Domain",
         null=True,
         blank=True,
         on_delete=models.SET_NULL
     )
 
     practice_category = models.ForeignKey(
-        Category,
+        "quiz.Category",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -79,7 +78,7 @@ class Lesson(models.Model):
 
     # ================= QUIZ =================
     exam = models.ForeignKey(
-        Exam,
+        "quiz.Exam",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -104,7 +103,25 @@ class Lesson(models.Model):
         ordering = ["order"]
         unique_together = ("section", "order")
 
+    # -------------------------------------------------
+    # Auto Assign Order
+    # -------------------------------------------------
+    def save(self, *args, **kwargs):
+        if not self.order:
+            max_order = Lesson.objects.filter(
+                section=self.section
+            ).aggregate(Max("order"))["order__max"] or 0
+
+            self.order = max_order + 1
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    # -------------------------------------------------
+    # Validation
+    # -------------------------------------------------
     def clean(self):
+
         if self.lesson_type == self.TYPE_QUIZ and not self.exam:
             raise ValidationError("Quiz lesson must be linked to an exam.")
 
