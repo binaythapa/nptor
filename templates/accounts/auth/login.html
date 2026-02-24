@@ -39,16 +39,25 @@
       </div>
 
       <div class="field">
-        <label class="label">Password</label>
-        <div class="control">
-          <input
-            type="password"
-            name="password"
-            class="input"
-            required
-          >
-        </div>
-      </div>
+  <label class="label">Password</label>
+
+  <div class="control has-icons-right" style="position:relative;">
+    <input
+      type="password"
+      name="password"
+      id="id_login_password"
+      class="input"
+      required
+    >
+
+    <button type="button"
+            class="button is-white is-small"
+            style="position:absolute; right:5px; top:5px;"
+            onclick="togglePassword('id_login_password', this)">
+      👁
+    </button>
+  </div>
+</div>
 
       <div class="field is-flex is-justify-content-space-between is-align-items-center">
         <div>
@@ -99,5 +108,24 @@
 })();
 </script>
 {% endif %}
+
+
+<script>
+// ================================
+// PASSWORD SHOW / HIDE TOGGLE
+// ================================
+function togglePassword(fieldId, iconElement) {
+
+    const input = document.getElementById(fieldId);
+
+    if (input.type === "password") {
+        input.type = "text";
+        iconElement.textContent = "🙈";
+    } else {
+        input.type = "password";
+        iconElement.textContent = "👁";
+    }
+}
+</script>
 
 {% endblock %}
