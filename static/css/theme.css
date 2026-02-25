@@ -740,3 +740,23 @@ body {
 
 
 }
+
+
+/* =====================================================
+   GLOBAL DARK BACKGROUND FIX
+   ===================================================== */
+
+:root[data-theme='dark']{
+  --bg:#0f172a;     /* softer dark */
+  --card:#111c2e;   /* slightly lighter card */
+}
+}
+/* Remove white Bulma surfaces */
+:root[data-theme='dark'] .box,
+:root[data-theme='dark'] .notification,
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .page-body {
+  background: var(--card) !important;
+  border-color: rgba(255,255,255,0.08);
+  color: var(--text);
+}
