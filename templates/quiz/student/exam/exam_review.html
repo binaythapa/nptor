@@ -132,25 +132,86 @@
 
 </form>
 
+
+
 <style>
+/* =====================================
+   FINAL REVIEW – LIGHT + DARK SAFE
+   ===================================== */
+
+/* Option styling */
 .option-label {
   display: block;
   padding: 8px 12px;
   margin-bottom: 6px;
   border-radius: 6px;
   cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.06);
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .option-label:hover {
-  background: #f5f5f5;
+  background: rgba(0,0,0,0.03);
 }
 
+/* Unanswered box */
 .unanswered {
-  border: 1px solid #ff3860;
-  background: #fff5f5;
+  border: 1px solid #ef4444;
+  background: rgba(239,68,68,0.06);
 }
-</style>
 
+/* Sticky header */
+.exam-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--card);
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.2s ease;
+}
+
+.exam-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timer-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.timer-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* Dark Mode Overrides */
+:root[data-theme='dark'] .option-label {
+  border-color: rgba(255,255,255,0.15);
+}
+
+:root[data-theme='dark'] .option-label:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+:root[data-theme='dark'] .unanswered {
+  border-color: #f87171;
+  background: rgba(239,68,68,0.15);
+}
+
+:root[data-theme='dark'] .notification {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text);
+}
+
+
+.timer-danger { color: #ef4444; }
+.timer-warning { color: #f59e0b; }
+</style>
 <script>
 (function () {
 
@@ -174,7 +235,7 @@
 
   function updateColor(seconds) {
     if (seconds <= 60) {
-      timerEl.style.color = "#ff3860";
+      timerEl.classList.add("timer-danger");
     } else if (seconds <= 300) {
       timerEl.style.color = "#ff9800";
     }
