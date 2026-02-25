@@ -536,7 +536,7 @@
 
 <div id="explanationBox" class="notification is-info mt-3"
      style="display:none;">
-  {{ explanation|linebreaks }}
+  {{ explanation|safe|linebreaks }}
 </div>
 {% endif %}
 {% endif %}
