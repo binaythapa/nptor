@@ -167,8 +167,6 @@
     margin-bottom: 0.4rem;
 }
 
-
-
 /* =====================================
    DARK MODE OVERRIDES – PRACTICE PAGE
    ===================================== */
@@ -176,7 +174,7 @@
 :root[data-theme='dark'] .practice-option {
   border-color: rgba(255,255,255,0.15);
   background: transparent;
-  color: var(--text);
+  color: #aab5c0 !important;
 }
 
 :root[data-theme='dark'] .practice-option:hover {
@@ -205,14 +203,14 @@
 }
 
 /* ===============================
-   DARK MODE – QUESTION TEXT FIX
+   DARK MODE – SOFT QUESTION TEXT
 ================================ */
 
 :root[data-theme='dark'] #practiceContainer p,
 :root[data-theme='dark'] #practiceContainer p *,
 :root[data-theme='dark'] #practiceContainer span,
 :root[data-theme='dark'] #practiceContainer span * {
-  color: var(--text) !important;
+  color: #cbd5e1 !important;  /* softer than var(--text) */
 }
 </style>
 
@@ -492,7 +490,9 @@
 {% if category_id %}<input type="hidden" name="category" value="{{ category_id }}">{% endif %}
 {% if difficulty %}<input type="hidden" name="difficulty" value="{{ difficulty }}">{% endif %}
 
-<p class="mb-2 has-text-weight-semibold">{{ question.text|safe }}</p>
+<div class="mb-2 has-text-weight-semibold question-content">
+  {{ question.text|safe }}
+</div>
 
 
 {% if user.is_staff %}
