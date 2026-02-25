@@ -166,6 +166,43 @@
     display: list-item !important;
     margin-bottom: 0.4rem;
 }
+
+
+
+/* =====================================
+   DARK MODE OVERRIDES – PRACTICE PAGE
+   ===================================== */
+
+:root[data-theme='dark'] .practice-option {
+  border-color: rgba(255,255,255,0.15);
+  background: transparent;
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .practice-option:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+:root[data-theme='dark'] .practice-option.correct {
+  background: rgba(34,197,94,0.15);
+  border-color: rgba(34,197,94,0.4);
+  color: #86efac;
+}
+
+:root[data-theme='dark'] .practice-option.wrong {
+  background: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.4);
+  color: #fca5a5;
+}
+
+:root[data-theme='dark'] #filterBody {
+  background: transparent;
+}
+
+:root[data-theme='dark'] .box {
+  background: var(--card);
+  border-color: rgba(255,255,255,0.08);
+}
 </style>
 
 

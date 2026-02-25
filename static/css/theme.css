@@ -766,3 +766,60 @@ img {
   flex: 1;
   overflow-x: auto;
 }
+
+
+/* =====================================================
+   COMPLETE DARK MODE FIXES (FOR HARD-CODED COLORS)
+   ===================================================== */
+
+:root[data-theme='dark'] body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Cards */
+:root[data-theme='dark'] .box,
+:root[data-theme='dark'] .card-surface,
+:root[data-theme='dark'] .page-body,
+:root[data-theme='dark'] .exam-card {
+  background: var(--card) !important;
+  border-color: rgba(255,255,255,0.08);
+}
+
+/* Remove white gradients */
+:root[data-theme='dark'] .exam-card {
+  background: var(--card) !important;
+}
+
+/* Hover backgrounds */
+:root[data-theme='dark'] .menu-list a:hover,
+:root[data-theme='dark'] .track-header:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+/* Borders */
+:root[data-theme='dark'] .site-header,
+:root[data-theme='dark'] .site-footer {
+  border-color: rgba(255,255,255,0.08);
+}
+
+/* Sidebar */
+:root[data-theme='dark'] .site-sidebar {
+  background: var(--sidebar);
+}
+
+/* Buttons (Bulma override) */
+:root[data-theme='dark'] .button.is-light {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: rgba(255,255,255,0.08);
+}
+
+/* Inputs */
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] textarea,
+:root[data-theme='dark'] select {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-color: rgba(255,255,255,0.12);
+}

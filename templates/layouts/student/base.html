@@ -1,11 +1,10 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="en" {% if request.COOKIES.darkmode == '1' %} data-theme="dark"{% endif %}>
 <head>
   <meta charset="utf-8" />
   <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="32x32">
   <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="48x48">
-
 
   <!-- ================= SEO TITLE ================= -->
   <title>
@@ -49,25 +48,24 @@
   {% block head_extra %}{% endblock %}
 </head>
 
-<body {% if request.COOKIES.darkmode == '1' %} data-theme="dark"{% endif %}>
+<body>
 <div id="app" class="app-layout">
 
   <!-- ================= HEADER ================= -->
   {% include "layouts/student/header.html" %}
 
   <!-- ================= MAIN ================= -->
- <!-- ================= MAIN ================= -->
-<div class="container main-area">
+  <div class="container main-area">
 
-  <!-- SIDEBAR -->
-  {% include "layouts/student/sidebar.html" %}
+    <!-- SIDEBAR -->
+    {% include "layouts/student/sidebar.html" %}
 
-  <!-- CONTENT -->
-  <main class="site-content">
-    {% block content %}{% endblock %}
-  </main>
+    <!-- CONTENT -->
+    <main class="site-content">
+      {% block content %}{% endblock %}
+    </main>
 
-</div>
+  </div>
 
   <!-- ================= FOOTER ================= -->
   {% include "layouts/student/footer.html" %}
@@ -86,22 +84,18 @@
 <!-- LOGOUT CONFIRMATION MODAL -->
 <div class="modal" id="logout-modal">
   <div class="modal-background"></div>
-
   <div class="modal-card">
     <header class="modal-card-head">
       <p class="modal-card-title">Confirm Logout</p>
       <button class="delete" aria-label="close" onclick="closeLogoutModal()"></button>
     </header>
-
     <section class="modal-card-body">
       <p>Are you sure you want to log out?</p>
     </section>
-
     <footer class="modal-card-foot">
       <button class="button is-light" onclick="closeLogoutModal()">
         Cancel
       </button>
-
       <button class="button is-danger"
               onclick="document.getElementById('logout-form').submit();">
         Logout
@@ -110,19 +104,16 @@
   </div>
 </div>
 
-
 <script src="{% static 'js/ui.js' %}"></script>
 
 <script>
 function openLogoutModal() {
   document.getElementById("logout-modal").classList.add("is-active");
 }
-
 function closeLogoutModal() {
   document.getElementById("logout-modal").classList.remove("is-active");
 }
 </script>
-
 
 <!-- ================= GOOGLE ANALYTICS ================= -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-0VP1Z2NB44"></script>

@@ -510,6 +510,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+
+
+
 <style>
 /* ===============================
    QUESTION
@@ -627,6 +630,35 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 }
 
+
+/* =====================================
+   DARK MODE – PRACTICE EXPRESS
+   ===================================== */
+
+:root[data-theme='dark'] .choice-item {
+  background: var(--card);
+  border-color: rgba(255,255,255,0.15);
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .choice-item:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+:root[data-theme='dark'] .choice-marker {
+  border-color: rgba(255,255,255,0.35);
+  color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .choice-item input:checked + .choice-marker {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+:root[data-theme='dark'] .choice-content {
+  color: var(--text);
+}
 
 </style>
 {% endblock %}
