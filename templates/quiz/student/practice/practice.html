@@ -143,6 +143,29 @@
   }
 }
 
+
+/* ================= RICH CONTENT (BULLET SAFE) ================= */
+
+.rich-content ul {
+    list-style: disc !important;
+    list-style-position: outside;
+    padding-left: 1.5rem !important;
+    margin-left: 0;
+    margin-bottom: 1rem;
+}
+
+.rich-content ol {
+    list-style: decimal !important;
+    list-style-position: outside;
+    padding-left: 1.5rem !important;
+    margin-left: 0;
+    margin-bottom: 1rem;
+}
+
+.rich-content li {
+    display: list-item !important;
+    margin-bottom: 0.4rem;
+}
 </style>
 
 
@@ -527,18 +550,20 @@
     {% endfor %}
   </ul>
 </div>
-
 {% if explanation %}
 <button type="button" class="button is-small is-info mt-2"
         onclick="toggleExplanation()" id="explanationToggleBtn">
   📘 Show Explanation
 </button>
 
-<div id="explanationBox" class="notification is-info mt-3"
+<div id="explanationBox" class="notification is-info mt-3 rich-content"
      style="display:none;">
-  {{ explanation|safe}}
+  {{ explanation|safe }}
 </div>
 {% endif %}
+
+
+
 {% endif %}
 <!-- ================= FEEDBACK ================= -->
 {% if user.is_authenticated %}
