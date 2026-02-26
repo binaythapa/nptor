@@ -84,4 +84,5 @@ class Command(BaseCommand):
             self.style.SUCCESS(
                 f"Import finished. Created: {created_count}, Skipped: {skipped_count}"
             )
+            
         )
