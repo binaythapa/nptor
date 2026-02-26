@@ -1,0 +1,1030 @@
+[
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these roles can configure a network policy? •",
+    "options": [
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "PUBLIC",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "John has a table EMPLOYEE_DATA, and he wants to create another table",
+    "options": [
+      {
+        "text": "EMPLOYEE_DATA_OTHER, which should be the same as EMPLOYEE_DATA table with",
+        "is_correct": false
+      },
+      {
+        "text": "CREATE SHARE EMPLOYEE_DATA;",
+        "is_correct": false
+      },
+      {
+        "text": "EMPLOYEE_DATA_OTHER LIKE EMPLOYEE_DATA;",
+        "is_correct": false
+      },
+      {
+        "text": "EMPLOYEE_DATA_OTHER CLONE EMPLOYEE_DATA;",
+        "is_correct": false
+      },
+      {
+        "text": "EMPLOYEE_DATA_OTHER AS SELECT * FROM EMPLOYEE_DATA;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these system-defined roles can manage operations at the organizational level? •",
+    "options": [
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If you have privileges to view queries executed by another user, the Query Detail page displays the details for the query and the actual query result. (TRUE/FALSE) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Both non-materialized and materialized views can be defined as secure. (True / False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user can be assigned multiple roles. (True / False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If you drop or disable a user in Snowflake in an Okta IdP federated environment, the user can still access Snowflake login through Okta. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which one is not the Snowflake System-Defined role? •",
+    "options": [
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "DATABASEADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "All files stored in internal stages for data loading and unloading are automatically encrypted using AES-256 strong encryption. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Multi-cluster warehouses are beneficial in improving the performance of slow-running queries or data loading. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Suppose we resize a warehouse to a smaller size while it is executing SQL statements.",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake blocks certain IPs by default to ensure that customer is getting the highest level of Network security. (TRUE / FALSE) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The suspended warehouse cannot be resized until they resume. (True / False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Materialized views can improve the performance of queries that use the same subquery results repeatedly. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these system-defined roles encapsulates the SYSADMIN and",
+    "options": [
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A DBA_ROLE created a database. Later the DBA_ROLE was dropped. Who will own the database now, which was created by the DBA_ROLE? •",
+    "options": [
+      {
+        "text": "A DBA_ROLE created a database. Later the DBA_ROLE was dropped. Who will own the",
+        "is_correct": false
+      },
+      {
+        "text": "database now, which was created by the DBA_ROLE?",
+        "is_correct": false
+      },
+      {
+        "text": "The role that dropped the DBA_ROLE will own the database.",
+        "is_correct": false
+      },
+      {
+        "text": "The DBA_ROLE can't get dropped as it is the database owner.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The closer the ratio of scanned micro-partitions and columnar data is to the ratio of actual data selected, the more efficient the pruning performed on the table. (TRUE/FALSE) •",
+    "options": [
+      {
+        "text": "(TRUE/FALSE)",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which privilege is required to enable changing the state of a warehouse (stop, start, suspend, resume)? •",
+    "options": [
+      {
+        "text": "OPERATE",
+        "is_correct": false
+      },
+      {
+        "text": "MODIFY",
+        "is_correct": false
+      },
+      {
+        "text": "MONITOR",
+        "is_correct": false
+      },
+      {
+        "text": "USAGE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When the Virtual Warehouse data cache gets filled up, in which fashion does the data get flushed out from the data cache? •",
+    "options": [
+      {
+        "text": "MOST-RECENTLY USED (MRU)",
+        "is_correct": false
+      },
+      {
+        "text": "LEAST-RECENTLY USED (LRU)",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command will help you to view the current permissions on a Schema? •",
+    "options": [
+      {
+        "text": "SHOW ALL PREIVILEGE ON SCHEMA <database_name>.<schema_name>;",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW GRANTS OF SCHEMA <database_name>.<schema_name>;",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW GRANTS ON SCHEMA <database_name>.<schema_name>;",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW ROLES ON SCHEMA <database_name>.<schema_name>;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The warehouse performance can be evaluated by querying the •",
+    "options": [
+      {
+        "text": "Information Schema QUERY_HISTORY view",
+        "is_correct": false
+      },
+      {
+        "text": "Information Schema LOAD_HISTORY view",
+        "is_correct": false
+      },
+      {
+        "text": "Account Usage LOAD_HISTORY view",
+        "is_correct": false
+      },
+      {
+        "text": "Account Usage QUERY_HISTORY view",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Readers accounts enable providers to share data with consumers who are not already",
+    "options": [
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which SQL command determines whether a network policy is set on the account or for a specific user? •",
+    "options": [
+      {
+        "text": "SHOW NETWORK_POLICIES",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW PARAMETER",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW POLICIES",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW POLICY",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW PARAMETERS",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which privilege is required to enable altering any properties of the resource monitor, such as changing the monthly credit quote? •",
+    "options": [
+      {
+        "text": "MONITOR",
+        "is_correct": false
+      },
+      {
+        "text": "MODIFY",
+        "is_correct": false
+      },
+      {
+        "text": "USAGE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the Snowflake shared view can be used to query the Snowflake Query",
+    "options": [
+      {
+        "text": "QUERY_HISTORY_VIEW view in ACCOUNT_USAGE Schema",
+        "is_correct": false
+      },
+      {
+        "text": "QUERY_HISTORY view in ACCOUNT_USAGE Schema",
+        "is_correct": false
+      },
+      {
+        "text": "QUERY_HISTORY view in INFORMATION_SCHEMA",
+        "is_correct": false
+      },
+      {
+        "text": "QUERY_HISTORY_VIEW view in INFORMATION_USAGE Schema",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake prunes micro-partitions based on a predicate with a subquery, even if the subquery result is constant. (TRUE/FALSE) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake Query history page allows you to view the details of all the queries executed in the last 31 days. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which schema can be used to find out about storage, compute, and objects in a",
+    "options": [
+      {
+        "text": "USAGE_SCHEMA",
+        "is_correct": false
+      },
+      {
+        "text": "RESOURCE_SCHEMA",
+        "is_correct": false
+      },
+      {
+        "text": "SNOWFLAKE_SCHEMA",
+        "is_correct": false
+      },
+      {
+        "text": "INFORMATION_SCHEMA",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How can we turn off the query result cache? •",
+    "options": [
+      {
+        "text": "Setting the parameter USE_QUERY_CACHED to FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "Setting the parameter USE_CACHED_RESULT to FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "Setting the parameter USE_CACHED_INFO to FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which role is inherited to every other role in the account? •",
+    "options": [
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "PUBLIC",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user cannot view the result set from a query that another user executed except for the",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which role has privileges to create warehouses and databases (and other objects) in an account? •",
+    "options": [
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake network policies currently support both Internet Protocol versions 4 and 6 (i.e., IPv4 as well as IPv6). (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "ACCOUNTADMIN role cannot view the results for a query run by another user. (True/",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Suppose we resize a warehouse to a larger size while it is executing SQL statements.",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "ACCOUNTADMIN role should not be used to create objects in Snowflake?(True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A role inherits all the privileges of those higher in the hierarchy. (True / False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "During Warehouse provisioning, if any of the compute resources fail to provision, then",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake supports multi-factor authentication (i.e., MFA) to provide increased login security for users connecting to Snowflake. Which role is strongly recommended for using MFA? •",
+    "options": [
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "You can create an an account level network policy using _____ (Select all that apply) •",
+    "options": [
+      {
+        "text": "You can create an an account level network policy using _____ (Select all that apply)",
+        "is_correct": false
+      },
+      {
+        "text": "SQL",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these SQL Queries can be answered completely by Metadata? (Select 3) •",
+    "options": [
+      {
+        "text": "COUNT",
+        "is_correct": false
+      },
+      {
+        "text": "AVG",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "You can create a user-level network policy using _____ •",
+    "options": [
+      {
+        "text": "You can create a user-level network policy using _____",
+        "is_correct": false
+      },
+      {
+        "text": "SQL",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "An account-level resource monitor overrides the resource monitor assignment for individual warehouses. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If you want to create a warehouse that remains in a suspended state initially, which property do you need to set for that warehouse? •",
+    "options": [
+      {
+        "text": "AUTO_SUSPEND = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "AUTO_RESUME = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "AUTO_SUSPEND = 0",
+        "is_correct": false
+      },
+      {
+        "text": "AUTO_RESUME = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "INITIALLY_SUSPENDED = TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The BI group is complaining about their queries taking too long to run. Checking the virtual warehouse information shows that the queued time is pretty high. What is the best way to fix this issue? •",
+    "options": [
+      {
+        "text": "Increase the virtual warehouse MAX_CLUSTER_COUNT property",
+        "is_correct": false
+      },
+      {
+        "text": "Set the STATEMENT_QUEUED_TIMEOUT_IN_SECONDS parameter to a low value",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these roles is dedicated to user and role management only? •",
+    "options": [
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The user access history can be found by querying the •",
+    "options": [
+      {
+        "text": "Account Usage ACCESS_REPORT view",
+        "is_correct": false
+      },
+      {
+        "text": "Information Schema ACCESS_HISTORY view",
+        "is_correct": false
+      },
+      {
+        "text": "Information Schema ACCESS_REPORT view",
+        "is_correct": false
+      },
+      {
+        "text": "Account Usage ACCESS_HISTORY view",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In a Snowflake federated environment, Snowflake serves as the Identity provider (IdP). (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these roles is granted the MANAGE GRANTS security privilege to be able to modify any grant globally, including revoking it? •",
+    "options": [
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which privilege is required to execute queries using a virtual warehouse? •",
+    "options": [
+      {
+        "text": "USAGE",
+        "is_correct": false
+      },
+      {
+        "text": "MODIFY",
+        "is_correct": false
+      },
+      {
+        "text": "OPERATE",
+        "is_correct": false
+      },
+      {
+        "text": "MONITOR",
+        "is_correct": false
+      }
+    ]
+  }
+]
