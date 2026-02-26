@@ -1,0 +1,954 @@
+[
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A role inherits all the privileges of those higher in the hierarchy. (True / False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "ACCOUNTADMIN role should not be used to create objects in Snowflake?(True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which one is not the Snowflake System-Defined role? •",
+    "options": [
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "DATABASEADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A Directory table is a separate database object that stores a catalog of staged files in cloud storage. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Monica is confused about which sampling method she should use with one of the very large tables, considering better performance. Which sampling method would you recommend from BERNOULLI | ROW and SYSTEM | BLOCK? •",
+    "options": [
+      {
+        "text": "SYSTEM | BLOCK",
+        "is_correct": false
+      },
+      {
+        "text": "BERNOULLI | ROW",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "UDF runs with either the caller’s or the owner’s rights. (TRUE / FALSE) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake prunes micro-partitions based on a predicate with a subquery, even if the subquery result is constant. (TRUE/FALSE) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If a file in a stage has the LAST_MODIFIED date older than 64 days and the initial set of data was loaded into the table more than 64 days earlier. In this case, to prevent any data loss, the COPY command loads the file by default. (True / False) •",
+    "options": [
+      {
+        "text": "If a file in a stage has the LAST_MODIFIED date older than 64 days and the initial set of",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these roles is granted the MANAGE GRANTS security privilege to be able to modify any grant globally, including revoking it? •",
+    "options": [
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which copy option is used to delete the file from the Snowflake stage when data from staged files are loaded successfully? •",
+    "options": [
+      {
+        "text": "DELETE = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "DEL = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "PURGE = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "REMOVE = TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "John has a table EMPLOYEE_DATA, and he wants to create another table",
+    "options": [
+      {
+        "text": "EMPLOYEE_DATA_OTHER, which should be the same as EMPLOYEE_DATA table with",
+        "is_correct": false
+      },
+      {
+        "text": "EMPLOYEE_DATA_OTHER CLONE EMPLOYEE_DATA;",
+        "is_correct": false
+      },
+      {
+        "text": "CREATE SHARE EMPLOYEE_DATA;",
+        "is_correct": false
+      },
+      {
+        "text": "EMPLOYEE_DATA_OTHER AS SELECT * FROM EMPLOYEE_DATA;",
+        "is_correct": false
+      },
+      {
+        "text": "EMPLOYEE_DATA_OTHER LIKE EMPLOYEE_DATA;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In the case of cloning massive databases or schemas, the original databases and schemas get locked while the cloning operation is running. While cloning is in progress, no DML operation can be done on the original databases and schemas. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "John has a SECURITYADMIN role. He created a custom DBA_ROLE and granted the",
+    "options": [
+      {
+        "text": "SYSADMIN role to DBA_ROLE. Then, John created a user, 'Monica.' John then granted",
+        "is_correct": false
+      },
+      {
+        "text": "DBA_ROLE to Monica. Monica creates a Database Monica_DB. Monica then created a",
+        "is_correct": false
+      },
+      {
+        "text": "Table T1 in Monica_DB under the PUBLIC schema. What should John do to access",
+        "is_correct": false
+      },
+      {
+        "text": "USE ROLE SECURITYADMIN; USE DATABASE monica_db; Select * from t1;",
+        "is_correct": false
+      },
+      {
+        "text": "GRANT ROLE DBA_ROLE TO John; USE DATABASE monica_db; Select * from t1;",
+        "is_correct": false
+      },
+      {
+        "text": "GRANT ROLE DBA_ROLE TO John; USE ROLE DBA_ROLE; USE DATABASE",
+        "is_correct": false
+      },
+      {
+        "text": "monica_db; Select * from t1;",
+        "is_correct": false
+      },
+      {
+        "text": "USE ROLE dba_role; USE DATABASE monica_db; Select * from t1;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command can be used to resume Automatic Clustering for a table? •",
+    "options": [
+      {
+        "text": "ALTER TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "RESUME RECLUSTER",
+        "is_correct": false
+      },
+      {
+        "text": "TRIGGER CLUSTERING",
+        "is_correct": false
+      },
+      {
+        "text": "START TABLE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Materialized views can improve the performance of queries that use the same subquery results repeatedly. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "User-managed Tasks is recommended when you can fully utilize a single warehouse by scheduling multiple concurrent tasks to take advantage of available compute resources. (True /False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The automatic refresh of metadata of the directory table in the cloud storage does not incur any charges to Snowflake Customers. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these roles can configure a network policy? •",
+    "options": [
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "PUBLIC",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the preferred way to distinguish empty strings from NULLs while unloading in",
+    "options": [
+      {
+        "text": "Set EMPTY_FIELD_AS_NULL to TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "Set EMPTY_FIELD_AS_NULL to FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "FIELD_OPTIONALLY_ENCLOSED_BY option to NONE.",
+        "is_correct": false
+      },
+      {
+        "text": "Enclose strings in quotes by setting the FIELD_OPTIONALLY_ENCLOSED_BY",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "During data loading using COPY INTO <table> command, if the string exceeds the target column length, what options do you have to truncate the string? (Select 2) •",
+    "options": [
+      {
+        "text": "TRUNCATECOLUMNS = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUNCATECOLUMNS = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "ENFORCE_LENGTH = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "ENFORCE_LENGTH = FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In a Snowflake federated environment, Snowflake serves as the Identity provider (IdP). (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If you want to create a warehouse that remains in a suspended state initially, which property do you need to set for that warehouse? •",
+    "options": [
+      {
+        "text": "AUTO_SUSPEND = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "INITIALLY_SUSPENDED = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "AUTO_SUSPEND = 0",
+        "is_correct": false
+      },
+      {
+        "text": "AUTO_RESUME = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "AUTO_RESUME = TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which object parameter can users with the ACCOUNTADMIN role use to set the minimum retention period for their account? •",
+    "options": [
+      {
+        "text": "DATA_RETENTION_TIME_IN_DAYS",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_RETENTION_TIME_IN_MIN_DAYS",
+        "is_correct": false
+      },
+      {
+        "text": "MIN_DATA_RETENTION_TIME_IN_DAYS",
+        "is_correct": false
+      },
+      {
+        "text": "MIN_DATA_RETENTION_TIME_IN_HOURS",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "An HTTP client that sends a URL (either scoped URL or file URL) to the REST API must be configured to allow redirects. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake network policies currently support both Internet Protocol versions 4 and 6 (i.e., IPv4 as well as IPv6). (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which table function in the Snowflake Information Schema can be used to query the replication history for a specified database within a specified date range? •",
+    "options": [
+      {
+        "text": "REPLICATION_GROUP_REFRESH_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "DATABASE_REFRESH_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_TRANSFER_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "REPLICATION_USAGE_HISTORY",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which table types does Snowflake support? (Select all that apply) •",
+    "options": [
+      {
+        "text": "MATERIALIZED TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "TRANSIENT TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "TEMPORARY TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "SECURED TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "EXTERNAL TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "PERMANENT TABLE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "You can create a user-level network policy using _____ •",
+    "options": [
+      {
+        "text": "You can create a user-level network policy using _____",
+        "is_correct": false
+      },
+      {
+        "text": "SQL",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Suppose we resize a warehouse to a smaller size while it is executing SQL statements.",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "VARIANT is used to FLATTEN hierarchical data. (True / False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these SQL functions helps generate the Scoped URL to access the unstructured data file? •",
+    "options": [
+      {
+        "text": "GET_RELATIVE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_PRESIGNED_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_ABSOLUTE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_STAGE_LOCATION",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_SCOPED_FILE_URL",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_STAGE_FILE_URI",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which is the default timestamp in Snowflake? •",
+    "options": [
+      {
+        "text": "TIMESTAMP_LTZ",
+        "is_correct": false
+      },
+      {
+        "text": "TIMESTAMP_NTZ",
+        "is_correct": false
+      },
+      {
+        "text": "TIMESTAMP_TZ",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The warehouse performance can be evaluated by querying the •",
+    "options": [
+      {
+        "text": "Account Usage QUERY_HISTORY view",
+        "is_correct": false
+      },
+      {
+        "text": "Information Schema QUERY_HISTORY view",
+        "is_correct": false
+      },
+      {
+        "text": "Account Usage LOAD_HISTORY view",
+        "is_correct": false
+      },
+      {
+        "text": "Information Schema LOAD_HISTORY view",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What value will be return by the following query? SELECT * FROM",
+    "options": [
+      {
+        "text": "TABLE(FLATTEN(input => parse_json('[]'), outer => true)) f;",
+        "is_correct": false
+      },
+      {
+        "text": "NULL",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Fail-safe helps access historical data after the Time Travel retention period has ended. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A DBA_ROLE created a database. Later the DBA_ROLE was dropped. Who will own the database now, which was created by the DBA_ROLE? •",
+    "options": [
+      {
+        "text": "A DBA_ROLE created a database. Later the DBA_ROLE was dropped. Who will own the",
+        "is_correct": false
+      },
+      {
+        "text": "database now, which was created by the DBA_ROLE?",
+        "is_correct": false
+      },
+      {
+        "text": "The role that dropped the DBA_ROLE will own the database.",
+        "is_correct": false
+      },
+      {
+        "text": "The DBA_ROLE can't get dropped as it is the database owner.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these SQL functions helps extract the path of a staged file relative to its location in the stage using the stage name and absolute file path in cloud storage as inputs? •",
+    "options": [
+      {
+        "text": "BUILD_STAGE_FILE_URI",
+        "is_correct": false
+      },
+      {
+        "text": "GET_STAGE_LOCATION",
+        "is_correct": false
+      },
+      {
+        "text": "GET_ABSOLUTE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_RELATIVE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_SCOPED_FILE_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_PRESIGNED_URL",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which privilege is required to execute queries using a virtual warehouse? •",
+    "options": [
+      {
+        "text": "MONITOR",
+        "is_correct": false
+      },
+      {
+        "text": "MODIFY",
+        "is_correct": false
+      },
+      {
+        "text": "OPERATE",
+        "is_correct": false
+      },
+      {
+        "text": "USAGE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How can you produce a lateral view of a VARIANT, OBJECT or ARRAY Column? •",
+    "options": [
+      {
+        "text": "Using INFER_SCHEMA table function",
+        "is_correct": false
+      },
+      {
+        "text": "Using SPLIT_TO_TABLE table function",
+        "is_correct": false
+      },
+      {
+        "text": "Using RESULT_SCAN table function",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which data types are not supported by the Search Optimization Service? (Select 4) •",
+    "options": [
+      {
+        "text": "VARCHAR",
+        "is_correct": false
+      },
+      {
+        "text": "BINARY",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the default encoding used by Snowflake while unloading data? •",
+    "options": [
+      {
+        "text": "UTF",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-8",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-16",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-32",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Direct data sharing can only be done with accounts in the same region and the same cloud provider. (TRUE/FALSE) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake supports SQL UDFs that return a set of rows. Which keyword in CREATE",
+    "options": [
+      {
+        "text": "TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "SCALAR",
+        "is_correct": false
+      },
+      {
+        "text": "MULTIPLE",
+        "is_correct": false
+      },
+      {
+        "text": "ROWS",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake supports extended DMLs. Which of the following commands are extended",
+    "options": [
+      {
+        "text": "LIST",
+        "is_correct": false
+      },
+      {
+        "text": "REMOVE",
+        "is_correct": false
+      },
+      {
+        "text": "PUT",
+        "is_correct": false
+      },
+      {
+        "text": "UNDROP",
+        "is_correct": false
+      },
+      {
+        "text": "GET",
+        "is_correct": false
+      }
+    ]
+  }
+]

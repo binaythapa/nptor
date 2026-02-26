@@ -1,0 +1,950 @@
+[
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The data objects stored by Snowflake are not directly visible nor accessible by customers; they are only accessible through SQL query operations run using",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command can be used to resume Automatic Clustering for a table? •",
+    "options": [
+      {
+        "text": "START TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "ALTER TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "RESUME RECLUSTER",
+        "is_correct": false
+      },
+      {
+        "text": "TRIGGER CLUSTERING",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The search optimization service speeds only equality searches. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Direct data sharing can only be done with accounts in the same region and the same cloud provider. (TRUE/FALSE) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which object parameter can users with the ACCOUNTADMIN role use to set the default retention period for their account? •",
+    "options": [
+      {
+        "text": "DATA_RETENTION_TIME_IN_DAYS",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_RETENTION_TIME_IN_HOURS",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_RETENTION_TIME_MAX",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_RETENTION_IN_TIME_TRAVEL",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "SQL clause that helps define the clustering key: •",
+    "options": [
+      {
+        "text": "CLUSTERING BY",
+        "is_correct": false
+      },
+      {
+        "text": "CLUSTER BY",
+        "is_correct": false
+      },
+      {
+        "text": "CLUSERTING ON",
+        "is_correct": false
+      },
+      {
+        "text": "CLUSTER ON",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which view in the Account Usage Schema can be used to query the replication history for a specified database? •",
+    "options": [
+      {
+        "text": "REPLICATION_USAGE_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "DATABASE_REFRESH_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_TRANSFER_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "REPLICATION_GROUP_REFRESH_HISTORY",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which is the default timestamp in Snowflake? •",
+    "options": [
+      {
+        "text": "TIMESTAMP_LTZ",
+        "is_correct": false
+      },
+      {
+        "text": "TIMESTAMP_NTZ",
+        "is_correct": false
+      },
+      {
+        "text": "TIMESTAMP_TZ",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which is not the DML (Data Manipulation Language) command? •",
+    "options": [
+      {
+        "text": "TRUNCATE",
+        "is_correct": false
+      },
+      {
+        "text": "UPDATE",
+        "is_correct": false
+      },
+      {
+        "text": "DELETE",
+        "is_correct": false
+      },
+      {
+        "text": "MERGE",
+        "is_correct": false
+      },
+      {
+        "text": "INSERT",
+        "is_correct": false
+      },
+      {
+        "text": "UNDROP",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Tasks require compute resources to execute code. Either Snowflake-managed or",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How can an ACCOUNTADMIN view the billing for Automatic Clustering? (Select 3) •",
+    "options": [
+      {
+        "text": "Query - AUTOMATIC_CLUSTERING_HISTORY View (in Account Usage)",
+        "is_correct": false
+      },
+      {
+        "text": "named 'AUTOMATIC_CLUSTERING'",
+        "is_correct": false
+      },
+      {
+        "text": "'AUTOMATIC_CLUSTERING'",
+        "is_correct": false
+      },
+      {
+        "text": "Query - AUTOMATIC_CLUSTERING_HISTORY table function (in the Snowflake",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Time Travel can be disabled for an account by ACCOUNTADMIN. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which table function in the Snowflake Information Schema can be used to query the replication history for a specified database within a specified date range? •",
+    "options": [
+      {
+        "text": "REPLICATION_USAGE_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "DATABASE_REFRESH_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "REPLICATION_GROUP_REFRESH_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_TRANSFER_HISTORY",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The snowflake data warehouse is not built on an existing database or “big data” software platform like Hadoop.(True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If DATA_RETENTION_TIME_IN_DAYS is set to a value of 0, and",
+    "options": [
+      {
+        "text": "MIN_DATA_RETENTION_TIME_IN_DAYS is set higher at the account level and is",
+        "is_correct": false
+      },
+      {
+        "text": "Higher value (set in MIN_DATA_RETENTION_TIME_IN_DAYS)",
+        "is_correct": false
+      },
+      {
+        "text": "0 (set in DATA_RETENTION_TIME_IN_DAYS)",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which object parameter can users with the ACCOUNTADMIN role use to set the minimum retention period for their account? •",
+    "options": [
+      {
+        "text": "MIN_DATA_RETENTION_TIME_IN_DAYS",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_RETENTION_TIME_IN_MIN_DAYS",
+        "is_correct": false
+      },
+      {
+        "text": "DATA_RETENTION_TIME_IN_DAYS",
+        "is_correct": false
+      },
+      {
+        "text": "MIN_DATA_RETENTION_TIME_IN_HOURS",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake supports extended DMLs. Which of the following commands are extended",
+    "options": [
+      {
+        "text": "REMOVE",
+        "is_correct": false
+      },
+      {
+        "text": "UNDROP",
+        "is_correct": false
+      },
+      {
+        "text": "PUT",
+        "is_correct": false
+      },
+      {
+        "text": "LIST",
+        "is_correct": false
+      },
+      {
+        "text": "GET",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which is not the DDL (Data Definition Language) command? •",
+    "options": [
+      {
+        "text": "CREATE",
+        "is_correct": false
+      },
+      {
+        "text": "DROP",
+        "is_correct": false
+      },
+      {
+        "text": "UNDROP",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW SHARES",
+        "is_correct": false
+      },
+      {
+        "text": "ALTER",
+        "is_correct": false
+      },
+      {
+        "text": "TRUNCATE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command can be used to suspend Automatic Clustering for a table? •",
+    "options": [
+      {
+        "text": "ALTER TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "STOP TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "SUSPEND RECLUSTER",
+        "is_correct": false
+      },
+      {
+        "text": "DROP CLUSTERING",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Monica wants to delete all the data from table t1. She wants to keep the table structure, so she does not need to create the table again. Which command will be appropriate for her need? •",
+    "options": [
+      {
+        "text": "DELETE",
+        "is_correct": false
+      },
+      {
+        "text": "UNDROP",
+        "is_correct": false
+      },
+      {
+        "text": "DROP",
+        "is_correct": false
+      },
+      {
+        "text": "TRUNCATE",
+        "is_correct": false
+      },
+      {
+        "text": "REMOVE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "User-managed Tasks is recommended when you can fully utilize a single warehouse by scheduling multiple concurrent tasks to take advantage of available compute resources. (True /False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which table types does Snowflake support? (Select all that apply) •",
+    "options": [
+      {
+        "text": "TRANSIENT TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "PERMANENT TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "TEMPORARY TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "EXTERNAL TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "SECURED TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "MATERIALIZED TABLE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake data providers can share data from one database per share. Data from multiple databases can not be shared with a share. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In which of the cloud platforms a Snowflake account can be hosted? (Select 3) •",
+    "options": [
+      {
+        "text": "GCP",
+        "is_correct": false
+      },
+      {
+        "text": "AWS",
+        "is_correct": false
+      },
+      {
+        "text": "AZURE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A stored procedure can simultaneously run the caller’s and the owner’s rights. (True /",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which data types are not supported by the Search Optimization Service? (Select 4) •",
+    "options": [
+      {
+        "text": "BINARY",
+        "is_correct": false
+      },
+      {
+        "text": "VARCHAR",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Search optimization is a Database-level property applied to all the tables within the database with supported data types. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Fail-safe helps access historical data after the Time Travel retention period has ended.(True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "John has a SECURITYADMIN role. He created a custom DBA_ROLE. He granted the",
+    "options": [
+      {
+        "text": "SYSADMIN role to DBA_ROLE. He created a user, 'Monica'. John then granted",
+        "is_correct": false
+      },
+      {
+        "text": "DBA_ROLE to Monica. Monica creates a Database Monica_DB. Monica then created a",
+        "is_correct": false
+      },
+      {
+        "text": "Table T1 in Monica_DB under the PUBLIC schema. What should John do to access",
+        "is_correct": false
+      },
+      {
+        "text": "GRANT ROLE DBA_ROLE TO John; USE ROLE DBA_ROLE; USE DATABASE",
+        "is_correct": false
+      },
+      {
+        "text": "monica_db; Select * from t1;",
+        "is_correct": false
+      },
+      {
+        "text": "GRANT ROLE DBA_ROLE TO John; USE DATABASE monica_db; Select * from t1;",
+        "is_correct": false
+      },
+      {
+        "text": "USE ROLE SECURITYADMIN; USE DATABASE monica_db; Select * from t1;",
+        "is_correct": false
+      },
+      {
+        "text": "USE ROLE dba_role; USE DATABASE monica_db; Select * from t1;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake automatically and transparently maintains materialized views. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Micro-partitioning is the on-demand feature of Snowflake. It is required to be enabled explicitly by ACCOUNTADMIN. (True / False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following is the correct hierarchy for the Snowflake objects? •",
+    "options": [
+      {
+        "text": "ACCOUNT > ORGANIZATION > ROLE > USER > DATABASE > SCHEMA > TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "ORGANIZATION > ACCOUNT > DATABASE > SCHEMA > TABLE",
+        "is_correct": false
+      },
+      {
+        "text": "ORGANIZATION > ACCOUNT > DATABASE > SCHEMA > TABLE > STAGE",
+        "is_correct": false
+      },
+      {
+        "text": "ORGANIZATION > ACCOUNT > ROLE > USER > DATABASE > SCHEMA > STAGE",
+        "is_correct": false
+      },
+      {
+        "text": "> TABLE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which systems function can help find the overlap depth of a table's micro-partitions? •",
+    "options": [
+      {
+        "text": "SYSTEM$CLUSTERING_INFORMATION",
+        "is_correct": false
+      },
+      {
+        "text": "SYSTEM$CLUSTERING_DEPTH",
+        "is_correct": false
+      },
+      {
+        "text": "SYSTEM$CLUSTERING_WEIGHT",
+        "is_correct": false
+      },
+      {
+        "text": "SYSTEM$CLUSTERING_ALL",
+        "is_correct": false
+      },
+      {
+        "text": "SYSTEM$CLUSTERING_INFO",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these columns gets appended on creating a stream on a table? (Select 3) •",
+    "options": [
+      {
+        "text": "METADATA$ISDELETE",
+        "is_correct": false
+      },
+      {
+        "text": "METADATA$ISINSERT",
+        "is_correct": false
+      },
+      {
+        "text": "METADATA$ISUPDATE",
+        "is_correct": false
+      },
+      {
+        "text": "METADATA$ACTION",
+        "is_correct": false
+      },
+      {
+        "text": "METADATA$ROW_ID",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "UDF runs with either the caller’s or the owner’s rights. (True / False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In the case of cloning massive databases or schemas, the original databases and schemas get locked while the cloning operation is running. While cloning is in progress, no DML operation can be done on the original databases and schemas. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Cloning a table replicates the source table's structure, data, load history, and certain other properties (e.g., STAGE FILE FORMAT). (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these types of VIEW does Snowflake support? (Select 3) •",
+    "options": [
+      {
+        "text": "STANDARD VIEW",
+        "is_correct": false
+      },
+      {
+        "text": "SECURE VIEW",
+        "is_correct": false
+      },
+      {
+        "text": "PERMANENT VIEW",
+        "is_correct": false
+      },
+      {
+        "text": "EXTERNAL VIEW",
+        "is_correct": false
+      },
+      {
+        "text": "TEMPORARY VIEW",
+        "is_correct": false
+      },
+      {
+        "text": "MATERIALIZED VIEW",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake supports SQL UDFs that return a set of rows. Which keyword in CREATE",
+    "options": [
+      {
+        "text": "MULTIPLE",
+        "is_correct": false
+      },
+      {
+        "text": "ROWS",
+        "is_correct": false
+      },
+      {
+        "text": "SCALAR",
+        "is_correct": false
+      },
+      {
+        "text": "TABLE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "User-managed tasks are recommended when you cannot fully utilize a warehouse because only a few tasks run concurrently or they run to completion quickly (in less than 1 minute). (True / False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The data retention period for a database, schema, or table can not be changed once",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command will list the pipes for which you have access privileges? •",
+    "options": [
+      {
+        "text": "DESCRIBE PIPES;",
+        "is_correct": false
+      },
+      {
+        "text": "LIST PIPES();",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW PIPES;",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW PIPES();",
+        "is_correct": false
+      },
+      {
+        "text": "LIST PIPES;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following Data Types are supported by Snowflake? (Select all that apply) •",
+    "options": [
+      {
+        "text": "BOOL",
+        "is_correct": false
+      },
+      {
+        "text": "CHAR",
+        "is_correct": false
+      },
+      {
+        "text": "INTEGER",
+        "is_correct": false
+      },
+      {
+        "text": "FLOAT",
+        "is_correct": false
+      },
+      {
+        "text": "NUMERIC",
+        "is_correct": false
+      },
+      {
+        "text": "VARCHAR",
+        "is_correct": false
+      }
+    ]
+  }
+]
