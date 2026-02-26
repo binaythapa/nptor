@@ -1,0 +1,1010 @@
+[
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What value will be return by the following query? SELECT * FROM",
+    "options": [
+      {
+        "text": "TABLE(FLATTEN(input => parse_json('[]'))) f;",
+        "is_correct": false
+      },
+      {
+        "text": "NULL",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "UDF runs with either the caller’s or the owner’s rights. (TRUE / FALSE) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these SQL functions helps extract the path of a staged file relative to its location in the stage using the stage name and absolute file path in cloud storage as inputs? •",
+    "options": [
+      {
+        "text": "BUILD_STAGE_FILE_URI",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_SCOPED_FILE_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_ABSOLUTE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_PRESIGNED_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_RELATIVE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_STAGE_LOCATION",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A Directory table is a separate database object that stores a catalog of staged files in cloud storage. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The Snowflake Information Schema includes table functions you can query to retrieve information about your directory tables. Which table function can be used to query the history of data files registered in the metadata of specified objects and the credits billed for these operations? •",
+    "options": [
+      {
+        "text": "STAGE_STORAGE_USAGE_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "STAGE_DIRECTORY_FILE_REGISTRATION_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "AUTO_REFRESH_REGISTRATION_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "DATABASE_REFRESH_HISTORY",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How can you produce a lateral view of a VARIANT, OBJECT or ARRAY Column? •",
+    "options": [
+      {
+        "text": "Using SPLIT_TO_TABLE table function",
+        "is_correct": false
+      },
+      {
+        "text": "Using RESULT_SCAN table function",
+        "is_correct": false
+      },
+      {
+        "text": "Using INFER_SCHEMA table function",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these are unstructured data? (Select 2) •",
+    "options": [
+      {
+        "text": "JSON",
+        "is_correct": false
+      },
+      {
+        "text": "XML",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "An HTTP client that sends a URL (either scoped URL or file URL) to the REST API must be configured to allow redirects. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The automatic refresh of metadata of the directory table in the cloud storage does not incur any charges to Snowflake Customers. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these SQL functions helps returns the absolute path of a staged file using the stage name and path of the file relative to its location in the stage as inputs.? •",
+    "options": [
+      {
+        "text": "GET_RELATIVE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_ABSOLUTE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_SCOPED_FILE_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_STAGE_LOCATION",
+        "is_correct": false
+      },
+      {
+        "text": "GET_PRESIGNED_URL",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_STAGE_FILE_URI",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Only the user who generated the scoped URL can use the URL to access the referenced file. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these SQL functions helps generate the Scoped URL to access the unstructured data file? •",
+    "options": [
+      {
+        "text": "GET_RELATIVE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_SCOPED_FILE_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_ABSOLUTE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_PRESIGNED_URL",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_STAGE_FILE_URI",
+        "is_correct": false
+      },
+      {
+        "text": "GET_STAGE_LOCATION",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command is used to create a security integration to enable an HTTP client that supports OAuth to redirect users to an authorization page and generate access tokens for access to the REST API endpoint? •",
+    "options": [
+      {
+        "text": "CREATE SECURITY INTEGRATION",
+        "is_correct": false
+      },
+      {
+        "text": "CREATE INTEGRATION",
+        "is_correct": false
+      },
+      {
+        "text": "CREATE OAUTH INTEGRATION",
+        "is_correct": false
+      },
+      {
+        "text": "CREATE SECURITY API",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If a file in a stage has the LAST_MODIFIED date older than 64 days and the initial set of data was loaded into the table more than 64 days earlier. In this case, to prevent any data loss, the COPY command loads the file by default. (True / False) •",
+    "options": [
+      {
+        "text": "If a file in a stage has the LAST_MODIFIED date older than 64 days and the initial set of",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which copy option is used to delete the file from the Snowflake stage when data from staged files are loaded successfully? •",
+    "options": [
+      {
+        "text": "DELETE = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "DEL = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "REMOVE = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "PURGE = TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Suppose files downloaded from an internal stage are corrupted. What should be verified with the stage creator to determine why the downloaded file is corrupted? •",
+    "options": [
+      {
+        "text": "Verify if ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE') set for the stage",
+        "is_correct": false
+      },
+      {
+        "text": "Verify if ENCRYPTION = (TYPE = 'SNOWFLAKE_FULL') set for the stage",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these functions helps generate the Pre-signed URL to access the unstructured data file? •",
+    "options": [
+      {
+        "text": "BUILD_STAGE_FILE_URI",
+        "is_correct": false
+      },
+      {
+        "text": "GET_ABSOLUTE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_PRESIGNED_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_STAGE_LOCATION",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_SCOPED_FILE_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_RELATIVE_PATH",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "UDF does not support sql DDL / DML? (True/Fales) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "While transforming Semi-structure data, If you want expansion for all the sub- elements recursively using FLATTEN function, what argument would you need to set with FLATTEN function? •",
+    "options": [
+      {
+        "text": "RECURSIVE => FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "OUTER => FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "OUTER => TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "RECURSIVE => TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "David wants to load a JSON file using the COPY INTO <table> command. He found that there are null values in the data for missing values and have no other special meaning.",
+    "options": [
+      {
+        "text": "David should use STRIP_OUTER_ELEMENT = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "David should use REPLACE_INVALID_CHARACTERS = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "David should use STRIP_OUTER_ELEMENT = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "David should use STRIP_NULL_VALUES = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "David should use STRIP_NULL_VALUES = TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Both external (external cloud storage) and internal (i.e., Snowflake) stages support unstructured data. (True / False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What value will be return by the following query? SELECT * FROM",
+    "options": [
+      {
+        "text": "TABLE(FLATTEN(input => parse_json('[]'), outer => true)) f;",
+        "is_correct": false
+      },
+      {
+        "text": "NULL",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following languages does Snowflake support for writing UDFs (User-",
+    "options": [
+      {
+        "text": "SQL",
+        "is_correct": false
+      },
+      {
+        "text": "JAVA",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following file format is not supported by Snowflake? •",
+    "options": [
+      {
+        "text": "CSV",
+        "is_correct": false
+      },
+      {
+        "text": "PARQUET",
+        "is_correct": false
+      },
+      {
+        "text": "AVRO",
+        "is_correct": false
+      },
+      {
+        "text": "JSON",
+        "is_correct": false
+      },
+      {
+        "text": "EDI",
+        "is_correct": false
+      },
+      {
+        "text": "ORC",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these SQL functions helps retrieve the URL for an external or internal named stage using the stage name as the input? •",
+    "options": [
+      {
+        "text": "BUILD_STAGE_FILE_URI",
+        "is_correct": false
+      },
+      {
+        "text": "GET_STAGE_LOCATION",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_SCOPED_FILE_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_ABSOLUTE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_PRESIGNED_URL",
+        "is_correct": false
+      },
+      {
+        "text": "GET_RELATIVE_PATH",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What of the following is the default character set for delimited files (CSV, TSV, etc.)? •",
+    "options": [
+      {
+        "text": "UTF-32LE",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-8",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-32",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-16BE",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-16",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which copyOptions can help load a file with expired metadata (if the LAST_MODIFIED date is older than 64 days and the initial set of data was loaded into the table more than 64 days earlier (and if the file was loaded into the table, that also occurred more than 64 days earlier))? (Select 2) •",
+    "options": [
+      {
+        "text": "Which copyOptions can help load a file with expired metadata (if the LAST_MODIFIED",
+        "is_correct": false
+      },
+      {
+        "text": "FORCE = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "LOAD_UNCERTAIN_FILES = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "LOAD_FILES = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "LOAD_CERTAIN_FILES = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "ON_ERROR = CONTINUE",
+        "is_correct": false
+      },
+      {
+        "text": "FORCE = TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Monica is confused about which sampling method she should use with one the very large tables,, considering better performance. Which sampling method would you recommend from BERNOULLI | ROW and SYSTEM | BLOCK? •",
+    "options": [
+      {
+        "text": "BERNOULLI | ROW",
+        "is_correct": false
+      },
+      {
+        "text": "SYSTEM | BLOCK",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the purpose of VALIDATION_MODE in the COPY INTO <table> command? •",
+    "options": [
+      {
+        "text": "What is the purpose of VALIDATION_MODE in the COPY INTO <table> command?",
+        "is_correct": false
+      },
+      {
+        "text": "VALIDATION_MODE is used to validate the load file and load it into the specified",
+        "is_correct": false
+      },
+      {
+        "text": "VALIDATION_MODE is used to validate the load file, skip the errored data and",
+        "is_correct": false
+      },
+      {
+        "text": "VALIDATION_MODE is used to validate the load file for errors instead of loading",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the default encoding used by Snowflake while unloading data? •",
+    "options": [
+      {
+        "text": "UTF",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-8",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-16",
+        "is_correct": false
+      },
+      {
+        "text": "UTF-32",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "While transforming Semi-structure data, what argument would you need to set with",
+    "options": [
+      {
+        "text": "RECURSIVE => TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "OUTER => TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "OUTER => FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "RECURSIVE => FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "MODE => OBJECT",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the preferred way to distinguish empty strings from NULLs while unloading in",
+    "options": [
+      {
+        "text": "Enclose strings in quotes by setting the FIELD_OPTIONALLY_ENCLOSED_BY",
+        "is_correct": false
+      },
+      {
+        "text": "Set EMPTY_FIELD_AS_NULL to FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "Set EMPTY_FIELD_AS_NULL to TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FIELD_OPTIONALLY_ENCLOSED_BY option to NONE.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these functions helps generate the FILE URL to access the unstructured data file? •",
+    "options": [
+      {
+        "text": "GET_ABSOLUTE_PATH",
+        "is_correct": false
+      },
+      {
+        "text": "GET_STAGE_LOCATION",
+        "is_correct": false
+      },
+      {
+        "text": "GET_PRESIGNED_URL",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_SCOPED_FILE_URL",
+        "is_correct": false
+      },
+      {
+        "text": "BUILD_STAGE_FILE_URI",
+        "is_correct": false
+      },
+      {
+        "text": "GET_RELATIVE_PATH",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "During data loading using COPY INTO <table> command, if the string exceeds the target column length, what options do you have to truncate the string? (Select 2) •",
+    "options": [
+      {
+        "text": "ENFORCE_LENGTH = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUNCATECOLUMNS = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUNCATECOLUMNS = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "ENFORCE_LENGTH = TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Python UDFs and tabular Python UDFs can read and process unstructured data in staged files using SnowflakeFile class. (True/False) •",
+    "options": [
+      {
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of these sampling method keywords are used to specify which method to use? (Select 2) •",
+    "options": [
+      {
+        "text": "SYSTEM | ROW",
+        "is_correct": false
+      },
+      {
+        "text": "BERNOULLI | ROW",
+        "is_correct": false
+      },
+      {
+        "text": "SYSTEM | BLOCK",
+        "is_correct": false
+      },
+      {
+        "text": "BERNOULLI | BLOCK",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "John is trying to load JSON data sets with a huge array containing multiple records.",
+    "options": [
+      {
+        "text": "Enable the STRIP_OUTER_ARRAY file format option for the COPY INTO <table>",
+        "is_correct": false
+      },
+      {
+        "text": "Enable VARIANT_OUTER_ARRAY file format for the COPY INTO <table>",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The VALIDATION_MODE parameter does not support COPY statements that transform data during a load. (True / False) •",
+    "options": [
+      {
+        "text": "The VALIDATION_MODE parameter does not support COPY statements that transform",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "John has to create a PIPE that will be triggered for loading by calling the Snowpipe",
+    "options": [
+      {
+        "text": "AUTO_INGEST = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "API_INGEST = TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "API_INGEST = FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "AUTO_INGEST = TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which function can be used in combination with COPY command to convert the rows in a relational table to a single VARIANT column and unload the rows into a file? •",
+    "options": [
+      {
+        "text": "UNLOAD_CONSTRUCT",
+        "is_correct": false
+      },
+      {
+        "text": "COPY_CONSTRUCT",
+        "is_correct": false
+      },
+      {
+        "text": "OBJECT_CONSTRUCT",
+        "is_correct": false
+      },
+      {
+        "text": "VARIANT_CONSTRUCT",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How can you unload the data from Snowflake using COPY INTO location statements in a Single file? •",
+    "options": [
+      {
+        "text": "By specifying copy option ONE_FILE=TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "By specifying copy option MULTIPLE_FILES=FALSE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When loading data using COPY INTO <table> command, it is a must that the data files have the same number and order of columns as your target table. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which methods can be used to check the status of a COPY INTO command? •",
+    "options": [
+      {
+        "text": "Write a SQL query against the INFORMATION_SCHEMA.LOAD_HISTORY view.",
+        "is_correct": false
+      },
+      {
+        "text": "Write a SQL query against the ACCOUNT_USAGE.LOAD_HISTORY view.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "VARIANT is used to FLATTEN hierarchical data. (True / False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A stored procedure can run both the caller’s and the owner’s rights simultaneously. (TRUE / FALSE) •",
+    "options": [
+      {
+        "text": "(TRUE / FALSE)",
+        "is_correct": false
+      },
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The best use of Snowpipe is to load large volumes of data and incrementally make them available for analysis. (True/False) •",
+    "options": [
+      {
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUE",
+        "is_correct": false
+      }
+    ]
+  }
+]
