@@ -1,0 +1,5914 @@
+[
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "As a best practice, clustering keys should only be defined on tables of which minimum size?",
+    "options": [
+      {
+        "text": "Multi-Kilobyte (KB) Range",
+        "is_correct": false
+      },
+      {
+        "text": "Multi-Megabyte (MB) Range",
+        "is_correct": false
+      },
+      {
+        "text": "Multi-Gigabyte (GB) Range",
+        "is_correct": false
+      },
+      {
+        "text": "Multi-Terabyte (TB) Range",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements are true of VALIDATION_MODE in Snowflake? (Choose two.)",
+    "options": [
+      {
+        "text": "The validation_mode option is used when creating an Internal Stage",
+        "is_correct": false
+      },
+      {
+        "text": "validation_mode=return_all_errors is a parameter of the copy command",
+        "is_correct": true
+      },
+      {
+        "text": "The validation_mode option will validate data to be loaded by the copy statement while completing the load and will return the rows that could not be loaded without error",
+        "is_correct": true
+      },
+      {
+        "text": "The validation_mode option will validate data to be loaded by the copy statement without completing the load and will return possible errors",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What services does Snowflake automatically provide for customer that they may have been responsible for with their on premise system? Select all the below that apply.",
+    "options": [
+      {
+        "text": "Installing and configuring hardware",
+        "is_correct": true
+      },
+      {
+        "text": "Patching software",
+        "is_correct": true
+      },
+      {
+        "text": "Physical security",
+        "is_correct": false
+      },
+      {
+        "text": "Maintaining metadata and statists",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which statement best describes Snowflake tables?",
+    "options": [
+      {
+        "text": "Snowflake tables are logical representations of underlying physical data",
+        "is_correct": true
+      },
+      {
+        "text": "Snowflake tables ate the physical instantiation of data loaded Into Snowflake",
+        "is_correct": false
+      },
+      {
+        "text": "Snowflake tables require that clustering keys be defined to perform optimally",
+        "is_correct": false
+      },
+      {
+        "text": "Snowflake tables are owned by a user",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statement is true of Snowflake? Select one.",
+    "options": [
+      {
+        "text": "It was built specifically for the cloud",
+        "is_correct": true
+      },
+      {
+        "text": "it was built as an on-premises solution and then potted to the cloud",
+        "is_correct": false
+      },
+      {
+        "text": "It was designed as a hybrid database to allow customers to store data either on premises or in the cloud",
+        "is_correct": false
+      },
+      {
+        "text": "It was built for Hadoop architecture",
+        "is_correct": false
+      },
+      {
+        "text": "It's based on an Oracle Architecture",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What are two ways to create and manage Data Shares in Snowflake? (Choose two.)",
+    "options": [
+      {
+        "text": "Via the Snowflake Web Interface (Ul)",
+        "is_correct": true
+      },
+      {
+        "text": "Via the data_share=true parameter",
+        "is_correct": false
+      },
+      {
+        "text": "Via SQL commands",
+        "is_correct": true
+      },
+      {
+        "text": "Via SQL commands",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A role is created and owns 2 tables. This role is then dropped. Who will now own the two tables?",
+    "options": [
+      {
+        "text": "The tables are now orphaned",
+        "is_correct": false
+      },
+      {
+        "text": "The user that deleted the role",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "The assumed role that dropped the role",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which statements are true of micro-partitions? Choose 2 answers",
+    "options": [
+      {
+        "text": "They are approximately 16MB in size",
+        "is_correct": true
+      },
+      {
+        "text": "They are stored compressed only if COMPRESS=TRUE on Table",
+        "is_correct": false
+      },
+      {
+        "text": "They are Immutable",
+        "is_correct": true
+      },
+      {
+        "text": "They are only encrypted in the Enterprise edition and above",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which object allows you to limit the number of credits consumed within a Snowflake account? Select one.",
+    "options": [
+      {
+        "text": "Account usage Tracking",
+        "is_correct": false
+      },
+      {
+        "text": "Resource Monitor",
+        "is_correct": true
+      },
+      {
+        "text": "Warehouse Limit Parameter",
+        "is_correct": false
+      },
+      {
+        "text": "Credit Consumption Tracker",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Each incremental increase in Virtual Warehouse size (e,g. Medium to Large) generally results in what? Select one.",
+    "options": [
+      {
+        "text": "More micro-partitions",
+        "is_correct": false
+      },
+      {
+        "text": "Better query scheduling",
+        "is_correct": false
+      },
+      {
+        "text": "Double the numbers of servers In the compute duster",
+        "is_correct": true
+      },
+      {
+        "text": "Higher storage costs",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are options when creating a Virtual Warehouse?",
+    "options": [
+      {
+        "text": "Auto-suspend",
+        "is_correct": true
+      },
+      {
+        "text": "Auto-resume",
+        "is_correct": true
+      },
+      {
+        "text": "Local SSD size",
+        "is_correct": false
+      },
+      {
+        "text": "User count",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False the longer the data retention period, the higher the resulting storage costs.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements is true of data loading? Select one.",
+    "options": [
+      {
+        "text": "Resizing the virtual warehouse from x-Small to Small will process a single file twice as fast",
+        "is_correct": false
+      },
+      {
+        "text": "The \"deal file size for loading is 16MB to match micro-partition size",
+        "is_correct": false
+      },
+      {
+        "text": "Marry files in the 10-lOOMB range tend to land In the 'sweet spot\" for load parallelism",
+        "is_correct": true
+      },
+      {
+        "text": "Once loaded, there is no option to force a reload of an already loaded file",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: During data unloading, only JSON and CSV files can be compressed.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following languages can be used to implement Snowflake User Defined Functions (UDFs)? Choose 2 answers",
+    "options": [
+      {
+        "text": "Java",
+        "is_correct": false
+      },
+      {
+        "text": "JavaScript",
+        "is_correct": true
+      },
+      {
+        "text": "SQL",
+        "is_correct": true
+      },
+      {
+        "text": "Python",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When scaling up Virtual Warehouse by increasing Virtual Warehouse t-shirt size, you are primarily scaling for improved: Select one.",
+    "options": [
+      {
+        "text": "Concurrency",
+        "is_correct": false
+      },
+      {
+        "text": "Performance",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How many shares can be consumed by single Data Consumer?",
+    "options": [
+      {
+        "text": "1",
+        "is_correct": false
+      },
+      {
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "text": "100, but can be increased by contacting support",
+        "is_correct": false
+      },
+      {
+        "text": "Unlimited",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Fail-safe is unavailable on which table types?",
+    "options": [
+      {
+        "text": "Temporary",
+        "is_correct": true
+      },
+      {
+        "text": "Transient",
+        "is_correct": true
+      },
+      {
+        "text": "Provisional",
+        "is_correct": false
+      },
+      {
+        "text": "Permanent",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowpipe via RFST API can only reference External Stages as source.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are valid Snowflake Virtual Warehouse Scaling Policies? (Choose two.)",
+    "options": [
+      {
+        "text": "Custom",
+        "is_correct": false
+      },
+      {
+        "text": "Economy",
+        "is_correct": true
+      },
+      {
+        "text": "Optimized",
+        "is_correct": false
+      },
+      {
+        "text": "Standard",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: A 4X-Large Warehouse may, at times, take longer to provision than a X-Small Warehouse.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When can a Virtual Warehouse start running queries?",
+    "options": [
+      {
+        "text": "12am-5am",
+        "is_correct": false
+      },
+      {
+        "text": "Only during administrator defined time slots",
+        "is_correct": true
+      },
+      {
+        "text": "When its provisioning is complete",
+        "is_correct": false
+      },
+      {
+        "text": "After replication",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The PUT command: (Choose two.)",
+    "options": [
+      {
+        "text": "Automatically creates a File Format object",
+        "is_correct": false
+      },
+      {
+        "text": "Automatically uses the last Stage created",
+        "is_correct": false
+      },
+      {
+        "text": "Automatically compresses files using Gzip",
+        "is_correct": true
+      },
+      {
+        "text": "Automatically encrypts files",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: A single database can exist in more than one Snowflake account.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake is designed for which type of workloads? (Choose two.)",
+    "options": [
+      {
+        "text": "OLAP (Analytics) workloads",
+        "is_correct": true
+      },
+      {
+        "text": "OLTP (Transactional) workloads",
+        "is_correct": true
+      },
+      {
+        "text": "Concurrent workloads",
+        "is_correct": false
+      },
+      {
+        "text": "On-premise workloads",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowflake’s data warehouse was built from the ground up for the cloud in lieu of using an existing database or a platform, like Hadoop, as a base.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: All Snowflake table types include fail-safe storage.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Pipes can be suspended and resumed.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following commands sets the Virtual Warehouse for a session?",
+    "options": [
+      {
+        "text": "COPT WAREHOUSE FROM < ;",
+        "is_correct": false
+      },
+      {
+        "text": "SET warehouse = <>;",
+        "is_correct": false
+      },
+      {
+        "text": "USE WAREHOUSE <>;",
+        "is_correct": true
+      },
+      {
+        "text": "USE VIRTUAL_WAREHOUSE <>;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the minimum Snowflake edition that customers planning on storing protected information in Snowflake should consider for regulatory compliance?",
+    "options": [
+      {
+        "text": "Standard",
+        "is_correct": false
+      },
+      {
+        "text": "Premier",
+        "is_correct": false
+      },
+      {
+        "text": "Enterprise",
+        "is_correct": false
+      },
+      {
+        "text": "Business Critical Edition",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are examples of operations that require a Virtual Warehouse to complete, assuming no quires have been executed previously? Choose 3 answers",
+    "options": [
+      {
+        "text": "MIN(< < column value>>)",
+        "is_correct": false
+      },
+      {
+        "text": "COPY",
+        "is_correct": true
+      },
+      {
+        "text": "SUM(<>)",
+        "is_correct": true
+      },
+      {
+        "text": "UPDATE",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: A customer using SnowSQL / native connectors will be unable be unable to able to also use the Snowflake Web interface (UI) unless access to the UI is explicitly granted by supported.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A Virtual Warehouse's auto-suspend and auto-resume settings apply to:",
+    "options": [
+      {
+        "text": "The primary duster in the virtual warehouse",
+        "is_correct": false
+      },
+      {
+        "text": "The entire Virtual Warehouse",
+        "is_correct": true
+      },
+      {
+        "text": "The database the Virtual Warehouse resides in",
+        "is_correct": false
+      },
+      {
+        "text": "The queries currently being run by the Virtual Warehouse",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A deterministic query is run at 8am, takes 5 minutes, and the results are cached. Which of the following statements are true? Choose 2 answers",
+    "options": [
+      {
+        "text": "The exact query win ALWAYS return me precomputed result set for the RESULT_CACHE_ACTIVE = time period",
+        "is_correct": true
+      },
+      {
+        "text": "The same exact query will return the precomputed results if the underlying data hasn't changed and the results were last accessed within the previous 24 hour period",
+        "is_correct": false
+      },
+      {
+        "text": "The same exact query will return the precomputed results even if the underlying data has changed as long as the results were last accessed within the previous",
+        "is_correct": true
+      },
+      {
+        "text": "The ''24 hour'' on the percomputed results gets renewed every time the exact query is executed",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the minimum Snowflake edition that provides data sharing?",
+    "options": [
+      {
+        "text": "Standard",
+        "is_correct": true
+      },
+      {
+        "text": "Premier",
+        "is_correct": false
+      },
+      {
+        "text": "Enterprise",
+        "is_correct": false
+      },
+      {
+        "text": "Business Critical Edition",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What are the three things customers want most from their enterprise data warehouse solution? Choose 3 answers",
+    "options": [
+      {
+        "text": "On-premise availability",
+        "is_correct": false
+      },
+      {
+        "text": "Simplicity",
+        "is_correct": true
+      },
+      {
+        "text": "Open source based",
+        "is_correct": false
+      },
+      {
+        "text": "Concurrency",
+        "is_correct": true
+      },
+      {
+        "text": "Performance",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When scaling out by adding clusters to a multi-cluster warehouse, you are primarily scaling for improved:",
+    "options": [
+      {
+        "text": "Concurrency",
+        "is_correct": true
+      },
+      {
+        "text": "Performance",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: An active warehouse is required to run a COPY INTO statement.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: AWS Private Link provides a secure connection from the Customer’s on-premise data center to the Snowflake.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the lowest Snowflake edition that offers Time Travel up to 90 days.",
+    "options": [
+      {
+        "text": "standard Edition",
+        "is_correct": false
+      },
+      {
+        "text": "Premier Edition",
+        "is_correct": false
+      },
+      {
+        "text": "Enterprise Edition",
+        "is_correct": true
+      },
+      {
+        "text": "Business Critical Edition",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowflake charges additional fees to Data providers for each share they create.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Select the different types of Internal Stages: (Choose three.)",
+    "options": [
+      {
+        "text": "Named Stage",
+        "is_correct": true
+      },
+      {
+        "text": "User Stage",
+        "is_correct": true
+      },
+      {
+        "text": "Table Stage",
+        "is_correct": true
+      },
+      {
+        "text": "Schema Stage",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Increasing the size of a Virtual Warehouse from an X-Small to an X-Large is an example of:",
+    "options": [
+      {
+        "text": "Scaling rhythmically",
+        "is_correct": false
+      },
+      {
+        "text": "Scaling max",
+        "is_correct": false
+      },
+      {
+        "text": "Scaling out",
+        "is_correct": false
+      },
+      {
+        "text": "Scaling up",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following connectors are available in the Downloads section of the Snowflake web Interface (UI) Choose 2 answers",
+    "options": [
+      {
+        "text": "SnowSQL",
+        "is_correct": true
+      },
+      {
+        "text": "ODBC",
+        "is_correct": true
+      },
+      {
+        "text": "R",
+        "is_correct": false
+      },
+      {
+        "text": "HIVE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the maximum compressed row size in Snowflake?",
+    "options": [
+      {
+        "text": "8KB",
+        "is_correct": false
+      },
+      {
+        "text": "16MB",
+        "is_correct": true
+      },
+      {
+        "text": "50MB",
+        "is_correct": false
+      },
+      {
+        "text": "4000GB",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements are true of Snowflake data loading? Choose 3 answers",
+    "options": [
+      {
+        "text": "VARIANT \"nut\" values are not the same as SQL Null values",
+        "is_correct": true
+      },
+      {
+        "text": "It is recommended to do frequent, single row DMLS",
+        "is_correct": false
+      },
+      {
+        "text": "It is recommended to validate the data before loading into the Snowflake target table",
+        "is_correct": true
+      },
+      {
+        "text": "It is recommended to use staging tables to manage MERGE statements",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Reader Accounts are able to extract data from shared data objects for use outside of Snowflake.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "For a multi-cluster Warehouse, the number of credits billed is calculated on: Select one.",
+    "options": [
+      {
+        "text": "The number of queries that ran using the Warehouse.",
+        "is_correct": false
+      },
+      {
+        "text": "The size of the Warehouse and the number of clusters that ran within a given time period.",
+        "is_correct": true
+      },
+      {
+        "text": "The sue of the Warehouse and the maximum number of clusters configured for the Warehouse.",
+        "is_correct": false
+      },
+      {
+        "text": "The number of users who accessed the Warehouse.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Increasing the maximum number of clusters in a Multi-Cluster Warehouse is an example of:",
+    "options": [
+      {
+        "text": "Scaling rhythmically",
+        "is_correct": false
+      },
+      {
+        "text": "Scaling max",
+        "is_correct": false
+      },
+      {
+        "text": "Scaling out",
+        "is_correct": true
+      },
+      {
+        "text": "Scaling Up",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or false: it is best practice to define a clustering key on every table.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Data in Fail-safe can be deleted by a user or the Snowflake team before it expires.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements describes a benefit of Snowflake’s separation of compute and storage? (Choose all that apply.)",
+    "options": [
+      {
+        "text": "Growth of storage and compute are tightly coupled together",
+        "is_correct": true
+      },
+      {
+        "text": "Storage expands without the requirement to add more compute",
+        "is_correct": false
+      },
+      {
+        "text": "Compute can be scaled up or down without the requirement to add more storage",
+        "is_correct": false
+      },
+      {
+        "text": "Multiple compute clusters can access stored data without contention",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which type of table corresponds to a single Snowflake session?",
+    "options": [
+      {
+        "text": "Temporary",
+        "is_correct": true
+      },
+      {
+        "text": "Translent",
+        "is_correct": false
+      },
+      {
+        "text": "Provisional",
+        "is_correct": false
+      },
+      {
+        "text": "Permanent",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are best practices for users with the SYSADMIN/ACCOUNTADMIN roles? Choose 3 answers",
+    "options": [
+      {
+        "text": "Their default role should be set to SYSTEMADMIN (the lower of the two)",
+        "is_correct": true
+      },
+      {
+        "text": "They should not set up multi_Factor Authentication (MFA)—as administrator they may need to changethe MFA settings and those enrolled in MFA are unable to do so",
+        "is_correct": false
+      },
+      {
+        "text": "They should only access and 'step into' the ACCOUNTADMIN role temporarily, as needed to complete a specific operation",
+        "is_correct": true
+      },
+      {
+        "text": "They should ensure all database objects in the account are owned by the ACCOUNTADMIN role",
+        "is_correct": false
+      },
+      {
+        "text": "They should use the SYSADMIN role to perform administrative work on database objects",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements is true of Snowflake?",
+    "options": [
+      {
+        "text": "It was built specifically for the cloud",
+        "is_correct": true
+      },
+      {
+        "text": "It was built as an on-premises solution and then ported to the cloud",
+        "is_correct": false
+      },
+      {
+        "text": "It was designed as a hybrid database to allow customers to store data either on premises or in the cloud",
+        "is_correct": false
+      },
+      {
+        "text": "It was built for Hadoop architecture",
+        "is_correct": false
+      },
+      {
+        "text": "It's based on an Oracle Architecture",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements are true of Snowflake releases: (Choose two.)",
+    "options": [
+      {
+        "text": "They happen approximately weekly",
+        "is_correct": false
+      },
+      {
+        "text": "They roll up and release approximately monthly, but customers can request early release application",
+        "is_correct": false
+      },
+      {
+        "text": "During a release, new customer requests/queries/connections transparently move over to the newer version",
+        "is_correct": true
+      },
+      {
+        "text": "A customer is assigned a 30 minute window (that can be moved anytime within a week) during which the system will be unavailable and customer is upgraded",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: You can define multiple columns within a clustering key on a table.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How would you execute a series of SQL statements using Task?",
+    "options": [
+      {
+        "text": "include the SQL statements in the body of the task create task mytask.. as insert into target1 select., fromstream_s1 where ..INSERT INTO target2 SELECT .. FROM stream .s1 where ..",
+        "is_correct": false
+      },
+      {
+        "text": "A stored procedure can have only one DML statement per stored procedure invocation and therefore you should sequence stored procedures calls in the task definition CREATE TASK mytask.... AS call stored_prc1(); call stored_proc2t);",
+        "is_correct": false
+      },
+      {
+        "text": "A stored procedure executing multiple SQL statements and invoke the stored procedure from the task. CREATE TASK mytask.... AS call stored_proc_multiple_statements_inside():",
+        "is_correct": true
+      },
+      {
+        "text": "Create a task for each SQL statement (e.g. resulting in task1. task2, etc) and string the series of SQL statements by having a control task calling task 1, task 2 sequentially.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: A Virtual Warehouse can be resized while suspended.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "On which of the following cloud platform can a Snowflake account be hosted? Choose 2 answers",
+    "options": [
+      {
+        "text": "Amazon Web Services",
+        "is_correct": true
+      },
+      {
+        "text": "Private Virtual Cloud",
+        "is_correct": false
+      },
+      {
+        "text": "Oracle Cloud",
+        "is_correct": false
+      },
+      {
+        "text": "Microsoft Azure Cloud",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following objects can be cloned? (Choose four.)",
+    "options": [
+      {
+        "text": "Tables",
+        "is_correct": true
+      },
+      {
+        "text": "Named File Formats",
+        "is_correct": false
+      },
+      {
+        "text": "Schemas",
+        "is_correct": true
+      },
+      {
+        "text": "Shares",
+        "is_correct": false
+      },
+      {
+        "text": "Databases",
+        "is_correct": true
+      },
+      {
+        "text": "Users",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What happens when a Data Provider revokes privileges to a Share on an object in their source database?",
+    "options": [
+      {
+        "text": "The object immediately becomes unavailable for all Data Consumers",
+        "is_correct": true
+      },
+      {
+        "text": "Any additional data arriving after this point in time will not be visible to Data Consumers",
+        "is_correct": false
+      },
+      {
+        "text": "The Data Consumers stop seeing data updates and become responsible for storage charges for the object",
+        "is_correct": false
+      },
+      {
+        "text": "A static copy of the object at the time the privilege was revoked is created In the Data Consumers' accounts",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: You can resize a Virtual Warehouse while queries are running.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Bulk unloading of data from Snowflake supports the use of a SELECT statement.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When should you consider disabling auto-suspend for a Virtual Warehouse? Choose 2 answers",
+    "options": [
+      {
+        "text": "When users will be using compute at different times throughout a 24/7 period",
+        "is_correct": false
+      },
+      {
+        "text": "When managing a steady workload",
+        "is_correct": true
+      },
+      {
+        "text": "When the compute must be available with no delay or lag time",
+        "is_correct": false
+      },
+      {
+        "text": "When you don’t want to have to manually turn on the Warehouse each time a user needs it",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Multi_Factor Authentication (MFA) in Snowflake is only supported in conjunction with single Sign-on (sso).",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How would you determine the size of the virtual warehouse used for a task?",
+    "options": [
+      {
+        "text": "Root task may be executed concurrently (i.e. multiple instances), it is recommended to leave some margins in the execution window to avoid missing instances of execution",
+        "is_correct": false
+      },
+      {
+        "text": "Querying (select) the size of the stream content would help determine the warehouse size. For example, if querying large stream content, use a larger warehouse size",
+        "is_correct": false
+      },
+      {
+        "text": "If using the stored procedure to execute multiple SQL statements, it's best to test run the stored procedure separately to size the compute resource first",
+        "is_correct": true
+      },
+      {
+        "text": "Since task infrastructure is based on running the task body on schedule, it's recommended to configure the virtual warehouse for automatic concurrency handling using Multi-cluster warehouse (MCW) to match the task schedule",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In which layer of its architecture does Snowflake store its metadata statistics? Select one.",
+    "options": [
+      {
+        "text": "Storage Layer",
+        "is_correct": false
+      },
+      {
+        "text": "Compute Layer",
+        "is_correct": false
+      },
+      {
+        "text": "Database Layer",
+        "is_correct": false
+      },
+      {
+        "text": "Cloud Service Layer",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Account-level storage usage can be monitored via:",
+    "options": [
+      {
+        "text": "The snowflake wet Interface (UI) in the Databases section.",
+        "is_correct": false
+      },
+      {
+        "text": "The Snowflake web interface (UI) in the Account -> Billing a usage section",
+        "is_correct": true
+      },
+      {
+        "text": "The Information Schema -> ACCOUNT_USAGE_HISTORY View",
+        "is_correct": false
+      },
+      {
+        "text": "The Account usage Schema - > ACCOUNT_USAGE_METRICS View",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Users are able to see the result sets of queries executed by other users that share their same role.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: You can query the files in an External Stage directly without having to load the data into a table.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which item in the Data Warehouse migration process does not apply in Snowflake>",
+    "options": [
+      {
+        "text": "Migrate Users",
+        "is_correct": false
+      },
+      {
+        "text": "Migrate Schemas",
+        "is_correct": false
+      },
+      {
+        "text": "Migrate Indexes",
+        "is_correct": true
+      },
+      {
+        "text": "Migrate Indexes",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: It is possible to unload structured data to semi-structured formats such as JSON and parquet.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Credit Consumption by the Compute Layer (Virtual Warehouses) is based on: (Choose two.)",
+    "options": [
+      {
+        "text": "Number of users",
+        "is_correct": false
+      },
+      {
+        "text": "Warehouse size",
+        "is_correct": true
+      },
+      {
+        "text": "Amount of data processed",
+        "is_correct": true
+      },
+      {
+        "text": "# of clusters for the Warehouse",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What are the three layers that make up Snowflake’s architecture? Choose 3 answer",
+    "options": [
+      {
+        "text": "Compute",
+        "is_correct": true
+      },
+      {
+        "text": "Tri-Secret Secure",
+        "is_correct": false
+      },
+      {
+        "text": "Storage",
+        "is_correct": true
+      },
+      {
+        "text": "Cloud Services",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The number of queries that a Virtual Warehouse can concurrently process is determined by: Choose 2 answers",
+    "options": [
+      {
+        "text": "The complexity of each query",
+        "is_correct": true
+      },
+      {
+        "text": "The CONCURRENT_QUERY_UMIT parameter set on the Snowflake account",
+        "is_correct": false
+      },
+      {
+        "text": "The size of the data required for each query",
+        "is_correct": true
+      },
+      {
+        "text": "The tool that s executing the query",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following terms best describes Snowflake’s database architecture?",
+    "options": [
+      {
+        "text": "Columnar shared nothing",
+        "is_correct": false
+      },
+      {
+        "text": "Shared disk",
+        "is_correct": true
+      },
+      {
+        "text": "Multi-cluster, shared data",
+        "is_correct": false
+      },
+      {
+        "text": "Multi-cluster, shared data",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowflake supports federated authentication in all editions.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements is true of zero-copy cloning?",
+    "options": [
+      {
+        "text": "Zero-copy clones objects inherit",
+        "is_correct": false
+      },
+      {
+        "text": "All zero-copy clone objects inherit the privileges of their original objects",
+        "is_correct": false
+      },
+      {
+        "text": "Zero-copy coning is licensed as an additional Snowflake feature",
+        "is_correct": false
+      },
+      {
+        "text": "Zero-copy coning is licensed as an additional Snowflake feature.",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: A table in Snowflake can only be queried using the Virtual Warehouse that was used to load the data.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: When a new Snowflake object is created, it is automatically owned by the user who created it.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How a Snowpipe charges calculated?",
+    "options": [
+      {
+        "text": "Per-second/per Warehouse size",
+        "is_correct": false
+      },
+      {
+        "text": "Per-second/per-core granularity",
+        "is_correct": true
+      },
+      {
+        "text": "Number of Pipes in account",
+        "is_correct": false
+      },
+      {
+        "text": "Total storage bucket size",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following items does the Cloud services Layer manage? Choose 4 answers",
+    "options": [
+      {
+        "text": "user authentication",
+        "is_correct": true
+      },
+      {
+        "text": "Metadata",
+        "is_correct": true
+      },
+      {
+        "text": "Query compilation and optimization",
+        "is_correct": true
+      },
+      {
+        "text": "external blob storage",
+        "is_correct": false
+      },
+      {
+        "text": "Data security",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements about data sharing are true? choose 2 answers",
+    "options": [
+      {
+        "text": "New objects created by a Data Provider are automatically shared with existing Data Consumers & Reader Accounts",
+        "is_correct": false
+      },
+      {
+        "text": "All database objects can be included In a shared database",
+        "is_correct": false
+      },
+      {
+        "text": "Reader Accounts are created and funded by Data Prowlers",
+        "is_correct": true
+      },
+      {
+        "text": "Shared databases are read-only",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the default File Format used in the COPY command if one is not specified?",
+    "options": [
+      {
+        "text": "JSON",
+        "is_correct": true
+      },
+      {
+        "text": "Parquet",
+        "is_correct": false
+      },
+      {
+        "text": "XML",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following commands are not blocking operations? Choose 2 answers",
+    "options": [
+      {
+        "text": "UPDATE",
+        "is_correct": false
+      },
+      {
+        "text": "INSERT",
+        "is_correct": true
+      },
+      {
+        "text": "MERGE",
+        "is_correct": false
+      },
+      {
+        "text": "COPY",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: When you create a custom role, it is a practice to immediately grant that role to ACCOUNTADMIN.",
+    "options": [
+      {
+        "text": "",
+        "is_correct": false
+      },
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Reader Accounts incur no additional Compute costs to the Data Provider since they are simply reading the shared data without making changes.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: It is possible to query data from an Internal or named External stage without loading the data into Snowflake.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Once created, a micro-partition will never be changed.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Select the three types of tables that exist within Snowflake. Choose 3 answers",
+    "options": [
+      {
+        "text": "Temporary",
+        "is_correct": true
+      },
+      {
+        "text": "Transient",
+        "is_correct": true
+      },
+      {
+        "text": "Provisioned",
+        "is_correct": false
+      },
+      {
+        "text": "Permanent",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the recommended method for loading data into Snowflake?",
+    "options": [
+      {
+        "text": "Load row by row",
+        "is_correct": false
+      },
+      {
+        "text": "Load data in batch",
+        "is_correct": true
+      },
+      {
+        "text": "Load data by writing it In the Snowflake Web Interface (UI)",
+        "is_correct": false
+      },
+      {
+        "text": "Load data via frequent, angle row DML's",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements is true of Snowflake micro-partitioning?",
+    "options": [
+      {
+        "text": "Micro-partitioning has been known to introduce data skew",
+        "is_correct": false
+      },
+      {
+        "text": "Micro-partitioning: requires a partitioning schema to be defined up front",
+        "is_correct": false
+      },
+      {
+        "text": "Micro-partitioning is transparently completed using the ordering that occurs when the data is inserted/loaded",
+        "is_correct": true
+      },
+      {
+        "text": "Micro-partitioning can be disabled within a Snowflake account",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: It is possible to load data into Snowflake without creating a named File Format object.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: The COPY command must specify a File Format in order to execute.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Micro-partition metadata enables some operations to be completed without requiring Compute.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements are true of Virtual Warehouses? (Choose all that apply.)",
+    "options": [
+      {
+        "text": "Customers can change the size of the Warehouse after creation",
+        "is_correct": false
+      },
+      {
+        "text": "A Warehouse can be resized while running",
+        "is_correct": true
+      },
+      {
+        "text": "A Warehouse can be configured to suspend after a period of inactivity",
+        "is_correct": true
+      },
+      {
+        "text": "A Warehouse can be configured to auto-resume when new queries are submitted",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which are true of Snowflake roles?",
+    "options": [
+      {
+        "text": "All grants to objects are given to roles, and never to users",
+        "is_correct": true
+      },
+      {
+        "text": "In order to do DML/DOL, a user needs to have selected a single role that has that specific access to the object and operation",
+        "is_correct": true
+      },
+      {
+        "text": "The public role controls at other roles",
+        "is_correct": false
+      },
+      {
+        "text": "Roles are a subset of users and users own objects In Snowflake",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowflake bills for a minimum of five minutes each time a Virtual Warehouse is started.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Why would a customer size a Virtual Warehouse from an X-Small to a Medium?",
+    "options": [
+      {
+        "text": "To accommodate more queries",
+        "is_correct": true
+      },
+      {
+        "text": "To accommodate more users",
+        "is_correct": false
+      },
+      {
+        "text": "To accommodate fluctuations in workload",
+        "is_correct": false
+      },
+      {
+        "text": "To accommodate a more complex workload",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Data Providers can share data with only the Data Consumer.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Some queries can be answered through the metadata cache and do not require an active Virtual Warehouse.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements are true about Schemas in Snowflake? (Choose two.)",
+    "options": [
+      {
+        "text": "A Schema may contain one or more Databases",
+        "is_correct": false
+      },
+      {
+        "text": "A Database may contain one or more Schemas",
+        "is_correct": true
+      },
+      {
+        "text": "A Schema is a logical grouping of Database Objects",
+        "is_correct": true
+      },
+      {
+        "text": "Each Schema is contained within a Warehouse",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: When you create a custom role, it is a best practice to immediately grant that role to ACCOUNTADMIN.",
+    "options": [
+      {
+        "text": "",
+        "is_correct": false
+      },
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What parameter controls if the Virtual warehouse starts immediately after the CREATE WAREHOUSE statement? Select one",
+    "options": [
+      {
+        "text": "INITTIALLY_SUSPENDED = TRUE/FALSE",
+        "is_correct": true
+      },
+      {
+        "text": "START_AFTCR_CREATE = TRUE/FALSE",
+        "is_correct": false
+      },
+      {
+        "text": "START_TTIME = 60 // (seconds from now)",
+        "is_correct": false
+      },
+      {
+        "text": "STAR",
+        "is_correct": false
+      },
+      {
+        "text": "TIME = CURREN",
+        "is_correct": false
+      },
+      {
+        "text": "DATE()",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the minimum Snowflake edition that provides multi-cluster warehouses and up to 90 days of Time Travel?",
+    "options": [
+      {
+        "text": "Standard",
+        "is_correct": false
+      },
+      {
+        "text": "Premier",
+        "is_correct": false
+      },
+      {
+        "text": "Enterprise",
+        "is_correct": true
+      },
+      {
+        "text": "Business Critical Edition",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake recommends, as a minimize, that all users with the following roles(s) should be enrolled in Multi-Factor Authentication (MFA): Select one:",
+    "options": [
+      {
+        "text": "SECURITYADMIN, ACCOUNTADMIN, PUBLIC, SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN ACCOUNTADMIN, SYSADMIN",
+        "is_correct": true
+      },
+      {
+        "text": "SECURITYADMIN, ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "To run a Multi-Cluster Warehouse in auto-scale mode, a user would:",
+    "options": [
+      {
+        "text": "To run a Multi-Cluster Warehouse in auto-scale mode, a user would:",
+        "is_correct": false
+      },
+      {
+        "text": "Set the Warehouse type to “Auto”",
+        "is_correct": false
+      },
+      {
+        "text": "Set the Minimum Clusters and Maximum Clusters settings to the same value",
+        "is_correct": false
+      },
+      {
+        "text": "Set the Minimum Clusters and Maximum Clusters settings to the different values",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following statements would be used to export/unload data from Snowflake?",
+    "options": [
+      {
+        "text": "COPY INTO @stage",
+        "is_correct": true
+      },
+      {
+        "text": "EXPORT TO @stage",
+        "is_correct": false
+      },
+      {
+        "text": "INSERT INTO @stage",
+        "is_correct": false
+      },
+      {
+        "text": "EXPORT_TO_STAGE(stage = > @Wage, select = > 'select * from t1);",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Data storage for individual tables can be monitored using which commands and/or object(s)? Choose 2 answers",
+    "options": [
+      {
+        "text": "SHOW TABLES;",
+        "is_correct": true
+      },
+      {
+        "text": "SHOW STORAGE BY TABLE;",
+        "is_correct": false
+      },
+      {
+        "text": "Information Schema -> TABLE_STORAGE_METRICS",
+        "is_correct": false
+      },
+      {
+        "text": "Information Schema -> TASLE_HISTORY",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are common use cases for zero-copy cloning? Choose 3 answers",
+    "options": [
+      {
+        "text": "Quick provisioning of Dev and Test/QA environments",
+        "is_correct": true
+      },
+      {
+        "text": "Data backups",
+        "is_correct": true
+      },
+      {
+        "text": "Point in time snapshots",
+        "is_correct": true
+      },
+      {
+        "text": "Performance optimization",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The Query History in the Snowflake Web Interface (UI) is kept for approximately:",
+    "options": [
+      {
+        "text": "60 minutes",
+        "is_correct": false
+      },
+      {
+        "text": "24 hours",
+        "is_correct": false
+      },
+      {
+        "text": "14 days",
+        "is_correct": false
+      },
+      {
+        "text": "30 days",
+        "is_correct": false
+      },
+      {
+        "text": "1 year",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: When data share is established between a Data Provider and a data Consumer, the Data Consumer can extend that data share to other Data Consumers.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: The user has to specify which cluster a query will run on in multi-clustering Warehouse.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: When active, a pipe requires a dedicated Virtual Warehouse to execute.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which statement best describes '' clustering''?",
+    "options": [
+      {
+        "text": "Clustering represents the way data is grouped together and stored within snowflake's micro-partitions",
+        "is_correct": true
+      },
+      {
+        "text": "The database administrator must define the clustering methodology for each Snowflake table.",
+        "is_correct": false
+      },
+      {
+        "text": "The clustering key must be included on the COPV command when loading data into Snowflake.",
+        "is_correct": false
+      },
+      {
+        "text": "Clustering can be disabled within a Snowflake account.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following DML commands isn’t supported by Snowflake?",
+    "options": [
+      {
+        "text": "UPSERT",
+        "is_correct": true
+      },
+      {
+        "text": "MERGE",
+        "is_correct": false
+      },
+      {
+        "text": "UPDATE",
+        "is_correct": false
+      },
+      {
+        "text": "TRUNCATE TABLE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What command is used to load files into an Internal Stage within Snowflake? Select one.",
+    "options": [
+      {
+        "text": "PUT",
+        "is_correct": true
+      },
+      {
+        "text": "COPY INTO",
+        "is_correct": false
+      },
+      {
+        "text": "TRANSFER",
+        "is_correct": false
+      },
+      {
+        "text": "INSERT",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Each worksheet in the Snowflake Web Interface (UI) can be associated with different roles, databases, schemas, and Virtual Warehouses.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the minimum duration charged when starting a virtual warehouse?",
+    "options": [
+      {
+        "text": "1 second",
+        "is_correct": false
+      },
+      {
+        "text": "1 minute",
+        "is_correct": true
+      },
+      {
+        "text": "1 hour",
+        "is_correct": false
+      },
+      {
+        "text": "1 day",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: A third-party tool that supports standard JDBC or ODBC but has no Snowflake-specific driver will be unable to connect to Snowflake.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake provides a mechanism for its customers to override its clustering algorithms. This method is:",
+    "options": [
+      {
+        "text": "Micro-partitions",
+        "is_correct": false
+      },
+      {
+        "text": "Clustering keys",
+        "is_correct": true
+      },
+      {
+        "text": "Key partitions",
+        "is_correct": false
+      },
+      {
+        "text": "Clustered partitions",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: It is possible for a user to run a query against the query result cache without requiring an active Warehouse.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the recommended Snowflake data type to store semi-structured data like JSON?",
+    "options": [
+      {
+        "text": "VARCHAR",
+        "is_correct": false
+      },
+      {
+        "text": "RAW",
+        "is_correct": false
+      },
+      {
+        "text": "LOB",
+        "is_correct": false
+      },
+      {
+        "text": "VARIANT",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What privileges are required to create a task?",
+    "options": [
+      {
+        "text": "The global privilege create task is required to create a new task.",
+        "is_correct": true
+      },
+      {
+        "text": "Tasks are created at the Application level and can only be created by the Account Admin role.",
+        "is_correct": false
+      },
+      {
+        "text": "Many Snowflake DDLs are metadata operations only, and create task DDL can be executed without virtual warehouse requirement or task specific grants.",
+        "is_correct": false
+      },
+      {
+        "text": "The role must have access to the target schema and the create task privilege on the schema itself.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which interfaces can be used to create and/or manage Virtual Warehouses?",
+    "options": [
+      {
+        "text": "The Snowflake Web Interface (UI)",
+        "is_correct": false
+      },
+      {
+        "text": "SQL commands",
+        "is_correct": true
+      },
+      {
+        "text": "Data integration tools",
+        "is_correct": false
+      },
+      {
+        "text": "All of the above",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are options when creating a virtual Warehouse? Choose 2 answers",
+    "options": [
+      {
+        "text": "Auto-drop",
+        "is_correct": false
+      },
+      {
+        "text": "Auto resize",
+        "is_correct": false
+      },
+      {
+        "text": "Auto-resume",
+        "is_correct": true
+      },
+      {
+        "text": "Auto-suspend",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following best describes where Snowflake’s metadata is stored?",
+    "options": [
+      {
+        "text": "Within the data files",
+        "is_correct": false
+      },
+      {
+        "text": "Inside the Virtual Warehouses",
+        "is_correct": false
+      },
+      {
+        "text": "In the Cloud Services Layer",
+        "is_correct": true
+      },
+      {
+        "text": "within the drivers",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowflake’s Global Services Layer gathers and maintains statistics on all columns in all micro-partitions.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowflake allows its customers to directly access the micro-partition files that make up its tables.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Loading data into Snowflake requires that source data files be no larger than 16MB.",
+    "options": [
+      {
+        "text": "",
+        "is_correct": true
+      },
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Query ID’s are unique across all Snowflake deployments and can be used in communication with Snowflake Support to help troubleshoot issues.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If a Small Warehouse is made up of 2 servers/cluster, how many servers/cluster make up a Medium Warehouse?",
+    "options": [
+      {
+        "text": "4",
+        "is_correct": true
+      },
+      {
+        "text": "16",
+        "is_correct": false
+      },
+      {
+        "text": "32",
+        "is_correct": false
+      },
+      {
+        "text": "128",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: When a user creates a role, they are initially assigned ownership of the role and they maintain ownership until it is transferred to another user.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When creating a user it is advisable sable to: Choose 2 answers",
+    "options": [
+      {
+        "text": "Set the user to be initially disabled",
+        "is_correct": false
+      },
+      {
+        "text": "Force an immediate password change",
+        "is_correct": true
+      },
+      {
+        "text": "Set a default role for the user",
+        "is_correct": true
+      },
+      {
+        "text": "Set the number of minutes to unlock to 15 minutes",
+        "is_correct": false
+      },
+      {
+        "text": "Set the users access to expire within a specified timeframe",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When a Pipe is recreated using the CREATE OR REPLACE PIPE command:",
+    "options": [
+      {
+        "text": "The Pipe load history is reset to empty",
+        "is_correct": true
+      },
+      {
+        "text": "The REFRESH parameter is set to TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "Previously loaded files will be ignored",
+        "is_correct": false
+      },
+      {
+        "text": "All of the above",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: A Snowflake account is charged for data stored in both Internal and External Stages.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are main sections of the top navigation of the Snowflake web Interface (UI)?",
+    "options": [
+      {
+        "text": "Database",
+        "is_correct": true
+      },
+      {
+        "text": "Tables",
+        "is_correct": false
+      },
+      {
+        "text": "Warehouses",
+        "is_correct": true
+      },
+      {
+        "text": "Worksheets",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "which of the following are valid approaches to loading data into a snowflake table? select all the below that apply.",
+    "options": [
+      {
+        "text": "Bulk copy from an External Stage",
+        "is_correct": true
+      },
+      {
+        "text": "Continuous load using Snowpipe REST API",
+        "is_correct": true
+      },
+      {
+        "text": "The Snowflake Web Interface (UT) data loading wizard",
+        "is_correct": true
+      },
+      {
+        "text": "Bulk copy from an Internal Stage",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowflake charges a premium for storing semi-structured data.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following is true of Snowpipe via REST API? Choose 2 answers",
+    "options": [
+      {
+        "text": "you can only use it on internal Stages",
+        "is_correct": false
+      },
+      {
+        "text": "All COPY INTO options are available fluting pipe creation",
+        "is_correct": false
+      },
+      {
+        "text": "Snowflake automatically manages the compute required to execute the Pipe's copy into commands",
+        "is_correct": true
+      },
+      {
+        "text": "Snowpipe keeps track of which files it has loaded",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Snowflake provides two mechanisms to reduce data storage costs for short-lived tables. These mechanisms are: Choose 2 answers",
+    "options": [
+      {
+        "text": "Temporary Tables",
+        "is_correct": true
+      },
+      {
+        "text": "Transient Tables",
+        "is_correct": true
+      },
+      {
+        "text": "Transient Tables",
+        "is_correct": false
+      },
+      {
+        "text": "Transient Tables",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What privileges are required to execute a task?",
+    "options": [
+      {
+        "text": "To execute a task, you need the EXECUTE TAS",
+        "is_correct": true
+      },
+      {
+        "text": "",
+        "is_correct": false
+      },
+      {
+        "text": "A task is an account-level object and can only be executed by the Account Admin role.",
+        "is_correct": false
+      },
+      {
+        "text": "A task is an account-level object and can only be executed by the Account Admin role.",
+        "is_correct": false
+      },
+      {
+        "text": "Tasks are stored in a special database called the utility database and require EXECUTE TASK privilege in the utility database.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or false: Snowflake enforces unique, primary key, and foreign key constraints during DML operations.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which formats are supported for unloading data from Snowflake? Choose 2 answers",
+    "options": [
+      {
+        "text": "Delimited (CSV, TSV, etc.)",
+        "is_correct": true
+      },
+      {
+        "text": "Avro",
+        "is_correct": false
+      },
+      {
+        "text": "JSON",
+        "is_correct": true
+      },
+      {
+        "text": "ORC",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The Information Schema and Account Usage Share provide storage information for which of the following objects? (Choose three.)",
+    "options": [
+      {
+        "text": "Users",
+        "is_correct": true
+      },
+      {
+        "text": "Tables",
+        "is_correct": true
+      },
+      {
+        "text": "Databases",
+        "is_correct": true
+      },
+      {
+        "text": "Internal Stages",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the most granular object that the Time Travel retention period can be defined on? Select one.",
+    "options": [
+      {
+        "text": "Account",
+        "is_correct": true
+      },
+      {
+        "text": "Database",
+        "is_correct": false
+      },
+      {
+        "text": "Schema",
+        "is_correct": false
+      },
+      {
+        "text": "Schema",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The FLATEEN function is used to query which type of data in Snowflake?",
+    "options": [
+      {
+        "text": "Structured data",
+        "is_correct": false
+      },
+      {
+        "text": "Semi-structured data",
+        "is_correct": true
+      },
+      {
+        "text": "Both of the above",
+        "is_correct": false
+      },
+      {
+        "text": "None of the above",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following connectors allow Multi-Factor Authentication (MFA) authorization when connecting? (Choose all that apply.)",
+    "options": [
+      {
+        "text": "JDBC",
+        "is_correct": true
+      },
+      {
+        "text": "SnowSQL",
+        "is_correct": true
+      },
+      {
+        "text": "Snowflake Web Interface (UI)",
+        "is_correct": true
+      },
+      {
+        "text": "ODBC",
+        "is_correct": true
+      },
+      {
+        "text": "Python D18912E1457D5D1DDCBD40AB3BF70D5D",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When loading data into Snowflake, the COPY command supports: Choose 2 answers",
+    "options": [
+      {
+        "text": "Joins",
+        "is_correct": false
+      },
+      {
+        "text": "Fitters",
+        "is_correct": false
+      },
+      {
+        "text": "Data type conversions",
+        "is_correct": true
+      },
+      {
+        "text": "Column reordering",
+        "is_correct": true
+      },
+      {
+        "text": "Aggregates",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following objects is not covered by Time Travel?",
+    "options": [
+      {
+        "text": "Tables",
+        "is_correct": false
+      },
+      {
+        "text": "Schemas",
+        "is_correct": false
+      },
+      {
+        "text": "Databases",
+        "is_correct": false
+      },
+      {
+        "text": "Stages",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are true of multi-cluster Warehouses? Select all that apply below.",
+    "options": [
+      {
+        "text": "A multi-cluster Warehouse can add clusters automatically based on query activity",
+        "is_correct": true
+      },
+      {
+        "text": "A multi-cluster Warehouse can automatically turn itself off after a period of inactivity",
+        "is_correct": true
+      },
+      {
+        "text": "A multi-cluster Warehouse can scale down when query activity slows",
+        "is_correct": true
+      },
+      {
+        "text": "A multi-cluster Warehouse can automatically turn itself on when a query is executed against it",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When a pipe is recreated using the CREATE on REPLAC PIPE command: Select one.",
+    "options": [
+      {
+        "text": "The Pipe load history is reset to empty",
+        "is_correct": true
+      },
+      {
+        "text": "The REFRESH parameter is set to TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "Previously loaded files will be ignored",
+        "is_correct": false
+      },
+      {
+        "text": "All of the above",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Query results are stored in the Result Cache for how long after they are last accessed, assuming no data changes have occurred? Select one.",
+    "options": [
+      {
+        "text": "1 Hour",
+        "is_correct": false
+      },
+      {
+        "text": "3 Hours",
+        "is_correct": false
+      },
+      {
+        "text": "12 hours",
+        "is_correct": false
+      },
+      {
+        "text": "24 hours",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Fail-safe can be disabled within a Snowflake account.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "text": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following roles is recommended to be used to create and manage users and roles?",
+    "options": [
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "PUBLIC",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: A Virtual Warehouse consumes Snowflake credits even when inactive.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "The fail-safe retention period is how many days?",
+    "options": [
+      {
+        "text": "1 day",
+        "is_correct": false
+      },
+      {
+        "text": "7 days",
+        "is_correct": false
+      },
+      {
+        "text": "45 days",
+        "is_correct": false
+      },
+      {
+        "text": "90 days",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: When Snowflake is configured to use Single Sign-on (sso), Snowflake receive the usernames and credentials from the sso service and loads them into the customer's Snowflake account",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "false",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If auto-suspend is enable for a Virtual Warehouse, he Warehouse is automatically suspended when:",
+    "options": [
+      {
+        "text": "All Snowflake sessions using the warehouse are terminated.",
+        "is_correct": false
+      },
+      {
+        "text": "The last query using the warehouse completes.",
+        "is_correct": false
+      },
+      {
+        "text": "There are no users loaned into Snowflake.",
+        "is_correct": false
+      },
+      {
+        "text": "The Warehouse is inactive for a specified period of time.",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following accurately represents how a table fits into Snowflake’s logical container hierarchy? Select one.",
+    "options": [
+      {
+        "text": "Account -> Schema -> Database -> Table",
+        "is_correct": false
+      },
+      {
+        "text": "Account -> Database -> Schema -> Table",
+        "is_correct": true
+      },
+      {
+        "text": "Database -> Schema -> Table -> Account",
+        "is_correct": false
+      },
+      {
+        "text": "Database -> Table -> Schema -> Account",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which is true of Snowflake network policies? A Snowflake network policy: (Choose two.)",
+    "options": [
+      {
+        "text": "Is available to all Snowflake Editions",
+        "is_correct": true
+      },
+      {
+        "text": "Is only available to customers with Business Critical Edition",
+        "is_correct": false
+      },
+      {
+        "text": "Restricts or enables access to specific IP addresses",
+        "is_correct": true
+      },
+      {
+        "text": "Is activated using an “ALTER DATABASE” command",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "If 3 size Small virtual warehouse is made up of two servers, how many servers make up a Large warehouse?",
+    "options": [
+      {
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "text": "8",
+        "is_correct": true
+      },
+      {
+        "text": "16",
+        "is_correct": false
+      },
+      {
+        "text": "32",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user is preparing to load data from an external stage Which practice will provide the MOST efficient loading performance?",
+    "options": [
+      {
+        "text": "Organize files into logical paths",
+        "is_correct": false
+      },
+      {
+        "text": "Store the files on the external stage to ensure caching is maintained",
+        "is_correct": false
+      },
+      {
+        "text": "Use pattern matching for regular expression execution",
+        "is_correct": false
+      },
+      {
+        "text": "Load the data in one large file",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which snowflake objects will incur both storage and cloud compute charges? (Select TWO)",
+    "options": [
+      {
+        "text": "Materialized view",
+        "is_correct": false
+      },
+      {
+        "text": "Sequence",
+        "is_correct": false
+      },
+      {
+        "text": "Secure view",
+        "is_correct": false
+      },
+      {
+        "text": "Transient table",
+        "is_correct": true
+      },
+      {
+        "text": "Clustered table",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which statements are true concerning Snowflake's underlying cloud infrastructure? (Select THREE),",
+    "options": [
+      {
+        "text": "Snowflake data and services are deployed in a single availability zone within a cloud provider's region.",
+        "is_correct": false
+      },
+      {
+        "text": "Snowflake data and services are available in a single cloud provider and a single region, the use of multiple cloud providers is not supported.",
+        "is_correct": false
+      },
+      {
+        "text": "Snowflake can be deployed in a customer's private cloud using the customer's own compute and storage resources for Snowflake compute and storage",
+        "is_correct": false
+      },
+      {
+        "text": "Snowflake uses the core compute and storage services of each cloud provider for its own compute and storage",
+        "is_correct": true
+      },
+      {
+        "text": "All three layers of Snowflake's architecture (storage, compute, and cloud services) are deployed and managed entirely on a selected cloud platform",
+        "is_correct": true
+      },
+      {
+        "text": "Snowflake data and services are deployed in at least three availability zones within a cloud provider's region",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the purpose of multi-cluster virtual warehouses?",
+    "options": [
+      {
+        "text": "To create separate data warehouses to increase query optimization",
+        "is_correct": false
+      },
+      {
+        "text": "To allow users the ability to choose the type of compute nodes that make up a virtual warehouse cluster",
+        "is_correct": false
+      },
+      {
+        "text": "To eliminate or reduce Queuing of concurrent queries",
+        "is_correct": true
+      },
+      {
+        "text": "To allow the warehouse to resize automatically",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user created a new worksheet within the Snowsight Ul and wants to share this with teammates How can this worksheet be shared?",
+    "options": [
+      {
+        "text": "Create a zero-copy clone of the worksheet and grant permissions to teammates",
+        "is_correct": false
+      },
+      {
+        "text": "Create a private Data Exchange so that any teammate can use the worksheet",
+        "is_correct": false
+      },
+      {
+        "text": "Share the worksheet with teammates within Snowsight",
+        "is_correct": true
+      },
+      {
+        "text": "Create a database and grant all permissions to teammates",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the purpose of an External Function?",
+    "options": [
+      {
+        "text": "To call code that executes outside of Snowflake",
+        "is_correct": true
+      },
+      {
+        "text": "To run a function in another Snowflake database",
+        "is_correct": false
+      },
+      {
+        "text": "To share data in Snowflake with external parties",
+        "is_correct": false
+      },
+      {
+        "text": "To ingest data from on-premises data sources",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which semi-structured file formats are supported when unloading data from a table? (Select TWO).",
+    "options": [
+      {
+        "text": "ORC",
+        "is_correct": false
+      },
+      {
+        "text": "XML",
+        "is_correct": false
+      },
+      {
+        "text": "Avro",
+        "is_correct": false
+      },
+      {
+        "text": "Parquet",
+        "is_correct": true
+      },
+      {
+        "text": "JSON",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A company's security audit requires generating a report listing all Snowflake logins (e.g.. date and user) within the last 90 days. Which of the following statements will return the required information?",
+    "options": [
+      {
+        "text": "",
+        "is_correct": false
+      },
+      {
+        "text": "",
+        "is_correct": false
+      },
+      {
+        "text": "",
+        "is_correct": true
+      },
+      {
+        "text": "",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What are ways to create and manage data shares in Snowflake? (Select TWO)",
+    "options": [
+      {
+        "text": "Through the Snowflake web interface (Ul)",
+        "is_correct": false
+      },
+      {
+        "text": "Through the DATA_SHARE=TRUE parameter",
+        "is_correct": false
+      },
+      {
+        "text": "Through SQL commands",
+        "is_correct": true
+      },
+      {
+        "text": "Through the enable__share=true parameter",
+        "is_correct": true
+      },
+      {
+        "text": "Using the CREATE SHARE AS SELECT * TABLE command",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following describes external functions in Snowflake?",
+    "options": [
+      {
+        "text": "They are a type of User-defined Function (UDF).",
+        "is_correct": true
+      },
+      {
+        "text": "They contain their own SQL code.",
+        "is_correct": false
+      },
+      {
+        "text": "They call code that is stored inside of Snowflake.",
+        "is_correct": false
+      },
+      {
+        "text": "They can return multiple rows for each row received",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When is the result set cache no longer available? (Select TWO)",
+    "options": [
+      {
+        "text": "When another warehouse is used to execute the query",
+        "is_correct": false
+      },
+      {
+        "text": "When another user executes the query",
+        "is_correct": false
+      },
+      {
+        "text": "When the underlying data has changed",
+        "is_correct": true
+      },
+      {
+        "text": "When the warehouse used to execute the query is suspended",
+        "is_correct": false
+      },
+      {
+        "text": "When it has been 24 hours since the last query",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When unloading to a stage, which of the following is a recommended practice or approach?",
+    "options": [
+      {
+        "text": "Set SINGLE: = true for larger files",
+        "is_correct": false
+      },
+      {
+        "text": "Use OBJECT_CONSTRUCT ( * ) when using Parquet",
+        "is_correct": false
+      },
+      {
+        "text": "Avoid the use of the CAST function",
+        "is_correct": true
+      },
+      {
+        "text": "Define an individual file format",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What Snowflake role must be granted for a user to create and manage accounts?",
+    "options": [
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": true
+      },
+      {
+        "text": "ORGADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following can be executed/called with Snowpipe?",
+    "options": [
+      {
+        "text": "A User Defined Function (UDF)",
+        "is_correct": false
+      },
+      {
+        "text": "A stored procedure",
+        "is_correct": false
+      },
+      {
+        "text": "A single copy_into statement",
+        "is_correct": true
+      },
+      {
+        "text": "A single insert__into statement",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What SQL command would be used to view all roles that were granted to user.1?",
+    "options": [
+      {
+        "text": "show grants to user USER1;",
+        "is_correct": true
+      },
+      {
+        "text": "show grants of user USER1;",
+        "is_correct": false
+      },
+      {
+        "text": "describe user USER1;",
+        "is_correct": false
+      },
+      {
+        "text": "show grants on user USER1;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What feature can be used to reorganize a very large table on one or more columns?",
+    "options": [
+      {
+        "text": "Micro-partitions",
+        "is_correct": false
+      },
+      {
+        "text": "Clustering keys",
+        "is_correct": true
+      },
+      {
+        "text": "Key partitions",
+        "is_correct": false
+      },
+      {
+        "text": "Clustered partitions",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What tasks can be completed using the copy command? (Select TWO)",
+    "options": [
+      {
+        "text": "Columns can be aggregated",
+        "is_correct": false
+      },
+      {
+        "text": "Columns can be joined with an existing table",
+        "is_correct": false
+      },
+      {
+        "text": "Columns can be reordered",
+        "is_correct": true
+      },
+      {
+        "text": "Columns can be omitted",
+        "is_correct": true
+      },
+      {
+        "text": "Data can be loaded without the need to spin up a virtual warehouse",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which Snowflake objects track DML changes made to tables, like inserts, updates, and deletes?",
+    "options": [
+      {
+        "text": "Pipes",
+        "is_correct": false
+      },
+      {
+        "text": "Streams",
+        "is_correct": true
+      },
+      {
+        "text": "Tasks",
+        "is_correct": false
+      },
+      {
+        "text": "Procedures",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A company strongly encourages all Snowflake users to self-enroll in Snowflake's default Multi-Factor Authentication (MFA) service to provide increased login security for users connecting to Snowflake. Which application will the Snowflake users need to install on their devices in order to connect with MFA?",
+    "options": [
+      {
+        "text": "Okta Verify",
+        "is_correct": false
+      },
+      {
+        "text": "Duo Mobile",
+        "is_correct": true
+      },
+      {
+        "text": "Microsoft Authenticator",
+        "is_correct": false
+      },
+      {
+        "text": "Google Authenticator",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which Snowflake feature is used for both querying and restoring data?",
+    "options": [
+      {
+        "text": "Cluster keys",
+        "is_correct": false
+      },
+      {
+        "text": "Time Travel",
+        "is_correct": true
+      },
+      {
+        "text": "Fail-safe",
+        "is_correct": false
+      },
+      {
+        "text": "Cloning",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What can be used to view warehouse usage over time? (Select Two).",
+    "options": [
+      {
+        "text": "The load HISTORY view",
+        "is_correct": false
+      },
+      {
+        "text": "The Query history view",
+        "is_correct": false
+      },
+      {
+        "text": "The show warehouses command",
+        "is_correct": false
+      },
+      {
+        "text": "The WAREHOUSE_METERING__HISTORY View",
+        "is_correct": true
+      },
+      {
+        "text": "The billing and usage tab in the Snowflake web Ul",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which data type can be used to store geospatial data in Snowflake?",
+    "options": [
+      {
+        "text": "Variant",
+        "is_correct": false
+      },
+      {
+        "text": "Object",
+        "is_correct": false
+      },
+      {
+        "text": "Geometry",
+        "is_correct": false
+      },
+      {
+        "text": "Geography",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following is a valid source for an external stage when the Snowflake account is located on Microsoft Azure?",
+    "options": [
+      {
+        "text": "An FTP server with TLS encryption",
+        "is_correct": false
+      },
+      {
+        "text": "An HTTPS server with WebDAV",
+        "is_correct": false
+      },
+      {
+        "text": "A Google Cloud storage bucket",
+        "is_correct": false
+      },
+      {
+        "text": "A Windows server file share on Azure",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is a machine learning and data science partner within the Snowflake Partner Ecosystem?",
+    "options": [
+      {
+        "text": "Informatica",
+        "is_correct": false
+      },
+      {
+        "text": "Power Bl",
+        "is_correct": false
+      },
+      {
+        "text": "Adobe",
+        "is_correct": false
+      },
+      {
+        "text": "Data Robot",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following describes how clustering keys work in Snowflake?",
+    "options": [
+      {
+        "text": "Clustering keys update the micro-partitions in place with a full sort, and impact the DML operations",
+        "is_correct": false
+      },
+      {
+        "text": "Clustering keys sort the designated columns over time, without blocking DML operations",
+        "is_correct": true
+      },
+      {
+        "text": "Clustering keys create a distributed, parallel data structure of pointers to a table's rows and columns",
+        "is_correct": false
+      },
+      {
+        "text": "Clustering keys establish a hashed key on each node of a virtual warehouse to optimize joins at run-time",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A developer is granted ownership of a table that has a masking policy. The developer's role is not able to see the masked dat a. Will the developer be able to modify the table to read the masked data?",
+    "options": [
+      {
+        "text": "Yes, because a table owner has full control and can unset masking policies.",
+        "is_correct": true
+      },
+      {
+        "text": "Yes, because masking policies only apply to cloned tables.",
+        "is_correct": false
+      },
+      {
+        "text": "No, because masking policies must always reference specific access roles.",
+        "is_correct": false
+      },
+      {
+        "text": "No, because ownership of a table does not include the ability to change masking policies",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What happens when a virtual warehouse is resized?",
+    "options": [
+      {
+        "text": "When increasing the size of an active warehouse the compute resource for all running and queued queries on the warehouse are affected",
+        "is_correct": false
+      },
+      {
+        "text": "When reducing the size of a warehouse the compute resources are removed only when they are no longer being used to execute any current statements.",
+        "is_correct": true
+      },
+      {
+        "text": "The warehouse will be suspended while the new compute resource is provisioned and will resume automatically once provisioning is complete.",
+        "is_correct": false
+      },
+      {
+        "text": "Users who are trying to use the warehouse will receive an error message until the resizing is complete",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following compute resources or features are managed by Snowflake? (Select TWO).",
+    "options": [
+      {
+        "text": "Execute a COPY command",
+        "is_correct": true
+      },
+      {
+        "text": "Updating data",
+        "is_correct": false
+      },
+      {
+        "text": "Snowpipe",
+        "is_correct": false
+      },
+      {
+        "text": "AUTOMATIC__CLUSTERING",
+        "is_correct": true
+      },
+      {
+        "text": "Scaling up a warehouse",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is a responsibility of Snowflake's virtual warehouses?",
+    "options": [
+      {
+        "text": "Infrastructure management",
+        "is_correct": false
+      },
+      {
+        "text": "Metadata management",
+        "is_correct": false
+      },
+      {
+        "text": "Query execution",
+        "is_correct": true
+      },
+      {
+        "text": "Query parsing and optimization",
+        "is_correct": false
+      },
+      {
+        "text": "Management of the storage layer",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What transformations are supported in a CREATE PIPE ... AS COPY ... FROM (....) statement? (Select TWO.)",
+    "options": [
+      {
+        "text": ")",
+        "is_correct": false
+      },
+      {
+        "text": "Data can be filtered by an optional where clause",
+        "is_correct": false
+      },
+      {
+        "text": "Incoming data can be joined with other tables",
+        "is_correct": false
+      },
+      {
+        "text": "Columns can be reordered",
+        "is_correct": true
+      },
+      {
+        "text": "Columns can be omitted",
+        "is_correct": true
+      },
+      {
+        "text": "Row level access can be defined",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In which scenarios would a user have to pay Cloud Services costs? (Select TWO).",
+    "options": [
+      {
+        "text": "Compute Credits = 50 Credits Cloud Services = 10",
+        "is_correct": false
+      },
+      {
+        "text": "Compute Credits = 80 Credits Cloud Services = 5",
+        "is_correct": true
+      },
+      {
+        "text": "Compute Credits = 10 Credits Cloud Services = 9",
+        "is_correct": false
+      },
+      {
+        "text": "Compute Credits = 120 Credits Cloud Services = 10",
+        "is_correct": true
+      },
+      {
+        "text": "Compute Credits = 200 Credits Cloud Services = 26",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What data is stored in the Snowflake storage layer? (Select TWO).",
+    "options": [
+      {
+        "text": "Snowflake parameters",
+        "is_correct": false
+      },
+      {
+        "text": "Micro-partitions",
+        "is_correct": true
+      },
+      {
+        "text": "Query history",
+        "is_correct": false
+      },
+      {
+        "text": "Persisted query results",
+        "is_correct": true
+      },
+      {
+        "text": "Standard and secure view results",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which services does the Snowflake Cloud Services layer manage? (Select TWO).",
+    "options": [
+      {
+        "text": "Compute resources",
+        "is_correct": false
+      },
+      {
+        "text": "Query execution",
+        "is_correct": false
+      },
+      {
+        "text": "Authentication",
+        "is_correct": true
+      },
+      {
+        "text": "Data storage",
+        "is_correct": false
+      },
+      {
+        "text": "Metadata",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the recommended file sizing for data loading using Snowpipe?",
+    "options": [
+      {
+        "text": "A compressed file size greater than 100 MB, and up to 250 MB",
+        "is_correct": true
+      },
+      {
+        "text": "A compressed file size greater than 100 GB, and up to 250 GB",
+        "is_correct": false
+      },
+      {
+        "text": "A compressed file size greater than 10 MB, and up to 100 MB",
+        "is_correct": false
+      },
+      {
+        "text": "A compressed file size greater than 1 GB, and up to 2 GB",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command can be used to stage local files from which Snowflake interface?",
+    "options": [
+      {
+        "text": "SnowSQL",
+        "is_correct": true
+      },
+      {
+        "text": "Snowflake classic web interface (Ul)",
+        "is_correct": false
+      },
+      {
+        "text": "Snowsight",
+        "is_correct": false
+      },
+      {
+        "text": ".NET driver",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which stage type can be altered and dropped?",
+    "options": [
+      {
+        "text": "Database stage",
+        "is_correct": false
+      },
+      {
+        "text": "External stage",
+        "is_correct": false
+      },
+      {
+        "text": "Table stage",
+        "is_correct": true
+      },
+      {
+        "text": "User stage",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When reviewing a query profile, what is a symptom that a query is too large to fit into the memory?",
+    "options": [
+      {
+        "text": "A single join node uses more than 50% of the query time",
+        "is_correct": false
+      },
+      {
+        "text": "Partitions scanned is equal to partitions total",
+        "is_correct": false
+      },
+      {
+        "text": "An AggregateOperacor node is present",
+        "is_correct": false
+      },
+      {
+        "text": "The query is spilling to remote storage",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A marketing co-worker has requested the ability to change a warehouse size on their medium virtual warehouse called mktg__WH. Which of the following statements will accommodate this request?",
+    "options": [
+      {
+        "text": "Which of the following statements will accommodate this request?",
+        "is_correct": false
+      },
+      {
+        "text": "ALLOW RESIZE ON WAREHOUSE MKTG__WH TO USER MKTG__LEAD;",
+        "is_correct": false
+      },
+      {
+        "text": "GRANT MODIFY ON WAREHOUSE MKTG WH TO ROLE MARKETING;",
+        "is_correct": true
+      },
+      {
+        "text": "GRANT MODIFY ON WAREHOUSE MKTG__WH TO USER MKTG__LEAD;",
+        "is_correct": false
+      },
+      {
+        "text": "GRANT OPERATE ON WAREHOUSE MKTG WH TO ROLE MARKETING;",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In the query profiler view for a query, which components represent areas that can be used to help optimize query performance? (Select TWO)",
+    "options": [
+      {
+        "text": "Bytes scanned",
+        "is_correct": true
+      },
+      {
+        "text": "Bytes sent over the network",
+        "is_correct": false
+      },
+      {
+        "text": "Number of partitions scanned",
+        "is_correct": true
+      },
+      {
+        "text": "Percentage scanned from cache",
+        "is_correct": false
+      },
+      {
+        "text": "External bytes scanned",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which is the MINIMUM required Snowflake edition that a user must have if they want to use AWS/Azure Privatelink or Google Cloud Private Service Connect?",
+    "options": [
+      {
+        "text": "Standard",
+        "is_correct": false
+      },
+      {
+        "text": "Premium",
+        "is_correct": false
+      },
+      {
+        "text": "Enterprise",
+        "is_correct": false
+      },
+      {
+        "text": "Business Critical",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Query compilation occurs in which architecture layer of the Snowflake Cloud Data Platform?",
+    "options": [
+      {
+        "text": "Compute layer",
+        "is_correct": true
+      },
+      {
+        "text": "Storage layer",
+        "is_correct": false
+      },
+      {
+        "text": "Cloud infrastructure layer",
+        "is_correct": false
+      },
+      {
+        "text": "Cloud services layer",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which account__usage views are used to evaluate the details of dynamic data masking? (Select TWO)",
+    "options": [
+      {
+        "text": "ROLES",
+        "is_correct": false
+      },
+      {
+        "text": "POLICY_REFERENCES",
+        "is_correct": true
+      },
+      {
+        "text": "QUERY_HISTORY",
+        "is_correct": false
+      },
+      {
+        "text": "RESOURCE_MONIT ORS",
+        "is_correct": false
+      },
+      {
+        "text": "ACCESS_HISTORY",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "In which use cases does Snowflake apply egress charges?",
+    "options": [
+      {
+        "text": "Data sharing within a specific region",
+        "is_correct": true
+      },
+      {
+        "text": "Query result retrieval",
+        "is_correct": false
+      },
+      {
+        "text": "Database replication",
+        "is_correct": false
+      },
+      {
+        "text": "Loading data into Snowflake",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How long is Snowpipe data load history retained?",
+    "options": [
+      {
+        "text": "As configured in the create pipe settings",
+        "is_correct": false
+      },
+      {
+        "text": "Until the pipe is dropped",
+        "is_correct": false
+      },
+      {
+        "text": "64 days",
+        "is_correct": true
+      },
+      {
+        "text": "14 days",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What happens when an external or an internal stage is dropped? (Select TWO).",
+    "options": [
+      {
+        "text": "When dropping an external stage, the files are not removed and only the stage is dropped",
+        "is_correct": true
+      },
+      {
+        "text": "When dropping an external stage, both the stage and the files within the stage are removed",
+        "is_correct": false
+      },
+      {
+        "text": "When dropping an internal stage, the files are deleted with the stage and the files are recoverable",
+        "is_correct": true
+      },
+      {
+        "text": "When dropping an internal stage, the files are deleted with the stage and the files are not recoverable",
+        "is_correct": false
+      },
+      {
+        "text": "When dropping an internal stage, only selected files are deleted with the stage and are not recoverable",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command can be used to load data into an internal stage?",
+    "options": [
+      {
+        "text": "LOAD",
+        "is_correct": false
+      },
+      {
+        "text": "copy",
+        "is_correct": true
+      },
+      {
+        "text": "GET",
+        "is_correct": false
+      },
+      {
+        "text": "PUT",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "User-level network policies can be created by which of the following roles? (Select TWO).",
+    "options": [
+      {
+        "text": "ROLEADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "ACCOUNTADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SYSADMIN",
+        "is_correct": false
+      },
+      {
+        "text": "SECURITYADMIN",
+        "is_correct": true
+      },
+      {
+        "text": "USERADMIN",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which Snowflake technique can be used to improve the performance of a query?",
+    "options": [
+      {
+        "text": "Clustering",
+        "is_correct": true
+      },
+      {
+        "text": "Indexing",
+        "is_correct": false
+      },
+      {
+        "text": "Fragmenting",
+        "is_correct": false
+      },
+      {
+        "text": "Using INDEX__HINTS",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Where would a Snowflake user find information about query activity from 90 days ago?",
+    "options": [
+      {
+        "text": "account__usage . query history view",
+        "is_correct": true
+      },
+      {
+        "text": "account__usage.query__history__archive View",
+        "is_correct": false
+      },
+      {
+        "text": "information__schema . cruery_history view",
+        "is_correct": false
+      },
+      {
+        "text": "information__schema - query history_by_ses s i on view",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which copy INTO command outputs the data into one file?",
+    "options": [
+      {
+        "text": "SINGLE=TRUE",
+        "is_correct": false
+      },
+      {
+        "text": "MAX_FILE_NUMBER=1",
+        "is_correct": true
+      },
+      {
+        "text": "FILE_NUMBER=1",
+        "is_correct": false
+      },
+      {
+        "text": "MULTIPLE=FAISE",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the MOST performant file format for loading data in Snowflake?",
+    "options": [
+      {
+        "text": "CSV (Unzipped)",
+        "is_correct": true
+      },
+      {
+        "text": "Parquet",
+        "is_correct": false
+      },
+      {
+        "text": "CSV (Gzipped)",
+        "is_correct": false
+      },
+      {
+        "text": "ORC",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which Snowflake partner specializes in data catalog solutions?",
+    "options": [
+      {
+        "text": "Alation",
+        "is_correct": true
+      },
+      {
+        "text": "DataRobot",
+        "is_correct": false
+      },
+      {
+        "text": "dbt",
+        "is_correct": false
+      },
+      {
+        "text": "Tableau",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Will data cached in a warehouse be lost when the warehouse is resized?",
+    "options": [
+      {
+        "text": "Possibly, if the warehouse is resized to a smaller size and the cache no longer fits.",
+        "is_correct": true
+      },
+      {
+        "text": "Yes. because the compute resource is replaced in its entirety with a new compute resource.",
+        "is_correct": false
+      },
+      {
+        "text": "No. because the size of the cache is independent from the warehouse size",
+        "is_correct": false
+      },
+      {
+        "text": "Yes. became the new compute resource will no longer have access to the cache encryption key",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following Snowflake objects can be shared using a secure share? (Select TWO).",
+    "options": [
+      {
+        "text": "Materialized views",
+        "is_correct": false
+      },
+      {
+        "text": "Sequences",
+        "is_correct": false
+      },
+      {
+        "text": "Procedures",
+        "is_correct": false
+      },
+      {
+        "text": "Tables",
+        "is_correct": true
+      },
+      {
+        "text": "Secure User Defined Functions (UDFs)",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is a best practice after creating a custom role?",
+    "options": [
+      {
+        "text": "Create the custom role using the SYSADMIN role.",
+        "is_correct": false
+      },
+      {
+        "text": "Assign the custom role to the SYSADMIN role",
+        "is_correct": true
+      },
+      {
+        "text": "Assign the custom role to the PUBLIC role",
+        "is_correct": false
+      },
+      {
+        "text": "Add__CUSTOM to all custom role names",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What are the default Time Travel and Fail-safe retention periods for transient tables?",
+    "options": [
+      {
+        "text": "Time Travel - 1 day. Fail-safe - 1 day",
+        "is_correct": false
+      },
+      {
+        "text": "Time Travel - 0 days. Fail-safe - 1 day",
+        "is_correct": false
+      },
+      {
+        "text": "Time Travel - 1 day. Fail-safe - 0 days",
+        "is_correct": true
+      },
+      {
+        "text": "Transient tables are retained in neither Fail-safe nor Time Travel",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user is loading JSON documents composed of a huge array containing multiple records into Snowflake. The user enables the strip__outer_array file format option What does the STRIP_OUTER_ARRAY file format do?",
+    "options": [
+      {
+        "text": "It removes the last element of the outer array.",
+        "is_correct": false
+      },
+      {
+        "text": "It removes the outer array structure and loads the records into separate table rows,",
+        "is_correct": true
+      },
+      {
+        "text": "It removes the trailing spaces in the last element of the outer array and loads the records into separate table columns",
+        "is_correct": false
+      },
+      {
+        "text": "It removes the NULL elements from the JSON object eliminating invalid data and enables the ability to load the records",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following describes how multiple Snowflake accounts in a single organization relate to various cloud providers?",
+    "options": [
+      {
+        "text": "Each Snowflake account can be hosted in a different cloud vendor and region.",
+        "is_correct": false
+      },
+      {
+        "text": "Each Snowflake account must be hosted in a different cloud vendor and region",
+        "is_correct": true
+      },
+      {
+        "text": "All Snowflake accounts must be hosted in the same cloud vendor and region",
+        "is_correct": false
+      },
+      {
+        "text": "Each Snowflake account can be hosted in a different cloud vendor, but must be in the same region.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which data types does Snowflake support when querying semi-structured data? (Select TWO)",
+    "options": [
+      {
+        "text": "VARIANT",
+        "is_correct": true
+      },
+      {
+        "text": "ARRAY",
+        "is_correct": true
+      },
+      {
+        "text": "VARCHAR",
+        "is_correct": false
+      },
+      {
+        "text": "XML",
+        "is_correct": false
+      },
+      {
+        "text": "BLOB",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What happens when a cloned table is replicated to a secondary database? (Select TWO)",
+    "options": [
+      {
+        "text": "A read-only copy of the cloned tables is stored.",
+        "is_correct": false
+      },
+      {
+        "text": "The replication will not be successful.",
+        "is_correct": false
+      },
+      {
+        "text": "The physical data is replicated",
+        "is_correct": true
+      },
+      {
+        "text": "Additional costs for storage are charged to a secondary account",
+        "is_correct": true
+      },
+      {
+        "text": "Metadata pointers to cloned tables are replicated",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user has unloaded data from Snowflake to a stage Which SQL command should be used to validate which data was loaded into the stage?",
+    "options": [
+      {
+        "text": "list @file__stage",
+        "is_correct": true
+      },
+      {
+        "text": "show @file__stage",
+        "is_correct": false
+      },
+      {
+        "text": "view @file__stage",
+        "is_correct": false
+      },
+      {
+        "text": "verify @file__stage",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user has 10 files in a stage containing new customer dat a. The ingest operation completes with no errors, using the following command: COPY INTO my__table FROM @my__stage; The next day the user adds 10 files to the stage so that now the stage contains a mixture of new customer data and updates to the previous data. The user did not remove the 10 original files. If the user runs the same copy into command what will happen?",
+    "options": [
+      {
+        "text": "All data from all of the files on the stage will be appended to the table",
+        "is_correct": true
+      },
+      {
+        "text": "Only data about new customers from the new files will be appended to the table",
+        "is_correct": false
+      },
+      {
+        "text": "The operation will fail with the error uncertain files in stage.",
+        "is_correct": false
+      },
+      {
+        "text": "All data from only the newly-added files will be appended to the table.",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are best practice recommendations that should be considered when loading data into Snowflake? (Select TWO).",
+    "options": [
+      {
+        "text": "Load files that are approximately 25 MB or smaller.",
+        "is_correct": false
+      },
+      {
+        "text": "Remove all dates and timestamps.",
+        "is_correct": false
+      },
+      {
+        "text": "Load files that are approximately 100-250 MB (or larger)",
+        "is_correct": true
+      },
+      {
+        "text": "Avoid using embedded characters such as commas for numeric data types",
+        "is_correct": true
+      },
+      {
+        "text": "Remove semi-structured data types",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user has an application that writes a new Tile to a cloud storage location every 5 minutes. What would be the MOST efficient way to get the files into Snowflake?",
+    "options": [
+      {
+        "text": "Create a task that runs a copy into operation from an external stage every 5 minutes",
+        "is_correct": false
+      },
+      {
+        "text": "Create a task that puts the files in an internal stage and automate the data loading wizard",
+        "is_correct": false
+      },
+      {
+        "text": "Create a task that runs a GET operation to intermittently check for new files",
+        "is_correct": false
+      },
+      {
+        "text": "Set up cloud provider notifications on the Tile location and use Snowpipe with auto-ingest",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What are value types that a VARIANT column can store? (Select TWO)",
+    "options": [
+      {
+        "text": "STRUCT",
+        "is_correct": false
+      },
+      {
+        "text": "OBJECT",
+        "is_correct": true
+      },
+      {
+        "text": "BINARY",
+        "is_correct": false
+      },
+      {
+        "text": "ARRAY",
+        "is_correct": true
+      },
+      {
+        "text": "CLOB",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "How often are encryption keys automatically rotated by Snowflake?",
+    "options": [
+      {
+        "text": "30 Days",
+        "is_correct": true
+      },
+      {
+        "text": "60 Days",
+        "is_correct": false
+      },
+      {
+        "text": "90 Days",
+        "is_correct": false
+      },
+      {
+        "text": "365 Days",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which command is used to unload data from a Snowflake table into a file in a stage?",
+    "options": [
+      {
+        "text": "COPY INTO",
+        "is_correct": true
+      },
+      {
+        "text": "GET",
+        "is_correct": false
+      },
+      {
+        "text": "WRITE",
+        "is_correct": false
+      },
+      {
+        "text": "EXTRACT INTO",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following Snowflake capabilities are available in all Snowflake editions? (Select TWO)",
+    "options": [
+      {
+        "text": "Customer-managed encryption keys through Tri-Secret Secure",
+        "is_correct": false
+      },
+      {
+        "text": "Automatic encryption of all data",
+        "is_correct": true
+      },
+      {
+        "text": "Up to 90 days of data recovery through Time Travel",
+        "is_correct": false
+      },
+      {
+        "text": "Object-level access control",
+        "is_correct": true
+      },
+      {
+        "text": "Column-level security to apply data masking policies to tables and views",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user unloaded a Snowflake table called mytable to an internal stage called mystage. Which command can be used to view the list of files that has been uploaded to the staged?",
+    "options": [
+      {
+        "text": "list @mytable;",
+        "is_correct": false
+      },
+      {
+        "text": "list @%raytable;",
+        "is_correct": false
+      },
+      {
+        "text": "list @ %m.ystage;",
+        "is_correct": false
+      },
+      {
+        "text": "list @mystage;",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following commands cannot be used within a reader account?",
+    "options": [
+      {
+        "text": "CREATE SHARE",
+        "is_correct": false
+      },
+      {
+        "text": "ALTER WAREHOUSE",
+        "is_correct": true
+      },
+      {
+        "text": "DROP ROLE",
+        "is_correct": false
+      },
+      {
+        "text": "SHOW SCHEMAS",
+        "is_correct": false
+      },
+      {
+        "text": "DESCRBE TABLE",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following objects can be shared through secure data sharing?",
+    "options": [
+      {
+        "text": "Masking policy",
+        "is_correct": false
+      },
+      {
+        "text": "Stored procedure",
+        "is_correct": false
+      },
+      {
+        "text": "Task",
+        "is_correct": false
+      },
+      {
+        "text": "External table",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "When reviewing the load for a warehouse using the load monitoring chart, the chart indicates that a high volume of Queries are always queuing in the warehouse According to recommended best practice, what should be done to reduce the Queue volume? (Select TWO).",
+    "options": [
+      {
+        "text": "Use multi-clustered warehousing to scale out warehouse capacity.",
+        "is_correct": true
+      },
+      {
+        "text": "Scale up the warehouse size to allow Queries to execute faster.",
+        "is_correct": false
+      },
+      {
+        "text": "Stop and start the warehouse to clear the queued queries",
+        "is_correct": false
+      },
+      {
+        "text": "Migrate some queries to a new warehouse to reduce load",
+        "is_correct": true
+      },
+      {
+        "text": "Limit user access to the warehouse so fewer queries are run against it",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What Snowflake features allow virtual warehouses to handle high concurrency workloads? (Select TWO)",
+    "options": [
+      {
+        "text": "The ability to scale up warehouses",
+        "is_correct": false
+      },
+      {
+        "text": "The use of warehouse auto scaling",
+        "is_correct": true
+      },
+      {
+        "text": "The ability to resize warehouses",
+        "is_correct": false
+      },
+      {
+        "text": "Use of multi-clustered warehouses",
+        "is_correct": true
+      },
+      {
+        "text": "The use of warehouse indexing",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which statement about billing applies to Snowflake credits?",
+    "options": [
+      {
+        "text": "Credits are billed per-minute with a 60-minute minimum",
+        "is_correct": false
+      },
+      {
+        "text": "Credits are used to pay for cloud data storage usage",
+        "is_correct": false
+      },
+      {
+        "text": "Credits are consumed based on the number of credits billed for each hour that a warehouse runs",
+        "is_correct": false
+      },
+      {
+        "text": "Credits are consumed based on the warehouse size and the time the warehouse is running",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What features does Snowflake Time Travel enable?",
+    "options": [
+      {
+        "text": "Querying data-related objects that were created within the past 365 days",
+        "is_correct": false
+      },
+      {
+        "text": "Restoring data-related objects that have been deleted within the past 90 days",
+        "is_correct": true
+      },
+      {
+        "text": "Conducting point-in-time analysis for Bl reporting",
+        "is_correct": false
+      },
+      {
+        "text": "Analyzing data usage/manipulation over all periods of time",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is a limitation of a Materialized View?",
+    "options": [
+      {
+        "text": "A Materialized View cannot support any aggregate functions",
+        "is_correct": false
+      },
+      {
+        "text": "A Materialized View can only reference up to two tables",
+        "is_correct": false
+      },
+      {
+        "text": "A Materialized View cannot be joined with other tables",
+        "is_correct": false
+      },
+      {
+        "text": "A Materialized View cannot be defined with a JOIN",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is a key feature of Snowflake architecture?",
+    "options": [
+      {
+        "text": "Zero-copy cloning creates a mirror copy of a database that updates with the original",
+        "is_correct": false
+      },
+      {
+        "text": "Software updates are automatically applied on a quarterly basis",
+        "is_correct": false
+      },
+      {
+        "text": "Snowflake eliminates resource contention with its virtual warehouse implementation",
+        "is_correct": false
+      },
+      {
+        "text": "Multi-cluster warehouses allow users to run a query that spans across multiple clusters",
+        "is_correct": true
+      },
+      {
+        "text": "Snowflake automatically sorts DATE columns during ingest for fast retrieval by date",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which cache type is used to cache data output from SQL queries?",
+    "options": [
+      {
+        "text": "Metadata cache",
+        "is_correct": false
+      },
+      {
+        "text": "Result cache",
+        "is_correct": true
+      },
+      {
+        "text": "Remote cache",
+        "is_correct": false
+      },
+      {
+        "text": "Local file cache",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A sales table FCT_SALES has 100 million records. The following Query was executed SELECT COUNT (1) FROM FCT__SALES; How did Snowflake fulfill this query?",
+    "options": [
+      {
+        "text": "Query against the result set cache",
+        "is_correct": false
+      },
+      {
+        "text": "Query against a virtual warehouse cache",
+        "is_correct": false
+      },
+      {
+        "text": "Query against the most-recently created micro-partition",
+        "is_correct": false
+      },
+      {
+        "text": "Query against the metadata excite",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the default character set used when loading CSV files into Snowflake?",
+    "options": [
+      {
+        "text": "UTF-8",
+        "is_correct": true
+      },
+      {
+        "text": "UTF-16",
+        "is_correct": false
+      },
+      {
+        "text": "ISO S859-1",
+        "is_correct": false
+      },
+      {
+        "text": "ANSI_X3.A",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "A user needs to create a materialized view in the schema MYDB.MYSCHEM",
+    "options": [
+      {
+        "text": "MYSCHEM",
+        "is_correct": false
+      },
+      {
+        "text": "Which statements will provide this access?",
+        "is_correct": true
+      },
+      {
+        "text": "",
+        "is_correct": true
+      },
+      {
+        "text": "",
+        "is_correct": false
+      },
+      {
+        "text": "",
+        "is_correct": false
+      },
+      {
+        "text": "",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which Snowflake object enables loading data from files as soon as they are available in a cloud storage location?",
+    "options": [
+      {
+        "text": "Pipe",
+        "is_correct": true
+      },
+      {
+        "text": "External stage",
+        "is_correct": false
+      },
+      {
+        "text": "Task",
+        "is_correct": false
+      },
+      {
+        "text": "Stream",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following indicates that it may be appropriate to use a clustering key for a table? (Select TWO).",
+    "options": [
+      {
+        "text": "The table contains a column that has very low cardinality",
+        "is_correct": true
+      },
+      {
+        "text": "DML statements that are being issued against the table are blocked",
+        "is_correct": false
+      },
+      {
+        "text": "The table has a small number of micro-partitions",
+        "is_correct": false
+      },
+      {
+        "text": "Queries on the table are running slower than expected",
+        "is_correct": false
+      },
+      {
+        "text": "The clustering depth for the table is large",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "During periods of warehouse contention which parameter controls the maximum length of time a warehouse will hold a query for processing?",
+    "options": [
+      {
+        "text": "STATEMENT_TIMEOUT__IN__SECONDS",
+        "is_correct": false
+      },
+      {
+        "text": "STATEMENT_QUEUED_TIMEOUT_IN_SECONDS",
+        "is_correct": true
+      },
+      {
+        "text": "MAX_CONCURRENCY__LEVEL",
+        "is_correct": false
+      },
+      {
+        "text": "QUERY_TIMEOUT_IN_SECONDS",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are valid methods for authenticating users for access into Snowflake? (Select THREE)",
+    "options": [
+      {
+        "text": "SCIM",
+        "is_correct": false
+      },
+      {
+        "text": "Federated authentication",
+        "is_correct": true
+      },
+      {
+        "text": "TLS 1.2",
+        "is_correct": false
+      },
+      {
+        "text": "Key-pair authentication",
+        "is_correct": true
+      },
+      {
+        "text": "OAuth",
+        "is_correct": true
+      },
+      {
+        "text": "OCSP authentication",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which feature is only available in the Enterprise or higher editions of Snowflake?",
+    "options": [
+      {
+        "text": "Column-level security",
+        "is_correct": true
+      },
+      {
+        "text": "SOC 2 type II certification",
+        "is_correct": false
+      },
+      {
+        "text": "Multi-factor Authentication (MFA)",
+        "is_correct": false
+      },
+      {
+        "text": "Object-level access control",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What happens to the underlying table data when a CLUSTER BY clause is added to a Snowflake table?",
+    "options": [
+      {
+        "text": "Data is hashed by the cluster key to facilitate fast searches for common data values",
+        "is_correct": false
+      },
+      {
+        "text": "Larger micro-partitions are created for common data values to reduce the number of partitions that must be scanned",
+        "is_correct": false
+      },
+      {
+        "text": "Smaller micro-partitions are created for common data values to allow for more parallelism",
+        "is_correct": false
+      },
+      {
+        "text": "Data may be colocated by the cluster key within the micro-partitions to improve pruning performance",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What is the minimum Snowflake edition required to create a materialized view?",
+    "options": [
+      {
+        "text": "Standard Edition",
+        "is_correct": false
+      },
+      {
+        "text": "Enterprise Edition",
+        "is_correct": true
+      },
+      {
+        "text": "Business Critical Edition",
+        "is_correct": false
+      },
+      {
+        "text": "Virtual Private Snowflake Edition",
+        "is_correct": false
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following are benefits of micro-partitioning? (Select TWO)",
+    "options": [
+      {
+        "text": "Micro-partitions cannot overlap in their range of values",
+        "is_correct": true
+      },
+      {
+        "text": "Micro-partitions are immutable objects that support the use of Time Travel.",
+        "is_correct": false
+      },
+      {
+        "text": "Micro-partitions can reduce the amount of I/O from object storage to virtual warehouses",
+        "is_correct": false
+      },
+      {
+        "text": "Rows are automatically stored in sorted order within micro-partitions",
+        "is_correct": true
+      },
+      {
+        "text": "Micro-partitions can be defined on a schema-by-schema basis",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following conditions must be met in order to return results from the results cache? (Select TWO).",
+    "options": [
+      {
+        "text": "The user has the appropriate privileges on the objects associated with the query",
+        "is_correct": true
+      },
+      {
+        "text": "Micro-partitions have been reclustered since the query was last run",
+        "is_correct": false
+      },
+      {
+        "text": "The new query is run using the same virtual warehouse as the previous query",
+        "is_correct": false
+      },
+      {
+        "text": "The query includes a User Defined Function (UDF)",
+        "is_correct": false
+      },
+      {
+        "text": "The query has been run within 24 hours of the previously-run query",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "Which of the following Snowflake features provide continuous data protection automatically? (Select TWO).",
+    "options": [
+      {
+        "text": "Internal stages",
+        "is_correct": false
+      },
+      {
+        "text": "Incremental backups",
+        "is_correct": false
+      },
+      {
+        "text": "Time Travel",
+        "is_correct": true
+      },
+      {
+        "text": "Zero-copy clones",
+        "is_correct": false
+      },
+      {
+        "text": "Fail-safe",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "True or False: Snowflake’s Global Services Layer gathers and maintains statistics on all columns in all micro-partitions.",
+    "options": [
+      {
+        "text": "True",
+        "is_correct": false
+      },
+      {
+        "text": "False",
+        "is_correct": true
+      }
+    ]
+  },
+  {
+    "domain": "Snowflake",
+    "category": "Undefined",
+    "difficulty": "medium",
+    "question": "What transformations are supported in a CREATE PIPE ... AS COPY ... FROM (....) statement? (Select TWO.)",
+    "options": [
+      {
+        "text": ")",
+        "is_correct": false
+      },
+      {
+        "text": "Data can be filtered by an optional where clause",
+        "is_correct": false
+      },
+      {
+        "text": "Incoming data can be joined with other tables",
+        "is_correct": false
+      },
+      {
+        "text": "Columns can be reordered",
+        "is_correct": true
+      },
+      {
+        "text": "Columns can be omitted",
+        "is_correct": true
+      },
+      {
+        "text": "Row level access can be defined",
+        "is_correct": false
+      }
+    ]
+  }
+]
