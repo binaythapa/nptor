@@ -1,0 +1,277 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Practice{% endblock %}
+
+{% block head_extra %}
+<style>
+
+/* ==============================
+   PRACTICE LAYOUT
+================================= */
+.practice-wrapper {
+  width: 100%;
+  padding: 16px;
+}
+
+.practice-card {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ==============================
+   QUESTION
+================================= */
+.question-content {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* ==============================
+   OPTIONS (FIXED ALIGNMENT)
+================================= */
+.practice-option {
+  display: grid;
+  grid-template-columns: 20px 1fr;   /* bullet + text */
+  align-items: start;
+  gap: 10px;
+
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.practice-option input[type="radio"],
+.practice-option input[type="checkbox"] {
+  margin-top: 3px;       /* micro vertical adjustment */
+  transform: scale(1.05);
+}
+
+.practice-option span {
+  line-height: 1.4;
+}
+
+/* Hover */
+.practice-option:hover {
+  background: #f9fafb;
+}
+
+/* Correct */
+.practice-option.correct {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #065f46;
+}
+
+/* Wrong */
+.practice-option.wrong {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #7f1d1d;
+}
+
+
+/* ==============================
+   DARK MODE
+================================= */
+:root[data-theme='dark'] .practice-option {
+  border-color: rgba(255,255,255,0.15);
+  background: transparent;
+  color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .practice-option:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+:root[data-theme='dark'] .practice-option.correct {
+  background: rgba(34,197,94,0.15);
+  border-color: rgba(34,197,94,0.4);
+  color: #86efac;
+}
+
+:root[data-theme='dark'] .practice-option.wrong {
+  background: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.4);
+  color: #fca5a5;
+}
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="practice-wrapper">
+<div class="practice-card">
+
+{% if question %}
+<div id="practiceContainer">
+
+<form method="post" id="practiceForm" data-qid="{{ question.id }}">
+{% csrf_token %}
+
+<!-- ================= QUESTION ================= -->
+<div class="question-content rich-content">
+  {{ question.text|safe }}
+</div>
+
+<!-- ================= OPTIONS ================= -->
+{% for c in choices %}
+<label class="practice-option
+  {% if result and c.is_correct %}correct{% endif %}
+  {% if result == 'wrong' and c.id|stringformat:'s' == selected_choice_id %}wrong{% endif %}
+">
+
+  {% if question.question_type == "multi" %}
+    <input type="checkbox"
+           name="choice_multi"
+           value="{{ c.id }}"
+           {% if c.id in selected_multi_ids %}checked{% endif %}
+           {% if show_next %}disabled{% endif %}>
+  {% else %}
+    <input type="radio"
+           name="choice"
+           value="{{ c.id }}"
+           {% if c.id|stringformat:'s' == selected_choice_id %}checked{% endif %}
+           {% if show_next %}disabled{% endif %}
+           required>
+  {% endif %}
+
+  <span>{{ c.text }}</span>
+
+</label>
+{% endfor %}
+
+<!-- ================= ACTIONS ================= -->
+<div class="is-flex is-justify-content-space-between mt-4">
+
+  {% if show_next %}
+    <button class="button is-link" name="next" value="1">
+      Next →
+    </button>
+  {% else %}
+    <button class="button is-primary">
+      Submit
+    </button>
+  {% endif %}
+
+  <a href="{% url 'quiz:practice' %}?reset=1"
+     class="button is-light">
+     🔄 Reset
+  </a>
+
+</div>
+
+</form>
+
+<!-- ================= RESULT ================= -->
+{% if result == "correct" %}
+<div class="notification is-success mt-3">
+  ✅ Correct! Great job.
+</div>
+{% elif result == "wrong" %}
+<div class="notification is-danger is-light mt-3">
+  ❌ Incorrect.
+</div>
+{% endif %}
+
+<!-- ================= EXPLANATION ================= -->
+{% if explanation %}
+<button type="button"
+        class="button is-small is-info mt-2"
+        onclick="toggleExplanation()">
+  📘 Show Explanation
+</button>
+
+<div id="explanationBox"
+     class="notification is-info mt-3 rich-content"
+     style="display:none;">
+  {{ explanation|safe }}
+</div>
+{% endif %}
+
+</div>
+{% else %}
+<div class="notification is-info">
+  No questions available.
+</div>
+{% endif %}
+
+</div>
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+
+function toggleExplanation() {
+  const box = document.getElementById("explanationBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+function getCookie(name) {
+  let value = null;
+  if (document.cookie && document.cookie !== '') {
+    document.cookie.split(';').forEach(cookie => {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        value = decodeURIComponent(cookie.substring(name.length + 1));
+      }
+    });
+  }
+  return value;
+}
+
+document.addEventListener("click", function(e) {
+
+  const submitBtn = e.target.closest("#practiceForm button[type='submit']");
+  if (!submitBtn) return;
+
+  e.preventDefault();
+
+  const form = document.getElementById("practiceForm");
+
+  if (submitBtn.name === "next") {
+    loadNext();
+    return;
+  }
+
+  const formData = new FormData(form);
+
+  fetch("{% url 'quiz:practice_answer_ajax' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById("practiceContainer").innerHTML = data.html;
+    }
+  })
+  .catch(() => alert("Submission error."));
+});
+
+function loadNext() {
+  fetch("{% url 'quiz:practice_next_ajax' %}", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById("practiceContainer").innerHTML = data.html;
+    }
+  })
+  .catch(() => alert("Next question error."));
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Leaderboard{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+  <div class="box">
+
+    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+      <h2 class="title is-5 mb-0">🏆 Global Study Plan Leaderboard</h2>
+
+      <!-- Domain Filter -->
+      <form method="get">
+        <div class="select is-small">
+          <select name="domain" onchange="this.form.submit()">
+            <option value="">All Domains</option>
+            {% for d in domains %}
+              <option value="{{ d.id }}"
+                {% if request.GET.domain == d.id|stringformat:"s" %}
+                  selected
+                {% endif %}
+              >
+                {{ d.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <table class="table is-fullwidth is-striped is-size-7 is-hoverable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>User</th>
+          <th>Mastery</th>
+          <th>XP</th>
+          <th>Streak</th>
+          <th>Global %</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+      {% for row in leaderboard %}
+        <tr
+          class="
+          {% if row.rank == 1 %}has-background-warning-light podium-glow{% endif %}
+          {% if row.rank == 2 %}has-background-grey-lighter podium-glow{% endif %}
+          {% if row.rank == 3 %}has-background-danger-light podium-glow{% endif %}
+          {% if row.user == request.user %}has-background-link-light{% endif %}
+          "
+        >
+
+          <!-- Rank -->
+          <td class="has-text-weight-bold">
+            {% if row.rank == 1 %}
+              🥇
+            {% elif row.rank == 2 %}
+              🥈
+            {% elif row.rank == 3 %}
+              🥉
+            {% else %}
+              {{ row.rank }}
+            {% endif %}
+          </td>
+
+          <!-- Username -->
+          <td>
+            {{ row.user.username }}
+
+            {% if row.user == request.user %}
+              <span class="tag is-link is-light is-small ml-2">
+                You
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- Mastery -->
+          <td style="min-width:120px;">
+            <progress class="progress
+              {% if row.mastery >= 85 %}is-success
+              {% elif row.mastery >= 60 %}is-warning
+              {% else %}is-danger{% endif %}"
+              value="{{ row.mastery }}"
+              max="100">
+            </progress>
+            <small><strong>{{ row.mastery }}%</strong></small>
+          </td>
+
+          <!-- XP -->
+          <td>
+            <span class="tag is-info is-light">
+              ⭐ {{ row.xp }}
+            </span>
+          </td>
+
+          <!-- Streak -->
+          <td>
+            🔥 {{ row.streak }}
+          </td>
+
+          <!-- Percentile -->
+          <td>
+            <span class="tag is-dark is-light">
+              Top {{ row.percentile }}%
+            </span>
+          </td>
+
+        </tr>
+
+      {% empty %}
+        <tr>
+          <td colspan="6" class="has-text-centered">
+            No leaderboard data yet.
+          </td>
+        </tr>
+      {% endfor %}
+
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+
+<style>
+.podium-glow {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px rgba(255, 200, 0, 0.3);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(255, 200, 0, 0.6);
+  }
+}
+</style>
+
+{% endblock %}

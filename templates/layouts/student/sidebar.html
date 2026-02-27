@@ -51,6 +51,22 @@
         </a>
       </li>
 
+
+      <!-- Step 4: Study Plan -->
+{% if user.is_authenticated %}
+<li>
+  <a href="{% if not is_from_course %}{% url 'quiz:study_plan_dashboard' %}{% else %}javascript:void(0);{% endif %}"
+     class="py-1 {% if is_from_course %}is-disabled{% endif %}"
+     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+    <span class="icon is-small mr-1">
+      <i class="fa fa-calendar-check"></i>
+    </span>
+    ④ Study Plan
+    <span class="tag is-primary is-light is-small ml-2">Structured</span>
+  </a>
+</li>
+{% endif %}
+
       <!-- Step 3: Courses & Exams (UPDATED NAME) -->
       <li>
         <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"

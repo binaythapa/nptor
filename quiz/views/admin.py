@@ -49,6 +49,8 @@ from quiz.services.pricing import apply_coupon
 from quiz.services.subscription import has_valid_subscription
 from quiz.utils import get_leaf_category_name
 
+from quiz.models import StudyPlan
+
 
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()
@@ -99,3 +101,62 @@ def recent_attempts_api(request):
 
 
 
+from django.contrib import admin
+from quiz.models import StudyPlan
+
+
+@admin.register(StudyPlan)
+class StudyPlanAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "user",
+        "plan_type",
+        "domain",
+        "is_active",
+        "is_completed",
+        "start_date",
+        "extension_days",
+    )
+
+    list_filter = (
+        "plan_type",
+        "is_active",
+        "is_completed",
+        "domain",
+        "start_date",
+    )
+
+    search_fields = (
+        "user__username",
+        "user__email",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "question_count",
+        "progress_summary",
+        "question_ids_pretty",   # 👈 ADD HERE
+    )
+
+    ordering = ("-created_at",)
+
+    # -----------------------------
+    # Custom Display Methods
+    # -----------------------------
+
+    def question_count(self, obj):
+        return len(obj.question_ids or [])
+    question_count.short_description = "Total Questions"
+
+    def progress_summary(self, obj):
+        total_done = sum(obj.daily_progress.values())
+        total_needed = obj.total_questions()
+        return f"{total_done} / {total_needed}"
+    progress_summary.short_description = "Progress"
+
+    def question_ids_pretty(self, obj):   # 👈 ADD HERE
+        if not obj.question_ids:
+            return "—"
+        return ", ".join(map(str, obj.question_ids[:20])) + " ..."
+    question_ids_pretty.short_description = "First 20 Question IDs"

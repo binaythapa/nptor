@@ -6,6 +6,10 @@ from django.conf.urls.static import static
 
 from quiz.forms import EmailOrUsernameLoginForm
 
+
+from quiz.views.study_plan import *
+
+
 # ================================
 # IMPORT QUIZ VIEWS
 # ================================
@@ -171,11 +175,35 @@ urlpatterns = [
     name="toggle_exam_publish",
 ),
 
-
+   
     path(
         "exam/attempt/<int:user_exam_id>/review/",
         exam_review,
         name="exam_review"
     ),
 
+
+    # ============================================================
+    # Study Plan
+    # ============================================================
+    path("study-plan/", study_plan_dashboard, name="study_plan_dashboard"),
+    path("study-plan/practice/", study_plan_practice, name="study_plan_practice"),
+    path("study-plan/create/", create_study_plan, name="create_study_plan"),
+    path("study-plan/clone/<int:plan_id>/", clone_study_plan, name="clone_study_plan"),
+    path(
+        "study-plan/adaptive/",
+        create_adaptive_plan,
+        name="create_adaptive_plan"
+    ),
+
+    path(
+        "study-plan/leaderboard/",
+        study_plan_leaderboard,
+        name="study_plan_leaderboard"
+    ),
+
+
 ]
+
+
+

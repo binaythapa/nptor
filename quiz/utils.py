@@ -208,3 +208,22 @@ def user_passed_exam(user, exam: "Exam") -> bool:
     return True
 
 
+
+
+def calculate_global_percentile(plan):
+    from .models import StudyPlan
+
+    total_users = StudyPlan.objects.filter(
+        is_completed=True
+    ).count()
+
+    if total_users == 0:
+        return 0
+
+    higher = StudyPlan.objects.filter(
+        is_completed=True,
+        total_correct__gt=plan.total_correct
+    ).count()
+
+    percentile = 100 - round((higher / total_users) * 100, 2)
+    return percentile

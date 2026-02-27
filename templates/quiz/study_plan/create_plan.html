@@ -1,0 +1,140 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Create Study Plan{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+  <div class="box" style="max-width:600px;margin:auto;">
+
+    <h2 class="title is-5 mb-4">
+      📅 Create New Study Plan
+    </h2>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- ================= DOMAIN SELECT ================= -->
+      <div class="field mb-5">
+        <label class="label is-size-7">Select Domain (Optional)</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="domain">
+              <option value="">All Domains</option>
+              {% for d in domains %}
+                <option value="{{ d.id }}">{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= PLAN OPTIONS ================= -->
+      <div class="field">
+        <label class="label is-size-7 mb-3">Select Plan Type</label>
+
+        <label class="plan-card">
+          <input type="radio" name="plan_type" value="7" data-days="7" required>
+          <div>
+            <strong>🚀 7-Day Crash Plan</strong>
+            <p class="is-size-7 has-text-grey">
+              60 Questions / Day · Fast intensive revision
+            </p>
+          </div>
+        </label>
+
+        <label class="plan-card">
+          <input type="radio" name="plan_type" value="15" data-days="15">
+          <div>
+            <strong>⚖ 15-Day Balanced Plan</strong>
+            <p class="is-size-7 has-text-grey">
+              40 Questions / Day · Structured improvement
+            </p>
+          </div>
+        </label>
+
+        <label class="plan-card">
+          <input type="radio" name="plan_type" value="30" data-days="30">
+          <div>
+            <strong>🏆 30-Day Mastery Plan</strong>
+            <p class="is-size-7 has-text-grey">
+              25 Questions / Day · Deep mastery preparation
+            </p>
+          </div>
+        </label>
+
+      </div>
+
+      <!-- ================= LIVE PREVIEW ================= -->
+      <div class="notification is-light mt-4" id="previewBox" style="display:none;">
+        ⏳ <strong>Estimated Completion Date:</strong>
+        <span id="completionDate"></span>
+      </div>
+
+      <!-- ================= ACTION ================= -->
+      <div class="field mt-5">
+        <div class="control">
+          <button type="submit" class="button is-primary is-fullwidth">
+            Create Study Plan
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+<style>
+.plan-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.plan-card:hover {
+  background: #f9fafb;
+  border-color: #3273dc;
+}
+
+.plan-card input {
+  margin-top: 4px;
+}
+
+/* Dark mode */
+:root[data-theme='dark'] .plan-card {
+  border-color: rgba(255,255,255,0.1);
+}
+
+:root[data-theme='dark'] .plan-card:hover {
+  background: rgba(255,255,255,0.05);
+}
+</style>
+
+<script>
+document.querySelectorAll('input[name="plan_type"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+
+    const days = parseInt(this.dataset.days);
+    const today = new Date();
+
+    const completion = new Date();
+    completion.setDate(today.getDate() + days);
+
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = completion.toLocaleDateString(undefined, options);
+
+    document.getElementById("completionDate").innerText = formattedDate;
+    document.getElementById("previewBox").style.display = "block";
+  });
+});
+</script>
+
+{% endblock %}

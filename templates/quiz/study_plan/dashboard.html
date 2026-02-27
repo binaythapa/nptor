@@ -1,0 +1,220 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Study Plan Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+  {% if active_plan and analytics %}
+
+  <div class="box mb-5">
+
+    <!-- ================= HEADER ================= -->
+    <div class="is-flex is-justify-content-space-between is-align-items-center">
+      <h2 class="title is-5 mb-0">
+        📅 Active Study Plan
+      </h2>
+
+      {% if analytics.badge %}
+      <span class="tag is-info is-medium">
+        🎖 {{ analytics.badge }}
+      </span>
+      {% endif %}
+    </div>
+
+    <p class="mt-2 mb-4 has-text-grey">
+      {{ active_plan.get_plan_type_display }}
+    </p>
+
+    <!-- ================= XP & LEVEL ================= -->
+    <div class="box has-background-light mb-4">
+
+      <div class="is-flex is-justify-content-space-between">
+        <div>
+          <p class="is-size-7 has-text-grey">Level</p>
+          <p class="title is-6">⭐ {{ active_plan.level }}</p>
+        </div>
+
+        <div class="has-text-right">
+          <p class="is-size-7 has-text-grey">XP</p>
+          <p class="title is-6">{{ active_plan.xp }}</p>
+        </div>
+      </div>
+
+      <progress class="progress is-warning mt-2"
+                value="{{ analytics.level_progress }}"
+                max="100">
+      </progress>
+
+      <p class="is-size-7 has-text-grey">
+        {{ analytics.level_progress }}% to next level
+      </p>
+
+    </div>
+
+    <!-- ================= COMPLETION ================= -->
+    <p class="is-size-7 mb-1">
+      Completion: {{ analytics.total_done }} / {{ analytics.total_questions }}
+    </p>
+
+    <progress class="progress is-primary"
+              value="{{ analytics.completion_percent }}"
+              max="100">
+    </progress>
+
+    <!-- ================= ACCURACY ================= -->
+    <p class="is-size-7 mt-4 mb-1">
+      Accuracy: {{ analytics.accuracy_percent }}%
+
+      {% if analytics.trend_percent %}
+        {% if analytics.trend_percent > 0 %}
+          <span class="tag is-success ml-2">
+            +{{ analytics.trend_percent }}%
+          </span>
+        {% elif analytics.trend_percent < 0 %}
+          <span class="tag is-danger ml-2">
+            {{ analytics.trend_percent }}%
+          </span>
+        {% endif %}
+      {% endif %}
+    </p>
+
+    <progress class="progress is-success"
+              value="{{ analytics.accuracy_percent }}"
+              max="100">
+    </progress>
+
+    <!-- ================= READINESS ================= -->
+    {% if analytics.readiness_score %}
+    <p class="is-size-7 mt-4 mb-1">
+      🎯 Certification Readiness: {{ analytics.readiness_score }}%
+    </p>
+
+    <progress class="progress
+      {% if analytics.readiness_score >= 85 %}is-success
+      {% elif analytics.readiness_score >= 60 %}is-warning
+      {% else %}is-danger{% endif %}"
+      value="{{ analytics.readiness_score }}"
+      max="100">
+    </progress>
+    {% endif %}
+
+    <!-- ================= GLOBAL PERCENTILE ================= -->
+    {% if analytics.global_percentile %}
+    <div class="mt-4">
+      <p class="is-size-7 mb-1">
+        🌍 Global Percentile
+      </p>
+
+      <progress class="progress is-link"
+                value="{{ analytics.global_percentile }}"
+                max="100">
+      </progress>
+
+      <p class="is-size-7 has-text-grey">
+        You are ahead of {{ analytics.global_percentile }}% of learners
+      </p>
+    </div>
+    {% endif %}
+
+    <!-- ================= STREAK CARD ================= -->
+    <div class="box has-background-warning-light mt-4">
+      <p class="is-size-7">
+        🔥 <strong>Current Streak:</strong> {{ active_plan.current_streak }} days<br>
+        🏆 <strong>Longest Streak:</strong> {{ active_plan.longest_streak }} days
+      </p>
+    </div>
+
+    <!-- ================= SPARKLINE ================= -->
+    {% if analytics.sparkline_data %}
+   
+
+   <div class="mt-4" style="height:70px;">
+  <canvas id="sparklineChart"></canvas>
+</div>
+    {% endif %}
+
+    <!-- ================= META ================= -->
+    <div class="is-size-7 mt-4 has-text-grey">
+      <p>Days Remaining: {{ analytics.days_remaining }}</p>
+      <p>Extension Used: {{ analytics.extension_used }}</p>
+    </div>
+
+    <!-- ================= ACTION BUTTONS ================= -->
+    <div class="mt-5">
+
+      <a href="{% url 'quiz:study_plan_practice' %}"
+         class="button is-primary">
+        Continue Practice
+      </a>
+
+      <a href="{% url 'quiz:create_adaptive_plan' %}"
+         class="button is-warning ml-2">
+        🤖 Smart Next Plan
+      </a>
+
+      <a href="{% url 'quiz:study_plan_leaderboard' %}"
+         class="button is-info ml-2">
+        🏆 Leaderboard
+      </a>
+
+    </div>
+
+  </div>
+
+  {% else %}
+
+  <div class="box">
+    <p>No active study plan.</p>
+    <a href="{% url 'quiz:create_study_plan' %}"
+       class="button is-link mt-3">
+       Create New Plan
+    </a>
+  </div>
+
+  {% endif %}
+
+</div>
+
+{% if active_plan and analytics.sparkline_data %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('sparklineChart');
+
+if (ctx) {
+  const dataPoints = {{ analytics.sparkline_data|safe }};
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dataPoints.map((_, i) => i + 1),
+      datasets: [{
+        data: dataPoints,
+        borderColor: '#3273dc',
+        borderWidth: 2,
+        fill: false,
+        tension: 0.4,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,   // 🔥 IMPORTANT FIX
+      plugins: { 
+        legend: { display: false } 
+      },
+      scales: {
+        x: { display: false },
+        y: { 
+          display: false,
+          min: 0,
+          max: 100
+        }
+      }
+    }
+  });
+}
+</script>
+{% endif %}
+
+{% endblock %}
