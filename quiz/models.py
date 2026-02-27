@@ -15,6 +15,7 @@ from ckeditor.fields import RichTextField
 from datetime import timedelta
 from django.utils import timezone
 from ckeditor_uploader.fields import RichTextUploadingField
+import math
 
 
 
@@ -1786,6 +1787,93 @@ class StudyPlan(models.Model):
         Level 4 -> 340
         """
         return int(100 * (1.5 ** (self.level - 1)))
+
+
+
+    import math
+
+    def certification_prediction(self):
+        """
+        Returns:
+        - predicted_score
+        - pass_probability
+        - confidence_level
+        """
+
+        total_attempted = self.total_attempted
+        total_correct = self.total_correct
+
+        if total_attempted == 0:
+            return {
+                "predicted_score": 0,
+                "pass_probability": 0,
+                "confidence": 0,
+            }
+
+        # ------------------------------
+        # 1️⃣ Bayesian Adjusted Accuracy
+        # ------------------------------
+        adjusted_accuracy = (
+            (total_correct + 20) /
+            (total_attempted + 40)
+        ) * 100
+
+        # ------------------------------
+        # 2️⃣ Difficulty Weighted Mastery
+        # ------------------------------
+        weighted_mastery = self.difficulty_weighted_mastery()
+
+        # ------------------------------
+        # 3️⃣ Consistency Score
+        # ------------------------------
+        days_practiced = len([
+            v for v in self.daily_progress.values()
+            if v > 0
+        ])
+
+        total_days = self.total_plan_days()
+
+        consistency_score = (
+            (days_practiced / total_days) * 100
+            if total_days > 0 else 0
+        )
+
+        # ------------------------------
+        # 4️⃣ Predicted Exam Score
+        # ------------------------------
+        predicted_score = (
+            adjusted_accuracy * 0.6 +
+            weighted_mastery * 0.3 +
+            consistency_score * 0.1
+        )
+
+        predicted_score = round(
+            max(min(predicted_score, 100), 0),
+            2
+        )
+
+        # ------------------------------
+        # 5️⃣ Pass Probability (Sigmoid)
+        # ------------------------------
+        pass_probability = 1 / (
+            1 + math.exp(-(predicted_score - 70) / 5)
+        )
+
+        pass_probability = round(pass_probability * 100, 2)
+
+        # ------------------------------
+        # 6️⃣ Confidence Level
+        # ------------------------------
+        confidence = min(
+            100,
+                round((total_attempted / 300) * 100, 2)
+        )
+
+        return {
+            "predicted_score": predicted_score,
+            "pass_probability": pass_probability,
+            "confidence": confidence,
+        }
 
 
 class LeaderboardEntry(models.Model):

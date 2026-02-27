@@ -99,6 +99,49 @@
     </progress>
     {% endif %}
 
+
+    <!-- ================= EXAM PREDICTION ================= -->
+<div class="mt-5">
+
+  <h4 class="title is-6">🧠 Exam Intelligence</h4>
+
+  <!-- Predicted Score -->
+  <p class="is-size-7 mb-1">
+    📊 Predicted Exam Score:
+    <strong>{{ analytics.predicted_score }}%</strong>
+  </p>
+
+  <progress class="progress 
+    {% if analytics.predicted_score >= 80 %}
+        is-success
+    {% elif analytics.predicted_score >= 70 %}
+        is-warning
+    {% else %}
+        is-danger
+    {% endif %}"
+    value="{{ analytics.predicted_score }}"
+    max="100">
+  </progress>
+
+  <!-- Pass Probability -->
+  <p class="is-size-7 mt-3 mb-1">
+    🎯 Pass Probability:
+    <strong>{{ analytics.pass_probability }}%</strong>
+  </p>
+
+  <progress class="progress is-link"
+    value="{{ analytics.pass_probability }}"
+    max="100">
+  </progress>
+
+  <!-- Confidence -->
+  <p class="is-size-7 mt-3">
+    🔬 Confidence Level:
+    <strong>{{ analytics.confidence_level }}%</strong>
+  </p>
+
+</div>
+
     <!-- ================= GLOBAL PERCENTILE ================= -->
     {% if analytics.global_percentile %}
     <div class="mt-4">

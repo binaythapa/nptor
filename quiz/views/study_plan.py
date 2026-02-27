@@ -1,48 +1,27 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from quiz.models import StudyPlan
+# Standard library imports
+import math
+from datetime import timedelta
 
+# Django imports
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.db.models import Q, F, Count, Max, Sum
 
-from quiz.models import StudyPlan, Domain
+# App imports
+from quiz.models import (
+    StudyPlan,
+    Question,
+    Domain,
+    Category,
+)
 from quiz.services.study_plan_service import generate_study_plan
-
-from django.db.models import Sum
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from quiz.models import StudyPlan, Question
-
-from django.db.models import Sum
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from quiz.models import StudyPlan, Question
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from quiz.models import Category
-
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from quiz.models import Category
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from quiz.models import Category
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from quiz.models import Category
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from quiz.models import Category
+from quiz.services.adaptive_engine import select_adaptive_question
 from quiz.utils import calculate_global_percentile
+
+
+
 
 
 @login_required
@@ -187,6 +166,9 @@ def study_plan_dashboard(request):
         readiness_score = active_plan.certification_readiness()
         badge = active_plan.certification_badge()
 
+
+        prediction = active_plan.certification_prediction()
+
         # ================= FINAL ANALYTICS DICT =================
         analytics = {
             "completion_percent": active_plan.completion_percentage(),
@@ -207,6 +189,11 @@ def study_plan_dashboard(request):
             "badge": active_plan.certification_badge(),
             "global_percentile": calculate_global_percentile(active_plan),
 
+
+            "predicted_score": prediction["predicted_score"],
+            "pass_probability": prediction["pass_probability"],
+            "confidence_level": prediction["confidence"],
+
             
         }
         
@@ -224,6 +211,18 @@ def study_plan_dashboard(request):
         "quiz/study_plan/dashboard.html",
         context
     )
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -246,39 +245,17 @@ def clone_study_plan(request, plan_id):
     return redirect("quiz:study_plan_dashboard")
     
 
-
-
-from django.db.models import Q
-from quiz.models import Question
-from django.contrib import messages
-from quiz.services.study_plan_service import generate_study_plan
-from quiz.models import Domain
-
-
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from quiz.models import Question
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from quiz.models import Question
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from quiz.models import Question
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
 from django.utils import timezone
 from datetime import timedelta
-from quiz.models import Question
+from time import time
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 
-from datetime import timedelta
-from django.utils import timezone
+
 @login_required
 def study_plan_practice(request):
 
+    # ================= ACTIVE PLAN =================
     plan = request.user.study_plans.filter(
         is_active=True,
         is_completed=False
@@ -333,17 +310,20 @@ def study_plan_practice(request):
     if not remaining.exists():
         return redirect("quiz:study_plan_dashboard")
 
-    # ================= PICK QUESTION =================
+    # ================= PICK QUESTION (ADAPTIVE) =================
     qid = request.session.get("sp_qid")
     question = remaining.filter(id=qid).first() if qid else None
 
     if not question:
-        question = remaining.first()
+        question = select_adaptive_question(plan, remaining, request)
         request.session["sp_qid"] = question.id
 
     choices = question.choices.order_by("order", "id")
 
-    # ================= HANDLE SUBMIT =================
+    # ============================================================
+    # ================= HANDLE SUBMIT ============================
+    # ============================================================
+
     if request.method == "POST":
 
         # ---------- Evaluate ----------
@@ -357,18 +337,20 @@ def study_plan_practice(request):
                 .values_list("id", flat=True)
             )
             is_correct = set(selected_ids) == set(correct_ids)
-
         else:
             selected_id = request.POST.get("choice")
             selected = question.choices.filter(id=selected_id).first()
             is_correct = selected and selected.is_correct
 
-        # ================= AGGREGATE TRACKING =================
+        # ============================================================
+        # ================= AGGREGATE STATS ==========================
+        # ============================================================
+
         plan.total_attempted += 1
         if is_correct:
             plan.total_correct += 1
 
-        # ---------- CATEGORY STATS ----------
+        # ---------- Category Stats ----------
         cat_key = str(question.category_id)
         category_stats = plan.category_stats or {}
 
@@ -381,7 +363,7 @@ def study_plan_practice(request):
 
         plan.category_stats = category_stats
 
-        # ---------- DIFFICULTY STATS ----------
+        # ---------- Difficulty Stats ----------
         diff_key = question.difficulty
         difficulty_stats = plan.difficulty_stats or {}
 
@@ -394,7 +376,33 @@ def study_plan_practice(request):
 
         plan.difficulty_stats = difficulty_stats
 
-        # ================= STREAK SYSTEM =================
+        # ============================================================
+        # ================= MISTAKE REINFORCEMENT ====================
+        # ============================================================
+
+        mistakes = request.session.get("recent_mistakes", {})
+        qid_str = str(question.id)
+
+        if not is_correct:
+            mistakes[qid_str] = mistakes.get(qid_str, 0) + 3
+        else:
+            if qid_str in mistakes:
+                mistakes[qid_str] = max(mistakes[qid_str] - 2, 0)
+
+        request.session["recent_mistakes"] = mistakes
+
+        # ============================================================
+        # ================= SPACED REPETITION ========================
+        # ============================================================
+
+        history = request.session.get("question_history", {})
+        history[qid_str] = time()
+        request.session["question_history"] = history
+
+        # ============================================================
+        # ================= STREAK SYSTEM ============================
+        # ============================================================
+
         today = timezone.now().date()
 
         if plan.last_activity_date == today:
@@ -409,9 +417,11 @@ def study_plan_practice(request):
         if plan.current_streak > plan.longest_streak:
             plan.longest_streak = plan.current_streak
 
-        # ================= XP SYSTEM (CLEAN) =================
+        # ============================================================
+        # ================= XP SYSTEM ================================
+        # ============================================================
 
-        base_xp = 2
+        base_xp = 2  # effort XP
 
         if is_correct:
             base_xp += 10
@@ -427,10 +437,8 @@ def study_plan_practice(request):
         streak_bonus = min(plan.current_streak, 10)
         base_xp += streak_bonus
 
-        # Apply XP via model method
         leveled_up = plan.apply_xp(base_xp)
 
-        # Store for animation
         request.session["xp_gain"] = base_xp
 
         if leveled_up:
@@ -438,7 +446,10 @@ def study_plan_practice(request):
                 "new_level": plan.level
             }
 
-        # ================= SAVE (SINGLE SAVE ONLY) =================
+        # ============================================================
+        # ================= SAVE (SINGLE SAVE) =======================
+        # ============================================================
+
         plan.save(update_fields=[
             "total_attempted",
             "total_correct",
@@ -451,7 +462,10 @@ def study_plan_practice(request):
             "level",
         ])
 
-        # ================= MARK COMPLETED =================
+        # ============================================================
+        # ================= MARK COMPLETED ===========================
+        # ============================================================
+
         seen.append(question.id)
         request.session["sp_seen"] = seen
         request.session.pop("sp_qid", None)
@@ -461,7 +475,10 @@ def study_plan_practice(request):
 
         return redirect("quiz:study_plan_practice")
 
-    # ================= RENDER =================
+    # ============================================================
+    # ================= RENDER ===============================
+    # ============================================================
+
     return render(
         request,
         "quiz/study_plan/practice.html",
@@ -474,8 +491,6 @@ def study_plan_practice(request):
             "xp_gain": request.session.pop("xp_gain", None),
         }
     )
-
-
 
 
 
@@ -509,19 +524,6 @@ def create_study_plan(request):
     return render(request, "quiz/study_plan/create_plan.html", {
         "domains": domains
     })
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.utils import timezone
-from quiz.models import StudyPlan, Question
-
-
-
-
-
-
 
 
 
@@ -582,25 +584,6 @@ def create_adaptive_plan(request):
     messages.success(request, "Adaptive study plan created successfully!")
 
     return redirect("quiz:study_plan_dashboard")
-
-
-
-
-
-
-
-from django.db.models import F
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from quiz.models import StudyPlan
-
-from django.db.models import Count
-import math
-from django.utils import timezone
-from django.db.models import Max
-from django.contrib.auth.decorators import login_required
-
-from quiz.models import Domain
 
 
 @login_required
