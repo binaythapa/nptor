@@ -6,9 +6,9 @@ from quiz.models import StudyPlan, Question
 
 
 PLAN_CONFIG = {
-    7: {"days": 7, "per_day": 2},    #60
-    15: {"days": 15, "per_day": 2},  #40
-    30: {"days": 30, "per_day": 2},  #25
+    7: {"days": 7, "per_day": 60},    #60
+    15: {"days": 15, "per_day": 40},  #40
+    30: {"days": 30, "per_day": 25},  #25
 }
 
 
