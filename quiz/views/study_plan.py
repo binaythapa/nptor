@@ -21,6 +21,8 @@ from quiz.services.adaptive_engine import select_adaptive_question
 from quiz.utils import calculate_global_percentile
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 
 
 
@@ -47,6 +49,7 @@ def study_plan_dashboard(request):
 
         active_plan.auto_extend_if_needed()
 
+        # ================= BASIC STATS =================
         total_done = sum(active_plan.daily_progress.values())
         total_questions = active_plan.total_questions()
 
@@ -59,7 +62,6 @@ def study_plan_dashboard(request):
         )
 
         # ================= CATEGORY ANALYTICS =================
-
         stats = active_plan.category_stats or {}
         category_ids = list(stats.keys())
 
@@ -92,7 +94,6 @@ def study_plan_dashboard(request):
                 weak_categories.append(category_data)
 
         # ================= TREND =================
-
         if history_plans.exists():
             previous_plan = history_plans.first()
 
@@ -108,7 +109,6 @@ def study_plan_dashboard(request):
                 )
 
         # ================= SPARKLINE =================
-
         for plan in reversed(history_plans):
             if plan.total_attempted > 0:
                 sparkline_data.append(
@@ -122,7 +122,6 @@ def study_plan_dashboard(request):
             sparkline_data.append(accuracy_percent)
 
         # ================= SUGGESTION =================
-
         if weak_categories:
             suggestion = "Create a 5-day focused mini-plan for weak topics."
         elif accuracy_percent >= 80:
@@ -133,7 +132,6 @@ def study_plan_dashboard(request):
             suggestion = "Repeat 7-day revision plan."
 
         # ================= MASTERY SCORE =================
-
         volume_score = min(100, (total_attempted / 200) * 100)
 
         days_practiced = len([
@@ -149,7 +147,6 @@ def study_plan_dashboard(request):
         )
 
         consistency_score = consistency_ratio * 100
-
         weak_penalty = min(len(weak_categories) * 5, 20)
 
         mastery_score = (
@@ -161,13 +158,19 @@ def study_plan_dashboard(request):
         mastery_score = round(max(mastery_score, 0), 2)
 
         # ================= ADVANCED METRICS =================
-
         difficulty_mastery = active_plan.difficulty_weighted_mastery()
         readiness_score = active_plan.certification_readiness()
         badge = active_plan.certification_badge()
 
-
         prediction = active_plan.certification_prediction()
+        volatility = active_plan.score_volatility()
+
+        if volatility < 0.15:
+            confidence_band = "High"
+        elif volatility < 0.30:
+            confidence_band = "Medium"
+        else:
+            confidence_band = "Low"
 
         # ================= FINAL ANALYTICS DICT =================
         analytics = {
@@ -178,25 +181,34 @@ def study_plan_dashboard(request):
             "trend_percent": trend_percent,
             "sparkline_data": sparkline_data,
             "days_remaining": max(
-             0,
+                0,
                 active_plan.total_plan_days() - active_plan.get_day_index()
             ),
             "extension_used": active_plan.extension_days,
             "mastery_score": mastery_score,
 
-            # 🔥 NEW XP + GAMIFICATION METRICS
+            # Gamification
             "level_progress": active_plan.level_progress_percent(),
-            "badge": active_plan.certification_badge(),
+            "badge": badge,
             "global_percentile": calculate_global_percentile(active_plan),
 
+            # Readiness
+            "difficulty_mastery": difficulty_mastery,
+            "readiness_score": readiness_score,
 
+            # Prediction
             "predicted_score": prediction["predicted_score"],
             "pass_probability": prediction["pass_probability"],
             "confidence_level": prediction["confidence"],
 
-            
+            # Stability
+            "volatility": volatility,
+            "confidence_band": confidence_band,
+
+            # Exam Mode
+            "exam_mode": getattr(active_plan, "exam_mode", False),
         }
-        
+
     context = {
         "active_plan": active_plan,
         "analytics": analytics,
@@ -211,8 +223,6 @@ def study_plan_dashboard(request):
         "quiz/study_plan/dashboard.html",
         context
     )
-
-
 
 
 
@@ -250,6 +260,12 @@ from datetime import timedelta
 from time import time
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+
+from django.utils import timezone
+from datetime import timedelta
+from time import time
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 
 
 @login_required
@@ -310,12 +326,12 @@ def study_plan_practice(request):
     if not remaining.exists():
         return redirect("quiz:study_plan_dashboard")
 
-    # ================= PICK QUESTION (ADAPTIVE) =================
+    # ================= PICK QUESTION (ADAPTIVE SAFE) =================
     qid = request.session.get("sp_qid")
     question = remaining.filter(id=qid).first() if qid else None
 
     if not question:
-        question = select_adaptive_question(plan, remaining, request)
+        question = select_adaptive_question(plan, remaining, request) or remaining.first()
         request.session["sp_qid"] = question.id
 
     choices = question.choices.order_by("order", "id")
@@ -337,6 +353,7 @@ def study_plan_practice(request):
                 .values_list("id", flat=True)
             )
             is_correct = set(selected_ids) == set(correct_ids)
+
         else:
             selected_id = request.POST.get("choice")
             selected = question.choices.filter(id=selected_id).first()
@@ -377,6 +394,14 @@ def study_plan_practice(request):
         plan.difficulty_stats = difficulty_stats
 
         # ============================================================
+        # ================= PERFORMANCE HISTORY ======================
+        # ============================================================
+
+        history = plan.performance_history or []
+        history.append(1 if is_correct else 0)
+        plan.performance_history = history[-50:]  # keep last 50
+
+        # ============================================================
         # ================= MISTAKE REINFORCEMENT ====================
         # ============================================================
 
@@ -395,9 +420,9 @@ def study_plan_practice(request):
         # ================= SPACED REPETITION ========================
         # ============================================================
 
-        history = request.session.get("question_history", {})
-        history[qid_str] = time()
-        request.session["question_history"] = history
+        history_map = request.session.get("question_history", {})
+        history_map[qid_str] = time()
+        request.session["question_history"] = history_map
 
         # ============================================================
         # ================= STREAK SYSTEM ============================
@@ -421,7 +446,7 @@ def study_plan_practice(request):
         # ================= XP SYSTEM ================================
         # ============================================================
 
-        base_xp = 2  # effort XP
+        base_xp = 2
 
         if is_correct:
             base_xp += 10
@@ -447,7 +472,15 @@ def study_plan_practice(request):
             }
 
         # ============================================================
-        # ================= SAVE (SINGLE SAVE) =======================
+        # ================= AUTO EXAM MODE ===========================
+        # ============================================================
+
+        if plan.certification_readiness() < 65 and \
+           plan.get_day_index() >= plan.total_days - 7:
+            plan.exam_mode = True
+
+        # ============================================================
+        # ================= SINGLE SAVE ==============================
         # ============================================================
 
         plan.save(update_fields=[
@@ -455,11 +488,13 @@ def study_plan_practice(request):
             "total_correct",
             "category_stats",
             "difficulty_stats",
+            "performance_history",
             "current_streak",
             "longest_streak",
             "last_activity_date",
             "xp",
             "level",
+            "exam_mode",
         ])
 
         # ============================================================
@@ -476,7 +511,7 @@ def study_plan_practice(request):
         return redirect("quiz:study_plan_practice")
 
     # ============================================================
-    # ================= RENDER ===============================
+    # ================= RENDER ==============================
     # ============================================================
 
     return render(
@@ -491,8 +526,6 @@ def study_plan_practice(request):
             "xp_gain": request.session.pop("xp_gain", None),
         }
     )
-
-
 
 
 

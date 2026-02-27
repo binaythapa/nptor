@@ -4,13 +4,16 @@ import time
 
 def select_adaptive_question(plan, questions_queryset, request=None):
     """
-    Advanced Lightweight Adaptive Engine
-    - Weak category boosting
-    - Difficulty targeting
+    Advanced Adaptive Engine (Production Safe)
+
+    Features:
+    - Weak category prioritization
+    - Difficulty targeting based on mastery
     - Streak escalation
     - Mistake reinforcement
     - Spaced repetition decay
-    - Exam-mode simulation
+    - Exam mode simulation
+    - Volatility stabilization
     """
 
     questions = list(questions_queryset)
@@ -22,21 +25,26 @@ def select_adaptive_question(plan, questions_queryset, request=None):
     difficulty_stats = plan.difficulty_stats or {}
 
     mastery = plan.accuracy_percentage()
-    streak = plan.current_streak
+    streak = plan.current_streak or 0
 
     # Session-based adaptive signals
     mistakes = request.session.get("recent_mistakes", {}) if request else {}
     history = request.session.get("question_history", {}) if request else {}
-    exam_mode = request.session.get("exam_mode", False) if request else False
+    exam_mode = getattr(plan, "exam_mode", False)
+
+    # Optional volatility stabilizer
+    volatility = getattr(plan, "score_volatility", lambda: 0.1)()
+    volatility_factor = 1 + min(volatility, 0.3)
 
     weighted_pool = []
-
     now = time.time()
 
     for q in questions:
 
+        qid_str = str(q.id)
+
         # ==========================================================
-        # 1️⃣ CATEGORY WEAKNESS WEIGHT
+        # 1️⃣ CATEGORY WEIGHT
         # ==========================================================
         cat_key = str(q.category_id)
         cat_data = category_stats.get(cat_key, {})
@@ -47,9 +55,10 @@ def select_adaptive_question(plan, questions_queryset, request=None):
         if attempted > 0:
             cat_accuracy = correct / attempted
         else:
-            cat_accuracy = 0.5  # neutral baseline
+            cat_accuracy = 0.5  # neutral
 
-        category_weight = 1 + (1 - cat_accuracy) * 2
+        # Weak categories boosted
+        category_weight = 1 + (1 - cat_accuracy) * 1.8
 
 
         # ==========================================================
@@ -73,7 +82,7 @@ def select_adaptive_question(plan, questions_queryset, request=None):
 
         else:
             if q.difficulty == "hard":
-                difficulty_weight = 1.7
+                difficulty_weight = 1.6
             elif q.difficulty == "medium":
                 difficulty_weight = 1.3
 
@@ -81,17 +90,16 @@ def select_adaptive_question(plan, questions_queryset, request=None):
         # ==========================================================
         # 3️⃣ STREAK ESCALATION
         # ==========================================================
-        streak_bonus = 1 + min(streak / 20, 0.5)
+        streak_bonus = 1 + min(streak / 25, 0.4)
 
 
         # ==========================================================
         # 4️⃣ MISTAKE REINFORCEMENT
         # ==========================================================
         mistake_weight = 1
-        qid_str = str(q.id)
 
         if qid_str in mistakes:
-            mistake_weight += mistakes[qid_str] * 0.5
+            mistake_weight += min(mistakes[qid_str] * 0.4, 2.0)
 
 
         # ==========================================================
@@ -102,13 +110,14 @@ def select_adaptive_question(plan, questions_queryset, request=None):
         if qid_str in history:
             time_since = now - history[qid_str]
 
-            # If seen recently (<5 min), reduce weight
             if time_since < 300:
                 spacing_weight = 0.4
             elif time_since < 1800:
                 spacing_weight = 0.7
+            elif time_since > 86400:
+                spacing_weight = 1.3
             else:
-                spacing_weight = 1.2  # revive older questions
+                spacing_weight = 1
 
 
         # ==========================================================
@@ -117,12 +126,14 @@ def select_adaptive_question(plan, questions_queryset, request=None):
         exam_weight = 1
 
         if exam_mode:
-            # In exam mode, reduce weakness bias
+            # Reduce reinforcement bias
             category_weight = 1 + (1 - cat_accuracy)
 
-            # Slightly favor harder questions
+            # Favor realistic exam difficulty
             if q.difficulty == "hard":
                 exam_weight = 1.3
+            elif q.difficulty == "medium":
+                exam_weight = 1.2
 
 
         # ==========================================================
@@ -134,29 +145,32 @@ def select_adaptive_question(plan, questions_queryset, request=None):
             streak_bonus *
             mistake_weight *
             spacing_weight *
-            exam_weight
+            exam_weight *
+            volatility_factor
         )
 
-        # Add controlled randomness
-        final_weight *= random.uniform(0.9, 1.1)
+        # Prevent extreme explosion
+        final_weight = max(final_weight, 0.05)
+
+        # Controlled randomness
+        final_weight *= random.uniform(0.92, 1.08)
 
         weighted_pool.append((q, final_weight))
 
-
     # ==========================================================
-    # Weighted Random Selection
+    # WEIGHTED RANDOM SELECTION
     # ==========================================================
     total_weight = sum(w for _, w in weighted_pool)
 
-    if total_weight == 0:
+    if total_weight <= 0:
         return random.choice(questions)
 
     r = random.uniform(0, total_weight)
     upto = 0
 
     for q, w in weighted_pool:
-        if upto + w >= r:
-            return q
         upto += w
+        if upto >= r:
+            return q
 
     return questions[0]

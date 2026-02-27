@@ -16,6 +16,7 @@ from datetime import timedelta
 from django.utils import timezone
 from ckeditor_uploader.fields import RichTextUploadingField
 import math
+import statistics
 
 
 
@@ -1480,6 +1481,10 @@ class StudyPlan(models.Model):
     xp = models.PositiveIntegerField(default=0)
     level = models.PositiveIntegerField(default=1)
 
+
+    performance_history = models.JSONField(default=list, blank=True)
+    exam_mode = models.BooleanField(default=False)
+
     # ---------------------------------
     # INDEXING (PERFORMANCE)
     # ---------------------------------
@@ -1874,6 +1879,20 @@ class StudyPlan(models.Model):
             "pass_probability": pass_probability,
             "confidence": confidence,
         }
+
+
+
+    def score_volatility(self):
+        """
+        Measures stability of recent performance.
+        Lower = more stable.
+        """
+        history = self.performance_history or []
+
+        if len(history) < 5:
+            return 0
+
+        return round(statistics.pstdev(history), 2)
 
 
 class LeaderboardEntry(models.Model):
