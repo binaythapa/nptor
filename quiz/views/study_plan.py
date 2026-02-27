@@ -23,7 +23,25 @@ from quiz.utils import calculate_global_percentile
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from quiz.utils import calculate_live_rank
 
+
+
+def calculate_live_rank(plan):
+    active_plans = StudyPlan.objects.filter(is_active=True)
+
+    scores = sorted(
+        [p.global_competitive_score() for p in active_plans],
+        reverse=True
+    )
+
+    user_score = plan.global_competitive_score()
+    rank = scores.index(user_score) + 1
+    total = len(scores)
+
+    percentile = 100 - round((rank / total) * 100, 2)
+
+    return rank, percentile
 
 
 @login_required
@@ -172,6 +190,10 @@ def study_plan_dashboard(request):
         else:
             confidence_band = "Low"
 
+
+        # ================= LIVE GLOBAL RANK =================
+        rank, percentile = calculate_live_rank(active_plan)
+
         # ================= FINAL ANALYTICS DICT =================
         analytics = {
             "completion_percent": active_plan.completion_percentage(),
@@ -187,10 +209,13 @@ def study_plan_dashboard(request):
             "extension_used": active_plan.extension_days,
             "mastery_score": mastery_score,
 
+            # 🔥 Live Competitive Metrics
+            "live_rank": rank,
+            "global_percentile": percentile,
+
             # Gamification
             "level_progress": active_plan.level_progress_percent(),
             "badge": badge,
-            "global_percentile": calculate_global_percentile(active_plan),
 
             # Readiness
             "difficulty_mastery": difficulty_mastery,
@@ -618,6 +643,10 @@ def create_adaptive_plan(request):
 
     return redirect("quiz:study_plan_dashboard")
 
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from collections import defaultdict
 
 @login_required
 def study_plan_leaderboard(request):
@@ -625,13 +654,13 @@ def study_plan_leaderboard(request):
     domain_id = request.GET.get("domain")
     month_filter = request.GET.get("monthly")
 
-    plans = StudyPlan.objects.filter(is_completed=True).select_related("user")
+    plans = StudyPlan.objects.select_related("user")
 
     # ================= DOMAIN FILTER =================
     if domain_id:
         plans = plans.filter(domain_id=domain_id)
 
-    # ================= MONTHLY RESET =================
+    # ================= MONTHLY SEASON =================
     if month_filter == "1":
         now = timezone.now()
         plans = plans.filter(
@@ -639,36 +668,39 @@ def study_plan_leaderboard(request):
             created_at__month=now.month
         )
 
+    # ================= ACTIVE + COMPLETED ONLY =================
+    plans = plans.filter(is_active=True)
+
     # ================= BEST PLAN PER USER =================
-    # Prevent duplicate users appearing multiple times
     best_plans = {}
 
     for plan in plans:
-        readiness = plan.certification_readiness()
+
+        # 🔥 NEW: Use Competitive Score instead of readiness only
+        score = plan.global_competitive_score()
 
         if (
             plan.user_id not in best_plans
-            or readiness > best_plans[plan.user_id]["readiness"]
+            or score > best_plans[plan.user_id]["score"]
         ):
             best_plans[plan.user_id] = {
                 "plan": plan,
-                "readiness": readiness
+                "score": score
             }
 
     ranked = sorted(
         best_plans.values(),
-        key=lambda x: x["readiness"],
+        key=lambda x: x["score"],
         reverse=True
     )
 
     total_users = len(ranked)
-
     leaderboard = []
 
     for index, item in enumerate(ranked, start=1):
 
         plan = item["plan"]
-        readiness = item["readiness"]
+        score = item["score"]
 
         percentile = (
             round((total_users - index) / total_users * 100, 2)
@@ -678,9 +710,11 @@ def study_plan_leaderboard(request):
         leaderboard.append({
             "rank": index,
             "user": plan.user,
-            "mastery": readiness,
-            "xp": getattr(plan, "xp", plan.total_correct * 10),
+            "competitive_score": score,
+            "readiness": plan.certification_readiness(),
+            "xp": plan.xp,
             "streak": plan.longest_streak,
+            "level": plan.level,
             "percentile": percentile,
         })
 
@@ -690,5 +724,7 @@ def study_plan_leaderboard(request):
         {
             "leaderboard": leaderboard,
             "domains": Domain.objects.filter(is_active=True),
+            "selected_domain": domain_id,
+            "monthly_mode": month_filter,
         }
     )

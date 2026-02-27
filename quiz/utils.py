@@ -227,3 +227,37 @@ def calculate_global_percentile(plan):
 
     percentile = 100 - round((higher / total_users) * 100, 2)
     return percentile
+
+
+
+    # quiz/utils.py
+
+
+
+
+def calculate_live_rank(plan, domain_id=None):
+    """
+    Calculate real-time global rank of a plan.
+    Optionally filter by domain.
+    """
+
+    plans = StudyPlan.objects.filter(is_active=True)
+
+    if domain_id:
+        plans = plans.filter(domain_id=domain_id)
+
+    # Compute competitive scores
+    scored = [
+        (p.id, p.global_competitive_score())
+        for p in plans
+    ]
+
+    # Sort descending
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    # Find rank
+    for index, (pid, _) in enumerate(scored, start=1):
+        if pid == plan.id:
+            return index
+
+    return None

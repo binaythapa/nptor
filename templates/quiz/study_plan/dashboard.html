@@ -22,206 +22,168 @@
     {% endif %}
   </div>
 
-  <p class="mt-2 mb-4 has-text-grey">
+  <p class="mt-2 mb-5 has-text-grey">
     {{ active_plan.get_plan_type_display }}
   </p>
 
   <!-- ================= XP & LEVEL ================= -->
-  <div class="box has-background-light mb-4">
+  <div class="box has-background-light mb-5">
 
-    <div class="is-flex is-justify-content-space-between">
+    <div class="is-flex is-justify-content-space-between is-align-items-center">
       <div>
-        <p class="is-size-7 has-text-grey">Level</p>
-        <p class="title is-6">⭐ {{ active_plan.level }}</p>
+        <p class="is-size-7 has-text-grey mb-1">Level</p>
+        <p class="title is-6 mb-0">⭐ {{ active_plan.level }}</p>
       </div>
 
       <div class="has-text-right">
-        <p class="is-size-7 has-text-grey">XP</p>
-        <p class="title is-6">{{ active_plan.xp }}</p>
+        <p class="is-size-7 has-text-grey mb-1">XP</p>
+        <p class="title is-6 mb-0">{{ active_plan.xp }}</p>
       </div>
     </div>
 
     {% if analytics.level_progress is not None %}
-    <progress class="progress is-warning mt-2"
+    <progress class="progress is-warning mt-3"
               value="{{ analytics.level_progress }}"
-              max="100">
-    </progress>
+              max="100"></progress>
 
-    <p class="is-size-7 has-text-grey">
+    <p class="is-size-7 has-text-grey mt-1">
       {{ analytics.level_progress }}% to next level
     </p>
     {% endif %}
   </div>
 
-  <!-- ================= COMPLETION ================= -->
-  <p class="is-size-7 mb-1">
-    Completion: {{ analytics.total_done }} / {{ analytics.total_questions }}
-  </p>
+  <!-- ================= PERFORMANCE METRICS ================= -->
+  <div class="mb-5">
 
-  <progress class="progress is-primary"
-            value="{{ analytics.completion_percent|default:0 }}"
-            max="100">
-  </progress>
+    <!-- Completion -->
+    <p class="is-size-7 mb-1">
+      Completion: {{ analytics.total_done }} / {{ analytics.total_questions }}
+    </p>
+    <progress class="progress is-primary"
+              value="{{ analytics.completion_percent|default:0 }}"
+              max="100"></progress>
 
-  <!-- ================= ACCURACY ================= -->
-  <p class="is-size-7 mt-4 mb-1">
-    Accuracy: {{ analytics.accuracy_percent|default:0 }}%
-
-    {% if analytics.trend_percent %}
-      {% if analytics.trend_percent > 0 %}
-        <span class="tag is-success ml-2">
-          +{{ analytics.trend_percent }}%
-        </span>
-      {% elif analytics.trend_percent < 0 %}
-        <span class="tag is-danger ml-2">
-          {{ analytics.trend_percent }}%
-        </span>
+    <!-- Accuracy -->
+    <p class="is-size-7 mt-4 mb-1">
+      Accuracy: {{ analytics.accuracy_percent|default:0 }}%
+      {% if analytics.trend_percent %}
+        {% if analytics.trend_percent > 0 %}
+          <span class="tag is-success ml-2">+{{ analytics.trend_percent }}%</span>
+        {% elif analytics.trend_percent < 0 %}
+          <span class="tag is-danger ml-2">{{ analytics.trend_percent }}%</span>
+        {% endif %}
       {% endif %}
+    </p>
+    <progress class="progress is-success"
+              value="{{ analytics.accuracy_percent|default:0 }}"
+              max="100"></progress>
+
+    <!-- Readiness -->
+    {% if analytics.readiness_score is not None %}
+    <p class="is-size-7 mt-4 mb-1">
+      🎯 Certification Readiness: {{ analytics.readiness_score }}%
+    </p>
+    <progress class="progress
+      {% if analytics.readiness_score >= 85 %}is-success
+      {% elif analytics.readiness_score >= 60 %}is-warning
+      {% else %}is-danger{% endif %}"
+      value="{{ analytics.readiness_score }}"
+      max="100"></progress>
     {% endif %}
-  </p>
 
-  <progress class="progress is-success"
-            value="{{ analytics.accuracy_percent|default:0 }}"
-            max="100">
-  </progress>
-
-  <!-- ================= READINESS ================= -->
-  {% if analytics.readiness_score is not None %}
-  <p class="is-size-7 mt-4 mb-1">
-    🎯 Certification Readiness: {{ analytics.readiness_score }}%
-  </p>
-
-  <progress class="progress
-    {% if analytics.readiness_score >= 85 %}is-success
-    {% elif analytics.readiness_score >= 60 %}is-warning
-    {% else %}is-danger{% endif %}"
-    value="{{ analytics.readiness_score }}"
-    max="100">
-  </progress>
-  {% endif %}
-
-  <!-- ================= VOLATILITY ================= -->
-  {% if analytics.volatility is not None %}
-  <div class="mt-3">
-    <p class="is-size-7">
-      📊 Performance Stability:
-      <strong>{{ analytics.volatility|floatformat:2 }}</strong>
-    </p>
-
-    <p class="is-size-7">
-      🎯 Confidence Band:
-      {% if analytics.confidence_band == "High" %}
-        <span class="tag is-success">High</span>
-      {% elif analytics.confidence_band == "Medium" %}
-        <span class="tag is-warning">Medium</span>
-      {% else %}
-        <span class="tag is-danger">Low</span>
-      {% endif %}
-    </p>
   </div>
-  {% endif %}
 
-  {% if analytics.exam_mode %}
-  <div class="notification is-danger is-light mt-3">
-    🔥 Exam Mode Activated (7-Day Intensive Phase)
-  </div>
-  {% endif %}
+  <!-- ================= EXAM & COMPETITION INTELLIGENCE ================= -->
+  <div class="box has-background-info-light mb-5">
 
-  <!-- ================= EXAM INTELLIGENCE ================= -->
-  {% if analytics.predicted_score %}
-  <div class="mt-5">
-    <h4 class="title is-6">🧠 Exam Intelligence</h4>
+    <h4 class="title is-6 mb-4">🧠 Exam & Competition Intelligence</h4>
 
     <!-- Predicted Score -->
     <p class="is-size-7 mb-1">
-      📊 Predicted Exam Score:
+      📊 Predicted Score:
       <strong>{{ analytics.predicted_score }}%</strong>
     </p>
-
     <progress class="progress
       {% if analytics.predicted_score >= 80 %}is-success
       {% elif analytics.predicted_score >= 70 %}is-warning
       {% else %}is-danger{% endif %}"
       value="{{ analytics.predicted_score }}"
-      max="100">
-    </progress>
+      max="100"></progress>
 
     <!-- Pass Probability -->
-    <p class="is-size-7 mt-3 mb-1">
+    <p class="is-size-7 mt-4 mb-1">
       🎯 Pass Probability:
       <strong>{{ analytics.pass_probability }}%</strong>
     </p>
-
     <progress class="progress is-link"
-      value="{{ analytics.pass_probability }}"
-      max="100">
-    </progress>
+              value="{{ analytics.pass_probability }}"
+              max="100"></progress>
 
-    <!-- Confidence -->
-    <p class="is-size-7 mt-3">
-      🔬 Model Confidence:
-      <strong>{{ analytics.confidence_level }}%</strong>
+    <!-- Global Rank -->
+    {% if analytics.live_rank %}
+    <p class="is-size-7 mt-4">
+      🏆 Global Rank:
+      <strong>#{{ analytics.live_rank }}</strong>
     </p>
-  </div>
-  {% endif %}
+    {% endif %}
 
-  <!-- ================= GLOBAL PERCENTILE ================= -->
-  {% if analytics.global_percentile %}
-  <div class="mt-4">
-    <p class="is-size-7 mb-1">
-      🌍 Global Percentile
-    </p>
-
-    <progress class="progress is-link"
-              value="{{ analytics.global_percentile }}"
-              max="100">
-    </progress>
-
-    <p class="is-size-7 has-text-grey">
-      You are ahead of {{ analytics.global_percentile }}% of learners
-    </p>
-  </div>
-  {% endif %}
-
-  <!-- ================= STREAK ================= -->
-  <div class="box has-background-warning-light mt-4">
+    {% if analytics.global_percentile %}
     <p class="is-size-7">
-      🔥 <strong>Current Streak:</strong> {{ active_plan.current_streak }} days<br>
-      🏆 <strong>Longest Streak:</strong> {{ active_plan.longest_streak }} days
+      🌍 Top {{ analytics.global_percentile }}% Worldwide
     </p>
+    <progress class="progress is-link mt-2"
+              value="{{ analytics.global_percentile }}"
+              max="100"></progress>
+    {% endif %}
+
+  </div>
+
+  <!-- ================= STABILITY & STREAK ================= -->
+  <div class="box has-background-warning-light mb-5">
+
+    {% if analytics.volatility is not None %}
+    <p class="is-size-7 mb-2">
+      📊 Stability Index:
+      <strong>{{ analytics.volatility|floatformat:2 }}</strong>
+    </p>
+    {% endif %}
+
+    <p class="is-size-7">
+      🔥 Current Streak:
+      <strong>{{ active_plan.current_streak }}</strong> days
+    </p>
+
+    <p class="is-size-7">
+      🏆 Longest Streak:
+      <strong>{{ active_plan.longest_streak }}</strong> days
+    </p>
+
   </div>
 
   <!-- ================= SPARKLINE ================= -->
   {% if analytics.sparkline_data %}
-  <div class="mt-4" style="height:70px;">
+  <div style="height:70px;" class="mb-5">
     <canvas id="sparklineChart"></canvas>
   </div>
   {% endif %}
 
   <!-- ================= META ================= -->
-  <div class="is-size-7 mt-4 has-text-grey">
+  <div class="is-size-7 has-text-grey mb-5">
     <p>Days Remaining: {{ analytics.days_remaining }}</p>
     <p>Extension Used: {{ analytics.extension_used }}</p>
   </div>
 
   <!-- ================= ACTION BUTTONS ================= -->
-  <div class="mt-5 buttons">
-
-    <a href="{% url 'quiz:study_plan_practice' %}"
-       class="button is-primary">
+  <div class="buttons">
+    <a href="{% url 'quiz:study_plan_practice' %}" class="button is-primary">
       Continue Practice
     </a>
-
-    <a href="{% url 'quiz:create_adaptive_plan' %}"
-       class="button is-warning">
+    <a href="{% url 'quiz:create_adaptive_plan' %}" class="button is-warning">
       🤖 Smart Next Plan
     </a>
-
-    <a href="{% url 'quiz:study_plan_leaderboard' %}"
-       class="button is-info">
+    <a href="{% url 'quiz:study_plan_leaderboard' %}" class="button is-info">
       🏆 Leaderboard
     </a>
-
   </div>
 
 </div>
@@ -230,9 +192,8 @@
 
 <div class="box">
   <p>No active study plan.</p>
-  <a href="{% url 'quiz:create_study_plan' %}"
-     class="button is-link mt-3">
-     Create New Plan
+  <a href="{% url 'quiz:create_study_plan' %}" class="button is-link mt-3">
+    Create New Plan
   </a>
 </div>
 

@@ -1894,6 +1894,29 @@ class StudyPlan(models.Model):
 
         return round(statistics.pstdev(history), 2)
 
+    def global_competitive_score(self):
+        """
+        Global ranking score across all active users.
+        Weighted competitive index.
+        """
+
+        readiness = self.certification_readiness()
+        mastery = self.difficulty_weighted_mastery()
+        streak = min(self.current_streak, 30)  # cap streak influence
+        stability = 1 - self.score_volatility()  # higher stability = better
+
+        xp_component = min(self.xp / 1000, 1) * 100
+
+        score = (
+            readiness * 0.35 +
+            mastery * 0.25 +
+            xp_component * 0.15 +
+            streak * 0.10 +
+            stability * 100 * 0.15
+        )
+
+        return round(score, 2)
+
 
 class LeaderboardEntry(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
