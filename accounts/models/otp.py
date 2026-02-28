@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
+import secrets
 import random
 
 
@@ -57,9 +58,16 @@ class EmailOTP(models.Model):
         return EmailOTP.objects.create(
             user=user,
             purpose=purpose,
-            code=str(random.randint(100000, 999999)),
+            code = f"{secrets.randbelow(900000) + 100000:06}",           
             expires_at=timezone.now() + timedelta(minutes=ttl_minutes),
         )
+
+
+
+
+
+
+
 
     def is_valid(self):
         """Check if OTP is usable"""
