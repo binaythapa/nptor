@@ -112,6 +112,30 @@
 <form method="post" id="practiceForm" data-qid="{{ question.id }}">
 {% csrf_token %}
 
+
+<!-- ================= QUESTION HEADER ================= -->
+<div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+
+  <div>
+    <p class="is-size-7 has-text-grey">
+      Question {{ question_number }} of {{ daily_target }}
+    </p>
+  </div>
+
+  <div class="has-text-right">
+    <p class="is-size-7 has-text-grey">
+      Attempted: {{ today_completed }} / {{ daily_target }}
+    </p>
+  </div>
+
+</div>
+
+<progress class="progress is-primary"
+          value="{{ progress_percent }}"
+          max="100">
+</progress>
+
+
 <!-- ================= QUESTION ================= -->
 <div class="question-content rich-content">
   {{ question.text|safe }}

@@ -538,6 +538,18 @@ def study_plan_practice(request):
     # ============================================================
     # ================= RENDER ==============================
     # ============================================================
+    
+
+    today_completed = plan.get_today_completed_count()
+    daily_target = plan.questions_per_day
+
+    # Current question serial number
+    question_number = today_completed + 1
+
+    # Progress %
+    progress_percent = round(
+        (today_completed / daily_target) * 100, 2
+        ) if daily_target > 0 else 0
 
     return render(
         request,
@@ -545,8 +557,10 @@ def study_plan_practice(request):
         {
             "question": question,
             "choices": choices,
-            "daily_target": plan.questions_per_day,
-            "today_completed": plan.get_today_completed_count(),
+            "daily_target": daily_target,
+            "today_completed": today_completed,
+            "question_number": question_number,
+            "progress_percent": progress_percent,
             "level_up_data": request.session.pop("level_up", None),
             "xp_gain": request.session.pop("xp_gain", None),
         }
