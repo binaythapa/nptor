@@ -1,0 +1,46 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+
+<div class="container" style="max-width:600px; margin-top:40px;">
+
+  <h2 style="font-size:22px; font-weight:600; margin-bottom:20px;">
+    ⭐ Share Your Experience
+  </h2>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="field">
+      <label class="label">Your Feedback</label>
+      {{ form.message }}
+    </div>
+
+    <div class="field">
+      <label class="label">Rating</label>
+      {{ form.rating }}
+    </div>
+
+    <div class="field">
+      <label class="label">Related Exam Track (optional)</label>
+      {{ form.exam_track }}
+    </div>
+
+    <div class="field">
+      <label class="label">Related Course (optional)</label>
+      {{ form.course }}
+    </div>
+
+    <div class="field">
+      <label class="label">Related Study Plan (optional)</label>
+      {{ form.study_plan }}
+    </div>
+
+    <button class="button is-primary is-fullwidth">
+      Submit Testimonial
+    </button>
+
+  </form>
+
+</div>
+
+{% endblock %}

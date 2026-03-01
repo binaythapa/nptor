@@ -5,6 +5,16 @@ from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
 
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from datetime import timedelta
+from django.utils import timezone
+
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -289,6 +299,10 @@ def autosave(request, user_exam_id):
     autosave_answers(ue, request.POST)
 
     return JsonResponse({"status": "ok"})
+
+
+
+
 @login_required
 def exam_submit(request, user_exam_id):
 
@@ -305,6 +319,8 @@ def exam_submit(request, user_exam_id):
         grade_exam(ue, None, is_mock=is_mock)
 
     return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+
 
 
 @login_required
@@ -509,6 +525,63 @@ def exam_result(request, user_exam_id):
     for fb in other_feedback_qs:
         comments_map.setdefault(fb.question_id, []).append(fb)
 
+    from pages.models import Testimonial
+
+    '''
+    # =====================================================
+    # ⭐ TESTIMONIAL POPUP LOGIC
+    # =====================================================
+    
+
+    show_testimonial_popup = False
+
+    if ue.passed and not is_mock:
+
+        # Check if already submitted testimonial for this track
+        existing = Testimonial.objects.filter(
+            user=request.user,
+            exam_track=ue.exam.track
+        ).exists()
+
+        if not existing:
+            show_testimonial_popup = True
+    
+
+    show_testimonial_popup = False
+    testimonial_exam_track = None
+    testimonial_course = None
+    testimonial_study_plan = None
+
+    if ue.passed and not is_mock and ue.exam.track:
+
+        existing = Testimonial.objects.filter(
+            user=request.user,
+            exam_track=ue.exam.track
+        ).exists()
+
+        if not existing:
+            show_testimonial_popup = True
+            testimonial_exam_track = ue.exam.track
+    print("DEBUG → PASSED:", ue.passed)
+    print("DEBUG → IS MOCK:", is_mock)
+    print("DEBUG → TRACK:", ue.exam.track)
+    print("DEBUG → SHOW POPUP:", show_testimonial_popup)
+
+    existing_qs = Testimonial.objects.filter(
+        user=request.user,
+        exam_track=ue.exam.track
+    )
+
+    print("DEBUG → EXISTING COUNT:", existing_qs.count())
+    '''
+
+    from pages.services.testimonials import get_testimonial_context
+
+    testimonial_context = get_testimonial_context(
+        request.user,
+        exam_track=ue.exam.track,
+        trigger=(ue.passed and not is_mock)
+    )
     # =====================================================
     # RENDER
     # =====================================================
@@ -529,8 +602,15 @@ def exam_result(request, user_exam_id):
             # 🎓 COURSE AWARE
             'course_context': course_context,
             'next_lesson': next_lesson,
+
+            # Testimonial
+            #'show_testimonial_popup': show_testimonial_popup,
+            **testimonial_context,
         }
     )
+
+
+
 
 
 @login_required
@@ -863,15 +943,7 @@ def mock_exam_start(request, exam_id):
         user_exam_id=ue.id,
         index=0
     )
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
-from datetime import timedelta
-from django.utils import timezone
 
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from datetime import timedelta
 
 
 @login_required

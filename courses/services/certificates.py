@@ -10,7 +10,7 @@ def issue_certificate_if_eligible(user, course, progress):
     """
 
     if progress < 100:
-        return None
+        return None, False
 
     certificate, created = CourseCertificate.objects.get_or_create(
         user=user,
@@ -20,4 +20,4 @@ def issue_certificate_if_eligible(user, course, progress):
         }
     )
 
-    return certificate
+    return certificate, created

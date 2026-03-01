@@ -164,7 +164,7 @@ def course_learn(request, slug, lesson_id=None):
     )
 
     # 7️⃣ Certificate
-    certificate = issue_certificate_if_eligible(
+    certificate, certificate_created = issue_certificate_if_eligible(
         request.user,
         course,
         progress
@@ -195,6 +195,17 @@ def course_learn(request, slug, lesson_id=None):
     # ✅ correct
     next_lesson = get_next_lesson(lesson)
 
+
+    from pages.services.testimonials import get_testimonial_context
+
+   
+
+    testimonial_context = get_testimonial_context(
+        request.user,
+        course=course,
+        trigger=certificate_created
+    )
+    
     return render(
         request,
         "courses/student/course_player.html",
@@ -214,6 +225,8 @@ def course_learn(request, slug, lesson_id=None):
             "show_celebration": show_celebration,
 
             "video_embed_url": video_embed_url,
+
+            **testimonial_context,
         }
     )
 

@@ -62,7 +62,7 @@ def subscribe_track_checkout(request, track_id):
         messages.error(request, "No subscription plans available for this track.")
         return redirect("quiz:exam_list")
 
-    return render(request, "quiz/checkout.html", {
+    return render(request, "quiz/student/checkout.html", {
         "track": track,
         "plans": plans,
     })
@@ -242,7 +242,7 @@ def track_checkout(request, track_id):
         return redirect("quiz:student_dashboard")  # or payment page
 
     # ================= GET =================
-    return render(request, "quiz/checkout.html", {
+    return render(request, "quiz/student/checkout.html", {
         "track": track,
         "plans": plans,
         "action": request.GET.get("action", "subscribe"),

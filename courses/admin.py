@@ -424,3 +424,42 @@ class CourseSubscriptionAdmin(admin.ModelAdmin):
                 sub.expires_at = now + timezone.timedelta(days=30)
             sub.is_active = True
             sub.save()
+
+
+from django.contrib import admin
+from .models import CourseCertificate
+
+
+@admin.register(CourseCertificate)
+class CourseCertificateAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "certificate_id",
+        "user",
+        "course",
+        "issued_at",
+    )
+
+    list_filter = (
+        "course",
+        "issued_at",
+    )
+
+    search_fields = (
+        "certificate_id",
+        "user__username",
+        "user__email",
+        "course__title",
+    )
+
+    readonly_fields = (
+        "certificate_id",
+        "issued_at",
+    )
+
+    ordering = ("-issued_at",)
+
+    autocomplete_fields = (
+        "user",
+        "course",
+    )

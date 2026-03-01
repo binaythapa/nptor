@@ -63,6 +63,35 @@ def study_plan_dashboard(request):
     trend_percent = None
     sparkline_data = []
 
+
+    from pages.services.testimonials import get_testimonial_context
+
+    
+
+    show_testimonial_popup = False
+    testimonial_study_plan = None
+    testimonial_exam_track = None
+    testimonial_course = None
+
+    completed_plan_id = request.session.pop("study_plan_completed_id", None)
+
+    if completed_plan_id:
+        completed_plan = request.user.study_plans.filter(
+            id=completed_plan_id
+        ).first()
+
+        if completed_plan:
+            testimonial_context = get_testimonial_context(
+                request.user,
+                study_plan=completed_plan,
+                trigger=True
+            )
+
+            show_testimonial_popup = testimonial_context["show_testimonial_popup"]
+            testimonial_study_plan = testimonial_context["testimonial_study_plan"]
+
+
+
     if active_plan:
 
         active_plan.auto_extend_if_needed()
@@ -241,7 +270,12 @@ def study_plan_dashboard(request):
         "weak_categories": weak_categories,
         "suggestion": suggestion,
         "history_plans": history_plans,
-    }
+
+        "show_testimonial_popup": show_testimonial_popup,
+        "testimonial_study_plan": testimonial_study_plan,
+        "testimonial_exam_track": None,
+        "testimonial_course": None,
+         }
 
     return render(
         request,
@@ -291,7 +325,6 @@ from datetime import timedelta
 from time import time
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-
 
 @login_required
 def study_plan_practice(request):
@@ -351,7 +384,7 @@ def study_plan_practice(request):
     if not remaining.exists():
         return redirect("quiz:study_plan_dashboard")
 
-    # ================= PICK QUESTION (ADAPTIVE SAFE) =================
+    # ================= PICK QUESTION =================
     qid = request.session.get("sp_qid")
     question = remaining.filter(id=qid).first() if qid else None
 
@@ -384,172 +417,82 @@ def study_plan_practice(request):
             selected = question.choices.filter(id=selected_id).first()
             is_correct = selected and selected.is_correct
 
-        # ============================================================
-        # ================= AGGREGATE STATS ==========================
-        # ============================================================
-
+        # ---------- Aggregate ----------
         plan.total_attempted += 1
         if is_correct:
             plan.total_correct += 1
 
-        # ---------- Category Stats ----------
+        # Category stats
         cat_key = str(question.category_id)
         category_stats = plan.category_stats or {}
-
-        if cat_key not in category_stats:
-            category_stats[cat_key] = {"attempted": 0, "correct": 0}
-
+        category_stats.setdefault(cat_key, {"attempted": 0, "correct": 0})
         category_stats[cat_key]["attempted"] += 1
         if is_correct:
             category_stats[cat_key]["correct"] += 1
-
         plan.category_stats = category_stats
 
-        # ---------- Difficulty Stats ----------
+        # Difficulty stats
         diff_key = question.difficulty
         difficulty_stats = plan.difficulty_stats or {}
-
-        if diff_key not in difficulty_stats:
-            difficulty_stats[diff_key] = {"attempted": 0, "correct": 0}
-
+        difficulty_stats.setdefault(diff_key, {"attempted": 0, "correct": 0})
         difficulty_stats[diff_key]["attempted"] += 1
         if is_correct:
             difficulty_stats[diff_key]["correct"] += 1
-
         plan.difficulty_stats = difficulty_stats
 
-        # ============================================================
-        # ================= PERFORMANCE HISTORY ======================
-        # ============================================================
-
+        # Performance history
         history = plan.performance_history or []
         history.append(1 if is_correct else 0)
-        plan.performance_history = history[-50:]  # keep last 50
+        plan.performance_history = history[-50:]
 
-        # ============================================================
-        # ================= MISTAKE REINFORCEMENT ====================
-        # ============================================================
-
-        mistakes = request.session.get("recent_mistakes", {})
-        qid_str = str(question.id)
-
-        if not is_correct:
-            mistakes[qid_str] = mistakes.get(qid_str, 0) + 3
-        else:
-            if qid_str in mistakes:
-                mistakes[qid_str] = max(mistakes[qid_str] - 2, 0)
-
-        request.session["recent_mistakes"] = mistakes
-
-        # ============================================================
-        # ================= SPACED REPETITION ========================
-        # ============================================================
-
-        history_map = request.session.get("question_history", {})
-        history_map[qid_str] = time()
-        request.session["question_history"] = history_map
-
-        # ============================================================
-        # ================= STREAK SYSTEM ============================
-        # ============================================================
-
+        # Streak system
         today = timezone.now().date()
-
-        if plan.last_activity_date == today:
-            pass
-        elif plan.last_activity_date == today - timedelta(days=1):
+        if plan.last_activity_date == today - timedelta(days=1):
             plan.current_streak += 1
-        else:
+        elif plan.last_activity_date != today:
             plan.current_streak = 1
 
         plan.last_activity_date = today
+        plan.longest_streak = max(plan.longest_streak, plan.current_streak)
 
-        if plan.current_streak > plan.longest_streak:
-            plan.longest_streak = plan.current_streak
-
-        # ============================================================
-        # ================= XP SYSTEM ================================
-        # ============================================================
-
+        # XP
         base_xp = 2
-
         if is_correct:
             base_xp += 10
 
-        difficulty_bonus = {
-            "easy": 0,
-            "medium": 3,
-            "hard": 5,
-        }
-
+        difficulty_bonus = {"easy": 0, "medium": 3, "hard": 5}
         base_xp += difficulty_bonus.get(question.difficulty, 0)
+        base_xp += min(plan.current_streak, 10)
 
-        streak_bonus = min(plan.current_streak, 10)
-        base_xp += streak_bonus
-
-        leveled_up = plan.apply_xp(base_xp)
-
+        plan.apply_xp(base_xp)
         request.session["xp_gain"] = base_xp
 
-        if leveled_up:
-            request.session["level_up"] = {
-                "new_level": plan.level
-            }
+        # Save once
+        plan.save()
 
-        # ============================================================
-        # ================= AUTO EXAM MODE ===========================
-        # ============================================================
-
-        if plan.certification_readiness() < 65 and \
-           plan.get_day_index() >= plan.total_days - 7:
-            plan.exam_mode = True
-
-        # ============================================================
-        # ================= SINGLE SAVE ==============================
-        # ============================================================
-
-        plan.save(update_fields=[
-            "total_attempted",
-            "total_correct",
-            "category_stats",
-            "difficulty_stats",
-            "performance_history",
-            "current_streak",
-            "longest_streak",
-            "last_activity_date",
-            "xp",
-            "level",
-            "exam_mode",
-        ])
-
-        # ============================================================
-        # ================= MARK COMPLETED ===========================
-        # ============================================================
-
+        # Mark progress
         seen.append(question.id)
         request.session["sp_seen"] = seen
         request.session.pop("sp_qid", None)
 
         plan.increment_today_progress()
+
+        # 🔥 Detect completion
+        was_completed = plan.is_completed
         plan.mark_completed_if_finished()
+
+        if not was_completed and plan.is_completed:
+            request.session["study_plan_completed_id"] = plan.id
+            return redirect("quiz:study_plan_dashboard")
 
         return redirect("quiz:study_plan_practice")
 
     # ============================================================
-    # ================= RENDER ==============================
+    # ================= RENDER ============================
     # ============================================================
-    
 
     today_completed = plan.get_today_completed_count()
     daily_target = plan.questions_per_day
-
-    # Current question serial number
-    question_number = today_completed + 1
-
-    # Progress %
-    progress_percent = round(
-        (today_completed / daily_target) * 100, 2
-        ) if daily_target > 0 else 0
 
     return render(
         request,
@@ -559,13 +502,13 @@ def study_plan_practice(request):
             "choices": choices,
             "daily_target": daily_target,
             "today_completed": today_completed,
-            "question_number": question_number,
-            "progress_percent": progress_percent,
-            "level_up_data": request.session.pop("level_up", None),
+            "question_number": today_completed + 1,
+            "progress_percent": round(
+                (today_completed / daily_target) * 100, 2
+            ) if daily_target > 0 else 0,
             "xp_gain": request.session.pop("xp_gain", None),
         }
     )
-
 
 
 @login_required

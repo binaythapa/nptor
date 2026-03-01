@@ -10,4 +10,6 @@ urlpatterns = [
     path("terms/", views.terms, name="terms"),
     path("contact/", views.contact, name="contact"),
     path("feedback/", views.feedback, name="feedback"),
+
+    path("testimonial/submit/", views.submit_testimonial, name="submit_testimonial"),
 ]
