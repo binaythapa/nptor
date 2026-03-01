@@ -1918,6 +1918,15 @@ class StudyPlan(models.Model):
         return round(score, 2)
 
 
+    def mark_completed_if_finished(self):
+        if sum(self.daily_progress.values()) >= self.total_questions():
+            self.is_completed = True
+            self.is_active = False
+            self.save(update_fields=["is_completed", "is_active"])
+            return True
+        return False
+
+
 class LeaderboardEntry(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     score = models.FloatField(default=0)

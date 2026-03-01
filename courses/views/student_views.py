@@ -391,3 +391,5 @@ def subscribe_course(request, course_id):
         sub.save(update_fields=["is_active"])
 
     return redirect("quiz:exam_list")
+
+

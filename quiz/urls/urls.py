@@ -202,6 +202,12 @@ urlpatterns = [
         name="study_plan_leaderboard"
     ),
 
+    path(
+        "study-plan/completed/<int:plan_id>/",
+        study_plan_completed,
+        name="study_plan_completed",
+    ),
+
 
 ]
 

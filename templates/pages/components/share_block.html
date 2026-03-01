@@ -1,0 +1,60 @@
+<div class="box mt-6 has-text-centered share-box">
+
+  <h4 class="title is-6">
+    🚀 Share Your Achievement
+  </h4>
+
+  <div class="buttons is-centered mt-4">
+
+    <a href="{{ share_links.linkedin }}"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="button is-link is-light">
+       🔗 LinkedIn
+    </a>
+
+    <a href="{{ share_links.facebook }}"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="button is-primary is-light">
+       📘 Facebook
+    </a>
+
+    <a href="{{ share_links.twitter }}"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="button is-info is-light">
+       🐦 X
+    </a>
+
+  </div>
+
+  <div class="mt-4">
+    <button class="button is-light is-small"
+            type="button"
+            onclick="copyShareText()">
+      📋 Copy Share Text
+    </button>
+  </div>
+
+</div>
+
+<script>
+function copyShareText() {
+  const text = "{{ share_text|escapejs }}";
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Achievement text copied successfully!");
+    });
+  } else {
+    alert("Clipboard not supported in this browser.");
+  }
+}
+</script>
+
+<style>
+.share-box {
+  border-top: 3px solid #3273dc;
+}
+</style>

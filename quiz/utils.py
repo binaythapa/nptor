@@ -7,6 +7,7 @@ from django.db.models import QuerySet
 from .models import *
 
 
+
 # ============================================================
 # CATEGORY HELPERS
 # ============================================================
@@ -237,27 +238,48 @@ def calculate_global_percentile(plan):
 
 def calculate_live_rank(plan, domain_id=None):
     """
-    Calculate real-time global rank of a plan.
+    Calculate real-time global rank & percentile
+    among active users.
     Optionally filter by domain.
     """
 
+    from .models import StudyPlan
+
+    # Only compare active competitive plans
     plans = StudyPlan.objects.filter(is_active=True)
 
     if domain_id:
         plans = plans.filter(domain_id=domain_id)
 
-    # Compute competitive scores
-    scored = [
-        (p.id, p.global_competitive_score())
-        for p in plans
-    ]
+    plans = list(plans)
 
-    # Sort descending
+    if not plans:
+        return None, 0
+
+    # Compute competitive score safely
+    scored = []
+
+    for p in plans:
+        try:
+            score = p.global_competitive_score()
+        except Exception:
+            score = 0
+        scored.append((p.id, score))
+
+    # Sort highest score first
     scored.sort(key=lambda x: x[1], reverse=True)
+
+    total_users = len(scored)
 
     # Find rank
     for index, (pid, _) in enumerate(scored, start=1):
         if pid == plan.id:
-            return index
 
-    return None
+            percentile = round(
+                ((total_users - index) / total_users) * 100,
+                2
+            ) if total_users > 0 else 0
+
+            return index, percentile
+
+    return None, 0

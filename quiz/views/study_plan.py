@@ -43,7 +43,6 @@ def calculate_live_rank(plan):
 
     return rank, percentile
 
-
 @login_required
 def study_plan_dashboard(request):
 
@@ -63,34 +62,15 @@ def study_plan_dashboard(request):
     trend_percent = None
     sparkline_data = []
 
-
-    from pages.services.testimonials import get_testimonial_context
-
-    
-
+    # ================= TESTIMONIAL DEFAULTS =================
     show_testimonial_popup = False
     testimonial_study_plan = None
     testimonial_exam_track = None
     testimonial_course = None
 
-    completed_plan_id = request.session.pop("study_plan_completed_id", None)
-
-    if completed_plan_id:
-        completed_plan = request.user.study_plans.filter(
-            id=completed_plan_id
-        ).first()
-
-        if completed_plan:
-            testimonial_context = get_testimonial_context(
-                request.user,
-                study_plan=completed_plan,
-                trigger=True
-            )
-
-            show_testimonial_popup = testimonial_context["show_testimonial_popup"]
-            testimonial_study_plan = testimonial_context["testimonial_study_plan"]
-
-
+    # =========================================================
+    # ================= ACTIVE PLAN LOGIC =====================
+    # =========================================================
 
     if active_plan:
 
@@ -219,11 +199,10 @@ def study_plan_dashboard(request):
         else:
             confidence_band = "Low"
 
-
         # ================= LIVE GLOBAL RANK =================
         rank, percentile = calculate_live_rank(active_plan)
 
-        # ================= FINAL ANALYTICS DICT =================
+        # ================= FINAL ANALYTICS =================
         analytics = {
             "completion_percent": active_plan.completion_percentage(),
             "total_done": total_done,
@@ -238,9 +217,9 @@ def study_plan_dashboard(request):
             "extension_used": active_plan.extension_days,
             "mastery_score": mastery_score,
 
-            # 🔥 Live Competitive Metrics
-            "live_rank": rank,
-            "global_percentile": percentile,
+            # Competitive
+            "live_rank": rank or 0,
+            "global_percentile": percentile or 0,
 
             # Gamification
             "level_progress": active_plan.level_progress_percent(),
@@ -270,26 +249,17 @@ def study_plan_dashboard(request):
         "weak_categories": weak_categories,
         "suggestion": suggestion,
         "history_plans": history_plans,
-
         "show_testimonial_popup": show_testimonial_popup,
         "testimonial_study_plan": testimonial_study_plan,
-        "testimonial_exam_track": None,
-        "testimonial_course": None,
-         }
+        "testimonial_exam_track": testimonial_exam_track,
+        "testimonial_course": testimonial_course,
+    }
 
     return render(
         request,
         "quiz/study_plan/dashboard.html",
         context
     )
-
-
-
-
-
-
-
-
 
 
 
@@ -325,6 +295,7 @@ from datetime import timedelta
 from time import time
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+
 
 @login_required
 def study_plan_practice(request):
@@ -422,7 +393,7 @@ def study_plan_practice(request):
         if is_correct:
             plan.total_correct += 1
 
-        # Category stats
+        # Save stats safely
         cat_key = str(question.category_id)
         category_stats = plan.category_stats or {}
         category_stats.setdefault(cat_key, {"attempted": 0, "correct": 0})
@@ -431,7 +402,6 @@ def study_plan_practice(request):
             category_stats[cat_key]["correct"] += 1
         plan.category_stats = category_stats
 
-        # Difficulty stats
         diff_key = question.difficulty
         difficulty_stats = plan.difficulty_stats or {}
         difficulty_stats.setdefault(diff_key, {"attempted": 0, "correct": 0})
@@ -440,34 +410,6 @@ def study_plan_practice(request):
             difficulty_stats[diff_key]["correct"] += 1
         plan.difficulty_stats = difficulty_stats
 
-        # Performance history
-        history = plan.performance_history or []
-        history.append(1 if is_correct else 0)
-        plan.performance_history = history[-50:]
-
-        # Streak system
-        today = timezone.now().date()
-        if plan.last_activity_date == today - timedelta(days=1):
-            plan.current_streak += 1
-        elif plan.last_activity_date != today:
-            plan.current_streak = 1
-
-        plan.last_activity_date = today
-        plan.longest_streak = max(plan.longest_streak, plan.current_streak)
-
-        # XP
-        base_xp = 2
-        if is_correct:
-            base_xp += 10
-
-        difficulty_bonus = {"easy": 0, "medium": 3, "hard": 5}
-        base_xp += difficulty_bonus.get(question.difficulty, 0)
-        base_xp += min(plan.current_streak, 10)
-
-        plan.apply_xp(base_xp)
-        request.session["xp_gain"] = base_xp
-
-        # Save once
         plan.save()
 
         # Mark progress
@@ -477,13 +419,11 @@ def study_plan_practice(request):
 
         plan.increment_today_progress()
 
-        # 🔥 Detect completion
-        was_completed = plan.is_completed
+        # 🔥 Final Completion Check
         plan.mark_completed_if_finished()
 
-        if not was_completed and plan.is_completed:
-            request.session["study_plan_completed_id"] = plan.id
-            return redirect("quiz:study_plan_dashboard")
+        if plan.is_completed:
+            return redirect("quiz:study_plan_completed", plan_id=plan.id)
 
         return redirect("quiz:study_plan_practice")
 
@@ -506,10 +446,8 @@ def study_plan_practice(request):
             "progress_percent": round(
                 (today_completed / daily_target) * 100, 2
             ) if daily_target > 0 else 0,
-            "xp_gain": request.session.pop("xp_gain", None),
         }
     )
-
 
 @login_required
 def create_study_plan(request):
@@ -684,4 +622,116 @@ def study_plan_leaderboard(request):
             "selected_domain": domain_id,
             "monthly_mode": month_filter,
         }
+    )
+
+
+
+from django.shortcuts import get_object_or_404, render
+from django.contrib.auth.decorators import login_required
+from quiz.models import StudyPlan
+from quiz.utils import calculate_live_rank
+
+@login_required
+def study_plan_completed(request, plan_id):
+
+    # ================= GET COMPLETED PLAN =================
+    plan = get_object_or_404(
+        StudyPlan,
+        id=plan_id,
+        user=request.user,
+        is_completed=True
+    )
+
+    # ================= FINAL METRICS =================
+    accuracy = plan.accuracy_percentage()
+    readiness = plan.certification_readiness()
+    difficulty_mastery = plan.difficulty_weighted_mastery()
+    badge = plan.certification_badge()
+
+    prediction = plan.certification_prediction()
+    volatility = plan.score_volatility()
+
+    # ================= CONFIDENCE BAND =================
+    if volatility < 0.15:
+        confidence_band = "High"
+    elif volatility < 0.30:
+        confidence_band = "Medium"
+    else:
+        confidence_band = "Low"
+
+    # ================= LIVE RANK =================
+    rank, percentile = calculate_live_rank(plan)
+    rank = rank or 0
+    percentile = percentile or 0
+
+    # ================= AI NEXT PLAN RECOMMENDATION =================
+    if readiness < 60:
+        recommendation = "Repeat 7-Day Revision Plan"
+        next_plan_type = StudyPlan.PLAN_7
+
+    elif readiness < 80:
+        recommendation = "Upgrade to 15-Day Improvement Plan"
+        next_plan_type = StudyPlan.PLAN_15
+
+    elif readiness < 90:
+        recommendation = "Start 30-Day Mastery Plan"
+        next_plan_type = StudyPlan.PLAN_30
+
+    else:
+        recommendation = "Switch to Exam Mode Simulation"
+        next_plan_type = None
+
+    # ================= TESTIMONIAL POPUP =================
+    from pages.services.testimonials import get_testimonial_context
+    from pages.services.share_service import ShareService
+
+    # ================= SOCIAL SHARE =================
+
+    share_text = ShareService.generate_achievement_text(
+        title=f"{plan.get_plan_type_display()} Study Plan",
+        readiness=round(readiness, 2),
+        predicted_score=round(prediction.get("predicted_score", 0), 2),
+        rank=rank,
+    )
+
+    share_links = ShareService.get_social_links(
+        text=share_text,
+        url="https://nptor.com"
+    )
+
+    testimonial_context = get_testimonial_context(
+        request.user,
+        study_plan=plan,
+        trigger=True
+    )
+
+    # ================= CONTEXT =================
+    context = {
+        "plan": plan,
+        "accuracy": round(accuracy, 2),
+        "readiness": round(readiness, 2),
+        "difficulty_mastery": round(difficulty_mastery, 2),
+        "badge": badge,
+        "prediction": prediction,
+        "volatility": round(volatility, 3),
+        "confidence_band": confidence_band,
+        "rank": rank,
+        "percentile": percentile,
+        "recommendation": recommendation,
+        "next_plan_type": next_plan_type,
+
+        # 🔥 Social Share
+        "share_links": share_links,
+
+        # 🔥 Testimonial
+        "show_testimonial_popup": testimonial_context["show_testimonial_popup"],
+        "testimonial_study_plan": testimonial_context["testimonial_study_plan"],
+        "testimonial_exam_track": None,
+        "testimonial_course": None,
+    }
+
+    return render(
+        request,
+        "quiz/study_plan/completed.html",
+        context
     )

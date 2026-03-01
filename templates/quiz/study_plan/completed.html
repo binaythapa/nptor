@@ -1,0 +1,215 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Study Plan Completed{% endblock %}
+
+{% block content %}
+{% include "components/testimonial_popup.html" %}
+
+<div class="container">
+
+  <!-- ================= HERO SECTION ================= -->
+  <div class="box has-text-centered completion-hero mb-6">
+
+    <h1 class="title is-4 animate-pop">
+      🎉 Congratulations!
+    </h1>
+
+    <p class="subtitle is-6 has-text-grey mb-3">
+      You have successfully completed your study plan
+    </p>
+
+    {% if badge %}
+      <span class="tag is-info is-medium">
+        🎖 {{ badge }}
+      </span>
+    {% endif %}
+
+  </div>
+
+
+  <!-- ================= PERFORMANCE GRID ================= -->
+  <div class="columns is-multiline is-variable is-4 mb-6">
+
+    <div class="column is-6-tablet is-3-desktop">
+      <div class="box metric-card has-text-centered">
+        <p class="metric-label">Final Accuracy</p>
+        <h2 class="metric-value">{{ accuracy }}%</h2>
+      </div>
+    </div>
+
+    <div class="column is-6-tablet is-3-desktop">
+      <div class="box metric-card has-text-centered">
+        <p class="metric-label">Certification Readiness</p>
+        <h2 class="metric-value">{{ readiness }}%</h2>
+      </div>
+    </div>
+
+    <div class="column is-6-tablet is-3-desktop">
+      <div class="box metric-card has-text-centered">
+        <p class="metric-label">Difficulty Mastery</p>
+        <h2 class="metric-value">{{ difficulty_mastery }}%</h2>
+      </div>
+    </div>
+
+    <div class="column is-6-tablet is-3-desktop">
+      <div class="box metric-card has-text-centered">
+        <p class="metric-label">Global Rank</p>
+        <h2 class="metric-value">#{{ rank }}</h2>
+        <p class="is-size-7 has-text-grey">
+          Top {{ percentile }}% Worldwide
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ================= EXAM INTELLIGENCE ================= -->
+  <div class="box mb-6">
+
+    <h3 class="title is-6 mb-4">
+      🧠 Exam Intelligence
+    </h3>
+
+    <!-- Predicted Score -->
+    <div class="mb-4">
+      <div class="is-flex is-justify-content-space-between">
+        <span class="is-size-7">Predicted Exam Score</span>
+        <strong>{{ prediction.predicted_score }}%</strong>
+      </div>
+
+      <progress class="progress is-link"
+                value="{{ prediction.predicted_score }}"
+                max="100">
+      </progress>
+    </div>
+
+    <!-- Pass Probability -->
+    <div class="mb-4">
+      <div class="is-flex is-justify-content-space-between">
+        <span class="is-size-7">Pass Probability</span>
+        <strong>{{ prediction.pass_probability }}%</strong>
+      </div>
+
+      <progress class="progress is-success"
+                value="{{ prediction.pass_probability }}"
+                max="100">
+      </progress>
+    </div>
+
+    <!-- Stability & Confidence -->
+    <div class="columns is-mobile mt-4">
+
+      <div class="column">
+        <p class="is-size-7 has-text-grey">Performance Stability</p>
+        <strong>{{ volatility|floatformat:2 }}</strong>
+      </div>
+
+      <div class="column has-text-right">
+        <p class="is-size-7 has-text-grey">Confidence Band</p>
+
+        {% if confidence_band == "High" %}
+          <span class="tag is-success">High</span>
+        {% elif confidence_band == "Medium" %}
+          <span class="tag is-warning">Medium</span>
+        {% else %}
+          <span class="tag is-danger">Low</span>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= SHARE BLOCK ================= -->
+  {% if share_links %}
+    {% include "pages/components/share_block.html" %}
+  {% endif %}
+
+
+  <!-- ================= AI NEXT STEP ================= -->
+  <div class="box has-text-centered mt-6 next-step-box">
+
+    <h4 class="title is-6">
+      🚀 What’s Next?
+    </h4>
+
+    <p class="mb-4 has-text-grey">
+      {{ recommendation }}
+    </p>
+
+    {% if next_plan_type %}
+      <a href="{% url 'quiz:create_study_plan' %}?recommended={{ next_plan_type }}"
+         class="button is-primary is-medium">
+         Start Recommended Plan
+      </a>
+    {% else %}
+      <a href="{% url 'quiz:exam_mode' %}"
+         class="button is-danger is-medium">
+         Enter Exam Simulation Mode
+      </a>
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+<!-- ================= CONFETTI ================= -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+setTimeout(() => {
+  confetti({
+    particleCount: 160,
+    spread: 80,
+    origin: { y: 0.6 }
+  });
+}, 600);
+</script>
+
+
+<style>
+
+/* ================= HERO ================= */
+.completion-hero {
+  background: linear-gradient(135deg, #f5f9ff, #ffffff);
+}
+
+/* ================= METRIC CARDS ================= */
+.metric-card {
+  transition: all 0.25s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.metric-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+/* ================= NEXT STEP BOX ================= */
+.next-step-box {
+  border-left: 4px solid #3273dc;
+}
+
+/* ================= ANIMATION ================= */
+.animate-pop {
+  animation: pop 0.6s ease-out;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+</style>
+
+{% endblock %}
