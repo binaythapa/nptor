@@ -1,3 +1,29 @@
+
+/* ================= FIX MOBILE OVERFLOW ================= */
+
+@media (max-width: 980px) {
+
+  .container.main-area {
+    max-width: 100%;
+    width: 100%;
+    margin: 12px 0;
+  }
+
+  .site-content {
+    min-width: 0;
+    width: 100%;
+  }
+
+}
+
+/* Prevent accidental horizontal scroll */
+html, body {
+  overflow-x: hidden;
+}
+
+
+
+
 /* static/css/theme.css -- consolidated polished theme (light + dark) */
 /* Generic disabled state for links & buttons */
 .is-disabled {
@@ -750,7 +776,7 @@ body {
   --bg:#0f172a;     /* softer dark */
   --card:#111c2e;   /* slightly lighter card */
 }
-}
+
 /* Remove white Bulma surfaces */
 :root[data-theme='dark'] .box,
 :root[data-theme='dark'] .notification,

@@ -1,0 +1,158 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Study Plan Report{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+<div class="box mb-5">
+
+  <!-- ================= HEADER ================= -->
+  <div class="is-flex is-justify-content-space-between is-align-items-center">
+    <h2 class="title is-4">📊 Study Plan Performance Report</h2>
+    <span class="tag is-dark is-medium">
+      {{ plan.get_plan_type_display }}
+    </span>
+  </div>
+
+  <p class="has-text-grey">
+    Completed on {{ plan.created_at|date:"F d, Y" }}
+  </p>
+
+</div>
+
+
+<!-- ================= PERFORMANCE SUMMARY ================= -->
+<div class="box mb-5">
+
+  <h3 class="title is-6">🎯 Performance Summary</h3>
+
+  <p class="is-size-7 mb-1">
+    Accuracy: <strong>{{ accuracy }}%</strong>
+  </p>
+  <progress class="progress is-success"
+            value="{{ accuracy }}"
+            max="100"></progress>
+
+  <p class="is-size-7 mt-4 mb-1">
+    Certification Readiness: <strong>{{ readiness }}%</strong>
+  </p>
+  <progress class="progress is-warning"
+            value="{{ readiness }}"
+            max="100"></progress>
+
+  <p class="is-size-7 mt-4 mb-1">
+    Difficulty Mastery: <strong>{{ difficulty_mastery }}%</strong>
+  </p>
+  <progress class="progress is-link"
+            value="{{ difficulty_mastery }}"
+            max="100"></progress>
+
+</div>
+
+
+<!-- ================= EXAM INTELLIGENCE ================= -->
+<div class="box has-background-info-light mb-5">
+
+  <h3 class="title is-6">🧠 Exam Intelligence</h3>
+
+  <p class="is-size-7">
+    Predicted Exam Score:
+    <strong>{{ prediction.predicted_score }}%</strong>
+  </p>
+
+  <p class="is-size-7 mt-2">
+    Pass Probability:
+    <strong>{{ prediction.pass_probability }}%</strong>
+  </p>
+
+  <p class="is-size-7 mt-2">
+    Model Confidence:
+    <strong>{{ prediction.confidence }}%</strong>
+  </p>
+
+</div>
+
+
+<!-- ================= COMPETITIVE POSITION ================= -->
+<div class="box has-background-dark has-text-white mb-5">
+
+  <h3 class="title is-6 has-text-white">🏆 Competitive Ranking</h3>
+
+  <p class="is-size-6">
+    Global Rank: <strong>#{{ rank }}</strong>
+  </p>
+
+  <p class="is-size-7">
+    Top {{ percentile }}% Worldwide
+  </p>
+
+  <progress class="progress is-warning mt-3"
+            value="{{ percentile }}"
+            max="100"></progress>
+
+</div>
+
+
+<!-- ================= XP & LEVEL ================= -->
+<div class="box mb-5">
+
+  <h3 class="title is-6">⭐ Gamification Stats</h3>
+
+  <p class="is-size-7">Final Level: <strong>{{ plan.level }}</strong></p>
+  <p class="is-size-7">Total XP Earned: <strong>{{ plan.xp }}</strong></p>
+  <p class="is-size-7">Longest Streak: <strong>{{ plan.longest_streak }}</strong> days</p>
+
+</div>
+
+
+<!-- ================= CATEGORY BREAKDOWN ================= -->
+{% if categories %}
+<div class="box mb-5">
+
+  <h3 class="title is-6">📚 Category Breakdown</h3>
+
+  <table class="table is-fullwidth is-striped is-size-7">
+    <thead>
+      <tr>
+        <th>Category ID</th>
+        <th>Attempted</th>
+        <th>Accuracy</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cat in categories %}
+      <tr>
+        <td>{{ cat.id }}</td>
+        <td>{{ cat.attempted }}</td>
+        <td>{{ cat.accuracy }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+{% endif %}
+
+
+<!-- ================= SHARE BLOCK ================= -->
+<div class="box has-background-light">
+
+  <h3 class="title is-6">🎓 Certification Milestone</h3>
+
+  <p class="is-size-7">
+    You completed the {{ plan.get_plan_type_display }} with
+    <strong>{{ readiness }}% readiness</strong>
+    and ranked in the
+    <strong>Top {{ percentile }}%</strong> globally.
+  </p>
+
+  <button class="button is-primary mt-3" onclick="window.print()">
+    📤 Download / Print Report
+  </button>
+
+</div>
+
+</div>
+
+{% endblock %}

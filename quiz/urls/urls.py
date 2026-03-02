@@ -208,6 +208,18 @@ urlpatterns = [
         name="study_plan_completed",
     ),
 
+    path(
+    "study-plan/history/",
+    study_plan_history,
+    name="study_plan_history"
+    ),
+
+    path(
+    "study-plan/<int:plan_id>/",
+    study_plan_detail,
+    name="study_plan_detail"
+    ),
+
 
 ]
 

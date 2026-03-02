@@ -202,6 +202,8 @@ def study_plan_dashboard(request):
         # ================= LIVE GLOBAL RANK =================
         rank, percentile = calculate_live_rank(active_plan)
 
+        tier = active_plan.competitive_tier(percentile)
+
         # ================= FINAL ANALYTICS =================
         analytics = {
             "completion_percent": active_plan.completion_percentage(),
@@ -240,6 +242,9 @@ def study_plan_dashboard(request):
 
             # Exam Mode
             "exam_mode": getattr(active_plan, "exam_mode", False),
+
+           
+            "tier": tier,
         }
 
     context = {
@@ -411,6 +416,8 @@ def study_plan_practice(request):
         plan.difficulty_stats = difficulty_stats
 
         plan.save()
+        plan.save_daily_snapshot()
+        
 
         # Mark progress
         seen.append(question.id)
@@ -733,5 +740,98 @@ def study_plan_completed(request, plan_id):
     return render(
         request,
         "quiz/study_plan/completed.html",
+        context
+    )
+
+
+@login_required
+def study_plan_history(request):
+
+    completed_plans = (
+        request.user.study_plans
+        .filter(is_completed=True)
+        .order_by("-created_at")
+    )
+
+    history_data = []
+
+    for plan in completed_plans:
+
+        # Live rank at time of viewing
+        rank, percentile = calculate_live_rank(plan)
+
+        # Use last activity date as completion date
+        completed_date = plan.last_activity_date or plan.created_at
+
+        history_data.append({
+            "id": plan.id,
+            "plan_type": plan.get_plan_type_display(),
+            "completed_at": completed_date,
+            "accuracy": plan.accuracy_percentage(),
+            "readiness": plan.certification_readiness(),
+            "tier": getattr(plan, "tier", None),
+            "rank": rank,
+            "percentile": percentile,
+            "xp": plan.xp,
+            "level": plan.level,
+            "streak": plan.longest_streak,
+        })
+
+    return render(
+        request,
+        "quiz/study_plan/history.html",
+        {"history": history_data}
+    )
+
+@login_required
+def study_plan_detail(request, plan_id):
+
+    plan = get_object_or_404(
+        StudyPlan,
+        id=plan_id,
+        user=request.user,
+        is_completed=True
+    )
+
+    # Core metrics
+    accuracy = plan.accuracy_percentage()
+    readiness = plan.certification_readiness()
+    difficulty_mastery = plan.difficulty_weighted_mastery()
+
+    # Competitive position
+    rank, percentile = calculate_live_rank(plan)
+
+    # Prediction
+    prediction = plan.certification_prediction()
+
+    # Category breakdown
+    category_data = []
+    stats = plan.category_stats or {}
+
+    for cat_id, data in stats.items():
+        attempted = data.get("attempted", 0)
+        correct = data.get("correct", 0)
+
+        if attempted > 0:
+            category_data.append({
+                "id": cat_id,
+                "accuracy": round((correct / attempted) * 100, 2),
+                "attempted": attempted
+            })
+
+    context = {
+        "plan": plan,
+        "accuracy": accuracy,
+        "readiness": readiness,
+        "difficulty_mastery": difficulty_mastery,
+        "rank": rank,
+        "percentile": percentile,
+        "prediction": prediction,
+        "categories": category_data,
+    }
+
+    return render(
+        request,
+        "quiz/study_plan/detail.html",
         context
     )

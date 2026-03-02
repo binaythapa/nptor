@@ -1,0 +1,91 @@
+{% extends "layouts/student/base.html" %}
+{% block title %}Study Plan History{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+  <div class="box">
+
+    <h2 class="title is-5 mb-4">
+      📚 Completed Study Plans
+    </h2>
+
+    {% if history %}
+
+    <table class="table is-fullwidth is-striped is-hoverable is-size-7">
+
+      <thead>
+        <tr>
+          <th>Plan</th>
+          <th>Date</th>
+          <th>Accuracy</th>
+          <th>Readiness</th>
+          <th>Rank</th>
+          <th>Tier</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {% for plan in history %}
+        <tr>
+
+          <td>{{ plan.plan_type }}</td>
+
+          <td>
+            {{ plan.completed_at|date:"Y-m-d" }}
+          </td>
+
+          <td>
+            {{ plan.accuracy }}%
+          </td>
+
+          <td>
+            {{ plan.readiness }}%
+          </td>
+
+          <td>
+            {% if plan.rank %}
+              #{{ plan.rank }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+
+          <td>
+            {% if plan.tier %}
+              <span class="tag is-info">
+                {{ plan.tier }}
+              </span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+
+          <td>
+            <a href="{% url 'quiz:study_plan_detail' plan.id %}"
+               class="button is-small is-link">
+              View Report
+            </a>
+          </td>
+
+        </tr>
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+    {% else %}
+
+    <p>No completed study plans yet.</p>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+{% endblock %}

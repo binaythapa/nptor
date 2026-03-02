@@ -1925,6 +1925,74 @@ class StudyPlan(models.Model):
             self.save(update_fields=["is_completed", "is_active"])
             return True
         return False
+    
+    def competitive_tier(self, percentile):
+        if percentile >= 95:
+            return "Grandmaster"
+        elif percentile >= 85:
+            return "Platinum"
+        elif percentile >= 70:
+            return "Gold"
+        elif percentile >= 40:
+            return "Silver"
+        else:
+            return "Bronze"
+
+
+    def save_daily_snapshot(self):
+
+        from .models import StudyPlanAnalyticsSnapshot
+        from django.utils import timezone
+
+        today = timezone.now().date()
+
+        # Prevent duplicate snapshot for same day
+        if self.snapshots.filter(date=today).exists():
+            return
+
+        prediction = self.certification_prediction()
+
+        StudyPlanAnalyticsSnapshot.objects.create(
+            plan=self,
+            accuracy=self.accuracy_percentage(),
+            readiness=self.certification_readiness(),
+            mastery=self.mastery_index(),
+            predicted_score=prediction["predicted_score"],
+            pass_probability=prediction["pass_probability"],
+            volatility=self.score_volatility(),
+            xp=self.xp,
+            level=self.level
+        )
+
+    def mastery_index(self):
+        """
+        Weighted mastery metric used for analytics & snapshots
+        """
+
+        if self.total_attempted == 0:
+            return 0
+
+        accuracy = (self.total_correct / self.total_attempted) * 100
+
+        volume_score = min(100, (self.total_attempted / 200) * 100)
+
+        days_practiced = len([
+            v for v in (self.daily_progress or {}).values()
+            if v > 0
+        ])
+
+        total_days = self.total_plan_days() if hasattr(self, "total_plan_days") else 1
+
+        consistency_ratio = days_practiced / total_days if total_days > 0 else 0
+        consistency_score = consistency_ratio * 100
+
+        mastery = (
+            (accuracy * 0.6) +
+            (volume_score * 0.25) +
+            (consistency_score * 0.15)
+        )
+
+        return round(max(mastery, 0), 2)
 
 
 class LeaderboardEntry(models.Model):
@@ -1932,3 +2000,28 @@ class LeaderboardEntry(models.Model):
     score = models.FloatField(default=0)
     rank = models.PositiveIntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+
+class StudyPlanAnalyticsSnapshot(models.Model):
+
+    plan = models.ForeignKey(
+        StudyPlan,
+        on_delete=models.CASCADE,
+        related_name="snapshots"
+    )
+
+    date = models.DateField(auto_now_add=True)
+
+    accuracy = models.FloatField()
+    readiness = models.FloatField()
+    mastery = models.FloatField()
+    predicted_score = models.FloatField()
+    pass_probability = models.FloatField()
+    volatility = models.FloatField()
+
+    xp = models.PositiveIntegerField()
+    level = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ["date"]

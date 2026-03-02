@@ -2,19 +2,24 @@
 {% block title %}Study Plan Dashboard{% endblock %}
 
 {% block content %}
-
 <div class="container">
+
 {% include "components/testimonial_popup.html" %}
 
 {% if active_plan and analytics %}
 
-<div class="box mb-5">
+<div class="box">
 
-  <!-- ================= HEADER ================= -->
+  <!-- ===================================================== -->
+  <!-- ================= HEADER ============================ -->
+  <!-- ===================================================== -->
   <div class="is-flex is-justify-content-space-between is-align-items-center">
-    <h2 class="title is-5 mb-0">
-      📅 Active Study Plan
-    </h2>
+    <div>
+      <h2 class="title is-5 mb-1">📅 Active Study Plan</h2>
+      <p class="has-text-grey is-size-7">
+        {{ active_plan.get_plan_type_display }}
+      </p>
+    </div>
 
     {% if analytics.badge %}
     <span class="tag is-info is-medium">
@@ -23,22 +28,62 @@
     {% endif %}
   </div>
 
-  <p class="mt-2 mb-5 has-text-grey">
-    {{ active_plan.get_plan_type_display }}
-  </p>
 
-  <!-- ================= XP & LEVEL ================= -->
-  <div class="box has-background-light mb-5">
+  <!-- ===================================================== -->
+  <!-- ================= COMPETITIVE TIER ================== -->
+  <!-- ===================================================== -->
+  <div class="box has-background-dark has-text-white mt-5">
 
     <div class="is-flex is-justify-content-space-between is-align-items-center">
+
       <div>
-        <p class="is-size-7 has-text-grey mb-1">Level</p>
-        <p class="title is-6 mb-0">⭐ {{ active_plan.level }}</p>
+        <p class="is-size-7 has-text-grey-light">Competitive Tier</p>
+        <h3 class="title is-5 has-text-white mb-1">
+          {% if analytics.tier == "Grandmaster" %}
+            👑 Grandmaster
+          {% elif analytics.tier == "Platinum" %}
+            💎 Platinum
+          {% elif analytics.tier == "Gold" %}
+            🥇 Gold
+          {% elif analytics.tier == "Silver" %}
+            🥈 Silver
+          {% else %}
+            🥉 Bronze
+          {% endif %}
+        </h3>
+
+        <p class="is-size-7">
+          Rank #{{ analytics.live_rank }} • Top {{ analytics.global_percentile }}%
+        </p>
       </div>
 
       <div class="has-text-right">
-        <p class="is-size-7 has-text-grey mb-1">XP</p>
-        <p class="title is-6 mb-0">{{ active_plan.xp }}</p>
+        {% if analytics.global_percentile %}
+        <progress class="progress is-warning mt-2"
+                  value="{{ analytics.global_percentile }}"
+                  max="100"></progress>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- ================= XP & LEVEL ======================== -->
+  <!-- ===================================================== -->
+  <div class="box has-background-light mt-5">
+
+    <div class="is-flex is-justify-content-space-between">
+      <div>
+        <p class="is-size-7 has-text-grey">Level</p>
+        <p class="title is-6">⭐ {{ active_plan.level }}</p>
+      </div>
+
+      <div class="has-text-right">
+        <p class="is-size-7 has-text-grey">XP</p>
+        <p class="title is-6">{{ active_plan.xp }}</p>
       </div>
     </div>
 
@@ -47,14 +92,19 @@
               value="{{ analytics.level_progress }}"
               max="100"></progress>
 
-    <p class="is-size-7 has-text-grey mt-1">
+    <p class="is-size-7 has-text-grey">
       {{ analytics.level_progress }}% to next level
     </p>
     {% endif %}
   </div>
 
-  <!-- ================= PERFORMANCE METRICS ================= -->
-  <div class="mb-5">
+
+  <!-- ===================================================== -->
+  <!-- ================= CORE PERFORMANCE ================== -->
+  <!-- ===================================================== -->
+  <div class="mt-5">
+
+    <h4 class="title is-6">📊 Performance Overview</h4>
 
     <!-- Completion -->
     <p class="is-size-7 mb-1">
@@ -94,8 +144,11 @@
 
   </div>
 
-  <!-- ================= EXAM & COMPETITION INTELLIGENCE ================= -->
-  <div class="box has-background-info-light mb-5">
+
+  <!-- ===================================================== -->
+  <!-- ================= EXAM INTELLIGENCE ================= -->
+  <!-- ===================================================== -->
+  <div class="box has-background-info-light mt-5">
 
     <h4 class="title is-6 mb-4">🧠 Exam & Competition Intelligence</h4>
 
@@ -120,33 +173,42 @@
               value="{{ analytics.pass_probability }}"
               max="100"></progress>
 
-    <!-- Global Rank -->
-    {% if analytics.live_rank %}
+    <!-- Confidence -->
     <p class="is-size-7 mt-4">
-      🏆 Global Rank:
-      <strong>#{{ analytics.live_rank }}</strong>
+      🔬 Model Confidence:
+      <strong>{{ analytics.confidence_level }}%</strong>
     </p>
-    {% endif %}
-
-    {% if analytics.global_percentile %}
-    <p class="is-size-7">
-      🌍 Top {{ analytics.global_percentile }}% Worldwide
-    </p>
-    <progress class="progress is-link mt-2"
-              value="{{ analytics.global_percentile }}"
-              max="100"></progress>
-    {% endif %}
 
   </div>
 
+
+  <!-- ===================================================== -->
   <!-- ================= STABILITY & STREAK ================= -->
-  <div class="box has-background-warning-light mb-5">
+  <!-- ===================================================== -->
+  <div class="box has-background-warning-light mt-5">
 
     {% if analytics.volatility is not None %}
     <p class="is-size-7 mb-2">
       📊 Stability Index:
       <strong>{{ analytics.volatility|floatformat:2 }}</strong>
     </p>
+
+    <p class="is-size-7 mb-2">
+      🎯 Confidence Band:
+      {% if analytics.confidence_band == "High" %}
+        <span class="tag is-success">High</span>
+      {% elif analytics.confidence_band == "Medium" %}
+        <span class="tag is-warning">Medium</span>
+      {% else %}
+        <span class="tag is-danger">Low</span>
+      {% endif %}
+    </p>
+    {% endif %}
+
+    {% if analytics.exam_mode %}
+    <div class="notification is-danger is-light mb-3">
+      🔥 Exam Mode Activated (7-Day Intensive Phase)
+    </div>
     {% endif %}
 
     <p class="is-size-7">
@@ -161,31 +223,47 @@
 
   </div>
 
-  <!-- ================= SPARKLINE ================= -->
+
+  <!-- ===================================================== -->
+  <!-- ================= SPARKLINE ========================= -->
+  <!-- ===================================================== -->
   {% if analytics.sparkline_data %}
-  <div style="height:70px;" class="mb-5">
+  <div style="height:80px;" class="mt-5">
     <canvas id="sparklineChart"></canvas>
   </div>
   {% endif %}
 
-  <!-- ================= META ================= -->
-  <div class="is-size-7 has-text-grey mb-5">
+
+  <!-- ===================================================== -->
+  <!-- ================= META ============================== -->
+  <!-- ===================================================== -->
+  <div class="is-size-7 has-text-grey mt-5">
     <p>Days Remaining: {{ analytics.days_remaining }}</p>
     <p>Extension Used: {{ analytics.extension_used }}</p>
   </div>
 
-  <!-- ================= ACTION BUTTONS ================= -->
-  <div class="buttons">
+
+  <!-- ===================================================== -->
+  <!-- ================= ACTION BUTTONS ==================== -->
+  <!-- ===================================================== -->
+  <div class="buttons mt-5">
     <a href="{% url 'quiz:study_plan_practice' %}" class="button is-primary">
       Continue Practice
     </a>
+
     <a href="{% url 'quiz:create_adaptive_plan' %}" class="button is-warning">
       🤖 Smart Next Plan
     </a>
+
     <a href="{% url 'quiz:study_plan_leaderboard' %}" class="button is-info">
       🏆 Leaderboard
     </a>
   </div>
+
+  <a href="{% url 'quiz:study_plan_history' %}"
+   class="button is-light">
+   📚 View History
+</a>
 
 </div>
 
@@ -194,13 +272,19 @@
 <div class="box">
   <p>No active study plan.</p>
   <a href="{% url 'quiz:create_study_plan' %}" class="button is-link mt-3">
-    Create New Plan
+     Create New Plan
   </a>
 </div>
 
-{% endif %}
 
+<a href="{% url 'quiz:study_plan_history' %}"
+   class="button is-light">
+   📚 View History
+</a>
+
+{% endif %}
 </div>
+
 
 <!-- ================= SPARKLINE SCRIPT ================= -->
 {% if active_plan and analytics.sparkline_data %}
@@ -230,11 +314,7 @@ if (ctx) {
       plugins: { legend: { display: false }},
       scales: {
         x: { display: false },
-        y: {
-          display: false,
-          min: 0,
-          max: 100
-        }
+        y: { display: false, min: 0, max: 100 }
       }
     }
   });
