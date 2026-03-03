@@ -198,19 +198,7 @@ SECURE_HSTS_PRELOAD = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-
-
-
-
-
-
 SESSION_COOKIE_SAMESITE = "None"
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
 
 
 # ============================================================
@@ -227,9 +215,6 @@ if DEBUG:
     MEDIA_ROOT = BASE_DIR / "media"
 else:
     MEDIA_ROOT = Path("/home/nptorcom/public_html/media")
-
-
-
 
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -259,9 +244,9 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "tbinay5@gmail.com"
-EMAIL_HOST_PASSWORD = 'ykex bzxs lesd zwke'
-DEFAULT_FROM_EMAIL = "Nepal Mentor <tbinay5@gmail.com>"
+EMAIL_HOST_USER = "contact.nptor@gmail.com"
+EMAIL_HOST_PASSWORD = 'jvwj mfjo vyxc mowx'
+DEFAULT_FROM_EMAIL = "NPTOR <contact.nptor@gmail.com>"
 
 
 # ============================================================
