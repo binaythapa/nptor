@@ -55,46 +55,110 @@ class Notification(models.Model):
     def unread_for(self, user):
         return not self.is_read_by.get(str(user.id), False)
     
+from django.db import models
 
- # =====================================================
+
+# =====================================================
 # DOMAIN (Snowflake, Power BI, Tableau)
 # =====================================================
 class Domain(models.Model):
+
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="domains",
+        null=True,
+        blank=True,
+        help_text="Organization that owns this domain"
+    )
+
     name = models.CharField(max_length=50)
-    slug = models.SlugField(unique=True)  
-    is_active = models.BooleanField(default=True)  
 
-    def __str__(self):
-        return self.name   
+    slug = models.SlugField(
+        max_length=100
+    )
 
-
-class Category(models.Model):
-    domain = models.ForeignKey(Domain, on_delete=models.CASCADE,null=True,blank=True,related_name="categories")
-    name = models.CharField(max_length=200, default= 'Unknown')
-    slug = models.SlugField(unique=True)
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
-    
-    class Meta:
-        unique_together = ("domain", "slug")
-    # optionally store a description or metadata
-    def __str__(self):
-        # show hierarchy in admin list
-        return (self.parent.name + ' -> ' if self.parent else '') + self.name
 
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("organization", "slug")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+# =====================================================
+# CATEGORY (Hierarchical Question Classification)
+# =====================================================
+class Category(models.Model):
+
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="categories",
+        null=True,
+        blank=True
+    )
+
+    domain = models.ForeignKey(
+        Domain,
+        on_delete=models.CASCADE,
+        related_name="categories",
+        null=True,
+        blank=True
+    )
+
+    name = models.CharField(
+        max_length=200,
+        default="Unknown"
+    )
+
+    slug = models.SlugField(
+        max_length=150
+    )
+
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        related_name="children",
+        on_delete=models.CASCADE
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("organization", "slug")
+        ordering = ["name"]
+
+    def __str__(self):
+
+        # Show hierarchy in admin list
+        if self.parent:
+            return f"{self.parent.name} → {self.name}"
+
+        return self.name
+
+    # =====================================================
+    # CATEGORY TREE HELPER
+    # =====================================================
     def get_descendants_include_self(self):
         """
-        Return a queryset/list of category IDs including this category and all descendants.
-        Simple recursive implementation.
+        Return list of category IDs including this category
+        and all descendant categories.
         """
+
         ids = [self.id]
-        children = list(self.children.all())
-        for c in children:
-            ids.extend(c.get_descendants_include_self())
+
+        for child in self.children.all():
+            ids.extend(child.get_descendants_include_self())
+
         return ids
-
-
-
 
 
 class QuestionQuerySet(models.QuerySet):
@@ -384,32 +448,53 @@ class SubscriptionPlan(models.Model):
 ##########################################################
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class ExamTrack(models.Model):
+
     TRACK = "track"
     EXAM = "exam"
 
     # ================= CORE =================
+
     title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+
+    slug = models.SlugField(
+        help_text="Unique inside organization"
+    )
+
     description = models.TextField(blank=True)
+
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="exam_tracks"
+    )
 
     subscription_scope = models.CharField(
         max_length=10,
-        choices=[(TRACK, "Track"), (EXAM, "Exam")],
+        choices=[
+            (TRACK, "Track"),
+            (EXAM, "Exam")
+        ],
         default=TRACK,
     )
 
-    # ================= DYNAMIC PRICING (PRIMARY) =================
+    # ================= DYNAMIC PRICING (PRIMARY SYSTEM) =================
+
     subscription_plans = models.ManyToManyField(
         "SubscriptionPlan",
         blank=True,
         related_name="tracks",
-        help_text="Pricing plans available for this track",
+        help_text="Dynamic pricing plans available for this track"
     )
 
     # ================= LEGACY PRICING (DEPRECATED) =================
+
     PRICING_FREE = "free"
     PRICING_MONTHLY = "monthly"
     PRICING_LIFETIME = "lifetime"
@@ -424,38 +509,49 @@ class ExamTrack(models.Model):
         max_length=20,
         choices=PRICING_TYPE_CHOICES,
         default=PRICING_FREE,
-        help_text="⚠ Legacy pricing (do not use with plans)",
+        help_text="⚠ Legacy pricing (avoid when using subscription plans)"
     )
 
     monthly_price = models.DecimalField(
         max_digits=8,
         decimal_places=2,
         null=True,
-        blank=True,
+        blank=True
     )
 
     lifetime_price = models.DecimalField(
         max_digits=8,
         decimal_places=2,
         null=True,
-        blank=True,
+        blank=True
     )
 
     trial_days = models.PositiveIntegerField(
         default=7,
-        help_text="Trial days (legacy only)",
+        help_text="Trial days (legacy system)"
     )
 
-    currency = models.CharField(max_length=10, default="INR")
+    currency = models.CharField(
+        max_length=10,
+        default="INR"
+    )
+
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    # ================= MODEL META =================
+
+    class Meta:
+        unique_together = ("organization", "slug")
+        ordering = ["-created_at"]
 
     # ================= VALIDATION =================
+
     def clean(self):
         super().clean()
-
-        # ❗ DO NOT validate based on M2M here
-        # Only validate legacy pricing consistency
 
         if self.pricing_type == self.PRICING_MONTHLY and not self.monthly_price:
             raise ValidationError({
@@ -468,25 +564,31 @@ class ExamTrack(models.Model):
             })
 
     # ================= HELPERS =================
+
     def has_dynamic_plans(self):
         """
-        Safe to use AFTER save
+        Returns True if dynamic subscription plans exist.
+        Safe to call after object is saved.
         """
         return self.subscription_plans.filter(is_active=True).exists()
 
     def is_free(self):
         """
-        Track is free only if:
-        - No active subscription plans
-        - Legacy pricing is free
+        Track is considered free only if:
+        - No active dynamic plans
+        - Legacy pricing type is free
         """
         if self.has_dynamic_plans():
             return False
+
         return self.pricing_type == self.PRICING_FREE
 
-    def __str__(self):
-        return self.title
+    # ================= STRING =================
 
+    def __str__(self):
+        if self.organization:
+            return f"{self.organization.name} → {self.title}"
+        return self.title
 from django.utils import timezone
 
 
@@ -505,7 +607,16 @@ class ExamTrackSubscription(BaseSubscription):
     """
     Represents user's access to an ExamTrack.
     Subscribing to a track unlocks ALL exams (levels) under it.
+
     """
+
+    organization = models.ForeignKey(
+    "organizations.Organization",
+    null=True,
+    blank=True,
+    on_delete=models.CASCADE,
+    related_name="organization_track_subscriptions"
+)
 
     user = models.ForeignKey(
         User,
@@ -540,6 +651,14 @@ class ExamTrackSubscription(BaseSubscription):
 
 class Exam(models.Model):
     title = models.CharField(max_length=255)
+
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="exams"
+    )
 
     track = models.ForeignKey(
         "ExamTrack",
@@ -996,6 +1115,9 @@ class ExamGrader:
 
 
 
+
+
+
 class ExamAdminValidator:
     @staticmethod
     def validate_exam(exam: Exam):
@@ -1032,6 +1154,22 @@ class ExamUnlockLog(models.Model):
 
     def __str__(self):
         return f"{self.user} unlocked {self.exam}"
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ####################################################################################################
@@ -1217,6 +1355,9 @@ class ContactMethod(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
 class EnrollmentLead(models.Model):
     """
     User showed intent to enroll in a paid Exam or Track.

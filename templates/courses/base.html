@@ -151,17 +151,25 @@ hr {
 
         {% if user.is_authenticated %}
 
-            <!-- GLOBAL -->
-            <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}">
-                ← Back To Home
-            </a>
+          <!-- GLOBAL -->
+<a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}">
+    ← Back To Home
+</a>
 
-            <div class="nav-divider"></div>
+<!-- ORG DASHBOARD -->
+ <a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}javascript:void(0);{% endif %}"
+             class="py-1 {% if is_from_course %}is-disabled{% endif %}"
+             {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+            <span class="icon is-small mr-1"><i class="fa fa-building"></i></span>
+            Org Dashboard
+          </a>
 
-            <!-- INSTRUCTOR -->
-            <a href="{% url 'courses:instructor_dashboard' %}">
-                Courses
-            </a>
+<div class="nav-divider"></div>
+
+<!-- INSTRUCTOR -->
+<a href="{% url 'courses:instructor_dashboard' %}">
+    Courses
+</a>
 
             <!-- COURSE CONTEXT -->
             {% if course %}

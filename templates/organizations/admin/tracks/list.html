@@ -1,0 +1,68 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+
+{% with org_slug=request.organization.slug %}
+
+<h2 class="title is-4">📚 Exam Tracks</h2>
+
+<a href="{% url 'organizations_admin:org_track_create' slug=org_slug %}"
+   class="button is-primary mb-4">
+   ➕ Create Track
+</a>
+
+<table class="table is-fullwidth is-striped is-hoverable">
+
+<thead>
+<tr>
+<th>Track</th>
+<th>Created</th>
+<th style="width:180px;">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for track in tracks %}
+<tr>
+
+<td>
+<strong>{{ track.title }}</strong>
+</td>
+
+<td>
+{{ track.created_at|date:"d M Y" }}
+</td>
+
+<td>
+
+<a href="{% url 'organizations_admin:org_track_edit' slug=org_slug pk=track.id %}"
+   class="button is-small is-info">
+   ✏ Edit
+</a>
+
+<a href="{% url 'organizations_admin:org_track_delete' slug=org_slug pk=track.id %}"
+   class="button is-small is-danger"
+   onclick="return confirm('Delete this track?')">
+   🗑 Delete
+</a>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="3">No tracks created.</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+{% endwith %}
+
+{% endblock %}

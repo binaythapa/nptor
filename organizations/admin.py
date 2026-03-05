@@ -4,9 +4,9 @@ from django.shortcuts import redirect, render
 # Explicit model imports (IMPORTANT)
 from organizations.models.organization import Organization
 from organizations.models.membership import OrganizationMember
-from organizations.models.assignment import CourseAssignment
+from organizations.models.assignment import ResourceAssignment
 from organizations.models.subscription import OrganizationCourseSubscription
-from organizations.models.access import CourseAccess
+from organizations.models.access import ResourceAccess
 
 
 from courses.models import Course
@@ -37,7 +37,7 @@ class OrganizationMemberAdmin(admin.ModelAdmin):
 # =========================
 # COURSE ASSIGNMENTS
 # =========================
-@admin.register(CourseAssignment)
+@admin.register(ResourceAssignment)
 class CourseAssignmentAdmin(admin.ModelAdmin):
     list_display = ("student", "course", "organization", "assigned_at")
     list_filter = ("organization",)
@@ -67,7 +67,7 @@ class OrganizationCourseSubscriptionAdmin(admin.ModelAdmin):
 # =========================
 # COURSE ACCESS
 # =========================
-@admin.register(CourseAccess)
+@admin.register(ResourceAccess)
 class CourseAccessAdmin(admin.ModelAdmin):
     list_display = (
         "user",

@@ -1,52 +1,296 @@
-
-
-
-
 {% extends "organizations/admin/base.html" %}
-
 
 {% block content %}
 
-<h2 class="title is-4">📚 Courses</h2>
+{% with org_slug=request.organization.slug %}
 
-<table class="table is-fullwidth">
-  <thead>
-    <tr>
-      <th>Course</th>
-      <th>Status</th>
-      <th>Action</th>
-    </tr>
-  </thead>
+<h2 class="title is-4 mb-5">📦 Assign Resources</h2>
 
-  <tbody>
-    {% for item in courses %}
-    <tr>
-      <td>{{ item.course.title }}</td>
 
-      <td>
-        {% if item.is_attached %}
-          <span class="tag is-success">Attached</span>
-        {% else %}
-          <span class="tag is-light">Not attached</span>
-        {% endif %}
-      </td>
+<!-- ================= COURSES ================= -->
 
-      <td>
-        {% if item.is_attached %}
-          <a href="{% url 'organizations_admin:course_detach' item.course.id %}"
-             class="button is-danger is-small"
-             onclick="return confirm('Detach this course?')">
-            Detach
-          </a>
-        {% else %}
-          <a href="{% url 'organizations_admin:course_attach' item.course.id %}"
-             class="button is-primary is-small">
-            Attach
-          </a>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
+<div class="box mb-6">
+
+<div class="is-flex is-justify-content-space-between mb-4">
+  <h3 class="title is-5">📚 Courses</h3>
+
+  <div>
+    <a href="{% url 'courses:course_create' %}" class="button is-primary is-small">
+      ➕ Add Course
+    </a>
+
+    <a href="{% url 'courses:instructor_dashboard' %}" class="button is-link is-small">
+      Course Dashboard
+    </a>
+  </div>
+</div>
+
+<table class="table is-fullwidth is-striped">
+
+<thead>
+<tr>
+<th>Course</th>
+<th>Status</th>
+<th class="has-text-right">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for item in courses %}
+
+<tr>
+
+<td>{{ item.course.title }}</td>
+
+<td>
+{% if item.is_attached %}
+<span class="tag is-success">Attached</span>
+{% else %}
+<span class="tag is-light">Not attached</span>
+{% endif %}
+</td>
+
+<td class="has-text-right">
+
+{% if item.is_attached %}
+<a href="{% url 'organizations_admin:course_detach' slug=org_slug course_id=item.course.id %}"
+   class="button is-danger is-small">
+Detach
+</a>
+{% else %}
+<a href="{% url 'organizations_admin:course_attach' slug=org_slug course_id=item.course.id %}"
+   class="button is-primary is-small">
+Attach
+</a>
+{% endif %}
+
+{% if item.can_edit %}
+
+<a href="{% url 'courses:course_edit' slug=item.course.slug %}"
+   class="button is-warning is-small">
+Edit
+</a>
+
+<a href="{% url 'courses:course_builder' slug=item.course.slug %}"
+   class="button is-info is-small">
+Builder
+</a>
+
+<a href="{% url 'courses:course_delete' slug=item.course.slug %}"
+   class="button is-danger is-small">
+Delete
+</a>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="3" class="has-text-centered">
+No courses available.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
 </table>
+
+</div>
+
+
+<!-- ================= EXAM TRACKS ================= -->
+
+<div class="box mb-6">
+
+<div class="is-flex is-justify-content-space-between mb-4">
+  <h3 class="title is-5">🧭 Exam Tracks</h3>
+
+  <a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"
+     class="button is-link is-small">
+     Manage Tracks
+  </a>
+</div>
+
+<table class="table is-fullwidth is-striped">
+
+<thead>
+<tr>
+<th>Track</th>
+<th>Exams</th>
+<th>Status</th>
+<th class="has-text-right">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for item in tracks %}
+
+<tr>
+
+<td>{{ item.track.title }}</td>
+
+<td>{{ item.track.exams.count }}</td>
+
+<td>
+{% if item.is_attached %}
+<span class="tag is-success">Attached</span>
+{% else %}
+<span class="tag is-light">Not attached</span>
+{% endif %}
+</td>
+
+<td class="has-text-right">
+
+{% if item.is_attached %}
+
+<a href="{% url 'organizations_admin:track_detach' slug=org_slug pk=item.track.id %}"
+   class="button is-danger is-small">
+Detach
+</a>
+
+{% else %}
+
+<a href="{% url 'organizations_admin:track_attach' slug=org_slug pk=item.track.id %}"
+   class="button is-primary is-small">
+Attach
+</a>
+
+{% endif %}
+
+<a href="{% url 'organizations_admin:org_track_edit' slug=org_slug pk=item.track.id %}"
+   class="button is-info is-small">
+Edit
+</a>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="4" class="has-text-centered">
+No exam tracks available.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+
+
+<!-- ================= EXAMS ================= -->
+
+<div class="box mb-6">
+
+<div class="is-flex is-justify-content-space-between mb-4">
+  <h3 class="title is-5">📝 Exams</h3>
+
+  <a href="{% url 'organizations_admin:exams' slug=org_slug %}"
+     class="button is-link is-small">
+     Manage Exams
+  </a>
+</div>
+
+<table class="table is-fullwidth is-striped">
+
+<thead>
+<tr>
+<th>Exam</th>
+<th>Track</th>
+<th>Status</th>
+<th>Attached</th>
+<th class="has-text-right">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for item in exams %}
+
+<tr>
+
+<td>{{ item.exam.title }}</td>
+
+<td>
+{% if item.exam.track %}
+{{ item.exam.track.title }}
+{% else %}
+<span class="tag is-light">No Track</span>
+{% endif %}
+</td>
+
+<td>
+{% if item.exam.is_published %}
+<span class="tag is-success">Published</span>
+{% else %}
+<span class="tag is-light">Draft</span>
+{% endif %}
+</td>
+
+<td>
+{% if item.is_attached %}
+<span class="tag is-success">Attached</span>
+{% else %}
+<span class="tag is-light">Not attached</span>
+{% endif %}
+</td>
+
+<td class="has-text-right">
+
+{% if item.is_attached %}
+
+<a href="{% url 'organizations_admin:exam_detach' slug=org_slug pk=item.exam.id %}"
+   class="button is-danger is-small">
+Detach
+</a>
+
+{% else %}
+
+<a href="{% url 'organizations_admin:exam_attach' slug=org_slug pk=item.exam.id %}"
+   class="button is-primary is-small">
+Attach
+</a>
+
+{% endif %}
+
+<a href="{% url 'organizations_admin:exam_update' slug=org_slug pk=item.exam.id %}"
+   class="button is-info is-small">
+Edit
+</a>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="5" class="has-text-centered">
+No exams available.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+{% endwith %}
+
 {% endblock %}

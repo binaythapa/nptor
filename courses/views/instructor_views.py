@@ -85,8 +85,6 @@ def toggle_publish_course(request, slug):
         "courses/instructor/partials/publish_button.html",
         {"course": course}
     )
-
-
 @login_required
 def instructor_dashboard(request):
 
@@ -100,27 +98,29 @@ def instructor_dashboard(request):
         .order_by("-created_at")
     )
 
-    if request.user.is_superuser:
+    # --------------------------------
+    # Organization courses
+    # --------------------------------
+    organization_courses = base_queryset.none()
 
+    if hasattr(request, "organization") and request.organization:
         organization_courses = base_queryset.filter(
-            organization__isnull=False
+            organization=request.organization
         )
 
-        admin_courses = base_queryset.filter(
-            owner_type="platform"
-        )
+    # --------------------------------
+    # Platform courses
+    # --------------------------------
+    admin_courses = base_queryset.filter(
+        owner_type="platform"
+    ) if request.user.is_superuser else base_queryset.none()
 
-        my_courses = base_queryset.filter(
-            created_by=request.user
-        )
-
-    else:
-        organization_courses = base_queryset.none()
-        admin_courses = base_queryset.none()
-
-        my_courses = base_queryset.filter(
-            created_by=request.user
-        )
+    # --------------------------------
+    # Personal courses
+    # --------------------------------
+    my_courses = base_queryset.filter(
+        created_by=request.user
+    )
 
     return render(
         request,
@@ -131,8 +131,6 @@ def instructor_dashboard(request):
             "my_courses": my_courses,
         }
     )
-
-
 
 @login_required
 def course_edit(request, slug):
@@ -163,9 +161,11 @@ def course_edit(request, slug):
 
                 if request.user.is_superuser:
                     pass
-                elif hasattr(request.user, "organization") and request.user.organization:
-                    course.organization = request.user.organization
+                
+                elif hasattr(request, "organization") and request.organization:
+                    course.organization = request.organization
                     course.owner_type = "organization"
+
                 else:
                     course.organization = None
                     course.owner_type = "platform"
@@ -254,10 +254,11 @@ def course_create(request):
                 course.created_by = request.user
 
                 if request.user.is_superuser:
-                    pass
-                elif hasattr(request.user, "organization") and request.user.organization:
-                    course.organization = request.user.organization
+                    pass               
+                elif hasattr(request, "organization") and request.organization:
+                    course.organization = request.organization
                     course.owner_type = "organization"
+
                 else:
                     course.organization = None
                     course.owner_type = "platform"

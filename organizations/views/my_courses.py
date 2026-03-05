@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-from organizations.models.assignment import CourseAssignment
+from organizations.models.assignment import ResourceAssignment
 from courses.models import Course
 
 

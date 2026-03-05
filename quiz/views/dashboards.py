@@ -8,7 +8,6 @@ from courses.models import CourseSubscription
 from django.db.models import Count
 
 
-from organizations.models.access import CourseAccess
 
 
 from django.conf import settings
@@ -42,7 +41,7 @@ from django.views.generic import CreateView, DetailView, TemplateView, UpdateVie
 
 # Project-specific imports
 from courses.models import Course, CourseSubscription, LessonProgress
-from organizations.models.access import CourseAccess
+
 
 from quiz.forms import *
 from quiz.models import (
@@ -406,14 +405,40 @@ def admin_dashboard(request):
     return render(request, "quiz/admin/admin_dashboard.html", context)
 
 
+from collections import defaultdict
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.conf import settings
+from django.utils import timezone
+
+from quiz.models import Exam, UserExam
+#from quiz.models.subscription import ExamSubscription, ExamTrackSubscription
+
+from organizations.models.assignment import ResourceAssignment
+from organizations.models.access import ResourceAccess
+
+from courses.models.subscription import CourseSubscription
+from courses.models.progress import LessonProgress
+
+from core.utils.memory import get_memory_usage_mb
+
+import logging
+
+logger = logging.getLogger("django")
 
 @login_required
 def student_dashboard(request):
+
     mem = get_memory_usage_mb()
     logger.info(f"Student Dashboard memory usage: {mem} MB")
+
     user = request.user
 
-    # ---------------- ACTIVE ATTEMPT ----------------
+    # --------------------------------------------------
+    # ACTIVE ATTEMPT
+    # --------------------------------------------------
+
     active_attempt = (
         UserExam.objects
         .filter(user=user, submitted_at__isnull=True)
@@ -421,20 +446,29 @@ def student_dashboard(request):
         .first()
     )
 
-    # ---------------- BASIC STATS ----------------
+    # --------------------------------------------------
+    # BASIC STATS
+    # --------------------------------------------------
+
     total_attempts = UserExam.objects.filter(
-        user=user, submitted_at__isnull=False
+        user=user,
+        submitted_at__isnull=False
     ).count()
 
     passed_count = UserExam.objects.filter(
-        user=user, passed=True
+        user=user,
+        passed=True
     ).count()
 
     failed_count = UserExam.objects.filter(
-        user=user, passed=False
+        user=user,
+        passed=False
     ).count()
 
-    # ---------------- SUBSCRIPTIONS (FULL OBJECTS) ----------------
+    # --------------------------------------------------
+    # SUBSCRIPTIONS
+    # --------------------------------------------------
+
     track_subs = {
         s.track_id: s
         for s in ExamTrackSubscription.objects.filter(user=user)
@@ -445,7 +479,52 @@ def student_dashboard(request):
         for s in ExamSubscription.objects.filter(user=user)
     }
 
-    # ---------------- GROUP EXAMS BY TRACK ----------------
+    # --------------------------------------------------
+    # ORGANIZATION ASSIGNMENTS
+    # --------------------------------------------------
+# --------------------------------------------------
+# ORGANIZATION RESOURCE ACCESS
+# --------------------------------------------------
+
+    resource_access = (
+    ResourceAccess.objects
+    .filter(
+        user=user,
+        source="organization",
+        is_active=True
+    )
+    .select_related("track", "exam")
+    )
+
+    org_track_ids = set()
+    org_exam_ids = set()
+
+    for access in resource_access:
+
+        if access.resource_type == "track" and access.track:
+            org_track_ids.add(access.track_id)
+
+        elif access.resource_type == "exam" and access.exam:
+            org_exam_ids.add(access.exam_id)
+    # --------------------------------------------------
+    # PRELOAD USER ATTEMPTS (PERFORMANCE)
+    # --------------------------------------------------
+
+    attempts_qs = (
+        UserExam.objects
+        .filter(user=user)
+        .select_related("exam")
+    )
+
+    attempts_by_exam = defaultdict(list)
+
+    for a in attempts_qs:
+        attempts_by_exam[a.exam_id].append(a)
+
+    # --------------------------------------------------
+    # GROUP EXAMS BY TRACK
+    # --------------------------------------------------
+
     track_map = defaultdict(lambda: {
         "items": [],
         "passed": 0,
@@ -460,27 +539,32 @@ def student_dashboard(request):
         .order_by("level")
     )
 
-    # ---------------- PASSED LEVELS ----------------
+    # --------------------------------------------------
+    # PASSED LEVELS
+    # --------------------------------------------------
+
     passed_levels_by_track = defaultdict(set)
 
-    passed_attempts = (
-        UserExam.objects
-        .filter(user=user, passed=True)
-        .select_related("exam")
-    )
+    for a in attempts_qs:
 
-    for ue in passed_attempts:
-        if ue.exam.track:
-            passed_levels_by_track[ue.exam.track_id].add(ue.exam.level)
+        if a.passed and a.exam.track:
+            passed_levels_by_track[a.exam.track_id].add(a.exam.level)
 
-    # ---------------- MAIN LOOP ----------------
+    # --------------------------------------------------
+    # MAIN LOOP
+    # --------------------------------------------------
+
     for exam in exams:
+
         track = exam.track
+
         if not track:
             continue
 
         track_sub = track_subs.get(track.id)
         exam_sub = exam_subs.get(exam.id)
+
+        # ---------------- ACCESS LOGIC ----------------
 
         has_valid_subscription = (
             (track_sub and track_sub.is_valid()) or
@@ -492,10 +576,16 @@ def student_dashboard(request):
             (exam_sub and not exam_sub.is_valid())
         )
 
-        if not has_valid_subscription and not has_expired_subscription:
+        has_org_access = (
+            exam.id in org_exam_ids or
+            track.id in org_track_ids
+        )
+
+        if not has_valid_subscription and not has_org_access and not has_expired_subscription:
             continue
 
-        # ---------- LEVEL LOCK ----------
+        # ---------------- LEVEL LOCK ----------------
+
         locked = False
         lock_reason = None
 
@@ -504,24 +594,29 @@ def student_dashboard(request):
                 locked = True
                 lock_reason = f"Complete Level {exam.level - 1} to unlock"
 
-        # ---------- ATTEMPTS ----------
-        attempts = list(
-            UserExam.objects
-            .filter(user=user, exam=exam, submitted_at__isnull=False)
-            .order_by("submitted_at")
-        )
+        # ---------------- ATTEMPTS ----------------
+
+        attempts = [
+            a for a in attempts_by_exam.get(exam.id, [])
+            if a.submitted_at
+        ]
 
         scores = [a.score for a in attempts if a.score is not None]
+
         last_score = scores[-1] if scores else None
         best_score = max(scores) if scores else None
+
         retry_count = max(0, len(attempts) - 1)
 
         status = None
         is_passed = False
 
         if attempts:
+
             track_map[track]["attempted"] += 1
+
             is_passed = attempts[-1].passed is True
+
             if is_passed:
                 track_map[track]["passed"] += 1
                 status = "passed"
@@ -529,58 +624,72 @@ def student_dashboard(request):
                 track_map[track]["failed"] += 1
                 status = "failed"
 
-        # ---------- ACTIVE / COOLDOWN ----------
-        active = (
-            UserExam.objects
-            .filter(user=user, exam=exam, submitted_at__isnull=True)
-            .first()
+        # ---------------- ACTIVE ATTEMPT ----------------
+
+        active = next(
+            (a for a in attempts_by_exam.get(exam.id, [])
+             if a.submitted_at is None),
+            None
         )
+
+        # ---------------- COOLDOWN ----------------
 
         cooldown_remaining = 0
         can_retake = True
 
         if attempts and not is_passed:
+
             last_attempt = attempts[-1]
+
             cd = getattr(settings, "RETAKE_COOLDOWN_MINUTES", 0)
+
             if cd and last_attempt.submitted_at:
-                elapsed = (timezone.now() - last_attempt.submitted_at).total_seconds()
+
+                elapsed = (
+                    timezone.now() - last_attempt.submitted_at
+                ).total_seconds()
+
                 remaining = (cd * 60) - elapsed
+
                 if remaining > 0:
                     can_retake = False
                     cooldown_remaining = int(remaining)
 
-        # ---------- ACTION ----------
+        # ---------------- ACTION ----------------
+
         if has_expired_subscription:
             action = "renew"
+
         elif is_passed:
             action = None
+
         elif active:
             action = "resume"
+
         elif locked:
             action = "locked"
+
         elif not can_retake:
             action = "cooldown"
+
         elif attempts:
             action = "retake"
+
         else:
             action = "start"
 
-        # ---------- MOCK ATTEMPTS ----------
-        mock_attempts = (
-            UserExam.objects
-            .filter(
-                user=user,
-                exam=exam,
-                passed__isnull=True,
-                submitted_at__isnull=False
-            )
-            .order_by("-submitted_at")
-        )
+        # ---------------- MOCK ATTEMPTS ----------------
 
-        mock_used = mock_attempts.count()
+        mock_attempts = [
+            a for a in attempts_by_exam.get(exam.id, [])
+            if a.passed is None and a.submitted_at
+        ]
+
+        mock_used = len(mock_attempts)
         mock_allowed = exam.max_mock_attempts or 0
 
-        # ---------- APPEND ----------
+        # ---------------- APPEND ----------------
+
         track_map[track]["items"].append({
             "exam": exam,
             "status": status,
@@ -596,20 +705,22 @@ def student_dashboard(request):
             "subscription_expired": has_expired_subscription,
             "track_subscription": track_sub,
             "exam_subscription": exam_sub,
-            "mock_attempts": list(mock_attempts),
+            "mock_attempts": mock_attempts,
             "mock_used": mock_used,
             "mock_allowed": mock_allowed,
         })
 
-    # =====================================================
-    # ORGANIZATION-ASSIGNED COURSES (NO PUBLIC COURSES)
-    # =====================================================
-    course_access_qs = (
-        CourseAccess.objects
+    # --------------------------------------------------
+    # ORGANIZATION COURSES (UPDATED FOR ResourceAccess)
+    # --------------------------------------------------
+
+    resource_access_qs = (
+        ResourceAccess.objects
         .filter(
             user=user,
+            resource_type="course",
             is_active=True,
-            source="organization",          # 🚫 excludes public & individual
+            source="organization",
             organization__isnull=False,
             course__is_published=True
         )
@@ -619,28 +730,30 @@ def student_dashboard(request):
 
     org_courses = defaultdict(list)
 
-    for access in course_access_qs:
+    for access in resource_access_qs:
         org_courses[access.organization].append(access)
 
-    # ---------------- COURSE SUBSCRIPTIONS ----------------
+    # --------------------------------------------------
+    # PERSONAL COURSE SUBSCRIPTIONS
+    # --------------------------------------------------
+
     course_subs = (
         CourseSubscription.objects
         .filter(user=user, is_active=True)
         .select_related("course")
-        
     )
 
     courses_data = []
 
     for sub in course_subs:
+
         course = sub.course
 
-        # Total lessons
-        total_lessons = course.sections.count() and sum(
-            s.lessons.count() for s in course.sections.all()
+        total_lessons = sum(
+            s.lessons.count()
+            for s in course.sections.all()
         )
 
-        # Completed lessons
         completed_lessons = LessonProgress.objects.filter(
             user=user,
             lesson__section__course=course,
@@ -648,6 +761,7 @@ def student_dashboard(request):
         ).count()
 
         progress = 0
+
         if total_lessons:
             progress = int((completed_lessons / total_lessons) * 100)
 
@@ -658,14 +772,20 @@ def student_dashboard(request):
             "total": total_lessons,
         })
 
-    return render(request, "quiz/student/student_dashboard.html", {
-        "active_attempt": active_attempt,
-        "total_attempts": total_attempts,
-        "passed_count": passed_count,
-        "failed_count": failed_count,
-        "track_map": dict(track_map),
+    # --------------------------------------------------
+    # RENDER
+    # --------------------------------------------------
 
-        # 👇 NEW (courses)
-        "org_courses": dict(org_courses),
-        "courses": courses_data,
-    })
+    return render(
+        request,
+        "quiz/student/student_dashboard.html",
+        {
+            "active_attempt": active_attempt,
+            "total_attempts": total_attempts,
+            "passed_count": passed_count,
+            "failed_count": failed_count,
+            "track_map": dict(track_map),
+            "org_courses": dict(org_courses),
+            "courses": courses_data,
+        },
+    )

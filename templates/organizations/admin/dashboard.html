@@ -1,28 +1,154 @@
 {% extends "organizations/admin/base.html" %}
 
 {% block content %}
-<h2 class="title is-4 mb-4">🏢 Organization Dashboard</h2>
 
-<div class="columns is-multiline">
+<h2 class="title is-4">📊 Organization Dashboard</h2>
+
+<!-- ================= STATS ================= -->
+
+<div class="columns is-multiline mb-5">
+
+  <!-- Students -->
   <div class="column is-4">
     <div class="box has-text-centered">
       <p class="heading">Students</p>
-      <p class="title is-3">👩‍🎓 {{ stats.students }}</p>
+      <p class="title is-4">{{ stats.students }}</p>
     </div>
   </div>
 
+  <!-- Courses -->
   <div class="column is-4">
     <div class="box has-text-centered">
       <p class="heading">Courses</p>
-      <p class="title is-3">📚 {{ stats.courses }}</p>
+      <p class="title is-4">{{ stats.courses }}</p>
     </div>
   </div>
 
+  <!-- Assignments -->
   <div class="column is-4">
     <div class="box has-text-centered">
       <p class="heading">Assignments</p>
-      <p class="title is-3">📝 {{ stats.assignments }}</p>
+      <p class="title is-4">{{ stats.assignments }}</p>
     </div>
   </div>
+
 </div>
+
+
+{% with org_slug=request.organization.slug %}
+
+<!-- ================= QUESTION STRUCTURE ================= -->
+
+<h3 class="title is-5">📚 Question Structure</h3>
+
+<div class="columns is-multiline mb-5">
+
+  <!-- Domains -->
+  <div class="column is-4">
+    <div class="box has-text-centered">
+
+      <p class="mb-3"><strong>Domains</strong></p>
+
+      <a href="{% url 'organizations_admin:domain_list' slug=org_slug %}"
+         class="button is-link is-light is-fullwidth mb-2">
+        Manage Domains
+      </a>
+
+      <a href="{% url 'organizations_admin:domain_create' slug=org_slug %}"
+         class="button is-primary is-small is-fullwidth">
+        ➕ Add Domain
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="column is-4">
+    <div class="box has-text-centered">
+
+      <p class="mb-3"><strong>Categories</strong></p>
+
+      <a href="{% url 'organizations_admin:category_list' slug=org_slug %}"
+         class="button is-link is-light is-fullwidth mb-2">
+        Manage Categories
+      </a>
+
+      <a href="{% url 'organizations_admin:category_create' slug=org_slug %}"
+         class="button is-primary is-small is-fullwidth">
+        ➕ Add Category
+      </a>
+
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ================= EXAM MANAGEMENT ================= -->
+
+<h3 class="title is-5">📝 Exam Management</h3>
+
+<div class="columns is-multiline">
+
+  <!-- Questions -->
+  <div class="column is-4">
+    <div class="box has-text-centered">
+
+      <p class="mb-3"><strong>Questions</strong></p>
+
+      <a href="{% url 'organizations_admin:questions' slug=org_slug %}"
+         class="button is-link is-light is-fullwidth mb-2">
+        Manage Questions
+      </a>
+
+      <a href="{% url 'organizations_admin:question_add' slug=org_slug %}"
+         class="button is-primary is-small is-fullwidth">
+        ➕ Add Question
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Exam Tracks -->
+  <div class="column is-4">
+    <div class="box has-text-centered">
+
+      <p class="mb-3"><strong>Exam Tracks</strong></p>
+
+      <a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"
+         class="button is-link is-light is-fullwidth mb-2">
+        Manage Tracks
+      </a>
+
+      <a href="{% url 'organizations_admin:org_track_create' slug=org_slug %}"
+         class="button is-primary is-small is-fullwidth">
+        ➕ Create Track
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Exams -->
+  <div class="column is-4">
+    <div class="box has-text-centered">
+
+      <p class="mb-3"><strong>Exams</strong></p>
+
+      <a href="{% url 'organizations_admin:exams' slug=org_slug %}"
+         class="button is-link is-light is-fullwidth mb-2">
+        Manage Exams
+      </a>
+
+      <a href="{% url 'organizations_admin:exam_create' slug=org_slug %}"
+         class="button is-primary is-small is-fullwidth">
+        ➕ Create Exam
+      </a>
+
+    </div>
+  </div>
+
+</div>
+
+{% endwith %}
+
 {% endblock %}

@@ -1,0 +1,240 @@
+{% extends "organizations/admin/base.html" %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block head_extra %}
+{{ form.media }}
+{% endblock %}
+
+{% block content %}
+
+{% with org_slug=request.organization.slug %}
+
+<div class="container py-5">
+
+  <!-- HEADER -->
+  <div class="mb-6">
+    <nav class="breadcrumb">
+      <ul>
+        <li>
+          <a href="{% url 'organizations_admin:questions' slug=org_slug %}">
+            Dashboard
+          </a>
+        </li>
+        <li class="is-active"><a href="#">Add Question</a></li>
+      </ul>
+    </nav>
+
+    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+      <h1 class="title is-3">➕ Add New Question</h1>
+      <span class="tag is-info is-light">Multiple Choice</span>
+    </div>
+  </div>
+
+  <form method="post" id="question-form">
+    {% csrf_token %}
+
+    <!-- ================= QUESTION CARD ================= -->
+    <div class="card mb-5">
+      <header class="card-header">
+        <p class="card-header-title">Question Details</p>
+      </header>
+
+      <div class="card-content">
+
+        {% for field in form %}
+        <div class="field mb-4">
+
+          <label class="label">{{ field.label }}</label>
+
+          <div class="control">
+
+            {% if field.name == "text" or field.name == "explanation" %}
+              {{ field }}
+            {% else %}
+              {% render_field field class+="input" %}
+            {% endif %}
+
+          </div>
+
+          {% if field.errors %}
+            <p class="help is-danger">{{ field.errors.0 }}</p>
+          {% endif %}
+
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+
+    <!-- ================= CHOICES CARD ================= -->
+    <div class="card mb-5">
+
+      <header class="card-header">
+        <p class="card-header-title">Answer Choices</p>
+
+        <button type="button"
+                class="card-header-icon"
+                id="add-choice-btn">
+          ➕
+        </button>
+      </header>
+
+      <div class="card-content">
+
+        {{ choice_formset.management_form }}
+
+        <table class="table is-fullwidth is-hoverable" id="choices-table">
+          <thead>
+            <tr>
+              <th>Choice Text</th>
+              <th class="has-text-centered">Correct?</th>
+              <th class="has-text-centered">Order</th>
+              <th class="has-text-centered">Delete</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            {% for cform in choice_formset %}
+            <tr class="choice-row" data-index="{{ forloop.counter0 }}">
+
+              <td>
+                {% render_field cform.text class+="input is-small" %}
+                {{ cform.id }}
+              </td>
+
+              <td class="has-text-centered">
+                {{ cform.is_correct }}
+              </td>
+
+              <td class="has-text-centered">
+                {% render_field cform.order class+="input is-small has-text-centered" style="width:80px;" %}
+              </td>
+
+              <td class="has-text-centered">
+                {{ cform.DELETE }}
+              </td>
+
+            </tr>
+            {% endfor %}
+
+          </tbody>
+        </table>
+
+        <div class="notification is-warning is-light mt-4 is-hidden"
+             id="no-correct-warning">
+          At least one correct answer is required.
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= ACTION BUTTONS ================= -->
+    <div class="field is-grouped is-grouped-centered">
+
+      <div class="control">
+        <a href="{% url 'organizations_admin:questions' slug=org_slug %}"
+           class="button is-light">
+          Cancel
+        </a>
+      </div>
+
+      <div class="control">
+        <button type="submit" class="button is-primary">
+          Save Question
+        </button>
+      </div>
+
+    </div>
+
+  </form>
+
+</div>
+
+{% endwith %}
+
+{% endblock %}
+
+{% block scripts_extra %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+
+  const addBtn = document.getElementById("add-choice-btn");
+  const tableBody = document.querySelector("#choices-table tbody");
+  const totalForms = document.getElementById("id_choices-TOTAL_FORMS");
+  const warning = document.getElementById("no-correct-warning");
+
+  function validateCorrectAnswers() {
+
+    const checkboxes = document.querySelectorAll("input[name$='-is_correct']");
+    let valid = false;
+
+    checkboxes.forEach(cb => {
+      if (cb.checked) valid = true;
+    });
+
+    warning.classList.toggle("is-hidden", valid);
+
+    return valid;
+  }
+
+  document.getElementById("question-form")
+    .addEventListener("submit", function(e) {
+
+      if (!validateCorrectAnswers()) {
+        e.preventDefault();
+        warning.scrollIntoView({behavior:"smooth"});
+      }
+
+  });
+
+  addBtn.addEventListener("click", function() {
+
+    const index = parseInt(totalForms.value);
+
+    const row = `
+      <tr class="choice-row" data-index="${index}">
+
+        <td>
+          <input type="text"
+                 name="choices-${index}-text"
+                 class="input is-small">
+
+          <input type="hidden"
+                 name="choices-${index}-id">
+        </td>
+
+        <td class="has-text-centered">
+          <input type="checkbox"
+                 name="choices-${index}-is_correct">
+        </td>
+
+        <td class="has-text-centered">
+          <input type="number"
+                 name="choices-${index}-order"
+                 value="${index + 1}"
+                 class="input is-small has-text-centered"
+                 style="width:80px;">
+        </td>
+
+        <td class="has-text-centered">
+          <input type="checkbox"
+                 name="choices-${index}-DELETE">
+        </td>
+
+      </tr>
+    `;
+
+    tableBody.insertAdjacentHTML("beforeend", row);
+    totalForms.value = index + 1;
+
+  });
+
+});
+
+</script>
+
+{% endblock %}

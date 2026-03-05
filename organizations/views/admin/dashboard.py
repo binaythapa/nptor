@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from organizations.permissions import org_admin_required
 from organizations.models.membership import OrganizationMember
-from organizations.models.assignment import CourseAssignment
+from organizations.models.assignment import ResourceAssignment
 from courses.models import Course
 from courses.models.progress import LessonProgress
 
@@ -11,47 +11,72 @@ from core.utils.memory import get_memory_usage_mb
 
 logger = logging.getLogger("django")
 
+from django.shortcuts import render
+from organizations.permissions import org_admin_required
+from organizations.models.membership import OrganizationMember
+from organizations.models.assignment import ResourceAssignment
+
+from courses.models import Course
+from courses.models.progress import LessonProgress
+
+import logging
+from core.utils.memory import get_memory_usage_mb
+
+logger = logging.getLogger("django")
+
 
 @org_admin_required
-def org_dashboard(request):
+def org_dashboard(request, slug):
+
     mem = get_memory_usage_mb()
     logger.info(f"Organization Dashboard memory usage: {mem} MB")
-    org = request.active_org
+
+    org = request.organization
 
     # =========================
     # ORGANIZATION STATS
     # =========================
+
     stats = {
         "students": OrganizationMember.objects.filter(
             organization=org,
             role="student",
-            is_active=True,
+            is_active=True
         ).count(),
 
         "courses": Course.objects.filter(
             organization=org,
-            is_published=True,
+            is_published=True
         ).count(),
 
-        "assignments": CourseAssignment.objects.filter(
-            organization=org
+        "assignments": ResourceAssignment.objects.filter(
+            organization=org,
+            resource_type="course"
         ).count(),
     }
 
     # =========================
     # ASSIGNED COURSES PROGRESS
     # =========================
+
     assignments = (
-        CourseAssignment.objects
-        .filter(organization=org)
+        ResourceAssignment.objects
+        .filter(
+            organization=org,
+            resource_type="course"
+        )
         .select_related("course", "student")
     )
 
     assigned_courses = []
 
     for assignment in assignments:
+
         course = assignment.course
         student = assignment.student
+
+        if not course:
+            continue
 
         total_lessons = LessonProgress.objects.filter(
             lesson__section__course=course
@@ -76,6 +101,7 @@ def org_dashboard(request):
     # =========================
     # RENDER
     # =========================
+
     return render(
         request,
         "organizations/admin/dashboard.html",

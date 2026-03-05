@@ -671,19 +671,18 @@ def start_trial(request, track_id):
     messages.success(request, "7-day free trial activated!")
     return redirect("quiz:student_dashboard")
 
-
-
-
 def allocate_questions_for_exam(exam, seed=None):
     mem = get_memory_usage_mb()
     if mem is not None:
         logger.info(f"Allocate Question for Exam page memory usage: {mem} MB")
+
     """
     Enterprise-grade allocation engine.
     - Supports fixed + percentage allocation
     - Deterministic if seed is provided (recommended: user_exam.id)
     - Prevents over-allocation
     - Uses active questions only
+    - 🔐 Multi-tenant safe
     """
 
     total_needed = int(exam.question_count)
@@ -691,9 +690,26 @@ def allocate_questions_for_exam(exam, seed=None):
         return []
 
     rng = random.Random(seed) if seed is not None else random
-    allocations = list(exam.allocations.select_related('category').all())
+    allocations = list(exam.allocations.select_related("category").all())
 
-    base_qs = Question.objects.filter(is_active=True,is_deleted=False)
+    # =====================================================
+    # 🔐 MULTI-TENANT QUESTION ISOLATION (CRITICAL FIX)
+    # =====================================================
+    base_qs = Question.objects.filter(
+        is_active=True,
+        is_deleted=False,
+    )
+
+    if exam.organization:
+        # Organization exam → ONLY that org's questions
+        base_qs = base_qs.filter(
+            organization=exam.organization
+        )
+    else:
+        # Public exam → ONLY global questions
+        base_qs = base_qs.filter(
+            organization__isnull=True
+        )
 
     selected_qs = []
     selected_ids = set()
@@ -723,8 +739,10 @@ def allocate_questions_for_exam(exam, seed=None):
                 cat_ids = [a.category.id]
 
             pool = list(
-                base_qs.filter(category_id__in=cat_ids).exclude(id__in=selected_ids)
+                base_qs.filter(category_id__in=cat_ids)
+                .exclude(id__in=selected_ids)
             )
+
             rng.shuffle(pool)
 
             take = min(len(pool), a.fixed_count)
@@ -742,6 +760,7 @@ def allocate_questions_for_exam(exam, seed=None):
     # -------------------------------------------------
     if percent_allocs and remaining_needed > 0 and percent_sum > 0:
         raw = []
+
         for a in percent_allocs:
             scaled = (a.percentage / percent_sum) * remaining_needed
             raw.append((a, math.floor(scaled), scaled % 1))
@@ -750,8 +769,8 @@ def allocate_questions_for_exam(exam, seed=None):
         allocated = sum(percent_counts.values())
         left = remaining_needed - allocated
 
-        # distribute remainders
-        for a, _, _ in sorted(raw, key=lambda x: x[2], reverse=True):
+        # Distribute remainder fairly
+        for a, _, remainder in sorted(raw, key=lambda x: x[2], reverse=True):
             if left <= 0:
                 break
             percent_counts[a.id] += 1
@@ -768,8 +787,10 @@ def allocate_questions_for_exam(exam, seed=None):
                 cat_ids = [a.category.id]
 
             pool = list(
-                base_qs.filter(category_id__in=cat_ids).exclude(id__in=selected_ids)
+                base_qs.filter(category_id__in=cat_ids)
+                .exclude(id__in=selected_ids)
             )
+
             rng.shuffle(pool)
 
             chosen = pool[:cnt]
@@ -781,33 +802,40 @@ def allocate_questions_for_exam(exam, seed=None):
     # -------------------------------------------------
     if len(selected_qs) < total_needed and exam.category:
         needed = total_needed - len(selected_qs)
+
         try:
             cat_ids = exam.category.get_descendants_include_self()
         except Exception:
             cat_ids = [exam.category.id]
 
         pool = list(
-            base_qs.filter(category_id__in=cat_ids).exclude(id__in=selected_ids)
+            base_qs.filter(category_id__in=cat_ids)
+            .exclude(id__in=selected_ids)
         )
+
         rng.shuffle(pool)
         selected_qs.extend(pool[:needed])
         selected_ids.update(q.id for q in pool[:needed])
 
     # -------------------------------------------------
-    # 4️⃣ GLOBAL FALLBACK
+    # 4️⃣ FINAL FALLBACK (within allowed tenant scope only)
     # -------------------------------------------------
     if len(selected_qs) < total_needed:
         needed = total_needed - len(selected_qs)
-        pool = list(base_qs.exclude(id__in=selected_ids))
+
+        pool = list(
+            base_qs.exclude(id__in=selected_ids)
+        )
+
         rng.shuffle(pool)
         selected_qs.extend(pool[:needed])
 
     # -------------------------------------------------
-    # FINAL SHUFFLE (order is stored anyway)
+    # FINAL SHUFFLE
     # -------------------------------------------------
     rng.shuffle(selected_qs)
-    return selected_qs[:total_needed]
 
+    return selected_qs[:total_needed]
 
 
 

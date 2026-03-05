@@ -1,0 +1,76 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+
+{% with org_slug=request.organization.slug %}
+
+<h2 class="title is-4">📝 Questions</h2>
+
+<div class="mb-4">
+    <a href="{% url 'organizations_admin:question_add' slug=org_slug %}"
+       class="button is-primary">
+        ➕ Add Question
+    </a>
+</div>
+
+<table class="table is-fullwidth is-striped">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Question</th>
+<th>Difficulty</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for q in questions %}
+<tr>
+
+<td>{{ q.id }}</td>
+
+<td>
+{{ q.text|truncatewords:15|safe }}
+</td>
+
+<td>{{ q.difficulty }}</td>
+
+<td>
+
+<a href="{% url 'organizations_admin:question_edit' slug=org_slug pk=q.id %}"
+   class="button is-small is-info">
+   Edit
+</a>
+
+<a href="{% url 'organizations_admin:question_deactivate' slug=org_slug pk=q.id %}"
+   class="button is-small is-warning"
+   onclick="return confirm('Deactivate this question?')">
+   Deactivate
+</a>
+
+<a href="{% url 'organizations_admin:question_delete' slug=org_slug pk=q.id %}"
+   class="button is-small is-danger"
+   onclick="return confirm('Permanently delete this question?')">
+   Delete
+</a>
+
+</td>
+
+</tr>
+{% empty %}
+
+<tr>
+<td colspan="4">No questions yet.</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+{% endwith %}
+
+{% endblock %}

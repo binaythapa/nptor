@@ -19,7 +19,8 @@ urlpatterns = [
     path("quiz/", include("quiz.urls")),
     path("courses/", include("courses.urls")),
     path("", include("pages.urls")),   # 👈 homepage lives here
-    path("org/", include("organizations.urls")), 
+    #path("org/", include("organizations.urls")), 
+    path("org/<slug:slug>/", include("organizations.urls")),
     path("api/", include("quiz.api_urls")),
 ]
 urlpatterns += admin_urls

@@ -1,0 +1,98 @@
+{% extends "organizations/admin/base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Edit Exam Track{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+  <!-- HEADER -->
+  <div class="mb-6">
+    <h1 class="title is-3">✏️ Edit Exam Track</h1>
+    <p class="subtitle is-6 has-text-grey">
+      Update exam track details and pricing
+    </p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- TRACK DETAILS -->
+    <div class="card mb-5">
+
+      <header class="card-header">
+        <p class="card-header-title">
+          Track Information
+        </p>
+      </header>
+
+      <div class="card-content">
+
+        {% for field in form %}
+
+        <div class="field mb-4">
+
+          <label class="label">
+            {{ field.label }}
+            {% if field.field.required %}
+            <span class="has-text-danger">*</span>
+            {% endif %}
+          </label>
+
+          <div class="control">
+
+            {% if field.name == "description" %}
+                {{ field }}
+            {% else %}
+                {% render_field field class+="input" %}
+            {% endif %}
+
+          </div>
+
+          {% if field.help_text %}
+          <p class="help">{{ field.help_text }}</p>
+          {% endif %}
+
+          {% if field.errors %}
+          <p class="help is-danger">
+            {{ field.errors.0 }}
+          </p>
+          {% endif %}
+
+        </div>
+
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+    <!-- ACTION BUTTONS -->
+
+    {% with org_slug=request.organization.slug %}
+
+    <div class="field is-grouped is-grouped-centered">
+
+      <div class="control">
+        <a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"
+           class="button is-light">
+           Cancel
+        </a>
+      </div>
+
+      <div class="control">
+        <button type="submit" class="button is-primary">
+          Update Track
+        </button>
+      </div>
+
+    </div>
+
+    {% endwith %}
+
+  </form>
+
+</div>
+
+{% endblock %}

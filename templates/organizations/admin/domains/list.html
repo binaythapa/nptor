@@ -1,0 +1,77 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+
+{% with org_slug=request.organization.slug %}
+
+<h2 class="title is-4">🌐 Domains</h2>
+
+<a href="{% url 'organizations_admin:domain_create' slug=org_slug %}"
+   class="button is-primary mb-4">
+   ➕ Create Domain
+</a>
+
+<table class="table is-fullwidth is-striped is-hoverable">
+
+<thead>
+<tr>
+<th>Name</th>
+<th>Slug</th>
+<th>Status</th>
+<th class="has-text-centered">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for d in domains %}
+<tr>
+
+<td>{{ d.name }}</td>
+
+<td>{{ d.slug }}</td>
+
+<td>
+{% if d.is_active %}
+<span class="tag is-success">Active</span>
+{% else %}
+<span class="tag is-light">Inactive</span>
+{% endif %}
+</td>
+
+<td class="has-text-centered">
+
+<a href="{% url 'organizations_admin:domain_edit' slug=org_slug pk=d.id %}"
+   class="button is-small is-info">
+   Edit
+</a>
+
+<form method="post"
+      action="{% url 'organizations_admin:domain_delete' slug=org_slug pk=d.id %}"
+      style="display:inline;">
+  {% csrf_token %}
+  <button class="button is-small is-danger"
+          onclick="return confirm('Delete this domain?');">
+      Delete
+  </button>
+</form>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="4">No domains created.</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+{% endwith %}
+
+{% endblock %}

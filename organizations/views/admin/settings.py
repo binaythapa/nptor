@@ -2,7 +2,7 @@ from django.shortcuts import render
 from organizations.permissions import org_admin_required
 
 @org_admin_required
-def org_settings(request):
+def org_settings(request,slug):
     return render(
         request,
         "organizations/admin/settings.html",

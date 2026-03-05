@@ -100,7 +100,9 @@
       <p class="menu-label has-text-grey-light mt-3 mb-1">Organization</p>
       <ul class="menu-list">
         <li>
-          <a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' %}{% else %}javascript:void(0);{% endif %}"
+         
+
+          <a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}javascript:void(0);{% endif %}"
              class="py-1 {% if is_from_course %}is-disabled{% endif %}"
              {% if is_from_course %}title="Disabled during course practice"{% endif %}>
             <span class="icon is-small mr-1"><i class="fa fa-building"></i></span>

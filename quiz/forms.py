@@ -66,8 +66,8 @@ class EmailOrUsernameLoginForm(AuthenticationForm):
         )
     )
 
-
 from django import forms
+from ckeditor.widgets import CKEditorWidget
 from .models import Question, Choice
 
 
@@ -83,37 +83,67 @@ class QuestionForm(forms.ModelForm):
             "explanation",
         ]
 
+        widgets = {
+            "text": CKEditorWidget(config_name="default"),
+            "explanation": CKEditorWidget(config_name="default"),
+        }
+
 
 class ChoiceForm(forms.ModelForm):
+
     class Meta:
         model = Choice
         fields = ["text", "is_correct", "order"]
 
-
+from django import forms
+from quiz.models import Exam, ExamTrack
 
 from django import forms
 from quiz.models import Exam, ExamTrack
 
+
 class ExamForm(forms.ModelForm):
+
     class Meta:
         model = Exam
         fields = [
             "title",
             "track",
             "category",
+            "categories",
             "question_count",
             "duration_seconds",
             "level",
             "passing_score",
+            "prerequisite_exams",
             "is_free",
             "price",
             "currency",
             "is_published",
             "max_mock_attempts",
+            "allow_review",
         ]
 
+        widgets = {
+            "categories": forms.CheckboxSelectMultiple(),
+            "prerequisite_exams": forms.SelectMultiple(),
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        organization = kwargs.pop("organization", None)
+
+        super().__init__(*args, **kwargs)
+
+        # 🔐 Restrict tracks to organization
+        if organization:
+            self.fields["track"].queryset = ExamTrack.objects.filter(
+                organization=organization,
+                is_active=True
+            )
 
 class ExamTrackForm(forms.ModelForm):
+
     class Meta:
         model = ExamTrack
         fields = [
@@ -125,5 +155,37 @@ class ExamTrackForm(forms.ModelForm):
             "lifetime_price",
             "trial_days",
             "currency",
+            "is_active",
+        ]
+
+        widgets = {
+            "description": forms.Textarea(attrs={
+                "rows": 4,
+                "class": "textarea"
+            })
+        }
+
+
+
+from django import forms
+from quiz.models import Domain, Category
+
+
+class DomainForm(forms.ModelForm):
+
+    class Meta:
+        model = Domain
+        fields = ["name", "slug", "is_active"]
+
+
+class CategoryForm(forms.ModelForm):
+
+    class Meta:
+        model = Category
+        fields = [
+            "domain",
+            "name",
+            "slug",
+            "parent",
             "is_active",
         ]

@@ -1,0 +1,94 @@
+{% extends "organizations/admin/base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Edit Exam{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+<div class="mb-6">
+<h1 class="title is-3">✏️ Edit Exam</h1>
+<p class="subtitle is-6 has-text-grey">
+Update exam settings
+</p>
+</div>
+
+<form method="post">
+{% csrf_token %}
+
+<div class="card">
+
+<header class="card-header">
+<p class="card-header-title">
+Exam Configuration
+</p>
+</header>
+
+<div class="card-content">
+
+{% for field in form %}
+
+<div class="field mb-4">
+
+<label class="label">
+{{ field.label }}
+{% if field.field.required %}
+<span class="has-text-danger">*</span>
+{% endif %}
+</label>
+
+<div class="control">
+
+{% if field.name == "categories" or field.name == "prerequisite_exams" %}
+{{ field }}
+{% else %}
+{% render_field field class+="input" %}
+{% endif %}
+
+</div>
+
+{% if field.help_text %}
+<p class="help">{{ field.help_text }}</p>
+{% endif %}
+
+{% if field.errors %}
+<p class="help is-danger">
+{{ field.errors.0 }}
+</p>
+{% endif %}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+{% with org_slug=request.organization.slug %}
+
+<div class="field is-grouped is-grouped-centered mt-5">
+
+<div class="control">
+<a href="{% url 'organizations_admin:exams' slug=org_slug %}"
+class="button is-light">
+Cancel
+</a>
+</div>
+
+<div class="control">
+<button type="submit" class="button is-primary">
+Update Exam
+</button>
+</div>
+
+</div>
+
+{% endwith %}
+
+</form>
+
+</div>
+
+{% endblock %}

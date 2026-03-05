@@ -1,0 +1,117 @@
+{% extends "organizations/admin/base.html" %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block title %}Create Exam Track{% endblock %}
+
+{% block content %}
+
+{% with org_slug=request.organization.slug %}
+
+<div class="container py-5">
+
+  <!-- HEADER -->
+  <div class="mb-6">
+
+    <nav class="breadcrumb">
+      <ul>
+        <li>
+          <a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}">
+            Tracks
+          </a>
+        </li>
+        <li class="is-active"><a href="#">Create Track</a></li>
+      </ul>
+    </nav>
+
+    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+      <h1 class="title is-3">📚 Create Exam Track</h1>
+      <span class="tag is-info is-light">Organization Track</span>
+    </div>
+
+  </div>
+
+
+  <!-- ================= FORM ================= -->
+
+  <form method="post">
+
+    {% csrf_token %}
+
+    <div class="card">
+
+      <header class="card-header">
+        <p class="card-header-title">
+          Track Details
+        </p>
+      </header>
+
+      <div class="card-content">
+
+        {% for field in form %}
+        <div class="field mb-4">
+
+          <label class="label">
+            {{ field.label }}
+
+            {% if field.field.required %}
+              <span class="has-text-danger">*</span>
+            {% endif %}
+          </label>
+
+          <div class="control">
+
+            {% if field.field.widget.input_type == "textarea" %}
+                {{ field }}
+            {% else %}
+                {% render_field field class+="input" %}
+            {% endif %}
+
+          </div>
+
+          {% if field.errors %}
+            <p class="help is-danger">
+              {{ field.errors.0 }}
+            </p>
+          {% endif %}
+
+        </div>
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+
+    <!-- ================= ACTION BUTTONS ================= -->
+
+    <div class="field is-grouped is-grouped-centered mt-5">
+
+      <div class="control">
+        <a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"
+           class="button is-light">
+           Cancel
+        </a>
+      </div>
+
+      <div class="control">
+        <button type="submit"
+                class="button is-primary">
+          ➕ Create Track
+        </button>
+      </div>
+
+    </div>
+
+  </form>
+
+</div>
+
+{% endwith %}
+
+{% endblock %}

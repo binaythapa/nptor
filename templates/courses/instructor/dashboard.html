@@ -209,6 +209,7 @@
 
 <div class="dashboard-header">
     <h2>Instructor Dashboard</h2>
+
     <a href="{% url 'courses:course_create' %}" class="btn-create">
         + Create Course
     </a>
@@ -216,43 +217,50 @@
 
 
 {# ================= ORGANIZATION COURSES ================= #}
+
 {% if organization_courses %}
 <h3 style="margin:40px 0 20px;">🏢 Organization Courses</h3>
 
 <div class="course-grid">
 {% for course in organization_courses %}
-    {% include "courses/instructor/partials/course_card.html" %}
+    {% include "courses/instructor/partials/course_card.html" with course=course %}
 {% endfor %}
 </div>
 {% endif %}
 
 
-{# ================= ADMIN COURSES ================= #}
+{# ================= PLATFORM COURSES ================= #}
+
 {% if admin_courses %}
 <h3 style="margin:50px 0 20px;">👑 Platform / Admin Courses</h3>
 
 <div class="course-grid">
 {% for course in admin_courses %}
-    {% include "courses/instructor/partials/course_card.html" %}
+    {% include "courses/instructor/partials/course_card.html" with course=course %}
 {% endfor %}
 </div>
 {% endif %}
 
 
 {# ================= MY COURSES ================= #}
+
 {% if my_courses %}
 <h3 style="margin:50px 0 20px;">👤 My Courses</h3>
 
 <div class="course-grid">
 {% for course in my_courses %}
-    {% include "courses/instructor/partials/course_card.html" %}
+    {% include "courses/instructor/partials/course_card.html" with course=course %}
 {% endfor %}
 </div>
 {% endif %}
 
 
+{# ================= EMPTY STATE ================= #}
+
 {% if not organization_courses and not admin_courses and not my_courses %}
-<p class="empty-state">No courses available.</p>
+<p class="empty-state">
+No courses available.
+</p>
 {% endif %}
 
 {% endblock %}

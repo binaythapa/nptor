@@ -108,18 +108,28 @@
     </ul>
 
 
-    <!-- ================= Org ================= -->
-    <p class="menu-label">Org</p>
-    <ul class="menu-list">
-      <li>
-        <a href="{% url 'organizations_admin:dashboard' %}">
-          <span class="icon is-small">
-            <i class="fa fa-users"></i>
-          </span>
-          <span class="menu-text">Org</span>
-        </a>
-      </li>
-    </ul>
+{% if request.organization %}
+
+{% with org_slug=request.organization.slug %}
+
+<p class="menu-label">Organization</p>
+
+<ul class="menu-list">
+
+<li>
+<a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
+<span class="icon is-small">
+<i class="fa fa-building"></i>
+</span>
+<span class="menu-text">Organization Dashboard</span>
+</a>
+</li>
+
+</ul>
+
+{% endwith %}
+
+{% endif %}
 
 
      <!-- ================= Course ================= -->

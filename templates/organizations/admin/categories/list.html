@@ -1,0 +1,94 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+
+{% with org_slug=request.organization.slug %}
+
+<h2 class="title is-4">📂 Categories</h2>
+
+<a href="{% url 'organizations_admin:category_create' slug=org_slug %}"
+   class="button is-primary mb-4">
+   ➕ Create Category
+</a>
+
+<table class="table is-fullwidth is-striped">
+
+<thead>
+<tr>
+<th>Name</th>
+<th>Domain</th>
+<th>Parent</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for c in categories %}
+<tr>
+
+<td>{{ c.name }}</td>
+
+<td>
+{% if c.domain %}
+{{ c.domain.name }}
+{% else %}
+—
+{% endif %}
+</td>
+
+<td>
+{% if c.parent %}
+{{ c.parent.name }}
+{% else %}
+—
+{% endif %}
+</td>
+
+<td>
+{% if c.is_active %}
+<span class="tag is-success">Active</span>
+{% else %}
+<span class="tag">Inactive</span>
+{% endif %}
+</td>
+
+<td>
+
+<a href="{% url 'organizations_admin:category_edit' slug=org_slug pk=c.id %}"
+   class="button is-small is-info">
+Edit
+</a>
+
+<form method="post"
+      action="{% url 'organizations_admin:category_delete' slug=org_slug pk=c.id %}"
+      style="display:inline;">
+{% csrf_token %}
+
+<button class="button is-small is-danger"
+        onclick="return confirm('Delete this category?')">
+Delete
+</button>
+
+</form>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="5">No categories created.</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+{% endwith %}
+
+{% endblock %}
