@@ -79,9 +79,9 @@
 <section class="section">
   <div class="container">
 
-    <div class="columns is-multiline">
+    <div class="columns">
 
-      <div class="column is-3">
+      <div class="column">
         <div class="box has-text-centered">
           <i class="fa fa-pen fa-2x mb-3"></i>
           <h3 class="title is-6">Practice Questions</h3>
@@ -91,7 +91,7 @@
         </div>
       </div>
 
-      <div class="column is-3">
+      <div class="column">
         <div class="box has-text-centered">
           <i class="fa fa-clock fa-2x mb-3"></i>
           <h3 class="title is-6">Mock Exams</h3>
@@ -101,7 +101,7 @@
         </div>
       </div>
 
-      <div class="column is-3">
+      <div class="column">
         <div class="box has-text-centered">
           <i class="fa fa-chart-line fa-2x mb-3"></i>
           <h3 class="title is-6">Track Progress</h3>
@@ -111,7 +111,7 @@
         </div>
       </div>
 
-      <div class="column is-3">
+      <div class="column">
         <div class="box has-text-centered">
           <i class="fa fa-user-graduate fa-2x mb-3"></i>
           <h3 class="title is-6">Structured Learning</h3>
@@ -127,21 +127,81 @@
 </section>
 
 
-<!-- ================= EXAM TRACKS ================= -->
+<!-- ================= COURSES ================= -->
 <section class="section has-background-light">
+  <div class="container">
+
+    <h2 class="title is-3 has-text-centered mb-6">
+      Featured Courses
+    </h2>
+
+    <div class="columns">
+
+      {% if courses %}
+
+        {% for course in courses|slice:":3" %}
+
+        <div class="column">
+          <div class="box">
+
+            {% if course.thumbnail %}
+            <figure class="image mb-3">
+              <img src="{{ course.thumbnail.url }}">
+            </figure>
+            {% endif %}
+
+            <h3 class="title is-5">
+              {{ course.title }}
+            </h3>
+
+            <p class="is-size-7 mb-2">
+              Level: {{ course.level|title }}
+            </p>
+
+            <p class="is-size-7 mb-3">
+              {{ course.description|truncatewords:20 }}
+            </p>
+
+            <a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-primary">
+              Login to Start
+            </a>
+
+          </div>
+        </div>
+
+        {% endfor %}
+
+      {% else %}
+
+      <div class="column">
+        <div class="notification is-light has-text-centered">
+          📚 Courses will be available soon.
+        </div>
+      </div>
+
+      {% endif %}
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ================= EXAM TRACKS ================= -->
+<section class="section">
   <div class="container">
 
     <h2 class="title is-3 has-text-centered mb-6">
       Popular Certification Tracks
     </h2>
 
-    <div class="columns is-multiline">
+    <div class="columns">
 
       {% if exam_tracks %}
 
-        {% for track in exam_tracks %}
+        {% for track in exam_tracks|slice:":3" %}
 
-        <div class="column is-4">
+        <div class="column">
           <div class="box">
 
             <h3 class="title is-5">
@@ -152,8 +212,8 @@
               {{ track.description|truncatewords:20 }}
             </p>
 
-            <a href="#" class="button is-small is-primary">
-              View Track
+            <a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-link">
+              Login to Explore
             </a>
 
           </div>
@@ -178,20 +238,20 @@
 
 
 <!-- ================= LATEST EXAMS ================= -->
-<section class="section">
+<section class="section has-background-light">
   <div class="container">
 
     <h2 class="title is-3 has-text-centered mb-6">
       Latest Mock Exams
     </h2>
 
-    <div class="columns is-multiline">
+    <div class="columns">
 
       {% if latest_exams %}
 
-        {% for exam in latest_exams %}
+        {% for exam in latest_exams|slice:":3" %}
 
-        <div class="column is-4">
+        <div class="column">
           <div class="box">
 
             <h3 class="title is-6">
@@ -206,8 +266,8 @@
               {{ exam.duration_seconds }} Seconds
             </p>
 
-            <a href="#" class="button is-small is-link">
-              Take Exam
+            <a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-primary">
+              Login to Attempt
             </a>
 
           </div>
@@ -232,20 +292,20 @@
 
 
 <!-- ================= TESTIMONIALS ================= -->
-<section class="section has-background-light">
+<section class="section">
   <div class="container">
 
     <h2 class="title is-3 has-text-centered mb-6">
       What Our Students Say
     </h2>
 
-    <div class="columns is-multiline">
+    <div class="columns">
 
       {% if testimonials %}
 
-        {% for testimonial in testimonials %}
+        {% for testimonial in testimonials|slice:":3" %}
 
-        <div class="column is-4">
+        <div class="column">
           <div class="box">
 
             <div class="mb-2">
@@ -294,7 +354,7 @@
 
 
 <!-- ================= CTA ================= -->
-<section class="section">
+<section class="section has-background-light">
   <div class="container has-text-centered">
 
     <h2 class="title is-4">

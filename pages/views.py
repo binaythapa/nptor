@@ -22,9 +22,20 @@ from pages.models import Testimonial
 
 User = get_user_model()
 
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+
+from quiz.models import Question, Exam, ExamTrack, StudyPlan
+from pages.models import Testimonial
+from courses.models import Course
+
+
+User = get_user_model()
+
 
 def home(request):
 
+    # Redirect logged-in users
     if request.user.is_authenticated:
         return redirect("quiz:dashboard")
 
@@ -51,6 +62,13 @@ def home(request):
         is_featured=True
     ).order_by("-created_at")[:6]
 
+    # ================= COURSES =================
+
+    courses = Course.objects.filter(
+        is_published=True,
+        is_public=True
+    ).select_related("category").order_by("-created_at")[:6]
+
     # ================= POPULAR EXAM TRACKS =================
 
     exam_tracks = ExamTrack.objects.filter(
@@ -66,16 +84,19 @@ def home(request):
     # ================= CONTEXT =================
 
     context = {
+
+        # Testimonials
         "testimonials": testimonials,
 
-        # Stats
+        # Platform stats
         "total_questions": total_questions,
         "total_exams": total_exams,
         "total_tracks": total_tracks,
         "total_students": total_students,
         "total_study_plans": total_study_plans,
 
-        # Dynamic sections
+        # Homepage dynamic sections
+        "courses": courses,
         "exam_tracks": exam_tracks,
         "latest_exams": latest_exams,
     }
