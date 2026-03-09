@@ -7,7 +7,17 @@ from quiz.urls.admin import urlpatterns as admin_urls
 from core.views.health import health_check
 
 
+from django.http import HttpResponse
+
+def ads_txt(request):
+    return HttpResponse(
+        "google.com, pub-5294449232420430, DIRECT, f08c47fec0942fa0",
+        content_type="text/plain"
+    )
+
+
 urlpatterns = [
+    path("ads.txt", ads_txt),
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health-check"),
     path("ckeditor/", include("ckeditor_uploader.urls")),
