@@ -1,7 +1,7 @@
 {% extends "layouts/student/base.html" %}
 
 {% block title %}
-{{ site_name }} – Prepare Smarter for Exams
+{{ site_name }} – Practice Exams, Mock Tests & Certification Prep
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,12 @@
     </h1>
 
     <p class="subtitle is-5 mt-3">
-      Practice exams, take mock tests, and improve your skills with confidence.
+      Practice real exam questions, simulate mock exams, and track your progress.
+      {% if total_students %}
+        Join {{ total_students }}+ learners preparing smarter.
+      {% else %}
+        Start your journey and become one of our first learners.
+      {% endif %}
     </p>
 
     <div class="buttons is-centered mt-5">
@@ -31,8 +36,47 @@
   </div>
 </section>
 
-<!-- ================= FEATURES ================= -->
+
+<!-- ================= PLATFORM STATS ================= -->
 <section class="section has-background-light">
+  <div class="container">
+    <div class="columns has-text-centered">
+
+      <div class="column">
+        <p class="title is-3">
+          {% if total_students %}{{ total_students }}+{% else %}0{% endif %}
+        </p>
+        <p class="is-size-6">Students</p>
+      </div>
+
+      <div class="column">
+        <p class="title is-3">
+          {% if total_questions %}{{ total_questions }}+{% else %}0{% endif %}
+        </p>
+        <p class="is-size-6">Practice Questions</p>
+      </div>
+
+      <div class="column">
+        <p class="title is-3">
+          {% if total_exams %}{{ total_exams }}+{% else %}0{% endif %}
+        </p>
+        <p class="is-size-6">Mock Exams</p>
+      </div>
+
+      <div class="column">
+        <p class="title is-3">
+          {% if total_tracks %}{{ total_tracks }}+{% else %}0{% endif %}
+        </p>
+        <p class="is-size-6">Exam Tracks</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ================= FEATURES ================= -->
+<section class="section">
   <div class="container">
 
     <div class="columns is-multiline">
@@ -42,7 +86,7 @@
           <i class="fa fa-pen fa-2x mb-3"></i>
           <h3 class="title is-6">Practice Questions</h3>
           <p class="is-size-7">
-            Practice curated questions designed for real exams.
+            Access {{ total_questions|default:0 }}+ curated questions designed for real exams.
           </p>
         </div>
       </div>
@@ -52,7 +96,7 @@
           <i class="fa fa-clock fa-2x mb-3"></i>
           <h3 class="title is-6">Mock Exams</h3>
           <p class="is-size-7">
-            Simulate real exam conditions and test your readiness.
+            Take {{ total_exams|default:0 }} realistic exams to test your readiness.
           </p>
         </div>
       </div>
@@ -62,7 +106,7 @@
           <i class="fa fa-chart-line fa-2x mb-3"></i>
           <h3 class="title is-6">Track Progress</h3>
           <p class="is-size-7">
-            Analyze performance and focus on weak areas.
+            Monitor performance and identify weak areas instantly.
           </p>
         </div>
       </div>
@@ -70,9 +114,9 @@
       <div class="column is-3">
         <div class="box has-text-centered">
           <i class="fa fa-user-graduate fa-2x mb-3"></i>
-          <h3 class="title is-6">Learn Smarter</h3>
+          <h3 class="title is-6">Structured Learning</h3>
           <p class="is-size-7">
-            Structured learning built for serious aspirants.
+            Follow guided study plans designed for certification success.
           </p>
         </div>
       </div>
@@ -82,18 +126,187 @@
   </div>
 </section>
 
+
+<!-- ================= EXAM TRACKS ================= -->
+<section class="section has-background-light">
+  <div class="container">
+
+    <h2 class="title is-3 has-text-centered mb-6">
+      Popular Certification Tracks
+    </h2>
+
+    <div class="columns is-multiline">
+
+      {% if exam_tracks %}
+
+        {% for track in exam_tracks %}
+
+        <div class="column is-4">
+          <div class="box">
+
+            <h3 class="title is-5">
+              {{ track.title }}
+            </h3>
+
+            <p class="is-size-7 mb-3">
+              {{ track.description|truncatewords:20 }}
+            </p>
+
+            <a href="#" class="button is-small is-primary">
+              View Track
+            </a>
+
+          </div>
+        </div>
+
+        {% endfor %}
+
+      {% else %}
+
+      <div class="column">
+        <div class="notification is-light has-text-centered">
+          🚀 Certification tracks will appear here soon.
+        </div>
+      </div>
+
+      {% endif %}
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ================= LATEST EXAMS ================= -->
+<section class="section">
+  <div class="container">
+
+    <h2 class="title is-3 has-text-centered mb-6">
+      Latest Mock Exams
+    </h2>
+
+    <div class="columns is-multiline">
+
+      {% if latest_exams %}
+
+        {% for exam in latest_exams %}
+
+        <div class="column is-4">
+          <div class="box">
+
+            <h3 class="title is-6">
+              {{ exam.title }}
+            </h3>
+
+            <p class="is-size-7 mb-2">
+              {{ exam.question_count }} Questions
+            </p>
+
+            <p class="is-size-7 mb-3">
+              {{ exam.duration_seconds }} Seconds
+            </p>
+
+            <a href="#" class="button is-small is-link">
+              Take Exam
+            </a>
+
+          </div>
+        </div>
+
+        {% endfor %}
+
+      {% else %}
+
+      <div class="column">
+        <div class="notification is-light has-text-centered">
+          📝 Mock exams will be available soon.
+        </div>
+      </div>
+
+      {% endif %}
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ================= TESTIMONIALS ================= -->
+<section class="section has-background-light">
+  <div class="container">
+
+    <h2 class="title is-3 has-text-centered mb-6">
+      What Our Students Say
+    </h2>
+
+    <div class="columns is-multiline">
+
+      {% if testimonials %}
+
+        {% for testimonial in testimonials %}
+
+        <div class="column is-4">
+          <div class="box">
+
+            <div class="mb-2">
+              {% for i in "12345" %}
+                {% if forloop.counter <= testimonial.rating %}
+                  <span style="color:#f5b50a;">★</span>
+                {% else %}
+                  <span style="color:#ddd;">★</span>
+                {% endif %}
+              {% endfor %}
+            </div>
+
+            <p class="mb-4">
+              "{{ testimonial.message|truncatewords:25 }}"
+            </p>
+
+            <p class="has-text-weight-semibold">
+              {{ testimonial.name }}
+            </p>
+
+            {% if testimonial.role %}
+            <p class="is-size-7 has-text-grey">
+              {{ testimonial.role }}
+            </p>
+            {% endif %}
+
+          </div>
+        </div>
+
+        {% endfor %}
+
+      {% else %}
+
+      <div class="column">
+        <div class="notification is-light has-text-centered">
+          ⭐ Student testimonials will appear here once available.
+        </div>
+      </div>
+
+      {% endif %}
+
+    </div>
+
+  </div>
+</section>
+
+
 <!-- ================= CTA ================= -->
 <section class="section">
   <div class="container has-text-centered">
+
     <h2 class="title is-4">
-      Start your preparation today
+      Start Practicing Today — It's Free
     </h2>
 
     <div class="buttons is-centered mt-4">
-      <a href="{% url 'quiz:practice' %}" class="button is-primary">
+      <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">
         Practice Now
       </a>
     </div>
+
   </div>
 </section>
 

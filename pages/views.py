@@ -1,14 +1,92 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
+from django.shortcuts import render, redirect
+from pages.models import Testimonial
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+
+from quiz.models import Question, Exam, ExamTrack, StudyPlan
+from pages.models import Testimonial
+
+User = get_user_model()
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+
+from quiz.models import Question, Exam, ExamTrack, StudyPlan
+from pages.models import Testimonial
+
+User = get_user_model()
+
+
 def home(request):
+
     if request.user.is_authenticated:
         return redirect("quiz:dashboard")
 
-    return render(request, "pages/home.html")
+    # ================= PLATFORM STATS =================
+
+    total_questions = Question.objects.active().count()
+
+    total_exams = Exam.objects.filter(
+        is_published=True
+    ).count()
+
+    total_tracks = ExamTrack.objects.filter(
+        is_active=True
+    ).count()
+
+    total_students = User.objects.count()
+
+    total_study_plans = StudyPlan.objects.count()
+
+    # ================= TESTIMONIALS =================
+
+    testimonials = Testimonial.objects.filter(
+        is_approved=True,
+        is_featured=True
+    ).order_by("-created_at")[:6]
+
+    # ================= POPULAR EXAM TRACKS =================
+
+    exam_tracks = ExamTrack.objects.filter(
+        is_active=True
+    ).order_by("-created_at")[:6]
+
+    # ================= LATEST MOCK EXAMS =================
+
+    latest_exams = Exam.objects.filter(
+        is_published=True
+    ).select_related("track").order_by("-created_at")[:6]
+
+    # ================= CONTEXT =================
+
+    context = {
+        "testimonials": testimonials,
+
+        # Stats
+        "total_questions": total_questions,
+        "total_exams": total_exams,
+        "total_tracks": total_tracks,
+        "total_students": total_students,
+        "total_study_plans": total_study_plans,
+
+        # Dynamic sections
+        "exam_tracks": exam_tracks,
+        "latest_exams": latest_exams,
+    }
+
+    return render(request, "pages/home.html", context)
+
+   
 
 
-    return render(request, "pages/home.html")
+
+
 
 def about(request):
     return render(request, "pages/about.html")
