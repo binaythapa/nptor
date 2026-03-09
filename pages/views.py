@@ -31,11 +31,8 @@ from courses.models import Course
 
 
 User = get_user_model()
-
-
 def home(request):
 
-    # Redirect logged-in users
     if request.user.is_authenticated:
         return redirect("quiz:dashboard")
 
@@ -55,6 +52,13 @@ def home(request):
 
     total_study_plans = StudyPlan.objects.count()
 
+    # ================= COURSES =================
+
+    courses = Course.objects.filter(
+        is_published=True,
+        is_public=True
+    ).order_by("-created_at")
+
     # ================= TESTIMONIALS =================
 
     testimonials = Testimonial.objects.filter(
@@ -62,49 +66,37 @@ def home(request):
         is_featured=True
     ).order_by("-created_at")[:6]
 
-    # ================= COURSES =================
-
-    courses = Course.objects.filter(
-        is_published=True,
-        is_public=True
-    ).select_related("category").order_by("-created_at")[:6]
-
     # ================= POPULAR EXAM TRACKS =================
 
     exam_tracks = ExamTrack.objects.filter(
         is_active=True
-    ).order_by("-created_at")[:6]
+    ).order_by("-created_at")
 
     # ================= LATEST MOCK EXAMS =================
 
     latest_exams = Exam.objects.filter(
         is_published=True
-    ).select_related("track").order_by("-created_at")[:6]
+    ).select_related("track").order_by("-created_at")
 
     # ================= CONTEXT =================
 
     context = {
-
-        # Testimonials
         "testimonials": testimonials,
 
-        # Platform stats
+        # Stats
         "total_questions": total_questions,
         "total_exams": total_exams,
         "total_tracks": total_tracks,
         "total_students": total_students,
         "total_study_plans": total_study_plans,
 
-        # Homepage dynamic sections
+        # Dynamic sections
         "courses": courses,
         "exam_tracks": exam_tracks,
         "latest_exams": latest_exams,
     }
 
     return render(request, "pages/home.html", context)
-
-   
-
 
 
 

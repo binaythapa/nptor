@@ -8,366 +8,388 @@
 
 <!-- ================= HERO ================= -->
 <section class="section">
-  <div class="container has-text-centered">
+<div class="container has-text-centered">
 
-    <h1 class="title is-2">
-      Prepare Smarter with {{ site_name }}
-    </h1>
+<h1 class="title is-2">
+Prepare Smarter with {{ site_name }}
+</h1>
 
-    <p class="subtitle is-5 mt-3">
-      Practice real exam questions, simulate mock exams, and track your progress.
-      {% if total_students %}
-        Join {{ total_students }}+ learners preparing smarter.
-      {% else %}
-        Start your journey and become one of our first learners.
-      {% endif %}
-    </p>
+<p class="subtitle is-5 mt-3">
+Practice real exam questions, simulate mock exams, and track your progress.
+{% if total_students %}
+Join {{ total_students }}+ learners preparing smarter.
+{% else %}
+Start your journey and become one of our first learners.
+{% endif %}
+</p>
 
-    <div class="buttons is-centered mt-5">
-      <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">
-        Start Practicing
-      </a>
+<div class="buttons is-centered mt-5">
+<a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">
+Start Practicing
+</a>
 
-      <a href="{% url 'accounts:request-login-otp' %}" class="button is-light is-medium">
-        Login / Sign up
-      </a>
-    </div>
+<a href="{% url 'accounts:request-login-otp' %}" class="button is-light is-medium">
+Login / Sign up
+</a>
+</div>
 
-  </div>
+</div>
 </section>
 
 
 <!-- ================= PLATFORM STATS ================= -->
 <section class="section has-background-light">
-  <div class="container">
-    <div class="columns has-text-centered">
+<div class="container">
+<div class="columns has-text-centered">
 
-      <div class="column">
-        <p class="title is-3">
-          {% if total_students %}{{ total_students }}+{% else %}0{% endif %}
-        </p>
-        <p class="is-size-6">Students</p>
-      </div>
+<div class="column">
+<p class="title is-3">{% if total_students %}{{ total_students }}+{% else %}0{% endif %}</p>
+<p class="is-size-6">Students</p>
+</div>
 
-      <div class="column">
-        <p class="title is-3">
-          {% if total_questions %}{{ total_questions }}+{% else %}0{% endif %}
-        </p>
-        <p class="is-size-6">Practice Questions</p>
-      </div>
+<div class="column">
+<p class="title is-3">{% if total_questions %}{{ total_questions }}+{% else %}0{% endif %}</p>
+<p class="is-size-6">Practice Questions</p>
+</div>
 
-      <div class="column">
-        <p class="title is-3">
-          {% if total_exams %}{{ total_exams }}+{% else %}0{% endif %}
-        </p>
-        <p class="is-size-6">Mock Exams</p>
-      </div>
+<div class="column">
+<p class="title is-3">{% if total_exams %}{{ total_exams }}+{% else %}0{% endif %}</p>
+<p class="is-size-6">Mock Exams</p>
+</div>
 
-      <div class="column">
-        <p class="title is-3">
-          {% if total_tracks %}{{ total_tracks }}+{% else %}0{% endif %}
-        </p>
-        <p class="is-size-6">Exam Tracks</p>
-      </div>
+<div class="column">
+<p class="title is-3">{% if total_tracks %}{{ total_tracks }}+{% else %}0{% endif %}</p>
+<p class="is-size-6">Exam Tracks</p>
+</div>
 
-    </div>
-  </div>
+</div>
+</div>
 </section>
 
 
 <!-- ================= FEATURES ================= -->
 <section class="section">
-  <div class="container">
+<div class="container">
 
-    <div class="columns">
+<div class="columns">
 
-      <div class="column">
-        <div class="box has-text-centered">
-          <i class="fa fa-pen fa-2x mb-3"></i>
-          <h3 class="title is-6">Practice Questions</h3>
-          <p class="is-size-7">
-            Access {{ total_questions|default:0 }}+ curated questions designed for real exams.
-          </p>
-        </div>
-      </div>
+<div class="column">
+<div class="box has-text-centered">
+<i class="fa fa-pen fa-2x mb-3"></i>
+<h3 class="title is-6">Practice Questions</h3>
+<p class="is-size-7">
+Access {{ total_questions|default:0 }}+ curated questions designed for real exams.
+</p>
+</div>
+</div>
 
-      <div class="column">
-        <div class="box has-text-centered">
-          <i class="fa fa-clock fa-2x mb-3"></i>
-          <h3 class="title is-6">Mock Exams</h3>
-          <p class="is-size-7">
-            Take {{ total_exams|default:0 }} realistic exams to test your readiness.
-          </p>
-        </div>
-      </div>
+<div class="column">
+<div class="box has-text-centered">
+<i class="fa fa-clock fa-2x mb-3"></i>
+<h3 class="title is-6">Mock Exams</h3>
+<p class="is-size-7">
+Take {{ total_exams|default:0 }} realistic exams to test your readiness.
+</p>
+</div>
+</div>
 
-      <div class="column">
-        <div class="box has-text-centered">
-          <i class="fa fa-chart-line fa-2x mb-3"></i>
-          <h3 class="title is-6">Track Progress</h3>
-          <p class="is-size-7">
-            Monitor performance and identify weak areas instantly.
-          </p>
-        </div>
-      </div>
+<div class="column">
+<div class="box has-text-centered">
+<i class="fa fa-chart-line fa-2x mb-3"></i>
+<h3 class="title is-6">Track Progress</h3>
+<p class="is-size-7">
+Monitor performance and identify weak areas instantly.
+</p>
+</div>
+</div>
 
-      <div class="column">
-        <div class="box has-text-centered">
-          <i class="fa fa-user-graduate fa-2x mb-3"></i>
-          <h3 class="title is-6">Structured Learning</h3>
-          <p class="is-size-7">
-            Follow guided study plans designed for certification success.
-          </p>
-        </div>
-      </div>
+<div class="column">
+<div class="box has-text-centered">
+<i class="fa fa-user-graduate fa-2x mb-3"></i>
+<h3 class="title is-6">Structured Learning</h3>
+<p class="is-size-7">
+Follow guided study plans designed for certification success.
+</p>
+</div>
+</div>
 
-    </div>
+</div>
 
-  </div>
+</div>
 </section>
 
 
 <!-- ================= COURSES ================= -->
 <section class="section has-background-light">
-  <div class="container">
+<div class="container">
 
-    <h2 class="title is-3 has-text-centered mb-6">
-      Featured Courses
-    </h2>
+<h2 class="title is-4 has-text-centered mb-5">
+Featured Courses
+</h2>
 
-    <div class="columns">
+<div class="columns is-multiline">
 
-      {% if courses %}
+{% if courses %}
 
-        {% for course in courses|slice:":3" %}
+{% for course in courses %}
 
-        <div class="column">
-          <div class="box">
+<div class="column is-4 course-item {% if forloop.counter > 3 %}is-hidden{% endif %}">
 
-            {% if course.thumbnail %}
-            <figure class="image mb-3">
-              <img src="{{ course.thumbnail.url }}">
-            </figure>
-            {% endif %}
+<div class="box p-4">
 
-            <h3 class="title is-5">
-              {{ course.title }}
-            </h3>
+<h3 class="title is-6">{{ course.title }}</h3>
 
-            <p class="is-size-7 mb-2">
-              Level: {{ course.level|title }}
-            </p>
+<p class="is-size-7 mb-2">
+Level: {{ course.level|title }}
+</p>
 
-            <p class="is-size-7 mb-3">
-              {{ course.description|truncatewords:20 }}
-            </p>
+<p class="is-size-7 mb-3">
+{{ course.description|truncatewords:12 }}
+</p>
 
-            <a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-primary">
-              Login to Start
-            </a>
+<a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-primary is-fullwidth">
+Login to Start
+</a>
 
-          </div>
-        </div>
+</div>
+</div>
 
-        {% endfor %}
+{% endfor %}
 
-      {% else %}
+{% else %}
 
-      <div class="column">
-        <div class="notification is-light has-text-centered">
-          📚 Courses will be available soon.
-        </div>
-      </div>
+<div class="column">
+<div class="notification is-light has-text-centered">
+📚 Courses will be available soon.
+</div>
+</div>
 
-      {% endif %}
+{% endif %}
 
-    </div>
+</div>
 
-  </div>
+{% if courses|length > 3 %}
+<div class="has-text-centered mt-4">
+<button class="button is-light" onclick="loadMore('course-item')">
+Show More Courses
+</button>
+</div>
+{% endif %}
+
+</div>
 </section>
 
 
-<!-- ================= EXAM TRACKS ================= -->
+<!-- ================= TRACKS ================= -->
 <section class="section">
-  <div class="container">
+<div class="container">
 
-    <h2 class="title is-3 has-text-centered mb-6">
-      Popular Certification Tracks
-    </h2>
+<h2 class="title is-4 has-text-centered mb-5">
+Certification Tracks
+</h2>
 
-    <div class="columns">
+<div class="columns is-multiline">
 
-      {% if exam_tracks %}
+{% if exam_tracks %}
 
-        {% for track in exam_tracks|slice:":3" %}
+{% for track in exam_tracks %}
 
-        <div class="column">
-          <div class="box">
+<div class="column is-4 track-item {% if forloop.counter > 3 %}is-hidden{% endif %}">
 
-            <h3 class="title is-5">
-              {{ track.title }}
-            </h3>
+<div class="box p-4">
 
-            <p class="is-size-7 mb-3">
-              {{ track.description|truncatewords:20 }}
-            </p>
+<h3 class="title is-6">{{ track.title }}</h3>
 
-            <a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-link">
-              Login to Explore
-            </a>
+<p class="is-size-7 mb-3">
+{{ track.description|truncatewords:12 }}
+</p>
 
-          </div>
-        </div>
+<a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-link is-fullwidth">
+Login to Explore
+</a>
 
-        {% endfor %}
+</div>
+</div>
 
-      {% else %}
+{% endfor %}
 
-      <div class="column">
-        <div class="notification is-light has-text-centered">
-          🚀 Certification tracks will appear here soon.
-        </div>
-      </div>
+{% else %}
 
-      {% endif %}
+<div class="column">
+<div class="notification is-light has-text-centered">
+🚀 Certification tracks will appear here soon.
+</div>
+</div>
 
-    </div>
+{% endif %}
 
-  </div>
+</div>
+
+{% if exam_tracks|length > 3 %}
+<div class="has-text-centered mt-4">
+<button class="button is-light" onclick="loadMore('track-item')">
+Show More Tracks
+</button>
+</div>
+{% endif %}
+
+</div>
 </section>
 
 
-<!-- ================= LATEST EXAMS ================= -->
+<!-- ================= MOCK EXAMS ================= -->
 <section class="section has-background-light">
-  <div class="container">
+<div class="container">
 
-    <h2 class="title is-3 has-text-centered mb-6">
-      Latest Mock Exams
-    </h2>
+<h2 class="title is-4 has-text-centered mb-5">
+Latest Mock Exams
+</h2>
 
-    <div class="columns">
+<div class="columns is-multiline">
 
-      {% if latest_exams %}
+{% if latest_exams %}
 
-        {% for exam in latest_exams|slice:":3" %}
+{% for exam in latest_exams %}
 
-        <div class="column">
-          <div class="box">
+<div class="column is-4 exam-item {% if forloop.counter > 3 %}is-hidden{% endif %}">
 
-            <h3 class="title is-6">
-              {{ exam.title }}
-            </h3>
+<div class="box p-4">
 
-            <p class="is-size-7 mb-2">
-              {{ exam.question_count }} Questions
-            </p>
+<h3 class="title is-6">{{ exam.title }}</h3>
 
-            <p class="is-size-7 mb-3">
-              {{ exam.duration_seconds }} Seconds
-            </p>
+<p class="is-size-7 mb-2">
+{{ exam.question_count }} Questions
+</p>
 
-            <a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-primary">
-              Login to Attempt
-            </a>
+<p class="is-size-7 mb-3">
+{{ exam.duration_seconds }} Seconds
+</p>
 
-          </div>
-        </div>
+<a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-primary is-fullwidth">
+Login to Attempt
+</a>
 
-        {% endfor %}
+</div>
+</div>
 
-      {% else %}
+{% endfor %}
 
-      <div class="column">
-        <div class="notification is-light has-text-centered">
-          📝 Mock exams will be available soon.
-        </div>
-      </div>
+{% else %}
 
-      {% endif %}
+<div class="column">
+<div class="notification is-light has-text-centered">
+📝 Mock exams will be available soon.
+</div>
+</div>
 
-    </div>
+{% endif %}
 
-  </div>
+</div>
+
+{% if latest_exams|length > 3 %}
+<div class="has-text-centered mt-4">
+<button class="button is-light" onclick="loadMore('exam-item')">
+Show More Exams
+</button>
+</div>
+{% endif %}
+
+</div>
 </section>
 
 
 <!-- ================= TESTIMONIALS ================= -->
 <section class="section">
-  <div class="container">
+<div class="container">
 
-    <h2 class="title is-3 has-text-centered mb-6">
-      What Our Students Say
-    </h2>
+<h2 class="title is-4 has-text-centered mb-5">
+What Our Students Say
+</h2>
 
-    <div class="columns">
+<div class="columns is-multiline">
 
-      {% if testimonials %}
+{% if testimonials %}
 
-        {% for testimonial in testimonials|slice:":3" %}
+{% for testimonial in testimonials|slice:":6" %}
 
-        <div class="column">
-          <div class="box">
+<div class="column is-4">
 
-            <div class="mb-2">
-              {% for i in "12345" %}
-                {% if forloop.counter <= testimonial.rating %}
-                  <span style="color:#f5b50a;">★</span>
-                {% else %}
-                  <span style="color:#ddd;">★</span>
-                {% endif %}
-              {% endfor %}
-            </div>
+<div class="box">
 
-            <p class="mb-4">
-              "{{ testimonial.message|truncatewords:25 }}"
-            </p>
+<div class="mb-2">
+{% for i in "12345" %}
+{% if forloop.counter <= testimonial.rating %}
+<span style="color:#f5b50a;">★</span>
+{% else %}
+<span style="color:#ddd;">★</span>
+{% endif %}
+{% endfor %}
+</div>
 
-            <p class="has-text-weight-semibold">
-              {{ testimonial.name }}
-            </p>
+<p class="mb-4">
+"{{ testimonial.message|truncatewords:20 }}"
+</p>
 
-            {% if testimonial.role %}
-            <p class="is-size-7 has-text-grey">
-              {{ testimonial.role }}
-            </p>
-            {% endif %}
+<p class="has-text-weight-semibold">
+{{ testimonial.name }}
+</p>
 
-          </div>
-        </div>
+{% if testimonial.role %}
+<p class="is-size-7 has-text-grey">
+{{ testimonial.role }}
+</p>
+{% endif %}
 
-        {% endfor %}
+</div>
 
-      {% else %}
+</div>
 
-      <div class="column">
-        <div class="notification is-light has-text-centered">
-          ⭐ Student testimonials will appear here once available.
-        </div>
-      </div>
+{% endfor %}
 
-      {% endif %}
+{% else %}
 
-    </div>
+<div class="column">
+<div class="notification is-light has-text-centered">
+⭐ Student testimonials will appear here once available.
+</div>
+</div>
 
-  </div>
+{% endif %}
+
+</div>
+
+</div>
 </section>
 
 
 <!-- ================= CTA ================= -->
 <section class="section has-background-light">
-  <div class="container has-text-centered">
+<div class="container has-text-centered">
 
-    <h2 class="title is-4">
-      Start Practicing Today — It's Free
-    </h2>
+<h2 class="title is-4">
+Start Practicing Today — It's Free
+</h2>
 
-    <div class="buttons is-centered mt-4">
-      <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">
-        Practice Now
-      </a>
-    </div>
+<div class="buttons is-centered mt-4">
+<a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">
+Practice Now
+</a>
+</div>
 
-  </div>
+</div>
 </section>
+
+
+<script>
+function loadMore(className) {
+
+let hiddenItems = document.querySelectorAll("." + className + ".is-hidden");
+
+for (let i = 0; i < 3 && i < hiddenItems.length; i++) {
+hiddenItems[i].classList.remove("is-hidden");
+}
+
+}
+</script>
 
 {% endblock %}
