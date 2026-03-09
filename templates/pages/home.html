@@ -236,7 +236,6 @@ Show More Tracks
 </div>
 </section>
 
-
 <!-- ================= MOCK EXAMS ================= -->
 <section class="section has-background-light">
 <div class="container">
@@ -253,9 +252,13 @@ Latest Mock Exams
 
 <div class="column is-4 exam-item {% if forloop.counter > 3 %}is-hidden{% endif %}">
 
-<div class="box p-4">
+<div class="box exam-card">
 
-<h3 class="title is-6">{{ exam.title }}</h3>
+<div class="exam-content">
+
+<h3 class="title is-6 exam-title">
+{{ exam.title }}
+</h3>
 
 <p class="is-size-7 mb-2">
 {{ exam.question_count }} Questions
@@ -265,11 +268,15 @@ Latest Mock Exams
 {{ exam.duration_seconds }} Seconds
 </p>
 
-<a href="{% url 'accounts:request-login-otp' %}" class="button is-small is-primary is-fullwidth">
+</div>
+
+<a href="{% url 'accounts:request-login-otp' %}"
+   class="button is-small is-primary is-fullwidth">
 Login to Attempt
 </a>
 
 </div>
+
 </div>
 
 {% endfor %}
@@ -296,7 +303,6 @@ Show More Exams
 
 </div>
 </section>
-
 
 <!-- ================= TESTIMONIALS ================= -->
 <section class="section">
@@ -391,5 +397,28 @@ hiddenItems[i].classList.remove("is-hidden");
 
 }
 </script>
+
+<style>
+
+.exam-card {
+height: 200px;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+}
+
+.exam-title {
+min-height: 48px;
+display: -webkit-box;
+-webkit-line-clamp: 2;
+-webkit-box-orient: vertical;
+overflow: hidden;
+}
+
+.exam-content {
+flex-grow: 1;
+}
+
+</style>
 
 {% endblock %}
