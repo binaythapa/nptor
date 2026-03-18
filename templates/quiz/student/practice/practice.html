@@ -598,8 +598,6 @@
     {% endfor %}
   </ul>
 </div>
-{% endif %}
-
 {% if explanation %}
 <button type="button" class="button is-small is-info mt-2"
         onclick="toggleExplanation()" id="explanationToggleBtn">
@@ -614,7 +612,7 @@
 
 
 
-
+{% endif %}
 <!-- ================= FEEDBACK ================= -->
 {% if user.is_authenticated %}
 <hr class="my-4">
