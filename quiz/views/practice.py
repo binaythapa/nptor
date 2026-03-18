@@ -241,7 +241,15 @@ def practice(request):
         question = remaining.order_by("?").first()
         request.session["p_qid"] = question.id
 
-    choices = question.choices.order_by("order", "id")
+    #choices = question.choices.order_by("order", "id")
+
+
+
+    choices = list(question.choices.all())
+
+    # 🔥 Stable shuffle per question (important)
+    random.seed(question.id)
+    random.shuffle(choices)
 
     # ================= SKIP =================
     if request.method == "POST" and request.POST.get("skip") == "1":
