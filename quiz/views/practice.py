@@ -212,7 +212,7 @@ def practice(request):
     # ================= ANONYMOUS LIMIT =================
     if not request.user.is_authenticated:
         if anon_count >= settings.BASICS_ANON_LIMIT:
-            return render(request, "quiz/practice/practice.html", {
+            return render(request, "quiz/student/practice/practice.html", {
                 "anon_limit_reached": True,
                 "anon_limit": settings.BASICS_ANON_LIMIT,
                 "domains": Domain.objects.filter(is_active=True),
