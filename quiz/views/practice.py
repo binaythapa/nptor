@@ -266,16 +266,18 @@ def practice(request):
 
     if request.method == "POST" and request.POST.get("next") != "1":
 
-        correct_choices = choices.filter(is_correct=True)
+        correct_choices = [c for c in choices if c.is_correct]
 
         if question.question_type == Question.MULTI:
             selected_multi_ids = list(map(int, request.POST.getlist("choice_multi")))
-            correct_ids = list(correct_choices.values_list("id", flat=True))
+           
+            correct_ids = [c.id for c in correct_choices]
             result = "correct" if set(selected_multi_ids) == set(correct_ids) else "wrong"
             show_next = result == "correct"
         else:
             selected_choice_id = request.POST.get("choice")
-            selected = choices.filter(id=selected_choice_id).first()
+            
+            selected = next((c for c in choices if str(c.id) == str(selected_choice_id)), None)
             result = "correct" if selected and selected.is_correct else "wrong"
             show_next = result == "correct"
 
