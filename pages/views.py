@@ -31,6 +31,15 @@ from courses.models import Course
 
 
 User = get_user_model()
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
+
+from quiz.models import Question, Exam, ExamTrack
+from courses.models import Course
+from pages.models import Testimonial
+
+
+
 def home(request):
 
     if request.user.is_authenticated:
@@ -38,14 +47,18 @@ def home(request):
 
     # ================= PLATFORM STATS =================
 
-    total_questions = Question.objects.active().count()
+    total_questions = Question.objects.active().filter(
+        organization__isnull=True   # 🔥 only public
+    ).count()
 
     total_exams = Exam.objects.filter(
-        is_published=True
+        is_published=True,
+        organization__isnull=True   # 🔥 only public
     ).count()
 
     total_tracks = ExamTrack.objects.filter(
-        is_active=True
+        is_active=True,
+        organization__isnull=True   # 🔥 only public
     ).count()
 
     total_students = User.objects.count()
@@ -56,7 +69,8 @@ def home(request):
 
     courses = Course.objects.filter(
         is_published=True,
-        is_public=True
+        is_public=True,
+        organization__isnull=True   # 🔥 only public
     ).order_by("-created_at")
 
     # ================= TESTIMONIALS =================
@@ -69,13 +83,15 @@ def home(request):
     # ================= POPULAR EXAM TRACKS =================
 
     exam_tracks = ExamTrack.objects.filter(
-        is_active=True
+        is_active=True,
+        organization__isnull=True   # 🔥 only public
     ).order_by("-created_at")
 
     # ================= LATEST MOCK EXAMS =================
 
     latest_exams = Exam.objects.filter(
-        is_published=True
+        is_published=True,
+        organization__isnull=True   # 🔥 only public
     ).select_related("track").order_by("-created_at")
 
     # ================= CONTEXT =================
