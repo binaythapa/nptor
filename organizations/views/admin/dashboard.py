@@ -25,6 +25,20 @@ from core.utils.memory import get_memory_usage_mb
 logger = logging.getLogger("django")
 
 
+from django.shortcuts import render
+from organizations.permissions import org_admin_required
+from organizations.models.membership import OrganizationMember
+from organizations.models.assignment import ResourceAssignment
+
+from courses.models import Course
+from courses.models.progress import LessonProgress
+
+import logging
+from core.utils.memory import get_memory_usage_mb
+
+logger = logging.getLogger("django")
+
+
 @org_admin_required
 def org_dashboard(request, slug):
 
@@ -51,7 +65,8 @@ def org_dashboard(request, slug):
 
         "assignments": ResourceAssignment.objects.filter(
             organization=org,
-            resource_type="course"
+            resource_type="course",
+            course__organization=org   # 🔥 SAFETY
         ).count(),
     }
 
@@ -63,7 +78,8 @@ def org_dashboard(request, slug):
         ResourceAssignment.objects
         .filter(
             organization=org,
-            resource_type="course"
+            resource_type="course",
+            course__organization=org   # 🔥 IMPORTANT
         )
         .select_related("course", "student")
     )
@@ -78,13 +94,19 @@ def org_dashboard(request, slug):
         if not course:
             continue
 
+        # 🔥 Ensure course belongs to org
+        if course.organization != org:
+            continue
+
         total_lessons = LessonProgress.objects.filter(
-            lesson__section__course=course
+            lesson__section__course=course,
+            lesson__section__course__organization=org   # 🔥 FIX
         ).values("lesson_id").distinct().count()
 
         completed_lessons = LessonProgress.objects.filter(
             user=student,
             lesson__section__course=course,
+            lesson__section__course__organization=org,   # 🔥 FIX
             completed=True
         ).count()
 
