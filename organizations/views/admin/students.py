@@ -17,8 +17,14 @@ def org_students(request, slug):
     members = (
         OrganizationMember.objects
         .filter(organization=org)
-        .select_related("user", "group")   # 🔥 include group
+        .select_related("user", "group")
         .order_by("role", "user__username")
+    )
+
+    # ✅ ALL groups (no group_type)
+    groups = OrganizationGroup.objects.filter(
+        organization=org,
+        is_active=True
     )
 
     return render(
@@ -27,6 +33,7 @@ def org_students(request, slug):
         {
             "members": members,
             "org": org,
+            "groups": groups,
         }
     )
 
@@ -39,7 +46,7 @@ def org_student_add(request, slug):
 
     org = request.organization
 
-    # 🔥 load groups for dropdown
+    # ✅ FIXED: removed group_type
     groups = OrganizationGroup.objects.filter(
         organization=org,
         is_active=True
@@ -61,7 +68,7 @@ def org_student_add(request, slug):
         if group_id and group_id.isdigit():
             group = OrganizationGroup.objects.filter(
                 id=group_id,
-                organization=org   # 🔒 safety
+                organization=org
             ).first()
 
         OrganizationMember.objects.get_or_create(
@@ -69,7 +76,7 @@ def org_student_add(request, slug):
             organization=org,
             defaults={
                 "role": role,
-                "group": group,   # 🔥 assign group
+                "group": group,
                 "is_active": True,
             }
         )
@@ -86,7 +93,7 @@ def org_student_add(request, slug):
         "organizations/admin/students/add.html",
         {
             "org": org,
-            "groups": groups,   # 🔥 send to template
+            "groups": groups,
         }
     )
 
@@ -110,11 +117,11 @@ def org_student_update_role(request, slug, member_id):
         new_role = request.POST.get("role")
         group_id = request.POST.get("group")
 
-        # 🔥 update role
+        # ✅ UPDATE ROLE
         if new_role in ["student", "staff"]:
             member.role = new_role
 
-        # 🔥 update group safely
+        # ✅ UPDATE GROUP (no group_type)
         if group_id and group_id.isdigit():
             group = OrganizationGroup.objects.filter(
                 id=group_id,
@@ -153,7 +160,7 @@ def org_student_remove(request, slug, member_id):
 
     messages.success(
         request,
-        "Student removed from organization."
+        "Member removed from organization."
     )
 
     return redirect("organizations_admin:students", slug=slug)

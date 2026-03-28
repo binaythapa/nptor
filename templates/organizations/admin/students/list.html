@@ -12,7 +12,7 @@
 </a>
 
 <!-- ===================================================== -->
-<!-- 🎓 STUDENTS (GROUPED BY CLASS) -->
+<!-- 🎓 STUDENTS -->
 <!-- ===================================================== -->
 
 <h3 class="title is-5">🎓 Students</h3>
@@ -22,12 +22,10 @@
 {% for group in grouped_students %}
 
   {% if group.grouper %}
-    <!-- ================= GROUP ================= -->
     <h4 class="title is-6 mt-4">
       📘 {{ group.grouper.name }}
     </h4>
   {% else %}
-    <!-- ================= UNGROUPED ================= -->
     <h4 class="title is-6 mt-4">
       📂 Ungrouped Students
     </h4>
@@ -69,13 +67,11 @@
               <div class="select is-small">
                 <select name="group" onchange="this.form.submit()">
                   <option value="">-- No Group --</option>
-                  {% for g in request.organization.groups.all %}
-                    {% if g.group_type == "student" %}
-                      <option value="{{ g.id }}"
-                        {% if m.group and m.group.id == g.id %}selected{% endif %}>
-                        {{ g.name }}
-                      </option>
-                    {% endif %}
+                  {% for g in groups %}
+                    <option value="{{ g.id }}"
+                      {% if m.group and m.group.id == g.id %}selected{% endif %}>
+                      {{ g.name }}
+                    </option>
                   {% endfor %}
                 </select>
               </div>
@@ -143,13 +139,11 @@
             <div class="select is-small">
               <select name="group" onchange="this.form.submit()">
                 <option value="">-- No Group --</option>
-                {% for g in request.organization.groups.all %}
-                  {% if g.group_type == "staff" %}
-                    <option value="{{ g.id }}"
-                      {% if m.group and m.group.id == g.id %}selected{% endif %}>
-                      {{ g.name }}
-                    </option>
-                  {% endif %}
+                {% for g in groups %}
+                  <option value="{{ g.id }}"
+                    {% if m.group and m.group.id == g.id %}selected{% endif %}>
+                    {{ g.name }}
+                  </option>
                 {% endfor %}
               </select>
             </div>
