@@ -456,6 +456,9 @@ def study_plan_practice(request):
         }
     )
 
+
+
+
 @login_required
 def create_study_plan(request):
 
@@ -465,7 +468,11 @@ def create_study_plan(request):
 
         domain = None
         if domain_id:
-            domain = Domain.objects.filter(id=domain_id, is_active=True).first()
+            domain = Domain.objects.filter(
+                id=domain_id,
+                is_active=True,
+                organization__isnull=True   # 🔥 FIX
+            ).first()
 
         try:
             generate_study_plan(
@@ -479,22 +486,20 @@ def create_study_plan(request):
         except Exception as e:
             messages.error(request, str(e))
 
-    domains = Domain.objects.filter(is_active=True)
+    # 🔥 ONLY PUBLIC DOMAINS
+    domains = Domain.objects.filter(
+        is_active=True,
+        organization__isnull=True
+    )
 
     return render(request, "quiz/study_plan/create_plan.html", {
         "domains": domains
     })
 
 
-
-
 @login_required
 def create_adaptive_plan(request):
-    """
-    Auto-generate next plan based on user's readiness score
-    """
 
-    # Get latest completed plan
     last_plan = request.user.study_plans.filter(
         is_completed=True
     ).order_by("-created_at").first()
@@ -505,7 +510,6 @@ def create_adaptive_plan(request):
 
     readiness = last_plan.certification_readiness()
 
-    # Decide plan type
     if readiness >= 85:
         plan_type = StudyPlan.PLAN_30
         days = 30
@@ -519,15 +523,15 @@ def create_adaptive_plan(request):
         days = 7
         per_day = 60
 
-    # Select questions
     total_needed = days * per_day
 
+    # 🔥 ONLY PUBLIC QUESTIONS
     questions = Question.objects.filter(
         is_active=True,
-        is_deleted=False
+        is_deleted=False,
+        category__domain__organization__isnull=True   # 🔥 FIX
     ).values_list("id", flat=True)[:total_needed]
 
-    # Deactivate current active plans
     request.user.study_plans.filter(
         is_active=True
     ).update(is_active=False)
@@ -545,11 +549,14 @@ def create_adaptive_plan(request):
 
     return redirect("quiz:study_plan_dashboard")
 
+
+
+
+
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from collections import defaultdict
-
 @login_required
 def study_plan_leaderboard(request):
 
@@ -558,11 +565,9 @@ def study_plan_leaderboard(request):
 
     plans = StudyPlan.objects.select_related("user")
 
-    # ================= DOMAIN FILTER =================
     if domain_id:
         plans = plans.filter(domain_id=domain_id)
 
-    # ================= MONTHLY SEASON =================
     if month_filter == "1":
         now = timezone.now()
         plans = plans.filter(
@@ -570,15 +575,11 @@ def study_plan_leaderboard(request):
             created_at__month=now.month
         )
 
-    # ================= ACTIVE + COMPLETED ONLY =================
     plans = plans.filter(is_active=True)
 
-    # ================= BEST PLAN PER USER =================
     best_plans = {}
 
     for plan in plans:
-
-        # 🔥 NEW: Use Competitive Score instead of readiness only
         score = plan.global_competitive_score()
 
         if (
@@ -625,12 +626,17 @@ def study_plan_leaderboard(request):
         "quiz/study_plan/leaderboard.html",
         {
             "leaderboard": leaderboard,
-            "domains": Domain.objects.filter(is_active=True),
+
+            # 🔥 ONLY PUBLIC DOMAINS
+            "domains": Domain.objects.filter(
+                is_active=True,
+                organization__isnull=True
+            ),
+
             "selected_domain": domain_id,
             "monthly_mode": month_filter,
         }
     )
-
 
 
 from django.shortcuts import get_object_or_404, render
