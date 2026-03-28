@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 
 from organizations.permissions import org_admin_required
-from organizations.models.membership import OrganizationMember
+from organizations.models.membership import OrganizationMember, OrganizationGroup
 
 
 # ===============================
@@ -17,7 +17,7 @@ def org_students(request, slug):
     members = (
         OrganizationMember.objects
         .filter(organization=org)
-        .select_related("user")
+        .select_related("user", "group")   # 🔥 include group
         .order_by("role", "user__username")
     )
 
@@ -39,25 +39,37 @@ def org_student_add(request, slug):
 
     org = request.organization
 
+    # 🔥 load groups for dropdown
+    groups = OrganizationGroup.objects.filter(
+        organization=org,
+        is_active=True
+    )
+
     if request.method == "POST":
 
         email = request.POST.get("email")
         role = request.POST.get("role", "student")
+        group_id = request.POST.get("group")
 
         user = User.objects.filter(email=email).first()
 
         if not user:
             messages.error(request, "User with this email does not exist.")
-            return redirect(
-                "organizations_admin:students",
-                slug=slug
-            )
+            return redirect("organizations_admin:students", slug=slug)
+
+        group = None
+        if group_id and group_id.isdigit():
+            group = OrganizationGroup.objects.filter(
+                id=group_id,
+                organization=org   # 🔒 safety
+            ).first()
 
         OrganizationMember.objects.get_or_create(
             user=user,
             organization=org,
             defaults={
                 "role": role,
+                "group": group,   # 🔥 assign group
                 "is_active": True,
             }
         )
@@ -67,22 +79,20 @@ def org_student_add(request, slug):
             f"{user.email} added to organization."
         )
 
-        return redirect(
-            "organizations_admin:students",
-            slug=slug
-        )
+        return redirect("organizations_admin:students", slug=slug)
 
     return render(
         request,
         "organizations/admin/students/add.html",
         {
-            "org": org
+            "org": org,
+            "groups": groups,   # 🔥 send to template
         }
     )
 
 
 # ===============================
-# UPDATE ROLE
+# UPDATE ROLE + GROUP
 # ===============================
 @org_admin_required
 def org_student_update_role(request, slug, member_id):
@@ -98,20 +108,27 @@ def org_student_update_role(request, slug, member_id):
     if request.method == "POST":
 
         new_role = request.POST.get("role")
+        group_id = request.POST.get("group")
 
+        # 🔥 update role
         if new_role in ["student", "staff"]:
             member.role = new_role
-            member.save()
 
-            messages.success(
-                request,
-                "Role updated successfully."
-            )
+        # 🔥 update group safely
+        if group_id and group_id.isdigit():
+            group = OrganizationGroup.objects.filter(
+                id=group_id,
+                organization=org
+            ).first()
+            member.group = group
+        else:
+            member.group = None
 
-    return redirect(
-        "organizations_admin:students",
-        slug=slug
-    )
+        member.save()
+
+        messages.success(request, "Updated successfully.")
+
+    return redirect("organizations_admin:students", slug=slug)
 
 
 # ===============================
@@ -129,15 +146,8 @@ def org_student_remove(request, slug, member_id):
     )
 
     if member.role == "org_admin":
-        messages.error(
-            request,
-            "Cannot remove organization admin."
-        )
-
-        return redirect(
-            "organizations_admin:students",
-            slug=slug
-        )
+        messages.error(request, "Cannot remove organization admin.")
+        return redirect("organizations_admin:students", slug=slug)
 
     member.delete()
 
@@ -146,7 +156,4 @@ def org_student_remove(request, slug, member_id):
         "Student removed from organization."
     )
 
-    return redirect(
-        "organizations_admin:students",
-        slug=slug
-    )
+    return redirect("organizations_admin:students", slug=slug)

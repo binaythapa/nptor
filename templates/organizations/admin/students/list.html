@@ -17,6 +17,7 @@
       <th>Name</th>
       <th>Email</th>
       <th>Role</th>
+      <th>Group</th> <!-- 🔥 NEW -->
       <th class="has-text-right">Actions</th>
     </tr>
   </thead>
@@ -26,6 +27,8 @@
     <tr>
       <td>{{ m.user.get_full_name|default:m.user.username }}</td>
       <td>{{ m.user.email }}</td>
+
+      <!-- ================= ROLE ================= -->
       <td>
         <form method="post"
               action="{% url 'organizations_admin:student_role' slug=org_slug member_id=m.id %}">
@@ -40,8 +43,25 @@
               </option>
             </select>
           </div>
+      </td>
+
+      <!-- ================= GROUP ================= -->
+      <td>
+          <div class="select is-small">
+            <select name="group" onchange="this.form.submit()">
+              <option value="">-- No Group --</option>
+              {% for g in request.organization.groups.all %}
+                <option value="{{ g.id }}"
+                  {% if m.group and m.group.id == g.id %}selected{% endif %}>
+                  {{ g.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         </form>
       </td>
+
+      <!-- ================= ACTION ================= -->
       <td class="has-text-right">
         <a href="{% url 'organizations_admin:student_remove' slug=org_slug member_id=m.id %}"
            class="button is-danger is-small"
@@ -50,9 +70,10 @@
         </a>
       </td>
     </tr>
+
     {% empty %}
     <tr>
-      <td colspan="4" class="has-text-centered has-text-grey">
+      <td colspan="5" class="has-text-centered has-text-grey">
         No students found.
       </td>
     </tr>

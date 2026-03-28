@@ -24,14 +24,7 @@ class OrganizationAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
 
 
-# =========================
-# ORGANIZATION MEMBERS
-# =========================
-@admin.register(OrganizationMember)
-class OrganizationMemberAdmin(admin.ModelAdmin):
-    list_display = ("user", "organization", "role", "is_active", "joined_at")
-    list_filter = ("organization", "role", "is_active")
-    search_fields = ("user__username", "organization__name")
+
 
 
 # =========================
@@ -101,3 +94,77 @@ def course_create(request):
         return redirect("organizations:courses")
 
     return render(request, "organizations/admin/course_form.html")
+
+
+
+from django.contrib import admin
+
+from .models.membership import OrganizationGroup, OrganizationMember
+
+
+# =====================================================
+# ORGANIZATION GROUP ADMIN
+# =====================================================
+
+@admin.register(OrganizationGroup)
+class OrganizationGroupAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "name",
+        "organization",
+        "is_active",
+        "created_at",
+    )
+
+    list_filter = (
+        "organization",
+        "is_active",
+    )
+
+    search_fields = (
+        "name",
+        "organization__name",
+    )
+
+    ordering = ("organization", "name")
+
+    list_per_page = 25
+
+
+# =====================================================
+# ORGANIZATION MEMBER ADMIN (OPTIONAL UPGRADE)
+# =====================================================
+
+@admin.register(OrganizationMember)
+class OrganizationMemberAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "user",
+        "organization",
+        "group",
+        "role",
+        "is_active",
+        "joined_at",
+    )
+
+    list_filter = (
+        "organization",
+        "role",
+        "group",
+        "is_active",
+    )
+
+    search_fields = (
+        "user__username",
+        "user__email",
+        "organization__name",
+        "group__name",
+    )
+
+    autocomplete_fields = ("user", "organization", "group")
+
+    ordering = ("-joined_at",)
+
+    list_per_page = 25
