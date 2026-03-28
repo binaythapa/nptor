@@ -76,7 +76,6 @@ logger = logging.getLogger("django")
 
 from django.template.loader import render_to_string
 
-
 def practice(request):
 
     """
@@ -101,8 +100,14 @@ def practice(request):
         from courses.models import Lesson
         lesson = Lesson.objects.select_related(
             "practice_domain",
-            "practice_category"
+            "practice_category",
+            "course"
         ).filter(id=lesson_id).first()
+
+    # ================= DETERMINE ORG CONTEXT =================
+    org = None
+    if is_from_course and lesson and lesson.course:
+        org = lesson.course.organization
 
     # ================= PER LESSON RESET =================
     if is_from_course and lesson:
@@ -171,17 +176,32 @@ def practice(request):
         .prefetch_related("choices")
     )
 
+    # ================= ORG / PUBLIC FILTER =================
+    if org:
+        qs = qs.filter(category__domain__organization=org)
+    else:
+        qs = qs.filter(category__domain__organization__isnull=True)
+
+    # ================= DOMAIN FILTER =================
     selected_domain = None
 
     if domain_id and str(domain_id).isdigit():
-        selected_domain = Domain.objects.filter(
-            id=domain_id,
-            is_active=True
-        ).first()
+        domain_filter = {
+            "id": domain_id,
+            "is_active": True
+        }
+
+        if org:
+            domain_filter["organization"] = org
+        else:
+            domain_filter["organization__isnull"] = True
+
+        selected_domain = Domain.objects.filter(**domain_filter).first()
 
         if selected_domain:
             qs = qs.filter(category__domain=selected_domain)
 
+    # ================= CATEGORY FILTER =================
     if category_id and str(category_id).isdigit() and selected_domain:
         cat = Category.objects.filter(
             id=category_id,
@@ -194,6 +214,7 @@ def practice(request):
                 category_id__in=cat.get_descendants_include_self()
             )
 
+    # ================= DIFFICULTY =================
     if difficulty:
         qs = qs.filter(difficulty=difficulty)
 
@@ -215,7 +236,10 @@ def practice(request):
             return render(request, "quiz/student/practice/practice.html", {
                 "anon_limit_reached": True,
                 "anon_limit": settings.BASICS_ANON_LIMIT,
-                "domains": Domain.objects.filter(is_active=True),
+                "domains": Domain.objects.filter(
+                    is_active=True,
+                    organization__isnull=True
+                ),
                 "categories": Category.objects.none(),
                 "difficulty_choices": Question.DIFFICULTY_CHOICES,
             })
@@ -228,7 +252,10 @@ def practice(request):
             "completed": True,
             "progress_done": total,
             "progress_total": total,
-            "domains": Domain.objects.filter(is_active=True),
+            "domains": Domain.objects.filter(
+                is_active=True,
+                organization__isnull=True
+            ),
             "categories": Category.objects.none(),
             "difficulty_choices": Question.DIFFICULTY_CHOICES,
         })
@@ -241,13 +268,7 @@ def practice(request):
         question = remaining.order_by("?").first()
         request.session["p_qid"] = question.id
 
-    #choices = question.choices.order_by("order", "id")
-
-
-
     choices = list(question.choices.all())
-
-    # 🔥 Stable shuffle per question (important)
     random.seed(question.id)
     random.shuffle(choices)
 
@@ -270,13 +291,11 @@ def practice(request):
 
         if question.question_type == Question.MULTI:
             selected_multi_ids = list(map(int, request.POST.getlist("choice_multi")))
-           
             correct_ids = [c.id for c in correct_choices]
             result = "correct" if set(selected_multi_ids) == set(correct_ids) else "wrong"
             show_next = result == "correct"
         else:
             selected_choice_id = request.POST.get("choice")
-            
             selected = next((c for c in choices if str(c.id) == str(selected_choice_id)), None)
             result = "correct" if selected and selected.is_correct else "wrong"
             show_next = result == "correct"
@@ -317,29 +336,6 @@ def practice(request):
         if selected_domain else Category.objects.none()
     )
 
-    locked_filters = {}
-    if is_from_course and lesson:
-        locked_filters = {
-            "domain": lesson.practice_domain_id,
-            "category": lesson.practice_category_id,
-            "difficulty": lesson.practice_difficulty,
-        }
-
-
-   
-
-    previous_feedbacks = QuestionFeedback.objects.filter(
-        question=question
-        ).select_related("user").order_by("-created_at")
-
-
-    feedback_submitted = False
-    if request.user.is_authenticated:
-        feedback_submitted = previous_feedbacks.filter(
-            user=request.user
-        ).exists()
-
-
     return render(request, "quiz/student/practice/practice.html", {
         "question": question,
         "choices": choices,
@@ -349,7 +345,10 @@ def practice(request):
         "show_next": show_next,
         "explanation": question.explanation,
         "discussions": discussions,
-        "domains": Domain.objects.filter(is_active=True),
+        "domains": Domain.objects.filter(
+            is_active=True,
+            organization__isnull=True
+        ),
         "categories": categories,
         "domain_id": domain_id,
         "category_id": category_id,
@@ -357,13 +356,8 @@ def practice(request):
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
         "progress_done": len(seen),
         "progress_total": total,
-        "locked_filters": locked_filters,
         "is_from_course": is_from_course,
-
-        "previous_feedbacks": previous_feedbacks,
-       
     })
-
 
 @require_POST
 @login_required
