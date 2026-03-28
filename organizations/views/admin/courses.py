@@ -21,40 +21,14 @@ from quiz.models import Exam, ExamTrack
 def org_courses(request, slug):
 
     org = request.organization
-    now = timezone.now()
 
     # =====================================================
-    # COURSES
+    # COURSES (ONLY ORG)
     # =====================================================
 
-    organization_courses = Course.objects.filter(
-        organization=org
-    )
-
-    platform_courses = Course.objects.filter(
-        owner_type="platform",
-        is_published=True
-    )
-
-    org_admin_user_ids = OrganizationMember.objects.filter(
-        organization=org,
-        role=OrganizationRole.ORG_ADMIN,
-        is_active=True
-    ).values_list("user_id", flat=True)
-
-    subscribed_courses = Course.objects.filter(
-        subscriptions__user_id__in=org_admin_user_ids,
-        subscriptions__is_active=True
-    ).filter(
-        Q(subscriptions__expires_at__isnull=True) |
-        Q(subscriptions__expires_at__gt=now)
-    )
-
-    visible_courses = (
-        organization_courses |
-        platform_courses |
-        subscribed_courses
-    ).distinct().order_by("title")
+    visible_courses = Course.objects.filter(
+        organization=org   # 🔥 ONLY ORG
+    ).order_by("title")
 
     attached_course_ids = set(
         OrganizationCourseSubscription.objects.filter(
@@ -68,23 +42,18 @@ def org_courses(request, slug):
         {
             "course": c,
             "is_attached": c.id in attached_course_ids,
-            "can_edit": (
-                c.organization == org
-                or c.created_by == request.user
-            )
+            "can_edit": True   # always true (org owns it)
         }
         for c in visible_courses
     ]
 
     # =====================================================
-    # TRACKS
+    # TRACKS (ONLY ORG)
     # =====================================================
 
-    #visible_tracks = ExamTrack.objects.all().order_by("title")
-
     visible_tracks = ExamTrack.objects.filter(
-            Q(organization=org) | Q(organization__isnull=True)
-            ).order_by("title")
+        organization=org   # 🔥 ONLY ORG
+    ).order_by("title")
 
     attached_track_ids = set(
         OrganizationCourseSubscription.objects.filter(
@@ -103,13 +72,12 @@ def org_courses(request, slug):
     ]
 
     # =====================================================
-    # EXAMS
+    # EXAMS (ONLY ORG)
     # =====================================================
 
-    #visible_exams = Exam.objects.select_related("track").order_by("title")
     visible_exams = Exam.objects.select_related("track").filter(
-        Q(organization=org) | Q(organization__isnull=True)
-        ).order_by("title")
+        organization=org   # 🔥 ONLY ORG
+    ).order_by("title")
 
     attached_exam_ids = set(
         OrganizationCourseSubscription.objects.filter(
@@ -137,8 +105,6 @@ def org_courses(request, slug):
             "org": org
         }
     )
-
-
 # =====================================================
 # ATTACH COURSE
 # =====================================================
@@ -148,9 +114,11 @@ def org_course_attach(request, slug, course_id):
 
     org = request.organization
 
+    # 🔒 ONLY ORG COURSE
     course = get_object_or_404(
         Course,
         id=course_id,
+        organization=org,   # 🔥 STRICT
         is_published=True
     )
 
