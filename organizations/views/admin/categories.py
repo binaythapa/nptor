@@ -6,6 +6,11 @@ from organizations.permissions import org_admin_required
 from quiz.models import Category
 from quiz.forms import CategoryForm
 
+from django.shortcuts import render
+from organizations.permissions import org_admin_required
+
+from quiz.models import Category
+
 
 # =========================
 # LIST
@@ -18,9 +23,7 @@ def org_category_list(request, slug):
     categories = (
         Category.objects
         .select_related("domain", "parent")
-        .filter(
-            Q(domain__organization=org) | Q(domain__organization__isnull=True)
-        )
+        .filter(domain__organization=org)   # 🔥 FIXED
         .order_by("domain__name", "name")
     )
 
@@ -31,7 +34,6 @@ def org_category_list(request, slug):
             "categories": categories
         }
     )
-
 
 # =========================
 # CREATE
