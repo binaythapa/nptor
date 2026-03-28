@@ -17,80 +17,84 @@
 
 <h3 class="title is-5">🎓 Students</h3>
 
-{% regroup members|dictsort:"group.name" by group as grouped_students %}
+{% regroup members by group as grouped_students %}
 
 {% for group in grouped_students %}
-  
-  {% if group.grouper %}
 
+  {% if group.grouper %}
+    <!-- ================= GROUP ================= -->
     <h4 class="title is-6 mt-4">
       📘 {{ group.grouper.name }}
     </h4>
-
-    <table class="table is-fullwidth is-striped is-hoverable mb-5">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Group</th>
-          <th class="has-text-right">Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {% for m in group.list %}
-          {% if m.role == "student" %}
-          <tr>
-            <td>{{ m.user.get_full_name|default:m.user.username }}</td>
-            <td>{{ m.user.email }}</td>
-
-            <!-- ROLE -->
-            <td>
-              <form method="post"
-                    action="{% url 'organizations_admin:student_role' slug=org_slug member_id=m.id %}">
-                {% csrf_token %}
-                <div class="select is-small">
-                  <select name="role" onchange="this.form.submit()">
-                    <option value="student" selected>Student</option>
-                    <option value="staff">Staff</option>
-                  </select>
-                </div>
-            </td>
-
-            <!-- GROUP -->
-            <td>
-                <div class="select is-small">
-                  <select name="group" onchange="this.form.submit()">
-                    <option value="">-- No Group --</option>
-                    {% for g in request.organization.groups.all %}
-                      {% if g.group_type == "student" %}
-                        <option value="{{ g.id }}"
-                          {% if m.group and m.group.id == g.id %}selected{% endif %}>
-                          {{ g.name }}
-                        </option>
-                      {% endif %}
-                    {% endfor %}
-                  </select>
-                </div>
-              </form>
-            </td>
-
-            <!-- ACTION -->
-            <td class="has-text-right">
-              <a href="{% url 'organizations_admin:student_remove' slug=org_slug member_id=m.id %}"
-                 class="button is-danger is-small"
-                 onclick="return confirm('Remove this student?')">
-                Remove
-              </a>
-            </td>
-          </tr>
-          {% endif %}
-        {% endfor %}
-      </tbody>
-    </table>
-
+  {% else %}
+    <!-- ================= UNGROUPED ================= -->
+    <h4 class="title is-6 mt-4">
+      📂 Ungrouped Students
+    </h4>
   {% endif %}
+
+  <table class="table is-fullwidth is-striped is-hoverable mb-5">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Group</th>
+        <th class="has-text-right">Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for m in group.list %}
+        {% if m.role == "student" %}
+        <tr>
+          <td>{{ m.user.get_full_name|default:m.user.username }}</td>
+          <td>{{ m.user.email }}</td>
+
+          <!-- ROLE -->
+          <td>
+            <form method="post"
+                  action="{% url 'organizations_admin:student_role' slug=org_slug member_id=m.id %}">
+              {% csrf_token %}
+              <div class="select is-small">
+                <select name="role" onchange="this.form.submit()">
+                  <option value="student" {% if m.role == "student" %}selected{% endif %}>Student</option>
+                  <option value="staff">Staff</option>
+                </select>
+              </div>
+          </td>
+
+          <!-- GROUP -->
+          <td>
+              <div class="select is-small">
+                <select name="group" onchange="this.form.submit()">
+                  <option value="">-- No Group --</option>
+                  {% for g in request.organization.groups.all %}
+                    {% if g.group_type == "student" %}
+                      <option value="{{ g.id }}"
+                        {% if m.group and m.group.id == g.id %}selected{% endif %}>
+                        {{ g.name }}
+                      </option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+            </form>
+          </td>
+
+          <!-- ACTION -->
+          <td class="has-text-right">
+            <a href="{% url 'organizations_admin:student_remove' slug=org_slug member_id=m.id %}"
+               class="button is-danger is-small"
+               onclick="return confirm('Remove this student?')">
+              Remove
+            </a>
+          </td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
 
 {% empty %}
 <p class="has-text-grey">No students found.</p>
