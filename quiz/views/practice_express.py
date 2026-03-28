@@ -92,12 +92,13 @@ def ajax_categories_by_domain(request):
     if not domain_id or not domain_id.isdigit():
         return JsonResponse({"categories": []})
 
-   
     categories = Category.objects.filter(
-    domain_id=domain_id,
-    is_active=True,
-    domain__organization__isnull=True   # 🔥 FIX
-)
+        domain_id=domain_id,
+        is_active=True
+    ).values("id", "name", "parent_id")
+
+
+  
 
     return JsonResponse({
         "categories": list(categories)
