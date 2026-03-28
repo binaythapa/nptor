@@ -80,7 +80,11 @@ def org_courses(request, slug):
     # TRACKS
     # =====================================================
 
-    visible_tracks = ExamTrack.objects.all().order_by("title")
+    #visible_tracks = ExamTrack.objects.all().order_by("title")
+
+    visible_tracks = ExamTrack.objects.filter(
+            Q(organization=org) | Q(organization__isnull=True)
+            ).order_by("title")
 
     attached_track_ids = set(
         OrganizationCourseSubscription.objects.filter(
@@ -102,7 +106,10 @@ def org_courses(request, slug):
     # EXAMS
     # =====================================================
 
-    visible_exams = Exam.objects.select_related("track").order_by("title")
+    #visible_exams = Exam.objects.select_related("track").order_by("title")
+    visible_exams = Exam.objects.select_related("track").filter(
+        Q(organization=org) | Q(organization__isnull=True)
+        ).order_by("title")
 
     attached_exam_ids = set(
         OrganizationCourseSubscription.objects.filter(
@@ -248,14 +255,27 @@ def org_course_create(request, slug):
 # =====================================================
 # EDIT COURSE
 # =====================================================
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db.models import Q
+
+from organizations.permissions import org_admin_required
+from courses.models import Course
+from courses.forms import CourseForm
+
 
 @org_admin_required
 def org_course_edit(request, slug, pk):
 
     org = request.organization
 
-    course = get_object_or_404(Course, id=pk)
+    # 🔒 Restrict access at DB level
+    course = get_object_or_404(
+        Course,
+        Q(id=pk) & (Q(organization=org) | Q(created_by=request.user))
+    )
 
+    # 🔒 Extra safety check (defense layer)
     if course.organization != org and course.created_by != request.user:
         messages.error(request, "You cannot edit this course.")
         return redirect("organizations_admin:org_course_list", slug=slug)
@@ -265,7 +285,6 @@ def org_course_edit(request, slug, pk):
         form = CourseForm(request.POST, request.FILES, instance=course)
 
         if form.is_valid():
-
             form.save()
 
             messages.success(request, "Course updated successfully.")
@@ -284,6 +303,15 @@ def org_course_edit(request, slug, pk):
             "org": org
         }
     )
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.db.models import Q
+
+from organizations.permissions import org_admin_required
+from organizations.models.subscription import OrganizationCourseSubscription
+
+from courses.models import Course
+from quiz.models import Exam, ExamTrack
 
 
 # =====================================================
@@ -295,8 +323,13 @@ def org_course_delete(request, slug, pk):
 
     org = request.organization
 
-    course = get_object_or_404(Course, id=pk)
+    # 🔒 Secure fetch
+    course = get_object_or_404(
+        Course,
+        Q(id=pk) & (Q(organization=org) | Q(created_by=request.user))
+    )
 
+    # 🔒 Extra safety check
     if course.organization != org and course.created_by != request.user:
         messages.error(request, "You cannot delete this course.")
         return redirect("organizations_admin:org_course_list", slug=slug)
@@ -311,12 +344,17 @@ def org_course_delete(request, slug, pk):
 # =====================================================
 # TRACK ATTACH / DETACH
 # =====================================================
+
 @org_admin_required
 def org_track_attach(request, slug, pk):
 
     org = request.organization
 
-    track = get_object_or_404(ExamTrack, pk=pk)
+    # 🔒 Only allow org or global tracks
+    track = get_object_or_404(
+        ExamTrack,
+        Q(pk=pk) & (Q(organization=org) | Q(organization__isnull=True))
+    )
 
     OrganizationCourseSubscription.objects.update_or_create(
         organization=org,
@@ -327,7 +365,6 @@ def org_track_attach(request, slug, pk):
     messages.success(request, "Track attached successfully.")
 
     return redirect("organizations_admin:courses", slug=slug)
-
 
 
 @org_admin_required
@@ -348,16 +385,20 @@ def org_track_detach(request, slug, pk):
     return redirect("organizations_admin:courses", slug=slug)
 
 
-
 # =====================================================
 # EXAM ATTACH / DETACH
 # =====================================================
+
 @org_admin_required
 def org_exam_attach(request, slug, pk):
 
     org = request.organization
 
-    exam = get_object_or_404(Exam, pk=pk)
+    # 🔒 Only allow org or global exams
+    exam = get_object_or_404(
+        Exam,
+        Q(pk=pk) & (Q(organization=org) | Q(organization__isnull=True))
+    )
 
     OrganizationCourseSubscription.objects.update_or_create(
         organization=org,
@@ -368,7 +409,6 @@ def org_exam_attach(request, slug, pk):
     messages.success(request, "Exam attached successfully.")
 
     return redirect("organizations_admin:courses", slug=slug)
-
 
 
 @org_admin_required
