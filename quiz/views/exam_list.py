@@ -1,7 +1,6 @@
-
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+
 from quiz.models import (
     ExamTrack,
     ExamSubscription,
@@ -9,6 +8,8 @@ from quiz.models import (
     UserExam,
 )
 from courses.models import Course, CourseSubscription
+
+
 @login_required
 def exam_list(request):
     user = request.user
@@ -18,7 +19,7 @@ def exam_list(request):
     # ================================
     courses_qs = Course.objects.filter(
         is_published=True,
-        organization__isnull=True,   # ✅ THIS is the key filter
+        organization__isnull=True   # ✅ public only
     ).order_by("-created_at")
 
     subscribed_course_ids = set(
@@ -38,11 +39,14 @@ def exam_list(request):
     ]
 
     # ================================
-    # EXAM TRACKS
+    # EXAM TRACKS (PUBLIC ONLY)
     # ================================
     tracks = (
         ExamTrack.objects
-        .filter(is_active=True)
+        .filter(
+            is_active=True,
+            organization__isnull=True   # 🔥 FIX
+        )
         .prefetch_related(
             "exams",
             "exams__prerequisite_exams"
@@ -54,7 +58,8 @@ def exam_list(request):
         s.track_id: s
         for s in ExamTrackSubscription.objects.filter(
             user=user,
-            is_active=True
+            is_active=True,
+            track__organization__isnull=True   # 🔥 FIX
         )
     }
 
@@ -62,7 +67,8 @@ def exam_list(request):
         s.exam_id: s
         for s in ExamSubscription.objects.filter(
             user=user,
-            is_active=True
+            is_active=True,
+            exam__organization__isnull=True   # 🔥 FIX
         )
     }
 
@@ -76,9 +82,13 @@ def exam_list(request):
     track_map = {}
 
     for track in tracks:
+
         exams = (
             track.exams
-            .filter(is_published=True)
+            .filter(
+                is_published=True,
+                organization__isnull=True   # 🔥 FIX
+            )
             .order_by("level", "title")
         )
 
@@ -96,11 +106,15 @@ def exam_list(request):
         for exam in exams:
             locked_reason = None
 
-            prereqs = exam.prerequisite_exams.all()
+            prereqs = exam.prerequisite_exams.filter(
+                organization__isnull=True   # 🔥 FIX
+            )
+
             missing = [
                 p.title for p in prereqs
                 if p.id not in passed_exam_ids
             ]
+
             if missing:
                 locked_reason = "Pass prerequisite: " + ", ".join(missing)
 
@@ -137,6 +151,6 @@ def exam_list(request):
         track_map[track] = items
 
     return render(request, "quiz/student/exam/exam_list.html", {
-        "courses": courses,        # ✅ platform courses only
+        "courses": courses,
         "track_map": track_map,
     })
