@@ -24,7 +24,6 @@
   </div>
 </div>
 
-
 <!-- ================= FILTERS ================= -->
 
 <form method="get" class="box mb-4">
@@ -75,83 +74,97 @@
 
 </form>
 
-
-<!-- ================= BULK DELETE FORM ================= -->
+<!-- ================= GROUPED ASSIGNMENTS ================= -->
 
 <form method="post" action="{% url 'organizations_admin:assignment_bulk_delete' slug=org_slug %}">
 {% csrf_token %}
 
-<table class="table is-fullwidth is-striped is-hoverable">
-  <thead>
-    <tr>
-      <th><input type="checkbox" onclick="toggleAll(this)"></th>
-      <th>Assigned To</th>
-      <th>Type</th>
-      <th>Resource</th>
-      <th>Affected</th>
-      <th>Date</th>
-      <th></th>
-    </tr>
-  </thead>
+{% for key, group in grouped_assignments.items %}
 
-  <tbody>
-    {% for a in assignments %}
-    <tr>
+<div class="box mb-4">
 
-      <!-- CHECKBOX -->
-      <td>
-        <input type="checkbox" name="assignment_ids" value="{{ a.id }}">
-      </td>
-
-      <!-- TARGET -->
-      <td>
-        {% if a.student %}
-          👤 {{ a.student.email }}
-        {% elif a.group %}
-          👥 {{ a.group.name }}
-        {% endif %}
-      </td>
-
-      <!-- TYPE -->
-      <td>{{ a.resource_type|title }}</td>
-
-      <!-- RESOURCE -->
-      <td>
-        {% if a.course %}{{ a.course.title }}{% endif %}
-        {% if a.track %}{{ a.track.title }}{% endif %}
-        {% if a.exam %}{{ a.exam.title }}{% endif %}
-      </td>
-
-      <!-- AFFECTED USERS -->
-      <td>
-        {% if a.group %}
-          {{ a.group.members.count }} students
+  <!-- HEADER -->
+  <div class="level">
+    <div class="level-left">
+      <h4 class="title is-6">
+        {% if group.type == "group" %}
+          👥 {{ group.label }}
         {% else %}
-          1
+          👤 {{ group.label }}
         {% endif %}
-      </td>
+      </h4>
+    </div>
 
-      <!-- DATE -->
-      <td>{{ a.assigned_at|date:"d M Y" }}</td>
+    <div class="level-right">
+      <span class="tag is-info">
+        {{ group.items|length }} assignments
+      </span>
+    </div>
+  </div>
 
-      <!-- REMOVE -->
-      <td>
-        <a href="{% url 'organizations_admin:assignment_remove' slug=org_slug assignment_id=a.id %}"
-           class="button is-danger is-small">
-          Remove
-        </a>
-      </td>
+  <!-- TABLE -->
+  <table class="table is-fullwidth is-striped is-hoverable">
 
-    </tr>
-    {% empty %}
-    <tr>
-      <td colspan="7" class="has-text-centered has-text-grey">
-        No assignments found.
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <thead>
+      <tr>
+        <th>
+          <input type="checkbox" onclick="toggleGroup(this, '{{ key }}')">
+        </th>
+        <th>Type</th>
+        <th>Resource</th>
+        <th>Affected</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for a in group.items %}
+      <tr>
+
+        <td>
+          <input type="checkbox"
+                 name="assignment_ids"
+                 value="{{ a.id }}"
+                 class="checkbox-{{ key }}">
+        </td>
+
+        <td>{{ a.resource_type|title }}</td>
+
+        <td>
+          {% if a.course %}{{ a.course.title }}{% endif %}
+          {% if a.track %}{{ a.track.title }}{% endif %}
+          {% if a.exam %}{{ a.exam.title }}{% endif %}
+        </td>
+
+        <td>
+          {% if a.group %}
+            {{ a.group.members.count }} students
+          {% else %}
+            1
+          {% endif %}
+        </td>
+
+        <td>{{ a.assigned_at|date:"d M Y" }}</td>
+
+        <td>
+          <a href="{% url 'organizations_admin:assignment_remove' slug=org_slug assignment_id=a.id %}"
+             class="button is-danger is-small">
+            Remove
+          </a>
+        </td>
+
+      </tr>
+      {% endfor %}
+    </tbody>
+
+  </table>
+
+</div>
+
+{% empty %}
+<p class="has-text-grey has-text-centered">No assignments found.</p>
+{% endfor %}
 
 <button class="button is-danger mt-3"
         onclick="return confirm('Delete selected assignments?')">
@@ -160,12 +173,12 @@
 
 </form>
 
-
 <!-- ================= JS ================= -->
 
 <script>
-function toggleAll(source){
-  checkboxes = document.getElementsByName('assignment_ids');
+function toggleGroup(source, key){
+  let checkboxes = document.getElementsByClassName("checkbox-" + key);
+
   for(let i=0; i<checkboxes.length; i++){
     checkboxes[i].checked = source.checked;
   }

@@ -15,6 +15,18 @@ from quiz.models import Exam, ExamTrack
 # LIST ASSIGNMENTS
 # =====================================================
 
+from collections import defaultdict
+
+from collections import defaultdict
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db.models import Count
+
+from organizations.permissions import org_admin_required
+from organizations.models.assignment import ResourceAssignment
+from organizations.models.membership import OrganizationMember, OrganizationGroup
+
+
 @org_admin_required
 def org_assignments(request, slug):
 
@@ -52,6 +64,27 @@ def org_assignments(request, slug):
         .annotate(count=Count("id"))
     )
 
+    # ================= GROUPING LOGIC =================
+
+    grouped_assignments = defaultdict(lambda: {
+        "label": "",
+        "type": "",
+        "items": []
+    })
+
+    for a in assignments:
+
+        if a.group:
+            key = f"group_{a.group.id}"
+            grouped_assignments[key]["label"] = a.group.name
+            grouped_assignments[key]["type"] = "group"
+        else:
+            key = f"student_{a.student.id}"
+            grouped_assignments[key]["label"] = a.student.email
+            grouped_assignments[key]["type"] = "student"
+
+        grouped_assignments[key]["items"].append(a)
+
     # ================= FILTER DATA =================
 
     students = OrganizationMember.objects.filter(
@@ -69,7 +102,7 @@ def org_assignments(request, slug):
         request,
         "organizations/admin/assignments/list.html",
         {
-            "assignments": assignments,
+            "grouped_assignments": dict(grouped_assignments),  # 🔥 IMPORTANT
             "org": org,
             "students": students,
             "groups": groups,
@@ -77,7 +110,6 @@ def org_assignments(request, slug):
             "group_counts": group_counts,
         }
     )
-
 
 # =====================================================
 # BULK DELETE
