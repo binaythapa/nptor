@@ -26,6 +26,7 @@ from organizations.permissions import org_admin_required
 from organizations.models.assignment import ResourceAssignment
 from organizations.models.membership import OrganizationMember, OrganizationGroup
 
+from collections import defaultdict
 
 @org_admin_required
 def org_assignments(request, slug):
@@ -64,26 +65,33 @@ def org_assignments(request, slug):
         .annotate(count=Count("id"))
     )
 
-    # ================= GROUPING LOGIC =================
+    # ================= GROUP BY RESOURCE (🔥 MAIN LOGIC) =================
 
-    grouped_assignments = defaultdict(lambda: {
-        "label": "",
+    grouped_resources = defaultdict(lambda: {
         "type": "",
-        "items": []
+        "title": "",
+        "assignments": []
     })
 
     for a in assignments:
 
-        if a.group:
-            key = f"group_{a.group.id}"
-            grouped_assignments[key]["label"] = a.group.name
-            grouped_assignments[key]["type"] = "group"
-        else:
-            key = f"student_{a.student.id}"
-            grouped_assignments[key]["label"] = a.student.email
-            grouped_assignments[key]["type"] = "student"
+        # Identify resource
+        if a.course:
+            key = f"course_{a.course.id}"
+            grouped_resources[key]["type"] = "course"
+            grouped_resources[key]["title"] = a.course.title
 
-        grouped_assignments[key]["items"].append(a)
+        elif a.track:
+            key = f"track_{a.track.id}"
+            grouped_resources[key]["type"] = "track"
+            grouped_resources[key]["title"] = a.track.title
+
+        elif a.exam:
+            key = f"exam_{a.exam.id}"
+            grouped_resources[key]["type"] = "exam"
+            grouped_resources[key]["title"] = a.exam.title
+
+        grouped_resources[key]["assignments"].append(a)
 
     # ================= FILTER DATA =================
 
@@ -102,7 +110,7 @@ def org_assignments(request, slug):
         request,
         "organizations/admin/assignments/list.html",
         {
-            "grouped_assignments": dict(grouped_assignments),  # 🔥 IMPORTANT
+            "grouped_resources": dict(grouped_resources),  # 🔥 IMPORTANT
             "org": org,
             "students": students,
             "groups": groups,

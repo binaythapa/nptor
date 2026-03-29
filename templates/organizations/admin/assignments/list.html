@@ -74,54 +74,57 @@
 
 </form>
 
-<!-- ================= GROUPED ASSIGNMENTS ================= -->
+<!-- ================= GROUPED BY RESOURCE ================= -->
 
 <form method="post" action="{% url 'organizations_admin:assignment_bulk_delete' slug=org_slug %}">
 {% csrf_token %}
 
-{% for key, group in grouped_assignments.items %}
+{% for key, resource in grouped_resources.items %}
 
-<div class="box mb-4">
+<details class="box mb-5" open>
 
   <!-- HEADER -->
-  <div class="level">
-    <div class="level-left">
-      <h4 class="title is-6">
-        {% if group.type == "group" %}
-          👥 {{ group.label }}
-        {% else %}
-          👤 {{ group.label }}
-        {% endif %}
-      </h4>
-    </div>
+  <summary class="is-flex is-justify-content-space-between is-align-items-center">
 
-    <div class="level-right">
-      <span class="tag is-info">
-        {{ group.items|length }} assignments
-      </span>
-    </div>
-  </div>
+    <span class="title is-5">
+
+      {% if resource.type == "course" %}
+        📘 {{ resource.title }}
+      {% elif resource.type == "track" %}
+        🧭 {{ resource.title }}
+      {% elif resource.type == "exam" %}
+        🧪 {{ resource.title }}
+      {% endif %}
+
+    </span>
+
+    <span class="tag is-info">
+      {{ resource.assignments|length }} assignments
+    </span>
+
+  </summary>
 
   <!-- TABLE -->
-  <table class="table is-fullwidth is-striped is-hoverable">
+  <table class="table is-fullwidth is-striped is-hoverable mt-3">
 
     <thead>
       <tr>
         <th>
-          <input type="checkbox" onclick="toggleGroup(this, '{{ key }}')">
+          <input type="checkbox" onclick="toggleResource(this, '{{ key }}')">
         </th>
+        <th>Assigned To</th>
         <th>Type</th>
-        <th>Resource</th>
-        <th>Affected</th>
+        <th>Users</th>
         <th>Date</th>
         <th></th>
       </tr>
     </thead>
 
     <tbody>
-      {% for a in group.items %}
+      {% for a in resource.assignments %}
       <tr>
 
+        <!-- CHECKBOX -->
         <td>
           <input type="checkbox"
                  name="assignment_ids"
@@ -129,14 +132,23 @@
                  class="checkbox-{{ key }}">
         </td>
 
-        <td>{{ a.resource_type|title }}</td>
-
+        <!-- TARGET -->
         <td>
-          {% if a.course %}{{ a.course.title }}{% endif %}
-          {% if a.track %}{{ a.track.title }}{% endif %}
-          {% if a.exam %}{{ a.exam.title }}{% endif %}
+          {% if a.group %}
+            👥 {{ a.group.name }}
+          {% else %}
+            👤 {{ a.student.email }}
+          {% endif %}
         </td>
 
+        <!-- TYPE -->
+        <td>
+          <span class="tag is-light">
+            {{ a.resource_type|title }}
+          </span>
+        </td>
+
+        <!-- USERS -->
         <td>
           {% if a.group %}
             {{ a.group.members.count }} students
@@ -145,8 +157,10 @@
           {% endif %}
         </td>
 
+        <!-- DATE -->
         <td>{{ a.assigned_at|date:"d M Y" }}</td>
 
+        <!-- REMOVE -->
         <td>
           <a href="{% url 'organizations_admin:assignment_remove' slug=org_slug assignment_id=a.id %}"
              class="button is-danger is-small">
@@ -160,7 +174,7 @@
 
   </table>
 
-</div>
+</details>
 
 {% empty %}
 <p class="has-text-grey has-text-centered">No assignments found.</p>
@@ -176,7 +190,7 @@
 <!-- ================= JS ================= -->
 
 <script>
-function toggleGroup(source, key){
+function toggleResource(source, key){
   let checkboxes = document.getElementsByClassName("checkbox-" + key);
 
   for(let i=0; i<checkboxes.length; i++){
