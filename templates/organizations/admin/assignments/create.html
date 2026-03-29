@@ -7,21 +7,52 @@
 <form method="post">
 {% csrf_token %}
 
-<!-- ================= STUDENT ================= -->
+<!-- ================= TARGET TYPE ================= -->
 
 <div class="field">
-  <label class="label">Student</label>
-
+  <label class="label">Assign To</label>
   <div class="control">
     <div class="select is-fullwidth">
-      <select name="student_id" required>
+      <select id="assign_type" onchange="toggleTarget()" required>
+        <option value="">Select</option>
+        <option value="student">Student</option>
+        <option value="group">Group (Class)</option>
+      </select>
+    </div>
+  </div>
+</div>
 
+
+<!-- ================= STUDENT ================= -->
+
+<div class="field target-field" id="student_field" style="display:none;">
+  <label class="label">Student</label>
+  <div class="control">
+    <div class="select is-fullwidth">
+      <select name="student_id" id="student_select" disabled>
+        <option value="">-- Select Student --</option>
         {% for s in students %}
         <option value="{{ s.id }}">
           {{ s.user.get_full_name|default:s.user.email }}
         </option>
         {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
 
+
+<!-- ================= GROUP ================= -->
+
+<div class="field target-field" id="group_field" style="display:none;">
+  <label class="label">Group (Class)</label>
+  <div class="control">
+    <div class="select is-fullwidth">
+      <select name="group_id" id="group_select" disabled>
+        <option value="">-- Select Group --</option>
+        {% for g in groups %}
+        <option value="{{ g.id }}">{{ g.name }}</option>
+        {% endfor %}
       </select>
     </div>
   </div>
@@ -32,17 +63,14 @@
 
 <div class="field">
   <label class="label">Resource Type</label>
-
   <div class="control">
     <div class="select is-fullwidth">
-
       <select name="resource_type" id="resource_type" required onchange="toggleResource()">
         <option value="">Select Type</option>
         <option value="course">Course</option>
         <option value="track">Exam Track</option>
         <option value="exam">Exam</option>
       </select>
-
     </div>
   </div>
 </div>
@@ -51,26 +79,14 @@
 <!-- ================= COURSE ================= -->
 
 <div class="field resource-field" id="course_field" style="display:none;">
-
 <label class="label">Course</label>
-
 <div class="control">
 <div class="select is-fullwidth">
-
-<select name="course_id" id="course_select">
-
-{% if courses %}
+<select name="course_id" id="course_select" disabled>
 {% for c in courses %}
-<option value="{{ c.id }}">
-{{ c.title }}
-</option>
+<option value="{{ c.id }}">{{ c.title }}</option>
 {% endfor %}
-{% else %}
-<option disabled>No courses attached</option>
-{% endif %}
-
 </select>
-
 </div>
 </div>
 </div>
@@ -79,26 +95,14 @@
 <!-- ================= TRACK ================= -->
 
 <div class="field resource-field" id="track_field" style="display:none;">
-
 <label class="label">Exam Track</label>
-
 <div class="control">
 <div class="select is-fullwidth">
-
-<select name="track_id" id="track_select">
-
-{% if tracks %}
+<select name="track_id" id="track_select" disabled>
 {% for t in tracks %}
-<option value="{{ t.id }}">
-{{ t.title }}
-</option>
+<option value="{{ t.id }}">{{ t.title }}</option>
 {% endfor %}
-{% else %}
-<option disabled>No tracks attached</option>
-{% endif %}
-
 </select>
-
 </div>
 </div>
 </div>
@@ -107,26 +111,14 @@
 <!-- ================= EXAM ================= -->
 
 <div class="field resource-field" id="exam_field" style="display:none;">
-
 <label class="label">Exam</label>
-
 <div class="control">
 <div class="select is-fullwidth">
-
-<select name="exam_id" id="exam_select">
-
-{% if exams %}
+<select name="exam_id" id="exam_select" disabled>
 {% for e in exams %}
-<option value="{{ e.id }}">
-{{ e.title }}
-</option>
+<option value="{{ e.id }}">{{ e.title }}</option>
 {% endfor %}
-{% else %}
-<option disabled>No exams attached</option>
-{% endif %}
-
 </select>
-
 </div>
 </div>
 </div>
@@ -143,34 +135,57 @@ Assign
 
 <script>
 
+// TARGET TOGGLE
+function toggleTarget(){
+
+let type = document.getElementById("assign_type").value
+
+// hide all
+document.getElementById("student_field").style.display = "none"
+document.getElementById("group_field").style.display = "none"
+
+// disable both
+document.getElementById("student_select").disabled = true
+document.getElementById("group_select").disabled = true
+
+if(type === "student"){
+  document.getElementById("student_field").style.display = "block"
+  document.getElementById("student_select").disabled = false
+}
+
+if(type === "group"){
+  document.getElementById("group_field").style.display = "block"
+  document.getElementById("group_select").disabled = false
+}
+}
+
+
+// RESOURCE TOGGLE
 function toggleResource(){
 
 let type = document.getElementById("resource_type").value
 
-// hide all fields
 document.getElementById("course_field").style.display = "none"
 document.getElementById("track_field").style.display = "none"
 document.getElementById("exam_field").style.display = "none"
 
-// disable all selects
 document.getElementById("course_select").disabled = true
 document.getElementById("track_select").disabled = true
 document.getElementById("exam_select").disabled = true
 
-
 if(type === "course"){
-document.getElementById("course_field").style.display = "block"
-document.getElementById("course_select").disabled = false
+  document.getElementById("course_field").style.display = "block"
+  document.getElementById("course_select").disabled = false
 }
 
 if(type === "track"){
-document.getElementById("track_field").style.display = "block"
-document.getElementById("track_select").disabled = false
+  document.getElementById("track_field").style.display = "block"
+  document.getElementById("track_select").disabled = false
 }
 
 if(type === "exam"){
-document.getElementById("exam_field").style.display = "block"
-document.getElementById("exam_select").disabled = false
+  document.getElementById("exam_field").style.display = "block"
+  document.getElementById("exam_select").disabled = false
 }
 
 }
