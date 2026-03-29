@@ -15,6 +15,7 @@ from organizations.views.admin.assignments import (
     org_assignments,
     org_assignment_create,
     org_assignment_remove,
+    org_assignment_bulk_delete,
 )
 
 from organizations.views.admin.settings import org_settings
@@ -68,6 +69,11 @@ admin_patterns = [
     path("assignments/", org_assignments, name="assignments"),
     path("assignments/create/", org_assignment_create, name="assignment_create"),
     path("assignments/<int:assignment_id>/remove/", org_assignment_remove, name="assignment_remove"),
+    path(
+    "assignments/bulk-delete/",
+    org_assignment_bulk_delete,
+    name="assignment_bulk_delete",
+),
 
     # ================= QUESTIONS =================
     path("questions/", org_question_dashboard, name="questions"),

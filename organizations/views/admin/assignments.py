@@ -13,17 +13,63 @@ from quiz.models import Exam, ExamTrack
 # =====================================================
 # LIST ASSIGNMENTS
 # =====================================================
+from django.db.models import Count
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+
+from organizations.permissions import org_admin_required
+from organizations.models.assignment import ResourceAssignment
+from organizations.models.membership import OrganizationMember, OrganizationGroup
+
 
 @org_admin_required
 def org_assignments(request, slug):
 
     org = request.organization
 
-    assignments = (
-        ResourceAssignment.objects
-        .filter(organization=org)
-        .select_related("student", "course", "track", "exam")
-        .order_by("-assigned_at")
+    assignments = ResourceAssignment.objects.filter(
+        organization=org
+    ).select_related(
+        "student", "group", "course", "track", "exam"
+    ).order_by("-assigned_at")
+
+    # ================= FILTERS =================
+
+    student_id = request.GET.get("student")
+    group_id = request.GET.get("group")
+    resource_type = request.GET.get("type")
+
+    if student_id:
+        assignments = assignments.filter(student_id=student_id)
+
+    if group_id:
+        assignments = assignments.filter(group_id=group_id)
+
+    if resource_type:
+        assignments = assignments.filter(resource_type=resource_type)
+
+    # ================= ANALYTICS =================
+
+    total_assignments = assignments.count()
+
+    group_counts = (
+        OrganizationMember.objects
+        .filter(organization=org, role="student", is_active=True)
+        .values("group__name")
+        .annotate(count=Count("id"))
+    )
+
+    # ================= FILTER DATA =================
+
+    students = OrganizationMember.objects.filter(
+        organization=org,
+        role="student",
+        is_active=True
+    )
+
+    groups = OrganizationGroup.objects.filter(
+        organization=org,
+        is_active=True
     )
 
     return render(
@@ -31,9 +77,35 @@ def org_assignments(request, slug):
         "organizations/admin/assignments/list.html",
         {
             "assignments": assignments,
-            "org": org
+            "org": org,
+            "students": students,
+            "groups": groups,
+            "total_assignments": total_assignments,
+            "group_counts": group_counts,
         }
     )
+
+
+# ================= BULK DELETE =================
+
+@org_admin_required
+def org_assignment_bulk_delete(request, slug):
+
+    org = request.organization
+
+    ids = request.POST.getlist("assignment_ids")
+
+    ResourceAssignment.objects.filter(
+        id__in=ids,
+        organization=org
+    ).delete()
+
+    messages.success(request, "Selected assignments removed.")
+
+    return redirect("organizations_admin:assignments", slug=slug)
+
+
+
 
 
 # =====================================================

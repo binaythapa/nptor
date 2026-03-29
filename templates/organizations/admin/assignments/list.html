@@ -1,50 +1,176 @@
 {% extends "organizations/admin/base.html" %}
 
 {% block content %}
-
 {% with org_slug=request.organization.slug %}
 
 <h2 class="title is-4">📝 Assignments</h2>
 
 <a href="{% url 'organizations_admin:assignment_create' slug=org_slug %}"
    class="button is-primary mb-4">
-  ➕ Assign Course
+  ➕ Assign Resource
 </a>
+
+<!-- ================= ANALYTICS ================= -->
+
+<div class="box mb-4">
+  <p><strong>Total Assignments:</strong> {{ total_assignments }}</p>
+
+  <div class="mt-2">
+    {% for g in group_counts %}
+      <span class="tag is-info mr-2">
+        {{ g.group__name|default:"No Group" }}: {{ g.count }}
+      </span>
+    {% endfor %}
+  </div>
+</div>
+
+
+<!-- ================= FILTERS ================= -->
+
+<form method="get" class="box mb-4">
+
+  <div class="columns">
+
+    <div class="column">
+      <label>Student</label>
+      <div class="select is-fullwidth">
+        <select name="student">
+          <option value="">All</option>
+          {% for s in students %}
+            <option value="{{ s.id }}">{{ s.user.email }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="column">
+      <label>Group</label>
+      <div class="select is-fullwidth">
+        <select name="group">
+          <option value="">All</option>
+          {% for g in groups %}
+            <option value="{{ g.id }}">{{ g.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="column">
+      <label>Type</label>
+      <div class="select is-fullwidth">
+        <select name="type">
+          <option value="">All</option>
+          <option value="course">Course</option>
+          <option value="track">Track</option>
+          <option value="exam">Exam</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="column is-flex is-align-items-end">
+      <button class="button is-link">Filter</button>
+    </div>
+
+  </div>
+
+</form>
+
+
+<!-- ================= BULK DELETE FORM ================= -->
+
+<form method="post" action="{% url 'organizations_admin:assignment_bulk_delete' slug=org_slug %}">
+{% csrf_token %}
 
 <table class="table is-fullwidth is-striped is-hoverable">
   <thead>
     <tr>
-      <th>Student</th>
-      <th>Course</th>
-      <th>Assigned On</th>
-      <th class="has-text-right">Action</th>
+      <th><input type="checkbox" onclick="toggleAll(this)"></th>
+      <th>Assigned To</th>
+      <th>Type</th>
+      <th>Resource</th>
+      <th>Affected</th>
+      <th>Date</th>
+      <th></th>
     </tr>
   </thead>
 
   <tbody>
     {% for a in assignments %}
     <tr>
-      <td>{{ a.student.email }}</td>
-      <td>{{ a.course.title }}</td>
+
+      <!-- CHECKBOX -->
+      <td>
+        <input type="checkbox" name="assignment_ids" value="{{ a.id }}">
+      </td>
+
+      <!-- TARGET -->
+      <td>
+        {% if a.student %}
+          👤 {{ a.student.email }}
+        {% elif a.group %}
+          👥 {{ a.group.name }}
+        {% endif %}
+      </td>
+
+      <!-- TYPE -->
+      <td>{{ a.resource_type|title }}</td>
+
+      <!-- RESOURCE -->
+      <td>
+        {% if a.course %}{{ a.course.title }}{% endif %}
+        {% if a.track %}{{ a.track.title }}{% endif %}
+        {% if a.exam %}{{ a.exam.title }}{% endif %}
+      </td>
+
+      <!-- AFFECTED USERS -->
+      <td>
+        {% if a.group %}
+          {{ a.group.members.count }} students
+        {% else %}
+          1
+        {% endif %}
+      </td>
+
+      <!-- DATE -->
       <td>{{ a.assigned_at|date:"d M Y" }}</td>
-      <td class="has-text-right">
+
+      <!-- REMOVE -->
+      <td>
         <a href="{% url 'organizations_admin:assignment_remove' slug=org_slug assignment_id=a.id %}"
-           class="button is-danger is-small"
-           onclick="return confirm('Remove assignment?')">
+           class="button is-danger is-small">
           Remove
         </a>
       </td>
+
     </tr>
     {% empty %}
     <tr>
-      <td colspan="4" class="has-text-centered has-text-grey">
-        No assignments yet.
+      <td colspan="7" class="has-text-centered has-text-grey">
+        No assignments found.
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 
-{% endwith %}
+<button class="button is-danger mt-3"
+        onclick="return confirm('Delete selected assignments?')">
+  Bulk Delete
+</button>
 
+</form>
+
+
+<!-- ================= JS ================= -->
+
+<script>
+function toggleAll(source){
+  checkboxes = document.getElementsByName('assignment_ids');
+  for(let i=0; i<checkboxes.length; i++){
+    checkboxes[i].checked = source.checked;
+  }
+}
+</script>
+
+{% endwith %}
 {% endblock %}
