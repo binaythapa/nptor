@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db.models import Count
 
 from organizations.permissions import org_admin_required
 from organizations.models.assignment import ResourceAssignment
-from organizations.models.membership import OrganizationMember
+from organizations.models.membership import OrganizationMember, OrganizationGroup
 from organizations.models.access import ResourceAccess
 
 from courses.models import Course
@@ -13,14 +14,6 @@ from quiz.models import Exam, ExamTrack
 # =====================================================
 # LIST ASSIGNMENTS
 # =====================================================
-from django.db.models import Count
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-
-from organizations.permissions import org_admin_required
-from organizations.models.assignment import ResourceAssignment
-from organizations.models.membership import OrganizationMember, OrganizationGroup
-
 
 @org_admin_required
 def org_assignments(request, slug):
@@ -86,7 +79,9 @@ def org_assignments(request, slug):
     )
 
 
-# ================= BULK DELETE =================
+# =====================================================
+# BULK DELETE
+# =====================================================
 
 @org_admin_required
 def org_assignment_bulk_delete(request, slug):
@@ -105,11 +100,8 @@ def org_assignment_bulk_delete(request, slug):
     return redirect("organizations_admin:assignments", slug=slug)
 
 
-
-
-
 # =====================================================
-# CREATE ASSIGNMENT
+# CREATE ASSIGNMENT (FINAL)
 # =====================================================
 
 @org_admin_required
@@ -118,7 +110,6 @@ def org_assignment_create(request, slug):
     org = request.organization
 
     # ---------------- STUDENTS ----------------
-
     students = (
         OrganizationMember.objects
         .filter(
@@ -129,8 +120,13 @@ def org_assignment_create(request, slug):
         .select_related("user")
     )
 
-    # ---------------- COURSES ----------------
+    # ---------------- GROUPS ----------------
+    groups = OrganizationGroup.objects.filter(
+        organization=org,
+        is_active=True
+    )
 
+    # ---------------- COURSES ----------------
     courses = (
         Course.objects
         .filter(
@@ -141,20 +137,14 @@ def org_assignment_create(request, slug):
     )
 
     # ---------------- TRACKS ----------------
-
-    tracks = (
-        ExamTrack.objects
-        .filter(organization=org)
-        .order_by("title")
-    )
+    tracks = ExamTrack.objects.filter(
+        organization=org
+    ).order_by("title")
 
     # ---------------- EXAMS ----------------
-
-    exams = (
-        Exam.objects
-        .filter(organization=org)
-        .order_by("title")
-    )
+    exams = Exam.objects.filter(
+        organization=org
+    ).order_by("title")
 
     # =================================================
     # POST
@@ -163,132 +153,126 @@ def org_assignment_create(request, slug):
     if request.method == "POST":
 
         student_id = request.POST.get("student_id")
+        group_id = request.POST.get("group_id")
         resource_type = request.POST.get("resource_type")
 
-        student = get_object_or_404(
-            OrganizationMember,
-            id=student_id,
-            organization=org,
-            role="student"
-        )
+        # ================= VALIDATION =================
 
-        user = student.user
+        if not student_id and not group_id:
+            messages.error(request, "Please select student or group.")
+            return redirect("organizations_admin:assignment_create", slug=slug)
 
-        # ------------------------------------------------
-        # COURSE ASSIGNMENT
-        # ------------------------------------------------
+        if student_id and group_id:
+            messages.error(request, "Select either student OR group.")
+            return redirect("organizations_admin:assignment_create", slug=slug)
 
-        if resource_type == "course":
+        users = []
 
-            course_id = request.POST.get("course_id")
+        # ================= TARGET =================
 
-            course = get_object_or_404(
-                Course,
-                id=course_id,
-                organization_subscriptions__organization=org
+        if group_id:
+            group = get_object_or_404(
+                OrganizationGroup,
+                id=group_id,
+                organization=org
             )
 
-            # Assignment record
+            members = OrganizationMember.objects.filter(
+                organization=org,
+                group=group,
+                role="student",
+                is_active=True
+            ).select_related("user")
+
+            users = [m.user for m in members]
+
+        else:
+            student = get_object_or_404(
+                OrganizationMember,
+                id=student_id,
+                organization=org,
+                role="student"
+            )
+            users = [student.user]
+
+        # =================================================
+        # ASSIGNMENT LOGIC
+        # =================================================
+
+        def assign_resource(user, resource_type, course=None, track=None, exam=None):
+
             ResourceAssignment.objects.get_or_create(
                 student=user,
                 organization=org,
-                resource_type="course",
-                course=course
-            )
-
-            # Access record
-            access, created = ResourceAccess.objects.get_or_create(
-                user=user,
-                resource_type="course",
+                resource_type=resource_type,
                 course=course,
-                source="organization",
-                organization=org,
-                defaults={"is_active": True},
-            )
-
-            if not created and not access.is_active:
-                access.is_active = True
-                access.save(update_fields=["is_active"])
-
-            messages.success(
-                request,
-                f"{course.title} assigned to {user.email}"
-            )
-
-        # ------------------------------------------------
-        # TRACK ASSIGNMENT
-        # ------------------------------------------------
-
-        elif resource_type == "track":
-
-            track_id = request.POST.get("track_id")
-
-            track = get_object_or_404(
-                ExamTrack,
-                id=track_id,
-                organization=org
-            )
-
-            ResourceAssignment.objects.get_or_create(
-                student=user,
-                organization=org,
-                resource_type="track",
-                track=track
-            )
-
-            ResourceAccess.objects.get_or_create(
-                user=user,
-                resource_type="track",
                 track=track,
-                source="organization",
-                organization=org,
-                defaults={"is_active": True},
-            )
-
-            messages.success(
-                request,
-                f"{track.title} assigned to {user.email}"
-            )
-
-        # ------------------------------------------------
-        # EXAM ASSIGNMENT
-        # ------------------------------------------------
-
-        elif resource_type == "exam":
-
-            exam_id = request.POST.get("exam_id")
-
-            exam = get_object_or_404(
-                Exam,
-                id=exam_id,
-                organization=org
-            )
-
-            ResourceAssignment.objects.get_or_create(
-                student=user,
-                organization=org,
-                resource_type="exam",
                 exam=exam
             )
 
             ResourceAccess.objects.get_or_create(
                 user=user,
-                resource_type="exam",
+                resource_type=resource_type,
+                course=course,
+                track=track,
                 exam=exam,
                 source="organization",
                 organization=org,
                 defaults={"is_active": True},
             )
 
-            messages.success(
-                request,
-                f"{exam.title} assigned to {user.email}"
+        # ---------------- COURSE ----------------
+        if resource_type == "course":
+
+            course = get_object_or_404(
+                Course,
+                id=request.POST.get("course_id"),
+                organization_subscriptions__organization=org
             )
 
-        return redirect(
-            "organizations_admin:assignments",
-            slug=slug
-        )
+            for user in users:
+                assign_resource(user, "course", course=course)
+
+            messages.success(
+                request,
+                f"{course.title} assigned to {len(users)} student(s)"
+            )
+
+        # ---------------- TRACK ----------------
+        elif resource_type == "track":
+
+            track = get_object_or_404(
+                ExamTrack,
+                id=request.POST.get("track_id"),
+                organization=org
+            )
+
+            for user in users:
+                assign_resource(user, "track", track=track)
+
+            messages.success(
+                request,
+                f"{track.title} assigned to {len(users)} student(s)"
+            )
+
+        # ---------------- EXAM ----------------
+        elif resource_type == "exam":
+
+            exam = get_object_or_404(
+                Exam,
+                id=request.POST.get("exam_id"),
+                organization=org
+            )
+
+            for user in users:
+                assign_resource(user, "exam", exam=exam)
+
+            messages.success(
+                request,
+                f"{exam.title} assigned to {len(users)} student(s)"
+            )
+
+        return redirect("organizations_admin:assignments", slug=slug)
 
     # =================================================
     # GET
@@ -299,6 +283,7 @@ def org_assignment_create(request, slug):
         "organizations/admin/assignments/create.html",
         {
             "students": students,
+            "groups": groups,   # 🔥 IMPORTANT FIX
             "courses": courses,
             "tracks": tracks,
             "exams": exams,
@@ -324,12 +309,6 @@ def org_assignment_remove(request, slug, assignment_id):
 
     assignment.delete()
 
-    messages.success(
-        request,
-        "Assignment removed successfully."
-    )
+    messages.success(request, "Assignment removed successfully.")
 
-    return redirect(
-        "organizations_admin:assignments",
-        slug=slug
-    )
+    return redirect("organizations_admin:assignments", slug=slug)

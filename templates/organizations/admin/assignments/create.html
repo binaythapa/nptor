@@ -136,29 +136,37 @@ Assign
 <script>
 
 // TARGET TOGGLE
+// TARGET TOGGLE
 function toggleTarget(){
 
 let type = document.getElementById("assign_type").value
+
+let studentSelect = document.getElementById("student_select")
+let groupSelect = document.getElementById("group_select")
+
+// reset
+studentSelect.required = false
+groupSelect.required = false
 
 // hide all
 document.getElementById("student_field").style.display = "none"
 document.getElementById("group_field").style.display = "none"
 
-// disable both
-document.getElementById("student_select").disabled = true
-document.getElementById("group_select").disabled = true
+studentSelect.disabled = true
+groupSelect.disabled = true
 
 if(type === "student"){
   document.getElementById("student_field").style.display = "block"
-  document.getElementById("student_select").disabled = false
+  studentSelect.disabled = false
+  studentSelect.required = true   // ✅ ADD
 }
 
 if(type === "group"){
   document.getElementById("group_field").style.display = "block"
-  document.getElementById("group_select").disabled = false
+  groupSelect.disabled = false
+  groupSelect.required = true   // ✅ ADD
 }
 }
-
 
 // RESOURCE TOGGLE
 function toggleResource(){
