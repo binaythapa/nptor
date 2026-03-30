@@ -11,12 +11,7 @@ from organizations.views.admin.students import (
     org_student_remove,
 )
 
-from organizations.views.admin.assignments import (
-    org_assignments,
-    org_assignment_create,
-    org_assignment_remove,
-    org_assignment_bulk_delete,
-)
+from organizations.views.admin.assignments import *
 
 from organizations.views.admin.settings import org_settings
 
@@ -47,6 +42,15 @@ admin_patterns = [
 
     # ================= DASHBOARD =================
     path("dashboard/", org_dashboard, name="dashboard"),
+   
+
+   
+
+    path(
+        "assignment-dashboard/",
+        org_assignment_dashboard,
+        name="assignment_dashboard"
+        ),
 
     # ================= COURSES =================
     path("courses/", org_courses, name="courses"),
@@ -74,6 +78,8 @@ admin_patterns = [
     org_assignment_bulk_delete,
     name="assignment_bulk_delete",
 ),
+   
+    
 
     # ================= QUESTIONS =================
     path("questions/", org_question_dashboard, name="questions"),

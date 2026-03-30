@@ -1,6 +1,8 @@
 {% extends "layouts/student/base.html" %}
 {% block content %}
 
+
+
 <style>
 
 .course-card {
@@ -660,23 +662,48 @@
 </style>
 
 <div class="container">
-  <!-- Header -->
-  <div class="header">
+
+
+
+  <!-- ================= HEADER ================= -->
+  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
+
     <h1>Student Dashboard</h1>
 
-    {% if active_attempt %}
-      <div class="active-alert">
-        <div class="alert-text">
-          Active Exam: {{ active_attempt.exam.title }}
-        </div>
-        <a href="{% url 'quiz:exam_take' active_attempt.id %}" class="resume-btn">
-          Resume Exam
-        </a>
-      </div>
-    {% endif %}
+    <!-- 🔔 Notification -->
+    <div style="position:relative;">
+      <span style="font-size:22px; cursor:pointer;">🔔</span>
+
+      {% if upcoming_deadlines %}
+      <span style="
+        position:absolute;
+        top:-6px;
+        right:-6px;
+        background:red;
+        color:white;
+        font-size:11px;
+        padding:2px 6px;
+        border-radius:50%;">
+        {{ upcoming_deadlines|length }}
+      </span>
+      {% endif %}
+    </div>
+
   </div>
 
-  <!-- Stats -->
+  <!-- ACTIVE EXAM -->
+  {% if active_attempt %}
+  <div class="active-alert">
+    <div class="alert-text">
+      Active Exam: {{ active_attempt.exam.title }}
+    </div>
+    <a href="{% url 'quiz:exam_take' active_attempt.id %}" class="resume-btn">
+      Resume Exam
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- ================= STATS ================= -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-value">{{ total_attempts }}</div>
@@ -692,270 +719,138 @@
     </div>
   </div>
 
-    <!-- ===============================
-       ORGANIZATION ASSIGNED COURSES
-       =============================== -->
-  {% if org_courses %}
-    <div class="mt-4 mb-4">
-      <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
-        🎓 Assigned Courses
-      </h2>
+  <!-- ================= SUMMARY ================= -->
+  <div class="box mb-4">
+    <h3 class="title is-6">📊 Your Progress Summary</h3>
 
-      {% for org, accesses in org_courses.items %}
-        <div class="track-section">
-
-          <!-- Org Header -->
-          <div class="track-header" style="cursor:default;">
-            <div class="track-title">
-              {% if org.logo %}
-                <img src="{{ org.logo.url }}"
-                     alt="{{ org.name }}"
-                     style="height:28px; border-radius:4px;">
-              {% else %}
-                <span class="track-icon">🏫</span>
-              {% endif %}
-              {{ org.name }}
-            </div>
-
-            <div class="track-meta">
-              <span class="track-count">
-                {{ accesses|length }} course{{ accesses|length|pluralize }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Courses -->
-          <div class="exams-container">
-            {% for access in accesses %}
-              <div class="exam-item">
-
-                <div class="exam-header">
-                  <div class="exam-title">
-                    {{ access.course.title }}
-                  </div>
-
-                  <div class="exam-details">
-                    Level: {{ access.course.get_level_display }}
-                  </div>
-                </div>
-
-                <div class="action-buttons">
-                 <a href="{% url 'courses:course_learn' access.course.slug %}"
-   class="action-btn btn-primary">
-  Continue Course
-</a>
-
-                </div>
-
-              </div>
-            {% endfor %}
-          </div>
-
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-
-{% if org_tracks %}
-<div class="mt-4 mb-4">
-  <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
-    🧭 Assigned Exam Tracks
-  </h2>
-
-  {% for org, tracks in org_tracks.items %}
-  <div class="track-section">
-
-    <div class="track-header" style="cursor:default;">
-      <div class="track-title">
-
-        {% if org.logo %}
-          <img src="{{ org.logo.url }}"
-               style="height:28px; border-radius:4px;">
-        {% else %}
-          <span class="track-icon">🏫</span>
-        {% endif %}
-
-        {{ org.name }}
-
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <div>
+        <strong>{{ student_assignments|length }}</strong><br>
+        <small>Total Assignments</small>
       </div>
 
-      <div class="track-meta">
-        <span class="track-count">
-          {{ tracks|length }} track{{ tracks|length|pluralize }}
-        </span>
+      <div>
+        <strong>{{ upcoming_deadlines|length }}</strong><br>
+        <small>Upcoming</small>
       </div>
     </div>
+  </div>
+
+  <!-- ================= ASSIGNMENTS ================= -->
+  {% if student_assignments %}
+  <div class="mt-4 mb-4">
+
+    <h2 style="font-size:18px; font-weight:600;">📌 My Assignments</h2>
+
+    {% if upcoming_deadlines %}
+    <div class="active-alert">
+      ⏰ {{ upcoming_deadlines|length }} upcoming deadline{{ upcoming_deadlines|length|pluralize }}
+    </div>
+    {% endif %}
 
     <div class="exams-container">
 
-      {% for track in tracks %}
-      <div class="exam-item">
+      {% for item in student_assignments %}
+      <div class="exam-item"
+           style="border-left:4px solid
+           {% if item.is_overdue %}#dc3545
+           {% elif item.progress > 70 %}#28a745
+           {% else %}#ffc107{% endif %};">
 
         <div class="exam-header">
-          <div class="exam-title">
-            {{ track.title }}
-          </div>
+          <div class="exam-title">{{ item.name }}</div>
 
           <div class="exam-details">
-            {{ track.exams.count }} Exams
+            {% if item.assignment.deadline %}
+              ⏰ {{ item.assignment.deadline|date:"d M Y H:i" }}
+            {% else %}
+              No deadline
+            {% endif %}
           </div>
         </div>
 
-      </div>
-      {% endfor %}
-
-    </div>
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
-
-
-{% if org_tracks %}
-<div class="mt-4 mb-4">
-  <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
-    🧭 Assigned Exam Tracks
-  </h2>
-
-  {% for org, tracks in org_tracks.items %}
-  <div class="track-section">
-
-    <div class="track-header" style="cursor:default;">
-      <div class="track-title">
-
-        {% if org.logo %}
-          <img src="{{ org.logo.url }}"
-               style="height:28px; border-radius:4px;">
-        {% else %}
-          <span class="track-icon">🏫</span>
-        {% endif %}
-
-        {{ org.name }}
-
-      </div>
-
-      <div class="track-meta">
-        <span class="track-count">
-          {{ tracks|length }} track{{ tracks|length|pluralize }}
-        </span>
-      </div>
-    </div>
-
-    <div class="exams-container">
-
-      {% for track in tracks %}
-      <div class="exam-item">
-
-        <div class="exam-header">
-          <div class="exam-title">
-            {{ track.title }}
-          </div>
-
-          <div class="exam-details">
-            {{ track.exams.count }} Exams
-          </div>
-        </div>
-
-      </div>
-      {% endfor %}
-
-    </div>
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
-
-
-
-
-
-
-
-{% if courses %}
-<div class="mb-5">
-  <h2 class="title is-4">🎓 My Courses</h2>
-
-  <div class="columns is-multiline">
-    {% for item in courses %}
-    <div class="column is-4">
-      <div class="box course-card">
-
-        <!-- Top Section -->
-        <div class="course-content">
-          <h3 class="course-title">
-            {{ item.course.title }}
-          </h3>
-        </div>
-
-        <!-- Bottom Section (Progress + Button Together) -->
-        <div class="course-footer">
-
-          <p class="course-progress">
-            <strong>{{ item.progress }}%</strong>
-            ({{ item.completed }}/{{ item.total }} lessons)
-          </p>
-
-          <progress class="progress is-small is-primary"
-                    value="{{ item.progress }}"
-                    max="100">
-            {{ item.progress }}%
-          </progress>
-
-          {% if item.progress == 100 %}
-            <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-success is-small is-fullwidth is-rounded">
-              ✔ Review Course
-            </a>
-
-          {% elif item.progress > 0 %}
-            <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-primary is-small is-fullwidth is-rounded">
-              ▶ Resume Learning
-            </a>
-
+        {% if item.assignment.deadline %}
+        <div class="countdown-container mt-2">
+          {% if item.is_overdue %}
+            🔴 Overdue
           {% else %}
-            <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-link is-small is-fullwidth is-rounded">
-              ▶ Start Course
+            ⏳ {{ item.assignment.deadline|timeuntil }} left
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="course-footer">
+          <strong>{{ item.progress }}%</strong>
+          <progress class="progress is-small is-primary"
+                    value="{{ item.progress }}" max="100"></progress>
+        </div>
+
+        <div class="mt-2">
+          {% if item.completed %}
+            <span class="tag tag-success">✔ Completed</span>
+          {% elif item.is_overdue %}
+            <span class="tag tag-danger">🔴 Overdue</span>
+          {% else %}
+            <span class="tag tag-warning">⏳ In Progress</span>
+          {% endif %}
+        </div>
+
+        <div class="mt-2">
+          {% if item.assignment.course %}
+            <a href="{% url 'courses:course_learn' item.assignment.course.slug %}"
+               class="action-btn btn-primary">
+              ▶ Open Course
+            </a>
+          {% elif item.assignment.exam %}
+            <a href="{% url 'quiz:exam_start' item.assignment.exam.id %}"
+               class="action-btn btn-primary">
+              ▶ Start Exam
             </a>
           {% endif %}
-
         </div>
 
       </div>
+      {% endfor %}
+
     </div>
-    {% endfor %}
   </div>
-</div>
-{% endif %}
+  {% endif %}
 
+  <!-- ================= COURSES ================= -->
+  {% if courses %}
+  <div class="mb-5">
+    <h2 class="title is-4">🎓 My Courses</h2>
 
+    <div class="columns is-multiline">
+      {% for item in courses %}
+      <div class="column is-4">
+        <div class="box course-card">
 
+          <h3>{{ item.course.title }}</h3>
 
+          <strong>{{ item.progress }}%</strong>
+          <progress class="progress is-small is-primary"
+                    value="{{ item.progress }}" max="100"></progress>
 
+          <a href="{% url 'courses:course_learn' item.course.slug %}"
+             class="button is-primary is-small is-fullwidth">
+            ▶ Continue
+          </a>
 
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
-
-
-  <!-- Tracks -->
+  <!-- ================= TRACKS ================= -->
   {% for track, data in track_map.items %}
   <div class="track-section">
     <button class="track-header" onclick="toggleExams(this)">
-      <div class="track-title">
-        <span class="track-icon">📘</span>
-        {{ track.title }}
-      </div>
+      <div class="track-title">📘 {{ track.title }}</div>
       <div class="track-meta">
-        <span class="track-count">{{ data.items|length }} exams</span>
-        {% if data.attempted %}
-          <div class="track-stats">
-            {% if data.passed %}<span class="track-passed">✓ {{ data.passed }}</span>{% endif %}
-            {% if data.failed %}<span class="track-failed">✗ {{ data.failed }}</span>{% endif %}
-          </div>
-        {% endif %}
+        <span>{{ data.items|length }} exams</span>
         <span>▼</span>
       </div>
     </button>
@@ -964,151 +859,26 @@
       {% for item in data.items %}
       <div class="exam-item">
 
-        <!-- Exam Header -->
         <div class="exam-header">
           <div class="exam-title">{{ item.exam.title }}</div>
           <div class="exam-details">
             Level {{ item.exam.level }} • {{ item.exam.question_count }} Questions
           </div>
-
-          {% if item.last_score is not None %}
-            <div class="exam-status {% if item.status == 'passed' %}status-passed{% else %}status-failed{% endif %}">
-              {% if item.status == "passed" %}
-                Passed ({{ item.last_score }}%)
-              {% else %}
-                Failed ({{ item.last_score }}%)
-              {% endif %}
-            </div>
-          {% endif %}
         </div>
-
-        <!-- ACTIONS -->
-        <div class="action-buttons">
-
-          {% if item.action == "renew" %}
-            <div class="tag tag-danger">🔴 Subscription Expired</div>
-
-            {% if item.track_subscription %}
-              <div class="tag tag-light">
-                Expired on: {{ item.track_subscription.expires_at|date:"d M Y" }}
-              </div>
-            {% endif %}
-
-            <a href="{% url 'quiz:track_checkout' item.exam.track.id %}"
-               class="action-btn btn-warning">
-              🔁 Renew Subscription
-            </a>
-
-          {% elif item.action == "locked" %}
-            <div class="tag tag-danger">🔒 {{ item.lock_reason }}</div>
-
-          {% elif item.is_passed %}
-            <div class="tag tag-success">✔ Exam Completed</div>
-
-          {% elif item.action == "resume" %}
-            <a href="{% url 'quiz:exam_take' item.last_attempt.id %}"
-               class="action-btn btn-warning">
-              Resume Exam
-            </a>
-
-          {% elif item.action == "cooldown" %}
-            <div class="countdown-container">
-              <span>Retry in</span>
-              <span class="countdown-text"
-                    data-seconds="{{ item.cooldown_remaining }}"></span>
-            </div>
-
-          {% elif item.action == "retake" %}
-            <a href="{% url 'quiz:exam_start' item.exam.id %}"
-               class="action-btn btn-primary">
-              Retake Exam
-            </a>
-
-          {% elif item.action == "start" %}
-            <a href="{% url 'quiz:exam_start' item.exam.id %}"
-               class="action-btn btn-primary">
-              Start Exam
-            </a>
-          {% endif %}
-
-          <!-- MOCK EXAMS (unchanged, but blocked when expired) -->
-          {% if not item.is_passed and item.status == "failed" and item.action != "renew" %}
-            {% if item.mock_used < item.mock_allowed %}
-              <a href="{% url 'quiz:mock_exam_start' item.exam.id %}"
-                 class="action-btn btn-info">
-                Take Mock Exam
-              </a>
-            {% else %}
-              <div class="tag tag-light">
-                <a href="https://api.whatsapp.com/send?phone=919600639802"
-                   target="_blank">
-                  <i class="fa fa-whatsapp"></i>
-                  Mock limit reached, Contact admin for reset.
-                </a>
-              </div>
-            {% endif %}
-          {% endif %}
-        </div>
-
-        <!-- Mock Attempts -->
-        {% if not item.is_passed and item.mock_attempts %}
-          <div class="mock-attempts">
-            <div class="mock-header">
-              <span class="mock-title">Mock Attempts</span>
-              <span class="mock-count">{{ item.mock_used }}/{{ item.mock_allowed }}</span>
-            </div>
-            <div class="mock-scores">
-              {% for m in item.mock_attempts %}
-                <span class="score-badge">{{ m.score }}%</span>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
 
       </div>
       {% endfor %}
     </div>
   </div>
   {% endfor %}
+
 </div>
 
 <script>
-/* JS unchanged – exactly your original */
 function toggleExams(button) {
   const container = button.nextElementSibling;
-  const arrow = button.querySelector('.track-meta span:last-child');
   container.classList.toggle('hidden');
-  arrow.textContent = container.classList.contains('hidden') ? '▼' : '▲';
 }
-function updateCountdown() {
-  document.querySelectorAll('.countdown-text[data-seconds]').forEach(el => {
-    let seconds = parseInt(el.dataset.seconds, 10);
-
-    if (isNaN(seconds) || seconds <= 0) {
-      el.textContent = "00:00:00";   // or "Now!" if you prefer
-      el.dataset.seconds = 0;
-      return;
-    }
-
-    seconds--;   // decrease first
-    el.dataset.seconds = seconds;
-
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    el.textContent =
-      String(hours).padStart(2, '0') + ":" +
-      String(minutes).padStart(2, '0') + ":" +
-      String(secs).padStart(2, '0');
-  });
-}
-
-
-document.addEventListener('DOMContentLoaded', function () {
-  setInterval(updateCountdown, 1000);
-  updateCountdown();
-});
 </script>
 
 {% endblock %}

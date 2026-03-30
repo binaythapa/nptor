@@ -1,34 +1,53 @@
 {% extends "organizations/admin/base.html" %}
 
 {% block content %}
-{% with org_slug=request.organization.slug %}
 
 <h2 class="title is-4">📝 Assignments</h2>
 
-<a href="{% url 'organizations_admin:assignment_create' slug=org_slug %}"
+<a href="{% url 'organizations_admin:assignment_create' slug=request.organization.slug %}"
    class="button is-primary mb-4">
   ➕ Assign Resource
 </a>
 
-<!-- ================= ANALYTICS ================= -->
+<!-- ================= SEARCH + SORT ================= -->
 
-<div class="box mb-4">
-  <p><strong>Total Assignments:</strong> {{ total_assignments }}</p>
+<form method="get" class="box mb-4">
+  <div class="columns">
 
-  <div class="mt-2">
-    {% for g in group_counts %}
-      <span class="tag is-info mr-2">
-        {{ g.group__name|default:"No Group" }}: {{ g.count }}
-      </span>
-    {% endfor %}
+    <!-- 🔍 SEARCH -->
+    <div class="column is-4">
+      <input type="text"
+             name="search"
+             value="{{ search }}"
+             class="input"
+             placeholder="Search course, group, student...">
+    </div>
+
+    <!-- ↕ SORT -->
+    <div class="column is-3">
+      <div class="select is-fullwidth">
+        <select name="sort">
+          <option value="-assigned_at" {% if sort == "-assigned_at" %}selected{% endif %}>Newest</option>
+          <option value="assigned_at" {% if sort == "assigned_at" %}selected{% endif %}>Oldest</option>
+          <option value="progress" {% if sort == "progress" %}selected{% endif %}>Progress</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="column is-2">
+      <button class="button is-link is-fullwidth">Apply</button>
+    </div>
+
   </div>
-</div>
+</form>
 
 <!-- ================= FILTERS ================= -->
 
 <form method="get" class="box mb-4">
-
   <div class="columns">
+
+    <input type="hidden" name="search" value="{{ search }}">
+    <input type="hidden" name="sort" value="{{ sort }}">
 
     <div class="column">
       <label>Student</label>
@@ -36,7 +55,9 @@
         <select name="student">
           <option value="">All</option>
           {% for s in students %}
-            <option value="{{ s.id }}">{{ s.user.email }}</option>
+            <option value="{{ s.id }}" {% if request.GET.student == s.id|stringformat:"s" %}selected{% endif %}>
+              {{ s.user.email }}
+            </option>
           {% endfor %}
         </select>
       </div>
@@ -48,7 +69,9 @@
         <select name="group">
           <option value="">All</option>
           {% for g in groups %}
-            <option value="{{ g.id }}">{{ g.name }}</option>
+            <option value="{{ g.id }}" {% if request.GET.group == g.id|stringformat:"s" %}selected{% endif %}>
+              {{ g.name }}
+            </option>
           {% endfor %}
         </select>
       </div>
@@ -59,62 +82,52 @@
       <div class="select is-fullwidth">
         <select name="type">
           <option value="">All</option>
-          <option value="course">Course</option>
-          <option value="track">Track</option>
-          <option value="exam">Exam</option>
+          <option value="course" {% if request.GET.type == "course" %}selected{% endif %}>Course</option>
+          <option value="track" {% if request.GET.type == "track" %}selected{% endif %}>Track</option>
+          <option value="exam" {% if request.GET.type == "exam" %}selected{% endif %}>Exam</option>
         </select>
       </div>
     </div>
 
     <div class="column is-flex is-align-items-end">
-      <button class="button is-link">Filter</button>
+      <button class="button is-link is-fullwidth">Apply Filter</button>
     </div>
 
   </div>
-
 </form>
 
-<!-- ================= GROUPED BY RESOURCE ================= -->
+<!-- ================= GROUPED ================= -->
 
-<form method="post" action="{% url 'organizations_admin:assignment_bulk_delete' slug=org_slug %}">
+<form method="post" action="{% url 'organizations_admin:assignment_bulk_delete' slug=request.organization.slug %}">
 {% csrf_token %}
 
 {% for key, resource in grouped_resources.items %}
 
 <details class="box mb-5" open>
 
-  <!-- HEADER -->
   <summary class="is-flex is-justify-content-space-between is-align-items-center">
-
     <span class="title is-5">
-
-      {% if resource.type == "course" %}
-        📘 {{ resource.title }}
-      {% elif resource.type == "track" %}
-        🧭 {{ resource.title }}
-      {% elif resource.type == "exam" %}
-        🧪 {{ resource.title }}
-      {% endif %}
-
+      {% if resource.type == "course" %}📘{% elif resource.type == "track" %}🧭{% else %}🧪{% endif %}
+      {{ resource.title }}
     </span>
 
     <span class="tag is-info">
       {{ resource.assignments|length }} assignments
     </span>
-
   </summary>
 
-  <!-- TABLE -->
+  {% if resource.assignments %}
   <table class="table is-fullwidth is-striped is-hoverable mt-3">
 
     <thead>
       <tr>
-        <th>
-          <input type="checkbox" onclick="toggleResource(this, '{{ key }}')">
-        </th>
+        <th><input type="checkbox" onclick="toggleResource(this, '{{ key }}')"></th>
         <th>Assigned To</th>
-        <th>Type</th>
         <th>Users</th>
+        <th>Progress</th>
+        <th>Status</th>
+        <th>Deadline</th>
+        <th>Version</th>
         <th>Date</th>
         <th></th>
       </tr>
@@ -122,17 +135,12 @@
 
     <tbody>
       {% for a in resource.assignments %}
-      <tr>
+      <tr {% if a.deadline and a.deadline < now %}style="background:#fff5f5;"{% endif %}>
 
-        <!-- CHECKBOX -->
         <td>
-          <input type="checkbox"
-                 name="assignment_ids"
-                 value="{{ a.id }}"
-                 class="checkbox-{{ key }}">
+          <input type="checkbox" name="assignment_ids" value="{{ a.id }}" class="checkbox-{{ key }}">
         </td>
 
-        <!-- TARGET -->
         <td>
           {% if a.group %}
             👥 {{ a.group.name }}
@@ -141,28 +149,45 @@
           {% endif %}
         </td>
 
-        <!-- TYPE -->
-        <td>
-          <span class="tag is-light">
-            {{ a.resource_type|title }}
-          </span>
-        </td>
-
-        <!-- USERS -->
         <td>
           {% if a.group %}
-            {{ a.group.members.count }} students
+            <span class="tag is-light">{{ a.group.members.count }} students</span>
           {% else %}
             1
           {% endif %}
         </td>
 
-        <!-- DATE -->
+        <td>
+          <progress class="progress is-primary" value="{{ a.avg_progress }}" max="100"></progress>
+          <small>{{ a.avg_progress }}%</small>
+        </td>
+
+        <td>
+          {% if a.is_completed %}
+            <span class="tag is-success">Completed</span>
+          {% elif a.deadline and a.deadline < now %}
+            <span class="tag is-danger">Overdue</span>
+          {% else %}
+            <span class="tag is-warning">In Progress</span>
+          {% endif %}
+        </td>
+
+        <td>
+          {% if a.deadline %}
+            {{ a.deadline|date:"d M Y H:i" }}
+          {% else %}
+            <span class="has-text-grey">No deadline</span>
+          {% endif %}
+        </td>
+
+        <td>
+          <span class="tag is-warning">v{{ a.version }}</span>
+        </td>
+
         <td>{{ a.assigned_at|date:"d M Y" }}</td>
 
-        <!-- REMOVE -->
         <td>
-          <a href="{% url 'organizations_admin:assignment_remove' slug=org_slug assignment_id=a.id %}"
+          <a href="{% url 'organizations_admin:assignment_remove' slug=request.organization.slug assignment_id=a.id %}"
              class="button is-danger is-small">
             Remove
           </a>
@@ -173,31 +198,63 @@
     </tbody>
 
   </table>
+  {% else %}
+    <p class="has-text-grey mt-3">No assignments in this category.</p>
+  {% endif %}
 
 </details>
 
 {% empty %}
-<p class="has-text-grey has-text-centered">No assignments found.</p>
+<p class="has-text-centered has-text-grey">No assignments found.</p>
 {% endfor %}
 
-<button class="button is-danger mt-3"
+<button class="button is-danger mt-3 is-fullwidth"
         onclick="return confirm('Delete selected assignments?')">
-  Bulk Delete
+  🗑 Bulk Delete Selected
 </button>
 
 </form>
+
+<!-- ================= PAGINATION ================= -->
+
+<nav class="pagination is-centered mt-5">
+
+  {% if page_obj.has_previous %}
+    <a class="pagination-previous"
+       href="?page={{ page_obj.previous_page_number }}&search={{ search }}&sort={{ sort }}">
+      Previous
+    </a>
+  {% endif %}
+
+  {% if page_obj.has_next %}
+    <a class="pagination-next"
+       href="?page={{ page_obj.next_page_number }}&search={{ search }}&sort={{ sort }}">
+      Next
+    </a>
+  {% endif %}
+
+  <ul class="pagination-list">
+    {% for num in page_obj.paginator.page_range %}
+      <li>
+        <a class="pagination-link {% if page_obj.number == num %}is-current{% endif %}"
+           href="?page={{ num }}&search={{ search }}&sort={{ sort }}">
+          {{ num }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+
+</nav>
 
 <!-- ================= JS ================= -->
 
 <script>
 function toggleResource(source, key){
   let checkboxes = document.getElementsByClassName("checkbox-" + key);
-
   for(let i=0; i<checkboxes.length; i++){
     checkboxes[i].checked = source.checked;
   }
 }
 </script>
 
-{% endwith %}
 {% endblock %}

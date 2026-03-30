@@ -1,0 +1,206 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+
+<h2 class="title is-4">📊 Assignment Analytics Dashboard</h2>
+
+<!-- ================= FILTERS ================= -->
+
+<form method="get" class="box mb-4">
+  <div class="columns">
+
+    <div class="column">
+      <label>Start Date</label>
+      <input type="date" name="start_date" class="input">
+    </div>
+
+    <div class="column">
+      <label>End Date</label>
+      <input type="date" name="end_date" class="input">
+    </div>
+
+    <div class="column">
+      <label>Group</label>
+      <div class="select is-fullwidth">
+        <select name="group">
+          <option value="">All</option>
+          {% for g in groups %}
+          <option value="{{ g.id }}">{{ g.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="column">
+      <label>Course</label>
+      <div class="select is-fullwidth">
+        <select name="course">
+          <option value="">All</option>
+          {% for c in courses %}
+          <option value="{{ c.id }}">{{ c.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="column is-flex is-align-items-end">
+      <button class="button is-link">Apply</button>
+    </div>
+
+  </div>
+</form>
+
+<!-- ================= EXPORT ================= -->
+
+<a href="?export=csv" class="button is-success mb-4">
+  📤 Export CSV
+</a>
+
+<!-- ================= KPI CARDS ================= -->
+
+<div class="columns is-multiline">
+
+  <div class="column is-3">
+    <div class="box has-text-centered">
+      <p class="heading">Assignments</p>
+      <p class="title">{{ total_assignments }}</p>
+    </div>
+  </div>
+
+  <div class="column is-3">
+    <div class="box has-text-centered">
+      <p class="heading">Students</p>
+      <p class="title">{{ total_users }}</p>
+    </div>
+  </div>
+
+  <div class="column is-3">
+    <div class="box has-text-centered">
+      <p class="heading">Overdue</p>
+      <p class="title has-text-danger">{{ overdue }}</p>
+    </div>
+  </div>
+
+  <div class="column is-3">
+    <div class="box has-text-centered">
+      <p class="heading">Upcoming</p>
+      <p class="title has-text-warning">{{ upcoming }}</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= CHARTS ================= -->
+
+<div class="columns is-multiline">
+
+  <!-- BAR -->
+  <div class="column is-6">
+    <div class="box">
+      <h3 class="title is-5">📘 Assignments per Course</h3>
+      <canvas id="courseChart"></canvas>
+    </div>
+  </div>
+
+  <!-- PIE -->
+  <div class="column is-6">
+    <div class="box">
+      <h3 class="title is-5">🥧 Completion Status</h3>
+      <canvas id="completionChart"></canvas>
+    </div>
+  </div>
+
+  <!-- LINE -->
+  <div class="column is-12">
+    <div class="box">
+      <h3 class="title is-5">📈 Progress Trend (7 Days)</h3>
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= DETAILS ================= -->
+
+<div class="box">
+  <h3 class="title is-5">📘 Top Courses</h3>
+  <ul>
+    {% for c in top_courses %}
+      <li>{{ c.course__title }} ({{ c.count }})</li>
+    {% empty %}
+      <li>No data</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="box">
+  <h3 class="title is-5">📅 Upcoming Deadlines</h3>
+  <ul>
+    {% for a in upcoming_list %}
+      <li>{{ a }} → {{ a.deadline|date:"d M Y H:i" }}</li>
+    {% empty %}
+      <li>No upcoming deadlines</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- ================= CHART JS ================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+// 📊 BAR CHART
+const courseChart = new Chart(document.getElementById("courseChart"), {
+  type: "bar",
+  data: {
+    labels: {{ course_labels|safe }},
+    datasets: [{
+      label: "Assignments",
+      data: {{ course_counts|safe }},
+    }]
+  }
+});
+
+// 🔍 DRILL DOWN
+document.getElementById("courseChart").onclick = function(evt){
+  const points = courseChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+  if(points.length){
+    const index = points[0].index;
+    const courseId = {{ course_ids|safe }}[index];
+
+    window.location.href = "/admin/assignments/?course=" + courseId;
+  }
+};
+
+// 🥧 PIE
+new Chart(document.getElementById("completionChart"), {
+  type: "pie",
+  data: {
+    labels: ["Completed", "Pending"],
+    datasets: [{
+      data: [{{ completed }}, {{ pending }}],
+    }]
+  }
+});
+
+// 📈 LINE
+new Chart(document.getElementById("trendChart"), {
+  type: "line",
+  data: {
+    labels: {{ trend_labels|safe }},
+    datasets: [{
+      label: "Avg Progress %",
+      data: {{ trend_values|safe }},
+      fill: false,
+      tension: 0.3
+    }]
+  }
+});
+
+// ⚡ AUTO REFRESH (30 sec)
+setTimeout(() => location.reload(), 30000);
+
+</script>
+
+{% endblock %}

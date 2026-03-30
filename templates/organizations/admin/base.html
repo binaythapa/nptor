@@ -23,20 +23,16 @@
   <link rel="stylesheet"
         href="{% static 'css/theme.css' %}">
 
-  <!-- EXTRA HEAD (CKEDITOR etc) -->
   {% block head_extra %}{% endblock %}
-
 </head>
 
 <body>
 
-{% with org_slug=request.organization.slug %}
-
-<!-- ================= ORG TOP BAR ================= -->
+<!-- ================= TOP NAV ================= -->
 <nav class="navbar is-light">
   <div class="navbar-brand">
     <a class="navbar-item"
-       href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
+       href="{% url 'organizations_admin:dashboard' slug=request.organization.slug %}">
       🏢 {{ request.organization.name }}
     </a>
   </div>
@@ -66,42 +62,55 @@
       <aside class="column is-3">
         <nav class="menu">
 
+          <!-- ===== ORG ===== -->
           <p class="menu-label">Organization</p>
-
           <ul class="menu-list">
 
             <li>
-              <a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
+              <a href="{% url 'organizations_admin:dashboard' slug=request.organization.slug %}">
                 <i class="fa fa-chart-line mr-1"></i>
                 Dashboard
               </a>
             </li>
 
             <li>
-              <a href="{% url 'organizations_admin:students' slug=org_slug %}">
+              <a href="{% url 'organizations_admin:students' slug=request.organization.slug %}">
                 <i class="fa fa-user-graduate mr-1"></i>
                 Students
               </a>
             </li>
 
             <li>
-              <a href="{% url 'organizations_admin:courses' slug=org_slug %}">
+              <a href="{% url 'organizations_admin:courses' slug=request.organization.slug %}">
                 <i class="fa fa-book mr-1"></i>
                 Courses
               </a>
             </li>
 
             <li>
-              <a href="{% url 'organizations_admin:assignments' slug=org_slug %}">
+              <a href="{% url 'organizations_admin:assignments' slug=request.organization.slug %}">
                 <i class="fa fa-tasks mr-1"></i>
                 Assignments
               </a>
             </li>
 
             <li>
-              <a href="{% url 'organizations_admin:settings' slug=org_slug %}">
+              <a href="{% url 'organizations_admin:settings' slug=request.organization.slug %}">
                 <i class="fa fa-gear mr-1"></i>
                 Settings
+              </a>
+            </li>
+
+          </ul>
+
+          <!-- ===== ANALYTICS ===== -->
+          <p class="menu-label">Analytics</p>
+          <ul class="menu-list">
+
+            <li>
+              <a href="{% url 'organizations_admin:assignment_dashboard' slug=request.organization.slug %}">
+                <i class="fa fa-chart-pie mr-1"></i>
+                Assignment Dashboard
               </a>
             </li>
 
@@ -122,9 +131,6 @@
   </div>
 </section>
 
-{% endwith %}
-
-<!-- EXTRA SCRIPTS -->
 {% block scripts_extra %}{% endblock %}
 
 </body>

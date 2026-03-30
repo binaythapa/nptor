@@ -426,6 +426,12 @@ from core.utils.memory import get_memory_usage_mb
 import logging
 
 logger = logging.getLogger("django")
+from organizations.models.assignment import ResourceAssignment, UserProgress
+from django.utils.timezone import now
+from collections import defaultdict
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+
 
 @login_required
 def student_dashboard(request):
@@ -480,34 +486,26 @@ def student_dashboard(request):
     }
 
     # --------------------------------------------------
-    # ORGANIZATION ASSIGNMENTS
+    # ORGANIZATION RESOURCE ACCESS
     # --------------------------------------------------
-# --------------------------------------------------
-# ORGANIZATION RESOURCE ACCESS
-# --------------------------------------------------
 
     resource_access = (
-    ResourceAccess.objects
-    .filter(
-        user=user,
-        source="organization",
-        is_active=True
-    )
-    .select_related("track", "exam")
+        ResourceAccess.objects
+        .filter(user=user, source="organization", is_active=True)
+        .select_related("track", "exam")
     )
 
     org_track_ids = set()
     org_exam_ids = set()
 
     for access in resource_access:
-
         if access.resource_type == "track" and access.track:
             org_track_ids.add(access.track_id)
-
         elif access.resource_type == "exam" and access.exam:
             org_exam_ids.add(access.exam_id)
+
     # --------------------------------------------------
-    # PRELOAD USER ATTEMPTS (PERFORMANCE)
+    # PRELOAD USER ATTEMPTS
     # --------------------------------------------------
 
     attempts_qs = (
@@ -546,7 +544,6 @@ def student_dashboard(request):
     passed_levels_by_track = defaultdict(set)
 
     for a in attempts_qs:
-
         if a.passed and a.exam.track:
             passed_levels_by_track[a.exam.track_id].add(a.exam.level)
 
@@ -557,14 +554,11 @@ def student_dashboard(request):
     for exam in exams:
 
         track = exam.track
-
         if not track:
             continue
 
         track_sub = track_subs.get(track.id)
         exam_sub = exam_subs.get(exam.id)
-
-        # ---------------- ACCESS LOGIC ----------------
 
         has_valid_subscription = (
             (track_sub and track_sub.is_valid()) or
@@ -584,8 +578,7 @@ def student_dashboard(request):
         if not has_valid_subscription and not has_org_access and not has_expired_subscription:
             continue
 
-        # ---------------- LEVEL LOCK ----------------
-
+        # LEVEL LOCK
         locked = False
         lock_reason = None
 
@@ -594,8 +587,7 @@ def student_dashboard(request):
                 locked = True
                 lock_reason = f"Complete Level {exam.level - 1} to unlock"
 
-        # ---------------- ATTEMPTS ----------------
-
+        # ATTEMPTS
         attempts = [
             a for a in attempts_by_exam.get(exam.id, [])
             if a.submitted_at
@@ -605,16 +597,13 @@ def student_dashboard(request):
 
         last_score = scores[-1] if scores else None
         best_score = max(scores) if scores else None
-
         retry_count = max(0, len(attempts) - 1)
 
         status = None
         is_passed = False
 
         if attempts:
-
             track_map[track]["attempted"] += 1
-
             is_passed = attempts[-1].passed is True
 
             if is_passed:
@@ -624,71 +613,49 @@ def student_dashboard(request):
                 track_map[track]["failed"] += 1
                 status = "failed"
 
-        # ---------------- ACTIVE ATTEMPT ----------------
-
+        # ACTIVE ATTEMPT
         active = next(
-            (a for a in attempts_by_exam.get(exam.id, [])
-             if a.submitted_at is None),
+            (a for a in attempts_by_exam.get(exam.id, []) if a.submitted_at is None),
             None
         )
 
-        # ---------------- COOLDOWN ----------------
-
+        # COOLDOWN
         cooldown_remaining = 0
         can_retake = True
 
         if attempts and not is_passed:
-
             last_attempt = attempts[-1]
-
             cd = getattr(settings, "RETAKE_COOLDOWN_MINUTES", 0)
 
             if cd and last_attempt.submitted_at:
-
-                elapsed = (
-                    timezone.now() - last_attempt.submitted_at
-                ).total_seconds()
-
+                elapsed = (timezone.now() - last_attempt.submitted_at).total_seconds()
                 remaining = (cd * 60) - elapsed
 
                 if remaining > 0:
                     can_retake = False
                     cooldown_remaining = int(remaining)
 
-        # ---------------- ACTION ----------------
-
+        # ACTION
         if has_expired_subscription:
             action = "renew"
-
         elif is_passed:
             action = None
-
         elif active:
             action = "resume"
-
         elif locked:
             action = "locked"
-
         elif not can_retake:
             action = "cooldown"
-
         elif attempts:
             action = "retake"
-
         else:
             action = "start"
 
-        # ---------------- MOCK ATTEMPTS ----------------
-
+        # MOCK ATTEMPTS
         mock_attempts = [
             a for a in attempts_by_exam.get(exam.id, [])
             if a.passed is None and a.submitted_at
         ]
-
-        mock_used = len(mock_attempts)
-        mock_allowed = exam.max_mock_attempts or 0
-
-        # ---------------- APPEND ----------------
 
         track_map[track]["items"].append({
             "exam": exam,
@@ -706,70 +673,71 @@ def student_dashboard(request):
             "track_subscription": track_sub,
             "exam_subscription": exam_sub,
             "mock_attempts": mock_attempts,
-            "mock_used": mock_used,
-            "mock_allowed": mock_allowed,
+            "mock_used": len(mock_attempts),
+            "mock_allowed": exam.max_mock_attempts or 0,
         })
 
     # --------------------------------------------------
-    # ORGANIZATION COURSES (UPDATED FOR ResourceAccess)
+    # ASSIGNMENTS (FIXED)
     # --------------------------------------------------
 
-    resource_access_qs = (
-        ResourceAccess.objects
-        .filter(
+    assignments_qs = ResourceAssignment.objects.filter(
+        organization__members__user=user
+    ).select_related("course", "track", "exam", "group")
+
+    student_assignments = []
+    upcoming_deadlines = []
+
+    for a in assignments_qs:
+
+        # ACCESS CHECK
+        if a.group and not OrganizationMember.objects.filter(
             user=user,
-            resource_type="course",
-            is_active=True,
-            source="organization",
-            organization__isnull=False,
-            course__is_published=True
-        )
-        .select_related("course", "organization")
-        .order_by("-granted_at")
-    )
+            group=a.group,
+            is_active=True
+        ).exists():
+            continue
 
-    org_courses = defaultdict(list)
+        if a.student and a.student != user:
+            continue
 
-    for access in resource_access_qs:
-        org_courses[access.organization].append(access)
-
-    # --------------------------------------------------
-    # PERSONAL COURSE SUBSCRIPTIONS
-    # --------------------------------------------------
-
-    course_subs = (
-        CourseSubscription.objects
-        .filter(user=user, is_active=True)
-        .select_related("course")
-    )
-
-    courses_data = []
-
-    for sub in course_subs:
-
-        course = sub.course
-
-        total_lessons = sum(
-            s.lessons.count()
-            for s in course.sections.all()
+        # PROGRESS
+        progress_qs = UserProgress.objects.filter(
+            user=user,
+            assignment=a
         )
 
-        completed_lessons = LessonProgress.objects.filter(
-            user=user,
-            lesson__section__course=course,
-            completed=True
-        ).count()
+        if progress_qs.exists():
+            avg_progress = sum(p.progress_percent for p in progress_qs) / progress_qs.count()
+            is_completed = all(p.is_completed for p in progress_qs)
+        else:
+            avg_progress = 0
+            is_completed = False
 
-        progress = 0
+        avg_progress = round(avg_progress, 1)
 
-        if total_lessons:
-            progress = int((completed_lessons / total_lessons) * 100)
+        # DEADLINE
+        is_overdue = False
 
-        courses_data.append({
-            "course": course,
-            "progress": progress,
-            "completed": completed_lessons,
-            "total": total_lessons,
+        if a.deadline and a.deadline < timezone.now():
+            is_overdue = True
+
+        # UPCOMING
+        if a.deadline and 0 <= (a.deadline - timezone.now()).total_seconds() <= 172800:
+            upcoming_deadlines.append(a)
+
+        resource_name = (
+            a.course.title if a.course else
+            a.track.title if a.track else
+            a.exam.title if a.exam else "Resource"
+        )
+
+        student_assignments.append({
+            "assignment": a,
+            "name": resource_name,
+            "progress": avg_progress,
+            "completed": is_completed,
+            "is_overdue": is_overdue,
         })
 
     # --------------------------------------------------
@@ -785,7 +753,10 @@ def student_dashboard(request):
             "passed_count": passed_count,
             "failed_count": failed_count,
             "track_map": dict(track_map),
-            "org_courses": dict(org_courses),
-            "courses": courses_data,
+
+            # ✅ NEW
+            "student_assignments": student_assignments,
+            "upcoming_deadlines": upcoming_deadlines,
+            "now": timezone.now(),
         },
     )
