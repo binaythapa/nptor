@@ -137,12 +137,24 @@ class Category(models.Model):
         ordering = ["name"]
 
     def __str__(self):
+        names = []
 
-        # Show hierarchy in admin list
-        if self.parent:
-            return f"{self.parent.name} → {self.name}"
+        # Add domain if exists
+        if self.domain:
+            names.append(self.domain.name)
 
-        return self.name
+        # Traverse parents (top → bottom)
+        current = self
+        hierarchy = []
+
+        while current:
+            hierarchy.append(current.name)
+            current = current.parent
+
+        # Reverse to get root → child order
+        names.extend(reversed(hierarchy))
+
+        return " → ".join(names)
 
     # =====================================================
     # CATEGORY TREE HELPER
