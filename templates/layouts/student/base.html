@@ -3,8 +3,8 @@
 <html lang="en" {% if request.COOKIES.darkmode == '1' %} data-theme="dark"{% endif %}>
 <head>
   <meta charset="utf-8" />
-  <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="32x32">
-  <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="48x48">
+  <link rel="icon" href="{% static 'images/logo.png' %}" sizes="32x32">
+  <link rel="icon" href="{% static 'images/logo.png' %}" sizes="48x48">
 
   <!-- ================= SEO TITLE ================= -->
   <title>
@@ -37,7 +37,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ request.build_absolute_uri }}">
   <meta property="og:image"
-        content="{% block og_image %}{% static 'images/logo.jpg' %}{% endblock %}">
+        content="{% block og_image %}{% static 'images/logo.png' %}{% endblock %}">
 
   <meta name="google-adsense-account" content="ca-pub-5294449232420430">
 
