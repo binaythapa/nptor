@@ -110,13 +110,17 @@ def home(request):
         is_published=True,
         organization__isnull=True,
         exam_type=Exam.ExamType.NORMAL
-    ).select_related(
-        "track",
-        "organization",
-        "category"
-    ).prefetch_related(
-        "categories"
-    ).order_by("LEVEL")
+        ).select_related(
+            "track",
+            "organization",
+            "category"
+        ).prefetch_related(
+            "categories"
+        ).order_by(
+            "-created_at",   # newest first
+            "title",         # alphabetical name
+            "level"          # level ascending
+        )
 
     # =========================================
     # CONTEXT

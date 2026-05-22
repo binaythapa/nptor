@@ -54,3 +54,20 @@ git merge feature/payment-gateway
 git checkout develop
 
 git restore --staged objective_exam/__init__.py
+
+
+
+
+
+####how to push to remote
+
+git remote -v
+
+git push origin main
+
+git push origin develop
+
+
+####sync in cpanel
+
+git pull origin main
