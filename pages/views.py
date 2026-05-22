@@ -119,8 +119,8 @@ def home(request):
         ).order_by(
            
             "title",         # alphabetical name
-            "level" ,         # level ascending
-             "created_at"   # oldest first
+            "level"        # level ascending
+             
         )
 
     # =========================================
