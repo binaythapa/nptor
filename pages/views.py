@@ -120,7 +120,7 @@ def home(request):
            
             "title",         # alphabetical name
             "level" ,         # level ascending
-             "-created_at"   # newest first
+             "created_at"   # oldest first
         )
 
     # =========================================
