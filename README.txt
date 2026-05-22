@@ -22,6 +22,9 @@ git checkout -b develop
 Step 3 — Future Workflow
 git checkout develop
 
+git add . 
+git commit -m "Sorted homepage exams by level"
+
 Step 4 — Move Stable Code to Main
 When everything is tested:
 
