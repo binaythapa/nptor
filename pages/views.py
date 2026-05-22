@@ -116,7 +116,7 @@ def home(request):
         "category"
     ).prefetch_related(
         "categories"
-    ).order_by("-created_at")
+    ).order_by("LEVEL")
 
     # =========================================
     # CONTEXT
