@@ -238,6 +238,7 @@ Show More Tracks
 
 <!-- ================= MOCK EXAMS ================= -->
 <section class="section has-background-light">
+
 <div class="container">
 
 <h2 class="title is-4 has-text-centered mb-5">
@@ -256,20 +257,29 @@ Latest Mock Exams
 
 <div class="exam-content">
 
+<!-- EXAM TITLE -->
 <h3 class="title is-6 exam-title">
 {{ exam.title }}
 </h3>
 
+<!-- LEVEL -->
+<p class="is-size-7 has-text-primary has-text-weight-semibold mb-2">
+Level {{ exam.level }}
+</p>
+
+<!-- QUESTION COUNT -->
 <p class="is-size-7 mb-2">
 {{ exam.question_count }} Questions
 </p>
 
+<!-- DURATION -->
 <p class="is-size-7 mb-3">
 {{ exam.duration_seconds }} Seconds
 </p>
 
 </div>
 
+<!-- LOGIN BUTTON -->
 <a href="{% url 'accounts:request-login-otp' %}"
    class="button is-small is-primary is-fullwidth">
 Login to Attempt
@@ -284,24 +294,35 @@ Login to Attempt
 {% else %}
 
 <div class="column">
+
 <div class="notification is-light has-text-centered">
 📝 Mock exams will be available soon.
 </div>
+
 </div>
 
 {% endif %}
 
 </div>
 
+<!-- SHOW MORE -->
 {% if latest_exams|length > 3 %}
+
 <div class="has-text-centered mt-4">
-<button class="button is-light" onclick="loadMore('exam-item')">
+
+<button class="button is-light"
+        onclick="loadMore('exam-item')">
+
 Show More Exams
+
 </button>
+
 </div>
+
 {% endif %}
 
 </div>
+
 </section>
 
 <!-- ================= TESTIMONIALS ================= -->
