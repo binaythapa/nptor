@@ -117,9 +117,10 @@ def home(request):
         ).prefetch_related(
             "categories"
         ).order_by(
-            "-created_at",   # newest first
+           
             "title",         # alphabetical name
-            "level"          # level ascending
+            "level" ,         # level ascending
+             "-created_at"   # newest first
         )
 
     # =========================================
