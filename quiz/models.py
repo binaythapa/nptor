@@ -660,9 +660,35 @@ class ExamTrackSubscription(BaseSubscription):
             return None
         return max((self.expires_at - timezone.now()).days, 0)
 
+from django.db import models
+
 
 class Exam(models.Model):
-    title = models.CharField(max_length=255)
+
+    # ---------------------------------
+    # EXAM TYPES
+    # ---------------------------------
+    class ExamType(models.TextChoices):
+        NORMAL = "NORMAL", "Normal Exam"
+        COURSE = "COURSE", "Course Exam"
+        MOCK = "MOCK", "Mock Exam"
+        ASSESSMENT = "ASSESSMENT", "Assessment"
+
+    # ---------------------------------
+    # BASIC INFO
+    # ---------------------------------
+    title = models.CharField(
+        max_length=255,
+        db_index=True
+    )
+
+    exam_type = models.CharField(
+        max_length=20,
+        choices=ExamType.choices,
+        default=ExamType.NORMAL,
+        db_index=True,
+        help_text="Defines how this exam is used in the platform."
+    )
 
     organization = models.ForeignKey(
         "organizations.Organization",
@@ -680,29 +706,46 @@ class Exam(models.Model):
         related_name="exams"
     )
 
+    # ---------------------------------
+    # CATEGORY
+    # ---------------------------------
     category = models.ForeignKey(
-        Category,
+        "Category",
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
+        related_name="primary_exams"
     )
 
     categories = models.ManyToManyField(
-        Category,
+        "Category",
         blank=True,
         related_name="exams"
     )
 
-    question_count = models.PositiveIntegerField(default=10)
-    duration_seconds = models.PositiveIntegerField()
+    # ---------------------------------
+    # EXAM CONFIGURATION
+    # ---------------------------------
+    question_count = models.PositiveIntegerField(
+        default=10
+    )
+
+    duration_seconds = models.PositiveIntegerField(
+        help_text="Exam duration in seconds."
+    )
 
     level = models.PositiveIntegerField(
         default=1,
         db_index=True
     )
 
-    passing_score = models.FloatField(default=50.0)
+    passing_score = models.FloatField(
+        default=50.0
+    )
 
+    # ---------------------------------
+    # ACCESS CONTROL
+    # ---------------------------------
     prerequisite_exams = models.ManyToManyField(
         "self",
         symmetrical=False,
@@ -710,10 +753,10 @@ class Exam(models.Model):
         related_name="unlocked_exams"
     )
 
-    # ✅ NEW — FREE / PAID CONTROL
     is_free = models.BooleanField(
         default=True,
-        help_text="If checked, this exam is free"
+        db_index=True,
+        help_text="If enabled, students can access exam for free."
     )
 
     price = models.DecimalField(
@@ -721,7 +764,7 @@ class Exam(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Required only if exam is paid"
+        help_text="Required only for paid exams."
     )
 
     currency = models.CharField(
@@ -729,34 +772,91 @@ class Exam(models.Model):
         default="INR"
     )
 
-    is_published = models.BooleanField(default=False, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    max_mock_attempts = models.PositiveIntegerField(
-        default=3,
-        help_text="Number of mock attempts allowed for this exam (0 = no mock)"
+    # ---------------------------------
+    # PUBLISHING
+    # ---------------------------------
+    is_published = models.BooleanField(
+        default=False,
+        db_index=True
     )
 
-    allow_review = models.BooleanField(
-    default=True,
-    help_text="If enabled, students can review answers before final submission."
-)
-    
-    # ---------------------------------
-    # 🔐 Behavior Helpers (Industry Clean)
-    # ---------------------------------
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
 
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    # ---------------------------------
+    # MOCK SETTINGS
+    # ---------------------------------
+    max_mock_attempts = models.PositiveIntegerField(
+        default=3,
+        help_text="0 means mock attempts disabled."
+    )
+
+    # ---------------------------------
+    # EXAM EXPERIENCE
+    # ---------------------------------
+    allow_review = models.BooleanField(
+        default=True,
+        help_text="Students can review answers before final submission."
+    )
+
+    # ---------------------------------
+    # MODEL META
+    # ---------------------------------
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["exam_type", "is_published"]),
+            models.Index(fields=["organization", "exam_type"]),
+            models.Index(fields=["level"]),
+        ]
+
+    # ---------------------------------
+    # HELPERS
+    # ---------------------------------
+    @property
     def is_practice_mode(self):
         return self.allow_review is True
 
+    @property
     def is_certification_mode(self):
         return self.allow_review is False
 
+    @property
+    def is_course_exam(self):
+        return self.exam_type == self.ExamType.COURSE
+
+    @property
+    def is_normal_exam(self):
+        return self.exam_type == self.ExamType.NORMAL
+
+    @property
+    def is_mock_exam(self):
+        return self.exam_type == self.ExamType.MOCK
+
+    # ---------------------------------
+    # VALIDATION
+    # ---------------------------------
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if not self.is_free and not self.price:
+            raise ValidationError({
+                "price": "Price is required for paid exams."
+            })
+
+        if self.is_free:
+            self.price = None
+
+    # ---------------------------------
+    # STRING REPRESENTATION
+    # ---------------------------------
     def __str__(self):
-        return self.title
-
-
-
+        return f"{self.title} ({self.exam_type})"
 
 from django.db import models
 from django.contrib.auth.models import User

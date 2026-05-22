@@ -42,59 +42,85 @@ from pages.models import Testimonial
 
 def home(request):
 
+    # =========================================
+    # REDIRECT AUTHENTICATED USERS
+    # =========================================
+
     if request.user.is_authenticated:
         return redirect("quiz:dashboard")
 
-    # ================= PLATFORM STATS =================
+    # =========================================
+    # PLATFORM STATS
+    # =========================================
 
     total_questions = Question.objects.active().filter(
-        organization__isnull=True   # 🔥 only public
+        organization__isnull=True
     ).count()
 
+    # ✅ ONLY NORMAL EXAMS
     total_exams = Exam.objects.filter(
         is_published=True,
-        organization__isnull=True   # 🔥 only public
+        organization__isnull=True,
+        exam_type=Exam.ExamType.NORMAL
     ).count()
 
     total_tracks = ExamTrack.objects.filter(
         is_active=True,
-        organization__isnull=True   # 🔥 only public
+        organization__isnull=True
     ).count()
 
     total_students = User.objects.count()
 
     total_study_plans = StudyPlan.objects.count()
 
-    # ================= COURSES =================
+    # =========================================
+    # COURSES
+    # =========================================
 
     courses = Course.objects.filter(
         is_published=True,
         is_public=True,
-        organization__isnull=True   # 🔥 only public
+        organization__isnull=True
     ).order_by("-created_at")
 
-    # ================= TESTIMONIALS =================
+    # =========================================
+    # TESTIMONIALS
+    # =========================================
 
     testimonials = Testimonial.objects.filter(
         is_approved=True,
         is_featured=True
     ).order_by("-created_at")[:6]
 
-    # ================= POPULAR EXAM TRACKS =================
+    # =========================================
+    # POPULAR EXAM TRACKS
+    # =========================================
 
     exam_tracks = ExamTrack.objects.filter(
         is_active=True,
-        organization__isnull=True   # 🔥 only public
+        organization__isnull=True
     ).order_by("-created_at")
 
-    # ================= LATEST MOCK EXAMS =================
+    # =========================================
+    # LATEST MOCK EXAMS
+    # ✅ ONLY NORMAL EXAMS
+    # =========================================
 
     latest_exams = Exam.objects.filter(
         is_published=True,
-        organization__isnull=True   # 🔥 only public
-    ).select_related("track").order_by("-created_at")
+        organization__isnull=True,
+        exam_type=Exam.ExamType.NORMAL
+    ).select_related(
+        "track",
+        "organization",
+        "category"
+    ).prefetch_related(
+        "categories"
+    ).order_by("-created_at")
 
-    # ================= CONTEXT =================
+    # =========================================
+    # CONTEXT
+    # =========================================
 
     context = {
         "testimonials": testimonials,
@@ -106,7 +132,7 @@ def home(request):
         "total_students": total_students,
         "total_study_plans": total_study_plans,
 
-        # Dynamic sections
+        # Dynamic Sections
         "courses": courses,
         "exam_tracks": exam_tracks,
         "latest_exams": latest_exams,
