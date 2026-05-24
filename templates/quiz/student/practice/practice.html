@@ -4,9 +4,12 @@
 {% block head_extra %}
 <style>
 
-/* ================= FIXED RESULT AREA ================= */
+/* =========================================
+   RESULT AREA
+   ========================================= */
+
 #resultArea {
-  min-height: 130px;              /* Reserved space */
+  min-height: 130px;
   opacity: 0;
   transition: opacity 0.25s ease;
 }
@@ -15,35 +18,10 @@
   opacity: 1;
 }
 
+/* =========================================
+   DISABLED STATE
+   ========================================= */
 
-/* ================= FILTER BODY (NO BLINK VERSION) ================= */
-/* ================= FILTER BODY (STABLE COLLAPSIBLE) ================= */
-#filterBody {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(-5px);
-  transition:
-    max-height 0.25s ease,
-    opacity 0.2s ease,
-    transform 0.2s ease;
-  will-change: max-height, opacity;
-}
-
-#filterBody.is-open {
-  max-height: 600px;   /* large enough for content */
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.box.mb-3.p-3 {
-  transition: none !important;
-}
-
-
-
-
-/* ================= DISABLED STATE ================= */
 .is-disabled {
   pointer-events: none;
   opacity: 0.45;
@@ -60,11 +38,13 @@
   color: inherit;
 }
 
+/* =========================================
+   PRACTICE WRAPPER
+   ========================================= */
 
-/* ================= WRAPPER ================= */
 .practice-wrapper {
   width: 100%;
-  padding: 16px;
+  padding: 14px;
 }
 
 .practice-card {
@@ -73,25 +53,27 @@
   margin: 0 auto;
 }
 
+/* =========================================
+   PRACTICE OPTIONS
+   ========================================= */
 
-/* ================= OPTIONS (NO BORDER VERSION) ================= */
-/* ================= OPTIONS ================= */
 .practice-option {
   display: flex;
   align-items: flex-start;
-  gap: 6px;                 /* smaller spacing */
-  padding: 6px 8px;         /* compact padding */
-  border-radius: 6px;
-  margin-bottom: 6px;       /* less vertical gap */
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  margin-bottom: 6px;
   border: 1px solid #e5e7eb;
   cursor: pointer;
-  font-size: 0.82rem;       /* smaller text */
+  font-size: 0.82rem;
   line-height: 1.25;
+  transition: 0.18s ease;
 }
 
 .practice-option input {
   margin-top: 2px;
-  transform: scale(0.9);    /* slightly smaller radio/checkbox */
+  transform: scale(0.9);
 }
 
 .practice-option:hover {
@@ -99,82 +81,170 @@
 }
 
 .practice-option.correct {
-  background: #f0fdf4;      /* very soft green */
-  border-color: #86efac;    /* muted green */
-  color: #065f46;           /* deep readable green */
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #065f46;
 }
 
 .practice-option.wrong {
-  background: #fef7f7;      /* soft pink, not red */
-  border-color: #fca5a5;    /* muted red */
-  color: #7f1d1d;           /* calm dark red */
+  background: #fef7f7;
+  border-color: #fca5a5;
+  color: #7f1d1d;
 }
 
+/* =========================================
+   COMPACT LOGIN NOTICE
+   ========================================= */
 
-/* ================= MOBILE ================= */
-@media (max-width: 768px) {
-
-  .practice-wrapper {
-    padding: 12px;
-  }
-
-  .practice-card {
-    max-width: 100%;
-  }
-
-  .practice-option {
-    padding: 14px;
-    font-size: 0.95rem;
-  }
-
-  .practice-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .practice-actions .button {
-    width: 100%;
-  }
-
-  .practice-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
+.compact-login-note {
+  font-size: 0.72rem;
+  line-height: 1.2;
+  border-radius: 8px;
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
 }
 
+/* =========================================
+   COMPACT FILTER BOX
+   ========================================= */
 
-/* ================= RICH CONTENT (BULLET SAFE) ================= */
+.compact-filter-box {
+  padding: 8px 10px !important;
+  border-radius: 10px;
+  margin-bottom: 10px !important;
+  box-shadow: none !important;
+}
+
+/* =========================================
+   FILTER HEADER
+   ========================================= */
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 4px;
+  min-height: 24px;
+}
+
+.filter-title {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.filter-hint {
+  color: var(--muted);
+  font-size: 0.66rem;
+  margin-left: 3px;
+}
+
+.filter-icon {
+  font-size: 0.7rem;
+  color: var(--muted);
+  line-height: 1;
+}
+
+/* =========================================
+   FILTER BODY
+   ========================================= */
+
+.filter-body {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition:
+    max-height 0.22s ease,
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.filter-body.is-open {
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================================
+   FILTER COLUMNS
+   ========================================= */
+
+.compact-filter-box .columns {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.compact-filter-box .column {
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+/* =========================================
+   FILTER SELECTS
+   ========================================= */
+
+.compact-filter-box .select {
+  width: 100%;
+}
+
+.compact-filter-box .select select {
+  height: 32px !important;
+  min-height: 32px !important;
+  font-size: 0.76rem;
+  border-radius: 7px;
+  padding-left: 10px;
+  padding-right: 30px;
+}
+
+/* =========================================
+   HELP TEXT
+   ========================================= */
+
+.compact-help {
+  margin-top: 4px !important;
+  margin-bottom: 0 !important;
+  font-size: 0.68rem !important;
+  line-height: 1.2;
+}
+
+/* =========================================
+   RICH CONTENT
+   ========================================= */
 
 .rich-content ul {
-    list-style: disc !important;
-    list-style-position: outside;
-    padding-left: 1.5rem !important;
-    margin-left: 0;
-    margin-bottom: 1rem;
+  list-style: disc !important;
+  list-style-position: outside;
+  padding-left: 1.5rem !important;
+  margin-left: 0;
+  margin-bottom: 1rem;
 }
 
 .rich-content ol {
-    list-style: decimal !important;
-    list-style-position: outside;
-    padding-left: 1.5rem !important;
-    margin-left: 0;
-    margin-bottom: 1rem;
+  list-style: decimal !important;
+  list-style-position: outside;
+  padding-left: 1.5rem !important;
+  margin-left: 0;
+  margin-bottom: 1rem;
 }
 
 .rich-content li {
-    display: list-item !important;
-    margin-bottom: 0.4rem;
+  display: list-item !important;
+  margin-bottom: 0.4rem;
 }
 
-/* =====================================
-   DARK MODE OVERRIDES – PRACTICE PAGE
-   ===================================== */
+/* =========================================
+   DARK MODE
+   ========================================= */
 
 :root[data-theme='dark'] .practice-option {
   border-color: rgba(255,255,255,0.15);
   background: transparent;
-  color: #aab5c0 !important;
+  color: #cbd5e1 !important;
 }
 
 :root[data-theme='dark'] .practice-option:hover {
@@ -193,76 +263,114 @@
   color: #fca5a5;
 }
 
-:root[data-theme='dark'] #filterBody {
-  background: transparent;
-}
-
 :root[data-theme='dark'] .box {
   background: var(--card);
   border-color: rgba(255,255,255,0.08);
 }
 
-/* ===============================
-   DARK MODE – SOFT QUESTION TEXT
-================================ */
-
 :root[data-theme='dark'] #practiceContainer p,
 :root[data-theme='dark'] #practiceContainer p *,
 :root[data-theme='dark'] #practiceContainer span,
 :root[data-theme='dark'] #practiceContainer span * {
-  color: #cbd5e1 !important;  /* softer than var(--text) */
+  color: #cbd5e1 !important;
 }
+
+/* Login notice dark mode */
+:root[data-theme='dark'] .compact-login-note {
+  background: rgba(251, 191, 36, 0.12) !important;
+  color: #f3f4f6 !important;
+}
+
+/* Filter dark mode */
+:root[data-theme='dark'] .compact-filter-box {
+  background: var(--card) !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+:root[data-theme='dark'] .filter-title {
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .filter-hint,
+:root[data-theme='dark'] .filter-icon {
+  color: #94a3b8;
+}
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 768px) {
+
+  .practice-wrapper {
+    padding: 10px;
+  }
+
+  .practice-card {
+    max-width: 100%;
+  }
+
+  .practice-option {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  .practice-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .practice-actions .button {
+    width: 100%;
+  }
+
+  .practice-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .compact-filter-box {
+    padding: 7px 8px !important;
+  }
+
+  .compact-filter-box .select select {
+    height: 30px !important;
+    min-height: 30px !important;
+    font-size: 0.74rem;
+  }
+
+  .filter-title {
+    font-size: 0.74rem;
+  }
+
+  .filter-hint {
+    font-size: 0.64rem;
+  }
+}
+
 </style>
-
-
-
-
 
 
 {% endblock %}
 
 {% block content %}
 <div class="box">
-
-
-<!-- ================= HEADER ================= -->
-<div class="practice-header is-flex is-align-items-center is-justify-content-space-between mb-3">
-<h1 class="title is-5 mb-0 has-text-weight-semibold">
-  Practice Basics
-</h1>
-
- <div class="links">
-  <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}"
-     class="{% if is_from_course %}is-disabled{% endif %}"
-     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-    Express
-  </a>
-  <span class="mx-1">|</span>
-  <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"
-     class="{% if is_from_course %}is-disabled{% endif %}"
-     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-    Pro
-  </a>
-</div>
-</div>
-
-
-<!-- Limited Access Message -->
 {% if not user.is_authenticated %}
-  <div class="notification is-light is-warning py-2 px-3 mt-2"
-       style="font-size: 0.75rem; line-height: 1.3;">
+<div class="notification is-warning is-light py-1 px-2 mb-2 compact-login-note">
 
-    <span class="has-text-weight-semibold">
-      Limited access.
-    </span>
+  <span class="has-text-weight-semibold">
+    Limited access.
+  </span>
 
-    <a href="{% url 'accounts:request-login-otp' %}"
-       class="has-text-link has-text-weight-semibold ml-1">
-      Log in
-    </a>
-    to unlock full features.
+  <a href="{% url 'accounts:request-login-otp' %}"
+     class="has-text-link has-text-weight-semibold">
+    Log in
+  </a>
 
-  </div>
+  to unlock full features.
+
+</div>
 {% endif %}
 
 
@@ -690,6 +798,29 @@
 
 
 </div>
+</div>
+
+<!-- ================= HEADER ================= -->
+<div class="practice-header is-flex is-align-items-center is-justify-content-space-between mb-3">
+<h1 class="title is-5 mb-0 has-text-weight-semibold">
+  Practice Basics
+</h1>
+
+ <div class="links">
+  <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}"
+     class="{% if is_from_course %}is-disabled{% endif %}"
+     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+    Express
+  </a>
+  <span class="mx-1">|</span>
+  <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"
+     class="{% if is_from_course %}is-disabled{% endif %}"
+     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+    Pro
+  </a>
+</div>
+
+
 
 
 
