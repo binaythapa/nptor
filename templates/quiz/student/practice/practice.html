@@ -803,10 +803,16 @@
 <!-- ================= HEADER ================= -->
 <div class="practice-header is-flex is-align-items-center is-justify-content-space-between mb-3">
 <h1 class="title is-5 mb-0 has-text-weight-semibold">
-  Practice Basics
+ 
 </h1>
 
  <div class="links">
+  <a href="#"
+     class="{% if is_from_course %}is-disabled{% endif %}"
+     {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+    Basics
+  </a>
+   <span class="mx-1">|</span>
   <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}"
      class="{% if is_from_course %}is-disabled{% endif %}"
      {% if is_from_course %}title="Disabled during course practice"{% endif %}>
