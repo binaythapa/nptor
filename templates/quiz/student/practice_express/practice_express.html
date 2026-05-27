@@ -8,17 +8,7 @@
 <div class="box">
 
   <!-- HEADER -->
-  <div class="is-flex is-align-items-center is-justify-content-space-between mb-3">
-    <h1 class="title is-5 mb-0 has-text-weight-semibold">
-  Practice Express
-</h1>
-
-    <div class="practice-modes">
-      <a href="{% url 'quiz:practice' %}" class="practice-link">Basics</a>
-      <span class="mx-1 has-text-grey">|</span>
-      <a href="{% url 'quiz:exam_list' %}" class="practice-link">Pro</a>
-    </div>
-  </div>
+ 
 
 <!-- Limited Access Message -->
 {% if not user.is_authenticated %}
@@ -174,10 +164,25 @@
 </form>
 
   <div id="feedback" class="notification is-hidden mt-4"></div>
+
+
+  
 </div>
 
 
+ <div class="is-flex is-align-items-center is-justify-content-space-between mb-3">
+    <h1 class="title is-5 mb-0 has-text-weight-semibold">
+  
+</h1>
 
+    <div class="practice-modes">
+      <a href="#" class="practice-link">Express</a>
+      <span class="mx-1 has-text-grey">|</span>
+      <a href="{% url 'quiz:practice' %}" class="practice-link">Basics</a>
+      <span class="mx-1 has-text-grey">|</span>
+      <a href="{% url 'quiz:exam_list' %}" class="practice-link">Pro</a>
+    </div>
+  </div>
 
 
 <!-- END / LIMIT -->
