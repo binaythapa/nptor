@@ -82,6 +82,7 @@ nav a:hover {
     background: #1e3a8a;
     color: #c7d2fe;
 }
+
 .menu-builder:hover {
     background: #2563eb;
     color: white;
@@ -92,6 +93,7 @@ nav a:hover {
     background: #374151;
     color: #e5e7eb;
 }
+
 .menu-edit:hover {
     background: #4b5563;
 }
@@ -101,6 +103,7 @@ nav a:hover {
     background: #065f46;
     color: #d1fae5;
 }
+
 .menu-view:hover {
     background: #047857;
     color: white;
@@ -116,6 +119,7 @@ nav a:hover {
 .logout-link {
     color: #f87171;
 }
+
 .logout-link:hover {
     color: #ef4444;
 }
@@ -142,37 +146,49 @@ hr {
 
     {% block extra_head %}{% endblock %}
 </head>
+
 <body>
 
 <!-- ================= NAVIGATION ================= -->
+
 <nav>
 
     <div class="nav-left">
 
         {% if user.is_authenticated %}
 
-          <!-- GLOBAL -->
-<a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}">
-    ← Back To Home
-</a>
+            <!-- GLOBAL -->
+            <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}">
+                ← Back To Home
+            </a>
 
-<!-- ORG DASHBOARD -->
- <a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}javascript:void(0);{% endif %}"
-             class="py-1 {% if is_from_course %}is-disabled{% endif %}"
-             {% if is_from_course %}title="Disabled during course practice"{% endif %}>
-            <span class="icon is-small mr-1"><i class="fa fa-building"></i></span>
-            Org Dashboard
-          </a>
+            <!-- ORG DASHBOARD -->
+            {% if request.active_org and request.active_org.slug %}
 
-<div class="nav-divider"></div>
+                <a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}javascript:void(0);{% endif %}"
+                   class="py-1 {% if is_from_course %}is-disabled{% endif %}"
+                   {% if is_from_course %}title="Disabled during course practice"{% endif %}>
 
-<!-- INSTRUCTOR -->
-<a href="{% url 'courses:instructor_dashboard' %}">
-    Courses
-</a>
+                    <span class="icon is-small mr-1">
+                        <i class="fa fa-building"></i>
+                    </span>
+
+                    Org Dashboard
+
+                </a>
+
+            {% endif %}
+
+            <div class="nav-divider"></div>
+
+            <!-- INSTRUCTOR -->
+            <a href="{% url 'courses:instructor_dashboard' %}">
+                Courses
+            </a>
 
             <!-- COURSE CONTEXT -->
             {% if course %}
+
                 <div class="course-menu">
 
                     <a href="{% url 'courses:course_builder' course.slug %}"
@@ -191,23 +207,30 @@ hr {
                     </a>
 
                 </div>
+
             {% endif %}
 
             <!-- LESSON CONTEXT -->
             {% if lesson %}
+
                 <div class="nav-divider"></div>
+
                 <a href="{% url 'courses:lesson_edit' lesson.id %}">
                     Edit Lesson
                 </a>
+
             {% endif %}
 
         {% endif %}
+
     </div>
 
     <!-- RIGHT SIDE -->
+
     <div class="nav-right">
 
         {% if user.is_authenticated %}
+
             <span class="nav-user">
                 {{ user.username }}
             </span>
@@ -216,19 +239,26 @@ hr {
                class="logout-link"
                onclick="event.preventDefault();
                         document.getElementById('logout-form').submit();">
+
                 Logout
+
             </a>
 
             <form id="logout-form"
                   method="post"
                   action="{% url 'accounts:logout' %}"
                   style="display:none;">
+
                 {% csrf_token %}
+
             </form>
+
         {% else %}
+
             <a href="{% url 'accounts:request-login-otp' %}">
                 Login
             </a>
+
         {% endif %}
 
     </div>
@@ -238,14 +268,18 @@ hr {
 <!-- ================= MAIN CONTENT ================= -->
 
 <div class="container">
+
     {% block content %}
     {% endblock %}
+
 </div>
 
 <script>
+
 document.body.addEventListener('htmx:configRequest', function(event) {
     event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
 });
+
 </script>
 
 </body>

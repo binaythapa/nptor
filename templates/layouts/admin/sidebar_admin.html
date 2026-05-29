@@ -93,8 +93,7 @@
 
     </ul>
 
-
-     <!-- ================= MOCK ================= -->
+    <!-- ================= MOCK ================= -->
     <p class="menu-label">Mock</p>
     <ul class="menu-list">
       <li>
@@ -107,32 +106,31 @@
       </li>
     </ul>
 
+    <!-- ================= ORGANIZATION ================= -->
+    {% if request.organization and request.organization.slug %}
 
-{% if request.organization %}
+    {% with org_slug=request.organization.slug %}
 
-{% with org_slug=request.organization.slug %}
+    <p class="menu-label">Organization</p>
 
-<p class="menu-label">Organization</p>
+    <ul class="menu-list">
 
-<ul class="menu-list">
+      <li>
+        <a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
+          <span class="icon is-small">
+            <i class="fa fa-building"></i>
+          </span>
+          <span class="menu-text">Organization Dashboard</span>
+        </a>
+      </li>
 
-<li>
-<a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
-<span class="icon is-small">
-<i class="fa fa-building"></i>
-</span>
-<span class="menu-text">Organization Dashboard</span>
-</a>
-</li>
+    </ul>
 
-</ul>
+    {% endwith %}
 
-{% endwith %}
+    {% endif %}
 
-{% endif %}
-
-
-     <!-- ================= Course ================= -->
+    <!-- ================= COURSE ================= -->
     <p class="menu-label">Course</p>
     <ul class="menu-list">
       <li>
@@ -145,8 +143,7 @@
       </li>
     </ul>
 
-
-     <!-- ================= Practice ================= -->
+    <!-- ================= PRACTICE ================= -->
     <p class="menu-label">Practice</p>
     <ul class="menu-list">
       <li>
@@ -159,5 +156,11 @@
       </li>
     </ul>
 
+
+    <p>ORG: {{ request.organization }}</p>
+<p>SLUG: {{ request.organization.slug }}</p>
   </nav>
+
+
+  
 </aside>
