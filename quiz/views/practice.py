@@ -101,10 +101,14 @@ def practice(request):
     if is_from_course:
         from courses.models import Lesson
 
+       
+
+
         lesson = Lesson.objects.select_related(
             "practice_domain",
             "practice_category",
-            "course"
+            "section",
+            "section__course"
         ).filter(
             id=lesson_id
         ).first()
@@ -112,8 +116,15 @@ def practice(request):
     # ================= DETERMINE ORG CONTEXT =================
     org = None
 
-    if is_from_course and lesson and lesson.course:
-        org = lesson.course.organization
+    
+
+    if (
+        is_from_course
+        and lesson
+        and lesson.section
+        and lesson.section.course
+    ):
+        org = lesson.section.course.organization
 
     # ================= PER LESSON RESET =================
     if is_from_course and lesson:
