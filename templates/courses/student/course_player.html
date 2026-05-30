@@ -1,26 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>{{ course.title }}</title>
 <style>
 /* ================= BASE LAYOUT ================= */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #fff;
 }
 
 .layout {
   display: flex;
-  height: 100vh;
+  min-height: calc(100vh - 52px);
 }
 
-/* ================= SIDEBAR ================= */
+/* ================= SIDEBAR (MOBILE-FRIENDLY) ================= */
 .sidebar {
-  width: 300px;
+  width: 280px;
   background: #f8f9fa;
   overflow-y: auto;
   border-right: 1px solid #ddd;
-  padding: 12px;
+  padding: 16px;
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+}
+
+/* Mobile sidebar - hidden by default with hamburger */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -300px;
+    top: 52px;
+    width: 280px;
+    height: calc(100% - 52px);
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    background: #fff;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  /* Overlay when sidebar is open */
+  .sidebar-overlay {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
 }
 
 /* ================= MAIN CONTENT ================= */
@@ -28,111 +72,16 @@ body {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-}
-
-/* ================= LESSON NAV ================= */
-.lesson-link {
-  display: block;
-  padding: 6px 8px;
-  text-decoration: none;
-  color: #333;
-  border-radius: 4px;
-  margin-bottom: 4px;
-}
-
-.lesson-link.active {
-  background: #e9ecef;
-  font-weight: bold;
-}
-
-.lesson-link.completed {
-  color: #2e7d32;
-  font-weight: bold;
-}
-
-/* ================= PROGRESS ================= */
-.progress-box {
-  margin: 10px 0 20px;
-}
-
-/* ================= LESSON CONTENT (CRITICAL) ================= */
-.lesson-content {
-  margin: 20px 0;
-  font-size: 15px;
-  line-height: 1.8;
-  color: #1f2937;
-
-  /* ⭐ PRESERVE SPACES, INDENTATION & LINE BREAKS */
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-/* Paragraph spacing */
-.lesson-content p {
-  margin: 12px 0;
-}
-
-/* Images inside lesson */
-.lesson-content img {
-  display: block;
   max-width: 100%;
-  height: auto;
-  border-radius: 8px;
 }
 
-/* Image alignment helpers */
-.lesson-content .align-left {
-  float: left;
-  margin: 10px 20px 10px 0;
+@media (max-width: 768px) {
+  .content {
+    padding: 16px;
+  }
 }
 
-.lesson-content .align-center {
-  margin: 24px auto;
-}
-
-.lesson-content .align-right {
-  float: right;
-  margin: 10px 0 10px 20px;
-}
-
-/* Image sizing helpers */
-.lesson-content .img-small {
-  width: 30%;
-}
-
-.lesson-content .img-medium {
-  width: 55%;
-}
-
-.lesson-content .img-large {
-  width: 85%;
-}
-
-/* Code blocks */
-.lesson-content pre {
-  background: #0f172a;
-  color: #e5e7eb;
-  padding: 14px;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin: 16px 0;
-}
-
-/* Callout blocks */
-.lesson-callout {
-  padding: 14px 18px;
-  border-left: 4px solid #3b82f6;
-  background: #eff6ff;
-  margin: 20px 0;
-  border-radius: 6px;
-}
-
-.lesson-callout.warning {
-  border-left-color: #f59e0b;
-  background: #fff7ed;
-}
-
-/* ================= TOP NAV ================= */
+/* ================= TOP NAV (MOBILE) ================= */
 .topbar {
   height: 52px;
   background: #1e293b;
@@ -141,80 +90,66 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  gap: 12px;
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .topbar a {
   color: white;
   text-decoration: none;
-  font-size: 18px;
-}
-
-.topbar a:hover {
-  opacity: 0.8;
+  font-size: 20px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .menu-btn {
   cursor: pointer;
-  font-size: 22px;
+  font-size: 24px;
   user-select: none;
-}
-
-/* ================= CELEBRATION ================= */
-.celebration-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
+  background: none;
+  border: none;
+  color: white;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  border-radius: 8px;
 }
 
-.celebration-card {
-  background: white;
-  padding: 40px;
-  width: 420px;
-  border-radius: 12px;
+.menu-btn:active {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Quote rotator - mobile friendly */
+#quote-rotator {
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.9;
+  max-width: 300px;
   text-align: center;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  transition: opacity 0.6s ease;
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.4;
 }
 
-/* ================= BUTTONS ================= */
-.btn-primary {
-  padding: 10px 18px;
-  background: #2e7d32;
-  color: white;
-  border-radius: 5px;
-  text-decoration: none;
-}
-
-.btn-secondary {
-  padding: 10px 18px;
-  background: #e0e0e0;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    left: -320px;
-    top: 52px;
-    height: calc(100% - 52px);
-    z-index: 1000;
-    transition: left 0.3s ease;
-  }
-
-  .sidebar.open {
-    left: 0;
+@media (max-width: 640px) {
+  #quote-rotator {
+    font-size: 10px;
+    max-width: 200px;
   }
 }
 
@@ -223,23 +158,276 @@ body {
     display: none;
   }
 }
-</style>
 
+/* ================= LESSON NAV (BETTER TOUCH) ================= */
+.lesson-link {
+  display: block;
+  padding: 12px 8px;
+  text-decoration: none;
+  color: #333;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  transition: background 0.2s;
+  min-height: 44px;
+  line-height: 1.3;
+}
+
+.lesson-link:active {
+  background: #e0e0e0;
+}
+
+.lesson-link.active {
+  background: #e9ecef;
+  font-weight: 600;
+}
+
+.lesson-link.completed {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+/* ================= PROGRESS ================= */
+.progress-box {
+  margin: 10px 0 20px;
+}
+
+.progress-box strong {
+  font-size: 14px;
+}
+
+.progress-bar {
+  background: #ddd;
+  border-radius: 6px;
+  height: 10px;
+  margin-top: 6px;
+}
+
+.progress-fill {
+  width: {{ progress }}%;
+  background: #4caf50;
+  height: 10px;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+/* ================= LESSON CONTENT ================= */
+.description {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #1f2937;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.description p {
+  margin: 16px 0;
+}
+
+.description img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  margin: 20px auto;
+}
+
+/* Responsive images */
+@media (max-width: 768px) {
+  .description .img-small,
+  .description .img-medium,
+  .description .img-large {
+    width: 100% !important;
+  }
+  
+  .description .align-left,
+  .description .align-right {
+    float: none;
+    margin: 20px auto;
+  }
+}
+
+/* Code blocks */
+.description pre {
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.description code {
+  font-size: 14px;
+}
+
+/* Callout blocks */
+.lesson-callout {
+  padding: 14px 18px;
+  border-left: 4px solid #3b82f6;
+  background: #eff6ff;
+  margin: 20px 0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.lesson-callout.warning {
+  border-left-color: #f59e0b;
+  background: #fff7ed;
+}
+
+/* ================= BUTTONS (LARGE TOUCH TARGETS) ================= */
+.btn-primary,
+.btn-secondary,
+.content a[style*="background"],
+.content button[type="submit"] {
+  min-height: 48px;
+  padding: 12px 20px !important;
+  font-size: 16px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-weight: 600;
+  width: auto;
+}
+
+@media (max-width: 480px) {
+  .btn-primary,
+  .btn-secondary,
+  .content a[style*="background"],
+  .content button[type="submit"] {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.btn-primary:active,
+.content a[style*="background"]:active,
+.content button[type="submit"]:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* ================= VIDEO IFRAME ================= */
+.content iframe {
+  width: 100%;
+  height: auto;
+  min-height: 240px;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .content iframe {
+    min-height: 200px;
+  }
+}
+
+/* ================= CELEBRATION ================= */
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.celebration-card {
+  background: white;
+  padding: 32px 24px;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.celebration-card h1 {
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 480px) {
+  .celebration-card {
+    padding: 24px 20px;
+  }
+  
+  .celebration-card h1 {
+    font-size: 20px;
+  }
+}
+
+/* ================= CERTIFICATE SECTION ================= */
+.certificate-section {
+  margin-top: 40px;
+  text-align: center;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 30px;
+}
+
+/* ================= BETTER TOUCH TARGETS ================= */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Prevent text zoom on input focus for iOS */
+@media (max-width: 768px) {
+  select, textarea, input {
+    font-size: 16px !important;
+  }
+}
+
+/* ================= SCROLLING IMPROVEMENTS ================= */
+.sidebar,
+.content {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ================= SECTION HEADINGS ================= */
+.sidebar h4 {
+  font-size: 15px;
+  margin: 16px 0 8px 0;
+  padding-left: 4px;
+}
+
+/* ================= VIDEO STATUS ================= */
+#video-status {
+  margin-top: 12px;
+  font-size: 14px;
+  padding: 8px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  text-align: center;
+}
+</style>
 </head>
 
 <body>
  
   {% include "components/testimonial_popup.html" %}
+  
 <!-- ================= TOP BAR ================= -->
 <div class="topbar">
   <div class="topbar-left">
-   
+    <!-- Hamburger Menu Button (visible on mobile) -->
+    <button class="menu-btn" id="menuToggle" aria-label="Menu" style="display: none;">☰</button>
 
     <a href="{% url 'quiz:student_dashboard' %}" title="Home">
       🏠
     </a>
 
-    <strong style="font-size:14px;">
+    <strong style="font-size: 14px; line-height: 1.3; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
       {{ course.title }}
     </strong>
   </div>
@@ -247,18 +435,6 @@ body {
 
 <div
   id="quote-rotator"
-  style="
-    font-size:13px;
-    font-style: italic;
-    opacity: 0.9;
-    max-width: 520px;
-    margin: 0 auto;
-    text-align: center;
-    transition: opacity 0.6s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  "
 >
   One lesson today is one step closer to your goal.
 </div>
@@ -267,20 +443,19 @@ body {
   </div>
 </div>
 
-
-
-
+<!-- Sidebar Overlay (for mobile) -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
 
 <div class="layout">
 
   <!-- LEFT: CURRICULUM -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
   
 
     <div class="progress-box">
       <strong>Progress: {{ progress }}%</strong>
-      <div style="background:#ddd; border-radius:6px; height:10px;">
-        <div style="width: {{ progress }}%; background:#4caf50; height:10px; border-radius:6px;"></div>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
       </div>
     </div>
 
@@ -301,21 +476,20 @@ body {
 
   <!-- RIGHT: CONTENT -->
   <div class="content">
-    <h2>{{ lesson.title }}</h2>
+    <h2 style="font-size: 20px; margin-top: 0; word-break: break-word;">{{ lesson.title }}</h2>
 
     <!-- ================= VIDEO ================= -->
  {% if lesson.lesson_type == lesson.TYPE_VIDEO %}
   <iframe
-    width="100%"
-    height="420"
     src="{{ video_embed_url }}?enablejsapi=1&origin={{ request.scheme }}://{{ request.get_host }}"
     frameborder="0"
     allowfullscreen
-    referrerpolicy="strict-origin-when-cross-origin">
+    referrerpolicy="strict-origin-when-cross-origin"
+    loading="lazy">
   </iframe>
 
 
-<p id="video-status" style="margin-top:10px;color:#666;">
+<p id="video-status">
   {% if lesson_progress.completed %}
     ✔ Lesson completed
   {% else %}
@@ -324,17 +498,20 @@ body {
 </p>
 
 {% if lesson_progress.completed and next_lesson %}
-  <div style="margin-top:30px;">
+  <div style="margin-top: 30px;">
     <a
       href="{% url 'courses:course_learn_lesson' course.slug next_lesson.id %}"
       style="
         padding:12px 20px;
         background:#2e7d32;
         color:white;
-        border-radius:6px;
+        border-radius:8px;
         text-decoration:none;
         font-weight:bold;
-        display:inline-block;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
       ">
       ▶ Continue to Next Lesson
     </a>
@@ -353,23 +530,26 @@ body {
   <form
     method="post"
     action="{% url 'courses:mark_lesson_completed' course.slug lesson.id %}"
-    style="margin-top:20px;">
+    style="margin-top: 20px;">
     {% csrf_token %}
     <button
       type="submit"
       style="
-        padding:10px 18px;
+        padding:12px 20px;
         background:#4caf50;
         color:white;
         border:none;
-        border-radius:4px;
+        border-radius:8px;
         cursor:pointer;
+        font-size:16px;
+        font-weight:bold;
+        min-height:48px;
       ">
       ✅ Mark as completed
     </button>
   </form>
 {% else %}
-  <p style="margin-top:20px;color:#2e7d32;font-weight:bold;">
+  <p style="margin-top:20px;color:#2e7d32;font-weight:bold;padding:12px;background:#e8f5e9;border-radius:8px;">
     ✔ Lesson completed
   </p>
 
@@ -381,10 +561,13 @@ body {
           padding:12px 20px;
           background:#2e7d32;
           color:white;
-          border-radius:6px;
+          border-radius:8px;
           text-decoration:none;
           font-weight:bold;
-          display:inline-block;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:8px;
         ">
         ▶ Continue to Next Lesson
       </a>
@@ -393,7 +576,6 @@ body {
 {% endif %}
 
 
-    <!-- ================= QUIZ ================= -->
     <!-- ================= QUIZ ================= -->
 {% elif lesson.lesson_type == lesson.TYPE_QUIZ %}
  <div class="description">
@@ -407,10 +589,13 @@ body {
       padding:12px 20px;
       background:{% if lesson_progress.completed %}#455a64{% else %}#7b1fa2{% endif %};
       color:white;
-      border-radius:6px;
+      border-radius:8px;
       text-decoration:none;
       font-weight:bold;
-      display:inline-block;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
     ">
     {% if lesson_progress.completed %}
       🔁 Re-attempt Quiz
@@ -421,7 +606,7 @@ body {
 
   <!-- COMPLETION STATUS -->
   {% if lesson_progress.completed %}
-    <p style="margin-top:10px;color:#2e7d32;font-weight:bold;">
+    <p style="margin-top:10px;color:#2e7d32;font-weight:bold;padding:12px;background:#e8f5e9;border-radius:8px;">
       ✔ Quiz completed
     </p>
   {% endif %}
@@ -435,10 +620,13 @@ body {
           padding:12px 20px;
           background:#2e7d32;
           color:white;
-          border-radius:6px;
+          border-radius:8px;
           text-decoration:none;
           font-weight:bold;
-          display:inline-block;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:8px;
         ">
         ▶ Continue to Next Lesson
       </a>
@@ -460,10 +648,13 @@ body {
       padding:12px 20px;
       background:{% if lesson_progress.completed %}#455a64{% else %}#1976d2{% endif %};
       color:white;
-      border-radius:6px;
+      border-radius:8px;
       text-decoration:none;
       font-weight:bold;
-      display:inline-block;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
     ">
     {% if lesson_progress.completed %}
       🔁 Re-practice
@@ -474,7 +665,7 @@ body {
 
   <!-- COMPLETION STATUS -->
   {% if lesson_progress.completed %}
-    <p style="margin-top:10px;color:#2e7d32;font-weight:bold;">
+    <p style="margin-top:10px;color:#2e7d32;font-weight:bold;padding:12px;background:#e8f5e9;border-radius:8px;">
       ✔ Practice completed
     </p>
   {% endif %}
@@ -488,10 +679,13 @@ body {
           padding:12px 20px;
           background:#2e7d32;
           color:white;
-          border-radius:6px;
+          border-radius:8px;
           text-decoration:none;
           font-weight:bold;
-          display:inline-block;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:8px;
         ">
         ▶ Continue to Next Lesson
       </a>
@@ -509,16 +703,16 @@ body {
 
     <a
       href="{% url 'courses:course_certificate_pdf' course.slug %}"
-      class="btn-primary">
+      class="btn-primary" style="display: inline-flex; margin: 10px 0;">
       📜 Download Certificate
     </a>
 
-    <br><br>
+    <br>
 
     <button
       type="button"
       onclick="document.getElementById('celebration-modal').style.display='none'"
-      class="btn-secondary">
+      class="btn-secondary" style="margin-top: 10px;">
       Continue
     </button>
   </div>
@@ -528,17 +722,20 @@ body {
 
 <!-- ================= CERTIFICATE (ALWAYS AVAILABLE) ================= -->
 {% if certificate %}
-  <div style="margin-top:40px; text-align:center;">
+  <div class="certificate-section">
     <a
       href="{% url 'courses:course_certificate_pdf' course.slug %}"
       style="
         padding:12px 20px;
         background:#1565c0;
         color:white;
-        border-radius:6px;
+        border-radius:8px;
         text-decoration:none;
         font-weight:bold;
-        display:inline-block;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
       ">
       📜 Download Certificate
     </a>
@@ -608,7 +805,7 @@ const quotes = [
   "Every minute you study is an investment in your future.",
   "Progress, not perfection.",
   "Small effort today → big results tomorrow.",
-  "You don’t need motivation. You need momentum.",
+  "You don't need motivation. You need momentum.",
   "Learn a little more than yesterday.",
   "This lesson is building your next opportunity.",
   "Stay curious. Stay committed.",
@@ -618,13 +815,11 @@ const quotes = [
 let quoteIndex = 0;
 const quoteEl = document.getElementById("quote-rotator");
 
-// change interval (milliseconds)
-const ROTATE_EVERY = 5000; // 10 seconds
+const ROTATE_EVERY = 5000;
 
 setInterval(() => {
   if (!quoteEl) return;
 
-  // fade out
   quoteEl.style.opacity = 0;
 
   setTimeout(() => {
@@ -634,9 +829,61 @@ setInterval(() => {
   }, 600);
 
 }, ROTATE_EVERY);
+
+// ================= MOBILE SIDEBAR TOGGLE =================
+(function() {
+  const menuBtn = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  
+  // Check if we're on mobile
+  function checkMobile() {
+    if (window.innerWidth <= 768) {
+      menuBtn.style.display = 'inline-flex';
+    } else {
+      menuBtn.style.display = 'none';
+      if (sidebar) sidebar.classList.remove('open');
+      if (overlay) overlay.classList.remove('active');
+    }
+  }
+  
+  function openSidebar() {
+    if (sidebar) sidebar.classList.add('open');
+    if (overlay) overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function closeSidebar() {
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  
+  if (menuBtn) {
+    menuBtn.addEventListener('click', openSidebar);
+  }
+  
+  if (overlay) {
+    overlay.addEventListener('click', closeSidebar);
+  }
+  
+  // Close sidebar when a lesson link is clicked (on mobile)
+  if (sidebar) {
+    const links = sidebar.querySelectorAll('.lesson-link');
+    links.forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          setTimeout(closeSidebar, 150);
+        }
+      });
+    });
+  }
+  
+  // Handle resize
+  window.addEventListener('resize', checkMobile);
+  checkMobile();
+})();
 </script>
-
-
 
 </body>
 </html>
