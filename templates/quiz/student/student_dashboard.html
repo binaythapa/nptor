@@ -942,6 +942,8 @@
 
 
 
+
+
     <!-- ===============================
        ORGANIZATION ASSIGNED COURSES
        =============================== -->
@@ -1011,9 +1013,38 @@
 
 
 
+
+
+
 {% if courses %}
 <div class="mb-5">
   <h2 class="title is-4">🎓 My Courses</h2>
+
+
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_courses }}</div>
+      <div class="stat-label">Total Courses</div>
+    </div>
+    <div class="stat-card stat-passed">
+      <div class="stat-value">{{ completed_courses }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card stat-failed">
+      <div class="stat-value">{{ running_courses }}</div>
+      <div class="stat-label">running courses</div>
+    </div>
+
+     <div class="stat-card stat-failed">
+      <div class="stat-value">{{ not_started_courses }}</div>
+      <div class="stat-label">not started courses</div>
+    </div>
+  </div>
+
+
+
 
   <div class="columns is-multiline">
     {% for item in courses %}

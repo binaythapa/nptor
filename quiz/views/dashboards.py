@@ -427,6 +427,11 @@ import logging
 
 logger = logging.getLogger("django")
 
+
+
+
+
+
 @login_required
 def student_dashboard(request):
 
@@ -734,8 +739,8 @@ def student_dashboard(request):
         org_courses[access.organization].append(access)
 
     # --------------------------------------------------
-    # PERSONAL COURSE SUBSCRIPTIONS
-    # --------------------------------------------------
+# PERSONAL COURSE SUBSCRIPTIONS
+# --------------------------------------------------
 
     course_subs = (
         CourseSubscription.objects
@@ -763,7 +768,9 @@ def student_dashboard(request):
         progress = 0
 
         if total_lessons:
-            progress = int((completed_lessons / total_lessons) * 100)
+            progress = int(
+                (completed_lessons / total_lessons) * 100
+            )
 
         courses_data.append({
             "course": course,
@@ -772,6 +779,27 @@ def student_dashboard(request):
             "total": total_lessons,
         })
 
+
+# --------------------------------------------------
+# COURSE SUMMARY STATS
+# --------------------------------------------------
+
+    total_courses = len(courses_data)
+
+    completed_courses = sum(
+        1 for c in courses_data
+        if c["progress"] >= 100
+    )
+
+    running_courses = sum(
+        1 for c in courses_data
+        if 0 < c["progress"] < 100
+    )
+
+    not_started_courses = sum(
+        1 for c in courses_data
+        if c["progress"] == 0
+    )
     # --------------------------------------------------
     # RENDER
     # --------------------------------------------------
@@ -785,7 +813,14 @@ def student_dashboard(request):
             "passed_count": passed_count,
             "failed_count": failed_count,
             "track_map": dict(track_map),
+
             "org_courses": dict(org_courses),
             "courses": courses_data,
+
+            # Course Statistics
+            "total_courses": total_courses,
+            "completed_courses": completed_courses,
+            "running_courses": running_courses,
+            "not_started_courses": not_started_courses,
         },
-    )
+)
