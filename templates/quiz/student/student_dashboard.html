@@ -134,12 +134,24 @@
 }
 
 /* Stats Grid */
+/* Stats Grid */
+.stats-grid-exam {
+  display: grid;
+  grid-template-columns:repeat(3,1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+
 .stats-grid {
   display: grid;
   grid-template-columns:repeat(4,1fr);
   gap: 12px;
   margin-bottom: 32px;
 }
+
+
+
 
 .stat-card {
   background: white;
@@ -680,7 +692,7 @@ Welcome Back,
   </div>
 
   <!-- Stats -->
-  <div class="stats-grid">
+  <div class="stats-grid-exam">
     <div class="stat-card">
       <div class="stat-value">{{ total_attempts }}</div>
       <div class="stat-label">Total Attempts</div>
