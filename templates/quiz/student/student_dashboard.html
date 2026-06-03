@@ -662,7 +662,7 @@
 <div class="container">
   <!-- Header -->
   <div class="header">
-    <h1>Exam Summary</h1>
+    <h1>Exam  Summary</h1>
 
     {% if active_attempt %}
       <div class="active-alert">
@@ -692,60 +692,7 @@
     </div>
   </div>
 
-{% if org_tracks %}
-<div class="mt-4 mb-4">
-  <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
-    🧭 Assigned Exam Tracks
-  </h2>
-
-  {% for org, tracks in org_tracks.items %}
-  <div class="track-section">
-
-    <div class="track-header" style="cursor:default;">
-      <div class="track-title">
-
-        {% if org.logo %}
-          <img src="{{ org.logo.url }}"
-               style="height:28px; border-radius:4px;">
-        {% else %}
-          <span class="track-icon">🏫</span>
-        {% endif %}
-
-        {{ org.name }}
-
-      </div>
-
-      <div class="track-meta">
-        <span class="track-count">
-          {{ tracks|length }} track{{ tracks|length|pluralize }}
-        </span>
-      </div>
-    </div>
-
-    <div class="exams-container">
-
-      {% for track in tracks %}
-      <div class="exam-item">
-
-        <div class="exam-header">
-          <div class="exam-title">
-            {{ track.title }}
-          </div>
-
-          <div class="exam-details">
-            {{ track.exams.count }} Exams
-          </div>
-        </div>
-
-      </div>
-      {% endfor %}
-
-    </div>
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
+  
 
 
 {% if org_tracks %}
@@ -804,142 +751,59 @@
 
 
 
+{% if org_tracks %}
+<div class="mt-4 mb-4">
+  <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
+    🧭 Assigned Exam Tracks
+  </h2>
 
+  {% for org, tracks in org_tracks.items %}
+  <div class="track-section">
 
+    <div class="track-header" style="cursor:default;">
+      <div class="track-title">
 
+        {% if org.logo %}
+          <img src="{{ org.logo.url }}"
+               style="height:28px; border-radius:4px;">
+        {% else %}
+          <span class="track-icon">🏫</span>
+        {% endif %}
 
+        {{ org.name }}
 
+      </div>
 
-    <!-- ===============================
-       ORGANIZATION ASSIGNED COURSES
-       =============================== -->
-  {% if org_courses %}
-    <div class="mt-4 mb-4">
-      <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
-        🎓 Assigned Courses
-      </h2>
-
-      {% for org, accesses in org_courses.items %}
-        <div class="track-section">
-
-          <!-- Org Header -->
-          <div class="track-header" style="cursor:default;">
-            <div class="track-title">
-              {% if org.logo %}
-                <img src="{{ org.logo.url }}"
-                     alt="{{ org.name }}"
-                     style="height:28px; border-radius:4px;">
-              {% else %}
-                <span class="track-icon">🏫</span>
-              {% endif %}
-              {{ org.name }}
-            </div>
-
-            <div class="track-meta">
-              <span class="track-count">
-                {{ accesses|length }} course{{ accesses|length|pluralize }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Courses -->
-          <div class="exams-container">
-            {% for access in accesses %}
-              <div class="exam-item">
-
-                <div class="exam-header">
-                  <div class="exam-title">
-                    {{ access.course.title }}
-                  </div>
-
-                  <div class="exam-details">
-                    Level: {{ access.course.get_level_display }}
-                  </div>
-                </div>
-
-                <div class="action-buttons">
-                 <a href="{% url 'courses:course_learn' access.course.slug %}"
-   class="action-btn btn-primary">
-  Continue Course
-</a>
-
-                </div>
-
-              </div>
-            {% endfor %}
-          </div>
-
-        </div>
-      {% endfor %}
+      <div class="track-meta">
+        <span class="track-count">
+          {{ tracks|length }} track{{ tracks|length|pluralize }}
+        </span>
+      </div>
     </div>
-  {% endif %}
 
+    <div class="exams-container">
 
+      {% for track in tracks %}
+      <div class="exam-item">
 
-{% if courses %}
-<div class="mb-5">
-  <h2 class="title is-4">🎓 My Courses</h2>
+        <div class="exam-header">
+          <div class="exam-title">
+            {{ track.title }}
+          </div>
 
-  <div class="columns is-multiline">
-    {% for item in courses %}
-    <div class="column is-4">
-      <div class="box course-card">
-
-        <!-- Top Section -->
-        <div class="course-content">
-          <h3 class="course-title">
-            {{ item.course.title }}
-          </h3>
-        </div>
-
-        <!-- Bottom Section (Progress + Button Together) -->
-        <div class="course-footer">
-
-          <p class="course-progress">
-            <strong>{{ item.progress }}%</strong>
-            ({{ item.completed }}/{{ item.total }} lessons)
-          </p>
-
-          <progress class="progress is-small is-primary"
-                    value="{{ item.progress }}"
-                    max="100">
-            {{ item.progress }}%
-          </progress>
-
-          {% if item.progress == 100 %}
-            <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-success is-small is-fullwidth is-rounded">
-              ✔ Review Course
-            </a>
-
-          {% elif item.progress > 0 %}
-            <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-primary is-small is-fullwidth is-rounded">
-              ▶ Resume Learning
-            </a>
-
-          {% else %}
-            <a href="{% url 'courses:course_learn' item.course.slug %}"
-               class="button is-link is-small is-fullwidth is-rounded">
-              ▶ Start Course
-            </a>
-          {% endif %}
-
+          <div class="exam-details">
+            {{ track.exams.count }} Exams
+          </div>
         </div>
 
       </div>
+      {% endfor %}
+
     </div>
-    {% endfor %}
   </div>
+  {% endfor %}
 </div>
 {% endif %}
-
-
-
-
-
-
-
 
 
   <!-- Tracks -->
@@ -1072,6 +936,139 @@
     </div>
   </div>
   {% endfor %}
+
+
+
+
+
+
+    <!-- ===============================
+       ORGANIZATION ASSIGNED COURSES
+       =============================== -->
+  {% if org_courses %}
+    <div class="mt-4 mb-4">
+      <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
+        🎓 Assigned Courses
+      </h2>
+
+      {% for org, accesses in org_courses.items %}
+        <div class="track-section">
+
+          <!-- Org Header -->
+          <div class="track-header" style="cursor:default;">
+            <div class="track-title">
+              {% if org.logo %}
+                <img src="{{ org.logo.url }}"
+                     alt="{{ org.name }}"
+                     style="height:28px; border-radius:4px;">
+              {% else %}
+                <span class="track-icon">🏫</span>
+              {% endif %}
+              {{ org.name }}
+            </div>
+
+            <div class="track-meta">
+              <span class="track-count">
+                {{ accesses|length }} course{{ accesses|length|pluralize }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Courses -->
+          <div class="exams-container">
+            {% for access in accesses %}
+              <div class="exam-item">
+
+                <div class="exam-header">
+                  <div class="exam-title">
+                    {{ access.course.title }}
+                  </div>
+
+                  <div class="exam-details">
+                    Level: {{ access.course.get_level_display }}
+                  </div>
+                </div>
+
+                <div class="action-buttons">
+                 <a href="{% url 'courses:course_learn' access.course.slug %}"
+   class="action-btn btn-primary">
+  Continue Course
+</a>
+
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+
+
+
+
+
+{% if courses %}
+<div class="mb-5">
+  <h2 class="title is-4">🎓 My Courses</h2>
+
+  <div class="columns is-multiline">
+    {% for item in courses %}
+    <div class="column is-4">
+      <div class="box course-card">
+
+        <!-- Top Section -->
+        <div class="course-content">
+          <h3 class="course-title">
+            {{ item.course.title }}
+          </h3>
+        </div>
+
+        <!-- Bottom Section (Progress + Button Together) -->
+        <div class="course-footer">
+
+          <p class="course-progress">
+            <strong>{{ item.progress }}%</strong>
+            ({{ item.completed }}/{{ item.total }} lessons)
+          </p>
+
+          <progress class="progress is-small is-primary"
+                    value="{{ item.progress }}"
+                    max="100">
+            {{ item.progress }}%
+          </progress>
+
+          {% if item.progress == 100 %}
+            <a href="{% url 'courses:course_learn' item.course.slug %}"
+               class="button is-success is-small is-fullwidth is-rounded">
+              ✔ Review Course
+            </a>
+
+          {% elif item.progress > 0 %}
+            <a href="{% url 'courses:course_learn' item.course.slug %}"
+               class="button is-primary is-small is-fullwidth is-rounded">
+              ▶ Resume Learning
+            </a>
+
+          {% else %}
+            <a href="{% url 'courses:course_learn' item.course.slug %}"
+               class="button is-link is-small is-fullwidth is-rounded">
+              ▶ Start Course
+            </a>
+          {% endif %}
+
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 </div>
 
 <script>
