@@ -134,11 +134,8 @@
 }
 
 /* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 32px;
+.stats-grid{
+    grid-template-columns:repeat(4,1fr);
 }
 
 .stat-card {
@@ -662,7 +659,10 @@
 <div class="container">
   <!-- Header -->
   <div class="header">
-    <h1>Exam  Summary</h1>
+    <h1>
+Welcome Back,
+{{ request.user.first_name|default:request.user.username }}
+</h1>
 
     {% if active_attempt %}
       <div class="active-alert">
@@ -691,64 +691,6 @@
       <div class="stat-label">Failed</div>
     </div>
   </div>
-
-  
-
-
-{% if org_tracks %}
-<div class="mt-4 mb-4">
-  <h2 style="font-size:18px; font-weight:600; margin-bottom:12px;">
-    🧭 Assigned Exam Tracks
-  </h2>
-
-  {% for org, tracks in org_tracks.items %}
-  <div class="track-section">
-
-    <div class="track-header" style="cursor:default;">
-      <div class="track-title">
-
-        {% if org.logo %}
-          <img src="{{ org.logo.url }}"
-               style="height:28px; border-radius:4px;">
-        {% else %}
-          <span class="track-icon">🏫</span>
-        {% endif %}
-
-        {{ org.name }}
-
-      </div>
-
-      <div class="track-meta">
-        <span class="track-count">
-          {{ tracks|length }} track{{ tracks|length|pluralize }}
-        </span>
-      </div>
-    </div>
-
-    <div class="exams-container">
-
-      {% for track in tracks %}
-      <div class="exam-item">
-
-        <div class="exam-header">
-          <div class="exam-title">
-            {{ track.title }}
-          </div>
-
-          <div class="exam-details">
-            {{ track.exams.count }} Exams
-          </div>
-        </div>
-
-      </div>
-      {% endfor %}
-
-    </div>
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
 
 
 {% if org_tracks %}
@@ -1034,12 +976,12 @@
     </div>
     <div class="stat-card stat-failed">
       <div class="stat-value">{{ running_courses }}</div>
-      <div class="stat-label">running courses</div>
+      <div class="stat-label">In Progress</div>
     </div>
 
      <div class="stat-card stat-failed">
       <div class="stat-value">{{ not_started_courses }}</div>
-      <div class="stat-label">not started courses</div>
+      <div class="stat-label">Not Started</div>
     </div>
   </div>
 
