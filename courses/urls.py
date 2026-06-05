@@ -2,12 +2,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from .views import (
-    student_views,
-    instructor_views,
-    api_views,
-)
-
+from .views import *
 app_name = "courses"
 urlpatterns = [
 
@@ -59,6 +54,15 @@ urlpatterns = [
     path("api/lesson/edit/", api_views.edit_lesson, name="api_edit_lesson"),
 
     path("api/order/update/", api_views.update_order, name="api_update_order"),
+
+
+
+    #=============Certificate============
+    path(
+        "certificate/<str:certificate_id>/",
+        certificate_verify,
+        name="certificate_verify",
+    ),
 
     
 ]

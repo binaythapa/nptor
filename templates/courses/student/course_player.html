@@ -722,6 +722,16 @@ a,
 
 <!-- ================= CERTIFICATE (ALWAYS AVAILABLE) ================= -->
 {% if certificate %}
+<div style="
+background:#e8f5e9;
+padding:12px;
+margin:15px 0;
+border-radius:8px;
+font-weight:600;
+color:#2e7d32;
+">
+🏆 Certificate Earned
+</div> 
   <div class="certificate-section">
     <a
       href="{% url 'courses:course_certificate_pdf' course.slug %}"
@@ -740,6 +750,44 @@ a,
       📜 Download Certificate
     </a>
   </div>
+
+<div style="margin-top:15px;">
+
+<button
+    onclick="copyCertificateLink()"
+    class="btn-secondary">
+    🔗 Copy Certificate Link
+</button>
+
+</div>
+
+<a
+target="_blank"
+class="btn-primary"
+href="https://www.linkedin.com/sharing/share-offsite/?url={{ certificate_url|urlencode }}">
+💼 Share on LinkedIn
+</a>
+
+<a
+target="_blank"
+class="btn-primary"
+href="https://api.whatsapp.com/send?text=I completed {{ course.title }} and earned my certificate! {{ certificate_url }}">
+🟢 WhatsApp
+</a>
+
+<a
+target="_blank"
+class="btn-primary"
+href="https://www.facebook.com/sharer/sharer.php?u={{ certificate_url|urlencode }}">
+📘 Facebook
+</a>
+
+<a
+target="_blank"
+class="btn-primary"
+href="https://twitter.com/intent/tweet?text=I completed {{ course.title }} on NPtor!&url={{ certificate_url|urlencode }}">
+𝕏 Twitter
+</a>
 {% endif %}
 
 
@@ -885,5 +933,18 @@ setInterval(() => {
 })();
 </script>
 
+
+<script>
+function copyCertificateLink() {
+
+    navigator.clipboard.writeText(
+        "{{ certificate_url }}"
+    );
+
+    alert(
+        "Certificate link copied successfully!"
+    );
+}
+</script>
 </body>
 </html>

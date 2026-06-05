@@ -198,7 +198,17 @@ def course_learn(request, slug, lesson_id=None):
 
     from pages.services.testimonials import get_testimonial_context
 
-   
+    from django.urls import reverse
+
+    certificate_url = None
+
+    if certificate:
+        certificate_url = request.build_absolute_uri(
+            reverse(
+                "courses:certificate_verify",
+                args=[certificate.certificate_id]
+            )
+        )
 
     testimonial_context = get_testimonial_context(
         request.user,
@@ -227,6 +237,8 @@ def course_learn(request, slug, lesson_id=None):
             "video_embed_url": video_embed_url,
 
             **testimonial_context,
+
+            "certificate_url": certificate_url,
         }
     )
 
@@ -391,5 +403,24 @@ def subscribe_course(request, course_id):
         sub.save(update_fields=["is_active"])
 
     return redirect("quiz:exam_list")
+
+
+
+from courses.models import CourseCertificate
+
+def certificate_verify(request, certificate_id):
+
+    certificate = get_object_or_404(
+        CourseCertificate,
+        certificate_id=certificate_id
+    )
+
+    return render(
+        request,
+        "courses/student/certificate_verify.html",
+        {
+            "certificate": certificate,
+        }
+    )
 
 

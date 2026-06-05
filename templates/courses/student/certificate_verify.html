@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Verification</title>
+
+    <style>
+
+        body{
+            font-family:Arial,sans-serif;
+            background:#f5f7fa;
+            margin:0;
+            padding:40px;
+        }
+
+        .card{
+            max-width:700px;
+            margin:auto;
+            background:white;
+            padding:40px;
+            border-radius:12px;
+            box-shadow:0 10px 30px rgba(0,0,0,.08);
+            text-align:center;
+        }
+
+        .verified{
+            color:#2e7d32;
+            font-size:22px;
+            font-weight:bold;
+        }
+
+        h1{
+            margin-bottom:25px;
+        }
+
+        .row{
+            margin:15px 0;
+            font-size:18px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>🏆 Certificate Verification</h1>
+
+    <p class="verified">
+        ✓ Verified Certificate
+    </p>
+
+    <hr>
+
+    <div class="row">
+        <strong>Student:</strong>
+        {{ certificate.user.get_full_name|default:certificate.user.username }}
+    </div>
+
+    <div class="row">
+        <strong>Course:</strong>
+        {{ certificate.course.title }}
+    </div>
+
+    <div class="row">
+        <strong>Certificate ID:</strong>
+        {{ certificate.certificate_id }}
+    </div>
+
+    <div class="row">
+        <strong>Issued On:</strong>
+        {{ certificate.issued_at|date:"d M Y" }}
+    </div>
+
+</div>
+
+</body>
+</html>
