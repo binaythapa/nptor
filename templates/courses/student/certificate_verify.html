@@ -1,43 +1,328 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Certificate Verification</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
+<title>Certificate Verification | NPTOR</title>
 
-        body{
-            font-family:Arial,sans-serif;
-            background:#f5f7fa;
-            margin:0;
-            padding:40px;
-        }
+<style>
 
-        .card{
-            max-width:700px;
-            margin:auto;
-            background:white;
-            padding:40px;
-            border-radius:12px;
-            box-shadow:0 10px 30px rgba(0,0,0,.08);
-            text-align:center;
-        }
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
 
-        .verified{
-            color:#2e7d32;
-            font-size:22px;
-            font-weight:bold;
-        }
+body{
+    font-family:Arial,sans-serif;
+    background:#f5f7fa;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
 
-        h1{
-            margin-bottom:25px;
-        }
+.card{
+    width:100%;
+    max-width:850px;
+    background:white;
+    border-radius:16px;
+    padding:40px;
+    box-shadow:0 15px 40px rgba(0,0,0,.08);
+}
 
-        .row{
-            margin:15px 0;
-            font-size:18px;
-        }
+.header{
+    text-align:center;
+    margin-bottom:30px;
+}
 
-    </style>
+.header h1{
+    font-size:36px;
+    color:#1f2937;
+    margin-bottom:15px;
+}
+
+.verified{
+    color:#2e7d32;
+    font-size:24px;
+    font-weight:700;
+}
+
+.badge{
+    display:inline-block;
+    margin-top:12px;
+    background:#e8f5e9;
+    color:#2e7d32;
+    padding:10px 20px;
+    border-radius:50px;
+    font-weight:600;
+}
+
+.details{
+    margin-top:30px;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+    padding:18px 0;
+    border-bottom:1px solid #eee;
+    font-size:18px;
+}
+
+.label{
+    font-weight:700;
+    color:#374151;
+}
+
+.value{
+    color:#111827;
+}
+
+.section-title{
+    margin-top:35px;
+    margin-bottom:15px;
+    font-size:22px;
+    font-weight:700;
+    color:#1f2937;
+}
+
+.info-box{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:20px;
+    margin-top:15px;
+}
+
+.info-box p{
+    margin:8px 0;
+}
+
+.actions{
+    margin-top:35px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    justify-content:center;
+}
+
+.btn{
+    text-decoration:none;
+    padding:12px 20px;
+    border-radius:8px;
+    color:white;
+    font-weight:600;
+    display:inline-block;
+}
+
+.btn-primary{
+    background:#1565c0;
+}
+
+.btn-success{
+    background:#2e7d32;
+}
+
+.footer{
+    margin-top:30px;
+    text-align:center;
+    color:#6b7280;
+    font-size:14px;
+}
+
+@media(max-width:768px){
+
+    .card{
+        padding:25px;
+    }
+
+    .row{
+        flex-direction:column;
+        gap:8px;
+    }
+
+    .header h1{
+        font-size:28px;
+    }
+
+    .verified{
+        font-size:20px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Certificate Verification | NPTOR</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f5f7fa;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.card{
+    width:100%;
+    max-width:850px;
+    background:white;
+    border-radius:16px;
+    padding:40px;
+    box-shadow:0 15px 40px rgba(0,0,0,.08);
+}
+
+.header{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.header h1{
+    font-size:36px;
+    color:#1f2937;
+    margin-bottom:15px;
+}
+
+.verified{
+    color:#2e7d32;
+    font-size:24px;
+    font-weight:700;
+}
+
+.badge{
+    display:inline-block;
+    margin-top:12px;
+    background:#e8f5e9;
+    color:#2e7d32;
+    padding:10px 20px;
+    border-radius:50px;
+    font-weight:600;
+}
+
+.details{
+    margin-top:30px;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+    padding:18px 0;
+    border-bottom:1px solid #eee;
+    font-size:18px;
+}
+
+.label{
+    font-weight:700;
+    color:#374151;
+}
+
+.value{
+    color:#111827;
+}
+
+.section-title{
+    margin-top:35px;
+    margin-bottom:15px;
+    font-size:22px;
+    font-weight:700;
+    color:#1f2937;
+}
+
+.info-box{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:20px;
+    margin-top:15px;
+}
+
+.info-box p{
+    margin:8px 0;
+}
+
+.actions{
+    margin-top:35px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    justify-content:center;
+}
+
+.btn{
+    text-decoration:none;
+    padding:12px 20px;
+    border-radius:8px;
+    color:white;
+    font-weight:600;
+    display:inline-block;
+    transition:.3s;
+}
+
+.btn:hover{
+    opacity:.9;
+    transform:translateY(-2px);
+}
+
+.btn-primary{
+    background:#1565c0;
+}
+
+.btn-success{
+    background:#2e7d32;
+}
+
+.footer{
+    margin-top:30px;
+    text-align:center;
+    color:#6b7280;
+    font-size:14px;
+}
+
+@media(max-width:768px){
+
+    .card{
+        padding:25px;
+    }
+
+    .row{
+        flex-direction:column;
+        gap:8px;
+    }
+
+    .header h1{
+        font-size:28px;
+    }
+
+    .verified{
+        font-size:20px;
+    }
+}
+
+</style>
 
 </head>
 
@@ -45,35 +330,215 @@
 
 <div class="card">
 
+```
+<div class="header">
+
     <h1>🏆 Certificate Verification</h1>
 
-    <p class="verified">
+    <div class="verified">
         ✓ Verified Certificate
-    </p>
-
-    <hr>
-
-    <div class="row">
-        <strong>Student:</strong>
-        {{ certificate.user.get_full_name|default:certificate.user.username }}
     </div>
 
-    <div class="row">
-        <strong>Course:</strong>
-        {{ certificate.course.title }}
-    </div>
-
-    <div class="row">
-        <strong>Certificate ID:</strong>
-        {{ certificate.certificate_id }}
-    </div>
-
-    <div class="row">
-        <strong>Issued On:</strong>
-        {{ certificate.issued_at|date:"d M Y" }}
+    <div class="badge">
+        Authentic Certificate Issued By NPTOR
     </div>
 
 </div>
+
+<div class="details">
+
+    <div class="row">
+        <div class="label">Student</div>
+        <div class="value">
+            {{ certificate.user.get_full_name|default:certificate.user.username }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Course</div>
+        <div class="value">
+            {{ certificate.course.title }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Certificate ID</div>
+        <div class="value">
+            {{ certificate.certificate_id }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Issued On</div>
+        <div class="value">
+            {{ certificate.issued_at|date:"d M Y" }}
+        </div>
+    </div>
+
+</div>
+
+<div class="section-title">
+    LinkedIn / Resume Details
+</div>
+
+<div class="info-box">
+
+    <p>
+        <strong>Credential Name:</strong>
+        {{ certificate.course.title }}
+    </p>
+
+    <p>
+        <strong>Credential ID:</strong>
+        {{ certificate.certificate_id }}
+    </p>
+
+    <p>
+        <strong>Credential URL:</strong><br>
+        {{ request.build_absolute_uri }}
+    </p>
+
+</div>
+
+<div class="actions">
+
+    <a
+        href="{% url 'courses:certificate_download_public' certificate.certificate_id %}"
+        class="btn btn-primary">
+        📜 Download Original Certificate
+    </a>
+
+    <a
+        href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}"
+        target="_blank"
+        class="btn btn-primary">
+        💼 Share on LinkedIn
+    </a>
+
+    <a
+        href="https://api.whatsapp.com/send?text=Verify my certificate: {{ request.build_absolute_uri }}"
+        target="_blank"
+        class="btn btn-success">
+        🟢 Share on WhatsApp
+    </a>
+
+</div>
+
+<div class="footer">
+    This certificate has been verified through the NPTOR certificate verification system.
+</div>
+
+
+</div>
+
+</body>
+</html>
+
+
+    <div class="details">
+
+        <div class="row">
+            <div class="label">Student</div>
+            <div class="value">
+                {{ certificate.user.get_full_name|default:certificate.user.username }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Course</div>
+            <div class="value">
+                {{ certificate.course.title }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Certificate ID</div>
+            <div class="value">
+                {{ certificate.certificate_id }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="label">Issued On</div>
+            <div class="value">
+                {{ certificate.issued_at|date:"d M Y" }}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="section-title">
+        LinkedIn / Resume Details
+    </div>
+
+    <div class="info-box">
+
+        <p>
+            <strong>Credential Name:</strong>
+            {{ certificate.course.title }}
+        </p>
+
+        <p>
+            <strong>Credential ID:</strong>
+            {{ certificate.certificate_id }}
+        </p>
+
+        <p>
+            <strong>Credential URL:</strong><br>
+            {{ request.build_absolute_uri }}
+        </p>
+
+    </div>
+
+    <div class="actions">
+
+        <a
+            href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}"
+            target="_blank"
+            class="btn btn-primary">
+            💼 Share on LinkedIn
+        </a>
+
+        <a
+            href="https://api.whatsapp.com/send?text=Verify my certificate: {{ request.build_absolute_uri }}"
+            target="_blank"
+            class="btn btn-success">
+            🟢 Share on WhatsApp
+        </a>
+
+    </div>
+
+    <div class="footer">
+        This certificate has been verified through the NPTOR certificate verification system.
+    </div>
+
+</div>
+
+<div class="actions">
+
+<a
+    href="{% url 'courses:certificate_download_public' certificate.certificate_id %}"
+    class="btn btn-primary">
+    📜 Download Original Certificate
+</a>
+
+<a
+    href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}"
+    target="_blank"
+    class="btn btn-primary">
+    💼 Share on LinkedIn
+</a>
+
+<a
+    href="https://api.whatsapp.com/send?text=Verify my certificate: {{ request.build_absolute_uri }}"
+    target="_blank"
+    class="btn btn-success">
+    🟢 Share on WhatsApp
+</a>
+```
+
+</div>
+
 
 </body>
 </html>

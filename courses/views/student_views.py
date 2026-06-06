@@ -424,3 +424,35 @@ def certificate_verify(request, certificate_id):
     )
 
 
+# student_views.py
+
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+
+from courses.models import CourseCertificate
+from courses.services.certificate_pdf import generate_certificate_pdf
+
+def certificate_download_public(request, certificate_id):
+
+
+    certificate = get_object_or_404(
+        CourseCertificate,
+        certificate_id=certificate_id
+    )
+
+    pdf_bytes = generate_certificate_pdf(
+        certificate.user,
+        certificate.course,
+        certificate
+    )
+
+    response = HttpResponse(
+        pdf_bytes,
+        content_type="application/pdf"
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{certificate.course.slug}-certificate.pdf"'
+    )
+
+    return response
