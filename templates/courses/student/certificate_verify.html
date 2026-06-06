@@ -53,19 +53,61 @@ body{font-family:'Segoe UI','Inter',system-ui,-apple-system,sans-serif;backgroun
 </div>
 <div class="section-title">📄 LinkedIn & Resume Details</div>
 <div class="info-box">
+    
     <p><strong>Credential Name:</strong> {{ certificate.course.title }}</p>
     <p><strong>Credential ID:</strong> {{ certificate.certificate_id }}</p>
-    <p><strong>Credential URL:</strong><br><span class="credential-url">{{ request.build_absolute_uri }}</span></p>
+    <p><strong>Credential URL:</strong><br><a href="{{ request.build_absolute_uri }}"
+   target="_blank"
+   class="credential-url">
+   {{ request.build_absolute_uri }}
+</a></p>
 </div>
+
+<div class="section-title">
+    📚 Skills & Topics Covered
+</div>
+
+<div class="info-box">
+
+    <p>
+        <strong>Total Sections:</strong>
+        {{ sections|length }}
+    </p>
+
+    <p>
+        <strong>Total Lessons:</strong>
+        {{ total_lessons }}
+    </p>
+
+    <br>
+
+    {% for section in sections %}
+
+        <div style="
+            padding:10px;
+            margin-bottom:8px;
+            background:#fff;
+            border-radius:8px;
+            border:1px solid #e5e7eb;
+        ">
+            ✅ {{ section.title }}
+        </div>
+
+    {% endfor %}
+
+</div>
+
+<div class="footer">
+    ✅ This certificate has been verified through the NPTOR certificate verification system.<br>
+    <span style="font-size:12px;">National Professional Training & Certification Body</span>
+</div>
+
 <div class="actions">
     <a href="/courses/certificate/download/{{ certificate.certificate_id }}/" class="btn btn-primary">📜 Download Certificate</a>
     <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}" target="_blank" class="btn btn-primary">💼 Share on LinkedIn</a>
     <a href="https://api.whatsapp.com/send?text=Verify my certificate: {{ request.build_absolute_uri }}" target="_blank" class="btn btn-success">🟢 Share on WhatsApp</a>
 </div>
-<div class="footer">
-    ✅ This certificate has been verified through the NPTOR certificate verification system.<br>
-    <span style="font-size:12px;">National Professional Training & Certification Body</span>
-</div>
+
 </div>
 </div>
 </body>

@@ -415,11 +415,28 @@ def certificate_verify(request, certificate_id):
         certificate_id=certificate_id
     )
 
+    course = (
+        certificate.course
+    )
+
+    sections = (
+        course.sections
+        .prefetch_related("lessons")
+        .all()
+    )
+
+    total_lessons = sum(
+        section.lessons.count()
+        for section in sections
+    )
+
     return render(
         request,
         "courses/student/certificate_verify.html",
         {
             "certificate": certificate,
+            "sections": sections,
+            "total_lessons": total_lessons,
         }
     )
 
