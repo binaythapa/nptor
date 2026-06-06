@@ -20,7 +20,7 @@ path(
 
 path(
     "certificate/download/<str:certificate_id>/",
-    certificate_download_public,
+    student_views.certificate_download_public,
     name="certificate_download_public",
 ),
 

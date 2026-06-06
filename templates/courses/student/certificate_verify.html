@@ -326,6 +326,7 @@ body{
 
 </head>
 
+
 <body>
 
 <div class="card">
@@ -403,7 +404,7 @@ body{
 <div class="actions">
 
     <a
-        href="{% url 'courses:certificate_download_public' certificate.certificate_id %}"
+        href="/courses/certificate/download/{{ certificate.certificate_id }}/"
         class="btn btn-primary">
         📜 Download Original Certificate
     </a>
@@ -427,118 +428,11 @@ body{
 <div class="footer">
     This certificate has been verified through the NPTOR certificate verification system.
 </div>
-
-
-</div>
-
-</body>
-</html>
-
-
-    <div class="details">
-
-        <div class="row">
-            <div class="label">Student</div>
-            <div class="value">
-                {{ certificate.user.get_full_name|default:certificate.user.username }}
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="label">Course</div>
-            <div class="value">
-                {{ certificate.course.title }}
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="label">Certificate ID</div>
-            <div class="value">
-                {{ certificate.certificate_id }}
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="label">Issued On</div>
-            <div class="value">
-                {{ certificate.issued_at|date:"d M Y" }}
-            </div>
-        </div>
-
-    </div>
-
-    <div class="section-title">
-        LinkedIn / Resume Details
-    </div>
-
-    <div class="info-box">
-
-        <p>
-            <strong>Credential Name:</strong>
-            {{ certificate.course.title }}
-        </p>
-
-        <p>
-            <strong>Credential ID:</strong>
-            {{ certificate.certificate_id }}
-        </p>
-
-        <p>
-            <strong>Credential URL:</strong><br>
-            {{ request.build_absolute_uri }}
-        </p>
-
-    </div>
-
-    <div class="actions">
-
-        <a
-            href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}"
-            target="_blank"
-            class="btn btn-primary">
-            💼 Share on LinkedIn
-        </a>
-
-        <a
-            href="https://api.whatsapp.com/send?text=Verify my certificate: {{ request.build_absolute_uri }}"
-            target="_blank"
-            class="btn btn-success">
-            🟢 Share on WhatsApp
-        </a>
-
-    </div>
-
-    <div class="footer">
-        This certificate has been verified through the NPTOR certificate verification system.
-    </div>
-
-</div>
-
-<div class="actions">
-
-<a
-    href="{% url 'courses:certificate_download_public' certificate.certificate_id %}"
-    class="btn btn-primary">
-    📜 Download Original Certificate
-</a>
-
-<a
-    href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}"
-    target="_blank"
-    class="btn btn-primary">
-    💼 Share on LinkedIn
-</a>
-
-<a
-    href="https://api.whatsapp.com/send?text=Verify my certificate: {{ request.build_absolute_uri }}"
-    target="_blank"
-    class="btn btn-success">
-    🟢 Share on WhatsApp
-</a>
 ```
 
 </div>
 
-
 </body>
 </html>
+
+
