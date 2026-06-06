@@ -5,6 +5,10 @@ from reportlab.lib.units import cm
 from reportlab.lib.colors import HexColor, grey
 import textwrap
 
+import qrcode
+
+from reportlab.lib.utils import ImageReader
+
 # -------------------------------------------------
 # TEXT SANITIZER
 # -------------------------------------------------
@@ -56,6 +60,44 @@ def generate_certificate_pdf(user, course, certificate):
     top_margin = height - 1.5 * cm
     bottom_margin = 1.5 * cm
     center_x = width / 2
+
+
+    # ==========================================
+    # CERTIFICATE VERIFICATION URL
+    # ==========================================
+
+    verification_url = (
+        f"https://nptor.com/certificate/"
+        f"{certificate.certificate_id}/"
+    )
+
+    # ==========================================
+    # GENERATE QR CODE
+    # ==========================================
+
+    qr = qrcode.QRCode(
+        version=1,
+        box_size=10,
+        border=2
+    )
+
+    qr.add_data(verification_url)
+    qr.make(fit=True)
+
+    qr_img = qr.make_image(
+        fill_color="black",
+        back_color="white"
+    )
+
+    qr_buffer = BytesIO()
+    qr_img.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+
+    qr_reader = ImageReader(qr_buffer)
+
+
+
+
     
     # ================= BORDER =================
     border_margin = 0.5 * cm
@@ -156,6 +198,23 @@ def generate_certificate_pdf(user, course, certificate):
     c.setFont("Helvetica", 9)
     issue_date = certificate.issued_at.strftime('%d %B %Y')
     c.drawRightString(right_margin - 1*cm, signature_y - 1.7*cm, issue_date)
+
+
+    c.setFont("Helvetica", 8)
+
+    c.drawRightString(
+        right_margin - 1*cm,
+        signature_y - 2.4*cm,
+        "Verification URL"
+    )
+
+    c.setFont("Helvetica", 7)
+
+    c.drawRightString(
+        right_margin - 1*cm,
+        signature_y - 2.8*cm,
+        verification_url
+    )
     
     # ================= DISCLAIMER BOX - 100% CORRECT ALIGNMENT =================
     disclaimer_box_top = bottom_margin + 2.5 * cm
@@ -212,12 +271,52 @@ def generate_certificate_pdf(user, course, certificate):
     c.setFont("Helvetica-Bold", 7)
     c.setFillColor(HexColor('#4A90E2'))
     c.drawCentredString(seal_center_x, seal_center_y - 0.1*cm, "NPC")
+
+
+    c.setFont("Helvetica-Bold", 6)
+
+    c.drawCentredString(
+        seal_center_x,
+        seal_center_y - 0.35 * cm,
+        "VERIFIED"
+    )
     
     # ================= FOOTER =================
     c.setFont("Helvetica", 8)
     c.setFillColor(HexColor('#BDC3C7'))
     footer_text = "This certificate is digitally generated and does not require a physical signature."
     c.drawCentredString(center_x, bottom_margin - 0.3*cm, footer_text)
+
+    # ==========================================
+    # QR CODE
+    # ==========================================
+
+    qr_size = 2.3 * cm
+
+    qr_x = left_margin + 0.5 * cm
+    qr_y = bottom_margin + 0.2 * cm
+
+    c.drawImage(
+        qr_reader,
+        qr_x,
+        qr_y,
+        width=qr_size,
+        height=qr_size,
+        preserveAspectRatio=True,
+        mask="auto"
+    )
+
+    c.setFont("Helvetica", 7)
+    c.setFillColor(HexColor("#666666"))
+
+    c.drawString(
+        qr_x,
+        qr_y - 0.25 * cm,
+        "Scan to verify"
+    )
+
+
+
     
     # Page number
     c.drawCentredString(center_x, bottom_margin - 0.8*cm, "Page 1 of 1")
