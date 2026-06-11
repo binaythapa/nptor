@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.text import slugify
 
 from quiz.models import Category, SubscriptionPlan
-
+from ckeditor_uploader.fields import RichTextUploadingField
 
 # =====================================================
 # COURSE
@@ -22,7 +22,10 @@ class Course(models.Model):
         blank=True
     )
 
-    description = models.TextField()
+    description = RichTextUploadingField(
+        blank=True,
+        help_text="Supports text, images, code blocks, diagrams"
+    )
 
     thumbnail = models.ImageField(
         upload_to="courses/",

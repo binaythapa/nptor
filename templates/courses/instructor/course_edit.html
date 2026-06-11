@@ -3,6 +3,9 @@
 {% block title %}Edit Course{% endblock %}
 
 {% block extra_head %}
+
+{{ form.media }}
+
 <style>
 
 /* ================= PAGE HEADER ================= */
@@ -17,6 +20,7 @@
 .page-header h2 {
     margin: 0;
     font-size: 22px;
+    font-weight: 600;
 }
 
 .back-link {
@@ -32,10 +36,10 @@
 /* ================= FORM CARD ================= */
 
 .form-card {
-    background: #ffffff;
+    background: #fff;
     padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    box-shadow: 0 6px 18px rgba(0,0,0,.05);
     margin-bottom: 25px;
 }
 
@@ -45,7 +49,35 @@
     font-weight: 600;
 }
 
-/* ================= INPUT STYLING ================= */
+/* ================= FORM GROUP ================= */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.help-text {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 0;
+    color: #dc2626;
+    font-size: 13px;
+}
+
+/* ================= INPUTS ================= */
 
 .form-card input[type="text"],
 .form-card input[type="number"],
@@ -58,7 +90,6 @@
     padding: 10px 12px;
     border: 1px solid #d1d5db;
     border-radius: 8px;
-    margin-bottom: 14px;
     font-size: 14px;
 }
 
@@ -67,27 +98,23 @@
 .form-card textarea:focus {
     outline: none;
     border-color: #5624d0;
-    box-shadow: 0 0 0 3px rgba(86,36,208,0.12);
+    box-shadow: 0 0 0 3px rgba(86,36,208,.12);
 }
 
 /* ================= CHECKBOX ================= */
 
-.form-card input[type="checkbox"] {
-    width: auto !important;
-    margin-right: 6px;
-    transform: scale(1.05);
-}
-
-.delete-checkbox {
+.form-check {
     display: flex;
     align-items: center;
-    gap: 6px;
-    color: #b91c1c;
-    margin-top: 8px;
-    font-size: 13px;
+    gap: 10px;
+    margin-top: 12px;
 }
 
-/* ================= SECTION BLOCK ================= */
+.form-check input[type="checkbox"] {
+    width: auto;
+}
+
+/* ================= SECTIONS ================= */
 
 .section-form {
     padding: 18px;
@@ -95,7 +122,6 @@
     border-radius: 10px;
     margin-bottom: 14px;
     background: #f9fafb;
-    transition: all 0.2s ease;
 }
 
 .section-form:hover {
@@ -103,7 +129,15 @@
 }
 
 .order-field {
-    width: 90px;
+    width: 120px;
+}
+
+.delete-checkbox {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #b91c1c;
 }
 
 /* ================= BUTTONS ================= */
@@ -115,7 +149,6 @@
     border-radius: 8px;
     border: none;
     cursor: pointer;
-    font-weight: 500;
 }
 
 .btn-primary:hover {
@@ -135,7 +168,8 @@
     background: #f3f0ff;
 }
 
-/* Sticky action bar */
+/* ================= ACTION BAR ================= */
+
 .action-bar {
     position: sticky;
     bottom: 0;
@@ -145,8 +179,29 @@
     margin-top: 20px;
 }
 
+/* ================= CKEDITOR ================= */
+
+.django-ckeditor-widget {
+    width: 100%;
+}
+
+.django-ckeditor-widget iframe {
+    min-height: 500px !important;
+}
+
+#cke_id_description {
+    width: 100% !important;
+}
+
+.cke {
+    border-radius: 10px !important;
+    overflow: hidden;
+}
+
 </style>
+
 {% endblock %}
+
 
 {% block content %}
 
@@ -163,34 +218,64 @@
     <!-- ================= COURSE DETAILS ================= -->
 
     <div class="form-card">
-        <h3>Course Details</h3>
+    <h3>Course Details</h3>
 
-        {{ form.title.label_tag }}
-        {{ form.title }}
 
-        {{ form.description.label_tag }}
-        {{ form.description }}
+<div class="form-group">
+    <label>Course Title</label>
+    {{ form.title }}
+    {{ form.title.errors }}
+</div>
 
-        {{ form.category.label_tag }}
-        {{ form.category }}
+<div class="form-group">
+    <label>Course Description</label>
+    {{ form.description }}
+    {{ form.description.errors }}
+</div>
 
-        {{ form.thumbnail.label_tag }}
-        {{ form.thumbnail }}
+<div class="form-group">
+    <label>Category</label>
+    {{ form.category }}
+    {{ form.category.errors }}
+</div>
 
-        {{ form.level.label_tag }}
-        {{ form.level }}
+<div class="form-group">
+    <label>Thumbnail</label>
+    {{ form.thumbnail }}
+    {{ form.thumbnail.errors }}
+</div>
 
-        {{ form.subscription_plans.label_tag }}
-        {{ form.subscription_plans }}
+<div class="form-group">
+    <label>Level</label>
+    {{ form.level }}
+    {{ form.level.errors }}
+</div>
 
-        <div class="delete-checkbox">
-            {{ form.is_public }}
-            <label for="{{ form.is_public.id_for_label }}">
-                Publicly visible
-            </label>
-        </div>
+<div class="form-group">
+    <label>Subscription Plans</label>
+    {{ form.subscription_plans }}
+    {{ form.subscription_plans.errors }}
+</div>
 
-    </div>
+<div class="form-check">
+    {{ form.is_public }}
+    <label for="{{ form.is_public.id_for_label }}">
+        Publicly Visible
+    </label>
+</div>
+
+{% if form.is_published %}
+<div class="form-check">
+    {{ form.is_published }}
+    <label for="{{ form.is_published.id_for_label }}">
+        Published
+    </label>
+</div>
+{% endif %}
+
+
+</div>
+
 
     <!-- ================= SECTIONS ================= -->
 

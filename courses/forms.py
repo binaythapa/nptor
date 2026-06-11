@@ -13,16 +13,16 @@ from .models import Course, CourseSection, Lesson
 class CourseForm(forms.ModelForm):
 
     description = forms.CharField(
-        widget=forms.Textarea(
-            attrs={
-                "rows": 4,
-                "class": "textarea"
-            }
-        )
+        widget=CKEditorUploadingWidget(
+            config_name="default"
+        ),
+        required=False,
+        label="Course Description"
     )
 
     class Meta:
         model = Course
+
         fields = [
             "title",
             "description",
@@ -62,12 +62,16 @@ CourseSectionFormSet = inlineformset_factory(
 class LessonForm(forms.ModelForm):
 
     article_content = forms.CharField(
-        widget=CKEditorUploadingWidget(config_name="default"),
-        required=False
+        widget=CKEditorUploadingWidget(
+            config_name="default"
+        ),
+        required=False,
+        label="Lesson Content"
     )
 
     class Meta:
         model = Lesson
+
         exclude = (
             "section",
             "order",

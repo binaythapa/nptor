@@ -38,9 +38,6 @@ class CourseSectionInline(admin.StackedInline):
     ordering = ("order",)
 
 
-# =========================
-# MAIN ADMINS
-# =========================
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
 
@@ -49,14 +46,12 @@ class CourseAdmin(admin.ModelAdmin):
         "organization",
         "level",
         "is_published",
-       
         "created_at",
     )
 
     list_filter = (
         "organization",
         "is_published",
-        
         "level",
         "created_at",
     )
@@ -75,13 +70,19 @@ class CourseAdmin(admin.ModelAdmin):
 
     fieldsets = (
 
-        ("Basic Info", {
+        ("Basic Information", {
             "fields": (
                 "title",
                 "slug",
                 "description",
                 "category",
                 "thumbnail",
+            ),
+            "description": (
+                "Provide the course title, detailed description, "
+                "category, and thumbnail. The description editor "
+                "supports formatting, images, tables, code blocks, "
+                "and diagrams."
             )
         }),
 
@@ -90,8 +91,8 @@ class CourseAdmin(admin.ModelAdmin):
                 "organization",
             ),
             "description": (
-                "Leave empty for public/platform courses. "
-                "Select an organization for org-owned courses."
+                "Leave empty for platform/public courses. "
+                "Select an organization for organization-owned courses."
             )
         }),
 
@@ -100,12 +101,17 @@ class CourseAdmin(admin.ModelAdmin):
                 "level",
                 "subscription_plans",
                 "is_published",
-                
+            ),
+            "description": (
+                "Configure course difficulty level, subscription access, "
+                "and publication status."
             )
         }),
 
-        ("Meta", {
-            "fields": ("created_at",),
+        ("Metadata", {
+            "fields": (
+                "created_at",
+            ),
         }),
     )
 
