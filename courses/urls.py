@@ -117,10 +117,20 @@ path(
 # ==================================================
 
 path(
+    "api/categories-by-domain/",
+    api_views.get_categories_by_domain,
+    name="categories_by_domain"
+),
+
+
+path(
     "api/section/create/",
     api_views.create_section,
     name="api_create_section"
 ),
+
+
+
 
 path(
     "api/section/delete/<int:section_id>/",
@@ -152,6 +162,8 @@ path(
     name="api_update_order"
 ),
 
+
+
 # ==================================================
 # COURSE DETAIL (KEEP LAST)
 # ==================================================
@@ -168,3 +180,6 @@ urlpatterns += static(
 settings.MEDIA_URL,
 document_root=settings.MEDIA_ROOT
 )
+
+
+

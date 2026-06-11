@@ -310,3 +310,26 @@ def update_order(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+    
+
+
+from django.http import JsonResponse
+from quiz.models import Category
+
+
+def get_categories_by_domain(request):
+
+    domain_id = request.GET.get("domain_id")
+
+    categories = Category.objects.filter(
+        domain_id=domain_id,
+        is_active=True
+    ).values(
+        "id",
+        "name"
+    )
+
+    return JsonResponse(
+        list(categories),
+        safe=False
+    )

@@ -232,6 +232,14 @@
     background: #f8fafc !important;
 }
 
+
+.form-card select:disabled {
+background: #f3f4f6;
+cursor: not-allowed;
+opacity: 0.8;
+}
+
+
 </style>
 
 {% endblock %}
@@ -279,12 +287,30 @@
     </div>
 
     <div class="form-group">
-        <label for="{{ form.category.id_for_label }}">
-            Category
-        </label>
-        {{ form.category }}
-        {{ form.category.errors }}
-    </div>
+    <label for="{{ form.domain.id_for_label }}">
+        Domain
+    </label>
+
+
+{{ form.domain }}
+
+{{ form.domain.errors }}
+
+
+</div>
+
+<div class="form-group">
+    <label for="{{ form.category.id_for_label }}">
+        Category
+    </label>
+
+{{ form.category }}
+
+{{ form.category.errors }}
+
+
+</div>
+
 
     <div class="form-group">
         <label for="{{ form.thumbnail.id_for_label }}">
@@ -420,6 +446,60 @@ function removeSection(button) {
     totalFormsInput.value =
         document.querySelectorAll(".section-form").length;
 }
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const domainSelect =
+        document.getElementById("id_domain");
+
+    const categorySelect =
+        document.getElementById("id_category");
+
+    console.log("Domain Select:", domainSelect);
+    console.log("Category Select:", categorySelect);
+
+    if (!domainSelect || !categorySelect) {
+        console.log("Dropdowns not found");
+        return;
+    }
+
+    domainSelect.addEventListener("change", function () {
+
+        const domainId = this.value;
+
+        console.log("Selected Domain:", domainId);
+
+        fetch(
+            `/courses/api/categories-by-domain/?domain_id=${domainId}`
+        )
+        .then(response => response.json())
+        .then(data => {
+
+            console.log("API Response:", data);
+
+            categorySelect.innerHTML =
+                '<option value="">Select Category</option>';
+
+            data.forEach(function(category) {
+
+                categorySelect.innerHTML += `
+                    <option value="${category.id}">
+                        ${category.name}
+                    </option>
+                `;
+            });
+
+            categorySelect.disabled = false;
+        })
+        .catch(error => {
+            console.error(error);
+        });
+
+    });
+
+});
 
 </script>
 

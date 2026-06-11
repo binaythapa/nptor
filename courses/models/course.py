@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
 
-from quiz.models import Category, SubscriptionPlan
+from quiz.models import Category, SubscriptionPlan, Domain
 from ckeditor_uploader.fields import RichTextUploadingField
 
 # =====================================================
@@ -33,14 +33,24 @@ class Course(models.Model):
         blank=True
     )
 
+
+    domain = models.ForeignKey(
+        Domain,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="courses"
+        )
+
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="courses"
-    )
+        )
 
+   
     level = models.CharField(
         max_length=20,
         choices=[

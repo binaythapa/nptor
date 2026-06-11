@@ -4,11 +4,7 @@ from django.forms import inlineformset_factory
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 from .models import Course, CourseSection, Lesson
-
-
-# =====================================================
-# COURSE FORM
-# =====================================================
+from quiz.models import Category, Domain
 
 class CourseForm(forms.ModelForm):
 
@@ -16,8 +12,7 @@ class CourseForm(forms.ModelForm):
         widget=CKEditorUploadingWidget(
             config_name="default"
         ),
-        required=False,
-        label="Course Description"
+        required=False
     )
 
     class Meta:
@@ -26,6 +21,7 @@ class CourseForm(forms.ModelForm):
         fields = [
             "title",
             "description",
+            "domain",
             "category",
             "thumbnail",
             "level",
@@ -38,7 +34,36 @@ class CourseForm(forms.ModelForm):
             "subscription_plans": forms.CheckboxSelectMultiple(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+        # Create Course page
+        self.fields["category"].queryset = Category.objects.none()
+
+        if "domain" in self.data:
+
+            try:
+                domain_id = int(self.data.get("domain"))
+
+                self.fields["category"].queryset = (
+                    Category.objects.filter(
+                        domain_id=domain_id,
+                        is_active=True
+                    ).order_by("name")
+                )
+
+            except (ValueError, TypeError):
+                pass
+
+        # Edit Course page
+        elif self.instance.pk and self.instance.domain:
+
+            self.fields["category"].queryset = (
+                Category.objects.filter(
+                    domain=self.instance.domain,
+                    is_active=True
+                ).order_by("name")
+            )
 # =====================================================
 # COURSE SECTION FORMSET
 # =====================================================
