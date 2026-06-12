@@ -190,57 +190,186 @@
   </ul>
 </div>
 
-<!-- ================= FILTERS (UNCHANGED) ================= -->
+
+
+
+
+
+
+<!-- ================= FILTERS ================= -->
+
 <form method="get" class="box mb-4">
+
+
 <input type="hidden" name="tab" value="{{ tab }}">
+
 <div class="columns is-multiline">
 
-  <div class="column is-3">
-    <input class="input" name="q" placeholder="Search question..."
-           value="{{ search }}">
-  </div>
+    <!-- Search -->
 
-  <div class="column is-3">
-    <div class="select is-fullwidth">
-      <select name="category">
-        <option value="">All categories</option>
-        {% for cat in categories %}
-          <option value="{{ cat.id }}"
-            {% if cat.id|stringformat:"s" == selected_category %}selected{% endif %}>
-            {{ cat.name }}
-          </option>
-        {% endfor %}
-      </select>
+    <div class="column is-3">
+        <input
+            class="input"
+            name="q"
+            placeholder="Search question..."
+            value="{{ search }}"
+        >
     </div>
-  </div>
 
-  <div class="column is-2">
-    <div class="select is-fullwidth">
-      <select name="difficulty">
-        <option value="">All</option>
-        <option value="easy" {% if selected_difficulty == "easy" %}selected{% endif %}>Easy</option>
-        <option value="medium" {% if selected_difficulty == "medium" %}selected{% endif %}>Medium</option>
-        <option value="hard" {% if selected_difficulty == "hard" %}selected{% endif %}>Hard</option>
-      </select>
+    <!-- Domain -->
+
+    <div class="column is-2">
+        <div class="select is-fullwidth">
+
+            <select
+                name="domain"
+                id="id_domain_filter">
+
+                <option value="">
+                    All Domains
+                </option>
+
+                {% for domain in domains %}
+                <option
+                    value="{{ domain.id }}"
+                    {% if selected_domain == domain.id|stringformat:"s" %}
+                        selected
+                    {% endif %}
+                >
+                    {{ domain.name }}
+                </option>
+                {% endfor %}
+
+            </select>
+
+        </div>
     </div>
-  </div>
 
-  <div class="column is-2">
-    <div class="select is-fullwidth">
-      <select name="status">
-        <option value="">All Status</option>
-        <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
-        <option value="disabled" {% if selected_status == "disabled" %}selected{% endif %}>Disabled</option>
-      </select>
+    <!-- Category -->
+
+    <div class="column is-3">
+        <div class="select is-fullwidth">
+
+            <select
+                name="category"
+                id="id_category_filter">
+
+                <option value="">
+                    All Categories
+                </option>
+
+                {% for cat in categories %}
+                <option
+                    value="{{ cat.id }}"
+                    {% if cat.id|stringformat:"s" == selected_category %}
+                        selected
+                    {% endif %}
+                >
+                    {{ cat.name }}
+                </option>
+                {% endfor %}
+
+            </select>
+
+        </div>
     </div>
-  </div>
 
-  <div class="column is-2">
-    <button class="button is-link is-fullwidth">Filter</button>
-  </div>
+    <!-- Difficulty -->
+
+    <div class="column is-2">
+        <div class="select is-fullwidth">
+
+            <select name="difficulty">
+
+                <option value="">All</option>
+
+                <option
+                    value="easy"
+                    {% if selected_difficulty == "easy" %}
+                        selected
+                    {% endif %}
+                >
+                    Easy
+                </option>
+
+                <option
+                    value="medium"
+                    {% if selected_difficulty == "medium" %}
+                        selected
+                    {% endif %}
+                >
+                    Medium
+                </option>
+
+                <option
+                    value="hard"
+                    {% if selected_difficulty == "hard" %}
+                        selected
+                    {% endif %}
+                >
+                    Hard
+                </option>
+
+            </select>
+
+        </div>
+    </div>
+
+    <!-- Status -->
+
+    <div class="column is-2">
+        <div class="select is-fullwidth">
+
+            <select name="status">
+
+                <option value="">
+                    All Status
+                </option>
+
+                <option
+                    value="active"
+                    {% if selected_status == "active" %}
+                        selected
+                    {% endif %}
+                >
+                    Active
+                </option>
+
+                <option
+                    value="disabled"
+                    {% if selected_status == "disabled" %}
+                        selected
+                    {% endif %}
+                >
+                    Disabled
+                </option>
+
+            </select>
+
+        </div>
+    </div>
+
+    <!-- Filter Button -->
+
+    <div class="column is-2">
+        <button
+            type="submit"
+            class="button is-link is-fullwidth">
+
+            Filter
+
+        </button>
+    </div>
 
 </div>
+
+
 </form>
+
+
+
+
+
 
 <!-- ================= TABLE ================= -->
 <div class="table-container">
@@ -341,6 +470,88 @@ function confirmDelete(e, id) {
     "This action will soft-delete the question and hide it from users."
   );
 }
+
+
+</script>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const domainSelect =
+        document.getElementById("id_domain_filter");
+
+    const categorySelect =
+        document.getElementById("id_category_filter");
+
+    if (!domainSelect || !categorySelect) {
+        return;
+    }
+
+    domainSelect.addEventListener("change", function () {
+
+        const domainId = this.value;
+
+        categorySelect.innerHTML =
+            '<option value="">Loading...</option>';
+
+        if (!domainId) {
+
+            categorySelect.innerHTML =
+                '<option value="">All Categories</option>';
+
+            return;
+        }
+
+        fetch(
+            `/courses/api/categories-by-domain/?domain_id=${domainId}`
+        )
+        .then(response => response.json())
+        .then(data => {
+
+            categorySelect.innerHTML =
+                '<option value="">All Categories</option>';
+
+            data.forEach(function(category) {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = category.id;
+                option.textContent = category.name;
+
+                categorySelect.appendChild(option);
+            });
+
+        });
+
+    });
+
+});
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const filterFields = document.querySelectorAll(
+        'input[name="q"], select[name="domain"], select[name="category"], select[name="difficulty"], select[name="status"]'
+    );
+
+    filterFields.forEach(field => {
+
+        field.addEventListener("change", function () {
+
+            document.querySelector("form").submit();
+
+        });
+
+    });
+
+});
+
 </script>
 
 {% endblock %}

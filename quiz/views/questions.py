@@ -9,7 +9,7 @@ from quiz.forms import QuestionForm
 
 from django.http import JsonResponse
 from django.template.loader import render_to_string
-from quiz.models import Category
+from quiz.models import *
 from django.views.decorators.http import require_GET, require_POST
 
 
@@ -79,11 +79,18 @@ def question_dashboard(request):
     # ================= FILTERS =================
     search = request.GET.get("q", "")
     if search:
-        questions = questions.filter(text__icontains=search)
+        questions = questions.filter(text__icontains=search)    
 
     category = request.GET.get("category", "")
     if category:
         questions = questions.filter(category_id=category)
+
+
+    domain = request.GET.get("domain", "")
+    if domain:
+        questions = questions.filter(
+            category__domain_id=domain
+        )
 
     difficulty = request.GET.get("difficulty", "")
     if difficulty:
@@ -175,10 +182,22 @@ def question_dashboard(request):
     )
 
     # ================= CATEGORIES =================
-    categories = (
-        Category.objects
-        .filter(questions__is_deleted=False)
-        .distinct()
+    categories = Category.objects.none()
+
+    if domain:
+        categories = (
+            Category.objects
+            .filter(
+                domain_id=domain,
+                is_active=True
+            )
+            .order_by("name")
+        )
+
+
+    domains = (
+        Domain.objects
+        .filter(is_active=True)
         .order_by("name")
     )
 
@@ -225,6 +244,9 @@ def question_dashboard(request):
 
         "tab": tab,
         "needs_review_count": needs_review_count,
+
+        "domains": domains,
+        "selected_domain": domain,
     }
 
     return render(
@@ -232,6 +254,16 @@ def question_dashboard(request):
         "quiz/admin/questions/dashboard.html",
         context
     )
+
+
+
+
+
+
+
+
+
+
 # views/questions.py
 
 from django.forms import inlineformset_factory
