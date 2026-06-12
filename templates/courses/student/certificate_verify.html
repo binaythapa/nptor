@@ -41,27 +41,49 @@ body{
     z-index:2;
 }
 
-/* ================= WATERMARKS ================= */
+/* ================= OFFICIAL STAMP ================= */
 
-.verified-watermark{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%) rotate(-30deg);
+.verified-watermark {
+    position: absolute;
+    top: 35px;
+    right: 40px;
+    
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    width: 100px;
+    height: 100px;
+    border: 3px double #2a7f49;
+    border-radius: 50%;
+    
+    transform: rotate(-15deg);
+    
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.2;
+    
+    color: #2a7f49;
+    opacity: 0.25;
+    
+    pointer-events: none;
+    user-select: none;
+    z-index: 3;
+}
 
-    font-size:140px;
-    font-weight:900;
-    letter-spacing:12px;
-    text-transform:uppercase;
-
-    color:#2a7f49;
-    opacity:0.06;
-
-    pointer-events:none;
-    user-select:none;
-
-    z-index:3; /* Raised above background containers */
-    white-space:nowrap;
+.verified-watermark::after {
+    content: "OFFICIAL";
+    font-size: 9px;
+    font-weight: 600;
+    opacity: 0.8;
+    border-top: 1px solid #2a7f49;
+    margin-top: 2px;
+    padding-top: 2px;
+    width: 70%;
 }
 
 /* ================= HEADER ================= */
@@ -242,8 +264,14 @@ body{
 
 @media(max-width:768px){
     .verified-watermark{
-        font-size:70px;
-        letter-spacing:5px;
+        top: 20px;
+        right: 20px;
+        width: 80px;
+        height: 80px;
+        font-size: 9px;
+    }
+    .verified-watermark::after {
+        font-size: 7px;
     }
 }
 
@@ -295,6 +323,7 @@ body{
 <body>
 <div class="card">
 
+    <!-- Small Authentic Ink Stamp -->
     <div class="verified-watermark">
         VERIFIED
     </div>
@@ -314,19 +343,37 @@ body{
             <div class="row"><div class="label">Issued On</div><div class="value">{{ certificate.issued_at|date:"d M Y" }}</div></div>
         </div>
 
-        <div class="section-title">💼 Quick Add to Profile</div>
-        <div class="info-box" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-            <p style="margin: 0; max-width: 500px; display: block; color: #1e3a5f; font-size: 15px;">
-                Easily feature this verified certification directly on your LinkedIn profile or resume using your unique ID: <strong>{{ certificate.certificate_id }}</strong>
+        <div class="section-title">💼 Add to LinkedIn Profile</div>
+        <div class="info-box">
+            <p style="margin-bottom:15px;">
+                Add this certification to your LinkedIn profile using the details below.
             </p>
-           <a href="https://linkedin.com{{ certificate.course.title|urlencode }}&organizationName=NPTOR&certId={{ certificate.certificate_id|urlencode }}&certUrl={{ request.build_absolute_uri|urlencode }}" 
-   target="_blank" 
-   class="btn" 
-   style="margin: 0; background: #0a66c2; color: white; padding: 10px 20px; border-radius: 44px; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center;">
-   + Add to LinkedIn
-</a>
-
+            <p><strong>Certification Name:</strong> {{ certificate.course.title }}</p>
+            <p><strong>Organization:</strong> NPTOR</p>
+            <p><strong>Credential ID:</strong> {{ certificate.certificate_id }}</p>
+            <p><strong>Credential URL:</strong>
+                <a href="{{ request.build_absolute_uri }}" target="_blank">
+                    {{ request.build_absolute_uri }}
+                </a>
+            </p>
+            <button type="button" onclick="copyLinkedInDetails()" class="btn" style="background:#0a66c2; color:#fff; margin-top:15px; cursor: pointer;">
+                📋 Copy LinkedIn Details
+            </button>
         </div>
+
+        <script>
+        function copyLinkedInDetails() {
+            const details = `Certification Name: {{ certificate.course.title|escapejs }}\nOrganization: NPTOR\nCredential ID: {{ certificate.certificate_id|escapejs }}\nCredential URL: {{ request.build_absolute_uri|escapejs }}`;
+
+            navigator.clipboard.writeText(details)
+                .then(() => {
+                    alert("LinkedIn certification details copied successfully.");
+                })
+                .catch(err => {
+                    alert("Failed to copy text automatically. Please select and copy manually.");
+                });
+        }
+        </script>
 
         <div class="section-title">📚 Skills & Topics Covered</div>
         <div class="info-box">
@@ -347,8 +394,8 @@ body{
 
         <div class="actions">
             <a href="/courses/certificate/download/{{ certificate.certificate_id }}/" class="btn btn-primary">📜 Download Certificate</a>
-            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}" target="_blank" class="btn btn-primary">💼 Share on LinkedIn</a>
-            <a href="https://api.whatsapp.com/send?text=Verify my certificate: {{ request.build_absolute_uri }}" target="_blank" class="btn btn-success">🟢 Share on WhatsApp</a>
+            <a href="https://linkedin.com{{ request.build_absolute_uri|urlencode }}" target="_blank" class="btn btn-primary">💼 Share on LinkedIn</a>
+            <a href="https://whatsapp.com my certificate: {{ request.build_absolute_uri }}" target="_blank" class="btn btn-success">🟢 Share on WhatsApp</a>
         </div>
     </div>
 </div>
