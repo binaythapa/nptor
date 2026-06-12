@@ -65,17 +65,25 @@ class EmailOrUsernameLoginForm(AuthenticationForm):
             attrs={"class": "input", "placeholder": "Password"}
         )
     )
-
 from django import forms
 from ckeditor.widgets import CKEditorWidget
-from .models import Question, Choice
 
+from .models import Question, Choice
+from quiz.models import Domain, Category
 
 class QuestionForm(forms.ModelForm):
 
+    domain = forms.ModelChoiceField(
+        queryset=Domain.objects.filter(is_active=True),
+        required=False,
+        empty_label="Select Domain"
+    )
+
     class Meta:
         model = Question
+
         fields = [
+            "domain",
             "category",
             "difficulty",
             "question_type",
@@ -84,17 +92,35 @@ class QuestionForm(forms.ModelForm):
         ]
 
         widgets = {
+            "category": forms.Select(
+                attrs={"class": "select-field"}
+            ),
+            "difficulty": forms.Select(
+                attrs={"class": "select-field"}
+            ),
+            "question_type": forms.Select(
+                attrs={"class": "select-field"}
+            ),
             "text": CKEditorWidget(config_name="default"),
             "explanation": CKEditorWidget(config_name="default"),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["domain"].widget.attrs.update({
+            "class": "select-field"
+        })
 
 class ChoiceForm(forms.ModelForm):
 
     class Meta:
         model = Choice
-        fields = ["text", "is_correct", "order"]
-
+        fields = [
+            "text",
+            "is_correct",
+            "order",
+        ]
 from django import forms
 from quiz.models import Exam, ExamTrack
 
