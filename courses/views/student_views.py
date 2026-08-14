@@ -101,20 +101,101 @@ def course_list(request):
 # ============================================================
 # COURSE DETAIL
 # ============================================================
+# ============================================================
+# COURSE DETAIL / PREVIEW
+# ============================================================
 
 @login_required
 def course_detail(request, slug):
     """
-    Display a publicly available course.
+    Course detail / preview page.
 
-    Direct URL access is also protected by the same
-    approval/publish/public rules.
+    ACCESS RULES
+    ------------
+
+    1. Course developer/owner:
+       Can preview the course at ANY development stage.
+
+    2. Staff / superuser:
+       Can preview any course.
+
+    3. Normal users:
+       Can only view courses that are:
+           - approved
+           - published
+           - public
+
+    IMPORTANT:
+    This does NOT change public_courses().
+    The public catalog and course player remain protected.
     """
 
+    # --------------------------------------------------------
+    # GET COURSE
+    # --------------------------------------------------------
+
     course = get_object_or_404(
-        public_courses(),
+        Course.objects.select_related(
+            "created_by",
+            "organization",
+        ),
         slug=slug,
     )
+
+    # --------------------------------------------------------
+    # COURSE DEVELOPER
+    # --------------------------------------------------------
+
+    is_course_owner = (
+        course.created_by_id == request.user.id
+    )
+
+    # --------------------------------------------------------
+    # ADMIN
+    # --------------------------------------------------------
+
+    is_admin = (
+        request.user.is_staff
+        or request.user.is_superuser
+    )
+
+    # --------------------------------------------------------
+    # PUBLIC STATUS
+    # --------------------------------------------------------
+
+    is_publicly_available = (
+        course.approval_status == Course.APPROVAL_APPROVED
+        and course.is_published
+        and course.is_public
+    )
+
+    # --------------------------------------------------------
+    # ACCESS CONTROL
+    # --------------------------------------------------------
+
+    if not (
+        is_course_owner
+        or is_admin
+        or is_publicly_available
+    ):
+        # Deliberately return 404 so private courses
+        # are not exposed to unauthorized users.
+        from django.http import Http404
+
+        raise Http404("Course not found.")
+
+    # --------------------------------------------------------
+    # PREVIEW MODE
+    # --------------------------------------------------------
+
+    is_preview = (
+        is_course_owner
+        or is_admin
+    ) and not is_publicly_available
+
+    # --------------------------------------------------------
+    # ENROLLMENT
+    # --------------------------------------------------------
 
     is_enrolled = CourseEnrollment.objects.filter(
         user=request.user,
@@ -122,23 +203,41 @@ def course_detail(request, slug):
         is_active=True,
     ).exists()
 
+    # --------------------------------------------------------
+    # PROGRESS
+    # --------------------------------------------------------
+
     completed, total, progress = get_course_progress(
         request.user,
         course,
     )
+
+    # --------------------------------------------------------
+    # RENDER
+    # --------------------------------------------------------
 
     return render(
         request,
         "courses/student/course_detail.html",
         {
             "course": course,
+
             "is_enrolled": is_enrolled,
+
             "completed": completed,
             "total": total,
             "progress": progress,
+
+            # Access information
+            "is_course_owner": is_course_owner,
+            "is_admin": is_admin,
+            "is_publicly_available": is_publicly_available,
+
+            # True when developer/admin is looking at
+            # a course that isn't publicly available yet.
+            "is_preview": is_preview,
         },
     )
-
 
 # ============================================================
 # YOUTUBE EMBED HELPER
@@ -214,6 +313,9 @@ def youtube_embed(url):
 # ============================================================
 # COURSE LEARN
 # ============================================================
+# ============================================================
+# COURSE LEARN / PREVIEW
+# ============================================================
 
 @login_required
 @ensure_csrf_cookie
@@ -225,8 +327,23 @@ def course_learn(
     """
     Course learning/player page.
 
-    Only an approved, published and public course
-    can be accessed.
+    NORMAL MODE
+    -----------
+    Only approved + published + public courses.
+
+    PREVIEW MODE
+    ------------
+    Course owner/developer or staff/superuser can preview
+    a course before publication.
+
+    Preview mode:
+        - Can access draft courses
+        - Can access unpublished courses
+        - Can access private courses
+        - Can open any lesson
+        - Does NOT create lesson progress
+        - Does NOT issue certificates
+        - Does NOT update video progress
     """
 
     # --------------------------------------------------------
@@ -239,13 +356,72 @@ def course_learn(
     )
 
     # --------------------------------------------------------
-    # COURSE SECURITY CHECK
+    # GET COURSE
     # --------------------------------------------------------
 
     course = get_object_or_404(
-        public_courses(),
+        Course.objects.select_related(
+            "created_by",
+            "organization",
+        ),
         slug=slug,
     )
+
+    # --------------------------------------------------------
+    # USER PERMISSIONS
+    # --------------------------------------------------------
+
+    is_course_owner = (
+        course.created_by_id == request.user.id
+    )
+
+    is_admin = (
+        request.user.is_staff
+        or request.user.is_superuser
+    )
+
+    # --------------------------------------------------------
+    # PUBLIC STATUS
+    # --------------------------------------------------------
+
+    is_publicly_available = (
+        course.approval_status
+        == Course.APPROVAL_APPROVED
+        and course.is_published
+        and course.is_public
+    )
+
+    # --------------------------------------------------------
+    # PREVIEW MODE
+    # --------------------------------------------------------
+
+    preview_requested = (
+        request.GET.get("preview") == "1"
+    )
+
+    is_preview = (
+        preview_requested
+        and (
+            is_course_owner
+            or is_admin
+        )
+    )
+
+    # --------------------------------------------------------
+    # ACCESS CONTROL
+    # --------------------------------------------------------
+
+    if is_preview:
+        # Developer/admin preview is allowed.
+        pass
+
+    elif not is_publicly_available:
+        # Normal student access.
+        from django.http import Http404
+
+        raise Http404(
+            "Course not found."
+        )
 
     # --------------------------------------------------------
     # CURRICULUM
@@ -269,7 +445,64 @@ def course_learn(
             section__course=course,
         )
 
+    elif is_preview:
+
+        # ----------------------------------------------------
+        # PREVIEW:
+        # Open the first lesson instead of depending on
+        # student progress/resume state.
+        # ----------------------------------------------------
+
+        lesson = (
+            Lesson.objects
+            .filter(
+                section__course=course
+            )
+            .select_related("section")
+            .order_by(
+                "section__order",
+                "order",
+            )
+            .first()
+        )
+
+        # ----------------------------------------------------
+        # No lessons yet
+        # ----------------------------------------------------
+
+        if not lesson:
+
+            return render(
+                request,
+                "courses/student/course_player.html",
+                {
+                    "course": course,
+                    "sections": sections,
+                    "lesson": None,
+                    "lesson_progress": None,
+                    "next_lesson": None,
+                    "completed": 0,
+                    "total": 0,
+                    "progress": 0,
+                    "completed_lesson_ids": set(),
+                    "certificate": None,
+                    "show_celebration": False,
+                    "video_embed_url": None,
+                    "is_preview": True,
+                    "is_course_owner": is_course_owner,
+                    "is_admin": is_admin,
+                    "is_publicly_available": (
+                        is_publicly_available
+                    ),
+                },
+            )
+
     else:
+
+        # ----------------------------------------------------
+        # NORMAL STUDENT MODE:
+        # Resume previous lesson.
+        # ----------------------------------------------------
 
         lesson = get_resume_lesson(
             request.user,
@@ -286,50 +519,94 @@ def course_learn(
     # --------------------------------------------------------
     # SEQUENTIAL LOCK
     # --------------------------------------------------------
+    #
+    # Preview users can open ANY lesson.
+    # Students still follow normal sequential locking.
+    # --------------------------------------------------------
 
-    if not is_lesson_unlocked(
-        request.user,
-        lesson,
-    ):
+    if not is_preview:
 
-        return redirect(
-            "courses:course_learn",
-            slug=slug,
-        )
+        if not is_lesson_unlocked(
+            request.user,
+            lesson,
+        ):
+
+            return redirect(
+                "courses:course_learn",
+                slug=slug,
+            )
 
     # --------------------------------------------------------
     # LESSON PROGRESS
     # --------------------------------------------------------
+    #
+    # IMPORTANT:
+    # Preview must not create student progress.
+    # --------------------------------------------------------
 
-    lesson_progress, _ = (
-        LessonProgress.objects.get_or_create(
-            user=request.user,
-            lesson=lesson,
+    if is_preview:
+
+        lesson_progress = None
+
+    else:
+
+        lesson_progress, _ = (
+            LessonProgress.objects.get_or_create(
+                user=request.user,
+                lesson=lesson,
+            )
         )
-    )
 
     # --------------------------------------------------------
     # COURSE PROGRESS
     # --------------------------------------------------------
 
-    completed, total, progress = (
-        get_course_progress(
-            request.user,
-            course,
+    if is_preview:
+
+        # Preview should not display the developer's
+        # personal learning progress.
+
+        total = (
+            Lesson.objects
+            .filter(
+                section__course=course
+            )
+            .count()
         )
-    )
+
+        completed = 0
+        progress = 0
+
+    else:
+
+        completed, total, progress = (
+            get_course_progress(
+                request.user,
+                course,
+            )
+        )
 
     # --------------------------------------------------------
     # CERTIFICATE
     # --------------------------------------------------------
+    #
+    # Never issue a certificate during preview.
+    # --------------------------------------------------------
 
-    certificate, certificate_created = (
-        issue_certificate_if_eligible(
-            request.user,
-            course,
-            progress,
+    if is_preview:
+
+        certificate = None
+        certificate_created = False
+
+    else:
+
+        certificate, certificate_created = (
+            issue_certificate_if_eligible(
+                request.user,
+                course,
+                progress,
+            )
         )
-    )
 
     # --------------------------------------------------------
     # CELEBRATION
@@ -342,7 +619,8 @@ def course_learn(
     show_celebration = False
 
     if (
-        progress >= 100
+        not is_preview
+        and progress >= 100
         and certificate
         and not request.session.get(
             celebration_key
@@ -359,16 +637,22 @@ def course_learn(
     # COMPLETED LESSONS
     # --------------------------------------------------------
 
-    completed_lesson_ids = set(
-        LessonProgress.objects.filter(
-            user=request.user,
-            lesson__section__course=course,
-            completed=True,
-        ).values_list(
-            "lesson_id",
-            flat=True,
+    if is_preview:
+
+        completed_lesson_ids = set()
+
+    else:
+
+        completed_lesson_ids = set(
+            LessonProgress.objects.filter(
+                user=request.user,
+                lesson__section__course=course,
+                completed=True,
+            ).values_list(
+                "lesson_id",
+                flat=True,
+            )
         )
-    )
 
     # --------------------------------------------------------
     # VIDEO
@@ -376,7 +660,10 @@ def course_learn(
 
     video_embed_url = None
 
-    if lesson.lesson_type == "video":
+    if (
+        lesson
+        and lesson.lesson_type == "video"
+    ):
 
         video_embed_url = youtube_embed(
             lesson.video_url
@@ -386,9 +673,15 @@ def course_learn(
     # NEXT LESSON
     # --------------------------------------------------------
 
-    next_lesson = get_next_lesson(
-        lesson
-    )
+    if lesson:
+
+        next_lesson = get_next_lesson(
+            lesson
+        )
+
+    else:
+
+        next_lesson = None
 
     # --------------------------------------------------------
     # TESTIMONIAL
@@ -398,13 +691,19 @@ def course_learn(
         get_testimonial_context,
     )
 
-    testimonial_context = (
-        get_testimonial_context(
-            request.user,
-            course=course,
-            trigger=certificate_created,
+    if is_preview:
+
+        testimonial_context = {}
+
+    else:
+
+        testimonial_context = (
+            get_testimonial_context(
+                request.user,
+                course=course,
+                trigger=certificate_created,
+            )
         )
-    )
 
     # --------------------------------------------------------
     # RENDER
@@ -419,17 +718,40 @@ def course_learn(
             "lesson": lesson,
             "lesson_progress": lesson_progress,
             "next_lesson": next_lesson,
+
             "completed": completed,
             "total": total,
             "progress": progress,
-            "completed_lesson_ids": completed_lesson_ids,
+
+            "completed_lesson_ids": (
+                completed_lesson_ids
+            ),
+
             "certificate": certificate,
-            "show_celebration": show_celebration,
-            "video_embed_url": video_embed_url,
+            "show_celebration": (
+                show_celebration
+            ),
+
+            "video_embed_url": (
+                video_embed_url
+            ),
+
+            # ------------------------------------------------
+            # PREVIEW CONTEXT
+            # ------------------------------------------------
+
+            "is_preview": is_preview,
+            "is_course_owner": (
+                is_course_owner
+            ),
+            "is_admin": is_admin,
+            "is_publicly_available": (
+                is_publicly_available
+            ),
+
             **testimonial_context,
         },
     )
-
 
 # ============================================================
 # MARK LESSON COMPLETED

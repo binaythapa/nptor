@@ -1,6 +1,5 @@
 {% extends "courses/base.html" %}
 
-
 {% block title %}
     Course Builder - {{ course.title }}
 {% endblock %}
@@ -30,11 +29,8 @@
     border-radius: 12px;
     padding: 24px;
     margin-bottom: 20px;
-
-    box-shadow:
-        0 4px 16px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
 }
-
 
 .builder-header-top {
     display: flex;
@@ -43,14 +39,12 @@
     gap: 20px;
 }
 
-
 .builder-title {
     margin: 0;
     font-size: 26px;
     font-weight: 700;
     color: #111827;
 }
-
 
 .builder-subtitle {
     margin-top: 8px;
@@ -60,86 +54,61 @@
 
 
 /* ============================================================
-   COURSE STATUS
+   COURSE PUBLICATION STATUS
 ============================================================ */
 
 .course-publication-status {
     margin-top: 20px;
     padding: 16px 20px;
-
     background: #f8fafc;
-
     border: 1px solid #e5e7eb;
     border-radius: 10px;
 }
 
-
-/* ============================================================
-   STATUS BADGE
-============================================================ */
-
 .status-badge {
     display: inline-block;
-
     padding: 6px 13px;
-
     border-radius: 20px;
-
     font-size: 12px;
     font-weight: 700;
-
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
-
 
 .status-draft {
     background: #e5e7eb;
     color: #374151;
 }
 
-
 .status-pending {
     background: #fef3c7;
     color: #92400e;
 }
-
 
 .status-changes {
     background: #ffedd5;
     color: #9a3412;
 }
 
-
 .status-rejected {
     background: #fee2e2;
     color: #991b1b;
 }
-
 
 .status-approved {
     background: #dbeafe;
     color: #1e40af;
 }
 
-
 .status-published {
     background: #dcfce7;
     color: #166534;
 }
 
-
-/* ============================================================
-   STATUS MESSAGE
-============================================================ */
-
 .status-message {
     display: block;
-
     margin-top: 10px;
-
     color: #6b7280;
-
     font-size: 14px;
     line-height: 1.6;
 }
@@ -151,26 +120,18 @@
 
 .review-notes {
     margin-top: 15px;
-
     padding: 14px 16px;
-
     background: #ffffff;
-
     border-left: 4px solid #f59e0b;
-
     border-radius: 6px;
-
     color: #374151;
-
     font-size: 14px;
     line-height: 1.6;
 }
 
-
 .review-notes strong {
     color: #111827;
 }
-
 
 .review-notes p {
     margin: 8px 0 0;
@@ -183,168 +144,62 @@
 
 .builder-actions {
     display: flex;
-
     gap: 10px;
-
     margin-top: 20px;
-
     flex-wrap: wrap;
 }
 
-
 .builder-btn {
     display: inline-block;
-
     padding: 9px 16px;
-
     border-radius: 7px;
-
     text-decoration: none;
-
     font-size: 13px;
-
     font-weight: 600;
-
     border: 0;
-
     cursor: pointer;
 }
-
 
 .btn-edit {
     background: #374151;
     color: #ffffff;
 }
 
-
 .btn-edit:hover {
     background: #1f2937;
 }
-
 
 .btn-preview {
     background: #065f46;
     color: #ffffff;
 }
 
-
 .btn-preview:hover {
     background: #047857;
 }
-
 
 .btn-submit {
     background: #2563eb;
     color: #ffffff;
 }
 
-
 .btn-submit:hover {
     background: #1d4ed8;
 }
-
 
 .btn-resubmit {
     background: #2563eb;
     color: #ffffff;
 }
 
-
 .btn-resubmit:hover {
     background: #1d4ed8;
 }
 
-
 .btn-disabled {
     background: #e5e7eb;
     color: #9ca3af;
-
     cursor: not-allowed;
-}
-
-
-/* ============================================================
-   SECTIONS
-============================================================ */
-
-.sections-container {
-    margin-top: 20px;
-}
-
-
-.section-card {
-    background: #ffffff;
-
-    border-radius: 12px;
-
-    margin-bottom: 18px;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 4px 16px rgba(0, 0, 0, 0.05);
-}
-
-
-.section-header {
-    padding: 18px 20px;
-
-    background: #f9fafb;
-
-    border-bottom: 1px solid #e5e7eb;
-}
-
-
-.section-title {
-    margin: 0;
-
-    font-size: 17px;
-
-    color: #111827;
-}
-
-
-.section-description {
-    margin-top: 6px;
-
-    color: #6b7280;
-
-    font-size: 13px;
-}
-
-
-/* ============================================================
-   SECTION CONTROLS
-============================================================ */
-
-.section-header-row {
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 15px;
-}
-
-
-.section-delete-btn {
-    border: 0;
-
-    background: transparent;
-
-    color: #dc2626;
-
-    cursor: pointer;
-
-    font-size: 12px;
-
-    font-weight: 600;
-}
-
-
-.section-delete-btn:hover {
-    color: #991b1b;
 }
 
 
@@ -354,171 +209,225 @@
 
 .add-section-panel {
     background: #ffffff;
-
     border-radius: 12px;
-
     margin-bottom: 18px;
-
     padding: 20px;
-
-    box-shadow:
-        0 4px 16px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
 }
-
 
 .add-section-form {
     display: flex;
-
     gap: 10px;
-
     flex-wrap: wrap;
 }
 
-
 .builder-input {
     flex: 1;
-
     min-width: 250px;
-
     padding: 10px 12px;
-
     border: 1px solid #d1d5db;
-
     border-radius: 7px;
-
     font-size: 14px;
-
     outline: none;
 }
-
 
 .builder-input:focus {
     border-color: #2563eb;
-
-    box-shadow:
-        0 0 0 2px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
 }
-
 
 .builder-select {
     padding: 9px 11px;
-
     border: 1px solid #d1d5db;
-
     border-radius: 7px;
-
     font-size: 13px;
-
     background: #ffffff;
-
     outline: none;
-}
-
-
-.builder-select:focus {
-    border-color: #2563eb;
 }
 
 
 /* ============================================================
-   LESSONS
+   SECTIONS
+============================================================ */
+
+.sections-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.section-card {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+
+.builder-section {
+    border: 1px solid #e5e7eb;
+}
+
+
+/* ============================================================
+   SECTION HEADER
+============================================================ */
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.section-description {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.section-number,
+.lesson-number {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6b7280;
+}
+
+
+/* ============================================================
+   DRAG HANDLE
+============================================================ */
+
+.drag-handle {
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: grab;
+    font-size: 20px;
+    padding: 2px 5px;
+}
+
+.drag-handle:hover {
+    color: #374151;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+
+/* ============================================================
+   SECTION / LESSON ACTIONS
+============================================================ */
+
+.section-actions,
+.lesson-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.order-btn {
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    border-radius: 5px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.order-btn:hover {
+    background: #f3f4f6;
+}
+
+.order-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.section-edit-btn,
+.lesson-edit-btn {
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.section-edit-btn:hover,
+.lesson-edit-btn:hover {
+    background: #e0e7ff;
+}
+
+
+/* ============================================================
+   LESSON LIST
 ============================================================ */
 
 .lesson-list {
     padding: 0;
     margin: 0;
-
     list-style: none;
 }
 
-
+.builder-lesson,
 .lesson-item {
     display: flex;
-
     justify-content: space-between;
-
     align-items: center;
-
     gap: 15px;
-
     padding: 15px 20px;
-
     border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
 }
 
-
+.builder-lesson:last-child,
 .lesson-item:last-child {
     border-bottom: none;
 }
 
+.lesson-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
 
 .lesson-info {
     min-width: 0;
 }
 
-
 .lesson-title {
     font-size: 14px;
-
     font-weight: 600;
-
     color: #111827;
 }
 
-
 .lesson-type {
     margin-top: 4px;
-
     font-size: 12px;
-
     color: #6b7280;
-}
-
-
-.lesson-actions {
-    display: flex;
-
-    align-items: center;
-
-    gap: 12px;
-
-    flex-shrink: 0;
-}
-
-
-.lesson-actions a {
-    text-decoration: none;
-
-    font-size: 12px;
-
-    font-weight: 600;
-
-    color: #2563eb;
-}
-
-
-.lesson-actions a:hover {
-    color: #1d4ed8;
-}
-
-
-.lesson-delete-btn {
-    border: 0;
-
-    background: transparent;
-
-    color: #dc2626;
-
-    cursor: pointer;
-
-    font-size: 12px;
-
-    font-weight: 600;
-}
-
-
-.lesson-delete-btn:hover {
-    color: #991b1b;
 }
 
 
@@ -526,34 +435,55 @@
    ADD LESSON
 ============================================================ */
 
+.add-lesson-area,
 .add-lesson-panel {
     padding: 16px 20px;
-
-    background: #fafafa;
-
-    border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
 }
-
 
 .add-lesson-form {
     display: flex;
-
     gap: 8px;
-
     flex-wrap: wrap;
 }
 
 
 /* ============================================================
-   EMPTY LESSON
+   SORTABLE
 ============================================================ */
+
+.dragging {
+    opacity: 0.45;
+}
+
+.sortable-ghost {
+    opacity: 0.35;
+    background: #eff6ff;
+}
+
+.sortable-chosen {
+    background: #f8fafc;
+}
+
+
+/* ============================================================
+   EMPTY
+============================================================ */
+
+.empty-sections,
+.empty-lessons {
+    color: #9ca3af;
+    font-size: 13px;
+}
+
+.empty-sections {
+    padding: 25px;
+    text-align: center;
+}
 
 .empty-lessons {
     padding: 20px;
-
-    color: #9ca3af;
-
-    font-size: 13px;
 }
 
 
@@ -563,16 +493,42 @@
 
 .htmx-indicator {
     display: none;
-
     font-size: 12px;
-
     color: #6b7280;
 }
-
 
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator {
     display: inline-block;
+}
+
+
+/* ============================================================
+   ORDER STATUS
+============================================================ */
+
+.order-status {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9999;
+
+    padding: 10px 15px;
+
+    background: #111827;
+    color: #ffffff;
+
+    border-radius: 7px;
+
+    font-size: 13px;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+
+    display: none;
+}
+
+.order-status.visible {
+    display: block;
 }
 
 
@@ -586,42 +542,45 @@
         flex-direction: column;
     }
 
-
-    .lesson-item {
+    .section-header {
         align-items: flex-start;
-
         flex-direction: column;
     }
 
+    .section-actions {
+        width: 100%;
+    }
+
+    .builder-lesson,
+    .lesson-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 
     .lesson-actions {
         width: 100%;
     }
 
-
     .builder-actions {
         flex-direction: column;
     }
 
-
     .builder-btn {
         text-align: center;
     }
-
 
     .add-section-form,
     .add-lesson-form {
         flex-direction: column;
     }
 
-
     .builder-input,
     .builder-select,
     .add-section-form .builder-btn,
     .add-lesson-form .builder-btn {
         width: 100%;
+        box-sizing: border-box;
     }
-
 }
 
 </style>
@@ -675,14 +634,10 @@
                 </span>
 
                 <div class="status-message">
-
                     Your course is currently a draft.
-
                     <br>
-
                     Complete your course and submit it
                     for administrator review when ready.
-
                 </div>
 
 
@@ -697,15 +652,11 @@
                 </span>
 
                 <div class="status-message">
-
                     Your course has been submitted for
                     administrator review.
-
                     <br>
-
-                    You cannot publish the course while
-                    it is awaiting review.
-
+                    You cannot publish the course while it is
+                    awaiting review.
                 </div>
 
 
@@ -720,17 +671,12 @@
                 </span>
 
                 <div class="status-message">
-
                     The administrator has requested
                     changes to this course.
-
                     <br>
-
                     Please review the feedback below,
                     update your course and resubmit it.
-
                 </div>
-
 
                 {% if course.review_notes %}
 
@@ -760,17 +706,12 @@
                 </span>
 
                 <div class="status-message">
-
                     This course submission was rejected
                     by the administrator.
-
                     <br>
-
                     You may update the course and
                     resubmit it if permitted.
-
                 </div>
-
 
                 {% if course.review_notes %}
 
@@ -795,36 +736,30 @@
 
             {% elif course.approval_status == course.APPROVAL_APPROVED %}
 
-                {% if course.is_published and course.is_public %}
+                {% if course.is_published %}
 
                     <span class="status-badge status-published">
                         Published
                     </span>
 
                     <div class="status-message">
-
-                        Your course has been approved,
-                        published and is currently available
-                        on the website.
-
+                        Your course is approved and currently
+                        published.
+                        <br>
+                        You can unpublish it whenever you want.
                     </div>
 
                 {% else %}
 
                     <span class="status-badge status-approved">
-                        Approved
+                        Approved — Not Published
                     </span>
 
                     <div class="status-message">
-
-                        Your course has been approved by
-                        the administrator.
-
+                        Your course has been approved by the
+                        administrator.
                         <br>
-
-                        It is currently waiting for
-                        administrator publication.
-
+                        You can publish it whenever you are ready.
                     </div>
 
                 {% endif %}
@@ -832,14 +767,27 @@
             {% endif %}
 
 
-            <!-- =================================================
+            <!-- ==================================================
+                 PUBLICATION CONTROL
+            ================================================== -->
+
+            {% if course.approval_status == course.APPROVAL_APPROVED %}
+
+                {% include "courses/instructor/partials/publish_button.html" %}
+
+            {% endif %}
+
+
+            <!-- ==================================================
                  COURSE ACTIONS
             ================================================== -->
 
             <div class="builder-actions">
 
 
-                <!-- EDIT -->
+                <!-- ==================================================
+                     EDIT COURSE
+                ================================================== -->
 
                 <a
                     href="{% url 'courses:course_edit' course.slug %}"
@@ -849,7 +797,9 @@
                 </a>
 
 
-                <!-- SUBMIT -->
+                <!-- ==================================================
+                     SUBMIT FOR REVIEW
+                ================================================== -->
 
                 {% if course.approval_status == course.APPROVAL_DRAFT %}
 
@@ -878,7 +828,9 @@
                 {% endif %}
 
 
-                <!-- RESUBMIT AFTER CHANGES -->
+                <!-- ==================================================
+                     RESUBMIT AFTER CHANGES
+                ================================================== -->
 
                 {% if course.approval_status == course.APPROVAL_CHANGES %}
 
@@ -907,7 +859,9 @@
                 {% endif %}
 
 
-                <!-- RESUBMIT AFTER REJECTION -->
+                <!-- ==================================================
+                     RESUBMIT AFTER REJECTION
+                ================================================== -->
 
                 {% if course.approval_status == course.APPROVAL_REJECTED %}
 
@@ -936,27 +890,16 @@
                 {% endif %}
 
 
-                <!-- PREVIEW -->
+                <!-- ==================================================
+                     DEVELOPER PREVIEW
+                ================================================== -->
 
-                {% if course.approval_status == course.APPROVAL_APPROVED and course.is_published and course.is_public %}
-
-                    <a
-                        href="{% url 'courses:course_detail' course.slug %}"
-                        class="builder-btn btn-preview"
-                    >
-                        Preview Course
-                    </a>
-
-                {% else %}
-
-                    <span
-                        class="builder-btn btn-disabled"
-                        title="Preview becomes available after administrator approval and publication."
-                    >
-                        Preview Unavailable
-                    </span>
-
-                {% endif %}
+                <a
+                    href="{% url 'courses:course_detail' course.slug %}?preview=1"
+                    class="builder-btn btn-preview"
+                >
+                    Preview Course
+                </a>
 
 
             </div>
@@ -998,7 +941,6 @@
                 value="{{ course.id }}"
             >
 
-
             <div class="add-section-form">
 
                 <input
@@ -1009,14 +951,12 @@
                     required
                 >
 
-
                 <button
                     type="submit"
                     class="builder-btn btn-submit"
                 >
                     + Add Section
                 </button>
-
 
                 <span class="htmx-indicator">
                     Adding...
@@ -1044,5 +984,797 @@
 
 
 </div>
+
+
+<!-- ============================================================
+     ORDER SAVE STATUS
+============================================================ -->
+
+<div
+    id="order-status"
+    class="order-status"
+>
+</div>
+
+
+<!-- ============================================================
+     SORTABLE JS
+============================================================ -->
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const sectionsContainer =
+        document.getElementById("section-list");
+
+    if (!sectionsContainer) {
+        console.warn(
+            "Course Builder: #section-list not found."
+        );
+        return;
+    }
+
+
+    /* ============================================================
+       STATUS
+    ============================================================ */
+
+    const statusElement =
+        document.getElementById("order-status");
+
+    let saveTimer = null;
+    let saveInProgress = false;
+    let saveAgain = false;
+
+
+    function showStatus(message) {
+
+        statusElement.textContent = message;
+
+        statusElement.classList.add("visible");
+    }
+
+
+    function hideStatus(delay = 1500) {
+
+        window.setTimeout(function () {
+
+            statusElement.classList.remove(
+                "visible"
+            );
+
+        }, delay);
+    }
+
+
+    /* ============================================================
+       CSRF
+    ============================================================ */
+
+    function getCsrfToken() {
+
+        const cookie = document.cookie
+            .split(";")
+            .map(item => item.trim())
+            .find(
+                item =>
+                    item.startsWith("csrftoken=")
+            );
+
+        if (cookie) {
+
+            return decodeURIComponent(
+                cookie.substring(
+                    "csrftoken=".length
+                )
+            );
+
+        }
+
+        const input =
+            document.querySelector(
+                'input[name="csrfmiddlewaretoken"]'
+            );
+
+        return input
+            ? input.value
+            : "";
+    }
+
+
+    /* ============================================================
+       GET SECTIONS
+    ============================================================ */
+
+    function getSectionElements() {
+
+        return Array.from(
+            sectionsContainer.children
+        ).filter(function (element) {
+
+            return (
+                element.classList.contains(
+                    "section-card"
+                ) ||
+                element.classList.contains(
+                    "builder-section"
+                )
+            );
+
+        });
+
+    }
+
+
+    /* ============================================================
+       GET LESSONS
+    ============================================================ */
+
+    function getLessonElements(section) {
+
+        return Array.from(
+            section.querySelectorAll(
+                ".lesson-item, .builder-lesson"
+            )
+        );
+
+    }
+
+
+    /* ============================================================
+       COLLECT ORDER
+    ============================================================ */
+
+    function collectOrder() {
+
+        const items = [];
+
+
+        getSectionElements().forEach(
+            function (section, sectionIndex) {
+
+                const sectionId =
+                    section.dataset.sectionId;
+
+                if (!sectionId) {
+                    return;
+                }
+
+
+                items.push({
+
+                    type: "section",
+
+                    id: parseInt(
+                        sectionId,
+                        10
+                    ),
+
+                    order:
+                        sectionIndex + 1
+
+                });
+
+
+                getLessonElements(section).forEach(
+                    function (lesson, lessonIndex) {
+
+                        const lessonId =
+                            lesson.dataset.lessonId;
+
+                        if (!lessonId) {
+                            return;
+                        }
+
+
+                        items.push({
+
+                            type: "lesson",
+
+                            id: parseInt(
+                                lessonId,
+                                10
+                            ),
+
+                            order:
+                                lessonIndex + 1
+
+                        });
+
+                    }
+                );
+
+            }
+        );
+
+
+        return {
+            items: items
+        };
+
+    }
+
+
+    /* ============================================================
+       SAVE ORDER
+    ============================================================ */
+
+    async function saveOrder() {
+
+        if (saveInProgress) {
+
+            saveAgain = true;
+
+            return;
+
+        }
+
+
+        saveInProgress = true;
+
+        saveAgain = false;
+
+
+        showStatus(
+            "Saving order..."
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "{% url 'courses:update_order' course.slug %}",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "X-CSRFToken":
+                                getCsrfToken(),
+
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+
+                        },
+
+                        credentials:
+                            "same-origin",
+
+                        body:
+                            JSON.stringify(
+                                collectOrder()
+                            )
+
+                    }
+                );
+
+
+            let data = {};
+
+
+            try {
+
+                data =
+                    await response.json();
+
+            } catch (e) {
+
+                data = {};
+
+            }
+
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.error ||
+                    "Unable to save order."
+                );
+
+            }
+
+
+            updateNumbers();
+
+
+            showStatus(
+                "✓ Order saved"
+            );
+
+
+            hideStatus();
+
+
+        } catch (error) {
+
+            console.error(
+                "COURSE BUILDER ORDER ERROR:",
+                error
+            );
+
+
+            showStatus(
+                "✕ Failed to save order"
+            );
+
+
+            hideStatus(3000);
+
+        } finally {
+
+            saveInProgress = false;
+
+
+            if (saveAgain) {
+
+                saveOrder();
+
+            }
+
+        }
+
+    }
+
+
+    /* ============================================================
+       QUEUE SAVE
+    ============================================================ */
+
+    function queueSave() {
+
+        window.clearTimeout(
+            saveTimer
+        );
+
+
+        saveTimer =
+            window.setTimeout(
+                saveOrder,
+                150
+            );
+
+    }
+
+
+    /* ============================================================
+       SECTION SORTABLE
+    ============================================================ */
+
+    function initializeSectionSortable() {
+
+        if (!window.Sortable) {
+
+            console.error(
+                "Course Builder: SortableJS is not loaded."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            sectionsContainer._sortableInstance
+        ) {
+
+            sectionsContainer
+                ._sortableInstance
+                .destroy();
+
+        }
+
+
+        sectionsContainer._sortableInstance =
+            new Sortable(
+                sectionsContainer,
+                {
+
+                    animation: 180,
+
+                    draggable:
+                        ".section-card, .builder-section",
+
+                    handle:
+                        ".section-drag-handle, .drag-handle",
+
+                    ghostClass:
+                        "sortable-ghost",
+
+                    chosenClass:
+                        "sortable-chosen",
+
+                    onEnd:
+                        function () {
+
+                            updateNumbers();
+
+                            queueSave();
+
+                        }
+
+                }
+            );
+
+    }
+
+
+    /* ============================================================
+       LESSON SORTABLE
+    ============================================================ */
+
+    function initializeLessonSortables() {
+
+        if (!window.Sortable) {
+            return;
+        }
+
+
+        getSectionElements().forEach(
+            function (section) {
+
+                const lessonList =
+                    section.querySelector(
+                        ".lesson-list"
+                    );
+
+
+                if (!lessonList) {
+                    return;
+                }
+
+
+                if (
+                    lessonList._sortableInstance
+                ) {
+
+                    lessonList
+                        ._sortableInstance
+                        .destroy();
+
+                }
+
+
+                lessonList._sortableInstance =
+                    new Sortable(
+                        lessonList,
+                        {
+
+                            animation: 180,
+
+                            draggable:
+                                ".lesson-item, .builder-lesson",
+
+                            handle:
+                                ".lesson-drag-handle, .drag-handle",
+
+                            ghostClass:
+                                "sortable-ghost",
+
+                            chosenClass:
+                                "sortable-chosen",
+
+                            group: {
+
+                                name:
+                                    "lessons",
+
+                                pull:
+                                    false,
+
+                                put:
+                                    false
+
+                            },
+
+                            onEnd:
+                                function () {
+
+                                    updateNumbers();
+
+                                    queueSave();
+
+                                }
+
+                        }
+                    );
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       INITIALIZE SORTABLE
+    ============================================================ */
+
+    function initializeSortables() {
+
+        initializeSectionSortable();
+
+        initializeLessonSortables();
+
+        updateNumbers();
+
+    }
+
+
+    /* ============================================================
+       MOVE ITEM UP / DOWN
+    ============================================================ */
+
+    function moveItem(
+        item,
+        direction
+    ) {
+
+        if (!item) {
+            return;
+        }
+
+
+        const parent =
+            item.parentElement;
+
+
+        if (!parent) {
+            return;
+        }
+
+
+        const isSection =
+            item.classList.contains(
+                "section-card"
+            ) ||
+            item.classList.contains(
+                "builder-section"
+            );
+
+
+        const isLesson =
+            item.classList.contains(
+                "lesson-item"
+            ) ||
+            item.classList.contains(
+                "builder-lesson"
+            );
+
+
+        let sibling =
+            direction === "up"
+                ? item.previousElementSibling
+                : item.nextElementSibling;
+
+
+        while (sibling) {
+
+            const validSection =
+                isSection &&
+                (
+                    sibling.classList.contains(
+                        "section-card"
+                    ) ||
+                    sibling.classList.contains(
+                        "builder-section"
+                    )
+                );
+
+
+            const validLesson =
+                isLesson &&
+                (
+                    sibling.classList.contains(
+                        "lesson-item"
+                    ) ||
+                    sibling.classList.contains(
+                        "builder-lesson"
+                    )
+                );
+
+
+            if (
+                validSection ||
+                validLesson
+            ) {
+
+                break;
+
+            }
+
+
+            sibling =
+                direction === "up"
+                    ? sibling.previousElementSibling
+                    : sibling.nextElementSibling;
+
+        }
+
+
+        if (!sibling) {
+            return;
+        }
+
+
+        if (direction === "up") {
+
+            parent.insertBefore(
+                item,
+                sibling
+            );
+
+        } else {
+
+            parent.insertBefore(
+                sibling,
+                item
+            );
+
+        }
+
+
+        updateNumbers();
+
+        queueSave();
+
+    }
+
+
+    /* ============================================================
+       UP / DOWN BUTTONS
+    ============================================================ */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const upButton =
+                event.target.closest(
+                    ".section-up, .lesson-up"
+                );
+
+
+            const downButton =
+                event.target.closest(
+                    ".section-down, .lesson-down"
+                );
+
+
+            if (upButton) {
+
+                moveItem(
+
+                    upButton.closest(
+                        ".section-card, .builder-section, " +
+                        ".lesson-item, .builder-lesson"
+                    ),
+
+                    "up"
+
+                );
+
+                return;
+
+            }
+
+
+            if (downButton) {
+
+                moveItem(
+
+                    downButton.closest(
+                        ".section-card, .builder-section, " +
+                        ".lesson-item, .builder-lesson"
+                    ),
+
+                    "down"
+
+                );
+
+            }
+
+        }
+    );
+
+
+    /* ============================================================
+       UPDATE NUMBERS
+    ============================================================ */
+
+    function updateNumbers() {
+
+        getSectionElements().forEach(
+            function (
+                section,
+                sectionIndex
+            ) {
+
+                const sectionNumber =
+                    section.querySelector(
+                        ".section-number"
+                    );
+
+
+                if (sectionNumber) {
+
+                    sectionNumber.textContent =
+                        sectionIndex + 1;
+
+                }
+
+
+                getLessonElements(
+                    section
+                ).forEach(
+                    function (
+                        lesson,
+                        lessonIndex
+                    ) {
+
+                        const lessonNumber =
+                            lesson.querySelector(
+                                ".lesson-number"
+                            );
+
+
+                        if (lessonNumber) {
+
+                            lessonNumber.textContent =
+                                lessonIndex + 1;
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       HTMX REFRESH
+    ============================================================ */
+
+    document.body.addEventListener(
+        "htmx:afterSwap",
+        function (event) {
+
+            if (
+                event.detail &&
+                event.detail.target ===
+                    sectionsContainer
+            ) {
+
+                initializeSortables();
+
+            }
+
+        }
+    );
+
+
+    /* ============================================================
+       INITIAL LOAD
+    ============================================================ */
+
+    initializeSortables();
+
+});
+
+</script>
+
 
 {% endblock %}

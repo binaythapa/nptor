@@ -154,8 +154,13 @@ def create_section(request):
         "courses/instructor/partials/section_list.html",
         {
             "sections": sections,
+            "course": course,
         },
     )
+
+
+
+  
 
 
 # ============================================================
@@ -241,19 +246,8 @@ def delete_section(
 @require_POST
 def create_lesson(request):
 
-    section_id = request.POST.get(
-        "section_id"
-    )
-
-    title = request.POST.get(
-        "title",
-        "",
-    ).strip()
-
-    lesson_type = request.POST.get(
-        "lesson_type",
-        "",
-    ).strip()
+    section_id = request.POST.get("section_id")
+    title = request.POST.get("title", "").strip()
 
     if not section_id:
         return HttpResponseBadRequest(
@@ -265,15 +259,8 @@ def create_lesson(request):
             "Lesson title is required."
         )
 
-    if not lesson_type:
-        return HttpResponseBadRequest(
-            "Lesson type is required."
-        )
-
     section = get_object_or_404(
-        CourseSection.objects.select_related(
-            "course"
-        ),
+        CourseSection.objects.select_related("course"),
         id=section_id,
     )
 
@@ -287,22 +274,32 @@ def create_lesson(request):
             "You are not allowed to edit this course."
         )
 
-    with transaction.atomic():
+    try:
 
-        max_order = (
-            Lesson.objects
-            .filter(section=section)
-            .aggregate(
-                max_order=Max("order")
-            )["max_order"]
-            or 0
-        )
+        with transaction.atomic():
 
-        Lesson.objects.create(
-            section=section,
-            title=title,
-            lesson_type=lesson_type,
-            order=max_order + 1,
+            max_order = (
+                Lesson.objects
+                .filter(section=section)
+                .aggregate(
+                    max_order=Max("order")
+                )["max_order"]
+                or 0
+            )
+
+            lesson = Lesson(
+                section=section,
+                title=title,
+                lesson_type=Lesson.TYPE_ARTICLE,
+                order=max_order + 1,
+            )
+
+            lesson.save()
+
+    except Exception as exc:
+
+        return HttpResponseBadRequest(
+            str(exc)
         )
 
     lessons = (
@@ -318,7 +315,6 @@ def create_lesson(request):
             "section": section,
         },
     )
-
 
 # ============================================================
 # DELETE LESSON

@@ -174,31 +174,49 @@ def submit_course_for_review_view(request, slug):
 # ======================================================
 # PUBLISH / UNPUBLISH COURSE
 # ======================================================
+# ======================================================
+# PUBLISH / UNPUBLISH COURSE
+# ======================================================
 
 @login_required
 def toggle_publish_course(request, slug):
     """
-    Legacy instructor publish endpoint.
+    Allow an authorized course developer/instructor
+    to publish or unpublish an approved course.
 
-    Publishing is now controlled exclusively by
-    platform administrators.
+    Rules:
 
-    Instructors can create, edit and submit courses
-    for review, but cannot publish or unpublish them.
+    APPROVED + unpublished
+        -> Publish
+
+    APPROVED + published
+        -> Unpublish
+
+    Any other approval state
+        -> Publishing is not allowed
     """
 
-    # --------------------------------------------------------
-    # COURSE
-    # --------------------------------------------------------
+    # --------------------------------------------------
+    # POST ONLY
+    # --------------------------------------------------
+
+    if request.method != "POST":
+        return HttpResponseForbidden(
+            "POST request required."
+        )
+
+    # --------------------------------------------------
+    # LOAD COURSE
+    # --------------------------------------------------
 
     course = get_object_or_404(
         Course,
         slug=slug,
     )
 
-    # --------------------------------------------------------
-    # COURSE EDIT PERMISSION
-    # --------------------------------------------------------
+    # --------------------------------------------------
+    # PERMISSION
+    # --------------------------------------------------
 
     if not can_edit_course(
         request.user,
@@ -208,15 +226,73 @@ def toggle_publish_course(request, slug):
             "You are not allowed to modify this course."
         )
 
-    # --------------------------------------------------------
-    # BLOCK INSTRUCTOR PUBLISHING
-    # --------------------------------------------------------
+    # --------------------------------------------------
+    # APPROVAL CHECK
+    # --------------------------------------------------
 
-    return HttpResponseForbidden(
-        "Course publishing is controlled by "
-        "platform administrators."
+    if not course.is_approved():
+        messages.error(
+            request,
+            "Only an approved course can be published."
+        )
+
+        return redirect(
+            "courses:course_builder",
+            slug=course.slug,
+        )
+
+    # --------------------------------------------------
+    # PUBLISH / UNPUBLISH
+    # --------------------------------------------------
+
+    try:
+
+        if course.is_published:
+
+            unpublish_course(
+                course=course,
+                user=request.user,
+            )
+
+            messages.success(
+                request,
+                f'"{course.title}" has been unpublished.'
+            )
+
+        else:
+
+            publish_course(
+                course=course,
+                user=request.user,
+            )
+
+            messages.success(
+                request,
+                f'"{course.title}" has been published.'
+            )
+
+    except PermissionError as exc:
+
+        messages.error(
+            request,
+            str(exc),
+        )
+
+    except ValueError as exc:
+
+        messages.error(
+            request,
+            str(exc),
+        )
+
+    # --------------------------------------------------
+    # RETURN TO BUILDER
+    # --------------------------------------------------
+
+    return redirect(
+        "courses:course_builder",
+        slug=course.slug,
     )
-
 # ======================================================
 # INSTRUCTOR DASHBOARD
 # ======================================================
@@ -863,4 +939,374 @@ def submit_course_for_review_view(request, slug):
     return redirect(
         "courses:course_builder",
         slug=course.slug,
+    )
+
+
+
+# ============================================================
+# UPDATE COURSE BUILDER ORDER
+# ============================================================
+
+import json
+
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.http import (
+    JsonResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+)
+from django.views.decorators.http import require_POST
+
+from courses.models import Course, CourseSection, Lesson
+from courses.services.permissions import can_edit_course
+
+
+@login_required
+@require_POST
+def update_order(request, slug):
+    """
+    Update section and lesson ordering.
+
+    Sections can only be reordered within the course.
+
+    Lessons can only be reordered within their existing section.
+    Moving a lesson between sections is intentionally NOT allowed.
+    """
+
+    # ---------------------------------------------------------
+    # LOAD COURSE
+    # ---------------------------------------------------------
+
+    course = Course.objects.filter(
+        slug=slug
+    ).first()
+
+    if not course:
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Course not found."
+            },
+            status=404
+        )
+
+    # ---------------------------------------------------------
+    # PERMISSION
+    # ---------------------------------------------------------
+
+    if not can_edit_course(
+        request.user,
+        course
+    ):
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "You are not allowed to edit this course."
+            },
+            status=403
+        )
+
+    # ---------------------------------------------------------
+    # PARSE JSON
+    # ---------------------------------------------------------
+
+    try:
+        data = json.loads(
+            request.body.decode("utf-8")
+        )
+
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Invalid JSON request."
+            },
+            status=400
+        )
+
+    sections_order = data.get(
+        "sections",
+        []
+    )
+
+    lessons_order = data.get(
+        "lessons",
+        {}
+    )
+
+    if not isinstance(
+        sections_order,
+        list
+    ):
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Invalid sections data."
+            },
+            status=400
+        )
+
+    if not isinstance(
+        lessons_order,
+        dict
+    ):
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Invalid lessons data."
+            },
+            status=400
+        )
+
+    # ---------------------------------------------------------
+    # VALIDATE SECTION IDs
+    # ---------------------------------------------------------
+
+    course_sections = {
+        str(section.id): section
+        for section in CourseSection.objects.filter(
+            course=course
+        )
+    }
+
+    submitted_section_ids = [
+        str(section_id)
+        for section_id in sections_order
+    ]
+
+    # No duplicates
+    if len(submitted_section_ids) != len(
+        set(submitted_section_ids)
+    ):
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Duplicate section detected."
+            },
+            status=400
+        )
+
+    # All submitted sections must belong to course
+    for section_id in submitted_section_ids:
+
+        if section_id not in course_sections:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "Invalid section for this course."
+                },
+                status=400
+            )
+
+    # ---------------------------------------------------------
+    # VALIDATE SECTION COMPLETENESS
+    # ---------------------------------------------------------
+
+    existing_section_ids = set(
+        course_sections.keys()
+    )
+
+    submitted_section_id_set = set(
+        submitted_section_ids
+    )
+
+    if existing_section_ids != submitted_section_id_set:
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Section ordering is incomplete."
+            },
+            status=400
+        )
+
+    # ---------------------------------------------------------
+    # VALIDATE LESSONS
+    # ---------------------------------------------------------
+
+    course_lessons = {
+        str(lesson.id): lesson
+        for lesson in Lesson.objects.filter(
+            section__course=course
+        ).select_related("section")
+    }
+
+    for section_id, lesson_ids in lessons_order.items():
+
+        section_id = str(section_id)
+
+        if section_id not in course_sections:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "Invalid section in lesson ordering."
+                },
+                status=400
+            )
+
+        if not isinstance(
+            lesson_ids,
+            list
+        ):
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "Invalid lesson ordering."
+                },
+                status=400
+            )
+
+        submitted_lesson_ids = [
+            str(lesson_id)
+            for lesson_id in lesson_ids
+        ]
+
+        if len(submitted_lesson_ids) != len(
+            set(submitted_lesson_ids)
+        ):
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "Duplicate lesson detected."
+                },
+                status=400
+            )
+
+        # Make sure every lesson belongs to this section
+        for lesson_id in submitted_lesson_ids:
+
+            lesson = course_lessons.get(
+                lesson_id
+            )
+
+            if not lesson:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "error": "Invalid lesson."
+                    },
+                    status=400
+                )
+
+            if str(lesson.section_id) != section_id:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "error": (
+                            "Lessons cannot be moved "
+                            "between sections."
+                        )
+                    },
+                    status=400
+                )
+
+    # ---------------------------------------------------------
+    # TRANSACTION
+    # ---------------------------------------------------------
+
+    try:
+
+        with transaction.atomic():
+
+            # =================================================
+            # 1. TEMPORARY SECTION ORDER
+            # =================================================
+
+            # Negative values prevent collisions with
+            # existing positive order values.
+
+            for index, section_id in enumerate(
+                submitted_section_ids,
+                start=1
+            ):
+
+                section = course_sections[
+                    section_id
+                ]
+
+                section.order = -index
+
+                section.save(
+                    update_fields=["order"]
+                )
+
+            # =================================================
+            # 2. FINAL SECTION ORDER
+            # =================================================
+
+            for index, section_id in enumerate(
+                submitted_section_ids,
+                start=1
+            ):
+
+                section = course_sections[
+                    section_id
+                ]
+
+                section.order = index
+
+                section.save(
+                    update_fields=["order"]
+                )
+
+            # =================================================
+            # 3. TEMPORARY LESSON ORDER
+            # =================================================
+
+            for section_id, lesson_ids in lessons_order.items():
+
+                for index, lesson_id in enumerate(
+                    lesson_ids,
+                    start=1
+                ):
+
+                    lesson = course_lessons[
+                        str(lesson_id)
+                    ]
+
+                    lesson.order = -index
+
+                    lesson.save(
+                        update_fields=["order"]
+                    )
+
+            # =================================================
+            # 4. FINAL LESSON ORDER
+            # =================================================
+
+            for section_id, lesson_ids in lessons_order.items():
+
+                for index, lesson_id in enumerate(
+                    lesson_ids,
+                    start=1
+                ):
+
+                    lesson = course_lessons[
+                        str(lesson_id)
+                    ]
+
+                    lesson.order = index
+
+                    lesson.save(
+                        update_fields=["order"]
+                    )
+
+    except Exception:
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Unable to save the new order."
+            },
+            status=500
+        )
+
+    # ---------------------------------------------------------
+    # SUCCESS
+    # ---------------------------------------------------------
+
+    return JsonResponse(
+        {
+            "success": True,
+            "message": "Order saved successfully."
+        }
     )

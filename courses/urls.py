@@ -9,7 +9,7 @@ from .views import (
     admin_views,
 )
 
-
+from courses.views.instructor_views import update_order
 # ============================================================
 # APP CONFIGURATION
 # ============================================================
@@ -118,6 +118,13 @@ urlpatterns = [
     ),
 
 
+
+
+    path(
+        "instructor/course/<slug:slug>/update-order/",
+        update_order,
+        name="update_order",
+    ),
     # ========================================================
     # COURSE APPROVAL
     # ========================================================

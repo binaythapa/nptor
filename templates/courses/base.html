@@ -147,6 +147,18 @@
         }
 
 
+          /* ================= HOME ================= */
+
+.menu-home {
+    background: #4b5563;
+    color: #f9fafb;
+}
+
+.menu-home:hover {
+    background: #374151;
+    color: white;
+}
+
         /* ================= BUILDER ================= */
 
         .menu-builder {
@@ -297,36 +309,47 @@
                  COURSE CONTEXT
             ================================================= -->
 
-            {% if course %}
-
-                <div class="course-menu">
-
-                    <a
-                        href="{% url 'courses:course_builder' course.slug %}"
-                        class="menu-btn menu-builder"
-                    >
-                        Sections
-                    </a>
 
 
-                    <a
-                        href="{% url 'courses:course_edit' course.slug %}"
-                        class="menu-btn menu-edit"
-                    >
-                        Edit
-                    </a>
+
+{% if course %}
+
+    <div class="course-menu">
+
+        <a
+    href="{% url 'quiz:dashboard' %}"
+    class="menu-home"
+>
+    Home
+</a>
+
+        <a
+            href="{% url 'courses:course_builder' course.slug %}"
+            class="menu-btn menu-builder"
+        >
+            Sections
+        </a>
+
+        <a
+            href="{% url 'courses:course_edit' course.slug %}"
+            class="menu-btn menu-edit"
+        >
+            Edit
+        </a>
+
+        <a
+            href="{% url 'courses:course_learn' course.slug %}?preview=1"
+            class="menu-btn menu-view"
+        >
+            Preview
+        </a>
+
+    </div>
+
+{% endif %}
 
 
-                    <a
-                        href="{% url 'courses:course_detail' course.slug %}"
-                        class="menu-btn menu-view"
-                    >
-                        Preview
-                    </a>
 
-                </div>
-
-            {% endif %}
 
 
             <!-- =================================================

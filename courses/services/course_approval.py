@@ -11,6 +11,7 @@ from courses.services.permissions import (
     can_approve_course,
     can_request_changes,
     can_reject_course,
+    can_edit_course,
 )
 
 
@@ -398,37 +399,46 @@ def reject_course(
 # ============================================================
 # PUBLISH COURSE
 # ============================================================
+# ============================================================
+# PUBLISH COURSE
+# ============================================================
 
 @transaction.atomic
 def publish_course(
     *,
     course,
-    admin_user,
+    user,
 ):
     """
     Publish an approved course.
 
-    Only a platform administrator can publish.
-
-    The course must already be approved.
+    Rules:
+    - User must be authenticated.
+    - User must have permission to edit the course.
+    - Course must already be approved.
+    - Publishing does NOT change approval status.
+    - Publishing does NOT automatically change is_public.
     """
 
     # --------------------------------------------------------
     # Authentication
     # --------------------------------------------------------
 
-    if not admin_user or not admin_user.is_authenticated:
+    if not user or not user.is_authenticated:
         raise PermissionError(
             "Authentication is required."
         )
 
     # --------------------------------------------------------
-    # Administrator permission
+    # Course permission
     # --------------------------------------------------------
 
-    if not admin_user.is_superuser:
+    if not can_edit_course(
+        user,
+        course,
+    ):
         raise PermissionError(
-            "Only platform administrators can publish courses."
+            "You are not allowed to publish this course."
         )
 
     # --------------------------------------------------------
@@ -446,13 +456,6 @@ def publish_course(
 
     course.is_published = True
 
-    # IMPORTANT:
-    #
-    # Publishing makes the course available publicly
-    # only if is_public is also True.
-    #
-    # We intentionally do not change is_public here.
-
     course.save(
         update_fields=[
             "is_published",
@@ -461,7 +464,7 @@ def publish_course(
     )
 
     # --------------------------------------------------------
-    # Notify instructor
+    # Notify course owner
     # --------------------------------------------------------
 
     _notify_course_owner(
@@ -485,30 +488,37 @@ def publish_course(
 def unpublish_course(
     *,
     course,
-    admin_user,
+    user,
 ):
     """
     Unpublish an existing course.
 
-    This does not remove the approval.
+    Rules:
+    - User must be authenticated.
+    - User must have permission to edit the course.
+    - Approval remains APPROVED.
+    - Only publication is changed.
     """
 
     # --------------------------------------------------------
     # Authentication
     # --------------------------------------------------------
 
-    if not admin_user or not admin_user.is_authenticated:
+    if not user or not user.is_authenticated:
         raise PermissionError(
             "Authentication is required."
         )
 
     # --------------------------------------------------------
-    # Administrator permission
+    # Course permission
     # --------------------------------------------------------
 
-    if not admin_user.is_superuser:
+    if not can_edit_course(
+        user,
+        course,
+    ):
         raise PermissionError(
-            "Only platform administrators can unpublish courses."
+            "You are not allowed to unpublish this course."
         )
 
     # --------------------------------------------------------
@@ -525,7 +535,7 @@ def unpublish_course(
     )
 
     # --------------------------------------------------------
-    # Notify instructor
+    # Notify course owner
     # --------------------------------------------------------
 
     _notify_course_owner(
@@ -533,7 +543,7 @@ def unpublish_course(
         title="Course Unpublished",
         message=(
             f'Your course "{course.title}" '
-            "has been unpublished by the administrator."
+            "has been unpublished."
         ),
     )
 

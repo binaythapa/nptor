@@ -1,23 +1,197 @@
-{% if course.is_published %}
-    <span style="
-        padding:4px 10px;
-        background:#28a745;
-        color:white;
-        border-radius:4px;
-        font-size:13px;
-        font-weight:600;
-    ">
-        ✔ Published
-    </span>
-{% else %}
-    <span style="
-        padding:4px 10px;
-        background:#b45309;
-        color:white;
-        border-radius:4px;
-        font-size:13px;
-        font-weight:600;
-    ">
-        Draft
-    </span>
+{% if course.approval_status == course.APPROVAL_APPROVED %}
+
+<style>
+
+/* ============================================================
+   PUBLICATION CONTROL
+============================================================ */
+
+.publication-control {
+    margin-top: 16px;
+}
+
+
+/* ============================================================
+   PUBLISH / UNPUBLISH BUTTON
+============================================================ */
+
+.publication-btn {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 10px 18px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    text-decoration: none;
+
+    transition:
+        background 0.2s ease,
+        transform 0.15s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.publication-btn:hover {
+    transform: translateY(-1px);
+}
+
+
+.publication-btn:active {
+    transform: translateY(0);
+}
+
+
+/* ============================================================
+   PUBLISH
+============================================================ */
+
+.publish-btn {
+    background: #047857;
+
+    color: #ffffff;
+}
+
+.publish-btn:hover {
+    background: #065f46;
+
+    box-shadow:
+        0 4px 10px
+        rgba(4, 120, 87, 0.20);
+}
+
+
+/* ============================================================
+   UNPUBLISH
+============================================================ */
+
+.unpublish-btn {
+    background: #dc2626;
+
+    color: #ffffff;
+}
+
+.unpublish-btn:hover {
+    background: #b91c1c;
+
+    box-shadow:
+        0 4px 10px
+        rgba(220, 38, 38, 0.20);
+}
+
+
+/* ============================================================
+   ICON
+============================================================ */
+
+.publication-icon {
+    margin-right: 7px;
+
+    font-size: 14px;
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 600px) {
+
+    .publication-btn {
+        width: 100%;
+    }
+
+}
+
+</style>
+
+
+<div class="publication-control">
+
+
+    {% if course.is_published %}
+
+        <!-- ====================================================
+             CURRENTLY PUBLISHED
+        ===================================================== -->
+
+        <form
+            method="post"
+            action="{% url 'courses:toggle_publish_course' course.slug %}"
+            style="display:inline;"
+        >
+
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="publication-btn unpublish-btn"
+                onclick="
+                    return confirm(
+                        'Are you sure you want to unpublish this course?'
+                    );
+                "
+            >
+
+                <span class="publication-icon">
+                    ↩
+                </span>
+
+                Unpublish Course
+
+            </button>
+
+        </form>
+
+
+    {% else %}
+
+        <!-- ====================================================
+             CURRENTLY NOT PUBLISHED
+        ===================================================== -->
+
+        <form
+            method="post"
+            action="{% url 'courses:toggle_publish_course' course.slug %}"
+            style="display:inline;"
+        >
+
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="publication-btn publish-btn"
+                onclick="
+                    return confirm(
+                        'Are you sure you want to publish this course?'
+                    );
+                "
+            >
+
+                <span class="publication-icon">
+                    ✓
+                </span>
+
+                Publish Course
+
+            </button>
+
+        </form>
+
+    {% endif %}
+
+
+</div>
+
 {% endif %}

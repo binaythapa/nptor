@@ -1,7 +1,3 @@
-<!-- =========================================================
-     LESSON LIST
-========================================================= -->
-
 {% if lessons %}
 
     <ul class="lesson-list">
@@ -9,11 +5,6 @@
         {% for lesson in lessons %}
 
             <li class="lesson-item">
-
-
-                <!-- =================================================
-                     LESSON INFORMATION
-                ================================================== -->
 
                 <div class="lesson-info">
 
@@ -24,28 +15,16 @@
 
                     </div>
 
+                    <div class="lesson-type">
 
-                    {% if lesson.lesson_type %}
+                        {{ lesson.get_lesson_type_display }}
 
-                        <div class="lesson-type">
-
-                            {{ lesson.get_lesson_type_display }}
-
-                        </div>
-
-                    {% endif %}
+                    </div>
 
                 </div>
 
 
-                <!-- =================================================
-                     LESSON ACTIONS
-                ================================================== -->
-
                 <div class="lesson-actions">
-
-
-                    <!-- EDIT -->
 
                     <a
                         href="{% url 'courses:lesson_edit' lesson.id %}"
@@ -53,8 +32,6 @@
                         Edit Lesson
                     </a>
 
-
-                    <!-- DELETE -->
 
                     <form
                         method="post"
@@ -66,7 +43,6 @@
                                 'Delete this lesson?'
                             );
                         "
-                        style="display: inline;"
                     >
 
                         {% csrf_token %}
@@ -115,7 +91,6 @@
 
         {% csrf_token %}
 
-
         <input
             type="hidden"
             name="section_id"
@@ -125,11 +100,6 @@
 
         <div class="add-lesson-form">
 
-
-            <!-- =================================================
-                 LESSON TITLE
-            ================================================== -->
-
             <input
                 type="text"
                 name="title"
@@ -138,37 +108,6 @@
                 required
             >
 
-
-            <!-- =================================================
-                 LESSON TYPE
-            ================================================== -->
-
-            <input
-                type="text"
-                name="lesson_type"
-                class="builder-input"
-                list="lesson-type-options-{{ section.id }}"
-                placeholder="Lesson type"
-                required
-                style="flex: 0 0 180px; min-width: 180px;"
-            >
-
-
-            <datalist
-                id="lesson-type-options-{{ section.id }}"
-            >
-
-                <option value="video">
-                <option value="text">
-                <option value="quiz">
-                <option value="document">
-
-            </datalist>
-
-
-            <!-- =================================================
-                 ADD LESSON BUTTON
-            ================================================== -->
 
             <button
                 type="submit"
