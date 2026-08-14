@@ -56,34 +56,170 @@ User = get_user_model()
 # Logger
 logger = logging.getLogger(__name__)
 
-# -------------------------
-# Notifications
-# -------------------------
+# ============================================================
+# NOTIFICATIONS
+# ============================================================
+
 @login_required
 def notifications_list(request):
-    qs = Notification.objects.order_by('-created_at')
+    """
+    Display notifications available to the current user.
+
+    A notification is visible when:
+
+        1. It is a broadcast notification
+           (users field is empty)
+
+        OR
+
+        2. The notification explicitly targets
+           the current user.
+    """
+
+    notifications = (
+        Notification.objects
+        .order_by("-created_at")
+    )
+
     visible = []
 
-    for n in qs:
-        # add transient boolean for template convenience
-        n.is_unread = n.unread_for(request.user)
-        if (not n.users.exists()) or (request.user in n.users.all()):
-            visible.append(n)
+    for notification in notifications:
 
-    return render(request, 'quiz/notifications_list.html', {'notifications': visible})
+        # ----------------------------------------------------
+        # Determine visibility
+        # ----------------------------------------------------
 
+        is_visible = (
+            not notification.users.exists()
+            or notification.users.filter(
+                id=request.user.id
+            ).exists()
+        )
+
+        if not is_visible:
+            continue
+
+        # ----------------------------------------------------
+        # Add transient template property
+        # ----------------------------------------------------
+
+        notification.is_unread = (
+            notification.unread_for(request.user)
+        )
+
+        visible.append(notification)
+
+    # --------------------------------------------------------
+    # Unread count
+    # --------------------------------------------------------
+
+    unread_count = sum(
+        1
+        for notification in visible
+        if notification.is_unread
+    )
+
+    return render(
+        request,
+        "quiz/notifications_list.html",
+        {
+            "notifications": visible,
+            "unread_count": unread_count,
+        },
+    )
+
+
+# ============================================================
+# READ ONE NOTIFICATION
+# ============================================================
 
 @login_required
 def notification_read(request, pk):
-    n = get_object_or_404(Notification, pk=pk)
-    n.mark_read(request.user)
-    return render(request, 'quiz/notification_detail.html', {'notification': n})
+    """
+    Mark one notification as read and display it.
+    """
 
+    notification = get_object_or_404(
+        Notification,
+        pk=pk,
+    )
+
+    # --------------------------------------------------------
+    # Security
+    # --------------------------------------------------------
+
+    is_visible = (
+        not notification.users.exists()
+        or notification.users.filter(
+            id=request.user.id
+        ).exists()
+    )
+
+    if not is_visible:
+        raise PermissionDenied(
+            "You do not have access to this notification."
+        )
+
+    # --------------------------------------------------------
+    # Mark read
+    # --------------------------------------------------------
+
+    notification.mark_read(
+        request.user
+    )
+
+    return render(
+        request,
+        "quiz/notification_detail.html",
+        {
+            "notification": notification,
+        },
+    )
+
+
+# ============================================================
+# MARK ALL NOTIFICATIONS AS READ
+# ============================================================
 
 @login_required
 def notifications_mark_all(request):
-    qs = Notification.objects.order_by('-created_at')[:200]
-    visible = [n for n in qs if (not n.users.exists()) or (request.user in n.users.all())]
-    for n in visible:
-        n.mark_read(request.user)
-    return redirect(request.META.get('HTTP_REFERER', '/'))
+    """
+    Mark all visible notifications as read.
+    """
+
+    if request.method != "POST":
+        return redirect(
+            "quiz:notifications_list"
+        )
+
+    notifications = (
+        Notification.objects
+        .order_by("-created_at")[:200]
+    )
+
+    for notification in notifications:
+
+        is_visible = (
+            not notification.users.exists()
+            or notification.users.filter(
+                id=request.user.id
+            ).exists()
+        )
+
+        if not is_visible:
+            continue
+
+        if notification.unread_for(
+            request.user
+        ):
+
+            notification.mark_read(
+                request.user
+            )
+
+    return redirect(
+        request.META.get(
+            "HTTP_REFERER",
+            "/",
+        )
+    )

@@ -1,130 +1,230 @@
 from django.utils import timezone
-from quiz.models import ExamSubscription, ExamTrackSubscription
 
+from quiz.models import (
+    ExamSubscription,
+    ExamTrackSubscription,
+)
+
+
+# ============================================================
+# EXAM ACCESS
+# ============================================================
 
 def can_access_exam(user, exam):
     """
+    Determine whether a user can access an exam.
+
     Returns:
-        (True, None) if access allowed
-        (False, reason_string) if denied
+        (True, None)
+            Access is allowed.
+
+        (False, reason)
+            Access is denied.
     """
 
     now = timezone.now()
 
-    # -------------------------------------------------
-    # BLOCK UNPUBLISHED EXAMS
-    # -------------------------------------------------
+    # --------------------------------------------------------
+    # USER AUTHENTICATION
+    # --------------------------------------------------------
+
+    if not user or not user.is_authenticated:
+        return False, "Login required"
+
+    # --------------------------------------------------------
+    # EXAM PUBLISHED CHECK
+    # --------------------------------------------------------
+
     if not exam.is_published:
         return False, "Exam is not published"
 
-    # -------------------------------------------------
-    # FREE EXAM (NO SUBSCRIPTION REQUIRED)
-    # -------------------------------------------------
+    # --------------------------------------------------------
+    # FREE EXAM
+    # --------------------------------------------------------
+
     if exam.is_free:
         return True, None
 
-    # -------------------------------------------------
+    # --------------------------------------------------------
     # TRACK-LEVEL SUBSCRIPTION
-    # -------------------------------------------------
-    if exam.track and exam.track.subscription_scope == exam.track.TRACK:
-        track = exam.track
+    #
+    # A valid track subscription gives access to
+    # all exams under that track.
+    # --------------------------------------------------------
 
-        sub = ExamTrackSubscription.objects.filter(
-            user=user,
-            track=track,
-            is_active=True
-        ).first()
+    if (
+        exam.track
+        and exam.track.subscription_scope
+        == exam.track.TRACK
+    ):
+        track_subscription = (
+            ExamTrackSubscription.objects.filter(
+                user=user,
+                track=exam.track,
+                is_active=True,
+            )
+            .first()
+        )
 
-        if not sub:
-            return False, "Subscription required for this track"
+        if not track_subscription:
+            return (
+                False,
+                "Subscription required for this track",
+            )
 
-        if sub.expires_at and sub.expires_at < now:
-            sub.is_active = False
-            sub.save(update_fields=["is_active"])
+        # ----------------------------------------------------
+        # CHECK EXPIRATION
+        # ----------------------------------------------------
+
+        if (
+            track_subscription.expires_at
+            and track_subscription.expires_at <= now
+        ):
+            track_subscription.is_active = False
+
+            track_subscription.save(
+                update_fields=["is_active"]
+            )
+
             return False, "Subscription expired"
 
-        # Track subscription grants access to all exams
         return True, None
 
-    # -------------------------------------------------
+    # --------------------------------------------------------
     # EXAM-LEVEL SUBSCRIPTION
-    # -------------------------------------------------
-    sub = ExamSubscription.objects.filter(
-        user=user,
-        exam=exam,
-        is_active=True
-    ).first()
+    #
+    # Used when the exam itself requires a subscription.
+    # --------------------------------------------------------
 
-    if not sub:
-        return False, "Subscription required for this exam"
+    exam_subscription = (
+        ExamSubscription.objects.filter(
+            user=user,
+            exam=exam,
+            is_active=True,
+        )
+        .first()
+    )
 
-    if sub.expires_at and sub.expires_at < now:
-        sub.is_active = False
-        sub.save(update_fields=["is_active"])
+    if not exam_subscription:
+        return (
+            False,
+            "Subscription required for this exam",
+        )
+
+    # --------------------------------------------------------
+    # CHECK EXPIRATION
+    # --------------------------------------------------------
+
+    if (
+        exam_subscription.expires_at
+        and exam_subscription.expires_at <= now
+    ):
+        exam_subscription.is_active = False
+
+        exam_subscription.save(
+            update_fields=["is_active"]
+        )
+
         return False, "Subscription expired"
 
     return True, None
 
 
-# quiz/services/access.py
-
-from django.utils import timezone
-from quiz.models import ExamTrackSubscription
-
-
-from django.utils import timezone
-from quiz.models import ExamTrackSubscription
-
+# ============================================================
+# ACTIVE TRACK SUBSCRIPTION
+# ============================================================
 
 def has_active_track_subscription(user, track):
     """
-    Returns True if user has a valid, active subscription for the track
+    Return True when the user has a valid active
+    subscription for the specified ExamTrack.
     """
-    now = timezone.now()
 
-    sub = ExamTrackSubscription.objects.filter(
-        user=user,
-        track=track,
-        is_active=True
-    ).first()
-
-    if not sub:
+    if not user or not user.is_authenticated:
         return False
 
-    if sub.expires_at and sub.expires_at < now:
-        sub.is_active = False
-        sub.save(update_fields=["is_active"])
+    if not track:
+        return False
+
+    now = timezone.now()
+
+    subscription = (
+        ExamTrackSubscription.objects.filter(
+            user=user,
+            track=track,
+            is_active=True,
+        )
+        .first()
+    )
+
+    if not subscription:
+        return False
+
+    # --------------------------------------------------------
+    # CHECK EXPIRATION
+    # --------------------------------------------------------
+
+    if (
+        subscription.expires_at
+        and subscription.expires_at <= now
+    ):
+        subscription.is_active = False
+
+        subscription.save(
+            update_fields=["is_active"]
+        )
+
         return False
 
     return True
 
 
+# ============================================================
+# COURSE / TRACK ACCESS
+# ============================================================
 
-
-
-
-
-from django.utils import timezone
-from quiz.models import ExamTrackSubscription
-
-
-def user_has_course_access(user, course) -> bool:
+def user_has_course_access(user, course):
     """
-    Industry-standard access rules:
-    - Course with NO plans → free
-    - Course with plans → user must have an active subscription
+    Determine whether a user has access to a course/track.
+
+    Rules:
+
+    1. No active subscription plans
+       -> Course is free.
+
+    2. Active subscription plans exist
+       -> User must have an active ExamTrackSubscription.
+
+    `course` is expected to be the ExamTrack object because
+    ExamTrackSubscription.track points to ExamTrack.
     """
 
-    plans = course.subscription_plans.filter(is_active=True)
+    if not user or not user.is_authenticated:
+        return False
 
-    # Free course
+    if not course:
+        return False
+
+    # --------------------------------------------------------
+    # ACTIVE SUBSCRIPTION PLANS
+    # --------------------------------------------------------
+
+    plans = course.subscription_plans.filter(
+        is_active=True
+    )
+
+    # --------------------------------------------------------
+    # FREE COURSE / TRACK
+    # --------------------------------------------------------
+
     if not plans.exists():
         return True
 
-    # Paid course → active subscription required
-    return ExamTrackSubscription.objects.filter(
-        user=user,
-        is_active=True,
-        expires_at__gt=timezone.now()
-    ).exists()
+    # --------------------------------------------------------
+    # PAID COURSE / TRACK
+    # --------------------------------------------------------
 
+    return has_active_track_subscription(
+        user=user,
+        track=course,
+    )

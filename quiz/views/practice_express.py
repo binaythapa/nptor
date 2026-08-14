@@ -97,20 +97,17 @@ def ajax_categories_by_domain(request):
         is_active=True
     ).values("id", "name", "parent_id")
 
-
-  
-
     return JsonResponse({
         "categories": list(categories)
     })
 
+
 # =====================================================
 # PRACTICE EXPRESS – PAGE
 # =====================================================
-
 def practice_express(request):
 
-    # RESET SESSION
+    # SAFE HARD RESET (only express keys)
     if request.GET.get("reset") == "1":
         for key in [
             "pe_seen",
@@ -125,19 +122,12 @@ def practice_express(request):
         return redirect("quiz:practice_express")
 
     return render(request, "quiz/student/practice_express/practice_express.html", {
-        # 🔥 ONLY PUBLIC DOMAINS
-        "domains": Domain.objects.filter(
-            is_active=True,
-            organization__isnull=True
-        ),
+        "domains": Domain.objects.filter(is_active=True),
         "categories": Category.objects.none(),
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
     })
 
 
-# =====================================================
-# PRACTICE EXPRESS – NEXT QUESTION (AJAX)
-# =====================================================
 
 @require_GET
 def practice_express_next(request):
@@ -162,23 +152,19 @@ def practice_express_next(request):
     last_filters = request.session.get("pe_filters")
 
     # -------------------------------
-    # BASE QUERYSET (🔥 PUBLIC ONLY)
+    # BASE QUERYSET (🔥 FIXED)
+    # ❌ REMOVED question_type filter
     # -------------------------------
     qs = Question.objects.filter(
-        category__isnull=False,
-        is_active=True,
-        is_deleted=False,
-        category__domain__organization__isnull=True   # 🔥 KEY FIX
+        category__isnull=False ,
+        is_active= True
     ).prefetch_related("choices")
 
     # -------------------------------
-    # DOMAIN FILTER (PUBLIC ONLY)
+    # DOMAIN FILTER
     # -------------------------------
     if domain_id:
-        qs = qs.filter(
-            category__domain_id=domain_id,
-            category__domain__organization__isnull=True
-        )
+        qs = qs.filter(category__domain_id=domain_id)
 
     # -------------------------------
     # CATEGORY FILTER (DESCENDANTS)
@@ -187,10 +173,8 @@ def practice_express_next(request):
         cat = Category.objects.filter(
             id=category_id,
             domain_id=domain_id,
-            is_active=True,
-            domain__organization__isnull=True   # 🔥 KEY FIX
+            is_active=True
         ).first()
-
         if cat:
             qs = qs.filter(
                 category_id__in=cat.get_descendants_include_self()
@@ -225,8 +209,12 @@ def practice_express_next(request):
             "progress_total": 0,
         })
 
+
+
+
+
     # -------------------------------
-    # 🔒 ANON LIMIT
+    # 🔒 ANON LIMIT (SETTINGS)
     # -------------------------------
     if not request.user.is_authenticated:
         limit = getattr(settings, "EXPRESS_ANON_LIMIT", 0)
@@ -234,7 +222,7 @@ def practice_express_next(request):
         if anon_attempted >= limit:
             return JsonResponse({
                 "limit_reached": True,
-                "message": f"Free limit of {limit} question(s) reached. Login to unlock unlimited access.",
+                "message": f"Free limit of {limit} question(s) reached.Login to unlock unlimited access.",
                 "progress_done": anon_attempted,
                 "progress_total": limit,
             })
@@ -259,7 +247,6 @@ def practice_express_next(request):
     # PICK NEXT QUESTION
     # -------------------------------
     question = remaining.order_by("?").first()
-
     correct_choices = question.choices.filter(is_correct=True)
 
     seen_qids.append(question.id)
@@ -269,7 +256,7 @@ def practice_express_next(request):
         request.session["pe_anon_attempted"] = anon_attempted + 1
 
     # -------------------------------
-    # RESPONSE
+    # RESPONSE (🔥 SUPPORTS ALL TYPES)
     # -------------------------------
     return JsonResponse({
         "id": question.id,
@@ -287,13 +274,11 @@ def practice_express_next(request):
 
 
 # =====================================================
-# PRACTICE EXPRESS – SAVE RESULT
+# PRACTICE EXPRESS – SAVE RESULT (AJAX, LOGIN ONLY)
 # =====================================================
-
 @require_POST
 @login_required
 def practice_express_save(request):
-
     question_id = request.POST.get("question_id")
     is_correct = request.POST.get("is_correct") == "true"
 
@@ -305,6 +290,7 @@ def practice_express_save(request):
         category=question.category
     )
 
+    # streak logic
     if stat.last_practice_date == today:
         pass
     elif stat.last_practice_date == today - timezone.timedelta(days=1):
@@ -314,7 +300,6 @@ def practice_express_save(request):
 
     stat.last_practice_date = today
     stat.total_attempted += 1
-
     if is_correct:
         stat.total_correct += 1
 
@@ -326,3 +311,6 @@ def practice_express_save(request):
         "accuracy": stat.accuracy(),
         "streak": stat.streak
     })
+
+
+

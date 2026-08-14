@@ -68,3 +68,15 @@ questions3.pdf
 questions4.pdf
 questions6.pdf
 questions5.pdf
+organizations/migrations/
+
+
+# Django migrations
+# Django migrations
+**/migrations/*.py
+**/migrations/*.pyc
+
+# Keep __init__.py
+!**/migrations/__init__.py
+
+

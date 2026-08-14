@@ -1,0 +1,216 @@
+{% extends "courses/base.html" %}
+
+{% block title %}
+Course Review
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width:1100px;margin:auto;">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;">
+
+        <div>
+            <h1 style="margin:0;">
+                Course Review
+            </h1>
+
+            <p style="color:#6b7280;margin-top:6px;">
+                Courses waiting for administrator approval.
+            </p>
+        </div>
+
+    </div>
+
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div
+                style="
+                    padding:14px;
+                    margin-bottom:15px;
+                    border-radius:7px;
+                    background:#ecfdf5;
+                    color:#065f46;
+                "
+            >
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    {% if courses %}
+
+        <div style="display:grid;gap:15px;">
+
+            {% for course in courses %}
+
+                <div
+                    style="
+                        background:white;
+                        border:1px solid #e5e7eb;
+                        border-radius:10px;
+                        padding:20px;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            gap:20px;
+                        "
+                    >
+
+                        <div>
+
+                            <h2 style="margin:0 0 8px;">
+                                {{ course.title }}
+                            </h2>
+
+                            <p style="margin:0;color:#6b7280;">
+                                Submitted by:
+                                <strong>
+                                    {{ course.created_by.get_username }}
+                                </strong>
+                            </p>
+
+                            {% if course.organization %}
+
+                                <p style="margin-top:5px;color:#6b7280;">
+                                    Organization:
+                                    {{ course.organization }}
+                                </p>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div style="text-align:right;">
+
+                            <span
+                                style="
+                                    display:inline-block;
+                                    padding:5px 10px;
+                                    border-radius:20px;
+                                    background:#fef3c7;
+                                    color:#92400e;
+                                    font-size:12px;
+                                    font-weight:600;
+                                "
+                            >
+                                Pending Review
+                            </span>
+
+                            {% if course.submitted_at %}
+
+                                <p
+                                    style="
+                                        margin-top:8px;
+                                        color:#6b7280;
+                                        font-size:12px;
+                                    "
+                                >
+                                    {{ course.submitted_at }}
+                                </p>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <hr>
+
+
+                    <div
+                        style="
+                            display:flex;
+                            gap:20px;
+                            color:#6b7280;
+                            font-size:13px;
+                            margin-bottom:15px;
+                        "
+                    >
+
+                        <span>
+                            Lessons:
+                            <strong>
+                                {{ course.total_lessons }}
+                            </strong>
+                        </span>
+
+                        <span>
+                            Category:
+                            <strong>
+                                {{ course.category|default:"Not specified" }}
+                            </strong>
+                        </span>
+
+                        <span>
+                            Level:
+                            <strong>
+                                {{ course.get_level_display }}
+                            </strong>
+                        </span>
+
+                    </div>
+
+
+                    <a
+                        href="{% url 'courses:admin-review-course' course.slug %}"
+                        style="
+                            display:inline-block;
+                            padding:9px 15px;
+                            border-radius:6px;
+                            background:#2563eb;
+                            color:white;
+                            text-decoration:none;
+                            font-weight:600;
+                            font-size:13px;
+                        "
+                    >
+                        Review Course
+                    </a>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div
+            style="
+                background:white;
+                border:1px dashed #d1d5db;
+                border-radius:10px;
+                padding:60px 20px;
+                text-align:center;
+                color:#6b7280;
+            "
+        >
+
+            <h2 style="color:#111827;">
+                No Courses Awaiting Review
+            </h2>
+
+            <p>
+                All submitted courses have been reviewed.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,60 +1,472 @@
+{% extends "courses/base.html" %}
 
-{% extends 'layouts/base.html' %}
-{% load static %}
+{% block title %}
+    Notifications
+{% endblock %}
+
+{% block extra_head %}
+
+<style>
+
+    /* =====================================================
+       NOTIFICATION PAGE
+    ===================================================== */
+
+    .notification-page {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+
+    /* =====================================================
+       HEADER
+    ===================================================== */
+
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+
+        margin-bottom: 25px;
+    }
+
+    .notification-header h1 {
+        margin: 0;
+
+        font-size: 26px;
+
+        color: #111827;
+    }
+
+    .notification-header p {
+        margin: 5px 0 0;
+
+        color: #6b7280;
+
+        font-size: 14px;
+    }
+
+
+    /* =====================================================
+       MARK ALL BUTTON
+    ===================================================== */
+
+    .mark-all-form {
+        margin: 0;
+    }
+
+    .mark-all-button {
+        border: none;
+
+        background: #2563eb;
+
+        color: white;
+
+        padding: 9px 15px;
+
+        border-radius: 7px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition: background 0.2s ease;
+    }
+
+    .mark-all-button:hover {
+        background: #1d4ed8;
+    }
+
+
+    /* =====================================================
+       NOTIFICATION LIST
+    ===================================================== */
+
+    .notification-list {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 10px;
+    }
+
+
+    /* =====================================================
+       NOTIFICATION ITEM
+    ===================================================== */
+
+    .notification-item {
+        display: block;
+
+        padding: 18px 20px;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 10px;
+
+        background: #ffffff;
+
+        text-decoration: none;
+
+        color: inherit;
+
+        transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease,
+            border-color 0.15s ease;
+    }
+
+    .notification-item:hover {
+        transform: translateY(-1px);
+
+        border-color: #cbd5e1;
+
+        box-shadow:
+            0 4px 12px
+            rgba(0, 0, 0, 0.06);
+    }
+
+
+    /* =====================================================
+       UNREAD
+    ===================================================== */
+
+    .notification-item.unread {
+        background: #eff6ff;
+
+        border-color: #bfdbfe;
+    }
+
+
+    /* =====================================================
+       TOP ROW
+    ===================================================== */
+
+    .notification-top {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: flex-start;
+
+        gap: 15px;
+    }
+
+
+    /* =====================================================
+       TITLE
+    ===================================================== */
+
+    .notification-title {
+        display: flex;
+
+        align-items: center;
+
+        gap: 9px;
+
+        font-size: 16px;
+
+        font-weight: 700;
+
+        color: #111827;
+    }
+
+
+    /* =====================================================
+       UNREAD DOT
+    ===================================================== */
+
+    .unread-dot {
+        width: 8px;
+
+        height: 8px;
+
+        flex-shrink: 0;
+
+        border-radius: 50%;
+
+        background: #2563eb;
+    }
+
+
+    /* =====================================================
+       DATE
+    ===================================================== */
+
+    .notification-date {
+        color: #9ca3af;
+
+        font-size: 12px;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       MESSAGE
+    ===================================================== */
+
+    .notification-message {
+        margin-top: 8px;
+
+        color: #4b5563;
+
+        font-size: 14px;
+
+        line-height: 1.6;
+
+        white-space: pre-line;
+    }
+
+
+    /* =====================================================
+       READ LABEL
+    ===================================================== */
+
+    .read-label {
+        display: inline-block;
+
+        margin-top: 10px;
+
+        font-size: 11px;
+
+        color: #9ca3af;
+    }
+
+
+    /* =====================================================
+       EMPTY STATE
+    ===================================================== */
+
+    .notification-empty {
+        text-align: center;
+
+        padding: 70px 20px;
+
+        border: 1px dashed #d1d5db;
+
+        border-radius: 10px;
+
+        background: #ffffff;
+    }
+
+    .notification-empty-icon {
+        font-size: 42px;
+
+        margin-bottom: 10px;
+    }
+
+    .notification-empty h2 {
+        margin: 0 0 8px;
+
+        color: #374151;
+
+        font-size: 20px;
+    }
+
+    .notification-empty p {
+        margin: 0;
+
+        color: #9ca3af;
+
+        font-size: 14px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 650px) {
+
+        .notification-header {
+            align-items: flex-start;
+
+            flex-direction: column;
+        }
+
+        .notification-top {
+            flex-direction: column;
+        }
+
+        .notification-date {
+            white-space: normal;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
 {% block content %}
 
-<h1 class="title" style="margin-bottom:18px;">Notifications</h1>
+<div class="notification-page">
 
-<div class="level" style="margin-bottom:12px;">
-  <div class="level-left"></div>
-  <div class="level-right">
-    <a href="{% url 'quiz:notifications_mark_all' %}" 
-       class="button is-small is-light">
-       <i class="fa fa-check-double"></i>&nbsp; Mark all as read
-    </a>
-  </div>
-</div>
 
-<div class="card" style="overflow:hidden;">
+    <!-- =================================================
+         HEADER
+    ================================================= -->
 
-  {% for n in notifications %}
-    <div class="notif-item"
-         style="
-            padding:14px 16px;
-            border-bottom:1px solid rgba(0,0,0,0.05);
-            background: {% if n.is_unread %} var(--surface-2) {% else %} var(--card) {% endif %};
-         ">
+    <div class="notification-header">
 
-      <div class="level">
-        <div class="level-left">
-          <strong>{{ n.title }}</strong>
+        <div>
+
+            <h1>
+                Notifications
+            </h1>
+
+            <p>
+                Stay updated with your latest notifications.
+            </p>
+
         </div>
-        <div class="level-right">
-          <span class="small-muted">
-            <i class="fa fa-clock"></i>
-            {{ n.created_at|date:"SHORT_DATETIME_FORMAT" }}
-          </span>
-        </div>
-      </div>
 
-      <div style="margin-top:6px;">
-        {{ n.message }}
-      </div>
 
-      <div style="margin-top:10px;">
-        <a href="{% url 'quiz:notification_detail' n.id %}"
-           class="button is-small is-link">
-          <i class="fa fa-envelope-open"></i>&nbsp; Open
-        </a>
-      </div>
+        {% if notifications %}
+
+            <form
+                method="post"
+                action="{% url 'quiz:notifications_mark_all' %}"
+                class="mark-all-form"
+            >
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="mark-all-button"
+                >
+                    Mark all as read
+                </button>
+
+            </form>
+
+        {% endif %}
 
     </div>
-  {% empty %}
-    <div style="padding:18px; text-align:center; color:var(--muted);">
-      <i class="fa fa-bell-slash" style="font-size:1.4rem; margin-bottom:6px;"></i>
-      <div>No notifications yet</div>
-    </div>
-  {% endfor %}
+
+
+    <!-- =================================================
+         NOTIFICATIONS
+    ================================================= -->
+
+    {% if notifications %}
+
+        <div class="notification-list">
+
+            {% for notification in notifications %}
+
+                <a
+                    href="{% url 'quiz:notification_detail' notification.pk %}"
+                    class="notification-item
+                        {% if notification.is_unread %}
+                            unread
+                        {% endif %}
+                    "
+                >
+
+                    <div class="notification-top">
+
+
+                        <!-- =================================
+                             TITLE
+                        ================================= -->
+
+                        <div class="notification-title">
+
+                            {% if notification.is_unread %}
+
+                                <span
+                                    class="unread-dot"
+                                    aria-hidden="true"
+                                ></span>
+
+                            {% endif %}
+
+                            {{ notification.title }}
+
+                        </div>
+
+
+                        <!-- =================================
+                             DATE
+                        ================================= -->
+
+                        <div class="notification-date">
+
+                            {{ notification.created_at|date:"M d, Y H:i" }}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         MESSAGE
+                    ===================================== -->
+
+                    <div class="notification-message">
+
+                        {{ notification.message }}
+
+                    </div>
+
+
+                    <!-- =====================================
+                         STATUS
+                    ===================================== -->
+
+                    {% if notification.is_unread %}
+
+                        <span class="read-label">
+                            Unread
+                        </span>
+
+                    {% else %}
+
+                        <span class="read-label">
+                            Read
+                        </span>
+
+                    {% endif %}
+
+                </a>
+
+            {% endfor %}
+
+        </div>
+
+
+    {% else %}
+
+
+        <!-- =================================================
+             EMPTY STATE
+        ================================================= -->
+
+        <div class="notification-empty">
+
+            <div class="notification-empty-icon">
+                🔔
+            </div>
+
+            <h2>
+                No notifications
+            </h2>
+
+            <p>
+                You're all caught up.
+            </p>
+
+        </div>
+
+    {% endif %}
+
 
 </div>
 

@@ -97,15 +97,23 @@ from organizations.models.organization import Organization
 from organizations.models.membership import OrganizationMember
 
 
+
+
+
+
+
 @staff_member_required
 def admin_dashboard(request):
+
     now = timezone.now()
+
     seven_days_ago = now - timedelta(days=7)
     thirty_days_ago = now - timedelta(days=30)
 
     # =====================================================
     # USER INTELLIGENCE
     # =====================================================
+
     total_users = User.objects.count()
 
     active_users_7d = User.objects.filter(
@@ -118,11 +126,15 @@ def admin_dashboard(request):
 
     users_with_no_attempts = User.objects.annotate(
         attempts=Count("exam_attempts")
-    ).filter(attempts=0).count()
+    ).filter(
+        attempts=0
+    ).count()
+
 
     # =====================================================
     # EXAM INTELLIGENCE
     # =====================================================
+
     total_attempts = UserExam.objects.filter(
         submitted_at__isnull=False
     ).count()
@@ -137,25 +149,34 @@ def admin_dashboard(request):
 
     pass_rate = (
         (passed_attempts / total_attempts) * 100
-        if total_attempts else 0
+        if total_attempts
+        else 0
     )
 
     most_attempted_exam = (
         Exam.objects
-        .annotate(attempts=Count("userexam"))
+        .annotate(
+            attempts=Count("userexam")
+        )
         .order_by("-attempts")
         .first()
     )
 
+
     # =====================================================
     # COURSE INTELLIGENCE
     # =====================================================
-    total_courses = Course.objects.filter(       
-    ).count()
+
+    total_courses = Course.objects.count()
 
     published_courses = Course.objects.filter(
         is_published=True,
-        
+    ).count()
+
+    # NEW:
+    # Courses waiting for administrator moderation
+    pending_course_reviews = Course.objects.filter(
+        approval_status=Course.APPROVAL_PENDING,
     ).count()
 
     platform_courses = Course.objects.filter(
@@ -170,14 +191,18 @@ def admin_dashboard(request):
 
     most_popular_course = (
         Course.objects
-        .annotate(enroll_count=Count("enrollments"))
+        .annotate(
+            enroll_count=Count("enrollments")
+        )
         .order_by("-enroll_count")
         .first()
     )
 
+
     # =====================================================
     # ORGANIZATION INTELLIGENCE
     # =====================================================
+
     total_orgs = Organization.objects.count()
 
     active_orgs = Organization.objects.filter(
@@ -198,9 +223,11 @@ def admin_dashboard(request):
         is_active=True
     ).count()
 
+
     # =====================================================
     # SUBSCRIPTION INTELLIGENCE
     # =====================================================
+
     total_track_subs = ExamTrackSubscription.objects.count()
 
     active_track_subs = ExamTrackSubscription.objects.filter(
@@ -223,16 +250,23 @@ def admin_dashboard(request):
 
     conversion_rate = (
         (paid_subs / trial_subs) * 100
-        if trial_subs else 0
+        if trial_subs
+        else 0
     )
+
 
     # =====================================================
     # REVENUE INTELLIGENCE
     # =====================================================
+
     total_revenue = (
         ExamTrackSubscription.objects
-        .filter(payment_required=True)
-        .aggregate(total=Sum("amount"))["total"]
+        .filter(
+            payment_required=True
+        )
+        .aggregate(
+            total=Sum("amount")
+        )["total"]
     ) or 0
 
     revenue_30d = (
@@ -241,39 +275,55 @@ def admin_dashboard(request):
             payment_required=True,
             subscribed_at__gte=thirty_days_ago
         )
-        .aggregate(total=Sum("amount"))["total"]
+        .aggregate(
+            total=Sum("amount")
+        )["total"]
     ) or 0
 
-    arpu = total_revenue / paid_subs if paid_subs else 0
+    arpu = (
+        total_revenue / paid_subs
+        if paid_subs
+        else 0
+    )
+
 
     # =====================================================
     # BUSINESS HEALTH
     # =====================================================
+
     churn_risk_users = User.objects.filter(
         track_subscriptions__is_active=True,
         last_login__lt=thirty_days_ago
     ).distinct().count()
 
+
     # =====================================================
-    # TRACK ANALYTICS (Optimized)
+    # TRACK ANALYTICS
     # =====================================================
+
     tracks = (
         ExamTrack.objects
         .annotate(
             enrolled=Count(
                 "subscriptions__user",
-                filter=Q(subscriptions__is_active=True),
+                filter=Q(
+                    subscriptions__is_active=True
+                ),
                 distinct=True
             ),
             revenue=Sum(
                 "subscriptions__amount",
-                filter=Q(subscriptions__payment_required=True)
+                filter=Q(
+                    subscriptions__payment_required=True
+                )
             )
         )
     )
 
     track_rows = []
+
     for track in tracks:
+
         track_rows.append({
             "track": track,
             "enrolled": track.enrolled,
@@ -281,129 +331,272 @@ def admin_dashboard(request):
         })
 
 
-
-
-
     # =====================================================
     # COURSE SUBSCRIPTIONS
     # =====================================================
 
-    total_course_subs = CourseSubscription.objects.count()
+    total_course_subs = (
+        CourseSubscription.objects.count()
+    )
 
-    active_course_subs = CourseSubscription.objects.filter(
-        is_active=True
-    ).count()
+    active_course_subs = (
+        CourseSubscription.objects.filter(
+            is_active=True
+        ).count()
+    )
 
-    expired_course_subs = CourseSubscription.objects.filter(
-        is_active=True,
-        expires_at__lt=now
-    ).count()   
+    expired_course_subs = (
+        CourseSubscription.objects.filter(
+            is_active=True,
+            expires_at__lt=now
+        ).count()
+    )
 
+    trial_course_subs = (
+        CourseSubscription.objects.filter(
+            payment_required=False
+        ).count()
+    )
 
-    trial_course_subs = CourseSubscription.objects.filter(
-        payment_required=False
-    ).count()
-
-
-    paid_course_subs = CourseSubscription.objects.filter(
-        payment_required=True
-    ).count()
+    paid_course_subs = (
+        CourseSubscription.objects.filter(
+            payment_required=True
+        ).count()
+    )
 
     course_conversion_rate = (
         (paid_course_subs / trial_course_subs) * 100
-        if trial_course_subs else 0
+        if trial_course_subs
+        else 0
     )
 
     course_revenue = (
         CourseSubscription.objects
-        .filter(payment_required=True)
-        .aggregate(total=Sum("amount"))["total"]
+        .filter(
+            payment_required=True
+        )
+        .aggregate(
+            total=Sum("amount")
+        )["total"]
     ) or 0
-
 
     source_breakdown = (
         CourseSubscription.objects
         .values("source")
-        .annotate(count=Count("id"))
+        .annotate(
+            count=Count("id")
         )
-    
- 
+    )
 
     most_subscribed_course = (
         Course.objects
-        .annotate(sub_count=Count("subscriptions"))
+        .annotate(
+            sub_count=Count("subscriptions")
+        )
         .order_by("-sub_count")
         .first()
     )
 
 
-
-
     # =====================================================
     # CONTEXT
     # =====================================================
+
     context = {
+
+        # -------------------------------------------------
         # User Intelligence
+        # -------------------------------------------------
+
         "total_users": total_users,
         "active_users_7d": active_users_7d,
         "new_users_7d": new_users_7d,
         "users_with_no_attempts": users_with_no_attempts,
 
+
+        # -------------------------------------------------
         # Exam Intelligence
+        # -------------------------------------------------
+
         "total_attempts": total_attempts,
-        "pass_rate": round(pass_rate, 2),
-        "avg_score": round(avg_score, 2) if avg_score else None,
-        "most_attempted_exam": most_attempted_exam,
+        "pass_rate": round(
+            pass_rate,
+            2
+        ),
+        "avg_score": (
+            round(avg_score, 2)
+            if avg_score
+            else None
+        ),
+        "most_attempted_exam": (
+            most_attempted_exam
+        ),
 
+
+        # -------------------------------------------------
         # Course Intelligence
+        # -------------------------------------------------
+
         "total_courses": total_courses,
-        "published_courses": published_courses,
-        "platform_courses": platform_courses,
-        "org_courses": org_courses,
-        "total_enrollments": total_enrollments,
-        "most_popular_course": most_popular_course,
 
+        "published_courses": (
+            published_courses
+        ),
+
+        # NEW
+        "pending_course_reviews": (
+            pending_course_reviews
+        ),
+
+        "platform_courses": (
+            platform_courses
+        ),
+
+        "org_courses": (
+            org_courses
+        ),
+
+        "total_enrollments": (
+            total_enrollments
+        ),
+
+        "most_popular_course": (
+            most_popular_course
+        ),
+
+
+        # -------------------------------------------------
         # Organization Intelligence
+        # -------------------------------------------------
+
         "total_orgs": total_orgs,
+
         "active_orgs": active_orgs,
-        "total_org_members": total_org_members,
-        "org_student_count": org_student_count,
-        "org_admin_count": org_admin_count,
 
+        "total_org_members": (
+            total_org_members
+        ),
+
+        "org_student_count": (
+            org_student_count
+        ),
+
+        "org_admin_count": (
+            org_admin_count
+        ),
+
+
+        # -------------------------------------------------
         # Subscription Intelligence
-        "total_track_subs": total_track_subs,
-        "active_track_subs": active_track_subs,
-        "expired_track_subs": expired_track_subs,
-        "trial_subs": trial_subs,
-        "paid_subs": paid_subs,
-        "conversion_rate": round(conversion_rate, 2),
+        # -------------------------------------------------
 
+        "total_track_subs": (
+            total_track_subs
+        ),
+
+        "active_track_subs": (
+            active_track_subs
+        ),
+
+        "expired_track_subs": (
+            expired_track_subs
+        ),
+
+        "trial_subs": (
+            trial_subs
+        ),
+
+        "paid_subs": (
+            paid_subs
+        ),
+
+        "conversion_rate": round(
+            conversion_rate,
+            2
+        ),
+
+
+        # -------------------------------------------------
         # Revenue
-        "total_revenue": total_revenue,
-        "revenue_30d": revenue_30d,
-        "arpu": round(arpu, 2),
+        # -------------------------------------------------
 
+        "total_revenue": (
+            total_revenue
+        ),
+
+        "revenue_30d": (
+            revenue_30d
+        ),
+
+        "arpu": round(
+            arpu,
+            2
+        ),
+
+
+        # -------------------------------------------------
         # Business Health
-        "churn_risk_users": churn_risk_users,
+        # -------------------------------------------------
 
+        "churn_risk_users": (
+            churn_risk_users
+        ),
+
+
+        # -------------------------------------------------
         # Tracks
+        # -------------------------------------------------
+
         "track_rows": track_rows,
 
-        # Course Subscription KPIs
-        "total_course_subs": total_course_subs,
-        "active_course_subs": active_course_subs,
-        "expired_course_subs": expired_course_subs,
-        "trial_course_subs": trial_course_subs,
-        "paid_course_subs": paid_course_subs,
-        "course_conversion_rate": round(course_conversion_rate, 2),
-        "course_revenue": course_revenue,
-        "source_breakdown": source_breakdown,
-        "most_subscribed_course": most_subscribed_course,
 
+        # -------------------------------------------------
+        # Course Subscription KPIs
+        # -------------------------------------------------
+
+        "total_course_subs": (
+            total_course_subs
+        ),
+
+        "active_course_subs": (
+            active_course_subs
+        ),
+
+        "expired_course_subs": (
+            expired_course_subs
+        ),
+
+        "trial_course_subs": (
+            trial_course_subs
+        ),
+
+        "paid_course_subs": (
+            paid_course_subs
+        ),
+
+        "course_conversion_rate": round(
+            course_conversion_rate,
+            2
+        ),
+
+        "course_revenue": (
+            course_revenue
+        ),
+
+        "source_breakdown": (
+            source_breakdown
+        ),
+
+        "most_subscribed_course": (
+            most_subscribed_course
+        ),
     }
 
-    return render(request, "quiz/admin/admin_dashboard.html", context)
-
+    return render(
+        request,
+        "quiz/admin/admin_dashboard.html",
+        context
+    )
 
 from collections import defaultdict
 

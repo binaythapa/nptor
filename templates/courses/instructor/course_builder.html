@@ -1,213 +1,1048 @@
 {% extends "courses/base.html" %}
 
-{% block title %}Course Builder{% endblock %}
+
+{% block title %}
+    Course Builder - {{ course.title }}
+{% endblock %}
+
 
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
 <style>
-.section-card {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    background: #fff;
+
+/* ============================================================
+   COURSE BUILDER
+============================================================ */
+
+.builder-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
 }
 
-.section-header {
-    padding: 10px;
-    background: #f4f6f9;
-    cursor: pointer;
+
+/* ============================================================
+   HEADER
+============================================================ */
+
+.builder-header {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+
+.builder-header-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 20px;
 }
 
-.lesson-item {
-    padding: 6px;
-    margin: 5px 0;
-    background: #fafafa;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+
+.builder-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
 }
 
-.sortable-ghost { opacity: 0.4; }
-.sortable-chosen { background: #e0f2ff !important; }
-.sortable-drag { background: #c7e9ff !important; }
 
-.publish-badge {
-    padding: 6px 12px;
-    border-radius: 4px;
-    color: #fff;
-    font-weight: 600;
+.builder-subtitle {
+    margin-top: 8px;
+    color: #6b7280;
     font-size: 14px;
 }
-.published { background: #28a745; }
-.unpublished { background: #dc3545; }
+
+
+/* ============================================================
+   COURSE STATUS
+============================================================ */
+
+.course-publication-status {
+    margin-top: 20px;
+    padding: 16px 20px;
+
+    background: #f8fafc;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+
+/* ============================================================
+   STATUS BADGE
+============================================================ */
+
+.status-badge {
+    display: inline-block;
+
+    padding: 6px 13px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+
+.status-draft {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+
+.status-changes {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+
+.status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+.status-approved {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+
+.status-published {
+    background: #dcfce7;
+    color: #166534;
+}
+
+
+/* ============================================================
+   STATUS MESSAGE
+============================================================ */
+
+.status-message {
+    display: block;
+
+    margin-top: 10px;
+
+    color: #6b7280;
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+/* ============================================================
+   REVIEW NOTES
+============================================================ */
+
+.review-notes {
+    margin-top: 15px;
+
+    padding: 14px 16px;
+
+    background: #ffffff;
+
+    border-left: 4px solid #f59e0b;
+
+    border-radius: 6px;
+
+    color: #374151;
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+.review-notes strong {
+    color: #111827;
+}
+
+
+.review-notes p {
+    margin: 8px 0 0;
+}
+
+
+/* ============================================================
+   COURSE ACTIONS
+============================================================ */
+
+.builder-actions {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+    flex-wrap: wrap;
+}
+
+
+.builder-btn {
+    display: inline-block;
+
+    padding: 9px 16px;
+
+    border-radius: 7px;
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    border: 0;
+
+    cursor: pointer;
+}
+
+
+.btn-edit {
+    background: #374151;
+    color: #ffffff;
+}
+
+
+.btn-edit:hover {
+    background: #1f2937;
+}
+
+
+.btn-preview {
+    background: #065f46;
+    color: #ffffff;
+}
+
+
+.btn-preview:hover {
+    background: #047857;
+}
+
+
+.btn-submit {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+
+.btn-submit:hover {
+    background: #1d4ed8;
+}
+
+
+.btn-resubmit {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+
+.btn-resubmit:hover {
+    background: #1d4ed8;
+}
+
+
+.btn-disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+
+    cursor: not-allowed;
+}
+
+
+/* ============================================================
+   SECTIONS
+============================================================ */
+
+.sections-container {
+    margin-top: 20px;
+}
+
+
+.section-card {
+    background: #ffffff;
+
+    border-radius: 12px;
+
+    margin-bottom: 18px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+
+.section-header {
+    padding: 18px 20px;
+
+    background: #f9fafb;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+
+.section-title {
+    margin: 0;
+
+    font-size: 17px;
+
+    color: #111827;
+}
+
+
+.section-description {
+    margin-top: 6px;
+
+    color: #6b7280;
+
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   SECTION CONTROLS
+============================================================ */
+
+.section-header-row {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+
+.section-delete-btn {
+    border: 0;
+
+    background: transparent;
+
+    color: #dc2626;
+
+    cursor: pointer;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.section-delete-btn:hover {
+    color: #991b1b;
+}
+
+
+/* ============================================================
+   ADD SECTION
+============================================================ */
+
+.add-section-panel {
+    background: #ffffff;
+
+    border-radius: 12px;
+
+    margin-bottom: 18px;
+
+    padding: 20px;
+
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+
+.add-section-form {
+    display: flex;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+}
+
+
+.builder-input {
+    flex: 1;
+
+    min-width: 250px;
+
+    padding: 10px 12px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+
+.builder-input:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+
+.builder-select {
+    padding: 9px 11px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 7px;
+
+    font-size: 13px;
+
+    background: #ffffff;
+
+    outline: none;
+}
+
+
+.builder-select:focus {
+    border-color: #2563eb;
+}
+
+
+/* ============================================================
+   LESSONS
+============================================================ */
+
+.lesson-list {
+    padding: 0;
+    margin: 0;
+
+    list-style: none;
+}
+
+
+.lesson-item {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 15px 20px;
+
+    border-bottom: 1px solid #f1f5f9;
+}
+
+
+.lesson-item:last-child {
+    border-bottom: none;
+}
+
+
+.lesson-info {
+    min-width: 0;
+}
+
+
+.lesson-title {
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #111827;
+}
+
+
+.lesson-type {
+    margin-top: 4px;
+
+    font-size: 12px;
+
+    color: #6b7280;
+}
+
+
+.lesson-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    flex-shrink: 0;
+}
+
+
+.lesson-actions a {
+    text-decoration: none;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    color: #2563eb;
+}
+
+
+.lesson-actions a:hover {
+    color: #1d4ed8;
+}
+
+
+.lesson-delete-btn {
+    border: 0;
+
+    background: transparent;
+
+    color: #dc2626;
+
+    cursor: pointer;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.lesson-delete-btn:hover {
+    color: #991b1b;
+}
+
+
+/* ============================================================
+   ADD LESSON
+============================================================ */
+
+.add-lesson-panel {
+    padding: 16px 20px;
+
+    background: #fafafa;
+
+    border-top: 1px solid #f1f5f9;
+}
+
+
+.add-lesson-form {
+    display: flex;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+}
+
+
+/* ============================================================
+   EMPTY LESSON
+============================================================ */
+
+.empty-lessons {
+    padding: 20px;
+
+    color: #9ca3af;
+
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   HTMX INDICATOR
+============================================================ */
+
+.htmx-indicator {
+    display: none;
+
+    font-size: 12px;
+
+    color: #6b7280;
+}
+
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+@media (max-width: 700px) {
+
+    .builder-header-top {
+        flex-direction: column;
+    }
+
+
+    .lesson-item {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .lesson-actions {
+        width: 100%;
+    }
+
+
+    .builder-actions {
+        flex-direction: column;
+    }
+
+
+    .builder-btn {
+        text-align: center;
+    }
+
+
+    .add-section-form,
+    .add-lesson-form {
+        flex-direction: column;
+    }
+
+
+    .builder-input,
+    .builder-select,
+    .add-section-form .builder-btn,
+    .add-lesson-form .builder-btn {
+        width: 100%;
+    }
+
+}
+
 </style>
+
 {% endblock %}
+
 
 {% block content %}
 
-<h2>
-    {{ course.title }}
+<div class="builder-container">
 
-    <span 
-        id="publish-toggle"
-        hx-post="{% url 'courses:toggle_publish_course' course.slug %}"
-        hx-target="#publish-toggle"
-        hx-swap="outerHTML"
-        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-        style="cursor:pointer; margin-left:10px;"
+
+    <!-- ======================================================
+         COURSE HEADER
+    ====================================================== -->
+
+    <div class="builder-header">
+
+        <div class="builder-header-top">
+
+            <div>
+
+                <h1 class="builder-title">
+                    {{ course.title }}
+                </h1>
+
+                <div class="builder-subtitle">
+                    Course Builder
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             COURSE STATUS
+        ================================================== -->
+
+        <div class="course-publication-status">
+
+
+            <!-- ==================================================
+                 DRAFT
+            ================================================== -->
+
+            {% if course.approval_status == course.APPROVAL_DRAFT %}
+
+                <span class="status-badge status-draft">
+                    Draft
+                </span>
+
+                <div class="status-message">
+
+                    Your course is currently a draft.
+
+                    <br>
+
+                    Complete your course and submit it
+                    for administrator review when ready.
+
+                </div>
+
+
+            <!-- ==================================================
+                 PENDING REVIEW
+            ================================================== -->
+
+            {% elif course.approval_status == course.APPROVAL_PENDING %}
+
+                <span class="status-badge status-pending">
+                    Awaiting Review
+                </span>
+
+                <div class="status-message">
+
+                    Your course has been submitted for
+                    administrator review.
+
+                    <br>
+
+                    You cannot publish the course while
+                    it is awaiting review.
+
+                </div>
+
+
+            <!-- ==================================================
+                 CHANGES REQUIRED
+            ================================================== -->
+
+            {% elif course.approval_status == course.APPROVAL_CHANGES %}
+
+                <span class="status-badge status-changes">
+                    Changes Required
+                </span>
+
+                <div class="status-message">
+
+                    The administrator has requested
+                    changes to this course.
+
+                    <br>
+
+                    Please review the feedback below,
+                    update your course and resubmit it.
+
+                </div>
+
+
+                {% if course.review_notes %}
+
+                    <div class="review-notes">
+
+                        <strong>
+                            Administrator Feedback
+                        </strong>
+
+                        <p>
+                            {{ course.review_notes|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+
+            <!-- ==================================================
+                 REJECTED
+            ================================================== -->
+
+            {% elif course.approval_status == course.APPROVAL_REJECTED %}
+
+                <span class="status-badge status-rejected">
+                    Rejected
+                </span>
+
+                <div class="status-message">
+
+                    This course submission was rejected
+                    by the administrator.
+
+                    <br>
+
+                    You may update the course and
+                    resubmit it if permitted.
+
+                </div>
+
+
+                {% if course.review_notes %}
+
+                    <div class="review-notes">
+
+                        <strong>
+                            Administrator Reason
+                        </strong>
+
+                        <p>
+                            {{ course.review_notes|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+
+            <!-- ==================================================
+                 APPROVED
+            ================================================== -->
+
+            {% elif course.approval_status == course.APPROVAL_APPROVED %}
+
+                {% if course.is_published and course.is_public %}
+
+                    <span class="status-badge status-published">
+                        Published
+                    </span>
+
+                    <div class="status-message">
+
+                        Your course has been approved,
+                        published and is currently available
+                        on the website.
+
+                    </div>
+
+                {% else %}
+
+                    <span class="status-badge status-approved">
+                        Approved
+                    </span>
+
+                    <div class="status-message">
+
+                        Your course has been approved by
+                        the administrator.
+
+                        <br>
+
+                        It is currently waiting for
+                        administrator publication.
+
+                    </div>
+
+                {% endif %}
+
+            {% endif %}
+
+
+            <!-- =================================================
+                 COURSE ACTIONS
+            ================================================== -->
+
+            <div class="builder-actions">
+
+
+                <!-- EDIT -->
+
+                <a
+                    href="{% url 'courses:course_edit' course.slug %}"
+                    class="builder-btn btn-edit"
+                >
+                    Edit Course
+                </a>
+
+
+                <!-- SUBMIT -->
+
+                {% if course.approval_status == course.APPROVAL_DRAFT %}
+
+                    <form
+                        method="post"
+                        action="{% url 'courses:submit-course-review' course.slug %}"
+                        style="display:inline;"
+                    >
+
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="builder-btn btn-submit"
+                            onclick="
+                                return confirm(
+                                    'Submit this course for administrator review?'
+                                );
+                            "
+                        >
+                            Submit for Review
+                        </button>
+
+                    </form>
+
+                {% endif %}
+
+
+                <!-- RESUBMIT AFTER CHANGES -->
+
+                {% if course.approval_status == course.APPROVAL_CHANGES %}
+
+                    <form
+                        method="post"
+                        action="{% url 'courses:submit-course-review' course.slug %}"
+                        style="display:inline;"
+                    >
+
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="builder-btn btn-resubmit"
+                            onclick="
+                                return confirm(
+                                    'Resubmit this course for administrator review?'
+                                );
+                            "
+                        >
+                            Resubmit for Review
+                        </button>
+
+                    </form>
+
+                {% endif %}
+
+
+                <!-- RESUBMIT AFTER REJECTION -->
+
+                {% if course.approval_status == course.APPROVAL_REJECTED %}
+
+                    <form
+                        method="post"
+                        action="{% url 'courses:submit-course-review' course.slug %}"
+                        style="display:inline;"
+                    >
+
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="builder-btn btn-resubmit"
+                            onclick="
+                                return confirm(
+                                    'Submit this revised course for administrator review?'
+                                );
+                            "
+                        >
+                            Resubmit for Review
+                        </button>
+
+                    </form>
+
+                {% endif %}
+
+
+                <!-- PREVIEW -->
+
+                {% if course.approval_status == course.APPROVAL_APPROVED and course.is_published and course.is_public %}
+
+                    <a
+                        href="{% url 'courses:course_detail' course.slug %}"
+                        class="builder-btn btn-preview"
+                    >
+                        Preview Course
+                    </a>
+
+                {% else %}
+
+                    <span
+                        class="builder-btn btn-disabled"
+                        title="Preview becomes available after administrator approval and publication."
+                    >
+                        Preview Unavailable
+                    </span>
+
+                {% endif %}
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         ADD SECTION
+    ====================================================== -->
+
+    <div class="add-section-panel">
+
+        <h2
+            style="
+                margin: 0 0 12px;
+                font-size: 17px;
+                color: #111827;
+            "
+        >
+            Course Sections
+        </h2>
+
+
+        <form
+            method="post"
+            hx-post="{% url 'courses:api_create_section' %}"
+            hx-target="#section-list"
+            hx-swap="innerHTML"
+        >
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="course_id"
+                value="{{ course.id }}"
+            >
+
+
+            <div class="add-section-form">
+
+                <input
+                    type="text"
+                    name="title"
+                    class="builder-input"
+                    placeholder="Enter section title"
+                    required
+                >
+
+
+                <button
+                    type="submit"
+                    class="builder-btn btn-submit"
+                >
+                    + Add Section
+                </button>
+
+
+                <span class="htmx-indicator">
+                    Adding...
+                </span>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- ======================================================
+         SECTION LIST
+    ====================================================== -->
+
+    <div
+        id="section-list"
+        class="sections-container"
     >
-        {% include "courses/instructor/partials/publish_button.html" %}
-    </span>
-</h2>
 
-<hr>
+        {% include "courses/instructor/partials/section_list.html" %}
 
-<!-- ================= ADD SECTION ================= -->
+    </div>
 
-<form 
-    hx-post="{% url 'courses:api_create_section' %}"
-    hx-target="#section-container"
-    hx-swap="innerHTML"
->
-    {% csrf_token %}
-    <input type="hidden" name="course_id" value="{{ course.id }}">
-    <input type="text" name="title" placeholder="New Section Title" required>
-    <button type="submit">Add Section</button>
-</form>
 
-<hr>
-
-<div id="section-container">
-    {% include "courses/instructor/partials/section_list.html" %}
 </div>
-
-<script>
-
-// ================= INITIALIZE SORTABLE =================
-function initSortable() {
-
-    const sectionContainer = document.getElementById('section-container');
-
-    if (sectionContainer && !sectionContainer.dataset.sortableInitialized) {
-        new Sortable(sectionContainer, {
-            animation: 200,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            dragClass: 'sortable-drag',
-            handle: '.section-header',   // drag only via header
-            onEnd: updateOrder
-        });
-
-        sectionContainer.dataset.sortableInitialized = true;
-    }
-
-    document.querySelectorAll(".lesson-list").forEach(function(el) {
-
-        if (!el.dataset.sortableInitialized) {
-            new Sortable(el, {
-                animation: 200,
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
-                onEnd: updateOrder
-            });
-
-            el.dataset.sortableInitialized = true;
-        }
-    });
-}
-
-
-// ================= UPDATE ORDER =================
-function updateOrder() {
-
-    let items = [];
-
-    document.querySelectorAll(".section-card").forEach((section, sIndex) => {
-
-        items.push({
-            type: "section",
-            id: section.dataset.id,
-            order: sIndex + 1
-        });
-
-        section.querySelectorAll(".lesson-item").forEach((lesson, lIndex) => {
-            items.push({
-                type: "lesson",
-                id: lesson.dataset.id,
-                order: lIndex + 1
-            });
-        });
-
-    });
-
-    fetch("{% url 'courses:api_update_order' %}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token }}"
-        },
-        body: JSON.stringify({ items: items })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.success) {
-            alert("Order update failed.");
-        }
-    })
-    .catch(() => alert("Error updating order"));
-}
-
-
-// ================= TOGGLE SECTION =================
-function toggleSection(sectionId) {
-    const body = document.getElementById("section-body-" + sectionId);
-    if (!body) return;
-
-    body.style.display = body.style.display === "none" ? "block" : "none";
-}
-
-
-// ================= TOGGLE LESSON FORM =================
-function toggleLessonForm(sectionId) {
-    const form = document.getElementById("lesson-form-" + sectionId);
-    if (!form) return;
-
-    form.style.display = form.style.display === "none" ? "block" : "none";
-}
-
-
-// ================= INLINE EDIT LESSON =================
-function editLesson(lessonId) {
-
-    const newTitle = prompt("Enter new lesson title:");
-    if (!newTitle || newTitle.trim() === "") return;
-
-    fetch("{% url 'courses:api_edit_lesson' %}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRFToken": "{{ csrf_token }}"
-        },
-        body: `lesson_id=${lessonId}&title=${encodeURIComponent(newTitle)}`
-    })
-    .then(response => {
-        if (!response.ok) {
-            alert("Failed to update lesson.");
-            return;
-        }
-        location.reload();
-    });
-}
-
-
-// ================= INIT EVENTS =================
-document.addEventListener("htmx:afterSwap", initSortable);
-document.addEventListener("DOMContentLoaded", initSortable);
-
-</script>
 
 {% endblock %}

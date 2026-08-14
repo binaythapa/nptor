@@ -1,0 +1,875 @@
+{% extends "courses/base.html" %}
+
+{% block title %}
+Admin Course Dashboard
+{% endblock %}
+
+
+{% block extra_head %}
+
+<style>
+
+/* ============================================================
+   ADMIN COURSE DASHBOARD
+   ============================================================ */
+
+.admin-dashboard {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.dashboard-header {
+    margin-bottom: 25px;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    color: #111827;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.dashboard-header p {
+    margin-top: 7px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+/* ============================================================
+   SUMMARY GRID
+   ============================================================ */
+
+.stats-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(6, minmax(0, 1fr));
+
+    gap: 14px;
+
+    margin-bottom: 25px;
+}
+
+
+/* ============================================================
+   STAT CARD
+   ============================================================ */
+
+.stat-card {
+    display: block;
+
+    padding: 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    text-decoration: none;
+
+    color: inherit;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 5px 18px rgba(0, 0, 0, 0.08);
+}
+
+.stat-number {
+    font-size: 28px;
+
+    font-weight: 700;
+
+    color: #111827;
+}
+
+.stat-label {
+    margin-top: 5px;
+
+    font-size: 12px;
+
+    color: #6b7280;
+
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   STATUS CARD COLORS
+   ============================================================ */
+
+.stat-card.pending {
+    border-left: 4px solid #f59e0b;
+}
+
+.stat-card.approved {
+    border-left: 4px solid #2563eb;
+}
+
+.stat-card.changes {
+    border-left: 4px solid #f97316;
+}
+
+.stat-card.rejected {
+    border-left: 4px solid #dc2626;
+}
+
+.stat-card.published {
+    border-left: 4px solid #16a34a;
+}
+
+
+/* ============================================================
+   PANEL
+   ============================================================ */
+
+.panel {
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    margin-bottom: 25px;
+
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   PANEL HEADER
+   ============================================================ */
+
+.panel-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 18px 20px;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    background: #f9fafb;
+}
+
+.panel-header h2 {
+    margin: 0;
+
+    font-size: 18px;
+
+    color: #111827;
+}
+
+.panel-header a {
+    color: #2563eb;
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+.panel-header a:hover {
+    text-decoration: underline;
+}
+
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+
+.table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    font-size: 13px;
+}
+
+thead {
+    background: #f9fafb;
+}
+
+th {
+    padding: 12px 16px;
+
+    text-align: left;
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.4px;
+
+    color: #6b7280;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+td {
+    padding: 14px 16px;
+
+    border-top: 1px solid #f1f5f9;
+
+    color: #374151;
+
+    vertical-align: middle;
+}
+
+tbody tr:hover {
+    background: #fafafa;
+}
+
+
+/* ============================================================
+   COURSE TITLE
+   ============================================================ */
+
+.course-title {
+    font-weight: 600;
+
+    color: #111827;
+}
+
+
+/* ============================================================
+   STATUS BADGES
+   ============================================================ */
+
+.status-badge {
+    display: inline-block;
+
+    padding: 5px 10px;
+
+    border-radius: 20px;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+/* Draft */
+
+.status-draft {
+    background: #e5e7eb;
+
+    color: #374151;
+}
+
+
+/* Pending */
+
+.status-pending {
+    background: #fef3c7;
+
+    color: #92400e;
+}
+
+
+/* Approved */
+
+.status-approved {
+    background: #dbeafe;
+
+    color: #1e40af;
+}
+
+
+/* Changes */
+
+.status-changes {
+    background: #ffedd5;
+
+    color: #9a3412;
+}
+
+
+/* Rejected */
+
+.status-rejected {
+    background: #fee2e2;
+
+    color: #991b1b;
+}
+
+
+/* Published */
+
+.status-published {
+    background: #dcfce7;
+
+    color: #166534;
+}
+
+
+/* ============================================================
+   ACTION BUTTON
+   ============================================================ */
+
+.action-btn {
+    display: inline-block;
+
+    padding: 6px 11px;
+
+    border-radius: 6px;
+
+    background: #111827;
+
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+.action-btn:hover {
+    background: #374151;
+}
+
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.empty-state {
+    padding: 35px 20px;
+
+    text-align: center;
+
+    color: #9ca3af;
+
+    font-size: 14px;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1000px) {
+
+    .stats-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .admin-dashboard {
+        padding: 0 12px;
+    }
+
+    .stats-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-header h1 {
+        font-size: 23px;
+    }
+
+    .panel-header {
+        padding: 15px;
+    }
+
+}
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="admin-dashboard">
+
+
+    <!-- ========================================================
+         HEADER
+         ======================================================== -->
+
+    <div class="dashboard-header">
+
+        <h1>
+            Course Moderation
+        </h1>
+
+        <p>
+            Review, approve, publish and manage platform courses.
+        </p>
+
+    </div>
+
+
+    <!-- ========================================================
+         SUMMARY CARDS
+         ======================================================== -->
+
+    <div class="stats-grid">
+
+
+        <!-- Pending -->
+
+        <a
+            href="{% url 'courses:admin-pending-courses' %}"
+            class="stat-card pending"
+        >
+
+            <div class="stat-number">
+                {{ pending_count }}
+            </div>
+
+            <div class="stat-label">
+                Pending Review
+            </div>
+
+        </a>
+
+
+        <!-- Draft -->
+
+        <a
+            href="{% url 'courses:admin-all-courses' %}?status={{ draft_status }}"
+            class="stat-card"
+        >
+
+            <div class="stat-number">
+                {{ draft_count }}
+            </div>
+
+            <div class="stat-label">
+                Draft
+            </div>
+
+        </a>
+
+
+        <!-- Approved -->
+
+        <a
+            href="{% url 'courses:admin-all-courses' %}?status={{ approved_status }}"
+            class="stat-card approved"
+        >
+
+            <div class="stat-number">
+                {{ approved_count }}
+            </div>
+
+            <div class="stat-label">
+                Approved
+            </div>
+
+        </a>
+
+
+        <!-- Changes Required -->
+
+        <a
+            href="{% url 'courses:admin-all-courses' %}?status={{ changes_status }}"
+            class="stat-card changes"
+        >
+
+            <div class="stat-number">
+                {{ changes_count }}
+            </div>
+
+            <div class="stat-label">
+                Changes Required
+            </div>
+
+        </a>
+
+
+        <!-- Rejected -->
+
+        <a
+            href="{% url 'courses:admin-all-courses' %}?status={{ rejected_status }}"
+            class="stat-card rejected"
+        >
+
+            <div class="stat-number">
+                {{ rejected_count }}
+            </div>
+
+            <div class="stat-label">
+                Rejected
+            </div>
+
+        </a>
+
+
+        <!-- Published -->
+
+        <div class="stat-card published">
+
+            <div class="stat-number">
+                {{ published_count }}
+            </div>
+
+            <div class="stat-label">
+                Published
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         PENDING COURSES
+         ======================================================== -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <h2>
+                Pending Review
+            </h2>
+
+            <a
+                href="{% url 'courses:admin-pending-courses' %}"
+            >
+                View All
+            </a>
+
+        </div>
+
+
+        {% if pending_courses %}
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Course
+                            </th>
+
+                            <th>
+                                Creator
+                            </th>
+
+                            <th>
+                                Organization
+                            </th>
+
+                            <th>
+                                Lessons
+                            </th>
+
+                            <th>
+                                Submitted
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for course in pending_courses %}
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="course-title">
+                                        {{ course.title }}
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+                                    {{ course.created_by }}
+                                </td>
+
+
+                                <td>
+
+                                    {% if course.organization %}
+                                        {{ course.organization }}
+                                    {% else %}
+                                        Platform
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+                                    {{ course.total_lessons }}
+                                </td>
+
+
+                                <td>
+
+                                    {% if course.submitted_at %}
+
+                                        {{ course.submitted_at|date:"M d, Y H:i" }}
+
+                                    {% else %}
+
+                                        —
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    <a
+                                        href="{% url 'courses:admin-review-course' course.slug %}"
+                                        class="action-btn"
+                                    >
+                                        Review
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                ✓ No courses are currently waiting
+                for administrator review.
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- ========================================================
+         RECENT COURSES
+         ======================================================== -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <h2>
+                Recent Courses
+            </h2>
+
+            <a
+                href="{% url 'courses:admin-all-courses' %}"
+            >
+                View All
+            </a>
+
+        </div>
+
+
+        {% if recent_courses %}
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Course
+                            </th>
+
+                            <th>
+                                Creator
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Published
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for course in recent_courses %}
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="course-title">
+                                        {{ course.title }}
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+                                    {{ course.created_by }}
+                                </td>
+
+
+                                <td>
+
+                                    {% if course.approval_status == draft_status %}
+
+                                        <span class="status-badge status-draft">
+                                            Draft
+                                        </span>
+
+
+                                    {% elif course.approval_status == pending_status %}
+
+                                        <span class="status-badge status-pending">
+                                            Pending Review
+                                        </span>
+
+
+                                    {% elif course.approval_status == approved_status %}
+
+                                        <span class="status-badge status-approved">
+                                            Approved
+                                        </span>
+
+
+                                    {% elif course.approval_status == changes_status %}
+
+                                        <span class="status-badge status-changes">
+                                            Changes Required
+                                        </span>
+
+
+                                    {% elif course.approval_status == rejected_status %}
+
+                                        <span class="status-badge status-rejected">
+                                            Rejected
+                                        </span>
+
+
+                                    {% else %}
+
+                                        <span class="status-badge">
+                                            {{ course.get_approval_status_display }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    {% if course.is_published and course.is_public %}
+
+                                        <span class="status-badge status-published">
+                                            Yes
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="status-badge status-draft">
+                                            No
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    <a
+                                        href="{% url 'courses:admin-review-course' course.slug %}"
+                                        class="action-btn"
+                                    >
+                                        Manage
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                No courses found.
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+</div>
+
+{% endblock %}

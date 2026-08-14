@@ -1,34 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <meta charset="utf-8">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f6f7fb;
-      padding: 20px;
-    }
-    .container {
-      max-width: 520px;
-      background: #ffffff;
-      padding: 24px;
-      margin: auto;
-      border-radius: 8px;
-    }
-    .footer {
-      margin-top: 24px;
-      font-size: 12px;
-      color: #666;
-      text-align: center;
-    }
-  </style>
+
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{{ site_name }}</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f6f7fb;
+            color: #333333;
+        }
+
+        .container {
+            max-width: 520px;
+            margin: 30px auto;
+            padding: 30px 24px;
+            background-color: #ffffff;
+            border-radius: 8px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #666666;
+            text-align: center;
+        }
+
+        a {
+            color: #3273dc;
+        }
+
+    </style>
+
 </head>
+
 <body>
-  <div class="container">
-    {% block content %}{% endblock %}
-    <div class="footer">
-      © {{ site_name }} · Do not share your OTP
+
+    <div class="container">
+
+        {% block content %}
+        {% endblock %}
+
+        <div class="footer">
+
+            © {{ site_name }}
+
+            <br>
+
+            For your security, never share your OTP with anyone.
+
+        </div>
+
     </div>
-  </div>
+
 </body>
+
 </html>

@@ -1,20 +1,30 @@
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
-from django.db import models, transaction
-from django.db.models import Max
 import json
 
-from courses.models import Course, CourseSection, Lesson
-from courses.services.permissions import can_edit_course
-
-
-from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.db import transaction
+from django.db.models import Max
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    JsonResponse,
+)
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.http import require_POST
+
+from courses.models import (
+    Course,
+    CourseSection,
+    Lesson,
+)
+
+from courses.services.permissions import (
+    can_edit_course,
+)
+
+
+# ============================================================
+# EDIT LESSON
+# ============================================================
 
 @login_required
 @require_POST
@@ -24,22 +34,39 @@ def edit_lesson(request):
     title = request.POST.get("title", "").strip()
 
     if not lesson_id:
-        return HttpResponseBadRequest("Invalid request.")
-
-    lesson = get_object_or_404(
-        Lesson.objects.select_related("section__course"),
-        id=lesson_id
-    )
-
-    if not can_edit_course(request.user, lesson.section.course):
-        return HttpResponseForbidden("You are not allowed to edit this lesson.")
+        return HttpResponseBadRequest(
+            "Invalid request."
+        )
 
     if not title:
-        return HttpResponseBadRequest("Lesson title cannot be empty.")
+        return HttpResponseBadRequest(
+            "Lesson title cannot be empty."
+        )
+
+    lesson = get_object_or_404(
+        Lesson.objects.select_related(
+            "section__course"
+        ),
+        id=lesson_id,
+    )
+
+    course = lesson.section.course
+
+    if not can_edit_course(
+        request.user,
+        course,
+    ):
+        return HttpResponseForbidden(
+            "You are not allowed to edit this lesson."
+        )
 
     with transaction.atomic():
+
         lesson.title = title
-        lesson.save(update_fields=["title"])
+
+        lesson.save(
+            update_fields=["title"]
+        )
 
     lessons = (
         lesson.section.lessons
@@ -51,44 +78,69 @@ def edit_lesson(request):
         "courses/instructor/partials/lesson_list.html",
         {
             "lessons": lessons,
-            "section": lesson.section
-        }
+            "section": lesson.section,
+        },
     )
 
 
+# ============================================================
+# CREATE SECTION
+# ============================================================
 
 @login_required
 @require_POST
 def create_section(request):
 
-    course_id = request.POST.get("course_id")
-    title = request.POST.get("title", "").strip()
-
-    if not course_id:
-        return HttpResponseBadRequest("Invalid course.")
-
-    if not title:
-        return HttpResponseBadRequest("Section title cannot be empty.")
-
-    course = get_object_or_404(
-        Course.objects.select_related("created_by", "organization"),
-        id=course_id
+    course_id = request.POST.get(
+        "course_id"
     )
 
-    if not can_edit_course(request.user, course):
-        return HttpResponseForbidden("You are not allowed to edit this course.")
+    title = request.POST.get(
+        "title",
+        "",
+    ).strip()
+
+    if not course_id:
+        return HttpResponseBadRequest(
+            "Invalid course."
+        )
+
+    if not title:
+        return HttpResponseBadRequest(
+            "Section title cannot be empty."
+        )
+
+    course = get_object_or_404(
+        Course.objects.select_related(
+            "created_by",
+            "organization",
+        ),
+        id=course_id,
+    )
+
+    if not can_edit_course(
+        request.user,
+        course,
+    ):
+        return HttpResponseForbidden(
+            "You are not allowed to edit this course."
+        )
 
     with transaction.atomic():
+
         max_order = (
             CourseSection.objects
             .filter(course=course)
-            .aggregate(Max("order"))["order__max"] or 0
+            .aggregate(
+                max_order=Max("order")
+            )["max_order"]
+            or 0
         )
 
         CourseSection.objects.create(
             course=course,
             title=title,
-            order=max_order + 1
+            order=max_order + 1,
         )
 
     sections = (
@@ -100,48 +152,71 @@ def create_section(request):
     return render(
         request,
         "courses/instructor/partials/section_list.html",
-        {"sections": sections}
+        {
+            "sections": sections,
+        },
     )
 
 
-
-from django.db import transaction
+# ============================================================
+# DELETE SECTION
+# ============================================================
 
 @login_required
 @require_POST
-def delete_section(request, section_id):
+def delete_section(
+    request,
+    section_id,
+):
 
     section = get_object_or_404(
-        CourseSection.objects.select_related("course"),
-        id=section_id
+        CourseSection.objects.select_related(
+            "course"
+        ),
+        id=section_id,
     )
 
-    if not can_edit_course(request.user, section.course):
-        return HttpResponseForbidden()
+    course = section.course
+
+    if not can_edit_course(
+        request.user,
+        course,
+    ):
+        return HttpResponseForbidden(
+            "You are not allowed to edit this course."
+        )
 
     with transaction.atomic():
 
-        course = section.course
-
-        # 1️⃣ Delete first
         section.delete()
 
-        # 2️⃣ Reorder safely (collision-proof)
-        remaining = (
+        remaining = list(
             CourseSection.objects
             .filter(course=course)
             .order_by("order")
         )
 
-        # Move to safe temporary range
-        for sec in remaining:
-            sec.order += 1000
-            sec.save(update_fields=["order"])
+        # Temporary values prevent unique-order collisions.
+        for index, sec in enumerate(
+            remaining,
+            start=1,
+        ):
+            sec.order = 1000 + index
 
-        # Assign clean sequence
-        for index, sec in enumerate(remaining, start=1):
+            sec.save(
+                update_fields=["order"]
+            )
+
+        # Final order.
+        for index, sec in enumerate(
+            remaining,
+            start=1,
+        ):
             sec.order = index
-            sec.save(update_fields=["order"])
+
+            sec.save(
+                update_fields=["order"]
+            )
 
     updated_sections = (
         course.sections
@@ -152,161 +227,340 @@ def delete_section(request, section_id):
     return render(
         request,
         "courses/instructor/partials/section_list.html",
-        {"sections": updated_sections}
+        {
+            "sections": updated_sections,
+        },
     )
 
 
-
-
-
-
-
+# ============================================================
+# CREATE LESSON
+# ============================================================
 
 @login_required
 @require_POST
 def create_lesson(request):
 
-    section_id = request.POST.get("section_id")
-    title = request.POST.get("title")
-    lesson_type = request.POST.get("lesson_type")
-
-    if not section_id or not title or not lesson_type:
-        return HttpResponseBadRequest("Missing required fields")
-
-    section = get_object_or_404(
-        CourseSection.objects.select_related("course"),
-        id=section_id
+    section_id = request.POST.get(
+        "section_id"
     )
 
-    if not can_edit_course(request.user, section.course):
-        return HttpResponseForbidden("You are not allowed to edit this course.")
+    title = request.POST.get(
+        "title",
+        "",
+    ).strip()
+
+    lesson_type = request.POST.get(
+        "lesson_type",
+        "",
+    ).strip()
+
+    if not section_id:
+        return HttpResponseBadRequest(
+            "Section is required."
+        )
+
+    if not title:
+        return HttpResponseBadRequest(
+            "Lesson title is required."
+        )
+
+    if not lesson_type:
+        return HttpResponseBadRequest(
+            "Lesson type is required."
+        )
+
+    section = get_object_or_404(
+        CourseSection.objects.select_related(
+            "course"
+        ),
+        id=section_id,
+    )
+
+    course = section.course
+
+    if not can_edit_course(
+        request.user,
+        course,
+    ):
+        return HttpResponseForbidden(
+            "You are not allowed to edit this course."
+        )
 
     with transaction.atomic():
+
         max_order = (
             Lesson.objects
             .filter(section=section)
-            .aggregate(Max("order"))["order__max"] or 0
+            .aggregate(
+                max_order=Max("order")
+            )["max_order"]
+            or 0
         )
 
         Lesson.objects.create(
             section=section,
             title=title,
             lesson_type=lesson_type,
-            order=max_order + 1
+            order=max_order + 1,
         )
 
-    lessons = section.lessons.order_by("order")
+    lessons = (
+        section.lessons
+        .order_by("order")
+    )
 
     return render(
         request,
         "courses/instructor/partials/lesson_list.html",
         {
             "lessons": lessons,
-            "section": section
-        }
+            "section": section,
+        },
     )
 
 
-
-
-
-
-
-from django.db import transaction
+# ============================================================
+# DELETE LESSON
+# ============================================================
 
 @login_required
 @require_POST
-def delete_lesson(request, lesson_id):
+def delete_lesson(
+    request,
+    lesson_id,
+):
 
     lesson = get_object_or_404(
-        Lesson.objects.select_related("section__course"),
-        id=lesson_id
+        Lesson.objects.select_related(
+            "section__course"
+        ),
+        id=lesson_id,
     )
 
-    if not can_edit_course(request.user, lesson.section.course):
-        return HttpResponseForbidden()
+    section = lesson.section
+
+    course = section.course
+
+    if not can_edit_course(
+        request.user,
+        course,
+    ):
+        return HttpResponseForbidden(
+            "You are not allowed to edit this lesson."
+        )
 
     with transaction.atomic():
 
-        section = lesson.section
-
-        # 1️⃣ Delete lesson first
         lesson.delete()
 
-        # 2️⃣ Reorder safely
-        remaining = (
+        remaining = list(
             Lesson.objects
             .filter(section=section)
             .order_by("order")
         )
 
-        # Move to safe temporary range
-        for l in remaining:
-            l.order += 1000
-            l.save(update_fields=["order"])
+        # Temporary values.
+        for index, item in enumerate(
+            remaining,
+            start=1,
+        ):
+            item.order = 1000 + index
 
-        # Reindex cleanly
-        for index, l in enumerate(remaining, start=1):
-            l.order = index
-            l.save(update_fields=["order"])
+            item.save(
+                update_fields=["order"]
+            )
 
-    updated_lessons = section.lessons.order_by("order")
+        # Final order.
+        for index, item in enumerate(
+            remaining,
+            start=1,
+        ):
+            item.order = index
+
+            item.save(
+                update_fields=["order"]
+            )
+
+    updated_lessons = (
+        section.lessons
+        .order_by("order")
+    )
 
     return render(
         request,
         "courses/instructor/partials/lesson_list.html",
         {
             "section": section,
-            "lessons": updated_lessons
-        }
+            "lessons": updated_lessons,
+        },
     )
 
 
-
-
-
-
+# ============================================================
+# UPDATE SECTION / LESSON ORDER
+# ============================================================
 
 @login_required
 @require_POST
 def update_order(request):
 
     try:
-        data = json.loads(request.body)
-        items = data.get("items", [])
+
+        data = json.loads(
+            request.body
+        )
+
+        items = data.get(
+            "items",
+            [],
+        )
+
+        if not isinstance(items, list):
+            return HttpResponseBadRequest(
+                "Invalid items."
+            )
 
         with transaction.atomic():
 
-            # Step 1️⃣ Move everything temporarily
+            objects = []
+
+            # ------------------------------------------------
+            # Validate everything first
+            # ------------------------------------------------
+
             for item in items:
 
-                if item["type"] == "section":
-                    obj = CourseSection.objects.select_for_update().get(id=item["id"])
+                item_type = item.get(
+                    "type"
+                )
 
-                    if not can_edit_course(request.user, obj.course):
-                        return HttpResponseForbidden()
+                item_id = item.get(
+                    "id"
+                )
 
-                elif item["type"] == "lesson":
-                    obj = Lesson.objects.select_for_update().get(id=item["id"])
+                if item_type == "section":
 
-                    if not can_edit_course(request.user, obj.section.course):
-                        return HttpResponseForbidden()
+                    obj = (
+                        CourseSection.objects
+                        .select_for_update()
+                        .select_related("course")
+                        .get(id=item_id)
+                    )
 
-                obj.order += 1000
-                obj.save(update_fields=["order"])
+                    course = obj.course
 
-            # Step 2️⃣ Apply final order
-            for item in items:
+                elif item_type == "lesson":
 
-                if item["type"] == "section":
-                    obj = CourseSection.objects.get(id=item["id"])
+                    obj = (
+                        Lesson.objects
+                        .select_for_update()
+                        .select_related(
+                            "section__course"
+                        )
+                        .get(id=item_id)
+                    )
+
+                    course = obj.section.course
+
                 else:
-                    obj = Lesson.objects.get(id=item["id"])
 
-                obj.order = item["order"]
-                obj.save(update_fields=["order"])
+                    raise ValueError(
+                        "Invalid item type."
+                    )
 
-        return JsonResponse({"success": True})
+                if not can_edit_course(
+                    request.user,
+                    course,
+                ):
+                    return HttpResponseForbidden(
+                        "You are not allowed to reorder this course."
+                    )
 
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+                objects.append(
+                    (
+                        item,
+                        obj,
+                    )
+                )
+
+            # ------------------------------------------------
+            # Temporary order
+            # ------------------------------------------------
+
+            for index, (
+                item,
+                obj,
+            ) in enumerate(
+                objects,
+                start=1,
+            ):
+
+                obj.order = 1000 + index
+
+                obj.save(
+                    update_fields=["order"]
+                )
+
+            # ------------------------------------------------
+            # Final order
+            # ------------------------------------------------
+
+            for item, obj in objects:
+
+                new_order = item.get(
+                    "order"
+                )
+
+                if new_order is None:
+                    raise ValueError(
+                        "Missing order."
+                    )
+
+                obj.order = int(
+                    new_order
+                )
+
+                obj.save(
+                    update_fields=["order"]
+                )
+
+        return JsonResponse(
+            {
+                "success": True,
+            }
+        )
+
+    except (
+        CourseSection.DoesNotExist,
+        Lesson.DoesNotExist,
+    ):
+
+        return JsonResponse(
+            {
+                "error": "Object not found."
+            },
+            status=404,
+        )
+
+    except (
+        ValueError,
+        TypeError,
+        json.JSONDecodeError,
+    ) as exc:
+
+        return JsonResponse(
+            {
+                "error": str(exc),
+            },
+            status=400,
+        )
+
+    except Exception as exc:
+
+        return JsonResponse(
+            {
+                "error": str(exc),
+            },
+            status=400,
+        )

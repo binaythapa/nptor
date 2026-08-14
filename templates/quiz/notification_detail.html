@@ -1,8 +1,248 @@
-{% extends 'layouts/base_sidebar.html' %}
+{% extends "courses/base.html" %}
+
+{% block title %}
+    {{ notification.title }}
+{% endblock %}
+
+
+{% block extra_head %}
+
+<style>
+
+    /* =====================================================
+       NOTIFICATION DETAIL
+    ===================================================== */
+
+    .notification-detail {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+
+    /* =====================================================
+       BACK LINK
+    ===================================================== */
+
+    .notification-back {
+        display: inline-block;
+
+        margin-bottom: 20px;
+
+        color: #2563eb;
+
+        text-decoration: none;
+
+        font-size: 14px;
+
+        font-weight: 500;
+    }
+
+    .notification-back:hover {
+        color: #1d4ed8;
+
+        text-decoration: underline;
+    }
+
+
+    /* =====================================================
+       CARD
+    ===================================================== */
+
+    .notification-detail-card {
+        background: #ffffff;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 12px;
+
+        padding: 28px;
+
+        box-shadow:
+            0 5px 15px
+            rgba(0, 0, 0, 0.05);
+    }
+
+
+    /* =====================================================
+       HEADER
+    ===================================================== */
+
+    .notification-detail-header {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: flex-start;
+
+        gap: 20px;
+
+        padding-bottom: 18px;
+
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+
+    .notification-detail-title {
+        margin: 0;
+
+        color: #111827;
+
+        font-size: 24px;
+
+        line-height: 1.3;
+    }
+
+
+    .notification-detail-date {
+        color: #9ca3af;
+
+        font-size: 12px;
+
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       MESSAGE
+    ===================================================== */
+
+    .notification-detail-message {
+        margin-top: 24px;
+
+        color: #374151;
+
+        font-size: 15px;
+
+        line-height: 1.7;
+
+        white-space: pre-line;
+    }
+
+
+    /* =====================================================
+       FOOTER
+    ===================================================== */
+
+    .notification-detail-footer {
+        margin-top: 28px;
+
+        padding-top: 18px;
+
+        border-top: 1px solid #e5e7eb;
+    }
+
+
+    .notification-read-status {
+        color: #6b7280;
+
+        font-size: 12px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 650px) {
+
+        .notification-detail-card {
+            padding: 20px;
+        }
+
+        .notification-detail-header {
+            flex-direction: column;
+
+            gap: 8px;
+        }
+
+        .notification-detail-title {
+            font-size: 21px;
+        }
+
+        .notification-detail-date {
+            white-space: normal;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
 {% block content %}
-<h1 class="title">{{ notification.title }}</h1>
-<div class="small-muted">{{ notification.created_at|date:"SHORT_DATETIME_FORMAT" }}</div>
-<div class="card" style="margin-top:12px">
-  <p>{{ notification.message }}</p>
+
+<div class="notification-detail">
+
+
+    <!-- =================================================
+         BACK
+    ================================================= -->
+
+    <a
+        href="{% url 'quiz:notifications_list' %}"
+        class="notification-back"
+    >
+        ← Back to Notifications
+    </a>
+
+
+    <!-- =================================================
+         NOTIFICATION CARD
+    ================================================= -->
+
+    <div class="notification-detail-card">
+
+
+        <!-- ==============================================
+             HEADER
+        ============================================== -->
+
+        <div class="notification-detail-header">
+
+            <h1 class="notification-detail-title">
+
+                {{ notification.title }}
+
+            </h1>
+
+
+            <div class="notification-detail-date">
+
+                {{ notification.created_at|date:"M d, Y H:i" }}
+
+            </div>
+
+        </div>
+
+
+        <!-- ==============================================
+             MESSAGE
+        ============================================== -->
+
+        <div class="notification-detail-message">
+
+            {{ notification.message }}
+
+        </div>
+
+
+        <!-- ==============================================
+             FOOTER
+        ============================================== -->
+
+        <div class="notification-detail-footer">
+
+            <span class="notification-read-status">
+
+                ✓ Notification read
+
+            </span>
+
+        </div>
+
+    </div>
+
 </div>
+
 {% endblock %}

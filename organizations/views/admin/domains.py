@@ -1,7 +1,5 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from organizations.permissions import org_admin_required
-from organizations.utils import org_qs, org_get
-
 from quiz.models import Domain
 from quiz.forms import DomainForm
 
@@ -9,7 +7,7 @@ from quiz.forms import DomainForm
 @org_admin_required
 def org_domain_list(request, slug):
 
-    domains = org_qs(Domain, request).filter(is_active=True)
+    domains = Domain.objects.filter(is_active=True)
 
     return render(
         request,
@@ -26,10 +24,7 @@ def org_domain_create(request, slug):
         form = DomainForm(request.POST)
 
         if form.is_valid():
-            obj = form.save(commit=False)
-            obj.organization = request.organization   # 🔥 IMPORTANT
-            obj.save()
-
+            form.save()
             return redirect("organizations_admin:domain_list", slug=slug)
 
     else:
@@ -45,7 +40,7 @@ def org_domain_create(request, slug):
 @org_admin_required
 def org_domain_edit(request, slug, pk):
 
-    domain = org_get(Domain, request, pk=pk)   # 🔒 secure access
+    domain = get_object_or_404(Domain, pk=pk)
 
     if request.method == "POST":
 
@@ -53,7 +48,6 @@ def org_domain_edit(request, slug, pk):
 
         if form.is_valid():
             form.save()
-
             return redirect(
                 "organizations_admin:domain_list",
                 slug=slug
@@ -75,7 +69,7 @@ def org_domain_edit(request, slug, pk):
 @org_admin_required
 def org_domain_delete(request, slug, pk):
 
-    domain = org_get(Domain, request, pk=pk)   # 🔒 secure access
+    domain = get_object_or_404(Domain, pk=pk)
 
     domain.delete()
 

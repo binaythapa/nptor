@@ -1,166 +1,346 @@
-<aside id="admin-sidebar" class="admin-sidebar">
-  <nav class="menu is-size-7">
+<!-- =========================================================
+     ADMIN SIDEBAR
+========================================================= -->
 
-    <!-- ================= DASHBOARD ================= -->
-    <p class="menu-label">Dashboard</p>
-    <ul class="menu-list">
-      <li>
+
+<!-- =========================================================
+     DASHBOARD
+========================================================= -->
+
+<p class="menu-label">
+    Dashboard
+</p>
+
+<ul class="menu-list">
+
+    <li>
         <a href="{% url 'quiz:dashboard' %}">
-          <span class="icon is-small">
-            <i class="fa fa-chart-line"></i>
-          </span>
-          <span class="menu-text">Dashboard</span>
-        </a>
-      </li>
-    </ul>
 
-    <!-- ================= USERS ================= -->
-    <p class="menu-label">Users</p>
-    <ul class="menu-list">
-      <li>
+            <span class="icon is-small">
+                <i class="fa fa-chart-line"></i>
+            </span>
+
+            <span class="menu-text">
+                Dashboard
+            </span>
+
+        </a>
+    </li>
+
+</ul>
+
+
+<!-- =========================================================
+     USERS
+========================================================= -->
+
+<p class="menu-label">
+    Users
+</p>
+
+<ul class="menu-list">
+
+    <li>
         <a href="{% url 'accounts:user_monitoring' %}">
-          <span class="icon is-small">
-            <i class="fa fa-users"></i>
-          </span>
-          <span class="menu-text">User Monitoring</span>
+
+            <span class="icon is-small">
+                <i class="fa fa-users"></i>
+            </span>
+
+            <span class="menu-text">
+                User Monitoring
+            </span>
+
         </a>
-      </li>
-    </ul>
+    </li>
 
-    <!-- ================= CONTENT ================= -->
-    <p class="menu-label">Content</p>
-    <ul class="menu-list">
+</ul>
 
-      <li>
+
+<!-- =========================================================
+     CONTENT
+========================================================= -->
+
+<p class="menu-label">
+    Content
+</p>
+
+<ul class="menu-list">
+
+    <!-- Exams -->
+
+    <li>
         <a href="{% url 'quiz:admin_exam_list' %}">
-          <span class="icon is-small">
-            <i class="fa fa-file-alt"></i>
-          </span>
-          <span class="menu-text">Exams</span>
-        </a>
-      </li>
 
-      <li>
+            <span class="icon is-small">
+                <i class="fa fa-file-alt"></i>
+            </span>
+
+            <span class="menu-text">
+                Exams
+            </span>
+
+        </a>
+    </li>
+
+
+    <!-- Tracks -->
+
+    <li>
         <a href="{% url 'quiz:admin_track_list' %}">
-          <span class="icon is-small">
-            <i class="fa fa-layer-group"></i>
-          </span>
-          <span class="menu-text">Tracks</span>
-        </a>
-      </li>
 
-      <li>
+            <span class="icon is-small">
+                <i class="fa fa-layer-group"></i>
+            </span>
+
+            <span class="menu-text">
+                Tracks
+            </span>
+
+        </a>
+    </li>
+
+
+    <!-- Questions -->
+
+    <li>
         <a href="{% url 'quiz:question_dashboard' %}">
-          <span class="icon is-small">
-            <i class="fa fa-question-circle"></i>
-          </span>
-          <span class="menu-text">Questions</span>
+
+            <span class="icon is-small">
+                <i class="fa fa-question-circle"></i>
+            </span>
+
+            <span class="menu-text">
+                Questions
+            </span>
+
         </a>
-      </li>
+    </li>
 
-    </ul>
+</ul>
 
-    <!-- ================= REVENUE ================= -->
-    <p class="menu-label">Revenue</p>
-    <ul class="menu-list">
 
-      <li>
+<!-- =========================================================
+     REVENUE
+========================================================= -->
+
+<p class="menu-label">
+    Revenue
+</p>
+
+<ul class="menu-list">
+
+    <!-- Subscriptions -->
+
+    <li>
         <a href="{% url 'quiz:subscription_admin_panel' %}">
-          <span class="icon is-small">
-            <i class="fa fa-credit-card"></i>
-          </span>
-          <span class="menu-text">Subscriptions</span>
-        </a>
-      </li>
 
-      <li>
+            <span class="icon is-small">
+                <i class="fa fa-credit-card"></i>
+            </span>
+
+            <span class="menu-text">
+                Subscriptions
+            </span>
+
+        </a>
+    </li>
+
+
+    <!-- Payments -->
+
+    <li>
         <a href="{% url 'quiz:admin_payment_list' %}">
-          <span class="icon is-small">
-            <i class="fa fa-rupee-sign"></i>
-          </span>
-          <span class="menu-text">Payments</span>
-        </a>
-      </li>
 
-      <li>
+            <span class="icon is-small">
+                <i class="fa fa-rupee-sign"></i>
+            </span>
+
+            <span class="menu-text">
+                Payments
+            </span>
+
+        </a>
+    </li>
+
+
+    <!-- Coupons -->
+
+    <li>
         <a href="{% url 'quiz:admin_coupon_list' %}">
-          <span class="icon is-small">
-            <i class="fa fa-ticket"></i>
-          </span>
-          <span class="menu-text">Coupons</span>
+
+            <span class="icon is-small">
+                <i class="fa fa-ticket"></i>
+            </span>
+
+            <span class="menu-text">
+                Coupons
+            </span>
+
         </a>
-      </li>
+    </li>
 
-    </ul>
+</ul>
 
-    <!-- ================= MOCK ================= -->
-    <p class="menu-label">Mock</p>
-    <ul class="menu-list">
-      <li>
+
+<!-- =========================================================
+     MOCK
+========================================================= -->
+
+<p class="menu-label">
+    Mock
+</p>
+
+<ul class="menu-list">
+
+    <li>
         <a href="{% url 'quiz:admin_mock_attempts' %}">
-          <span class="icon is-small">
-            <i class="fa fa-users"></i>
-          </span>
-          <span class="menu-text">Mock Reset</span>
+
+            <span class="icon is-small">
+                <i class="fa fa-users"></i>
+            </span>
+
+            <span class="menu-text">
+                Mock Reset
+            </span>
+
         </a>
-      </li>
-    </ul>
+    </li>
 
-    <!-- ================= ORGANIZATION ================= -->
-    {% if request.organization and request.organization.slug %}
+</ul>
 
-    {% with org_slug=request.organization.slug %}
 
-    <p class="menu-label">Organization</p>
+<!-- =========================================================
+     COURSES - ADMIN MODERATION
+========================================================= -->
 
-    <ul class="menu-list">
+<p class="menu-label">
+    Courses
+</p>
 
-      <li>
-        <a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
-          <span class="icon is-small">
-            <i class="fa fa-building"></i>
-          </span>
-          <span class="menu-text">Organization Dashboard</span>
+<ul class="menu-list">
+
+    <!-- Course Dashboard -->
+
+    <li>
+        <a href="{% url 'courses:admin-course-dashboard' %}">
+
+            <span class="icon is-small">
+                <i class="fa fa-graduation-cap"></i>
+            </span>
+
+            <span class="menu-text">
+                Course Dashboard
+            </span>
+
         </a>
-      </li>
+    </li>
 
-    </ul>
 
-    {% endwith %}
+    <!-- Pending Reviews -->
 
-    {% endif %}
+    <li>
+        <a href="{% url 'courses:admin-pending-courses' %}">
 
-    <!-- ================= COURSE ================= -->
-    <p class="menu-label">Course</p>
-    <ul class="menu-list">
-      <li>
+            <span class="icon is-small">
+                <i class="fa fa-clock"></i>
+            </span>
+
+            <span class="menu-text">
+                Pending Reviews
+
+                {% if pending_course_reviews %}
+                    <span
+                        style="
+                            display: inline-block;
+                            margin-left: 6px;
+                            padding: 2px 7px;
+                            border-radius: 10px;
+                            background: #f59e0b;
+                            color: #ffffff;
+                            font-size: 11px;
+                            font-weight: 600;
+                            line-height: 1.2;
+                        "
+                    >
+                        {{ pending_course_reviews }}
+                    </span>
+                {% endif %}
+
+            </span>
+
+        </a>
+    </li>
+
+
+    <!-- All Courses -->
+
+    <li>
+        <a href="{% url 'courses:admin-all-courses' %}">
+
+            <span class="icon is-small">
+                <i class="fa fa-book"></i>
+            </span>
+
+            <span class="menu-text">
+                All Courses
+            </span>
+
+        </a>
+    </li>
+
+</ul>
+
+
+<!-- =========================================================
+     COURSE AUTHORING
+========================================================= -->
+
+<p class="menu-label">
+    Course Authoring
+</p>
+
+<ul class="menu-list">
+
+    <li>
         <a href="{% url 'courses:instructor_dashboard' %}">
-          <span class="icon is-small">
-            <i class="fa fa-users"></i>
-          </span>
-          <span class="menu-text">Course</span>
-        </a>
-      </li>
-    </ul>
 
-    <!-- ================= PRACTICE ================= -->
-    <p class="menu-label">Practice</p>
-    <ul class="menu-list">
-      <li>
+            <span class="icon is-small">
+                <i class="fa fa-chalkboard-teacher"></i>
+            </span>
+
+            <span class="menu-text">
+                My Courses
+            </span>
+
+        </a>
+    </li>
+
+</ul>
+
+
+<!-- =========================================================
+     PRACTICE
+========================================================= -->
+
+<p class="menu-label">
+    Practice
+</p>
+
+<ul class="menu-list">
+
+    <li>
         <a href="{% url 'quiz:practice' %}">
-          <span class="icon is-small">
-            <i class="fa fa-users"></i>
-          </span>
-          <span class="menu-text">Practice</span>
+
+            <span class="icon is-small">
+                <i class="fa fa-dumbbell"></i>
+            </span>
+
+            <span class="menu-text">
+                Practice
+            </span>
+
         </a>
-      </li>
-    </ul>
+    </li>
 
-
-    <p>ORG: {{ request.organization }}</p>
-<p>SLUG: {{ request.organization.slug }}</p>
-  </nav>
-
-
-  
-</aside>
+</ul>

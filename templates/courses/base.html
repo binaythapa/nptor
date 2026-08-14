@@ -1,208 +1,326 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <title>{% block title %}LMS Platform{% endblock %}</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+            Courses
+        {% endblock %}
+    </title>
 
     <style>
 
-/* ================= BODY ================= */
+        /* ================= BODY ================= */
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    margin: 0;
-    background: #f4f6f9;
-}
+        body {
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
 
-/* ================= NAVBAR ================= */
+            margin: 0;
 
-nav {
-    background: #111827;
-    padding: 12px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+            background: #f4f6f9;
+        }
 
-/* Left & Right sections */
-.nav-left {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
 
-.nav-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #e5e7eb;
-}
+        /* ================= NAVBAR ================= */
 
-/* Base nav links */
-nav a {
-    color: #e5e7eb;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
+        nav {
+            background: #111827;
 
-nav a:hover {
-    color: #ffffff;
-}
+            padding: 12px 24px;
 
-/* Divider between groups */
-.nav-divider {
-    height: 20px;
-    width: 1px;
-    background: #374151;
-}
+            display: flex;
 
-/* ================= COURSE CONTEXT MENU ================= */
+            justify-content: space-between;
 
-.course-menu {
-    display: flex;
-    gap: 8px;
-    padding-left: 15px;
-    border-left: 1px solid #374151;
-}
+            align-items: center;
+        }
 
-/* Pill base */
-.menu-btn {
-    padding: 5px 12px;
-    font-size: 12px;
-    border-radius: 20px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
 
-/* Builder */
-.menu-builder {
-    background: #1e3a8a;
-    color: #c7d2fe;
-}
+        /* ================= NAV LEFT ================= */
 
-.menu-builder:hover {
-    background: #2563eb;
-    color: white;
-}
+        .nav-left {
+            display: flex;
 
-/* Edit */
-.menu-edit {
-    background: #374151;
-    color: #e5e7eb;
-}
+            align-items: center;
 
-.menu-edit:hover {
-    background: #4b5563;
-}
+            gap: 20px;
+        }
 
-/* View */
-.menu-view {
-    background: #065f46;
-    color: #d1fae5;
-}
 
-.menu-view:hover {
-    background: #047857;
-    color: white;
-}
+        /* ================= NAV RIGHT ================= */
 
-/* ================= USER SECTION ================= */
+        .nav-right {
+            display: flex;
 
-.nav-user {
-    font-size: 13px;
-    color: #9ca3af;
-}
+            align-items: center;
 
-.logout-link {
-    color: #f87171;
-}
+            gap: 12px;
 
-.logout-link:hover {
-    color: #ef4444;
-}
+            color: #e5e7eb;
+        }
 
-/* ================= MAIN CONTAINER ================= */
 
-.container {
-    max-width: 1100px;
-    margin: 30px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
-}
+        /* ================= NAV LINKS ================= */
 
-hr {
-    margin: 20px 0;
-}
+        nav a {
+            color: #e5e7eb;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: 500;
+
+            transition: all 0.2s ease;
+        }
+
+        nav a:hover {
+            color: #ffffff;
+        }
+
+
+        /* ================= DISABLED LINK ================= */
+
+        .is-disabled {
+            opacity: 0.5;
+
+            cursor: not-allowed;
+
+            pointer-events: none;
+        }
+
+
+        /* ================= DIVIDER ================= */
+
+        .nav-divider {
+            height: 20px;
+
+            width: 1px;
+
+            background: #374151;
+        }
+
+
+        /* ================= COURSE CONTEXT MENU ================= */
+
+        .course-menu {
+            display: flex;
+
+            gap: 8px;
+
+            padding-left: 15px;
+
+            border-left: 1px solid #374151;
+        }
+
+
+        /* ================= MENU BUTTON ================= */
+
+        .menu-btn {
+            padding: 5px 12px;
+
+            font-size: 12px;
+
+            border-radius: 20px;
+
+            text-decoration: none;
+
+            font-weight: 500;
+
+            transition: all 0.2s ease;
+        }
+
+
+        /* ================= BUILDER ================= */
+
+        .menu-builder {
+            background: #1e3a8a;
+
+            color: #c7d2fe;
+        }
+
+        .menu-builder:hover {
+            background: #2563eb;
+
+            color: white;
+        }
+
+
+        /* ================= EDIT ================= */
+
+        .menu-edit {
+            background: #374151;
+
+            color: #e5e7eb;
+        }
+
+        .menu-edit:hover {
+            background: #4b5563;
+        }
+
+
+        /* ================= VIEW ================= */
+
+        .menu-view {
+            background: #065f46;
+
+            color: #d1fae5;
+        }
+
+        .menu-view:hover {
+            background: #047857;
+
+            color: white;
+        }
+
+
+        /* ================= USER ================= */
+
+        .nav-user {
+            font-size: 13px;
+
+            color: #9ca3af;
+        }
+
+
+        /* ================= LOGOUT ================= */
+
+        .logout-link {
+            color: #f87171;
+        }
+
+        .logout-link:hover {
+            color: #ef4444;
+        }
+
+
+        /* ================= MAIN CONTAINER ================= */
+
+        .container {
+            max-width: 1100px;
+
+            margin: 30px auto;
+
+            padding: 20px;
+
+            background: white;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 6px 18px
+                rgba(0, 0, 0, 0.05);
+        }
+
+
+        /* ================= HR ================= */
+
+        hr {
+            margin: 20px 0;
+        }
 
     </style>
 
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script
+        src="https://unpkg.com/htmx.org@1.9.10">
+    </script>
 
-    {% block extra_head %}{% endblock %}
+    {% block extra_head %}
+    {% endblock %}
+
 </head>
+
 
 <body>
 
-<!-- ================= NAVIGATION ================= -->
+
+<!-- =========================================================
+     NAVIGATION
+========================================================= -->
 
 <nav>
+
+    <!-- ================= LEFT SIDE ================= -->
 
     <div class="nav-left">
 
         {% if user.is_authenticated %}
 
-            <!-- GLOBAL -->
-            <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}">
-                ← Back To Home
-            </a>
 
-            <!-- ORG DASHBOARD -->
+            <!-- =================================================
+                 ORGANIZATION DASHBOARD
+            ================================================= -->
+
             {% if request.active_org and request.active_org.slug %}
 
-                <a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}javascript:void(0);{% endif %}"
-                   class="py-1 {% if is_from_course %}is-disabled{% endif %}"
-                   {% if is_from_course %}title="Disabled during course practice"{% endif %}>
+                {% if not is_from_course %}
 
-                    <span class="icon is-small mr-1">
-                        <i class="fa fa-building"></i>
+                    <a
+                        href="{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}"
+                        class="py-1"
+                    >
+                        Org Dashboard
+                    </a>
+
+                {% else %}
+
+                    <span
+                        class="py-1 is-disabled"
+                        title="Disabled during course practice"
+                    >
+                        Org Dashboard
                     </span>
 
-                    Org Dashboard
-
-                </a>
+                {% endif %}
 
             {% endif %}
 
-            <div class="nav-divider"></div>
 
-            <!-- INSTRUCTOR -->
-            <a href="{% url 'courses:instructor_dashboard' %}">
-                Courses
-            </a>
+            <!-- =================================================
+                 COURSE CONTEXT
+            ================================================= -->
 
-            <!-- COURSE CONTEXT -->
             {% if course %}
 
                 <div class="course-menu">
 
-                    <a href="{% url 'courses:course_builder' course.slug %}"
-                       class="menu-btn menu-builder">
+                    <a
+                        href="{% url 'courses:course_builder' course.slug %}"
+                        class="menu-btn menu-builder"
+                    >
                         Sections
                     </a>
 
-                    <a href="{% url 'courses:course_edit' course.slug %}"
-                       class="menu-btn menu-edit">
+
+                    <a
+                        href="{% url 'courses:course_edit' course.slug %}"
+                        class="menu-btn menu-edit"
+                    >
                         Edit
                     </a>
 
-                    <a href="{% url 'courses:course_detail' course.slug %}"
-                       class="menu-btn menu-view">
+
+                    <a
+                        href="{% url 'courses:course_detail' course.slug %}"
+                        class="menu-btn menu-view"
+                    >
                         Preview
                     </a>
 
@@ -210,52 +328,75 @@ hr {
 
             {% endif %}
 
-            <!-- LESSON CONTEXT -->
+
+            <!-- =================================================
+                 LESSON CONTEXT
+            ================================================= -->
+
             {% if lesson %}
 
                 <div class="nav-divider"></div>
 
-                <a href="{% url 'courses:lesson_edit' lesson.id %}">
+                <a
+                    href="{% url 'courses:lesson_edit' lesson.id %}"
+                >
                     Edit Lesson
                 </a>
 
             {% endif %}
 
+
         {% endif %}
 
     </div>
 
-    <!-- RIGHT SIDE -->
+
+    <!-- ================= RIGHT SIDE ================= -->
 
     <div class="nav-right">
 
         {% if user.is_authenticated %}
 
             <span class="nav-user">
+
                 {{ user.username }}
+
             </span>
 
-            <a href="#"
-               class="logout-link"
-               onclick="event.preventDefault();
-                        document.getElementById('logout-form').submit();">
 
+            <!-- =================================================
+                 LOGOUT
+            ================================================= -->
+
+            <a
+                href="#"
+                class="logout-link"
+                onclick="
+                    event.preventDefault();
+                    document.getElementById('logout-form').submit();
+                "
+            >
                 Logout
-
             </a>
 
-            <form id="logout-form"
-                  method="post"
-                  action="{% url 'accounts:logout' %}"
-                  style="display:none;">
+
+            <form
+                id="logout-form"
+                method="post"
+                action="{% url 'accounts:logout' %}"
+                style="display:none;"
+            >
 
                 {% csrf_token %}
 
             </form>
 
+
         {% else %}
 
-            <a href="{% url 'accounts:request-login-otp' %}">
+            <a
+                href="{% url 'accounts:request-login-otp' %}"
+            >
                 Login
             </a>
 
@@ -265,22 +406,19 @@ hr {
 
 </nav>
 
-<!-- ================= MAIN CONTENT ================= -->
 
-<div class="container">
+<!-- =========================================================
+     MAIN CONTENT
+========================================================= -->
+
+<main class="container">
 
     {% block content %}
     {% endblock %}
 
-</div>
+</main>
 
-<script>
-
-document.body.addEventListener('htmx:configRequest', function(event) {
-    event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
-});
-
-</script>
 
 </body>
+
 </html>

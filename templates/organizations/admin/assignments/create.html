@@ -4,223 +4,175 @@
 
 <h2 class="title is-4">➕ Assign Resource</h2>
 
-<form method="post" onsubmit="return handleSubmit(this)">
+<form method="post">
 {% csrf_token %}
-
-<!-- ================= TARGET TYPE ================= -->
-
-<div class="field">
-  <label class="label">Assign To</label>
-  <div class="control">
-    <div class="select is-fullwidth">
-      <select name="assign_type" id="assign_type" onchange="toggleTarget()" required>
-        <option value="">Select</option>
-        <option value="student">Student</option>
-        <option value="group">Group (Class)</option>
-      </select>
-    </div>
-  </div>
-</div>
 
 <!-- ================= STUDENT ================= -->
 
-<div class="field" id="student_field" style="display:none;">
+<div class="field">
   <label class="label">Student</label>
+
   <div class="control">
     <div class="select is-fullwidth">
-      <select name="student_id" id="student_select">
-        <option value="">-- Select Student --</option>
+      <select name="student_id" required>
+
         {% for s in students %}
         <option value="{{ s.id }}">
           {{ s.user.get_full_name|default:s.user.email }}
         </option>
         {% endfor %}
+
       </select>
     </div>
   </div>
 </div>
 
-<!-- ================= GROUP ================= -->
-
-<div class="field" id="group_field" style="display:none;">
-  <label class="label">Group (Class)</label>
-  <div class="control">
-    <div class="select is-multiple is-fullwidth">
-      <select name="group_ids" id="group_select" multiple size="6">
-        {% for g in groups %}
-        <option value="{{ g.id }}">{{ g.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <p class="help">Hold Ctrl / Cmd to select multiple groups</p>
-  </div>
-</div>
 
 <!-- ================= RESOURCE TYPE ================= -->
 
 <div class="field">
   <label class="label">Resource Type</label>
+
   <div class="control">
     <div class="select is-fullwidth">
-      <select name="resource_type" id="resource_type" onchange="toggleResource()" required>
+
+      <select name="resource_type" id="resource_type" required onchange="toggleResource()">
         <option value="">Select Type</option>
         <option value="course">Course</option>
         <option value="track">Exam Track</option>
         <option value="exam">Exam</option>
       </select>
+
     </div>
   </div>
 </div>
+
 
 <!-- ================= COURSE ================= -->
 
-<div class="field" id="course_field" style="display:none;">
-  <label class="label">Course</label>
-  <div class="control">
-    <div class="select is-fullwidth">
-      <select name="course_id" id="course_select">
-        <option value="">-- Select Course --</option>
-        {% for c in courses %}
-        <option value="{{ c.id }}">{{ c.title }}</option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
+<div class="field resource-field" id="course_field" style="display:none;">
+
+<label class="label">Course</label>
+
+<div class="control">
+<div class="select is-fullwidth">
+
+<select name="course_id" id="course_select">
+
+{% if courses %}
+{% for c in courses %}
+<option value="{{ c.id }}">
+{{ c.title }}
+</option>
+{% endfor %}
+{% else %}
+<option disabled>No courses attached</option>
+{% endif %}
+
+</select>
+
 </div>
+</div>
+</div>
+
 
 <!-- ================= TRACK ================= -->
 
-<div class="field" id="track_field" style="display:none;">
-  <label class="label">Exam Track</label>
-  <div class="control">
-    <div class="select is-fullwidth">
-      <select name="track_id" id="track_select">
-        <option value="">-- Select Track --</option>
-        {% for t in tracks %}
-        <option value="{{ t.id }}">{{ t.title }}</option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
+<div class="field resource-field" id="track_field" style="display:none;">
+
+<label class="label">Exam Track</label>
+
+<div class="control">
+<div class="select is-fullwidth">
+
+<select name="track_id" id="track_select">
+
+{% if tracks %}
+{% for t in tracks %}
+<option value="{{ t.id }}">
+{{ t.title }}
+</option>
+{% endfor %}
+{% else %}
+<option disabled>No tracks attached</option>
+{% endif %}
+
+</select>
+
 </div>
+</div>
+</div>
+
 
 <!-- ================= EXAM ================= -->
 
-<div class="field" id="exam_field" style="display:none;">
-  <label class="label">Exam</label>
-  <div class="control">
-    <div class="select is-fullwidth">
-      <select name="exam_id" id="exam_select">
-        <option value="">-- Select Exam --</option>
-        {% for e in exams %}
-        <option value="{{ e.id }}">{{ e.title }}</option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
+<div class="field resource-field" id="exam_field" style="display:none;">
+
+<label class="label">Exam</label>
+
+<div class="control">
+<div class="select is-fullwidth">
+
+<select name="exam_id" id="exam_select">
+
+{% if exams %}
+{% for e in exams %}
+<option value="{{ e.id }}">
+{{ e.title }}
+</option>
+{% endfor %}
+{% else %}
+<option disabled>No exams attached</option>
+{% endif %}
+
+</select>
+
+</div>
+</div>
 </div>
 
-<!-- ================= DEADLINE ================= -->
 
-<div class="field">
-  <label class="label">Deadline</label>
-  <div class="control">
-    <input type="datetime-local" name="deadline" class="input">
-  </div>
-</div>
-
-<!-- ================= OVERWRITE ================= -->
-
-<div class="field">
-  <label class="checkbox">
-    <input type="checkbox" name="overwrite">
-    Overwrite existing assignment
-  </label>
-</div>
-
-<!-- ================= SUBMIT ================= -->
-
-<div class="field mt-5">
-  <button id="submitBtn" class="button is-success is-fullwidth">
-    🚀 Assign Resource
-  </button>
-</div>
+<button class="button is-success mt-4">
+Assign
+</button>
 
 </form>
+
 
 <!-- ================= JS ================= -->
 
 <script>
 
-// 🔐 Prevent double submit
-function handleSubmit(form){
-  document.getElementById("submitBtn").classList.add("is-loading")
-  return true
-}
-
-// ================= TARGET =================
-function toggleTarget(){
-
-  let type = document.getElementById("assign_type").value
-
-  let student = document.getElementById("student_select")
-  let group = document.getElementById("group_select")
-
-  student.required = false
-  group.required = false
-
-  student.value = ""
-  group.selectedIndex = -1
-
-  document.getElementById("student_field").style.display = "none"
-  document.getElementById("group_field").style.display = "none"
-
-  if(type === "student"){
-    document.getElementById("student_field").style.display = "block"
-    student.required = true
-  }
-
-  if(type === "group"){
-    document.getElementById("group_field").style.display = "block"
-    group.required = true
-  }
-}
-
-// ================= RESOURCE =================
 function toggleResource(){
 
-  let type = document.getElementById("resource_type").value
+let type = document.getElementById("resource_type").value
 
-  let course = document.getElementById("course_select")
-  let track = document.getElementById("track_select")
-  let exam = document.getElementById("exam_select")
+// hide all fields
+document.getElementById("course_field").style.display = "none"
+document.getElementById("track_field").style.display = "none"
+document.getElementById("exam_field").style.display = "none"
 
-  course.required = false
-  track.required = false
-  exam.required = false
+// disable all selects
+document.getElementById("course_select").disabled = true
+document.getElementById("track_select").disabled = true
+document.getElementById("exam_select").disabled = true
 
-  course.value = ""
-  track.value = ""
-  exam.value = ""
 
-  document.getElementById("course_field").style.display = "none"
-  document.getElementById("track_field").style.display = "none"
-  document.getElementById("exam_field").style.display = "none"
+if(type === "course"){
+document.getElementById("course_field").style.display = "block"
+document.getElementById("course_select").disabled = false
+}
 
-  if(type === "course"){
-    document.getElementById("course_field").style.display = "block"
-    course.required = true
-  }
+if(type === "track"){
+document.getElementById("track_field").style.display = "block"
+document.getElementById("track_select").disabled = false
+}
 
-  if(type === "track"){
-    document.getElementById("track_field").style.display = "block"
-    track.required = true
-  }
+if(type === "exam"){
+document.getElementById("exam_field").style.display = "block"
+document.getElementById("exam_select").disabled = false
+}
 
-  if(type === "exam"){
-    document.getElementById("exam_field").style.display = "block"
-    exam.required = true
-  }
 }
 
 </script>

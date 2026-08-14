@@ -1,4 +1,8 @@
+
+
+
 {% extends "organizations/admin/base.html" %}
+
 
 {% block content %}
 
@@ -7,7 +11,6 @@
 <form method="post">
   {% csrf_token %}
 
-  <!-- ================= EMAIL ================= -->
   <div class="field">
     <label class="label">User Email</label>
     <div class="control">
@@ -15,11 +18,10 @@
     </div>
   </div>
 
-  <!-- ================= ROLE ================= -->
   <div class="field">
     <label class="label">Role</label>
     <div class="control">
-      <div class="select is-fullwidth">
+      <div class="select">
         <select name="role">
           <option value="student">Student</option>
           <option value="staff">Staff</option>
@@ -28,36 +30,7 @@
     </div>
   </div>
 
-  <!-- ================= GROUP (NEW) ================= -->
-  <div class="field">
-    <label class="label">Group / Class</label>
-    <div class="control">
-      <div class="select is-fullwidth">
-        <select name="group">
-          <option value="">-- No Group --</option>
-          {% for g in groups %}
-            <option value="{{ g.id }}">{{ g.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-    <p class="help">Optional: Assign student to a class or batch</p>
-  </div>
-
-  <!-- ================= SUBMIT ================= -->
-  <div class="field mt-4">
-    <div class="control">
-      <button class="button is-success">
-        Add Student
-      </button>
-
-      <a href="{% url 'organizations_admin:students' slug=request.organization.slug %}"
-         class="button is-light ml-2">
-        Cancel
-      </a>
-    </div>
-  </div>
-
+  <button class="button is-success">Add</button>
 </form>
-
 {% endblock %}
+

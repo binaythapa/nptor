@@ -1,24 +1,101 @@
 {% extends "layouts/student/base.html" %}
+
 {% block content %}
 
-<section style="max-width:480px;margin:40px auto;">
-  <div class="card-surface has-text-centered" style="padding:24px;">
+<section
+    style="
+        max-width: 480px;
+        margin: 60px auto;
+        padding: 0 15px;
+    "
+>
 
-    <i class="fa fa-circle-check has-text-success" style="font-size:48px;"></i>
+    <div
+        class="card-surface"
+        style="
+            padding: 35px 30px;
+            text-align: center;
+        "
+    >
 
-    <h1 class="title is-4 mt-3">
-      Account Created Successfully
-    </h1>
+        <!-- =====================================================
+             SUCCESS ICON
+        ====================================================== -->
 
-    <p class="mb-4">
-      Your account has been verified. You can now log in.
-    </p>
+        <div class="mb-4">
 
-    <a href="{% url 'accounts:request-login-otp' %}" class="button is-primary">
-      Go to Login
-    </a>
+            <i
+                class="fa fa-circle-check has-text-success"
+                style="font-size:64px;"
+                aria-hidden="true"
+            ></i>
 
-  </div>
+        </div>
+
+
+        <!-- =====================================================
+             TITLE
+        ====================================================== -->
+
+        <h1 class="title is-4 mb-3">
+
+            Account Created Successfully
+
+        </h1>
+
+
+        <!-- =====================================================
+             MESSAGE
+        ====================================================== -->
+
+        <p class="mb-2">
+
+            Your email address has been verified
+            and your account is now active.
+
+        </p>
+
+        <p class="small-muted mb-5">
+
+            You can now log in and start your
+            learning journey with Nepal Mentor.
+
+        </p>
+
+
+        <!-- =====================================================
+             LOGIN BUTTON
+        ====================================================== -->
+
+        <a
+            href="{% url 'accounts:request-login-otp' %}"
+            class="button is-primary is-fullwidth"
+        >
+
+            Go to Login
+
+        </a>
+
+
+        <!-- =====================================================
+             HOME LINK
+        ====================================================== -->
+
+        <div
+            class="small-muted"
+            style="margin-top:20px;"
+        >
+
+            <a
+                href="/"
+            >
+                Return to Home
+            </a>
+
+        </div>
+
+    </div>
+
 </section>
 
 {% endblock %}

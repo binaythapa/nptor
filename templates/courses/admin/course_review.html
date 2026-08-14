@@ -1,0 +1,1134 @@
+{% extends "courses/base.html" %}
+
+{% block title %}
+Review Course - {{ course.title }}
+{% endblock %}
+
+{% block extra_head %}
+
+<style>
+
+/* ============================================================
+   ADMIN COURSE REVIEW
+   ============================================================ */
+
+.review-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.review-header {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.review-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.review-title {
+    margin: 0;
+    font-size: 28px;
+    color: #111827;
+}
+
+.review-subtitle {
+    margin-top: 7px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 13px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-draft {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-approved {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-changes {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+.status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-published {
+    background: #dcfce7;
+    color: #166534;
+}
+
+
+/* ============================================================
+   INFORMATION GRID
+   ============================================================ */
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.info-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.info-label {
+    color: #6b7280;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   PANELS
+   ============================================================ */
+
+.panel {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.panel-header {
+    padding: 18px 20px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #111827;
+}
+
+.panel-body {
+    padding: 20px;
+}
+
+
+/* ============================================================
+   DESCRIPTION
+   ============================================================ */
+
+.course-description {
+    color: #374151;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+
+.section-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 15px 18px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 16px;
+    color: #111827;
+}
+
+.section-description {
+    margin-top: 5px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.lesson-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lesson-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 13px 18px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.lesson-item:last-child {
+    border-bottom: 0;
+}
+
+.lesson-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.lesson-type {
+    margin-top: 3px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+
+/* ============================================================
+   REVIEW HISTORY
+   ============================================================ */
+
+.review-notes {
+    padding: 15px;
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    color: #374151;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.review-meta {
+    margin-top: 12px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   ADMIN ACTIONS
+   ============================================================ */
+
+.actions-panel {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.actions-panel h2 {
+    margin: 0 0 15px;
+    font-size: 18px;
+    color: #111827;
+}
+
+.action-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-button {
+    border: 0;
+    border-radius: 7px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-approve {
+    background: #16a34a;
+    color: white;
+}
+
+.btn-approve:hover {
+    background: #15803d;
+}
+
+.btn-publish {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-publish:hover {
+    background: #1d4ed8;
+}
+
+.btn-unpublish {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-unpublish:hover {
+    background: #4b5563;
+}
+
+.btn-changes {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-changes:hover {
+    background: #d97706;
+}
+
+.btn-reject {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-reject:hover {
+    background: #b91c1c;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 15px;
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   REVIEW FORM
+   ============================================================ */
+
+.review-form {
+    margin-top: 20px;
+}
+
+.review-form label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.review-form textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    box-sizing: border-box;
+
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    resize: vertical;
+}
+
+.review-form textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    .review-container {
+        padding: 0 12px;
+    }
+
+    .review-header-top {
+        flex-direction: column;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lesson-item {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .action-row {
+        flex-direction: column;
+    }
+
+    .action-button {
+        width: 100%;
+    }
+
+}
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="review-container">
+
+
+    <!-- ========================================================
+         BACK
+         ======================================================== -->
+
+    <a
+        href="{% url 'courses:admin-course-dashboard' %}"
+        class="back-link"
+    >
+        ← Back to Course Dashboard
+    </a>
+
+
+    <!-- ========================================================
+         COURSE HEADER
+         ======================================================== -->
+
+    <div class="review-header">
+
+        <div class="review-header-top">
+
+            <div>
+
+                <h1 class="review-title">
+                    {{ course.title }}
+                </h1>
+
+                <div class="review-subtitle">
+                    Course Moderation
+                </div>
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div>
+
+                {% if course.approval_status == course.APPROVAL_DRAFT %}
+
+                    <span class="status-badge status-draft">
+                        Draft
+                    </span>
+
+                {% elif course.approval_status == course.APPROVAL_PENDING %}
+
+                    <span class="status-badge status-pending">
+                        Pending Review
+                    </span>
+
+                {% elif course.approval_status == course.APPROVAL_APPROVED %}
+
+                    {% if course.is_published and course.is_public %}
+
+                        <span class="status-badge status-published">
+                            Published
+                        </span>
+
+                    {% else %}
+
+                        <span class="status-badge status-approved">
+                            Approved
+                        </span>
+
+                    {% endif %}
+
+                {% elif course.approval_status == course.APPROVAL_CHANGES %}
+
+                    <span class="status-badge status-changes">
+                        Changes Required
+                    </span>
+
+                {% elif course.approval_status == course.APPROVAL_REJECTED %}
+
+                    <span class="status-badge status-rejected">
+                        Rejected
+                    </span>
+
+                {% else %}
+
+                    <span class="status-badge">
+                        {{ course.get_approval_status_display }}
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- ====================================================
+             COURSE INFORMATION
+             ==================================================== -->
+
+        <div class="info-grid">
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Creator
+                </div>
+
+                <div class="info-value">
+                    {{ course.created_by }}
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Organization
+                </div>
+
+                <div class="info-value">
+
+                    {% if course.organization %}
+                        {{ course.organization }}
+                    {% else %}
+                        Platform
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Category
+                </div>
+
+                <div class="info-value">
+
+                    {% if course.category %}
+                        {{ course.category }}
+                    {% else %}
+                        —
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Level
+                </div>
+
+                <div class="info-value">
+                    {{ course.get_level_display }}
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Created
+                </div>
+
+                <div class="info-value">
+                    {{ course.created_at|date:"M d, Y H:i" }}
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Submitted
+                </div>
+
+                <div class="info-value">
+
+                    {% if course.submitted_at %}
+                        {{ course.submitted_at|date:"M d, Y H:i" }}
+                    {% else %}
+                        —
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Lessons
+                </div>
+
+                <div class="info-value">
+                    {{ sections|length }}
+                </div>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Public
+                </div>
+
+                <div class="info-value">
+
+                    {% if course.is_public %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         DESCRIPTION
+         ======================================================== -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <h2>
+                Course Description
+            </h2>
+
+        </div>
+
+        <div class="panel-body">
+
+            <div class="course-description">
+
+                {% if course.description %}
+
+                    {{ course.description|linebreaks }}
+
+                {% else %}
+
+                    No course description provided.
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================================================
+         COURSE STRUCTURE
+         ======================================================== -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <h2>
+                Course Content
+            </h2>
+
+        </div>
+
+        <div class="panel-body">
+
+
+            {% for section in sections %}
+
+                <div class="section-card">
+
+                    <div class="section-header">
+
+                        <h3 class="section-title">
+
+                            {{ forloop.counter }}.
+                            {{ section.title }}
+
+                        </h3>
+
+
+                        {% if section.description %}
+
+                            <div class="section-description">
+
+                                {{ section.description }}
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <ul class="lesson-list">
+
+                        {% for lesson in section.lessons.all %}
+
+                            <li class="lesson-item">
+
+                                <div>
+
+                                    <div class="lesson-title">
+
+                                        {{ forloop.counter }}.
+                                        {{ lesson.title }}
+
+                                    </div>
+
+
+                                    {% if lesson.lesson_type %}
+
+                                        <div class="lesson-type">
+
+                                            {{ lesson.get_lesson_type_display }}
+
+                                        </div>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </li>
+
+                        {% empty %}
+
+                            <li class="lesson-item">
+
+                                <div class="lesson-type">
+                                    No lessons in this section.
+                                </div>
+
+                            </li>
+
+                        {% endfor %}
+
+                    </ul>
+
+                </div>
+
+            {% empty %}
+
+                <p>
+                    No course sections have been created.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================================================
+         REVIEW HISTORY
+         ======================================================== -->
+
+    {% if course.review_notes or course.reviewed_by %}
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <h2>
+                    Review Information
+                </h2>
+
+            </div>
+
+            <div class="panel-body">
+
+
+                {% if course.review_notes %}
+
+                    <div class="review-notes">
+
+                        <strong>
+                            Administrator Notes
+                        </strong>
+
+                        <div>
+                            {{ course.review_notes|linebreaks }}
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+
+                {% if course.reviewed_by %}
+
+                    <div class="review-meta">
+
+                        Reviewed by:
+                        <strong>
+                            {{ course.reviewed_by }}
+                        </strong>
+
+                        {% if course.reviewed_at %}
+
+                            &nbsp;|&nbsp;
+
+                            {{ course.reviewed_at|date:"M d, Y H:i" }}
+
+                        {% endif %}
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    {% endif %}
+
+
+    <!-- ========================================================
+         ADMIN ACTIONS
+         ======================================================== -->
+
+    <section class="actions-panel">
+
+        <h2>
+            Administrator Actions
+        </h2>
+
+
+        <!-- ====================================================
+             PENDING
+             ==================================================== -->
+
+        {% if course.approval_status == course.APPROVAL_PENDING %}
+
+            <div class="action-row">
+
+                <!-- APPROVE -->
+
+                <form
+                    method="post"
+                    action="{% url 'courses:admin-approve-course' course.slug %}"
+                >
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="action-button btn-approve"
+                        onclick="return confirm(
+                            'Are you sure you want to approve this course?'
+                        );"
+                    >
+                        Approve Course
+                    </button>
+
+                </form>
+
+
+                <!-- REQUEST CHANGES -->
+
+                <form
+                    method="post"
+                    action="{% url 'courses:admin-request-course-changes' course.slug %}"
+                    class="review-form"
+                    style="width:100%;"
+                >
+
+                    {% csrf_token %}
+
+                    <label for="review_notes">
+                        Feedback / Changes Required
+                    </label>
+
+                    <textarea
+                        id="review_notes"
+                        name="review_notes"
+                        placeholder="Explain what the instructor needs to change..."
+                        required
+                    ></textarea>
+
+                    <div style="margin-top:10px;">
+
+                        <button
+                            type="submit"
+                            class="action-button btn-changes"
+                        >
+                            Request Changes
+                        </button>
+
+                    </div>
+
+                </form>
+
+
+                <!-- REJECT -->
+
+                <form
+                    method="post"
+                    action="{% url 'courses:admin-reject-course' course.slug %}"
+                    class="review-form"
+                    style="width:100%;"
+                >
+
+                    {% csrf_token %}
+
+                    <label for="reject_notes">
+                        Rejection Reason
+                    </label>
+
+                    <textarea
+                        id="reject_notes"
+                        name="review_notes"
+                        placeholder="Explain why this course is being rejected..."
+                        required
+                    ></textarea>
+
+                    <div style="margin-top:10px;">
+
+                        <button
+                            type="submit"
+                            class="action-button btn-reject"
+                            onclick="return confirm(
+                                'Are you sure you want to reject this course?'
+                            );"
+                        >
+                            Reject Course
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+        <!-- ====================================================
+             APPROVED
+             ==================================================== -->
+
+        {% elif course.approval_status == course.APPROVAL_APPROVED %}
+
+
+            {% if course.is_published and course.is_public %}
+
+                <div>
+
+                    <span class="status-badge status-published">
+                        Course is Published
+                    </span>
+
+                    <div style="margin-top:15px;">
+
+                        <form
+                            method="post"
+                            action="{% url 'courses:admin-unpublish-course' course.slug %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="action-button btn-unpublish"
+                                onclick="return confirm(
+                                    'Are you sure you want to unpublish this course?'
+                                );"
+                            >
+                                Unpublish Course
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            {% else %}
+
+                <div>
+
+                    <span class="status-badge status-approved">
+                        Course Approved
+                    </span>
+
+                    <div style="margin-top:10px; color:#6b7280; font-size:13px;">
+
+                        This course has been approved but has not
+                        been published yet.
+
+                    </div>
+
+                    <div style="margin-top:15px;">
+
+                        <form
+                            method="post"
+                            action="{% url 'courses:admin-publish-course' course.slug %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="action-button btn-publish"
+                                onclick="return confirm(
+                                    'Publish this course to the website?'
+                                );"
+                            >
+                                Publish Course
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+
+        <!-- ====================================================
+             CHANGES REQUIRED
+             ==================================================== -->
+
+        {% elif course.approval_status == course.APPROVAL_CHANGES %}
+
+            <div>
+
+                <span class="status-badge status-changes">
+                    Waiting for Instructor Changes
+                </span>
+
+                <p style="color:#6b7280; font-size:13px;">
+
+                    The instructor must update the course and
+                    resubmit it for review.
+
+                </p>
+
+            </div>
+
+
+        <!-- ====================================================
+             REJECTED
+             ==================================================== -->
+
+        {% elif course.approval_status == course.APPROVAL_REJECTED %}
+
+            <div>
+
+                <span class="status-badge status-rejected">
+                    Course Rejected
+                </span>
+
+                <p style="color:#6b7280; font-size:13px;">
+
+                    The instructor may update the course and
+                    submit a new review request if permitted.
+
+                </p>
+
+            </div>
+
+
+        <!-- ====================================================
+             DRAFT
+             ==================================================== -->
+
+        {% elif course.approval_status == course.APPROVAL_DRAFT %}
+
+            <div>
+
+                <span class="status-badge status-draft">
+                    Draft
+                </span>
+
+                <p style="color:#6b7280; font-size:13px;">
+
+                    This course has not yet been submitted
+                    for administrator review.
+
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+    </section>
+
+
+</div>
+
+{% endblock %}

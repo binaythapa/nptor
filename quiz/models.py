@@ -1,24 +1,22 @@
-from django.db import models
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
-from django.utils import timezone
-from phone_field import PhoneField
-from django.conf import settings
-from django.db import models
-from django.utils import timezone
-from django.db.models import Q
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.db.models import Q
-from django.core.exceptions import ValidationError
-from ckeditor.fields import RichTextField
+
+
 from datetime import timedelta
-from django.utils import timezone
-from ckeditor_uploader.fields import RichTextUploadingField
 import math
 import statistics
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import Q
+from django.utils import timezone
 
+from ckeditor.fields import RichTextField
+from ckeditor_uploader.fields import RichTextUploadingField
+from phone_field import PhoneField
+
+from accounts.models.client import Client
 
 
 User = get_user_model()
@@ -26,18 +24,6 @@ User = get_user_model()
 from django.conf import settings
 
 
-class Client(models.Model):
-    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
-    contact= PhoneField(blank=True, help_text='Contact phone number', null= True)
-    address = models.CharField(max_length=200, blank=True, null=True)
-    acceptpolicy= models.BooleanField(default=False)
-
-    def __str__(self):
-        return str(self.user)
-
-    def fullname(self):
-        return str(self.user.first_name + " " + self.user.last_name)
-    
 
 class Notification(models.Model):
     title = models.CharField(max_length=200)
@@ -137,24 +123,12 @@ class Category(models.Model):
         ordering = ["name"]
 
     def __str__(self):
-        names = []
 
-        # Add domain if exists
-        if self.domain:
-            names.append(self.domain.name)
+        # Show hierarchy in admin list
+        if self.parent:
+            return f"{self.parent.name} → {self.name}"
 
-        # Traverse parents (top → bottom)
-        current = self
-        hierarchy = []
-
-        while current:
-            hierarchy.append(current.name)
-            current = current.parent
-
-        # Reverse to get root → child order
-        names.extend(reversed(hierarchy))
-
-        return " → ".join(names)
+        return self.name
 
     # =====================================================
     # CATEGORY TREE HELPER
@@ -660,35 +634,9 @@ class ExamTrackSubscription(BaseSubscription):
             return None
         return max((self.expires_at - timezone.now()).days, 0)
 
-from django.db import models
-
 
 class Exam(models.Model):
-
-    # ---------------------------------
-    # EXAM TYPES
-    # ---------------------------------
-    class ExamType(models.TextChoices):
-        NORMAL = "NORMAL", "Normal Exam"
-        COURSE = "COURSE", "Course Exam"
-        MOCK = "MOCK", "Mock Exam"
-        ASSESSMENT = "ASSESSMENT", "Assessment"
-
-    # ---------------------------------
-    # BASIC INFO
-    # ---------------------------------
-    title = models.CharField(
-        max_length=255,
-        db_index=True
-    )
-
-    exam_type = models.CharField(
-        max_length=20,
-        choices=ExamType.choices,
-        default=ExamType.NORMAL,
-        db_index=True,
-        help_text="Defines how this exam is used in the platform."
-    )
+    title = models.CharField(max_length=255)
 
     organization = models.ForeignKey(
         "organizations.Organization",
@@ -706,46 +654,29 @@ class Exam(models.Model):
         related_name="exams"
     )
 
-    # ---------------------------------
-    # CATEGORY
-    # ---------------------------------
     category = models.ForeignKey(
-        "Category",
+        Category,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
-        related_name="primary_exams"
+        blank=True
     )
 
     categories = models.ManyToManyField(
-        "Category",
+        Category,
         blank=True,
         related_name="exams"
     )
 
-    # ---------------------------------
-    # EXAM CONFIGURATION
-    # ---------------------------------
-    question_count = models.PositiveIntegerField(
-        default=10
-    )
-
-    duration_seconds = models.PositiveIntegerField(
-        help_text="Exam duration in seconds."
-    )
+    question_count = models.PositiveIntegerField(default=10)
+    duration_seconds = models.PositiveIntegerField()
 
     level = models.PositiveIntegerField(
         default=1,
         db_index=True
     )
 
-    passing_score = models.FloatField(
-        default=50.0
-    )
+    passing_score = models.FloatField(default=50.0)
 
-    # ---------------------------------
-    # ACCESS CONTROL
-    # ---------------------------------
     prerequisite_exams = models.ManyToManyField(
         "self",
         symmetrical=False,
@@ -753,10 +684,10 @@ class Exam(models.Model):
         related_name="unlocked_exams"
     )
 
+    # ✅ NEW — FREE / PAID CONTROL
     is_free = models.BooleanField(
         default=True,
-        db_index=True,
-        help_text="If enabled, students can access exam for free."
+        help_text="If checked, this exam is free"
     )
 
     price = models.DecimalField(
@@ -764,7 +695,7 @@ class Exam(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Required only for paid exams."
+        help_text="Required only if exam is paid"
     )
 
     currency = models.CharField(
@@ -772,91 +703,34 @@ class Exam(models.Model):
         default="INR"
     )
 
-    # ---------------------------------
-    # PUBLISHING
-    # ---------------------------------
-    is_published = models.BooleanField(
-        default=False,
-        db_index=True
-    )
+    is_published = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True
-    )
-
-    # ---------------------------------
-    # MOCK SETTINGS
-    # ---------------------------------
     max_mock_attempts = models.PositiveIntegerField(
         default=3,
-        help_text="0 means mock attempts disabled."
+        help_text="Number of mock attempts allowed for this exam (0 = no mock)"
     )
 
-    # ---------------------------------
-    # EXAM EXPERIENCE
-    # ---------------------------------
     allow_review = models.BooleanField(
-        default=True,
-        help_text="Students can review answers before final submission."
-    )
+    default=True,
+    help_text="If enabled, students can review answers before final submission."
+)
+    
+    # ---------------------------------
+    # 🔐 Behavior Helpers (Industry Clean)
+    # ---------------------------------
 
-    # ---------------------------------
-    # MODEL META
-    # ---------------------------------
-    class Meta:
-        ordering = ["-created_at"]
-        indexes = [
-            models.Index(fields=["exam_type", "is_published"]),
-            models.Index(fields=["organization", "exam_type"]),
-            models.Index(fields=["level"]),
-        ]
-
-    # ---------------------------------
-    # HELPERS
-    # ---------------------------------
-    @property
     def is_practice_mode(self):
         return self.allow_review is True
 
-    @property
     def is_certification_mode(self):
         return self.allow_review is False
 
-    @property
-    def is_course_exam(self):
-        return self.exam_type == self.ExamType.COURSE
-
-    @property
-    def is_normal_exam(self):
-        return self.exam_type == self.ExamType.NORMAL
-
-    @property
-    def is_mock_exam(self):
-        return self.exam_type == self.ExamType.MOCK
-
-    # ---------------------------------
-    # VALIDATION
-    # ---------------------------------
-    def clean(self):
-        from django.core.exceptions import ValidationError
-
-        if not self.is_free and not self.price:
-            raise ValidationError({
-                "price": "Price is required for paid exams."
-            })
-
-        if self.is_free:
-            self.price = None
-
-    # ---------------------------------
-    # STRING REPRESENTATION
-    # ---------------------------------
     def __str__(self):
-        return f"{self.title} ({self.exam_type})"
+        return self.title
+
+
+
 
 from django.db import models
 from django.contrib.auth.models import User

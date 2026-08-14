@@ -1,100 +1,536 @@
 {% load static %}
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
 
-  <title>
-    {% block title %}
-      Admin Panel – {{ site_name|default:"Nepal Mentor" }}
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+            Admin Dashboard
+        {% endblock %}
+    </title>
+
+
+    <!-- =====================================================
+         ADMIN CSS
+    ====================================================== -->
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+
+            background: #f4f6f9;
+
+            color: #1f2937;
+        }
+
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .admin-header {
+            height: 64px;
+
+            background: #111827;
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 0 20px;
+
+            position: fixed;
+
+            top: 0;
+            left: 0;
+            right: 0;
+
+            z-index: 1000;
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+
+        .admin-header-left {
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+        }
+
+
+        .admin-header-right {
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+        }
+
+
+        .admin-brand {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            color: white;
+
+            text-decoration: none;
+
+            font-weight: 600;
+        }
+
+
+        .admin-logo {
+            width: 38px;
+
+            height: 38px;
+
+            object-fit: cover;
+
+            border-radius: 6px;
+        }
+
+
+        .admin-brand-text {
+            font-size: 18px;
+        }
+
+
+        .admin-user {
+            color: #d1d5db;
+
+            font-size: 14px;
+        }
+
+
+        .admin-header button,
+        .admin-header a.button {
+            border: 0;
+
+            cursor: pointer;
+        }
+
+
+        /* =====================================================
+           LAYOUT
+        ===================================================== */
+
+        .admin-layout {
+            display: flex;
+
+            min-height: 100vh;
+
+            padding-top: 64px;
+        }
+
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        .admin-sidebar {
+            position: fixed;
+
+            top: 64px;
+
+            left: 0;
+
+            bottom: 0;
+
+            width: 250px;
+
+            background: #ffffff;
+
+            border-right: 1px solid #e5e7eb;
+
+            padding: 20px 14px;
+
+            overflow-y: auto;
+
+            z-index: 900;
+        }
+
+
+        .admin-sidebar .menu-label {
+            margin: 18px 10px 8px;
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.08em;
+
+            color: #9ca3af;
+        }
+
+
+        .admin-sidebar .menu-list {
+            list-style: none;
+
+            margin: 0;
+
+            padding: 0;
+        }
+
+
+        .admin-sidebar .menu-list li {
+            margin: 3px 0;
+        }
+
+
+        .admin-sidebar .menu-list a {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding: 10px 12px;
+
+            border-radius: 7px;
+
+            color: #374151;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease;
+        }
+
+
+        .admin-sidebar .menu-list a:hover {
+            background: #f3f4f6;
+
+            color: #111827;
+        }
+
+
+        .admin-sidebar .icon {
+            width: 20px;
+
+            min-width: 20px;
+
+            text-align: center;
+
+            color: #6b7280;
+        }
+
+
+        .admin-sidebar .menu-text {
+            flex: 1;
+        }
+
+
+        /* =====================================================
+           CONTENT
+        ===================================================== */
+
+        .admin-content {
+            margin-left: 250px;
+
+            width: calc(100% - 250px);
+
+            min-height: calc(100vh - 64px);
+
+            padding: 30px;
+        }
+
+
+        .admin-content .section {
+            padding: 0;
+        }
+
+
+        .admin-content .container {
+            width: 100%;
+
+            max-width: 1400px;
+
+            margin: 0 auto;
+        }
+
+
+        /* =====================================================
+           KPI GRID
+        ===================================================== */
+
+        .admin-content .admin-kpi-card {
+            display: inline-flex;
+
+            vertical-align: top;
+
+            flex-direction: column;
+
+            justify-content: center;
+
+            width: calc(25% - 18px);
+
+            min-height: 135px;
+
+            margin: 0 14px 14px 0;
+
+            padding: 20px;
+
+            background: #ffffff;
+
+            border: 1px solid #e5e7eb;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 3px 10px
+                rgba(0, 0, 0, 0.04);
+
+            transition:
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
+        }
+
+
+        .admin-kpi-card:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 6px 18px
+                rgba(0, 0, 0, 0.08);
+        }
+
+
+        .admin-kpi-value {
+            font-size: 27px;
+
+            font-weight: 700;
+
+            color: #111827;
+
+            line-height: 1.25;
+
+            overflow-wrap: anywhere;
+        }
+
+
+        .admin-kpi-label {
+            margin-top: 8px;
+
+            font-size: 13px;
+
+            color: #6b7280;
+        }
+
+
+        .admin-danger {
+            color: #dc2626 !important;
+        }
+
+
+        /* =====================================================
+           COURSE MODERATION LINKS
+        ===================================================== */
+
+        .admin-kpi-card a {
+            text-decoration: none;
+        }
+
+
+        .admin-kpi-card a:hover {
+            opacity: 0.9;
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        .admin-footer {
+            margin-left: 250px;
+        }
+
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media (max-width: 1200px) {
+
+            .admin-content .admin-kpi-card {
+                width: calc(33.333% - 16px);
+            }
+
+        }
+
+
+        @media (max-width: 900px) {
+
+            .admin-sidebar {
+                width: 210px;
+            }
+
+            .admin-content {
+                margin-left: 210px;
+
+                width: calc(100% - 210px);
+
+                padding: 20px;
+            }
+
+            .admin-content .admin-kpi-card {
+                width: calc(50% - 14px);
+            }
+
+        }
+
+
+        @media (max-width: 650px) {
+
+            .admin-sidebar {
+                display: none;
+            }
+
+            .admin-content {
+                margin-left: 0;
+
+                width: 100%;
+
+                padding: 15px;
+            }
+
+            .admin-content .admin-kpi-card {
+                width: 100%;
+
+                margin-right: 0;
+            }
+
+            .admin-brand-text {
+                display: none;
+            }
+
+            .admin-user {
+                display: none;
+            }
+
+        }
+
+    </style>
+
+
+    {% block head_extra %}
     {% endblock %}
-  </title>
 
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-  <!-- Bulma + Icons -->
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
-<link rel="stylesheet" href="{% static 'css/admin.css' %}">
-
-
-  {% block head_extra %}{% endblock %}
 </head>
 
-<body class="has-background-light">
 
-<div class="app-layout">
+<body>
 
-  <!-- 🔐 ADMIN HEADER -->
-  {% include "layouts/admin/header_admin.html" %}
 
-  <!-- 🔐 ADMIN FLEX LAYOUT -->
-  <div class="admin-layout" id="admin-layout">
+    <!-- =====================================================
+         ADMIN HEADER
+    ====================================================== -->
 
-      <!-- SIDEBAR -->
-      {% include "layouts/admin/sidebar_admin.html" %}
+    <header class="admin-header">
 
-      <!-- CONTENT -->
-      <main class="admin-content">
-          <section class="section">
-              <div class="container">
-                  {% block content %}{% endblock %}
-              </div>
-          </section>
-      </main>
+        {% include "layouts/admin/header_admin.html" %}
 
-  </div>
+    </header>
 
-  <!-- Shared Footer -->
-  {% include "layouts/student/footer.html" %}
 
-  {% if user.is_authenticated %}
-  <form id="logout-form"
-        method="post"
-        action="{% url 'accounts:logout' %}"
-        style="display:none;">
-      {% csrf_token %}
-  </form>
-  {% endif %}
+    <!-- =====================================================
+         ADMIN LAYOUT
+    ====================================================== -->
 
-</div>
+    <div class="admin-layout">
 
-<script src="{% static 'js/ui.js' %}"></script>
 
-<!-- COLLAPSIBLE SIDEBAR SCRIPT -->
-<script>
-function toggleSidebar() {
-    const layout = document.getElementById("admin-layout");
-    layout.classList.toggle("collapsed");
+        <!-- =================================================
+             SIDEBAR
+        ================================================== -->
 
-    localStorage.setItem(
-        "adminSidebarCollapsed",
-        layout.classList.contains("collapsed")
-    );
-}
+        <aside class="admin-sidebar">
 
-// Restore collapse state
-document.addEventListener("DOMContentLoaded", function() {
-    const collapsed = localStorage.getItem("adminSidebarCollapsed");
-    if (collapsed === "true") {
-        document.getElementById("admin-layout")
-                .classList.add("collapsed");
-    }
-});
-</script>
+            {% include "layouts/admin/sidebar_admin.html" %}
 
-<!-- ================= GOOGLE ANALYTICS ================= -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0VP1Z2NB44"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-0VP1Z2NB44');
-</script>
+        </aside>
 
-{% block scripts_extra %}{% endblock %}
+
+        <!-- =================================================
+             CONTENT
+        ================================================== -->
+
+        <main class="admin-content">
+
+            <section class="section">
+
+                <div class="container">
+
+                    {% block content %}
+                    {% endblock %}
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    {% include "layouts/student/footer.html" %}
+
+
+    <!-- =====================================================
+         EXTRA SCRIPTS
+    ====================================================== -->
+
+    {% if user.is_authenticated %}
+
+        {% block scripts_extra %}
+        {% endblock %}
+
+    {% endif %}
+
+
 </body>
+
 </html>

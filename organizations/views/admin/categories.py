@@ -1,15 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Q
-
 from organizations.permissions import org_admin_required
-
-from quiz.models import Category
+from quiz.models import Category, Domain
 from quiz.forms import CategoryForm
-
-from django.shortcuts import render
-from organizations.permissions import org_admin_required
-
-from quiz.models import Category
 
 
 # =========================
@@ -18,12 +10,9 @@ from quiz.models import Category
 @org_admin_required
 def org_category_list(request, slug):
 
-    org = request.organization
-
     categories = (
         Category.objects
         .select_related("domain", "parent")
-        .filter(domain__organization=org)   # 🔥 FIXED
         .order_by("domain__name", "name")
     )
 
@@ -35,27 +24,19 @@ def org_category_list(request, slug):
         }
     )
 
+
 # =========================
 # CREATE
 # =========================
 @org_admin_required
 def org_category_create(request, slug):
 
-    org = request.organization
-
     if request.method == "POST":
 
         form = CategoryForm(request.POST)
 
         if form.is_valid():
-            obj = form.save(commit=False)
-
-            # 🔒 Prevent assigning category to another org's domain
-            if obj.domain and obj.domain.organization not in [org, None]:
-                return redirect("organizations_admin:category_list", slug=slug)
-
-            obj.save()
-
+            form.save()
             return redirect(
                 "organizations_admin:category_list",
                 slug=slug
@@ -77,13 +58,7 @@ def org_category_create(request, slug):
 @org_admin_required
 def org_category_edit(request, slug, pk):
 
-    org = request.organization
-
-    category = get_object_or_404(
-        Category,
-        Q(pk=pk) &
-        (Q(domain__organization=org) | Q(domain__organization__isnull=True))
-    )
+    category = get_object_or_404(Category, pk=pk)
 
     if request.method == "POST":
 
@@ -93,13 +68,7 @@ def org_category_edit(request, slug, pk):
         )
 
         if form.is_valid():
-            obj = form.save(commit=False)
-
-            # 🔒 Prevent switching to another org domain
-            if obj.domain and obj.domain.organization not in [org, None]:
-                return redirect("organizations_admin:category_list", slug=slug)
-
-            obj.save()
+            form.save()
 
             return redirect(
                 "organizations_admin:category_list",
@@ -125,13 +94,7 @@ def org_category_edit(request, slug, pk):
 @org_admin_required
 def org_category_delete(request, slug, pk):
 
-    org = request.organization
-
-    category = get_object_or_404(
-        Category,
-        Q(pk=pk) &
-        (Q(domain__organization=org) | Q(domain__organization__isnull=True))
-    )
+    category = get_object_or_404(Category, pk=pk)
 
     category.delete()
 

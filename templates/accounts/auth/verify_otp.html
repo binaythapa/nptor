@@ -1,72 +1,516 @@
 {% extends "layouts/student/base.html" %}
+
 {% block content %}
 
-<section style="max-width:400px;margin:20px auto;">
-  <div class="card-surface" style="padding:20px;">
+<section
+    style="
+        max-width: 480px;
+        margin: 40px auto;
+        padding: 0 15px;
+    "
+>
 
-    <h1 class="title is-4">Verify OTP</h1>
+    <div
+        class="card-surface"
+        style="padding: 30px;"
+    >
 
-    {% if error %}
-      <div class="notification is-danger">{{ error }}</div>
-    {% endif %}
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
 
-    {% if expires_in %}
-      <p id="otp-timer" class="has-text-grey mb-3">
-        OTP expires in <strong></strong>
-      </p>
-    {% endif %}
+        <div class="has-text-centered mb-5">
 
-    <form method="post">
-      {% csrf_token %}
-      <input
-        class="input"
-        name="otp"
-        placeholder="Enter OTP"
-        required
-        autofocus
-      >
+            <h1 class="title is-4 mb-2">
+                Verify OTP
+            </h1>
 
-      <button class="button is-primary mt-3">
-        Verify
-      </button>
-    </form>
+            <p class="small-muted">
+                Enter the 6-digit verification code
+                sent to your email.
+            </p>
 
-    <p id="otp-expired-msg"
-       class="has-text-danger mt-3 is-hidden">
-      OTP has expired. Please request a new one.
-    </p>
+        </div>
 
-  </div>
+
+        <!-- =====================================================
+             ERROR MESSAGE
+        ====================================================== -->
+
+        {% if error %}
+
+            <div
+                class="notification is-danger is-light"
+            >
+                {{ error }}
+            </div>
+
+        {% endif %}
+
+
+        <!-- =====================================================
+             ACCOUNT LOCK MESSAGE
+        ====================================================== -->
+
+        {% if error == "Account locked" %}
+
+            <div
+                class="notification is-warning is-light"
+            >
+                Your account is currently locked because
+                of multiple failed OTP attempts.
+            </div>
+
+        {% endif %}
+
+
+        <!-- =====================================================
+             OTP COUNTDOWN
+        ====================================================== -->
+
+        {% if expires_in is not None %}
+
+            <div
+                id="otp-timer-container"
+                class="has-text-centered mb-4"
+            >
+
+                <p
+                    id="otp-timer"
+                    class="has-text-grey"
+                >
+
+                    OTP expires in
+
+                    <strong id="otp-countdown">
+                        --
+                    </strong>
+
+                </p>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- =====================================================
+             OTP FORM
+        ====================================================== -->
+
+        <form
+            method="post"
+            id="otp-form"
+            autocomplete="off"
+        >
+
+            {% csrf_token %}
+
+
+            <div class="field">
+
+                <label
+                    class="label"
+                    for="otp-input"
+                >
+                    Verification Code
+                </label>
+
+                <div class="control">
+
+                    <input
+                        class="input has-text-centered"
+                        type="text"
+                        name="otp"
+                        id="otp-input"
+                        placeholder="000000"
+                        required
+                        autofocus
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        pattern="[0-9]{6}"
+                        minlength="6"
+                        maxlength="6"
+                        style="
+                            font-size:1.5rem;
+                            letter-spacing:0.35rem;
+                            font-weight:600;
+                        "
+                    >
+
+                </div>
+
+                <p
+                    id="otp-help"
+                    class="help has-text-grey"
+                >
+                    Enter the 6-digit code from your email.
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 VERIFY BUTTON
+            ================================================== -->
+
+            <div class="field mt-5">
+
+                <div class="control">
+
+                    <button
+                        class="button is-primary is-fullwidth"
+                        type="submit"
+                        id="verify-btn"
+                    >
+                        <span id="verify-btn-text">
+                            Verify & Login
+                        </span>
+
+                        <span
+                            id="verify-btn-loading"
+                            style="display:none;"
+                        >
+                            Verifying...
+                        </span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+
+        <!-- =====================================================
+             EXPIRED MESSAGE
+        ====================================================== -->
+
+        <div
+            id="otp-expired-msg"
+            class="notification is-danger is-light mt-4"
+            style="display:none;"
+        >
+
+            <strong>
+                OTP has expired.
+            </strong>
+
+            <br>
+
+            Please return to the login page and request
+            a new OTP.
+
+            <br><br>
+
+            <a
+                href="{% url 'accounts:request-login-otp' %}"
+                class="button is-danger is-light is-small"
+            >
+                Request New OTP
+            </a>
+
+        </div>
+
+
+        <!-- =====================================================
+             BACK TO LOGIN
+        ====================================================== -->
+
+        <div
+            class="small-muted has-text-centered"
+            style="margin-top:20px;"
+        >
+
+            <a
+                href="{% url 'accounts:request-login-otp' %}"
+            >
+                ← Back to Login
+            </a>
+
+        </div>
+
+    </div>
+
 </section>
 
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================= -->
+
+{% if expires_in is not None %}
+
 <script>
-(function () {
-  const seconds = {{ expires_in|default:"null" }};
-  if (seconds === null) return;
 
-  let remaining = seconds;
-  const timerEl = document.querySelector("#otp-timer strong");
-  const expiredMsg = document.getElementById("otp-expired-msg");
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-  function formatTime(s) {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  }
+        // =====================================================
+        // INITIAL STATE
+        // =====================================================
 
-  function tick() {
-    if (remaining <= 0) {
-      timerEl.textContent = "00:00";
-      expiredMsg.classList.remove("is-hidden");
-      return;
+        let remainingSeconds =
+            Number(
+                "{{ expires_in|default:0 }}"
+            );
+
+
+        // =====================================================
+        // ELEMENTS
+        // =====================================================
+
+        const otpInput =
+            document.getElementById(
+                "otp-input"
+            );
+
+        const form =
+            document.getElementById(
+                "otp-form"
+            );
+
+        const verifyButton =
+            document.getElementById(
+                "verify-btn"
+            );
+
+        const verifyButtonText =
+            document.getElementById(
+                "verify-btn-text"
+            );
+
+        const verifyButtonLoading =
+            document.getElementById(
+                "verify-btn-loading"
+            );
+
+        const countdown =
+            document.getElementById(
+                "otp-countdown"
+            );
+
+        const timer =
+            document.getElementById(
+                "otp-timer"
+            );
+
+        const expiredMessage =
+            document.getElementById(
+                "otp-expired-msg"
+            );
+
+
+        // =====================================================
+        // FORMAT TIME
+        // =====================================================
+
+        function formatTime(seconds) {
+
+            const minutes =
+                Math.floor(
+                    seconds / 60
+                );
+
+            const secs =
+                seconds % 60;
+
+            return (
+                String(minutes).padStart(2, "0")
+                + ":"
+                + String(secs).padStart(2, "0")
+            );
+
+        }
+
+
+        // =====================================================
+        // UPDATE TIMER
+        // =====================================================
+
+        function updateTimer() {
+
+            if (
+                remainingSeconds <= 0
+            ) {
+
+                countdown.textContent =
+                    "Expired";
+
+                timer.classList.remove(
+                    "has-text-grey"
+                );
+
+                timer.classList.add(
+                    "has-text-danger"
+                );
+
+                otpInput.disabled =
+                    true;
+
+                verifyButton.disabled =
+                    true;
+
+                expiredMessage.style.display =
+                    "block";
+
+                return false;
+            }
+
+
+            countdown.textContent =
+                formatTime(
+                    remainingSeconds
+                );
+
+
+            /*
+             * Highlight the timer when less than
+             * 30 seconds remain.
+             */
+
+            if (
+                remainingSeconds <= 30
+            ) {
+
+                timer.classList.remove(
+                    "has-text-grey"
+                );
+
+                timer.classList.add(
+                    "has-text-danger"
+                );
+
+            }
+
+
+            return true;
+
+        }
+
+
+        // =====================================================
+        // INITIAL TIMER
+        // =====================================================
+
+        updateTimer();
+
+
+        // =====================================================
+        // COUNTDOWN
+        // =====================================================
+
+        const timerInterval =
+            setInterval(
+                function () {
+
+                    remainingSeconds -= 1;
+
+                    if (
+                        !updateTimer()
+                    ) {
+
+                        clearInterval(
+                            timerInterval
+                        );
+
+                    }
+
+                },
+                1000
+            );
+
+
+        // =====================================================
+        // OTP INPUT
+        // =====================================================
+
+        otpInput.addEventListener(
+            "input",
+            function () {
+
+                /*
+                 * Allow digits only.
+                 */
+
+                this.value =
+                    this.value
+                        .replace(
+                            /\D/g,
+                            ""
+                        )
+                        .slice(
+                            0,
+                            6
+                        );
+
+            }
+        );
+
+
+        // =====================================================
+        // FORM SUBMISSION
+        // =====================================================
+
+        form.addEventListener(
+            "submit",
+            function (event) {
+
+                /*
+                 * Client-side expiration check.
+                 */
+
+                if (
+                    remainingSeconds <= 0
+                ) {
+
+                    event.preventDefault();
+
+                    return;
+
+                }
+
+
+                /*
+                 * Validate exactly 6 digits.
+                 */
+
+                if (
+                    !/^\d{6}$/.test(
+                        otpInput.value
+                    )
+                ) {
+
+                    event.preventDefault();
+
+                    otpInput.focus();
+
+                    return;
+
+                }
+
+
+                /*
+                 * Prevent duplicate submissions.
+                 */
+
+                verifyButton.disabled =
+                    true;
+
+                verifyButtonText.style.display =
+                    "none";
+
+                verifyButtonLoading.style.display =
+                    "inline";
+
+            }
+        );
+
     }
-    timerEl.textContent = formatTime(remaining);
-    remaining--;
-    setTimeout(tick, 1000);
-  }
+);
 
-  tick();
-})();
 </script>
+
+{% endif %}
 
 {% endblock %}

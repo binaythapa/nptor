@@ -1,29 +1,189 @@
-{% if section %}
-    {% for lesson in section.lessons.all %}
-        <div class="lesson-item"
-             data-id="{{ lesson.id }}"
-             style="padding:6px; margin:5px 0; background:#fafafa; border:1px solid #ddd; border-radius:4px;">
+<!-- =========================================================
+     LESSON LIST
+========================================================= -->
 
-            {{ lesson.title }} ({{ lesson.lesson_type }})
+{% if lessons %}
 
-            <div style="float:right;">
-                {% if lesson.id %}
-                    <a href="{% url 'courses:lesson_edit' lesson.id %}"
-                       style="margin-right:5px;">
-                        Edit
+    <ul class="lesson-list">
+
+        {% for lesson in lessons %}
+
+            <li class="lesson-item">
+
+
+                <!-- =================================================
+                     LESSON INFORMATION
+                ================================================== -->
+
+                <div class="lesson-info">
+
+                    <div class="lesson-title">
+
+                        {{ forloop.counter }}.
+                        {{ lesson.title }}
+
+                    </div>
+
+
+                    {% if lesson.lesson_type %}
+
+                        <div class="lesson-type">
+
+                            {{ lesson.get_lesson_type_display }}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- =================================================
+                     LESSON ACTIONS
+                ================================================== -->
+
+                <div class="lesson-actions">
+
+
+                    <!-- EDIT -->
+
+                    <a
+                        href="{% url 'courses:lesson_edit' lesson.id %}"
+                    >
+                        Edit Lesson
                     </a>
-                {% endif %}
 
-                <button
-                    hx-post="{% url 'courses:api_delete_lesson' lesson.id %}"
-                    hx-target="#lessons-{{ section.id }}"
-                    hx-swap="innerHTML">
-                    Delete
-                </button>
-            </div>
+
+                    <!-- DELETE -->
+
+                    <form
+                        method="post"
+                        hx-post="{% url 'courses:api_delete_lesson' lesson.id %}"
+                        hx-target="#lesson-area-{{ section.id }}"
+                        hx-swap="innerHTML"
+                        onsubmit="
+                            return confirm(
+                                'Delete this lesson?'
+                            );
+                        "
+                        style="display: inline;"
+                    >
+
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="lesson-delete-btn"
+                        >
+                            Delete
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </li>
+
+        {% endfor %}
+
+    </ul>
+
+{% else %}
+
+    <div class="empty-lessons">
+
+        No lessons have been added
+        to this section yet.
+
+    </div>
+
+{% endif %}
+
+
+<!-- =========================================================
+     ADD LESSON
+========================================================= -->
+
+<div class="add-lesson-panel">
+
+    <form
+        method="post"
+        hx-post="{% url 'courses:api_create_lesson' %}"
+        hx-target="#lesson-area-{{ section.id }}"
+        hx-swap="innerHTML"
+    >
+
+        {% csrf_token %}
+
+
+        <input
+            type="hidden"
+            name="section_id"
+            value="{{ section.id }}"
+        >
+
+
+        <div class="add-lesson-form">
+
+
+            <!-- =================================================
+                 LESSON TITLE
+            ================================================== -->
+
+            <input
+                type="text"
+                name="title"
+                class="builder-input"
+                placeholder="Lesson title"
+                required
+            >
+
+
+            <!-- =================================================
+                 LESSON TYPE
+            ================================================== -->
+
+            <input
+                type="text"
+                name="lesson_type"
+                class="builder-input"
+                list="lesson-type-options-{{ section.id }}"
+                placeholder="Lesson type"
+                required
+                style="flex: 0 0 180px; min-width: 180px;"
+            >
+
+
+            <datalist
+                id="lesson-type-options-{{ section.id }}"
+            >
+
+                <option value="video">
+                <option value="text">
+                <option value="quiz">
+                <option value="document">
+
+            </datalist>
+
+
+            <!-- =================================================
+                 ADD LESSON BUTTON
+            ================================================== -->
+
+            <button
+                type="submit"
+                class="builder-btn btn-submit"
+            >
+                + Add Lesson
+            </button>
+
+
+            <span class="htmx-indicator">
+                Adding...
+            </span>
 
         </div>
-    {% empty %}
-        <p>No lessons yet.</p>
-    {% endfor %}
-{% endif %}
+
+    </form>
+
+</div>

@@ -122,6 +122,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "quiz.context_processors.unread_notifications_count",
                 "pages.context_processors.site_globals",
+                
             ],
         },
     },
