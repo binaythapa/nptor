@@ -7,7 +7,6 @@ from .category import (
     Category,
 )
 
-
 from .notification import (
     Notification,
 )
@@ -36,10 +35,6 @@ from .practice import (
     PracticeStat,
 )
 
-from .subscription_plan import (
-    SubscriptionPlan,
-)
-
 from .exam_track import (
     ExamTrack,
 )
@@ -48,12 +43,9 @@ from .exam import (
     Exam,
 )
 
-from .exam_subscription import (
-    ExamSubscription,
-)
-
 from .coupon import (
     Coupon,
+    CouponRedemption,
 )
 
 from .exam_category_allocation import (
@@ -111,7 +103,3 @@ from .study_plan_analytics import (
 from .leaderboard import (
     LeaderboardEntry,
 )
-
-
-from .exam_track_subscription import ExamTrackSubscription
-

@@ -3,15 +3,6 @@ from django.db import models
 
 
 class ExamTrack(models.Model):
-    """
-    Represents a collection/track of exams.
-
-    A track can have:
-    - Multiple exams
-    - Multiple subscription plans
-    - Legacy pricing configuration
-    - Organization ownership
-    """
 
     # =====================================================
     # SUBSCRIPTION SCOPE
@@ -29,17 +20,13 @@ class ExamTrack(models.Model):
     # CORE FIELDS
     # =====================================================
 
-    title = models.CharField(
-        max_length=200
-    )
+    title = models.CharField(max_length=200)
 
     slug = models.SlugField(
         help_text="Unique inside organization"
     )
 
-    description = models.TextField(
-        blank=True
-    )
+    description = models.TextField(blank=True)
 
     organization = models.ForeignKey(
         "organizations.Organization",
@@ -57,19 +44,19 @@ class ExamTrack(models.Model):
 
     # =====================================================
     # DYNAMIC PRICING
-    # PRIMARY SUBSCRIPTION SYSTEM
+    # CENTRALIZED SUBSCRIPTION SYSTEM
     # =====================================================
 
     subscription_plans = models.ManyToManyField(
-        "SubscriptionPlan",
+        "subscriptions.SubscriptionPlan",
         blank=True,
-        related_name="tracks",
+        related_name="exam_tracks",
         help_text="Dynamic pricing plans available for this track",
     )
 
     # =====================================================
     # LEGACY PRICING
-    # DEPRECATED
+    # KEEP TEMPORARILY
     # =====================================================
 
     PRICING_FREE = "free"
@@ -86,7 +73,7 @@ class ExamTrack(models.Model):
         max_length=20,
         choices=PRICING_TYPE_CHOICES,
         default=PRICING_FREE,
-        help_text="⚠ Legacy pricing (avoid when using subscription plans)",
+        help_text="Legacy pricing",
     )
 
     monthly_price = models.DecimalField(
@@ -105,7 +92,7 @@ class ExamTrack(models.Model):
 
     trial_days = models.PositiveIntegerField(
         default=7,
-        help_text="Trial days (legacy system)",
+        help_text="Legacy trial days",
     )
 
     currency = models.CharField(
@@ -117,13 +104,9 @@ class ExamTrack(models.Model):
     # STATUS
     # =====================================================
 
-    is_active = models.BooleanField(
-        default=True
-    )
+    is_active = models.BooleanField(default=True)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     # =====================================================
     # META
@@ -150,59 +133,39 @@ class ExamTrack(models.Model):
             self.pricing_type == self.PRICING_MONTHLY
             and not self.monthly_price
         ):
-            raise ValidationError(
-                {
-                    "monthly_price": (
-                        "Monthly price is required "
-                        "for monthly pricing."
-                    )
-                }
-            )
+            raise ValidationError({
+                "monthly_price": (
+                    "Monthly price is required for monthly pricing."
+                )
+            })
 
         if (
             self.pricing_type == self.PRICING_LIFETIME
             and not self.lifetime_price
         ):
-            raise ValidationError(
-                {
-                    "lifetime_price": (
-                        "Lifetime price is required "
-                        "for lifetime pricing."
-                    )
-                }
-            )
+            raise ValidationError({
+                "lifetime_price": (
+                    "Lifetime price is required for lifetime pricing."
+                )
+            })
 
     # =====================================================
     # HELPERS
     # =====================================================
 
     def has_dynamic_plans(self):
-        """
-        Returns True if at least one active
-        subscription plan exists.
-
-        Safe to call after the object has been saved.
-        """
-
         return self.subscription_plans.filter(
             is_active=True
         ).exists()
 
     def is_free(self):
-        """
-        Track is considered free only when:
-
-        1. There are no active dynamic subscription plans.
-        2. Legacy pricing type is free.
-        """
-
         if self.has_dynamic_plans():
             return False
 
         return self.pricing_type == self.PRICING_FREE
 
     # =====================================================
-    # STRING REPRESENTATION
+    # STRING
     # =====================================================
 
     def __str__(self):

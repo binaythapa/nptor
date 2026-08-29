@@ -1,28 +1,179 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
+# organizations/views/admin/assignments.py
 
-from organizations.permissions import org_admin_required
+"""
+Organization assignment administration views.
+
+The views in this module are intentionally thin.
+
+Architecture:
+
+    Request
+        ↓
+    Organization permission layer
+        ↓
+    Assignment service
+        ↓
+    ResourceAssignment + ResourceAccess
+
+Business rules must remain in:
+
+    organizations.services.assignments
+"""
+
+from django.contrib import messages
+from django.shortcuts import (
+    get_object_or_404,
+    redirect,
+    render,
+)
+
+from organizations.permissions import org_teacher_required
 from organizations.models.assignment import ResourceAssignment
 from organizations.models.membership import OrganizationMember
-from organizations.models.access import ResourceAccess
+from organizations.services.assignments import (
+    assign_resource,
+    revoke_assignment,
+    DuplicateActiveAssignmentError,
+    AssignmentError,
+    ResourceNotAvailableError,
+    StudentNotInOrganizationError,
+    UnauthorizedAssignmentError,
+    InvalidAssignmentError,
+)
 
 from courses.models import Course
 from quiz.models import Exam, ExamTrack
 
 
-# =====================================================
+# ============================================================
+# COMMON CONTEXT
+# ============================================================
+
+
+def _assignment_form_context(organization):
+    """
+    Build the data required by the assignment creation form.
+
+    This function only prepares querysets for presentation.
+    Assignment business logic belongs to the service layer.
+    """
+
+    students = (
+        OrganizationMember.objects
+        .filter(
+            organization=organization,
+            role=OrganizationMember.ROLE_STUDENT,
+            is_active=True,
+        )
+        .select_related("user")
+        .order_by(
+            "user__first_name",
+            "user__last_name",
+            "user__username",
+        )
+    )
+
+    courses = (
+        Course.objects
+        .filter(
+            organization_subscriptions__organization=organization,
+            organization_subscriptions__is_active=True,
+        )
+        .distinct()
+        .order_by("title")
+    )
+
+    tracks = (
+        ExamTrack.objects
+        .filter(
+            organization=organization,
+        )
+        .order_by("title")
+    )
+
+    exams = (
+        Exam.objects
+        .filter(
+            organization=organization,
+        )
+        .order_by("title")
+    )
+
+    return {
+        "students": students,
+        "courses": courses,
+        "tracks": tracks,
+        "exams": exams,
+        "org": organization,
+    }
+
+
+# ============================================================
+# DATETIME HELPER
+# ============================================================
+
+
+def _parse_datetime(value):
+    """
+    Convert an HTML datetime-local value into an aware
+    Django datetime.
+
+    Browser format:
+
+        YYYY-MM-DDTHH:MM
+
+    Empty or invalid values return None.
+    """
+
+    if not value:
+        return None
+
+    from datetime import datetime
+
+    from django.utils import timezone
+
+    try:
+        parsed = datetime.fromisoformat(value)
+
+    except (TypeError, ValueError):
+        return None
+
+    if timezone.is_naive(parsed):
+        parsed = timezone.make_aware(parsed)
+
+    return parsed
+
+
+# ============================================================
 # LIST ASSIGNMENTS
-# =====================================================
+# ============================================================
 
-@org_admin_required
+
+@org_teacher_required
 def org_assignments(request, slug):
+    """
+    Display assignments belonging to the active organization.
 
-    org = request.organization
+    Organization owners, admins, and staff/teachers may view
+    assignments according to the organization permission layer.
+    """
+
+    organization = request.organization
 
     assignments = (
         ResourceAssignment.objects
-        .filter(organization=org)
-        .select_related("student", "course", "track", "exam")
+        .filter(
+            organization=organization,
+        )
+        .select_related(
+            "student",
+            "assigned_by",
+            "revoked_by",
+            "course",
+            "track",
+            "exam",
+            "resource_access",
+        )
         .order_by("-assigned_at")
     )
 
@@ -31,233 +182,360 @@ def org_assignments(request, slug):
         "organizations/admin/assignments/list.html",
         {
             "assignments": assignments,
-            "org": org
-        }
+            "org": organization,
+        },
     )
 
 
-# =====================================================
+# ============================================================
 # CREATE ASSIGNMENT
-# =====================================================
+# ============================================================
 
-@org_admin_required
+
+@org_teacher_required
 def org_assignment_create(request, slug):
+    """
+    Create a resource assignment for an organization student.
 
-    org = request.organization
+    The view performs HTTP/form handling only.
 
-    # ---------------- STUDENTS ----------------
+    Actual assignment creation is handled by:
 
-    students = (
-        OrganizationMember.objects
-        .filter(
-            organization=org,
-            role="student",
-            is_active=True
-        )
-        .select_related("user")
+        organizations.services.assignments.assign_resource()
+    """
+
+    organization = request.organization
+
+    context = _assignment_form_context(
+        organization,
     )
 
-    # ---------------- COURSES ----------------
+    # ========================================================
+    # GET
+    # ========================================================
 
-    courses = (
-        Course.objects
-        .filter(
-            organization_subscriptions__organization=org,
-            organization_subscriptions__is_active=True
-        )
-        .distinct()
-    )
+    if request.method != "POST":
 
-    # ---------------- TRACKS ----------------
-
-    tracks = (
-        ExamTrack.objects
-        .filter(organization=org)
-        .order_by("title")
-    )
-
-    # ---------------- EXAMS ----------------
-
-    exams = (
-        Exam.objects
-        .filter(organization=org)
-        .order_by("title")
-    )
-
-    # =================================================
-    # POST
-    # =================================================
-
-    if request.method == "POST":
-
-        student_id = request.POST.get("student_id")
-        resource_type = request.POST.get("resource_type")
-
-        student = get_object_or_404(
-            OrganizationMember,
-            id=student_id,
-            organization=org,
-            role="student"
+        return render(
+            request,
+            "organizations/admin/assignments/create.html",
+            context,
         )
 
-        user = student.user
+    # ========================================================
+    # BASIC INPUT
+    # ========================================================
 
-        # ------------------------------------------------
-        # COURSE ASSIGNMENT
-        # ------------------------------------------------
+    student_id = request.POST.get(
+        "student_id",
+    )
 
-        if resource_type == "course":
+    resource_type = request.POST.get(
+        "resource_type",
+    )
 
-            course_id = request.POST.get("course_id")
+    if not student_id:
 
-            course = get_object_or_404(
-                Course,
-                id=course_id,
-                organization_subscriptions__organization=org
-            )
+        messages.error(
+            request,
+            "Please select a student.",
+        )
 
-            # Assignment record
-            ResourceAssignment.objects.get_or_create(
-                student=user,
-                organization=org,
-                resource_type="course",
-                course=course
-            )
+        return render(
+            request,
+            "organizations/admin/assignments/create.html",
+            context,
+        )
 
-            # Access record
-            access, created = ResourceAccess.objects.get_or_create(
-                user=user,
-                resource_type="course",
-                course=course,
-                source="organization",
-                organization=org,
-                defaults={"is_active": True},
-            )
+    if not resource_type:
 
-            if not created and not access.is_active:
-                access.is_active = True
-                access.save(update_fields=["is_active"])
+        messages.error(
+            request,
+            "Please select a resource type.",
+        )
 
-            messages.success(
-                request,
-                f"{course.title} assigned to {user.email}"
-            )
+        return render(
+            request,
+            "organizations/admin/assignments/create.html",
+            context,
+        )
 
-        # ------------------------------------------------
-        # TRACK ASSIGNMENT
-        # ------------------------------------------------
+    # ========================================================
+    # STUDENT
+    # ========================================================
 
-        elif resource_type == "track":
+    student_membership = get_object_or_404(
+        OrganizationMember,
+        id=student_id,
+        organization=organization,
+        role=OrganizationMember.ROLE_STUDENT,
+        is_active=True,
+    )
 
-            track_id = request.POST.get("track_id")
+    student = student_membership.user
 
-            track = get_object_or_404(
-                ExamTrack,
-                id=track_id,
-                organization=org
-            )
+    # ========================================================
+    # RESOURCE ID
+    # ========================================================
 
-            ResourceAssignment.objects.get_or_create(
-                student=user,
-                organization=org,
-                resource_type="track",
-                track=track
-            )
+    if resource_type == ResourceAssignment.RESOURCE_COURSE:
 
-            ResourceAccess.objects.get_or_create(
-                user=user,
-                resource_type="track",
-                track=track,
-                source="organization",
-                organization=org,
-                defaults={"is_active": True},
-            )
+        resource_id = request.POST.get(
+            "course_id",
+        )
 
-            messages.success(
-                request,
-                f"{track.title} assigned to {user.email}"
-            )
+    elif resource_type == ResourceAssignment.RESOURCE_TRACK:
 
-        # ------------------------------------------------
-        # EXAM ASSIGNMENT
-        # ------------------------------------------------
+        resource_id = request.POST.get(
+            "track_id",
+        )
 
-        elif resource_type == "exam":
+    elif resource_type == ResourceAssignment.RESOURCE_EXAM:
 
-            exam_id = request.POST.get("exam_id")
+        resource_id = request.POST.get(
+            "exam_id",
+        )
 
-            exam = get_object_or_404(
-                Exam,
-                id=exam_id,
-                organization=org
-            )
+    else:
 
-            ResourceAssignment.objects.get_or_create(
-                student=user,
-                organization=org,
-                resource_type="exam",
-                exam=exam
-            )
+        messages.error(
+            request,
+            "Invalid resource type.",
+        )
 
-            ResourceAccess.objects.get_or_create(
-                user=user,
-                resource_type="exam",
-                exam=exam,
-                source="organization",
-                organization=org,
-                defaults={"is_active": True},
-            )
+        return render(
+            request,
+            "organizations/admin/assignments/create.html",
+            context,
+        )
 
-            messages.success(
-                request,
-                f"{exam.title} assigned to {user.email}"
-            )
+    if not resource_id:
+
+        messages.error(
+            request,
+            "Please select a resource.",
+        )
+
+        return render(
+            request,
+            "organizations/admin/assignments/create.html",
+            context,
+        )
+
+    # ========================================================
+    # TIMELINE
+    # ========================================================
+
+    starts_at = _parse_datetime(
+        request.POST.get(
+            "starts_at",
+        )
+    )
+
+    due_at = _parse_datetime(
+        request.POST.get(
+            "due_at",
+        )
+    )
+
+    expires_at = _parse_datetime(
+        request.POST.get(
+            "expires_at",
+        )
+    )
+
+    notes = (
+        request.POST.get(
+            "notes",
+        )
+        or ""
+    ).strip()
+
+    # ========================================================
+    # ASSIGN RESOURCE
+    # ========================================================
+
+    try:
+
+        result = assign_resource(
+            actor=request.user,
+            organization=organization,
+            student=student,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            starts_at=starts_at,
+            due_at=due_at,
+            expires_at=expires_at,
+            notes=notes,
+        )
+
+    except DuplicateActiveAssignmentError as exc:
+
+        messages.warning(
+            request,
+            str(exc),
+        )
 
         return redirect(
             "organizations_admin:assignments",
-            slug=slug
+            slug=slug,
         )
 
-    # =================================================
-    # GET
-    # =================================================
+    except (
+        StudentNotInOrganizationError,
+        UnauthorizedAssignmentError,
+        ResourceNotAvailableError,
+        InvalidAssignmentError,
+        AssignmentError,
+    ) as exc:
 
-    return render(
-        request,
-        "organizations/admin/assignments/create.html",
-        {
-            "students": students,
-            "courses": courses,
-            "tracks": tracks,
-            "exams": exams,
-            "org": org
-        }
+        messages.error(
+            request,
+            str(exc),
+        )
+
+        return redirect(
+            "organizations_admin:assignments",
+            slug=slug,
+        )
+
+    # ========================================================
+    # SUCCESS
+    # ========================================================
+
+    assignment = result.assignment
+
+    resource_name = (
+        assignment.resource_name
+        or "Resource"
+    )
+
+    if result.created:
+
+        messages.success(
+            request,
+            (
+                f"{resource_name} was successfully assigned "
+                f"to {student.email}."
+            ),
+        )
+
+    else:
+
+        messages.success(
+            request,
+            (
+                f"{resource_name} assignment for "
+                f"{student.email} was reactivated."
+            ),
+        )
+
+    return redirect(
+        "organizations_admin:assignments",
+        slug=slug,
     )
 
 
-# =====================================================
-# REMOVE ASSIGNMENT
-# =====================================================
+# ============================================================
+# REVOKE ASSIGNMENT
+# ============================================================
 
-@org_admin_required
-def org_assignment_remove(request, slug, assignment_id):
 
-    org = request.organization
+@org_teacher_required
+def org_assignment_remove(
+    request,
+    slug,
+    assignment_id,
+):
+    """
+    Revoke an assignment.
+
+    IMPORTANT:
+
+    We do not delete the assignment.
+
+    The historical record remains available for:
+
+        - audit
+        - reporting
+        - progress history
+        - organization reporting
+        - compliance
+    """
+
+    organization = request.organization
 
     assignment = get_object_or_404(
         ResourceAssignment,
         id=assignment_id,
-        organization=org
+        organization=organization,
     )
 
-    assignment.delete()
+    # ========================================================
+    # POST ONLY
+    # ========================================================
+
+    if request.method != "POST":
+
+        messages.error(
+            request,
+            "Invalid request method.",
+        )
+
+        return redirect(
+            "organizations_admin:assignments",
+            slug=slug,
+        )
+
+    # ========================================================
+    # REASON
+    # ========================================================
+
+    reason = (
+        request.POST.get(
+            "reason",
+        )
+        or "Assignment revoked by organization staff."
+    ).strip()
+
+    # ========================================================
+    # REVOKE THROUGH SERVICE
+    # ========================================================
+
+    try:
+
+        revoke_assignment(
+            assignment=assignment,
+            actor=request.user,
+            reason=reason,
+        )
+
+    except (
+        UnauthorizedAssignmentError,
+        InvalidAssignmentError,
+        AssignmentError,
+    ) as exc:
+
+        messages.error(
+            request,
+            str(exc),
+        )
+
+        return redirect(
+            "organizations_admin:assignments",
+            slug=slug,
+        )
+
+    # ========================================================
+    # SUCCESS
+    # ========================================================
 
     messages.success(
         request,
-        "Assignment removed successfully."
+        "Assignment revoked successfully.",
     )
 
     return redirect(
         "organizations_admin:assignments",
-        slug=slug
+        slug=slug,
     )

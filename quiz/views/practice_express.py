@@ -40,13 +40,11 @@ from quiz.models import (
     Exam,
     ExamTrack,
     UserExam,
-    ExamSubscription,
-    ExamTrackSubscription,
     Coupon,
 )
 from quiz.services.access import can_access_exam
 from quiz.services.pricing import apply_coupon
-from quiz.services.subscription import has_valid_subscription
+
 from quiz.utils import get_leaf_category_name
 
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
@@ -311,6 +309,8 @@ def practice_express_save(request):
         "accuracy": stat.accuracy(),
         "streak": stat.streak
     })
+
+
 
 
 

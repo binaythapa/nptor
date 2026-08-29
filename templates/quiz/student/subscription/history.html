@@ -1,145 +1,555 @@
 {% extends "layouts/admin/base_admin.html" %}
+
 {% block content %}
 
-<h1 class="title is-4">📜 Subscription History</h1>
-<p class="has-text-grey mb-5">
-  View your active, expired, and past subscriptions
-</p>
+<div class="container">
 
-<!-- ================= TRACK SUBSCRIPTIONS ================= -->
-<h2 class="title is-5">📚 Track Subscriptions</h2>
+    <h1 class="title is-4">
+        Subscription History
+    </h1>
 
-<table class="table is-fullwidth is-striped">
-  <thead>
-    <tr>
-      <th>Track</th>
-      <th>Status</th>
-      <th>Amount</th>
-      <th>Subscribed On</th>
-      <th>Expires On</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for sub in track_subs %}
-    <tr>
-      <td>{{ sub.track.title }}</td>
-      <td>
-        {% if not sub.is_active %}
-          <span class="tag is-danger is-light">Revoked</span>
-        {% elif sub.expires_at and sub.expires_at < now %}
-          <span class="tag is-warning is-light">Expired</span>
-        {% else %}
-          <span class="tag is-success is-light">Active</span>
-        {% endif %}
-      </td>
-      <td>₹{{ sub.amount|default:"0" }}</td>
-      <td>{{ sub.subscribed_at|date:"M d, Y" }}</td>
-      <td>
-        {% if sub.expires_at %}
-          {{ sub.expires_at|date:"M d, Y" }}
-        {% else %}
-          Lifetime
-        {% endif %}
-      </td>
-    </tr>
-    {% empty %}
-    <tr>
-      <td colspan="5" class="has-text-grey">
-        No track subscriptions yet
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <p class="has-text-grey mb-5">
+        View your subscriptions, access entitlements, and payment history.
+    </p>
 
-<hr>
 
-<!-- ================= EXAM SUBSCRIPTIONS ================= -->
-<h2 class="title is-5">📝 Exam Subscriptions</h2>
+    <!-- ===================================================== -->
+    <!-- SUBSCRIPTIONS -->
+    <!-- ===================================================== -->
 
-<table class="table is-fullwidth is-striped">
-  <thead>
-    <tr>
-      <th>Exam</th>
-      <th>Status</th>
-      <th>Amount</th>
-      <th>Subscribed On</th>
-      <th>Expires On</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for sub in exam_subs %}
-    <tr>
-      <td>{{ sub.exam.title }}</td>
-      <td>
-        {% if not sub.is_active %}
-          <span class="tag is-danger is-light">Revoked</span>
-        {% elif sub.expires_at and sub.expires_at < now %}
-          <span class="tag is-warning is-light">Expired</span>
-        {% else %}
-          <span class="tag is-success is-light">Active</span>
-        {% endif %}
-      </td>
-      <td>₹{{ sub.amount|default:"0" }}</td>
-      <td>{{ sub.subscribed_at|date:"M d, Y" }}</td>
-      <td>
-        {% if sub.expires_at %}
-          {{ sub.expires_at|date:"M d, Y" }}
-        {% else %}
-          Lifetime
-        {% endif %}
-      </td>
-    </tr>
-    {% empty %}
-    <tr>
-      <td colspan="5" class="has-text-grey">
-        No exam subscriptions yet
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <h2 class="title is-5">
+        Subscriptions
+    </h2>
 
-<hr>
+    <div class="table-container">
 
-<!-- ================= PAYMENT HISTORY ================= -->
-<h2 class="title is-5">💳 Payment History</h2>
+        <table class="table is-fullwidth is-striped is-hoverable">
 
-<table class="table is-fullwidth is-striped">
-  <thead>
-    <tr>
-      <th>Item</th>
-      <th>Amount</th>
-      <th>Method</th>
-      <th>Reference</th>
-      <th>Date</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for p in payments %}
-    <tr>
-      <td>
-        {% if p.track %}
-          {{ p.track.title }}
-        {% elif p.exam %}
-          {{ p.exam.title }}
-        {% else %}
-          —
-        {% endif %}
-      </td>
-      <td>₹{{ p.amount }}</td>
-      <td>{{ p.get_payment_method_display }}</td>
-      <td>{{ p.reference_id|default:"—" }}</td>
-      <td>{{ p.paid_at|date:"M d, Y H:i" }}</td>
-    </tr>
-    {% empty %}
-    <tr>
-      <td colspan="5" class="has-text-grey">
-        No payments found
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+            <thead>
+                <tr>
+                    <th>Plan</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th>Payment</th>
+                    <th>Subscribed On</th>
+                    <th>Starts On</th>
+                    <th>Expires On</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for sub in subscriptions %}
+
+                <tr>
+
+                    <td>
+                        <strong>
+                            {{ sub.plan.name }}
+                        </strong>
+                    </td>
+
+
+                    <!-- STATUS -->
+
+                    <td>
+
+                        {% if sub.status == "active" and sub.is_valid %}
+
+                            <span class="tag is-success is-light">
+                                Active
+                            </span>
+
+                        {% elif sub.status == "expired" %}
+
+                            <span class="tag is-warning is-light">
+                                Expired
+                            </span>
+
+                        {% elif sub.status == "cancelled" %}
+
+                            <span class="tag is-danger is-light">
+                                Cancelled
+                            </span>
+
+                        {% elif sub.status == "suspended" %}
+
+                            <span class="tag is-warning is-light">
+                                Suspended
+                            </span>
+
+                        {% elif sub.status == "pending" %}
+
+                            <span class="tag is-info is-light">
+                                Pending
+                            </span>
+
+                        {% else %}
+
+                            <span class="tag">
+                                {{ sub.get_status_display }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- AMOUNT -->
+
+                    <td>
+
+                        {{ sub.currency }}
+                        {{ sub.amount|default:"0.00" }}
+
+                    </td>
+
+
+                    <!-- PAYMENT -->
+
+                    <td>
+
+                        {% if sub.payment_status == "paid" %}
+
+                            <span class="tag is-success is-light">
+                                Paid
+                            </span>
+
+                        {% elif sub.payment_status == "not_required" %}
+
+                            <span class="tag is-info is-light">
+                                Not Required
+                            </span>
+
+                        {% elif sub.payment_status == "failed" %}
+
+                            <span class="tag is-danger is-light">
+                                Failed
+                            </span>
+
+                        {% elif sub.payment_status == "refunded" %}
+
+                            <span class="tag is-warning is-light">
+                                Refunded
+                            </span>
+
+                        {% else %}
+
+                            <span class="tag">
+                                {{ sub.payment_status|title }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- SUBSCRIBED -->
+
+                    <td>
+                        {{ sub.subscribed_at|date:"M d, Y" }}
+                    </td>
+
+
+                    <!-- START -->
+
+                    <td>
+                        {{ sub.starts_at|date:"M d, Y" }}
+                    </td>
+
+
+                    <!-- EXPIRY -->
+
+                    <td>
+
+                        {% if sub.expires_at %}
+
+                            {{ sub.expires_at|date:"M d, Y" }}
+
+                        {% else %}
+
+                            <span class="has-text-success">
+                                Lifetime
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        class="has-text-grey has-text-centered"
+                    >
+                        No subscriptions found.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <hr>
+
+
+    <!-- ===================================================== -->
+    <!-- TRACK ACCESS -->
+    <!-- ===================================================== -->
+
+    <h2 class="title is-5">
+        Track Access
+    </h2>
+
+    <div class="table-container">
+
+        <table class="table is-fullwidth is-striped is-hoverable">
+
+            <thead>
+
+                <tr>
+                    <th>Track</th>
+                    <th>Plan</th>
+                    <th>Subscription Status</th>
+                    <th>Access</th>
+                    <th>Expires On</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for entitlement in track_subs %}
+
+                <tr>
+
+                    <td>
+                        {% if entitlement.track %}
+                            {{ entitlement.track.title }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {{ entitlement.subscription.plan.name }}
+                    </td>
+
+                    <td>
+                        {{ entitlement.subscription.get_status_display }}
+                    </td>
+
+                    <td>
+
+                        {% if entitlement.is_valid %}
+
+                            <span class="tag is-success is-light">
+                                Active
+                            </span>
+
+                        {% elif not entitlement.is_active %}
+
+                            <span class="tag is-danger is-light">
+                                Revoked
+                            </span>
+
+                        {% else %}
+
+                            <span class="tag is-warning is-light">
+                                Expired
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if entitlement.subscription.expires_at %}
+
+                            {{ entitlement.subscription.expires_at|date:"M d, Y" }}
+
+                        {% else %}
+
+                            Lifetime
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="has-text-grey has-text-centered"
+                    >
+                        No track access found.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <hr>
+
+
+    <!-- ===================================================== -->
+    <!-- EXAM ACCESS -->
+    <!-- ===================================================== -->
+
+    <h2 class="title is-5">
+        Exam Access
+    </h2>
+
+    <div class="table-container">
+
+        <table class="table is-fullwidth is-striped is-hoverable">
+
+            <thead>
+
+                <tr>
+                    <th>Exam</th>
+                    <th>Plan</th>
+                    <th>Subscription Status</th>
+                    <th>Access</th>
+                    <th>Expires On</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for entitlement in exam_subs %}
+
+                <tr>
+
+                    <td>
+
+                        {% if entitlement.exam %}
+                            {{ entitlement.exam.title }}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+                        {{ entitlement.subscription.plan.name }}
+                    </td>
+
+                    <td>
+                        {{ entitlement.subscription.get_status_display }}
+                    </td>
+
+                    <td>
+
+                        {% if entitlement.is_valid %}
+
+                            <span class="tag is-success is-light">
+                                Active
+                            </span>
+
+                        {% elif not entitlement.is_active %}
+
+                            <span class="tag is-danger is-light">
+                                Revoked
+                            </span>
+
+                        {% else %}
+
+                            <span class="tag is-warning is-light">
+                                Expired
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if entitlement.subscription.expires_at %}
+
+                            {{ entitlement.subscription.expires_at|date:"M d, Y" }}
+
+                        {% else %}
+
+                            Lifetime
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="has-text-grey has-text-centered"
+                    >
+                        No exam access found.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <hr>
+
+
+    <!-- ===================================================== -->
+    <!-- PAYMENT HISTORY -->
+    <!-- ===================================================== -->
+
+    <h2 class="title is-5">
+        Payment History
+    </h2>
+
+    <div class="table-container">
+
+        <table class="table is-fullwidth is-striped is-hoverable">
+
+            <thead>
+
+                <tr>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Provider</th>
+                    <th>Status</th>
+                    <th>Transaction</th>
+                    <th>Date</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for payment in payments %}
+
+                <tr>
+
+                    <td>
+                        {{ payment.subscription.plan.name }}
+                    </td>
+
+                    <td>
+                        {{ payment.currency }}
+                        {{ payment.amount }}
+                    </td>
+
+                    <td>
+                        {{ payment.get_provider_display }}
+                    </td>
+
+                    <td>
+
+                        {% if payment.status == "success" %}
+
+                            <span class="tag is-success is-light">
+                                Successful
+                            </span>
+
+                        {% elif payment.status == "failed" %}
+
+                            <span class="tag is-danger is-light">
+                                Failed
+                            </span>
+
+                        {% elif payment.status == "refunded" %}
+
+                            <span class="tag is-warning is-light">
+                                Refunded
+                            </span>
+
+                        {% else %}
+
+                            <span class="tag">
+                                {{ payment.get_status_display }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if payment.transaction_id %}
+                            {{ payment.transaction_id }}
+                        {% elif payment.order_id %}
+                            {{ payment.order_id }}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if payment.paid_at %}
+
+                            {{ payment.paid_at|date:"M d, Y H:i" }}
+
+                        {% else %}
+
+                            {{ payment.created_at|date:"M d, Y H:i" }}
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="has-text-grey has-text-centered"
+                    >
+                        No payment history found.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
 
 {% endblock %}

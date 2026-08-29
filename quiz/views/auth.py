@@ -43,15 +43,13 @@ from quiz.models import (
     Exam,
     ExamTrack,
     UserExam,
-    ExamSubscription,
-    ExamTrackSubscription,
     Coupon,
 )
 from quiz.services.access import can_access_exam
 from quiz.services.answer_persistence import autosave_answers
 from quiz.services.grading import grade_exam
 from quiz.services.pricing import apply_coupon
-from quiz.services.subscription import has_valid_subscription
+
 from quiz.utils import get_leaf_category_name
 
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
@@ -229,3 +227,4 @@ def users_list(request):
     return render(request, 'quiz/users_list.html', {
         'users': users_qs,
     })
+

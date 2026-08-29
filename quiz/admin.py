@@ -8,7 +8,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.html import strip_tags
 from django.utils.translation import gettext_lazy as _
@@ -23,11 +22,8 @@ from .models import (
     Choice,
     QuestionFeedback,
     PracticeStat,
-    SubscriptionPlan,
     ExamTrack,
     Exam,
-    ExamSubscription,
-    ExamTrackSubscription,
     Coupon,
     ExamCategoryAllocation,
     UserExam,
@@ -42,6 +38,9 @@ from .models import (
     StudyPlanAnalyticsSnapshot,
     LeaderboardEntry,
 )
+
+# Subscription models now belong to subscriptions app.
+
 
 
 # ============================================================
@@ -110,99 +109,7 @@ BULMA_WIDGET_OVERRIDES = {
 }
 
 
-# ============================================================
-# EXAM TRACK SUBSCRIPTION
-# ============================================================
 
-@admin.register(ExamTrackSubscription)
-class ExamTrackSubscriptionAdmin(admin.ModelAdmin):
-
-    list_display = (
-        "user",
-        "track",
-        "is_active",
-        "is_trial",
-        "payment_required",
-        "amount",
-        "currency",
-        "subscribed_at",
-        "expires_at",
-    )
-
-    list_filter = (
-        "is_active",
-        "is_trial",
-        "payment_required",
-        "currency",
-        "subscribed_by_admin",
-    )
-
-    search_fields = (
-        "user__username",
-        "user__email",
-        "track__title",
-        "payment_id",
-    )
-
-    readonly_fields = (
-        "subscribed_at",
-    )
-
-    ordering = (
-        "-subscribed_at",
-    )
-
-    actions = [
-        "deactivate",
-    ]
-
-    @admin.action(
-        description="Deactivate selected subscriptions"
-    )
-    def deactivate(
-        self,
-        request,
-        queryset,
-    ):
-        updated = queryset.update(
-            is_active=False
-        )
-
-        self.message_user(
-            request,
-            f"{updated} subscription(s) deactivated.",
-            messages.SUCCESS,
-        )
-
-    def has_delete_permission(
-        self,
-        request,
-        obj=None,
-    ):
-        return False
-
-
-# ============================================================
-# SUBSCRIPTION PLAN
-# ============================================================
-
-@admin.register(SubscriptionPlan)
-class SubscriptionPlanAdmin(admin.ModelAdmin):
-
-    list_display = (
-        "name",
-        "price",
-        "duration_days",
-        "is_active",
-    )
-
-    list_filter = (
-        "is_active",
-    )
-
-    search_fields = (
-        "name",
-    )
 
 
 # ============================================================
@@ -273,10 +180,12 @@ class QuestionFeedbackInline(
 
     show_change_link = True
 
-    formfield_overrides = (
-        BULMA_WIDGET_OVERRIDES
-    )
+    formfield_overrides = BULMA_WIDGET_OVERRIDES
 
+
+# ============================================================
+# QUESTION
+# ============================================================
 
 # ============================================================
 # QUESTION
@@ -285,36 +194,69 @@ class QuestionFeedbackInline(
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
 
+    # ============================================================
+    # LIST DISPLAY
+    # ============================================================
+
     list_display = (
         "id",
         "short_text",
+        "primary_category_display",
+        "category_count",
         "question_type",
         "difficulty",
-        "category",
         "feedback_count",
         "created_by",
         "updated_by",
         "updated_at",
     )
 
+    # ============================================================
+    # FILTERS
+    # ============================================================
+
     list_filter = (
         "question_type",
         "difficulty",
-        "category",
+        "primary_category",
+        "categories",
+        "is_active",
+        "is_deleted",
     )
+
+    # ============================================================
+    # SEARCH
+    # ============================================================
 
     search_fields = (
         "text",
+        "explanation",
+        "primary_category__name",
+        "categories__name",
     )
+
+    # ============================================================
+    # MANY-TO-MANY CATEGORY SELECTION
+    # ============================================================
+
+    filter_horizontal = (
+        "categories",
+    )
+
+    # ============================================================
+    # INLINES
+    # ============================================================
 
     inlines = [
         ChoiceInline,
         QuestionFeedbackInline,
     ]
 
-    formfield_overrides = (
-        BULMA_WIDGET_OVERRIDES
-    )
+    formfield_overrides = BULMA_WIDGET_OVERRIDES
+
+    # ============================================================
+    # READONLY
+    # ============================================================
 
     readonly_fields = (
         "feedback_summary",
@@ -326,15 +268,22 @@ class QuestionAdmin(admin.ModelAdmin):
         "deleted_by",
     )
 
+    # ============================================================
+    # FIELDSETS
+    # ============================================================
+
     fieldsets = (
         (
             None,
             {
                 "fields": (
-                    "category",
+                    "organization",
+                    "primary_category",
+                    "categories",
                     "text",
                     "question_type",
                     "difficulty",
+                    "is_active",
                 )
             },
         ),
@@ -403,17 +352,32 @@ class QuestionAdmin(admin.ModelAdmin):
         ),
     )
 
-    def get_queryset(
-        self,
-        request,
-    ):
+    # ============================================================
+    # QUERYSET
+    # ============================================================
+
+    def get_queryset(self, request):
         return (
             super()
             .get_queryset(request)
             .filter(
                 is_deleted=False
             )
+            .select_related(
+                "organization",
+                "primary_category",
+                "created_by",
+                "updated_by",
+                "deleted_by",
+            )
+            .prefetch_related(
+                "categories"
+            )
         )
+
+    # ============================================================
+    # SAVE
+    # ============================================================
 
     def save_model(
         self,
@@ -433,6 +397,10 @@ class QuestionAdmin(admin.ModelAdmin):
             form,
             change,
         )
+
+    # ============================================================
+    # SOFT DELETE
+    # ============================================================
 
     def delete_model(
         self,
@@ -462,6 +430,10 @@ class QuestionAdmin(admin.ModelAdmin):
             deleted_by=request.user,
         )
 
+    # ============================================================
+    # QUESTION DISPLAY
+    # ============================================================
+
     @admin.display(
         description="Question"
     )
@@ -485,6 +457,55 @@ class QuestionAdmin(admin.ModelAdmin):
             )
         )
 
+    # ============================================================
+    # PRIMARY CATEGORY DISPLAY
+    # ============================================================
+
+    @admin.display(
+        description="Primary Category",
+        ordering="primary_category__name",
+    )
+    def primary_category_display(
+        self,
+        obj,
+    ):
+        if not obj.primary_category:
+            return "—"
+
+        return obj.primary_category.name
+
+    # ============================================================
+    # CATEGORY COUNT
+    # ============================================================
+
+    @admin.display(
+        description="Categories"
+    )
+    def category_count(
+        self,
+        obj,
+    ):
+        category_ids = set(
+            obj.categories.values_list(
+                "id",
+                flat=True,
+            )
+        )
+
+        # Primary category is logically part of the
+        # classification even if it is not duplicated
+        # inside the ManyToMany relationship.
+        if obj.primary_category_id:
+            category_ids.add(
+                obj.primary_category_id
+            )
+
+        return len(category_ids)
+
+    # ============================================================
+    # FEEDBACK COUNT
+    # ============================================================
+
     @admin.display(
         description="Feedbacks"
     )
@@ -493,6 +514,10 @@ class QuestionAdmin(admin.ModelAdmin):
         obj,
     ):
         return obj.feedbacks.count()
+
+    # ============================================================
+    # FEEDBACK SUMMARY
+    # ============================================================
 
     @admin.display(
         description="Feedback summary"
@@ -516,6 +541,10 @@ class QuestionAdmin(admin.ModelAdmin):
         return (
             f"This question has {count} feedbacks."
         )
+
+    # ============================================================
+    # DELETE PERMISSION
+    # ============================================================
 
     def has_delete_permission(
         self,
@@ -640,9 +669,7 @@ class CategoryAdmin(admin.ModelAdmin):
         "slug",
     )
 
-    formfield_overrides = (
-        BULMA_WIDGET_OVERRIDES
-    )
+    formfield_overrides = BULMA_WIDGET_OVERRIDES
 
 
 # ============================================================
@@ -906,9 +933,7 @@ class UserAnswerAdmin(admin.ModelAdmin):
         "raw_answer",
     )
 
-    formfield_overrides = (
-        BULMA_WIDGET_OVERRIDES
-    )
+    formfield_overrides = BULMA_WIDGET_OVERRIDES
 
 
 # ============================================================
@@ -981,33 +1006,6 @@ class ExamUnlockLogAdmin(admin.ModelAdmin):
     list_filter = (
         "exam",
         "source",
-    )
-
-
-# ============================================================
-# EXAM SUBSCRIPTION
-# ============================================================
-
-@admin.register(ExamSubscription)
-class ExamSubscriptionAdmin(admin.ModelAdmin):
-
-    list_display = (
-        "user",
-        "exam",
-        "is_active",
-        "subscribed_at",
-        "expires_at",
-    )
-
-    list_filter = (
-        "is_active",
-        "payment_required",
-    )
-
-    search_fields = (
-        "user__username",
-        "user__email",
-        "exam__title",
     )
 
 
@@ -1398,8 +1396,7 @@ def reset_mock_attempts_action(
     """
     Reset submitted mock attempts.
 
-    This action is intentionally conservative:
-    only attempts where passed IS NULL and
+    Only attempts where passed IS NULL and
     submitted_at IS NOT NULL are deleted.
     """
 

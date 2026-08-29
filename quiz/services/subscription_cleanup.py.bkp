@@ -1,0 +1,32 @@
+from django.db.models import Q
+from django.utils import timezone
+
+from subscriptions.models import Subscription
+
+
+def expire_old_subscriptions():
+    """
+    Deactivate subscriptions whose expiration date has passed.
+
+    Lifetime subscriptions have expires_at=None and are ignored.
+
+    Returns:
+        int: Number of subscriptions deactivated.
+    """
+
+    current_time = timezone.now()
+
+    updated_count = (
+        Subscription.objects
+        .filter(
+            status=Subscription.STATUS_ACTIVE,
+            expires_at__isnull=False,
+            expires_at__lt=current_time,
+        )
+        .update(
+            status=Subscription.STATUS_EXPIRED,
+            updated_at=current_time,
+        )
+    )
+
+    return updated_count

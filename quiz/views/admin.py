@@ -72,15 +72,14 @@ from quiz.forms import *
 from quiz.models import (
     Exam,
     ExamTrack,
-    UserExam,
-    ExamSubscription,
+    UserExam,    
     Coupon,
     StudyPlan,
 )
 
 from quiz.services.access import can_access_exam
 from quiz.services.pricing import apply_coupon
-from quiz.services.subscription import has_valid_subscription
+
 from quiz.utils import get_leaf_category_name
 
 

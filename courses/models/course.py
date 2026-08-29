@@ -2,7 +2,8 @@ from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
 
-from quiz.models import Category, SubscriptionPlan
+from quiz.models import Category
+from subscriptions.models import SubscriptionPlan
 
 
 class Course(models.Model):

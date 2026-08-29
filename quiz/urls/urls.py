@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
 from django.conf import settings
@@ -13,12 +13,11 @@ from quiz.forms import EmailOrUsernameLoginForm
 
 from quiz.views.admin import *
 from quiz.views.questions import *
-from quiz.views.views import *
 
 from quiz.views.practice_express import *
 from quiz.views.auth import *
-from quiz.views.subscription import *
-from quiz.views.admin_subscriptions import *
+
+from quiz.views.admin_subscription_views import *
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
 from quiz.views.mock import *
@@ -42,6 +41,39 @@ from quiz.views.practice import (
     practice_answer_ajax,
     practice_next_ajax,
     discussion_submit_ajax,
+)
+
+
+# ============================================================
+# LEGACY SUBSCRIPTION FUNCTIONS STILL IN USE
+#
+# These are temporary.
+# They will be migrated into the subscriptions app later.
+# ============================================================
+
+
+
+# ============================================================
+# PAYMENT CHECKOUT
+#
+# New payment architecture:
+#
+# payments
+#     ↓
+# PaymentOrder
+#     ↓
+# PaymentTransaction
+#     ↓
+# PaymentFulfillmentService
+#     ↓
+# subscriptions
+#     ↓
+# Subscription / Entitlement / ResourceAccess
+# ============================================================
+
+from payments.views.checkout import (
+    track_checkout,
+    exam_checkout,
 )
 
 
@@ -261,15 +293,33 @@ urlpatterns = [
 
 
     # ========================================================
-    # SUBSCRIPTIONS - USER
+    # SUBSCRIPTIONS / PAYMENTS - USER
+    #
+    # IMPORTANT:
+    #
+    # Payment checkout is now handled by:
+    #
+    # payments.views.checkout
+    #
+    # Subscription creation/access is handled by:
+    #
+    # subscriptions
+    #
+    # Old subscribe_track / subscribe_exam routes
+    # have intentionally been removed.
     # ========================================================
 
-    path(
-        "subscriptions/history/",
-        subscription_history,
-        name="subscription_history",
+   path(
+        "track/<int:track_id>/checkout/",
+        track_checkout,
+        name="track_checkout",
     ),
 
+    path(
+        "exam/<int:exam_id>/checkout/",
+        exam_checkout,
+        name="exam_checkout",
+    ),
     path(
         "track/<int:track_id>/checkout/",
         track_checkout,
@@ -277,15 +327,9 @@ urlpatterns = [
     ),
 
     path(
-        "subscribe/track/<int:track_id>/",
-        subscribe_track,
-        name="subscribe_track",
-    ),
-
-    path(
-        "subscribe/exam/<int:exam_id>/",
-        subscribe_exam,
-        name="subscribe_exam",
+        "exam/<int:exam_id>/checkout/",
+        exam_checkout,
+        name="exam_checkout",
     ),
 
 
@@ -552,11 +596,7 @@ urlpatterns = [
         name="ajax_categories_by_domain",
     ),
 
-    path(
-        "log-enrollment-lead/",
-        log_enrollment_lead,
-        name="log_enrollment_lead",
-    ),
+   
 
 
     # ========================================================
@@ -616,7 +656,6 @@ urlpatterns = [
         study_plan_detail,
         name="study_plan_detail",
     ),
-
 ]
 
 

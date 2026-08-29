@@ -1,230 +1,259 @@
-from django.utils import timezone
+# quiz/services/access.py
 
-from quiz.models import (
-    ExamSubscription,
-    ExamTrackSubscription,
-)
+from subscriptions.services import AccessService
+
+
+# ============================================================
+# GENERIC RESOURCE ACCESS
+# ============================================================
+
+def has_resource_access(
+    user,
+    resource_type,
+    resource,
+    organization=None,
+):
+    """
+    Central access check for Course / Track / Exam.
+
+    AccessService is the single source of truth.
+
+    Returns:
+        True  -> access allowed
+        False -> access denied
+    """
+
+    if not user or not user.is_authenticated:
+        return False
+
+    if not resource:
+        return False
+
+    # --------------------------------------------------------
+    # Current AccessService API
+    # --------------------------------------------------------
+    #
+    # AccessService.has_access() currently expects:
+    #
+    #     student
+    #     resource_type
+    #     resource
+    #
+    # It does not currently accept organization.
+    #
+    # Keep organization in this wrapper for backward
+    # compatibility with existing callers.
+    # --------------------------------------------------------
+
+    return AccessService.has_access(
+        student=user,
+        resource_type=resource_type,
+        resource=resource,
+    )
+
+
+# ============================================================
+# COURSE ACCESS
+# ============================================================
+
+def has_course_access(
+    user,
+    course,
+    organization=None,
+):
+    """
+    Check whether a user has access to a Course.
+    """
+
+    return has_resource_access(
+        user=user,
+        resource_type=AccessService.RESOURCE_COURSE,
+        resource=course,
+        organization=organization,
+    )
+
+
+# ============================================================
+# TRACK ACCESS
+# ============================================================
+
+def has_track_access(
+    user,
+    track,
+    organization=None,
+):
+    """
+    Check whether a user has access to an ExamTrack.
+    """
+
+    return has_resource_access(
+        user=user,
+        resource_type=AccessService.RESOURCE_TRACK,
+        resource=track,
+        organization=organization,
+    )
 
 
 # ============================================================
 # EXAM ACCESS
 # ============================================================
 
-def can_access_exam(user, exam):
+def has_exam_access(
+    user,
+    exam,
+    organization=None,
+):
+    """
+    Check whether a user has direct access to an Exam.
+
+    This checks the actual Exam ResourceAccess record.
+
+    Track-level inheritance is handled by can_access_exam().
+    """
+
+    return has_resource_access(
+        user=user,
+        resource_type=AccessService.RESOURCE_EXAM,
+        resource=exam,
+        organization=organization,
+    )
+
+
+# ============================================================
+# COURSE ACCESS — BACKWARD COMPATIBILITY
+# ============================================================
+
+def user_has_course_access(
+    user,
+    course,
+    organization=None,
+):
+    """
+    Backward-compatible wrapper.
+
+    Existing code can continue calling:
+
+        user_has_course_access(user, course)
+
+    while the actual access logic lives in
+    subscriptions.AccessService.
+    """
+
+    return has_course_access(
+        user=user,
+        course=course,
+        organization=organization,
+    )
+
+
+# ============================================================
+# TRACK ACCESS — BACKWARD COMPATIBILITY
+# ============================================================
+
+def has_active_track_subscription(
+    user,
+    track,
+    organization=None,
+):
+    """
+    Backward-compatible function.
+
+    New code should use has_track_access().
+    """
+
+    return has_track_access(
+        user=user,
+        track=track,
+        organization=organization,
+    )
+
+
+# ============================================================
+# EXAM ACCESS
+# ============================================================
+
+def can_access_exam(
+    user,
+    exam,
+    organization=None,
+):
     """
     Determine whether a user can access an exam.
 
+    Access rules:
+
+        1. User must be authenticated.
+        2. Exam must be published.
+        3. Free exams are accessible.
+        4. Direct Exam ResourceAccess grants access.
+        5. Track ResourceAccess grants access to exams
+           belonging to that track.
+        6. Otherwise access is denied.
+
     Returns:
+
         (True, None)
-            Access is allowed.
+
+    or:
 
         (False, reason)
-            Access is denied.
     """
 
-    now = timezone.now()
-
     # --------------------------------------------------------
-    # USER AUTHENTICATION
+    # Authentication
     # --------------------------------------------------------
 
     if not user or not user.is_authenticated:
         return False, "Login required"
 
     # --------------------------------------------------------
-    # EXAM PUBLISHED CHECK
+    # Published exam
     # --------------------------------------------------------
 
     if not exam.is_published:
         return False, "Exam is not published"
 
     # --------------------------------------------------------
-    # FREE EXAM
+    # Free exam
     # --------------------------------------------------------
 
     if exam.is_free:
         return True, None
 
     # --------------------------------------------------------
-    # TRACK-LEVEL SUBSCRIPTION
-    #
-    # A valid track subscription gives access to
-    # all exams under that track.
+    # DIRECT EXAM ACCESS
     # --------------------------------------------------------
 
-    if (
-        exam.track
-        and exam.track.subscription_scope
-        == exam.track.TRACK
+    if has_exam_access(
+        user=user,
+        exam=exam,
+        organization=organization,
     ):
-        track_subscription = (
-            ExamTrackSubscription.objects.filter(
-                user=user,
-                track=exam.track,
-                is_active=True,
-            )
-            .first()
-        )
-
-        if not track_subscription:
-            return (
-                False,
-                "Subscription required for this track",
-            )
-
-        # ----------------------------------------------------
-        # CHECK EXPIRATION
-        # ----------------------------------------------------
-
-        if (
-            track_subscription.expires_at
-            and track_subscription.expires_at <= now
-        ):
-            track_subscription.is_active = False
-
-            track_subscription.save(
-                update_fields=["is_active"]
-            )
-
-            return False, "Subscription expired"
-
         return True, None
 
     # --------------------------------------------------------
-    # EXAM-LEVEL SUBSCRIPTION
+    # TRACK-LEVEL ACCESS
+    # --------------------------------------------------------
     #
-    # Used when the exam itself requires a subscription.
+    # A user with valid Track ResourceAccess can access
+    # exams belonging to that track.
+    #
+    # This is intentionally checked here rather than inside
+    # AccessService.has_access(exam), because ResourceAccess
+    # represents access to a specific resource.
     # --------------------------------------------------------
 
-    exam_subscription = (
-        ExamSubscription.objects.filter(
+    if exam.track:
+
+        if has_track_access(
             user=user,
-            exam=exam,
-            is_active=True,
-        )
-        .first()
-    )
-
-    if not exam_subscription:
-        return (
-            False,
-            "Subscription required for this exam",
-        )
+            track=exam.track,
+            organization=organization,
+        ):
+            return True, None
 
     # --------------------------------------------------------
-    # CHECK EXPIRATION
+    # DENIED
     # --------------------------------------------------------
 
-    if (
-        exam_subscription.expires_at
-        and exam_subscription.expires_at <= now
-    ):
-        exam_subscription.is_active = False
-
-        exam_subscription.save(
-            update_fields=["is_active"]
-        )
-
-        return False, "Subscription expired"
-
-    return True, None
-
-
-# ============================================================
-# ACTIVE TRACK SUBSCRIPTION
-# ============================================================
-
-def has_active_track_subscription(user, track):
-    """
-    Return True when the user has a valid active
-    subscription for the specified ExamTrack.
-    """
-
-    if not user or not user.is_authenticated:
-        return False
-
-    if not track:
-        return False
-
-    now = timezone.now()
-
-    subscription = (
-        ExamTrackSubscription.objects.filter(
-            user=user,
-            track=track,
-            is_active=True,
-        )
-        .first()
-    )
-
-    if not subscription:
-        return False
-
-    # --------------------------------------------------------
-    # CHECK EXPIRATION
-    # --------------------------------------------------------
-
-    if (
-        subscription.expires_at
-        and subscription.expires_at <= now
-    ):
-        subscription.is_active = False
-
-        subscription.save(
-            update_fields=["is_active"]
-        )
-
-        return False
-
-    return True
-
-
-# ============================================================
-# COURSE / TRACK ACCESS
-# ============================================================
-
-def user_has_course_access(user, course):
-    """
-    Determine whether a user has access to a course/track.
-
-    Rules:
-
-    1. No active subscription plans
-       -> Course is free.
-
-    2. Active subscription plans exist
-       -> User must have an active ExamTrackSubscription.
-
-    `course` is expected to be the ExamTrack object because
-    ExamTrackSubscription.track points to ExamTrack.
-    """
-
-    if not user or not user.is_authenticated:
-        return False
-
-    if not course:
-        return False
-
-    # --------------------------------------------------------
-    # ACTIVE SUBSCRIPTION PLANS
-    # --------------------------------------------------------
-
-    plans = course.subscription_plans.filter(
-        is_active=True
-    )
-
-    # --------------------------------------------------------
-    # FREE COURSE / TRACK
-    # --------------------------------------------------------
-
-    if not plans.exists():
-        return True
-
-    # --------------------------------------------------------
-    # PAID COURSE / TRACK
-    # --------------------------------------------------------
-
-    return has_active_track_subscription(
-        user=user,
-        track=course,
-    )
+    return False, "Subscription required"

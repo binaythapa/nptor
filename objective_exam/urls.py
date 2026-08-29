@@ -17,6 +17,17 @@ def ads_txt(request):
 
 
 urlpatterns = [
+    path(
+            "payments/",
+            include("payments.urls"),
+        ),
+
+    path(
+            "subscriptions/",
+            include("subscriptions.urls"),
+        ),
+
+   
     path("ads.txt", ads_txt),
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health-check"),

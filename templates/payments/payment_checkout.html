@@ -1,0 +1,158 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <div class="columns is-centered">
+
+        <div class="column is-6">
+
+            <div class="box">
+
+                <h1 class="title is-4">
+                    💳 Checkout
+                </h1>
+
+                <hr>
+
+                <div class="mb-5">
+
+                    <p class="has-text-grey is-size-7">
+                        Order Number
+                    </p>
+
+                    <p class="has-text-weight-semibold">
+                        {{ order.order_number }}
+                    </p>
+
+                </div>
+
+
+                <div class="mb-5">
+
+                    <p class="has-text-grey is-size-7">
+                        Item
+                    </p>
+
+                    <p class="title is-5 mb-0">
+                        {{ resource }}
+                    </p>
+
+                </div>
+
+
+                <div class="mb-5">
+
+                    <p class="has-text-grey is-size-7">
+                        Payment Gateway
+                    </p>
+
+                    <span class="tag is-info is-light">
+                        {{ transaction.gateway|title }}
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="notification is-light is-primary">
+
+                    <div
+                        class="is-flex
+                               is-justify-content-space-between
+                               is-align-items-center">
+
+                        <span>
+                            Amount
+                        </span>
+
+                        <strong class="is-size-4">
+
+                            {{ order.currency }}
+                            {{ order.amount }}
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     DUMMY PAYMENT
+                ================================================== -->
+
+                {% if transaction.gateway == "dummy" %}
+
+                    <div class="notification is-warning is-light">
+
+                        <strong>
+                            Development Payment
+                        </strong>
+
+                        <br>
+
+                        You are using the Dummy payment gateway.
+                        No real money will be charged.
+
+                    </div>
+
+
+                    <form
+                        method="post"
+                        action="{% url 'payments:payment_verify' order.order_number %}">
+
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="gateway_payment_id"
+                            value="DUMMY-PAYMENT-{{ order.order_number }}"
+                        >
+
+
+                        <button
+                            type="submit"
+                            class="button is-primary is-fullwidth is-medium">
+
+                            💳 Simulate Successful Payment
+
+                        </button>
+
+                    </form>
+
+                {% else %}
+
+                    <div class="notification is-info is-light">
+
+                        Continue with
+                        {{ transaction.gateway|title }}
+                        to complete your payment.
+
+                    </div>
+
+                {% endif %}
+
+
+                <div class="has-text-centered mt-5">
+
+                    <a
+                        href="{% url 'quiz:exam_list' %}"
+                        class="has-text-grey">
+
+                        ← Back to Catalogue
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

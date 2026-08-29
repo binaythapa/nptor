@@ -1,19 +1,27 @@
 import logging
 
+from datetime import timedelta
+
 from django.shortcuts import (
     render,
     get_object_or_404,
     redirect,
 )
+
 from django.contrib.auth.decorators import login_required
+
 from django.views.decorators.http import require_POST
+
 from django.views.decorators.csrf import ensure_csrf_cookie
+
 from django.http import (
     JsonResponse,
     HttpResponse,
     HttpResponseForbidden,
 )
+
 from django.utils import timezone
+
 
 from courses.models import (
     Course,
@@ -21,12 +29,22 @@ from courses.models import (
     Lesson,
     LessonProgress,
     CourseEnrollment,
-    CourseSubscription,
     CourseCertificate,
 )
 
-from quiz.models import Exam
-from quiz.services.access import user_has_course_access
+
+from organizations.models import ResourceAccess
+
+
+from subscriptions.models import (
+    Subscription,
+    SubscriptionEntitlement,
+    SubscriptionPlan,
+)
+
+
+from subscriptions.services import AccessService
+
 
 from courses.services.progress import (
     get_course_progress,
@@ -35,19 +53,21 @@ from courses.services.progress import (
     get_resume_lesson,
 )
 
+
 from courses.services.certificates import (
     issue_certificate_if_eligible,
 )
+
 
 from courses.services.certificate_pdf import (
     generate_certificate_pdf,
 )
 
+
 from courses.utils import youtube_embed_url
 
 
 logger = logging.getLogger(__name__)
-
 
 # ============================================================
 # PUBLIC COURSE QUERYSET
@@ -996,6 +1016,9 @@ def track_video_progress(request):
 # ============================================================
 # ENROLL COURSE
 # ============================================================
+# ============================================================
+# ENROLL COURSE
+# ============================================================
 
 @login_required
 def enroll_course(
@@ -1003,8 +1026,13 @@ def enroll_course(
     course_id,
 ):
     """
-    Enroll a user in a publicly available course
-    after access has been granted.
+    Enroll a user in a publicly available course after
+    verifying actual ResourceAccess.
+
+    Enrollment and access are intentionally separate:
+
+        ResourceAccess = permission
+        CourseEnrollment = learning relationship
     """
 
     course = get_object_or_404(
@@ -1013,25 +1041,40 @@ def enroll_course(
     )
 
     # --------------------------------------------------------
-    # Check access
+    # CHECK RESOURCE ACCESS
     # --------------------------------------------------------
 
-    has_access = (
-        CourseSubscription.objects.filter(
-            user=request.user,
-            course=course,
-            is_active=True,
-        ).exists()
+    has_access = AccessService.has_access(
+        user=request.user,
+        resource_type=ResourceAccess.RESOURCE_COURSE,
+        resource=course,
     )
+
+    # --------------------------------------------------------
+    # FREE PUBLIC COURSE
+    # --------------------------------------------------------
 
     if not has_access:
 
-        return HttpResponseForbidden(
-            "You do not have access to this course."
+        has_active_plans = (
+            course.subscription_plans
+            .filter(is_active=True)
+            .exists()
         )
 
+        # A public course with no active plans is free.
+        if not has_active_plans:
+
+            has_access = True
+
+        else:
+
+            return HttpResponseForbidden(
+                "You do not have access to this course."
+            )
+
     # --------------------------------------------------------
-    # Enrollment
+    # ENROLLMENT
     # --------------------------------------------------------
 
     CourseEnrollment.objects.get_or_create(
@@ -1043,8 +1086,9 @@ def enroll_course(
         "courses:course_detail",
         slug=course.slug,
     )
-
-
+# ============================================================
+# SUBSCRIBE COURSE
+# ============================================================
 # ============================================================
 # SUBSCRIBE COURSE
 # ============================================================
@@ -1056,11 +1100,29 @@ def subscribe_course(
     course_id,
 ):
     """
-    Subscribe to a publicly available course.
+    Create a user subscription for a course.
 
-    Only approved + published + public courses
-    can be subscribed to.
+    New architecture:
+
+        SubscriptionPlan
+              ↓
+        Subscription
+              ↓
+        SubscriptionEntitlement
+              ↓
+        ResourceAccess
+
+    The course must be publicly available.
+
+    If multiple active plans exist for the course, the request
+    must provide:
+
+        plan_id=<id>
     """
+
+    # --------------------------------------------------------
+    # COURSE
+    # --------------------------------------------------------
 
     course = get_object_or_404(
         public_courses(),
@@ -1068,30 +1130,137 @@ def subscribe_course(
     )
 
     # --------------------------------------------------------
-    # Create or reactivate subscription
+    # AVAILABLE PLANS
     # --------------------------------------------------------
 
-    sub, created = (
-        CourseSubscription.objects.get_or_create(
-            user=request.user,
-            course=course,
-            defaults={
-                "is_active": True,
-                "source": "quiz",
-            },
-        )
+    plans = (
+        course.subscription_plans
+        .filter(is_active=True)
+        .order_by("price", "id")
     )
 
-    if not created and not sub.is_active:
+    # --------------------------------------------------------
+    # FREE COURSE
+    # --------------------------------------------------------
 
-        sub.is_active = True
+    if not plans.exists():
 
-        sub.save(
-            update_fields=[
-                "is_active"
-            ]
+        CourseEnrollment.objects.get_or_create(
+            user=request.user,
+            course=course,
         )
 
+        return redirect(
+            "courses:course_detail",
+            slug=course.slug,
+        )
+
+    # --------------------------------------------------------
+    # SELECT PLAN
+    # --------------------------------------------------------
+
+    plan_id = request.POST.get("plan_id")
+
+    if plan_id:
+
+        plan = get_object_or_404(
+            SubscriptionPlan,
+            id=plan_id,
+            is_active=True,
+        )
+
+        if not plans.filter(
+            id=plan.id
+        ).exists():
+
+            return HttpResponseForbidden(
+                "Selected subscription plan is not available "
+                "for this course."
+            )
+
+    else:
+
+        # If there is exactly one plan, use it.
+        if plans.count() == 1:
+
+            plan = plans.first()
+
+        else:
+
+            return HttpResponse(
+                "Please select a subscription plan.",
+                status=400,
+            )
+
+    # --------------------------------------------------------
+    # CALCULATE EXPIRATION
+    # --------------------------------------------------------
+
+    starts_at = timezone.now()
+
+    expires_at = None
+
+    if plan.duration_days is not None:
+
+        expires_at = (
+            starts_at
+            + timezone.timedelta(
+                days=plan.duration_days
+            )
+        )
+
+    # --------------------------------------------------------
+    # CREATE SUBSCRIPTION
+    # --------------------------------------------------------
+
+    subscription = Subscription.objects.create(
+        plan=plan,
+        user=request.user,
+        starts_at=starts_at,
+        expires_at=expires_at,
+        amount=plan.price,
+        currency=plan.currency,
+        payment_status=(
+            "not_required"
+            if plan.price == 0
+            else "pending"
+        ),
+        subscribed_by_admin=False,
+    )
+
+    # --------------------------------------------------------
+    # CREATE ENTITLEMENT
+    # --------------------------------------------------------
+
+    entitlement = SubscriptionEntitlement.objects.create(
+        subscription=subscription,
+        resource_type=(
+            SubscriptionEntitlement.RESOURCE_COURSE
+        ),
+        course=course,
+        is_active=True,
+    )
+
+    # --------------------------------------------------------
+    # GRANT ACTUAL USER ACCESS
+    # --------------------------------------------------------
+
+    AccessService.grant_from_entitlement(
+        user=request.user,
+        entitlement=entitlement,
+        source=ResourceAccess.SOURCE_INDIVIDUAL,
+    )
+
+    # --------------------------------------------------------
+    # ENROLL
+    # --------------------------------------------------------
+
+    CourseEnrollment.objects.get_or_create(
+        user=request.user,
+        course=course,
+    )
+
     return redirect(
-        "quiz:exam_list"
+        "courses:course_detail",
+        slug=course.slug,
     )

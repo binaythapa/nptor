@@ -76,6 +76,8 @@ INSTALLED_APPS = [
     "accounts",
     "pages",
     "organizations",
+    "subscriptions",
+    "payments",
 ]
 
 

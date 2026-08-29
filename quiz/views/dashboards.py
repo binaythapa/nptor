@@ -4,7 +4,6 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
-from courses.models import CourseSubscription
 from django.db.models import Count
 
 
@@ -40,7 +39,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
 # Project-specific imports
-from courses.models import Course, CourseSubscription, LessonProgress
+from courses.models import Course, LessonProgress
 
 
 from quiz.forms import *
@@ -48,13 +47,15 @@ from quiz.models import (
     Exam,
     ExamTrack,
     UserExam,
-    ExamSubscription,
-    ExamTrackSubscription,
     Coupon,
 )
 from quiz.services.access import can_access_exam
 from quiz.services.pricing import apply_coupon
-from quiz.services.subscription import has_valid_subscription
+from subscriptions.services import AccessService
+from subscriptions.models import (
+    Subscription,
+    SubscriptionEntitlement,
+)
 from quiz.utils import get_leaf_category_name
 
 User = get_user_model()
@@ -90,7 +91,6 @@ from quiz.models import (
     UserExam,
     Exam,
     ExamTrack,
-    ExamTrackSubscription,
 )
 from courses.models import Course, CourseEnrollment
 from organizations.models.organization import Organization
@@ -228,31 +228,51 @@ def admin_dashboard(request):
     # SUBSCRIPTION INTELLIGENCE
     # =====================================================
 
-    total_track_subs = ExamTrackSubscription.objects.count()
-
-    active_track_subs = ExamTrackSubscription.objects.filter(
-        is_active=True,
-        expires_at__gte=now
-    ).count()
-
-    expired_track_subs = ExamTrackSubscription.objects.filter(
-        is_active=True,
-        expires_at__lt=now
-    ).count()
-
-    trial_subs = ExamTrackSubscription.objects.filter(
-        is_trial=True
-    ).count()
-
-    paid_subs = ExamTrackSubscription.objects.filter(
-        payment_required=True
-    ).count()
-
-    conversion_rate = (
-        (paid_subs / trial_subs) * 100
-        if trial_subs
-        else 0
+    entitlement_qs = (
+        SubscriptionEntitlement.objects
+        .select_related(
+            "subscription",
+            "track",
+            "exam",
+            "course",
+        )
     )
+
+    total_track_subs = entitlement_qs.filter(
+        resource_type=SubscriptionEntitlement.RESOURCE_TRACK,
+    ).count()
+
+    active_track_subs = (
+        entitlement_qs
+        .filter(
+            resource_type=SubscriptionEntitlement.RESOURCE_TRACK,
+            is_active=True,
+            subscription__status=Subscription.STATUS_ACTIVE,
+            subscription__starts_at__lte=now,
+        )
+        .filter(
+            Q(subscription__expires_at__isnull=True)
+            | Q(subscription__expires_at__gte=now)
+        )
+        .count()
+    )
+
+    expired_track_subs = (
+        entitlement_qs
+        .filter(
+            resource_type=SubscriptionEntitlement.RESOURCE_TRACK,
+            is_active=True,
+            subscription__expires_at__lt=now,
+        )
+        .count()
+    )
+
+    # Trial/payment_required/is_trial belonged to the legacy
+    # ExamTrackSubscription model and are no longer used here.
+    trial_subs = 0
+    paid_subs = Subscription.objects.filter(amount__gt=0).count()
+
+    conversion_rate = 0
 
 
     # =====================================================
@@ -260,24 +280,18 @@ def admin_dashboard(request):
     # =====================================================
 
     total_revenue = (
-        ExamTrackSubscription.objects
-        .filter(
-            payment_required=True
-        )
-        .aggregate(
-            total=Sum("amount")
-        )["total"]
+        Subscription.objects
+        .filter(amount__gt=0)
+        .aggregate(total=Sum("amount"))["total"]
     ) or 0
 
     revenue_30d = (
-        ExamTrackSubscription.objects
+        Subscription.objects
         .filter(
-            payment_required=True,
-            subscribed_at__gte=thirty_days_ago
+            amount__gt=0,
+            subscribed_at__gte=thirty_days_ago,
         )
-        .aggregate(
-            total=Sum("amount")
-        )["total"]
+        .aggregate(total=Sum("amount"))["total"]
     ) or 0
 
     arpu = (
@@ -291,43 +305,58 @@ def admin_dashboard(request):
     # BUSINESS HEALTH
     # =====================================================
 
-    churn_risk_users = User.objects.filter(
-        track_subscriptions__is_active=True,
-        last_login__lt=thirty_days_ago
-    ).distinct().count()
+    churn_risk_users = (
+        Subscription.objects
+        .filter(
+            user__isnull=False,
+            status=Subscription.STATUS_ACTIVE,
+            expires_at__isnull=False,
+            expires_at__lte=now,
+            expires_at__gte=thirty_days_ago,
+            user__last_login__lt=thirty_days_ago,
+        )
+        .values("user_id")
+        .distinct()
+        .count()
+    )
 
 
     # =====================================================
     # TRACK ANALYTICS
     # =====================================================
 
-    tracks = (
-        ExamTrack.objects
-        .annotate(
-            enrolled=Count(
-                "subscriptions__user",
-                filter=Q(
-                    subscriptions__is_active=True
-                ),
-                distinct=True
-            ),
-            revenue=Sum(
-                "subscriptions__amount",
-                filter=Q(
-                    subscriptions__payment_required=True
-                )
-            )
-        )
+    tracks = ExamTrack.objects.all()
+
+    track_entitlements = entitlement_qs.filter(
+        resource_type=SubscriptionEntitlement.RESOURCE_TRACK,
+        track__isnull=False,
     )
 
     track_rows = []
 
     for track in tracks:
+        subscription_ids = track_entitlements.filter(
+            track=track
+        ).values("subscription_id")
 
         track_rows.append({
             "track": track,
-            "enrolled": track.enrolled,
-            "revenue": track.revenue or 0,
+            "enrolled": (
+                track_entitlements
+                .filter(track=track)
+                .values("subscription__user_id")
+                .distinct()
+                .count()
+            ),
+            "revenue": (
+                Subscription.objects
+                .filter(
+                    id__in=subscription_ids,
+                    amount__gt=0,
+                )
+                .aggregate(total=Sum("amount"))["total"]
+                or 0
+            ),
         })
 
 
@@ -606,7 +635,6 @@ from django.conf import settings
 from django.utils import timezone
 
 from quiz.models import Exam, UserExam
-#from quiz.models.subscription import ExamSubscription, ExamTrackSubscription
 
 from organizations.models.assignment import ResourceAssignment
 from organizations.models.access import ResourceAccess
@@ -662,14 +690,38 @@ def student_dashboard(request):
     # SUBSCRIPTIONS
     # --------------------------------------------------
 
+    user_entitlements = (
+        SubscriptionEntitlement.objects
+        .filter(
+            subscription__user=user,
+            is_active=True,
+        )
+        .select_related(
+            "subscription",
+            "track",
+            "exam",
+            "course",
+        )
+    )
+
     track_subs = {
-        s.track_id: s
-        for s in ExamTrackSubscription.objects.filter(user=user)
+        entitlement.track_id: entitlement
+        for entitlement in user_entitlements
+        if (
+            entitlement.resource_type
+            == SubscriptionEntitlement.RESOURCE_TRACK
+            and entitlement.track_id
+        )
     }
 
     exam_subs = {
-        s.exam_id: s
-        for s in ExamSubscription.objects.filter(user=user)
+        entitlement.exam_id: entitlement
+        for entitlement in user_entitlements
+        if (
+            entitlement.resource_type
+            == SubscriptionEntitlement.RESOURCE_EXAM
+            and entitlement.exam_id
+        )
     }
 
     # --------------------------------------------------
@@ -757,24 +809,45 @@ def student_dashboard(request):
         track_sub = track_subs.get(track.id)
         exam_sub = exam_subs.get(exam.id)
 
+
+
+
+
         # ---------------- ACCESS LOGIC ----------------
 
-        has_valid_subscription = (
-            (track_sub and track_sub.is_valid()) or
-            (exam_sub and exam_sub.is_valid())
+          # ---------------- ACCESS LOGIC ----------------
+
+        # Centralized subscription/access check.
+        # Subscription ownership and access rules are handled
+        # by the subscriptions app.
+        has_valid_subscription = AccessService.has_access(
+            student=user,
+            resource_type=AccessService.RESOURCE_EXAM,
+            resource=exam,
         )
 
-        has_expired_subscription = (
-            (track_sub and not track_sub.is_valid()) or
-            (exam_sub and not exam_sub.is_valid())
+        # Dashboard-specific UX: show "renew" when an existing
+        # entitlement exists but its parent subscription has expired.
+        has_expired_subscription = any(
+            entitlement
+            and entitlement.subscription
+            and entitlement.subscription.expires_at
+            and entitlement.subscription.expires_at <= timezone.now()
+            for entitlement in (track_sub, exam_sub)
         )
 
+        # Organization-assigned access.
         has_org_access = (
             exam.id in org_exam_ids or
             track.id in org_track_ids
         )
 
-        if not has_valid_subscription and not has_org_access and not has_expired_subscription:
+        # Do not display exams for which the user has no access.
+        if (
+            not has_valid_subscription
+            and not has_org_access
+            and not has_expired_subscription
+        ):
             continue
 
         # ---------------- LEVEL LOCK ----------------

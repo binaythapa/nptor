@@ -1,27 +1,42 @@
 import math
 import random
 import logging
+
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
 
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
-from datetime import timedelta
-from django.utils import timezone
+from quiz.services.exam_question_allocator import (
+    allocate_questions_for_exam,
+)
 
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from datetime import timedelta
+from subscriptions.models import (
+    SubscriptionPlan,
+    SubscriptionEntitlement,
+)
+
+from subscriptions.services import (
+    SubscriptionService,
+    AccessService,
+)
+
+from organizations.models.access import ResourceAccess
+
+
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import login, authenticate, get_user_model
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import (
+    login,
+    authenticate,
+    get_user_model,
+)
+from django.contrib.auth.decorators import (
+    login_required,
+    user_passes_test,
+)
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
 from django.contrib.auth.views import (
     LoginView,
     LogoutView,
@@ -35,149 +50,375 @@ from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q, Sum
-from django.http import HttpResponseBadRequest, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.http import (
+    HttpResponseBadRequest,
+    JsonResponse,
+)
+from django.shortcuts import (
+    get_object_or_404,
+    render,
+    redirect,
+)
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.dateformat import DateFormat
 from django.utils.formats import get_format
-from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
+from django.views.decorators.http import (
+    require_GET,
+    require_POST,
+)
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    TemplateView,
+    UpdateView,
+)
 
-# Project-specific imports
-from courses.models import Course, Lesson
-from courses.services.progress import get_next_lesson
+# ============================================================
+# PROJECT IMPORTS
+# ============================================================
+
+from courses.models import (
+    Course,
+    Lesson,
+)
+
+from courses.services.progress import (
+    get_next_lesson,
+)
+
 from courses.services.quiz_completion import *
+
 from quiz.forms import *
+
 from quiz.models import (
     Exam,
     ExamTrack,
     UserExam,
-    ExamSubscription,
-    ExamTrackSubscription,
+    UserAnswer,
+    Question,
+    QuestionFeedback,
     Coupon,
 )
-from quiz.services.access import can_access_exam
-from quiz.services.pricing import apply_coupon
-from quiz.services.subscription import has_valid_subscription
-from quiz.utils import get_leaf_category_name
-from quiz.services.grading import grade_exam
-from quiz.services.answer_persistence import autosave_answers
 
+from quiz.services.access import (
+    can_access_exam,
+)
 
+from quiz.services.pricing import (
+    apply_coupon,
+)
 
+from quiz.services.grading import (
+    grade_exam,
+)
 
-# Re-assign User in case a custom user model is used (overrides the imported User if needed)
+from quiz.services.answer_persistence import (
+    autosave_answers,
+)
+
+from quiz.utils import (
+    get_leaf_category_name,
+)
+
+# ============================================================
+# USER MODEL
+# ============================================================
+
 User = get_user_model()
 
-import logging
-from core.utils.memory import get_memory_usage_mb
+# ============================================================
+# UTILITIES
+# ============================================================
+
+from core.utils.memory import (
+    get_memory_usage_mb,
+)
 
 logger = logging.getLogger("django")
-
-
 
 @login_required
 def exam_start(request, exam_id):
     mem = get_memory_usage_mb()
-    if mem is not None:
-        logger.info(f"Exam Start page memory usage: {mem} MB")
-    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
 
-    # --------------------------------------------------
-    # COURSE CONTEXT (optional)
-    # --------------------------------------------------
+    if mem is not None:
+        logger.info(
+            f"Exam Start page memory usage: {mem} MB"
+        )
+
+    # =========================================================
+    # LOAD EXAM
+    # =========================================================
+
+    exam = get_object_or_404(
+        Exam,
+        pk=exam_id,
+        is_published=True,
+    )
+
+    # =========================================================
+    # COURSE CONTEXT
+    # =========================================================
+
     course_slug = request.GET.get("course")
     lesson_id = request.GET.get("lesson")
 
     if course_slug and lesson_id:
+
         from courses.models import Lesson
 
-        lesson = Lesson.objects.filter(
-            id=lesson_id,
-            lesson_type=Lesson.TYPE_QUIZ,
-            exam=exam
-        ).first()
+        lesson = (
+            Lesson.objects
+            .filter(
+                id=lesson_id,
+                lesson_type=Lesson.TYPE_QUIZ,
+                exam=exam,
+            )
+            .first()
+        )
 
         if lesson:
-            # ✅ Enforce max attempts ONLY for course quiz
-            attempts = UserExam.objects.filter(
-                user=request.user,
-                exam=exam,
-                submitted_at__isnull=False
-            ).count()
 
-            if lesson.quiz_max_attempts and attempts >= lesson.quiz_max_attempts:
+            # -------------------------------------------------
+            # COURSE QUIZ MAX ATTEMPTS
+            # -------------------------------------------------
+
+            attempts = (
+                UserExam.objects
+                .filter(
+                    user=request.user,
+                    exam=exam,
+                    submitted_at__isnull=False,
+                )
+                .count()
+            )
+
+            if (
+                lesson.quiz_max_attempts
+                and attempts >= lesson.quiz_max_attempts
+            ):
+
                 messages.error(
                     request,
-                    f"You have reached the maximum attempts "
-                    f"({lesson.quiz_max_attempts}) for this lesson."
+                    (
+                        "You have reached the maximum "
+                        f"attempts ({lesson.quiz_max_attempts}) "
+                        "for this lesson."
+                    ),
                 )
+
                 return redirect(
                     "courses:course_learn_lesson",
                     slug=course_slug,
-                    lesson_id=lesson.id
+                    lesson_id=lesson.id,
                 )
 
-            # Store context for result → lesson completion
-            request.session["course_exam_context"] = {
+            # -------------------------------------------------
+            # STORE COURSE CONTEXT
+            # -------------------------------------------------
+
+            request.session[
+                "course_exam_context"
+            ] = {
                 "course_slug": course_slug,
                 "lesson_id": lesson.id,
             }
 
-    # --------------------------------------------------
-    # EXISTING ACCESS CHECK (unchanged)
-    # --------------------------------------------------
-    allowed, reason = can_access_exam(request.user, exam)
+    # =========================================================
+    # ACCESS CHECK
+    # =========================================================
+
+    allowed, reason = can_access_exam(
+        request.user,
+        exam,
+    )
+
     if not allowed:
+
+        logger.info(
+            "Exam access denied | "
+            "user=%s | exam=%s | reason=%s",
+            request.user.id,
+            exam.id,
+            reason,
+        )
+
         messages.info(
             request,
-            "This exam is premium. Please subscribe to unlock access."
+            (
+                "This exam is premium. "
+                "Please subscribe to unlock access."
+            ),
         )
-        return redirect("quiz:exam_locked", exam_id=exam.id)
+
+        return redirect(
+            "quiz:exam_locked",
+            exam_id=exam.id,
+        )
+
+    # =========================================================
+    # CREATE / RESUME EXAM ATTEMPT
+    # =========================================================
 
     try:
+
         with transaction.atomic():
 
-            # 🔒 Prevent race condition (double attempts)
+            # -------------------------------------------------
+            # LOCK EXISTING ACTIVE ATTEMPT
+            # -------------------------------------------------
+
             existing = (
                 UserExam.objects
                 .select_for_update()
-                .filter(user=request.user, exam=exam, submitted_at__isnull=True)
+                .filter(
+                    user=request.user,
+                    exam=exam,
+                    submitted_at__isnull=True,
+                )
                 .first()
             )
-            if existing:
-                return redirect('quiz:exam_take', user_exam_id=existing.id)
 
-            # ==================================================
-            # Create attempt FIRST (deterministic seed)
-            # ==================================================
+            if existing:
+
+                logger.info(
+                    "Resuming existing exam attempt | "
+                    "user=%s | exam=%s | user_exam=%s",
+                    request.user.id,
+                    exam.id,
+                    existing.id,
+                )
+
+                return redirect(
+                    "quiz:exam_take",
+                    user_exam_id=existing.id,
+                )
+
+            # -------------------------------------------------
+            # CREATE USER EXAM FIRST
+            # -------------------------------------------------
+
             ue = UserExam.objects.create(
                 user=request.user,
-                exam=exam
+                exam=exam,
             )
 
-            questions = allocate_questions_for_exam(exam, seed=ue.id)
+            logger.info(
+                "Created UserExam | "
+                "user=%s | exam=%s | user_exam=%s",
+                request.user.id,
+                exam.id,
+                ue.id,
+            )
+
+            # -------------------------------------------------
+            # ALLOCATE QUESTIONS
+            # -------------------------------------------------
+
+            questions = allocate_questions_for_exam(
+                exam,
+                seed=ue.id,
+            )
+
             if not questions:
-                raise ValueError("No questions allocated")
 
-            ue.question_order = [q.id for q in questions]
+                logger.error(
+                    "No questions allocated | "
+                    "user=%s | exam=%s | user_exam=%s",
+                    request.user.id,
+                    exam.id,
+                    ue.id,
+                )
+
+                raise ValueError(
+                    "No questions were allocated for this exam."
+                )
+
+            logger.info(
+                "Questions allocated | "
+                "exam=%s | user_exam=%s | count=%s",
+                exam.id,
+                ue.id,
+                len(questions),
+            )
+
+            # -------------------------------------------------
+            # STORE QUESTION ORDER
+            # -------------------------------------------------
+
+            ue.question_order = [
+                question.id
+                for question in questions
+            ]
+
             ue.current_index = 0
-            ue.save()
 
-            UserAnswer.objects.bulk_create([
-                UserAnswer(user_exam=ue, question=q)
-                for q in questions
-            ])
+            ue.save(
+                update_fields=[
+                    "question_order",
+                    "current_index",
+                ]
+            )
+
+            # -------------------------------------------------
+            # CREATE USER ANSWERS
+            # -------------------------------------------------
+
+            UserAnswer.objects.bulk_create(
+                [
+                    UserAnswer(
+                        user_exam=ue,
+                        question=question,
+                    )
+                    for question in questions
+                ]
+            )
+
+            logger.info(
+                "UserAnswer records created | "
+                "user_exam=%s | count=%s",
+                ue.id,
+                len(questions),
+            )
 
     except Exception:
+
+        # Keep technical details in the server log only.
+        # Never expose the exception to the student.
+
+        logger.exception(
+            "EXAM START FAILED | user=%s | exam=%s",
+            request.user.id,
+            exam.id,
+        )
+
         messages.error(
             request,
-            "This exam is not properly configured. Please contact support."
+            "This exam is not properly configured. Please contact support.",
         )
-        return redirect('quiz:student_dashboard')
 
-    return redirect('quiz:exam_question', user_exam_id=ue.id, index=0)
+        return redirect(
+            "quiz:student_dashboard"
+        )
+
+    # =========================================================
+    # GO TO FIRST QUESTION
+    # =========================================================
+
+    logger.info(
+        "Starting exam questions | "
+        "user=%s | exam=%s | user_exam=%s",
+        request.user.id,
+        exam.id,
+        ue.id,
+    )
+
+    return redirect(
+        "quiz:exam_question",
+        user_exam_id=ue.id,
+        index=0,
+    )
+
 
 
 @login_required
@@ -644,198 +885,527 @@ def exam_resume(request, exam_id):
 
 
 
+
+
+
+
+
+
 @login_required
 @require_POST
 def start_trial(request, track_id):
-    track = get_object_or_404(ExamTrack, id=track_id)
+    """
+    Activate the 7-day free trial for an exam track.
 
-    existing = ExamTrackSubscription.objects.filter(
-        user=request.user,
-        track=track
-    ).exists()
+    New subscription architecture:
 
-    if existing:
-        messages.error(request, "Trial already used.")
+        User
+          ↓
+        Subscription
+          ↓
+        SubscriptionEntitlement
+          ↓
+        ResourceAccess
+
+    No legacy ExamTrackSubscription is used.
+    """
+
+    track = get_object_or_404(
+        ExamTrack,
+        id=track_id,
+    )
+
+    # =========================================================
+    # TRIAL PLAN
+    # =========================================================
+
+    plan = get_object_or_404(
+        SubscriptionPlan,
+        code="free-trial-7-day",
+        is_active=True,
+    )
+
+    # =========================================================
+    # PREVENT DUPLICATE TRIAL
+    # =========================================================
+    #
+    # Check whether this user already has an entitlement
+    # for this track under the trial plan.
+    #
+    # We intentionally check historical subscriptions as well,
+    # because the trial should only be usable once.
+    # =========================================================
+
+    trial_used = (
+        SubscriptionEntitlement.objects
+        .filter(
+            subscription__user=request.user,
+            subscription__plan=plan,
+            resource_type=SubscriptionEntitlement.RESOURCE_TRACK,
+            track=track,
+        )
+        .exists()
+    )
+
+    if trial_used:
+        messages.error(
+            request,
+            "Trial already used.",
+        )
         return redirect("quiz:exam_list")
 
-    ExamTrackSubscription.objects.create(
-        user=request.user,
-        track=track,
-        is_active=True,
-        is_trial=True,
-        expires_at=timezone.now() + timedelta(days=7),
-        payment_required=False,
-        amount=0
+    # =========================================================
+    # CREATE SUBSCRIPTION + ENTITLEMENT
+    # =========================================================
+
+    try:
+        with transaction.atomic():
+
+            subscription, entitlement = (
+                SubscriptionService
+                .create_or_reactivate_subscription(
+                    user=request.user,
+                    resource_type=(
+                        SubscriptionEntitlement.RESOURCE_TRACK
+                    ),
+                    resource=track,
+                    plan=plan,
+                    granted_by=None,
+                    notes="7-day free trial",
+                )
+            )
+
+            # =================================================
+            # RESOURCE ACCESS
+            # =================================================
+            #
+            # SubscriptionEntitlement is the entitlement
+            # definition. ResourceAccess is the actual access.
+            # =================================================
+
+            AccessService.grant_access(
+                user=request.user,
+                resource_type=(
+                    SubscriptionEntitlement.RESOURCE_TRACK
+                ),
+                resource=track,
+                source=ResourceAccess.SOURCE_ADMIN,
+                subscription=subscription,
+                expires_at=subscription.expires_at,
+            )
+
+    except Exception:
+        logger.exception(
+            "Failed to activate 7-day trial for user=%s track=%s",
+            request.user.id,
+            track.id,
+        )
+
+        messages.error(
+            request,
+            "Unable to activate the trial. Please try again.",
+        )
+
+        return redirect("quiz:exam_list")
+
+    messages.success(
+        request,
+        "7-day free trial activated!",
     )
 
-    messages.success(request, "7-day free trial activated!")
-    return redirect("quiz:student_dashboard")
-
-def allocate_questions_for_exam(exam, seed=None):
-    mem = get_memory_usage_mb()
-    if mem is not None:
-        logger.info(f"Allocate Question for Exam page memory usage: {mem} MB")
-
-    """
-    Enterprise-grade allocation engine.
-    - Supports fixed + percentage allocation
-    - Deterministic if seed is provided (recommended: user_exam.id)
-    - Prevents over-allocation
-    - Uses active questions only
-    - 🔐 Multi-tenant safe
-    """
-
-    total_needed = int(exam.question_count)
-    if total_needed <= 0:
-        return []
-
-    rng = random.Random(seed) if seed is not None else random
-    allocations = list(exam.allocations.select_related("category").all())
-
-    # =====================================================
-    # 🔐 MULTI-TENANT QUESTION ISOLATION (CRITICAL FIX)
-    # =====================================================
-    base_qs = Question.objects.filter(
-        is_active=True,
-        is_deleted=False,
+    return redirect(
+        "quiz:student_dashboard"
     )
 
-    if exam.organization:
-        # Organization exam → ONLY that org's questions
-        base_qs = base_qs.filter(
-            organization=exam.organization
-        )
-    else:
-        # Public exam → ONLY global questions
-        base_qs = base_qs.filter(
-            organization__isnull=True
-        )
+
+
+
+
+
+
+
+
+
+
+
+    # =========================================================
+    # SELECTION STATE
+    # =========================================================
 
     selected_qs = []
-    selected_ids = set()
 
-    # -------------------------------------------------
-    # 0️⃣ Guard: fixed_count overflow
-    # -------------------------------------------------
-    fixed_total = sum(a.fixed_count or 0 for a in allocations)
-    if fixed_total > total_needed:
-        raise ValueError(
-            f"Fixed allocation ({fixed_total}) exceeds exam.question_count ({total_needed})"
-        )
+    selected_ids = set()
 
     remaining_needed = total_needed
 
-    # -------------------------------------------------
-    # 1️⃣ FIXED COUNT ALLOCATION
-    # -------------------------------------------------
-    percent_allocs = []
-    percent_sum = 0
+    # =========================================================
+    # HELPER: CATEGORY QUESTION POOL
+    # =========================================================
 
-    for a in allocations:
-        if a.fixed_count:
-            try:
-                cat_ids = a.category.get_descendants_include_self()
-            except Exception:
-                cat_ids = [a.category.id]
+    def get_category_pool(category):
 
-            pool = list(
-                base_qs.filter(category_id__in=cat_ids)
-                .exclude(id__in=selected_ids)
-            )
-
-            rng.shuffle(pool)
-
-            take = min(len(pool), a.fixed_count)
-            chosen = pool[:take]
-
-            selected_qs.extend(chosen)
-            selected_ids.update(q.id for q in chosen)
-            remaining_needed -= take
-        else:
-            percent_allocs.append(a)
-            percent_sum += a.percentage
-
-    # -------------------------------------------------
-    # 2️⃣ PERCENTAGE ALLOCATION
-    # -------------------------------------------------
-    if percent_allocs and remaining_needed > 0 and percent_sum > 0:
-        raw = []
-
-        for a in percent_allocs:
-            scaled = (a.percentage / percent_sum) * remaining_needed
-            raw.append((a, math.floor(scaled), scaled % 1))
-
-        percent_counts = {a.id: cnt for a, cnt, _ in raw}
-        allocated = sum(percent_counts.values())
-        left = remaining_needed - allocated
-
-        # Distribute remainder fairly
-        for a, _, remainder in sorted(raw, key=lambda x: x[2], reverse=True):
-            if left <= 0:
-                break
-            percent_counts[a.id] += 1
-            left -= 1
-
-        for a in percent_allocs:
-            cnt = percent_counts.get(a.id, 0)
-            if cnt <= 0:
-                continue
-
-            try:
-                cat_ids = a.category.get_descendants_include_self()
-            except Exception:
-                cat_ids = [a.category.id]
-
-            pool = list(
-                base_qs.filter(category_id__in=cat_ids)
-                .exclude(id__in=selected_ids)
-            )
-
-            rng.shuffle(pool)
-
-            chosen = pool[:cnt]
-            selected_qs.extend(chosen)
-            selected_ids.update(q.id for q in chosen)
-
-    # -------------------------------------------------
-    # 3️⃣ FALLBACK: legacy category
-    # -------------------------------------------------
-    if len(selected_qs) < total_needed and exam.category:
-        needed = total_needed - len(selected_qs)
+        if not category:
+            return []
 
         try:
-            cat_ids = exam.category.get_descendants_include_self()
+
+            category_ids = (
+                category
+                .get_descendants_include_self()
+            )
+
         except Exception:
-            cat_ids = [exam.category.id]
 
-        pool = list(
-            base_qs.filter(category_id__in=cat_ids)
-            .exclude(id__in=selected_ids)
+            category_ids = [category.id]
+
+        return list(
+            base_qs.filter(
+                models.Q(
+                    primary_category_id__in=category_ids
+                )
+                |
+                models.Q(
+                    categories__id__in=category_ids
+                )
+            )
+            .exclude(
+                id__in=selected_ids
+            )
+            .distinct()
+            .order_by()
+        )
+
+    # =========================================================
+    # 1. FIXED ALLOCATIONS
+    # =========================================================
+
+    percentage_allocations = []
+
+    percentage_sum = 0
+
+    fixed_total = sum(
+        allocation.fixed_count or 0
+        for allocation in allocations
+    )
+
+    if fixed_total > total_needed:
+
+        raise ValueError(
+            (
+                f"Fixed allocation ({fixed_total}) "
+                f"exceeds exam.question_count "
+                f"({total_needed})."
+            )
+        )
+
+    for allocation in allocations:
+
+        if allocation.fixed_count is not None:
+
+            if remaining_needed <= 0:
+                break
+
+            pool = get_category_pool(
+                allocation.category
+            )
+
+            rng.shuffle(pool)
+
+            take = min(
+                len(pool),
+                allocation.fixed_count,
+                remaining_needed,
+            )
+
+            chosen = pool[:take]
+
+            selected_qs.extend(
+                chosen
+            )
+
+            selected_ids.update(
+                q.id
+                for q in chosen
+            )
+
+            remaining_needed -= take
+
+        elif allocation.percentage is not None:
+
+            percentage_allocations.append(
+                allocation
+            )
+
+            percentage_sum += (
+                allocation.percentage
+            )
+
+    # =========================================================
+    # 2. PERCENTAGE ALLOCATIONS
+    # =========================================================
+
+    if (
+        percentage_allocations
+        and remaining_needed > 0
+        and percentage_sum > 0
+    ):
+
+        raw_allocations = []
+
+        for allocation in percentage_allocations:
+
+            scaled = (
+                allocation.percentage
+                / percentage_sum
+            ) * remaining_needed
+
+            floor_count = math.floor(
+                scaled
+            )
+
+            remainder = (
+                scaled - floor_count
+            )
+
+            raw_allocations.append(
+                (
+                    allocation,
+                    floor_count,
+                    remainder,
+                )
+            )
+
+        percentage_counts = {
+            allocation.id: count
+            for allocation, count, _ in raw_allocations
+        }
+
+        allocated = sum(
+            percentage_counts.values()
+        )
+
+        leftover = (
+            remaining_needed
+            - allocated
+        )
+
+        # -----------------------------------------------------
+        # Largest remainder method
+        # -----------------------------------------------------
+
+        for (
+            allocation,
+            _,
+            remainder,
+        ) in sorted(
+            raw_allocations,
+            key=lambda item: item[2],
+            reverse=True,
+        ):
+
+            if leftover <= 0:
+                break
+
+            percentage_counts[
+                allocation.id
+            ] += 1
+
+            leftover -= 1
+
+        # -----------------------------------------------------
+        # Select questions
+        # -----------------------------------------------------
+
+        for allocation in percentage_allocations:
+
+            count = percentage_counts.get(
+                allocation.id,
+                0,
+            )
+
+            if count <= 0:
+                continue
+
+            if remaining_needed <= 0:
+                break
+
+            pool = get_category_pool(
+                allocation.category
+            )
+
+            rng.shuffle(pool)
+
+            take = min(
+                len(pool),
+                count,
+                remaining_needed,
+            )
+
+            chosen = pool[:take]
+
+            selected_qs.extend(
+                chosen
+            )
+
+            selected_ids.update(
+                q.id
+                for q in chosen
+            )
+
+            remaining_needed -= take
+
+    # =========================================================
+    # 3. PRIMARY CATEGORY FALLBACK
+    # =========================================================
+
+    if (
+        remaining_needed > 0
+        and exam.primary_category_id
+    ):
+
+        pool = get_category_pool(
+            exam.primary_category
         )
 
         rng.shuffle(pool)
-        selected_qs.extend(pool[:needed])
-        selected_ids.update(q.id for q in pool[:needed])
 
-    # -------------------------------------------------
-    # 4️⃣ FINAL FALLBACK (within allowed tenant scope only)
-    # -------------------------------------------------
-    if len(selected_qs) < total_needed:
-        needed = total_needed - len(selected_qs)
+        chosen = pool[
+            :remaining_needed
+        ]
+
+        selected_qs.extend(
+            chosen
+        )
+
+        selected_ids.update(
+            q.id
+            for q in chosen
+        )
+
+        remaining_needed -= len(
+            chosen
+        )
+
+    # =========================================================
+    # 4. EXAM MULTI-CATEGORY FALLBACK
+    # =========================================================
+
+    if remaining_needed > 0:
+
+        category_ids = set()
+
+        for category in exam.categories.all():
+
+            try:
+
+                category_ids.update(
+                    category
+                    .get_descendants_include_self()
+                )
+
+            except Exception:
+
+                category_ids.add(
+                    category.id
+                )
+
+        if category_ids:
+
+            pool = list(
+                base_qs.filter(
+                    models.Q(
+                        primary_category_id__in=category_ids
+                    )
+                    |
+                    models.Q(
+                        categories__id__in=category_ids
+                    )
+                )
+                .exclude(
+                    id__in=selected_ids
+                )
+                .distinct()
+                .order_by()
+            )
+
+            rng.shuffle(pool)
+
+            chosen = pool[
+                :remaining_needed
+            ]
+
+            selected_qs.extend(
+                chosen
+            )
+
+            selected_ids.update(
+                q.id
+                for q in chosen
+            )
+
+            remaining_needed -= len(
+                chosen
+            )
+
+    # =========================================================
+    # 5. FINAL TENANT-SAFE FALLBACK
+    # =========================================================
+
+    if remaining_needed > 0:
 
         pool = list(
-            base_qs.exclude(id__in=selected_ids)
+            base_qs
+            .exclude(
+                id__in=selected_ids
+            )
+            .order_by()
         )
 
         rng.shuffle(pool)
-        selected_qs.extend(pool[:needed])
 
-    # -------------------------------------------------
+        chosen = pool[
+            :remaining_needed
+        ]
+
+        selected_qs.extend(
+            chosen
+        )
+
+        selected_ids.update(
+            q.id
+            for q in chosen
+        )
+
+    # =========================================================
     # FINAL SHUFFLE
-    # -------------------------------------------------
-    rng.shuffle(selected_qs)
+    # =========================================================
 
-    return selected_qs[:total_needed]
+    rng.shuffle(
+        selected_qs
+    )
+
+    return selected_qs[
+        :total_needed
+    ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

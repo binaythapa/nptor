@@ -1,36 +1,107 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from quiz.services.subscription_service import SubscriptionService
-from quiz.services.notification_service import NotificationService
+from accounts.models import Notification
+
+from subscriptions.services.subscription_service import (
+    SubscriptionService,
+)
 
 
 class Command(BaseCommand):
     help = "Send subscription expiry reminders"
 
     def handle(self, *args, **options):
+
+        sent_count = 0
+
         for days in (7, 3, 1):
 
-            track_subs, exam_subs = SubscriptionService.get_expiring_subscriptions(days)
+            subscriptions = (
+                SubscriptionService
+                .get_expiring_subscriptions(days)
+            )
 
-            for sub in track_subs:
-                NotificationService.notify_expiry(
-                    user=sub.user,
-                    title="Subscription expiring soon",
-                    message=(
-                        f"Your subscription for '{sub.track.title}' "
-                        f"expires on {sub.expires_at.date()}."
+            for subscription in subscriptions:
+
+                user = subscription.user
+
+                if not user:
+                    continue
+
+                # -------------------------------------------------
+                # Determine resources covered by subscription
+                # -------------------------------------------------
+
+                resource_names = []
+
+                entitlements = (
+                    subscription.entitlements
+                    .select_related(
+                        "track",
+                        "exam",
+                        "course",
+                    )
+                    .filter(
+                        is_active=True,
                     )
                 )
 
-            for sub in exam_subs:
-                NotificationService.notify_expiry(
-                    user=sub.user,
-                    title="Exam access expiring soon",
-                    message=(
-                        f"Your access to exam '{sub.exam.title}' "
-                        f"expires on {sub.expires_at.date()}."
+                for entitlement in entitlements:
+
+                    resource = (
+                        entitlement.get_resource()
+                    )
+
+                    if resource:
+                        resource_names.append(
+                            str(resource)
+                        )
+
+                # -------------------------------------------------
+                # Fallback to subscription plan
+                # -------------------------------------------------
+
+                if resource_names:
+
+                    resource_name = ", ".join(
+                        resource_names
+                    )
+
+                elif subscription.plan:
+
+                    resource_name = (
+                        subscription.plan.name
+                    )
+
+                else:
+
+                    resource_name = "your subscription"
+
+                # -------------------------------------------------
+                # Create notification
+                # -------------------------------------------------
+
+                notification = (
+                    Notification.objects.create(
+                        title="Subscription Expiring Soon",
+                        message=(
+                            f"Your subscription for "
+                            f"{resource_name} will expire on "
+                            f"{subscription.expires_at.date()}."
+                        ),
                     )
                 )
 
-        self.stdout.write(self.style.SUCCESS("Expiry reminders sent"))
+                notification.recipients.add(
+                    user
+                )
+
+                sent_count += 1
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Subscription expiry reminders sent: "
+                f"{sent_count}"
+            )
+        )

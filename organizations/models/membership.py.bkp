@@ -1,0 +1,232 @@
+# organizations/models/membership.py
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
+
+
+class OrganizationMember(models.Model):
+    """
+    Represents a user's membership in an organization.
+
+    A user may belong to multiple organizations and may have
+    a different role in each organization.
+
+    Example:
+
+        User A
+            ├── School A → org_admin
+            └── Institute B → staff
+
+    Membership is the organization-level identity of the user.
+    Permissions are handled separately by the organization
+    permission layer.
+    """
+
+    # =========================================================
+    # ROLES
+    # =========================================================
+
+    ROLE_ORG_ADMIN = "org_admin"
+    ROLE_STAFF = "staff"
+    ROLE_STUDENT = "student"
+
+    ROLE_CHOICES = (
+        (
+            ROLE_ORG_ADMIN,
+            "Organization Admin",
+        ),
+        (
+            ROLE_STAFF,
+            "Staff / Teacher",
+        ),
+        (
+            ROLE_STUDENT,
+            "Student",
+        ),
+    )
+
+    # =========================================================
+    # MEMBERSHIP
+    # =========================================================
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="organization_memberships",
+    )
+
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="members",
+    )
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        db_index=True,
+    )
+
+    # =========================================================
+    # STATUS
+    # =========================================================
+
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text=(
+            "Inactive members cannot access organization "
+            "resources."
+        ),
+    )
+
+    # =========================================================
+    # AUDIT
+    # =========================================================
+
+    joined_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    # =========================================================
+    # META
+    # =========================================================
+
+    class Meta:
+        ordering = [
+            "organization",
+            "user",
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "user",
+                    "organization",
+                ],
+                name="unique_org_member",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "organization",
+                    "is_active",
+                ],
+                name="org_member_active_idx",
+            ),
+            models.Index(
+                fields=[
+                    "organization",
+                    "role",
+                    "is_active",
+                ],
+                name="org_member_role_idx",
+            ),
+            models.Index(
+                fields=[
+                    "user",
+                    "is_active",
+                ],
+                name="org_member_user_idx",
+            ),
+        ]
+
+    # =========================================================
+    # VALIDATION
+    # =========================================================
+
+    def clean(self):
+        super().clean()
+
+        if not self.user_id:
+            raise ValidationError({
+                "user": "A user is required."
+            })
+
+        if not self.organization_id:
+            raise ValidationError({
+                "organization": (
+                    "An organization is required."
+                )
+            })
+
+        if not self.role:
+            raise ValidationError({
+                "role": "A membership role is required."
+            })
+
+        valid_roles = {
+            self.ROLE_ORG_ADMIN,
+            self.ROLE_STAFF,
+            self.ROLE_STUDENT,
+        }
+
+        if self.role not in valid_roles:
+            raise ValidationError({
+                "role": "Invalid organization membership role."
+            })
+
+    # =========================================================
+    # ROLE HELPERS
+    # =========================================================
+
+    @property
+    def is_org_admin(self):
+        return (
+            self.role == self.ROLE_ORG_ADMIN
+            and self.is_active
+        )
+
+    @property
+    def is_staff_member(self):
+        return (
+            self.role == self.ROLE_STAFF
+            and self.is_active
+        )
+
+    @property
+    def is_student(self):
+        return (
+            self.role == self.ROLE_STUDENT
+            and self.is_active
+        )
+
+    # =========================================================
+    # ACCESS HELPER
+    # =========================================================
+
+    @property
+    def can_manage_students(self):
+        """
+        Organization admins and staff/teachers can manage
+        students.
+
+        Final permission enforcement should still happen
+        through the organization's permission layer.
+        """
+
+        return (
+            self.is_active
+            and self.role in {
+                self.ROLE_ORG_ADMIN,
+                self.ROLE_STAFF,
+            }
+        )
+
+    # =========================================================
+    # STRING
+    # =========================================================
+
+    def __str__(self):
+        return (
+            f"{self.user} → "
+            f"{self.organization} "
+            f"({self.get_role_display()})"
+        )
