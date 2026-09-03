@@ -1,7 +1,7 @@
 from django.core.paginator import Paginator
 
 from courses.models import Course
-from quiz.models import Category, Domain, Exam, ExamTrack
+from quiz.models import Category, Domain, Exam, ExamTrack, LearningShortlist
 from subscriptions.services import AccessService
 
 
@@ -113,10 +113,24 @@ def _has_access(user, resource_type, resource):
 
 
 def _resource_item(resource_type, resource):
-    item = {"type": resource_type, "resource": resource}
+    item = {"type": resource_type, "resource": resource, "is_shortlisted": False}
     if resource_type == "exam":
         item["duration_minutes"] = (resource.duration_seconds or 0) // 60
     return item
+
+
+def _add_user_state(user, items):
+    shortlist_rows = LearningShortlist.objects.filter(user=user)
+    shortlisted = {
+        (row.resource_type, row.course_id or row.track_id or row.exam_id)
+        for row in shortlist_rows
+    }
+    for item in items:
+        resource_type = getattr(AccessService, f"RESOURCE_{item['type'].upper()}")
+        resource = item["resource"]
+        item["is_shortlisted"] = (item["type"], resource.id) in shortlisted
+        item["has_access"] = _has_access(user, resource_type, resource)
+    return items
 
 
 def _add_access_state(user, items):
@@ -172,7 +186,7 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     resources.sort(key=lambda item: item["resource"].title.lower())
 
     if access in {"owned", "available"}:
-        resources = _add_access_state(user, resources)
+        resources = _add_user_state(user, resources)
         resources = [item for item in resources if (access == "owned" and item["has_access"]) or (access == "available" and not item["has_access"])]
 
     try:
@@ -187,7 +201,7 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     page_obj = paginator.get_page(page_number)
 
     if access not in {"owned", "available"}:
-        _add_access_state(user, page_obj.object_list)
+        _add_user_state(user, page_obj.object_list)
 
     selected_categories = (
         Category.objects.filter(
