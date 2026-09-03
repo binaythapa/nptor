@@ -51,14 +51,19 @@ class PracticeFilterTests(TestCase):
             "AWS storage question",
             self.aws_storage,
         )
+        self.aws_multi_category_question = self._question(
+            "AWS multi-category question",
+            self.aws_child,
+            primary_category=None,
+        )
         self.azure_question = self._question(
             "Azure compute question",
             self.azure_compute,
         )
 
-    def _question(self, text, category):
+    def _question(self, text, category, primary_category=True):
         question = Question.objects.create(
-            primary_category=category,
+            primary_category=category if primary_category is not None else None,
             question_type=Question.SINGLE,
             difficulty=Question.EASY,
             text=text,
@@ -83,8 +88,11 @@ class PracticeFilterTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self._session()["p_total"], 2)
-        self.assertIn(str(self.aws.id), response.context["domain_id"])
+        self.assertEqual(self._session()["p_total"], 3)
+        self.assertEqual(
+            response.context["domain_id"],
+            str(self.aws.id),
+        )
         self.assertEqual(
             response.context["categories"].count(),
             3,
@@ -97,10 +105,10 @@ class PracticeFilterTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["category_id"], None)
-        self.assertEqual(self._session()["p_total"], 2)
+        self.assertIsNone(response.context["category_id"])
+        self.assertEqual(self._session()["p_total"], 3)
 
-    def test_category_filter_includes_descendants(self):
+    def test_category_filter_includes_descendants_and_m2m_categories(self):
         response = self.client.get(
             reverse("quiz:practice"),
             {
@@ -110,7 +118,7 @@ class PracticeFilterTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self._session()["p_total"], 1)
+        self.assertEqual(self._session()["p_total"], 2)
         self.assertEqual(
             response.context["category_id"],
             str(self.aws_root.id),
