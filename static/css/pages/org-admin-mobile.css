@@ -1,0 +1,298 @@
+/* ==========================================================
+   ORGANIZATION ADMIN MOBILE EXPERIENCE
+   Desktop-first Bulma layout with a touch-friendly mobile shell.
+========================================================== */
+
+.org-admin-page {
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+.org-admin-page .org-admin-shell {
+    min-width: 0;
+}
+
+.org-admin-page .org-admin-main {
+    min-width: 0;
+}
+
+.org-admin-page .org-admin-content {
+    min-width: 0;
+}
+
+.org-admin-page .org-admin-sidebar {
+    min-width: 0;
+}
+
+.org-admin-page .org-admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+}
+
+.org-admin-page .org-mobile-menu-btn {
+    display: none;
+}
+
+.org-admin-page .org-admin-backdrop {
+    display: none;
+}
+
+.org-admin-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.org-admin-page .box,
+.org-admin-page .card {
+    min-width: 0;
+}
+
+.org-admin-page img,
+.org-admin-page iframe,
+.org-admin-page video {
+    max-width: 100%;
+}
+
+.org-admin-page input,
+.org-admin-page select,
+.org-admin-page textarea,
+.org-admin-page .select,
+.org-admin-page .select select {
+    max-width: 100%;
+}
+
+.org-dashboard .org-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.org-dashboard .org-stat-card {
+    min-width: 0;
+}
+
+@media (max-width: 1023px) {
+    .org-admin-page .org-admin-topbar .navbar-menu {
+        display: flex;
+    }
+
+    .org-admin-page .org-admin-shell {
+        padding: 0 12px;
+    }
+
+    .org-dashboard .org-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .org-admin-page .org-admin-topbar {
+        min-height: 56px;
+    }
+
+    .org-admin-page .org-admin-topbar .navbar-brand {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .org-admin-page .org-mobile-menu-btn {
+        display: inline-flex;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        border: 0;
+        border-radius: 8px;
+        background: #334155;
+        color: #fff;
+        cursor: pointer;
+        font-size: 20px;
+    }
+
+    .org-admin-page .org-mobile-menu-btn:focus-visible {
+        outline: 3px solid rgba(50, 115, 220, .35);
+        outline-offset: 2px;
+    }
+
+    .org-admin-page .org-admin-brand {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .org-admin-page .org-admin-top-actions {
+        gap: 6px;
+    }
+
+    .org-admin-page .org-admin-top-actions .tag {
+        display: none;
+    }
+
+    .org-admin-page .org-admin-top-actions .button {
+        padding-left: .7rem;
+        padding-right: .7rem;
+    }
+
+    .org-admin-page .org-admin-shell {
+        padding: 0;
+    }
+
+    .org-admin-page .org-admin-main {
+        display: block;
+    }
+
+    .org-admin-page .org-admin-sidebar {
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+        width: min(86vw, 320px);
+        height: auto;
+        margin: 0;
+        padding: 18px 14px;
+        overflow-y: auto;
+        background: #fff;
+        box-shadow: 10px 0 30px rgba(15, 23, 42, .16);
+        transform: translateX(-105%);
+        transition: transform .25s ease;
+        z-index: 1200;
+    }
+
+    .org-admin-page.org-sidebar-open .org-admin-sidebar {
+        transform: translateX(0);
+    }
+
+    .org-admin-page .org-admin-backdrop {
+        position: fixed;
+        inset: 56px 0 0;
+        z-index: 1150;
+        background: rgba(15, 23, 42, .45);
+    }
+
+    .org-admin-page.org-sidebar-open .org-admin-backdrop {
+        display: block;
+    }
+
+    .org-admin-page .org-admin-content {
+        width: 100%;
+        padding: 1rem .75rem 2rem;
+    }
+
+    .org-admin-page .org-admin-content > .title:first-child {
+        font-size: 1.45rem;
+        line-height: 1.25;
+    }
+
+    .org-dashboard .org-stat-grid {
+        grid-template-columns: 1fr;
+        gap: .75rem;
+    }
+
+    .org-dashboard .org-stat-card {
+        padding: 1rem;
+    }
+
+    .org-admin-page .columns {
+        margin-left: -.5rem;
+        margin-right: -.5rem;
+    }
+
+    .org-admin-page .column {
+        min-width: 0;
+    }
+
+    .org-admin-page .box {
+        padding: 1rem;
+        overflow-wrap: anywhere;
+    }
+
+    .org-admin-page .buttons {
+        flex-wrap: wrap;
+    }
+
+    .org-admin-page .button {
+        min-height: 40px;
+    }
+
+    .org-admin-page form .button.is-fullwidth,
+    .org-admin-page .button.is-fullwidth {
+        width: 100%;
+    }
+
+    .org-admin-page .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .35rem;
+    }
+
+    .org-admin-page .pagination-list {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .org-admin-page .modal-card {
+        width: calc(100% - 24px);
+        max-height: calc(100vh - 24px);
+        margin: 12px;
+    }
+
+    .org-admin-page .modal-card-body {
+        overflow-x: hidden;
+    }
+
+    .org-admin-page .field.is-horizontal {
+        display: block;
+    }
+
+    .org-admin-page .field.is-horizontal .field-label {
+        margin-bottom: .5rem;
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .org-admin-page .org-admin-topbar .navbar-item {
+        padding: .5rem;
+    }
+
+    .org-admin-page .org-admin-brand {
+        font-size: .9rem;
+    }
+
+    .org-admin-page .org-admin-content {
+        padding-left: .65rem;
+        padding-right: .65rem;
+    }
+
+    .org-admin-page .org-admin-content > .title:first-child {
+        font-size: 1.25rem;
+    }
+
+    .org-admin-page .box {
+        padding: .85rem;
+    }
+
+    .org-admin-page .table {
+        font-size: .85rem;
+    }
+
+    .org-admin-page .table td,
+    .org-admin-page .table th {
+        white-space: nowrap;
+    }
+
+    .org-admin-page .navbar-end .button {
+        font-size: .78rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .org-admin-page .org-admin-sidebar {
+        transition: none;
+    }
+}
