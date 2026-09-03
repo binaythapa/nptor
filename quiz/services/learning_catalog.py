@@ -1,12 +1,14 @@
 from django.core.paginator import Paginator
-from django.db.models import Q
 
 from courses.models import Course
 from quiz.models import Category, Domain, Exam, ExamTrack
+from subscriptions.services import AccessService
 
 
 DEFAULT_PER_PAGE = 12
 MAX_PER_PAGE = 48
+VALID_RESOURCE_TYPES = {"all", "courses", "tracks", "exams"}
+VALID_ACCESS_FILTERS = {"", "owned", "available"}
 
 
 def _public_courses():
@@ -68,13 +70,18 @@ def _domain_for_track(track):
 
 
 def _domain_summary(domain, courses, exams, tracks):
-    course_ids = [course.id for course in courses if course.category and course.category.domain_id == domain.id]
-    exam_ids = [exam.id for exam in exams if exam.primary_category and exam.primary_category.domain_id == domain.id]
-    track_ids = []
-    for track in tracks:
-        track_domain = _domain_for_track(track)
-        if track_domain and track_domain.id == domain.id:
-            track_ids.append(track.id)
+    course_ids = [
+        course.id for course in courses
+        if course.category and course.category.domain_id == domain.id
+    ]
+    exam_ids = [
+        exam.id for exam in exams
+        if exam.primary_category and exam.primary_category.domain_id == domain.id
+    ]
+    track_ids = [
+        track.id for track in tracks
+        if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)
+    ]
     return {
         "domain": domain,
         "course_count": len(course_ids),
@@ -84,6 +91,44 @@ def _domain_summary(domain, courses, exams, tracks):
         "exam_ids": exam_ids,
         "track_ids": track_ids,
     }
+
+
+def _matches_query(resource, resource_type, needle):
+    if not needle:
+        return True
+    title = resource.title.lower()
+    if needle in title:
+        return True
+    if resource_type == "course":
+        category = getattr(resource, "category", None)
+        return bool(category and needle in category.name.lower())
+    if resource_type == "exam":
+        category = getattr(resource, "primary_category", None)
+        return bool(category and needle in category.name.lower())
+    return any(
+        needle in exam.title.lower()
+        for exam in resource.exams.all()
+        if exam.is_published
+    )
+
+
+def _matches_level(resource, resource_type, level):
+    if not level:
+        return True
+    if resource_type == "course":
+        return resource.level == level
+    try:
+        return resource.level == int(level)
+    except (TypeError, ValueError):
+        return False
+
+
+def _has_access(user, resource_type, resource):
+    return AccessService.has_access(
+        student=user,
+        resource_type=resource_type,
+        resource=resource,
+    )
 
 
 def build_learning_catalog(
@@ -98,11 +143,7 @@ def build_learning_catalog(
     page=1,
     per_page=DEFAULT_PER_PAGE,
 ):
-    """Build the public, domain-first learning marketplace catalogue.
-
-    The catalogue is discovery-only. Existing access/payment services remain
-    authoritative for whether a learner may consume a resource.
-    """
+    """Build the public domain-first learning marketplace catalogue."""
     courses = list(_public_courses().order_by("title"))
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
@@ -112,7 +153,6 @@ def build_learning_catalog(
         .filter(is_active=True, organization__isnull=True)
         .order_by("name")
     )
-
     domains = [
         _domain_summary(item, courses, exams, tracks)
         for item in active_domains
@@ -139,24 +179,30 @@ def build_learning_catalog(
 
     if category is not None:
         category_ids = set(category.get_descendants_include_self())
-        courses = [
-            item for item in courses
-            if item.category_id in category_ids
-        ]
+        courses = [item for item in courses if item.category_id in category_ids]
         exams = [
             item for item in exams
             if item.primary_category_id in category_ids
             or any(cat.id in category_ids for cat in item.categories.all())
         ]
 
-    if query:
-        needle = query.strip().lower()
-        courses = [item for item in courses if needle in item.title.lower() or needle in (item.category.name.lower() if item.category else "")]
-        exams = [item for item in exams if needle in item.title.lower() or needle in (item.primary_category.name.lower() if item.primary_category else "")]
-        tracks = [item for item in tracks if needle in item.title.lower() or any(needle in exam.title.lower() for exam in item.exams.all())]
-
-    if resource_type not in {"all", "courses", "tracks", "exams"}:
+    if resource_type not in VALID_RESOURCE_TYPES:
         resource_type = "all"
+    if access not in VALID_ACCESS_FILTERS:
+        access = ""
+
+    needle = query.lower()
+    if needle:
+        courses = [item for item in courses if _matches_query(item, "course", needle)]
+        exams = [item for item in exams if _matches_query(item, "exam", needle)]
+        tracks = [item for item in tracks if _matches_query(item, "track", needle)]
+
+    courses = [item for item in courses if _matches_level(item, "course", level)]
+    exams = [item for item in exams if _matches_level(item, "exam", level)]
+    tracks = [
+        item for item in tracks
+        if not level or any(_matches_level(exam, "exam", level) for exam in item.exams.all())
+    ]
 
     resources = []
     if resource_type in {"all", "courses"}:
@@ -168,6 +214,16 @@ def build_learning_catalog(
 
     resources.sort(key=lambda item: item["resource"].title.lower())
 
+    if access in {"owned", "available"}:
+        filtered_resources = []
+        for item in resources:
+            resource_type_name = item["type"]
+            access_type = getattr(AccessService, f"RESOURCE_{resource_type_name.upper()}")
+            item["has_access"] = _has_access(user, access_type, item["resource"])
+            if (access == "owned" and item["has_access"]) or (access == "available" and not item["has_access"]):
+                filtered_resources.append(item)
+        resources = filtered_resources
+
     paginator = Paginator(resources, min(max(int(per_page), 1), MAX_PER_PAGE))
     try:
         page_number = max(int(page), 1)
@@ -175,12 +231,20 @@ def build_learning_catalog(
         page_number = 1
     page_obj = paginator.get_page(page_number)
 
-    selected_categories = Category.objects.filter(
-        is_active=True,
-        domain=selected_domain,
-        organization__isnull=True,
-        parent__isnull=True,
-    ).order_by("name") if selected_domain else Category.objects.none()
+    for item in page_obj.object_list:
+        if "has_access" not in item:
+            access_type = getattr(AccessService, f"RESOURCE_{item['type'].upper()}")
+            item["has_access"] = _has_access(user, access_type, item["resource"])
+
+    selected_categories = (
+        Category.objects.filter(
+            is_active=True,
+            domain=selected_domain,
+            organization__isnull=True,
+            parent__isnull=True,
+        ).order_by("name")
+        if selected_domain else Category.objects.none()
+    )
 
     return {
         "domains": domains,
