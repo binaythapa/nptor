@@ -7,6 +7,7 @@ from django.urls import reverse
 from courses.models import Course
 from organizations.models.access import ResourceAccess
 from payments.models import PaymentOrder
+from payments.views.checkout import PAYMENT_RETURN_SESSION_KEY
 from quiz.models import Exam
 from subscriptions.models import SubscriptionEntitlement, SubscriptionPlan
 from subscriptions.services import SubscriptionService
@@ -128,6 +129,31 @@ class PurchasedLearningDashboardTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Start Learning")
+
+    def test_success_page_resumes_safe_learning_destination(self):
+        course = self._course()
+        order = PaymentOrder.objects.create(
+            user=self.user,
+            resource_type=PaymentOrder.RESOURCE_COURSE,
+            course=course,
+            amount=Decimal("100.00"),
+            currency="INR",
+            status=PaymentOrder.STATUS_PAID,
+        )
+        target = reverse("courses:course_preview", kwargs={"slug": course.slug})
+        session = self.client.session
+        session[PAYMENT_RETURN_SESSION_KEY] = target
+        session.save()
+
+        response = self.client.get(
+            reverse(
+                "payments:payment_success",
+                kwargs={"order_number": order.order_number},
+            )
+        )
+
+        self.assertRedirects(response, target)
+        self.assertNotIn(PAYMENT_RETURN_SESSION_KEY, self.client.session)
 
     def test_unpaid_order_cannot_render_success_page(self):
         course = self._course()
