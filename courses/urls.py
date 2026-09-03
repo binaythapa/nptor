@@ -16,6 +16,7 @@ from courses.permissions import (
     course_entitlement_required,
     lesson_course_access_required,
     video_progress_access_required,
+    instructor_dashboard_access_required,
 )
 from payments.views.checkout import course_checkout
 
@@ -72,7 +73,11 @@ urlpatterns = [
         name="course_detail",
     ),
 
-    path("instructor/dashboard/", instructor_views.instructor_dashboard, name="instructor_dashboard"),
+    path(
+        "instructor/dashboard/",
+        instructor_dashboard_access_required(instructor_views.instructor_dashboard),
+        name="instructor_dashboard",
+    ),
     path("instructor/course/create/", instructor_views.course_create, name="course_create"),
     path("instructor/course/<slug:slug>/edit/", instructor_views.course_edit, name="course_edit"),
     path("instructor/course/<slug:slug>/delete/", instructor_views.course_delete, name="course_delete"),
