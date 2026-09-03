@@ -4,7 +4,10 @@
 {% block title %}Student Dashboard | {{ site_name|default:"Nepal Mentor" }}{% endblock %}
 {% block meta_description %}Student learning dashboard for practice exams, courses, certification preparation, mock tests, and progress tracking.{% endblock %}
 
-{% block page_css %}<link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/dashboard_learning_hub.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="dashboard-page">
@@ -41,7 +44,6 @@
 
   <section class="dashboard-section dashboard-learning-section" aria-labelledby="learning-title">
     <div class="section-heading dashboard-learning-heading"><div><span class="section-eyebrow">Your Resources</span><h2 id="learning-title">My Learning</h2></div><a href="{% url 'quiz:exam_list' %}" class="section-heading-link">Explore all <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>
-
     <div class="dashboard-learning-toolbar">
       <div class="dashboard-filter-tabs" role="tablist" aria-label="Learning resource type">
         <button type="button" class="dashboard-filter is-active" data-dashboard-filter="all" aria-selected="true">All</button>
@@ -51,7 +53,6 @@
       </div>
       <label class="dashboard-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Search learning resources</span><input type="search" data-dashboard-search placeholder="Search courses, exams or tracks" autocomplete="off"></label>
     </div>
-
     <div class="dashboard-learning-grid" data-dashboard-grid>
       {% for item in courses %}
       <article class="dashboard-learning-card" data-learning-card data-learning-type="course" data-learning-name="{{ item.course.title|lower }}">
@@ -60,25 +61,23 @@
         <a href="{% url 'courses:course_learn' item.course.slug %}" class="learning-card-action" aria-label="Continue {{ item.course.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
       </article>
       {% endfor %}
-
       {% for track, data in track_map.items %}
       <article class="dashboard-learning-card" data-learning-card data-learning-type="track" data-learning-name="{{ track.title|lower }}">
         <div class="learning-card-icon learning-card-icon-track"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
         <div class="learning-card-body"><span class="learning-card-type">Exam Track</span><h3>{{ track.title }}</h3><p>{{ data.items|length }} exam{{ data.items|length|pluralize }}{% if data.passed %} · {{ data.passed }} passed{% endif %}</p>{% if data.attempted %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> {{ data.passed|default:0 }} passed</span>{% else %}<span class="learning-result">Not started</span>{% endif %}</div>
         <a href="{% url 'quiz:exam_list' %}" class="learning-card-action" aria-label="View {{ track.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
       </article>
-
-        {% for item in data.items %}
-        <article class="dashboard-learning-card" data-learning-card data-learning-type="exam" data-learning-name="{{ item.exam.title|lower }}">
-          <div class="learning-card-icon learning-card-icon-exam"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div>
-          <div class="learning-card-body"><span class="learning-card-type">Exam</span><h3>{{ item.exam.title }}</h3><p>Level {{ item.exam.level }} · {{ item.exam.question_count }} questions · {{ item.exam.duration_seconds|default:0|divisibleby:60|yesno:"Timed,Timed" }}</p>
-            {% if item.last_score is not None %}<span class="learning-result {% if item.status == 'passed' %}learning-result-success{% else %}learning-result-danger{% endif %}"><i class="fa-solid {% if item.status == 'passed' %}fa-check{% else %}fa-xmark{% endif %}" aria-hidden="true"></i> {{ item.status|title }} · {{ item.last_score }}%</span>
-            {% elif item.action == "locked" %}<span class="learning-result learning-result-danger"><i class="fa-solid fa-lock" aria-hidden="true"></i> {{ item.lock_reason }}</span>
-            {% else %}<span class="learning-result">Not attempted</span>{% endif %}
-          </div>
-          {% if item.action == "resume" %}<a href="{% url 'quiz:exam_take' item.last_attempt.id %}" class="learning-card-action" aria-label="Resume {{ item.exam.title }}"><i class="fa-solid fa-play" aria-hidden="true"></i></a>{% elif item.action == "start" or item.action == "retake" %}<a href="{% url 'quiz:exam_start' item.exam.id %}" class="learning-card-action" aria-label="Start {{ item.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% elif item.action == "renew" %}<a href="{% url 'quiz:track_checkout' item.exam.track.id %}" class="learning-card-action" aria-label="Renew {{ item.exam.title }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i></a>{% endif %}
-        </article>
-        {% endfor %}
+      {% for item in data.items %}
+      <article class="dashboard-learning-card" data-learning-card data-learning-type="exam" data-learning-name="{{ item.exam.title|lower }}">
+        <div class="learning-card-icon learning-card-icon-exam"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div>
+        <div class="learning-card-body"><span class="learning-card-type">Exam</span><h3>{{ item.exam.title }}</h3><p>Level {{ item.exam.level }} · {{ item.exam.question_count }} questions · Timed</p>
+          {% if item.last_score is not None %}<span class="learning-result {% if item.status == 'passed' %}learning-result-success{% else %}learning-result-danger{% endif %}"><i class="fa-solid {% if item.status == 'passed' %}fa-check{% else %}fa-xmark{% endif %}" aria-hidden="true"></i> {{ item.status|title }} · {{ item.last_score }}%</span>
+          {% elif item.action == "locked" %}<span class="learning-result learning-result-danger"><i class="fa-solid fa-lock" aria-hidden="true"></i> {{ item.lock_reason }}</span>
+          {% else %}<span class="learning-result">Not attempted</span>{% endif %}
+        </div>
+        {% if item.action == "resume" %}<a href="{% url 'quiz:exam_take' item.last_attempt.id %}" class="learning-card-action" aria-label="Resume {{ item.exam.title }}"><i class="fa-solid fa-play" aria-hidden="true"></i></a>{% elif item.action == "start" or item.action == "retake" %}<a href="{% url 'quiz:exam_start' item.exam.id %}" class="learning-card-action" aria-label="Start {{ item.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% elif item.action == "renew" %}<a href="{% url 'quiz:track_checkout' item.exam.track.id %}" class="learning-card-action" aria-label="Renew {{ item.exam.title }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i></a>{% endif %}
+      </article>
+      {% endfor %}
       {% endfor %}
     </div>
     <div class="dashboard-no-results" data-dashboard-empty hidden><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>No learning resources match your search.</span></div>
