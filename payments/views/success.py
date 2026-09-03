@@ -1,7 +1,8 @@
 # payments/views/success.py
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from payments.models import PaymentOrder
 
@@ -12,10 +13,9 @@ def payment_success(
     order_number,
 ):
     """
-    Display successful payment result.
+    Display a successful payment only after the order is paid.
 
-    Access/subscription should already have been fulfilled
-    before this page is reached.
+    Access/subscription is fulfilled before this page is reached.
     """
 
     order = get_object_or_404(
@@ -23,6 +23,16 @@ def payment_success(
         order_number=order_number,
         user=request.user,
     )
+
+    if order.status != PaymentOrder.STATUS_PAID:
+        messages.info(
+            request,
+            "This payment has not been completed yet.",
+        )
+        return redirect(
+            "payments:payment_checkout",
+            order_number=order.order_number,
+        )
 
     return render(
         request,
