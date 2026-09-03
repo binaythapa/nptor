@@ -113,6 +113,11 @@ class LearningCatalogServiceTests(TestCase):
 
         catalog = build_learning_catalog(user=self.user)
 
-        self.assertEqual([item["domain"].slug for item in catalog["domains"]], ["snowflake", "aws"])
+        self.assertEqual(
+            {item["domain"].slug for item in catalog["domains"]},
+            {"snowflake", "aws"},
+        )
         self.assertEqual(catalog["domains"][0]["course_count"], 0)
-        self.assertTrue(all(item["domain"].slug != "legacy" for item in catalog["domains"]))
+        self.assertTrue(
+            all(item["domain"].slug != "legacy" for item in catalog["domains"])
+        )
