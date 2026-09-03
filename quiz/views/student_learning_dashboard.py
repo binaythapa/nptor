@@ -8,12 +8,48 @@ from django.utils import timezone
 from courses.models import Course, LessonProgress
 from courses.models.subscription import CourseSubscription
 from organizations.models.access import ResourceAccess
-from quiz.models import Exam, ExamTrack, UserExam
+from quiz.models import Exam, ExamTrack, LearningShortlist, UserExam
+from quiz.services.learning_catalog import _public_courses, _public_exams, _public_tracks
 
 
 def _valid_accesses(queryset):
     """Return currently usable access records without exposing expired access."""
     return [access for access in queryset if access.is_valid()]
+
+
+def _shortlist_items(user):
+    rows = list(
+        LearningShortlist.objects
+        .filter(user=user)
+        .select_related(
+            "course",
+            "course__category",
+            "track",
+            "exam",
+            "exam__primary_category",
+        )
+    )
+    valid_courses = {course.id: course for course in _public_courses().filter(id__in=[row.course_id for row in rows if row.course_id])}
+    valid_tracks = {track.id: track for track in _public_tracks().filter(id__in=[row.track_id for row in rows if row.track_id])}
+    valid_exams = {exam.id: exam for exam in _public_exams().filter(id__in=[row.exam_id for row in rows if row.exam_id])}
+
+    items = []
+    for row in rows:
+        resource = None
+        if row.resource_type == LearningShortlist.RESOURCE_COURSE:
+            resource = valid_courses.get(row.course_id)
+        elif row.resource_type == LearningShortlist.RESOURCE_TRACK:
+            resource = valid_tracks.get(row.track_id)
+        elif row.resource_type == LearningShortlist.RESOURCE_EXAM:
+            resource = valid_exams.get(row.exam_id)
+        if resource is None:
+            continue
+        items.append({
+            "item": row,
+            "resource": resource,
+            "type": row.resource_type,
+        })
+    return items
 
 
 @login_required
@@ -34,9 +70,6 @@ def student_dashboard(request):
         .first()
     )
 
-    # The dashboard is driven by ResourceAccess, the final authorization
-    # boundary. This makes purchases and admin grants visible immediately,
-    # instead of relying on the legacy CourseSubscription table alone.
     accesses = _valid_accesses(
         ResourceAccess.objects
         .filter(user=user, is_active=True)
@@ -56,9 +89,6 @@ def student_dashboard(request):
         elif access.resource_type == ResourceAccess.RESOURCE_EXAM and access.exam_id:
             exam_access.setdefault(access.exam_id, access)
 
-    # Keep compatibility with older course purchases that pre-date the
-    # ResourceAccess entitlement path, while all new purchases use the
-    # canonical access record above.
     legacy_course_subs = (
         CourseSubscription.objects
         .filter(user=user, is_active=True)
@@ -133,9 +163,6 @@ def student_dashboard(request):
             "source": track_access[track.id].source,
         })
 
-    # Standalone purchased/admin-granted exams. Exams belonging to an
-    # accessible track are also represented here so the Exams filter is
-    # useful without forcing the user to open the track first.
     accessed_exams = (
         Exam.objects
         .filter(id__in=list(exam_access), is_published=True)
@@ -155,8 +182,6 @@ def student_dashboard(request):
             "source": exam_access[exam.id].source,
         })
 
-    # Exams unlocked through a purchased track should also appear as exam
-    # cards, even when there is no individual exam entitlement.
     for track in tracks_data:
         for exam in track_exams.get(track["track"].id, []):
             if exam.id in exam_access:
@@ -172,6 +197,7 @@ def student_dashboard(request):
             })
 
     exams_data.sort(key=lambda item: item["exam"].title.lower())
+    shortlist_items = _shortlist_items(user)
 
     return render(
         request,
@@ -184,6 +210,8 @@ def student_dashboard(request):
             "courses": courses_data,
             "tracks": tracks_data,
             "exams": exams_data,
+            "shortlist_items": shortlist_items,
+            "shortlist_count": len(shortlist_items),
             "learning_count": len(courses_data) + len(tracks_data) + len(exams_data),
             "generated_at": timezone.now(),
         },
