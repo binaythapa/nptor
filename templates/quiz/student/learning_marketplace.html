@@ -54,8 +54,8 @@
             {% else %}<p>{{ item.resource.question_count }} questions · {{ item.duration_minutes }} min</p>{% endif %}
             <div class="resource-footer">
               {% if item.has_access %}<span class="resource-status owned">You have access</span><a class="resource-action primary" href="{% if item.type == 'course' %}{% url 'courses:course_learn' item.resource.slug %}{% else %}{% url 'quiz:exam_start' item.resource.id %}{% endif %}">Continue →</a>
-              {% elif item.type == 'course' %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'courses:course_learn' item.resource.slug %}">Start →</a>
-              {% elif item.type == 'track' %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'quiz:learning_domain' item.resource.exams.first.primary_category.domain.slug %}">Explore →</a>
+              {% elif item.type == 'course' %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'courses:course_preview' item.resource.slug %}">Start →</a>
+              {% elif item.type == 'track' %}<span class="resource-status">Preview available</span>{% if item.domain_slug %}<a class="resource-action primary" href="{% url 'quiz:learning_domain' item.domain_slug %}">Explore →</a>{% else %}<a class="resource-action primary" href="{% url 'quiz:exam_list' %}">Explore →</a>{% endif %}
               {% elif item.resource.is_free %}<span class="resource-status">Free exam</span><a class="resource-action primary" href="{% url 'quiz:exam_start' item.resource.id %}">Start →</a>
               {% else %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'quiz:exam_preview' item.resource.id %}">Try →</a>{% endif %}
             </div>
