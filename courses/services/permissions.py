@@ -24,24 +24,42 @@ def can_edit_course(user, course):
     if not user or not user.is_authenticated:
         return False
 
-    # --------------------------------------------------------
-    # PLATFORM ADMIN
-    # --------------------------------------------------------
-
     if user.is_superuser:
         return True
 
-    # --------------------------------------------------------
-    # PLATFORM COURSE CREATOR
-    # --------------------------------------------------------
-
-    # A course without an organization is platform-owned content.
     if not course.organization:
         return course.created_by == user
 
-    # --------------------------------------------------------
-    # ORGANIZATION COURSE
-    # --------------------------------------------------------
+    membership = get_active_membership(
+        user,
+        course.organization,
+    )
+
+    if not membership:
+        return False
+
+    return membership.role in OrganizationRole.teaching_roles()
+
+
+def can_preview_course(user, course):
+    """
+    Determine whether a user can preview a course that is not
+    publicly available yet.
+
+    Platform creators can preview their own platform courses.
+    Organization courses require the same active teaching-role
+    boundary as editing; creator status alone is not sufficient.
+    Platform administrators can preview any course.
+    """
+
+    if not user or not user.is_authenticated:
+        return False
+
+    if user.is_superuser or user.is_staff:
+        return True
+
+    if not course.organization:
+        return course.created_by == user
 
     membership = get_active_membership(
         user,
@@ -65,9 +83,6 @@ def can_review_course(user, course):
 
     Only platform administrators can currently
     review courses.
-
-    Organization instructors/creators must NOT
-    be able to approve their own courses.
     """
 
     if not user or not user.is_authenticated:
@@ -84,11 +99,6 @@ def can_review_course(user, course):
 def can_publish_course(user, course):
     """
     Determine whether a user can publish a course.
-
-    Rules:
-        1. User must be authenticated.
-        2. Course must already be approved.
-        3. Only platform administrators can publish.
     """
 
     if not user or not user.is_authenticated:
@@ -109,23 +119,11 @@ def can_submit_course_for_review(user, course):
     """
     Determine whether a user can submit a course
     for administrator review.
-
-    Allowed states:
-
-        DRAFT
-        CHANGES_REQUIRED
-        REJECTED
-
-    Not allowed:
-
-        PENDING
-        APPROVED
     """
 
     if not user or not user.is_authenticated:
         return False
 
-    # User must have permission to edit the course.
     if not can_edit_course(
         user,
         course,
@@ -145,12 +143,7 @@ def can_submit_course_for_review(user, course):
 
 
 def can_request_changes(user, course):
-    """
-    Determine whether an administrator can request
-    changes to a course.
-
-    Course must currently be pending review.
-    """
+    """Determine whether an administrator can request changes."""
 
     if not can_review_course(
         user,
@@ -170,10 +163,7 @@ def can_request_changes(user, course):
 
 
 def can_approve_course(user, course):
-    """
-    Determine whether an administrator can approve
-    a course currently awaiting review.
-    """
+    """Determine whether an administrator can approve a course."""
 
     if not can_review_course(
         user,
@@ -193,10 +183,7 @@ def can_approve_course(user, course):
 
 
 def can_reject_course(user, course):
-    """
-    Determine whether an administrator can reject
-    a course currently awaiting review.
-    """
+    """Determine whether an administrator can reject a course."""
 
     if not can_review_course(
         user,
