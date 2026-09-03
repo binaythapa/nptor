@@ -248,8 +248,15 @@
            CSRF
            ------------------------------------------------- */
 
-        const csrfToken =
+        let csrfToken =
             getCookie("csrftoken");
+
+        if (!csrfToken) {
+            csrfToken =
+                document.querySelector(
+                    "input[name='csrfmiddlewaretoken']"
+                )?.value || null;
+        }
 
 
         const headers = {
@@ -433,6 +440,21 @@
 
 
         /*
+         * Preserve native HTML5 validation even when submitAnswer()
+         * is called programmatically.
+         */
+        if (
+            typeof form.checkValidity === "function" &&
+            !form.checkValidity()
+        ) {
+            if (typeof form.reportValidity === "function") {
+                form.reportValidity();
+            }
+            return;
+        }
+
+
+        /*
          * Prevent accidental double submission.
          */
 
@@ -551,10 +573,20 @@
 
         try {
 
+            const currentForm =
+                document.getElementById(
+                    "practiceForm"
+                );
+
+            const nextFormData =
+                currentForm
+                    ? new FormData(currentForm)
+                    : new FormData();
+
             const data =
                 await postForm(
                     config.nextUrl,
-                    new FormData()
+                    nextFormData
                 );
 
 
@@ -639,10 +671,20 @@
 
         try {
 
+            const currentForm =
+                document.getElementById(
+                    "practiceForm"
+                );
+
+            const skipFormData =
+                currentForm
+                    ? new FormData(currentForm)
+                    : new FormData();
+
             const data =
                 await postForm(
                     config.skipUrl,
-                    new FormData()
+                    skipFormData
                 );
 
 
@@ -776,27 +818,30 @@
         }
 
 
+        /*
+         * After an answer is checked, #practiceForm is replaced by
+         * _answer_result.html. Therefore the result container carries
+         * the question id and must be used as a fallback.
+         */
         const form =
             document.getElementById(
                 "practiceForm"
             );
 
-
-        if (!form) {
-
-            console.error(
-                "Practice form not found."
+        const result =
+            document.getElementById(
+                "practiceResult"
             );
 
-            return;
-        }
-
-
         const questionId =
-            form.dataset.qid;
-
+            form?.dataset.qid ||
+            result?.dataset.qid;
 
         if (!questionId) {
+
+            console.error(
+                "Practice question ID could not be determined."
+            );
 
             alert(
                 "Question ID is missing."
@@ -922,57 +967,48 @@
 
     function initEvents() {
 
+        /*
+         * Use the form submit event so native required-field
+         * validation still works before AJAX submission.
+         */
         document.addEventListener(
-            "click",
+            "submit",
             function (event) {
 
-
-                /* =========================================
-                   PRACTICE SUBMIT
-                   ========================================= */
-
-                const submitButton =
+                const form =
                     event.target.closest(
-                        "#practiceForm button[type='submit']"
+                        "#practiceForm"
                     );
 
-
-                if (submitButton) {
-
-                    /*
-                     * Skip is now handled separately through
-                     * the AJAX data-practice-skip button.
-                     *
-                     * Keep this check for backward
-                     * compatibility with any old Skip button.
-                     */
-
-                    if (
-                        submitButton.name ===
-                        "skip"
-                    ) {
-                        return;
-                    }
-
-
-                    event.preventDefault();
-
-
-                    const form =
-                        document.getElementById(
-                            "practiceForm"
-                        );
-
-
-                    if (form) {
-
-                        submitAnswer(form);
-                    }
-
-
+                if (!form) {
                     return;
                 }
 
+                /*
+                 * Backward compatibility for any old Skip submit
+                 * button that uses name="skip".
+                 */
+                if (
+                    event.submitter &&
+                    event.submitter.name === "skip"
+                ) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                submitAnswer(form);
+            }
+        );
+
+
+        /*
+         * All buttons below use click delegation because the
+         * question/result HTML is replaced after every AJAX call.
+         */
+        document.addEventListener(
+            "click",
+            function (event) {
 
                 /* =========================================
                    SKIP QUESTION
@@ -983,8 +1019,11 @@
                         "[data-practice-skip]"
                     );
 
-
                 if (skipButton) {
+
+                    if (skipButton.disabled) {
+                        return;
+                    }
 
                     event.preventDefault();
 
@@ -1003,7 +1042,6 @@
                         "[data-practice-next]"
                     );
 
-
                 if (nextButton) {
 
                     event.preventDefault();
@@ -1015,13 +1053,11 @@
 
 
                 /*
-                 * Backward compatibility with the
-                 * existing inline onclick:
+                 * Backward compatibility with:
                  *
                  * onclick="loadNextQuestion()"
                  *
-                 * No action is needed here because
-                 * loadNextQuestion is exposed globally.
+                 * The function is exposed globally below.
                  */
 
 
@@ -1033,7 +1069,6 @@
                     event.target.closest(
                         ".practice-explanation-toggle"
                     );
-
 
                 if (explanationButton) {
 
@@ -1056,7 +1091,6 @@
                         "#feedbackSubmitBtn"
                     );
 
-
                 if (feedbackButton) {
 
                     event.preventDefault();
@@ -1067,7 +1101,6 @@
 
                     return;
                 }
-
             }
         );
     }
@@ -1099,6 +1132,9 @@
 
     window.loadNextQuestion =
         loadNextQuestion;
+
+    window.skipQuestion =
+        skipQuestion;
 
 
     /*
