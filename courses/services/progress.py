@@ -1,10 +1,10 @@
 from courses.models import Lesson, LessonProgress
 
+
 def get_course_progress(user, course):
     """
     Returns (completed_count, total_count, percentage)
     """
-
     lessons = Lesson.objects.filter(section__course=course)
     total = lessons.count()
 
@@ -14,35 +14,33 @@ def get_course_progress(user, course):
     completed = LessonProgress.objects.filter(
         user=user,
         lesson__in=lessons,
-        completed=True
+        completed=True,
     ).count()
 
     percentage = int((completed / total) * 100)
-
     return completed, total, percentage
 
 
-
-from courses.models import Lesson, LessonProgress
-def is_lesson_unlocked(user, lesson):
-    """
-    A lesson is unlocked if:
-    - it is the first lesson in the course
-    - OR the previous lesson is completed
-    """
-
-    lessons = list(
+def _course_lessons(lesson):
+    return list(
         Lesson.objects.filter(
             section__course=lesson.section.course
         ).order_by("section__order", "order")
     )
 
+
+def is_lesson_unlocked(user, lesson):
+    """
+    A lesson is unlocked if it is the first lesson in the course
+    or the previous lesson is completed.
+    """
+    lessons = _course_lessons(lesson)
+
     try:
         index = lessons.index(lesson)
     except ValueError:
-        return False  # lesson not part of course
+        return False
 
-    # First lesson always unlocked
     if index == 0:
         return True
 
@@ -51,25 +49,19 @@ def is_lesson_unlocked(user, lesson):
     return LessonProgress.objects.filter(
         user=user,
         lesson=previous_lesson,
-        completed=True
+        completed=True,
     ).exists()
 
 
-from courses.models import Lesson, LessonProgress
-
-from courses.models import Lesson, LessonProgress
-
 def get_resume_lesson(user, course):
     """
-    Returns:
-    - First incomplete lesson if exists
-    - Otherwise FIRST lesson of the course
+    Returns the first incomplete lesson, or the first lesson when
+    the course is already complete.
     """
-
     completed_ids = LessonProgress.objects.filter(
         user=user,
         completed=True,
-        lesson__section__course=course
+        lesson__section__course=course,
     ).values_list("lesson_id", flat=True)
 
     lesson = (
@@ -90,15 +82,10 @@ def get_resume_lesson(user, course):
         .first()
     )
 
+
 def get_next_lesson(lesson):
-    """
-    Returns the next lesson in course order, or None
-    """
-    lessons = list(
-        Lesson.objects.filter(
-            section__course=lesson.section.course
-        ).order_by("section__order", "order")
-    )
+    """Return the next lesson in course order, or None."""
+    lessons = _course_lessons(lesson)
 
     try:
         index = lessons.index(lesson)
@@ -111,4 +98,16 @@ def get_next_lesson(lesson):
     return None
 
 
+def get_previous_lesson(lesson):
+    """Return the previous lesson in course order, or None."""
+    lessons = _course_lessons(lesson)
 
+    try:
+        index = lessons.index(lesson)
+    except ValueError:
+        return None
+
+    if index > 0:
+        return lessons[index - 1]
+
+    return None
