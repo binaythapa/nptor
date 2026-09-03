@@ -29,40 +29,28 @@ app_name = "courses"
 # ============================================================
 
 urlpatterns = [
-    # ========================================================
-    # STUDENT
-    # ========================================================
-
-    path(
-        "",
-        student_views.course_list,
-        name="course_list",
-    ),
+    path("", student_views.course_list, name="course_list"),
 
     path(
         "<slug:slug>/learn/",
         course_learning_access_required(student_views.course_learn),
         name="course_learn",
     ),
-
     path(
         "<slug:slug>/learn/<int:lesson_id>/",
         course_learning_access_required(student_views.course_learn),
         name="course_learn_lesson",
     ),
-
     path(
         "<slug:slug>/learn/<int:lesson_id>/complete/",
         lesson_course_access_required(student_views.mark_lesson_completed),
         name="mark_lesson_completed",
     ),
-
     path(
         "<slug:slug>/certificate/pdf/",
-        lesson_course_access_required(student_views.download_certificate_pdf),
+        course_learning_access_required(student_views.download_certificate_pdf),
         name="course_certificate_pdf",
     ),
-
     path(
         "video/progress/",
         video_progress_access_required(student_views.track_video_progress),
@@ -76,192 +64,36 @@ urlpatterns = [
         name="subscribe_course",
     ),
 
-    # --------------------------------------------------------
-    # IMPORTANT
-    #
-    # Keep the generic course detail URL AFTER all specific
-    # URLs above.
-    # --------------------------------------------------------
+    path("<slug:slug>/", student_views.course_detail, name="course_detail"),
 
-    path(
-        "<slug:slug>/",
-        student_views.course_detail,
-        name="course_detail",
-    ),
+    path("instructor/dashboard/", instructor_views.instructor_dashboard, name="instructor_dashboard"),
+    path("instructor/course/create/", instructor_views.course_create, name="course_create"),
+    path("instructor/course/<slug:slug>/edit/", instructor_views.course_edit, name="course_edit"),
+    path("instructor/course/<slug:slug>/delete/", instructor_views.course_delete, name="course_delete"),
+    path("instructor/course/<slug:slug>/builder/", instructor_views.course_builder, name="course_builder"),
+    path("instructor/course/<slug:slug>/update-order/", update_order, name="update_order"),
+    path("instructor/course/<slug:slug>/submit-review/", instructor_views.submit_course_for_review_view, name="submit-course-review"),
+    path("instructor/course/<slug:slug>/toggle-publish/", instructor_views.toggle_publish_course, name="toggle_publish_course"),
+    path("instructor/lesson/<int:lesson_id>/edit/", instructor_views.lesson_edit, name="lesson_edit"),
 
-    # ========================================================
-    # INSTRUCTOR
-    # ========================================================
+    path("admin/courses/", admin_views.course_dashboard, name="admin-course-dashboard"),
+    path("admin/courses/all/", admin_views.all_courses, name="admin-all-courses"),
+    path("admin/courses/pending/", admin_views.pending_courses, name="admin-pending-courses"),
+    path("admin/course/<slug:slug>/review/", admin_views.review_course, name="admin-review-course"),
+    path("admin/course/<slug:slug>/approve/", admin_views.approve_course_view, name="admin-approve-course"),
+    path("admin/course/<slug:slug>/request-changes/", admin_views.request_course_changes_view, name="admin-request-course-changes"),
+    path("admin/course/<slug:slug>/reject/", admin_views.reject_course_view, name="admin-reject-course"),
+    path("admin/course/<slug:slug>/publish/", admin_views.publish_course_view, name="admin-publish-course"),
+    path("admin/course/<slug:slug>/unpublish/", admin_views.unpublish_course_view, name="admin-unpublish-course"),
 
-    path(
-        "instructor/dashboard/",
-        instructor_views.instructor_dashboard,
-        name="instructor_dashboard",
-    ),
-
-    path(
-        "instructor/course/create/",
-        instructor_views.course_create,
-        name="course_create",
-    ),
-
-    path(
-        "instructor/course/<slug:slug>/edit/",
-        instructor_views.course_edit,
-        name="course_edit",
-    ),
-
-    path(
-        "instructor/course/<slug:slug>/delete/",
-        instructor_views.course_delete,
-        name="course_delete",
-    ),
-
-    path(
-        "instructor/course/<slug:slug>/builder/",
-        instructor_views.course_builder,
-        name="course_builder",
-    ),
-
-    path(
-        "instructor/course/<slug:slug>/update-order/",
-        update_order,
-        name="update_order",
-    ),
-
-    # ========================================================
-    # COURSE APPROVAL
-    # ========================================================
-
-    path(
-        "instructor/course/<slug:slug>/submit-review/",
-        instructor_views.submit_course_for_review_view,
-        name="submit-course-review",
-    ),
-
-    # ========================================================
-    # COURSE PUBLISH
-    # ========================================================
-
-    path(
-        "instructor/course/<slug:slug>/toggle-publish/",
-        instructor_views.toggle_publish_course,
-        name="toggle_publish_course",
-    ),
-
-    # ========================================================
-    # LESSON EDIT
-    # ========================================================
-
-    path(
-        "instructor/lesson/<int:lesson_id>/edit/",
-        instructor_views.lesson_edit,
-        name="lesson_edit",
-    ),
-
-    # ========================================================
-    # ADMIN COURSE MODERATION
-    # ========================================================
-
-    path(
-        "admin/courses/",
-        admin_views.course_dashboard,
-        name="admin-course-dashboard",
-    ),
-
-    path(
-        "admin/courses/all/",
-        admin_views.all_courses,
-        name="admin-all-courses",
-    ),
-
-    path(
-        "admin/courses/pending/",
-        admin_views.pending_courses,
-        name="admin-pending-courses",
-    ),
-
-    path(
-        "admin/course/<slug:slug>/review/",
-        admin_views.review_course,
-        name="admin-review-course",
-    ),
-
-    path(
-        "admin/course/<slug:slug>/approve/",
-        admin_views.approve_course_view,
-        name="admin-approve-course",
-    ),
-
-    path(
-        "admin/course/<slug:slug>/request-changes/",
-        admin_views.request_course_changes_view,
-        name="admin-request-course-changes",
-    ),
-
-    path(
-        "admin/course/<slug:slug>/reject/",
-        admin_views.reject_course_view,
-        name="admin-reject-course",
-    ),
-
-    path(
-        "admin/course/<slug:slug>/publish/",
-        admin_views.publish_course_view,
-        name="admin-publish-course",
-    ),
-
-    path(
-        "admin/course/<slug:slug>/unpublish/",
-        admin_views.unpublish_course_view,
-        name="admin-unpublish-course",
-    ),
-
-    # ========================================================
-    # API
-    # ========================================================
-
-    path(
-        "api/section/create/",
-        api_views.create_section,
-        name="api_create_section",
-    ),
-
-    path(
-        "api/section/delete/<int:section_id>/",
-        api_views.delete_section,
-        name="api_delete_section",
-    ),
-
-    path(
-        "api/lesson/create/",
-        api_views.create_lesson,
-        name="api_create_lesson",
-    ),
-
-    path(
-        "api/lesson/delete/<int:lesson_id>/",
-        api_views.delete_lesson,
-        name="api_delete_lesson",
-    ),
-
-    path(
-        "api/lesson/edit/",
-        api_views.edit_lesson,
-        name="api_edit_lesson",
-    ),
-
-    path(
-        "api/order/update/",
-        api_views.update_order,
-        name="api_update_order",
-    ),
+    path("api/section/create/", api_views.create_section, name="api_create_section"),
+    path("api/section/delete/<int:section_id>/", api_views.delete_section, name="api_delete_section"),
+    path("api/lesson/create/", api_views.create_lesson, name="api_create_lesson"),
+    path("api/lesson/delete/<int:lesson_id>/", api_views.delete_lesson, name="api_delete_lesson"),
+    path("api/lesson/edit/", api_views.edit_lesson, name="api_edit_lesson"),
+    path("api/order/update/", api_views.update_order, name="api_update_order"),
 ]
 
-
-# ============================================================
-# MEDIA FILES - DEVELOPMENT
-# ============================================================
 
 urlpatterns += static(
     settings.MEDIA_URL,
