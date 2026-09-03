@@ -104,3 +104,16 @@ class ExamAttemptExpiryTests(TestCase):
             UserExam.STATUS_SUBMITTED,
         )
         self.assertIsNotNone(self.ue.submitted_at)
+
+    def test_exam_submit_requires_post(self):
+        response = self.client.get(
+            reverse(
+                "quiz:exam_submit",
+                args=[self.ue.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 405)
+        self.ue.refresh_from_db()
+        self.assertIsNone(self.ue.submitted_at)
+        self.assertIsNone(self.ue.score)
