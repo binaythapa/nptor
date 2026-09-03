@@ -2,7 +2,12 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
-from courses.services.permissions import can_view_instructor_dashboard
+from django.test import RequestFactory
+
+from courses.services.permissions import (
+    can_view_instructor_dashboard,
+    instructor_dashboard_access_required,
+)
 
 
 class InstructorDashboardAuthorizationTests(TestCase):
@@ -51,3 +56,35 @@ class InstructorDashboardAuthorizationTests(TestCase):
         self.assertFalse(
             can_view_instructor_dashboard(self._user(authenticated=False), object())
         )
+
+    @patch("courses.services.permissions.can_view_instructor_dashboard", return_value=False)
+    def test_dashboard_decorator_blocks_non_teaching_active_org_member(
+        self,
+        can_view,
+    ):
+        request = RequestFactory().get("/courses/instructor/dashboard/")
+        request.user = self._user()
+        request.active_org = object()
+
+        view = instructor_dashboard_access_required(lambda request: "allowed")
+        response = view(request)
+
+        self.assertEqual(response.status_code, 403)
+        can_view.assert_called_once_with(request.user, request.active_org)
+
+    @patch("courses.services.permissions.can_view_instructor_dashboard", return_value=True)
+    def test_dashboard_decorator_exposes_authorized_active_org_to_view(
+        self,
+        can_view,
+    ):
+        request = RequestFactory().get("/courses/instructor/dashboard/")
+        request.user = self._user()
+        request.active_org = object()
+
+        view = instructor_dashboard_access_required(
+            lambda request: request.organization
+        )
+        response = view(request)
+
+        self.assertIs(response, request.active_org)
+        can_view.assert_called_once_with(request.user, request.active_org)
