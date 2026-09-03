@@ -1,6 +1,9 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from quiz.models import Choice, Exam, Question, UserAnswer, UserExam
 
@@ -61,3 +64,43 @@ class ExamAttemptExpiryTests(TestCase):
             )
         )
         self.assertContains(response, "form.action =")
+
+    def test_expired_submission_grades_posted_answer(self):
+        UserExam.objects.filter(pk=self.ue.pk).update(
+            started_at=timezone.now() - timedelta(seconds=120),
+        )
+
+        response = self.client.post(
+            reverse(
+                "quiz:exam_submit",
+                args=[self.ue.id],
+            ),
+            {
+                f"question_{self.question.id}": str(self.correct.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse(
+                "quiz:exam_result",
+                args=[self.ue.id],
+            ),
+        )
+
+        self.ue.refresh_from_db()
+        answer = UserAnswer.objects.get(
+            user_exam=self.ue,
+            question=self.question,
+        )
+
+        self.assertEqual(answer.choice_id, self.correct.id)
+        self.assertTrue(answer.is_correct)
+        self.assertEqual(self.ue.score, 100.0)
+        self.assertTrue(self.ue.passed)
+        self.assertEqual(
+            self.ue.status,
+            UserExam.STATUS_SUBMITTED,
+        )
+        self.assertIsNotNone(self.ue.submitted_at)
