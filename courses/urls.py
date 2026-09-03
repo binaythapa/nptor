@@ -10,6 +10,8 @@ from .views import (
 )
 
 from courses.views.instructor_views import update_order
+from courses.permissions import course_learning_access_required
+
 # ============================================================
 # APP CONFIGURATION
 # ============================================================
@@ -35,13 +37,13 @@ urlpatterns = [
 
     path(
         "<slug:slug>/learn/",
-        student_views.course_learn,
+        course_learning_access_required(student_views.course_learn),
         name="course_learn",
     ),
 
     path(
         "<slug:slug>/learn/<int:lesson_id>/",
-        student_views.course_learn,
+        course_learning_access_required(student_views.course_learn),
         name="course_learn_lesson",
     ),
 
