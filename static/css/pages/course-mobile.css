@@ -1,0 +1,381 @@
+/* ==========================================================
+   COURSE / LESSON MOBILE EXPERIENCE
+   Keeps the existing desktop course player intact while
+   making navigation, content and actions touch-friendly.
+========================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+.course-detail-page,
+.course-player-page {
+    min-width: 0;
+}
+
+.course-detail-page {
+    margin: 0;
+    padding: 40px 20px;
+    background: #f9f9f9;
+    font-family: Arial, sans-serif;
+}
+
+.course-detail-card {
+    width: min(900px, 100%);
+    margin: 0 auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+}
+
+.course-detail-card h1,
+.course-player-page h2 {
+    overflow-wrap: anywhere;
+}
+
+.course-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.course-detail-actions .btn {
+    margin-top: 0;
+}
+
+.course-player-page {
+    min-height: 100vh;
+    background: #fff;
+}
+
+.course-player-page .layout {
+    min-width: 0;
+}
+
+.course-player-page .content {
+    min-width: 0;
+}
+
+.course-player-page .lesson-content,
+.course-player-page .description {
+    overflow-wrap: anywhere;
+}
+
+.course-player-page .lesson-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.course-player-page .lesson-content iframe,
+.course-player-page .lesson-content video {
+    max-width: 100%;
+}
+
+.course-player-page .lesson-video {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 260px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #000;
+}
+
+.course-player-page .lesson-video iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.course-player-page .mobile-menu-btn {
+    display: none;
+}
+
+.course-player-page .sidebar-backdrop {
+    display: none;
+}
+
+.course-player-page .lesson-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.course-player-page .lesson-nav-prev,
+.course-player-page .lesson-nav-next {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 7px;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.course-player-page .lesson-nav-prev {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.course-player-page .lesson-nav-next {
+    background: #2e7d32;
+    color: #fff;
+    margin-left: auto;
+}
+
+@media (max-width: 900px) {
+    .course-player-page .content {
+        padding: 18px;
+    }
+
+    .course-player-page .lesson-video {
+        min-height: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    .course-detail-page {
+        padding: 16px 12px;
+    }
+
+    .course-detail-card {
+        padding: 20px 16px;
+        border-radius: 10px;
+    }
+
+    .course-detail-card h1 {
+        font-size: 26px;
+        line-height: 1.2;
+    }
+
+    .course-detail-actions {
+        flex-direction: column;
+    }
+
+    .course-detail-actions .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .course-player-page .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 1100;
+        min-height: 56px;
+        height: auto;
+        padding: 8px 12px;
+    }
+
+    .course-player-page .topbar-left {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .course-player-page .topbar-left > strong {
+        min-width: 0;
+        max-width: calc(100vw - 120px);
+    }
+
+    .course-player-page .topbar-left > strong {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .course-player-page .mobile-menu-btn {
+        display: inline-flex;
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 7px;
+        background: #334155;
+        color: #fff;
+        cursor: pointer;
+        font-size: 21px;
+    }
+
+    .course-player-page .sidebar {
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+        width: min(86vw, 340px);
+        height: auto;
+        padding: 14px;
+        z-index: 1200;
+        transform: translateX(-105%);
+        transition: transform .25s ease;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, .14);
+    }
+
+    .course-player-page.sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+
+    .course-player-page .sidebar-backdrop {
+        position: fixed;
+        inset: 56px 0 0;
+        z-index: 1150;
+        background: rgba(15, 23, 42, .45);
+    }
+
+    .course-player-page.sidebar-open .sidebar-backdrop {
+        display: block;
+    }
+
+    .course-player-page .layout {
+        display: block;
+        height: auto;
+        min-height: calc(100vh - 56px);
+    }
+
+    .course-player-page .content {
+        width: 100%;
+        padding: 18px 14px 96px;
+        overflow: visible;
+    }
+
+    .course-player-page .content h2 {
+        margin: 8px 0 18px;
+        font-size: 25px;
+        line-height: 1.25;
+    }
+
+    .course-player-page .preview-banner {
+        margin: 10px 12px 0 !important;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .course-player-page .lesson-content,
+    .course-player-page .description {
+        margin: 16px 0;
+        font-size: 15px;
+        line-height: 1.7;
+    }
+
+    .course-player-page .lesson-content .align-left,
+    .course-player-page .lesson-content .align-right {
+        float: none;
+        width: 100%;
+        margin: 16px auto;
+    }
+
+    .course-player-page .lesson-content .img-small,
+    .course-player-page .lesson-content .img-medium,
+    .course-player-page .lesson-content .img-large {
+        width: 100%;
+    }
+
+    .course-player-page .lesson-content pre {
+        max-width: 100%;
+        padding: 12px;
+        font-size: 13px;
+        white-space: pre;
+        overflow-x: auto;
+    }
+
+    .course-player-page .lesson-video {
+        min-height: 0;
+        border-radius: 8px;
+    }
+
+    .course-player-page .lesson-link {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        padding: 10px 9px;
+        margin-bottom: 5px;
+        line-height: 1.35;
+    }
+
+    .course-player-page .sidebar h4 {
+        margin: 18px 4px 8px;
+        line-height: 1.3;
+    }
+
+    .course-player-page .lesson-navigation {
+        position: sticky;
+        bottom: 0;
+        z-index: 1000;
+        margin: 28px -14px -96px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, .97);
+        box-shadow: 0 -4px 16px rgba(15, 23, 42, .08);
+    }
+
+    .course-player-page .lesson-nav-prev,
+    .course-player-page .lesson-nav-next {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+        font-size: 14px;
+        padding: 10px 8px;
+    }
+
+    .course-player-page .celebration-card {
+        padding: 26px 18px;
+        width: calc(100% - 24px);
+    }
+
+    .course-player-page .back-builder-btn {
+        padding: 7px 9px;
+    }
+
+    .course-player-page .back-builder-btn span {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .course-player-page .topbar-left > strong {
+        max-width: calc(100vw - 90px);
+        font-size: 13px !important;
+    }
+
+    .course-player-page #quote-rotator {
+        display: none;
+    }
+
+    .course-player-page .content {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .course-player-page .lesson-navigation {
+        margin-left: -12px;
+        margin-right: -12px;
+    }
+
+    .course-player-page .lesson-nav-prev,
+    .course-player-page .lesson-nav-next {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .course-player-page .content h2 {
+        font-size: 22px;
+    }
+
+    .course-player-page .lesson-nav-prev,
+    .course-player-page .lesson-nav-next {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .course-player-page .sidebar {
+        transition: none;
+    }
+}
