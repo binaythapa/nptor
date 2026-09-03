@@ -72,6 +72,37 @@ def can_preview_course(user, course):
     return membership.role in OrganizationRole.teaching_roles()
 
 
+def can_view_instructor_dashboard(user, organization):
+    """
+    Determine whether a user may view organization-specific
+    instructor dashboard data.
+
+    Organization course and student-progress information is
+    restricted to active teaching/content roles. A normal student
+    must never gain access merely because middleware selected the
+    organization as their active organization.
+    """
+
+    if not user or not user.is_authenticated:
+        return False
+
+    if user.is_superuser:
+        return True
+
+    if not organization:
+        return False
+
+    membership = get_active_membership(
+        user,
+        organization,
+    )
+
+    if not membership:
+        return False
+
+    return membership.role in OrganizationRole.teaching_roles()
+
+
 # ============================================================
 # COURSE REVIEW PERMISSION
 # ============================================================
