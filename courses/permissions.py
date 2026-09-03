@@ -55,8 +55,32 @@ def course_learning_access_required(view_func):
     return _wrapped
 
 
+def course_entitlement_required(view_func):
+    """Require actual access for non-preview course operations."""
+
+    @wraps(view_func)
+    def _wrapped(request, slug, *args, **kwargs):
+        course = Course.objects.filter(slug=slug).first()
+        if course is None:
+            raise Http404("Course not found.")
+
+        if not (
+            course.approval_status == Course.APPROVAL_APPROVED
+            and course.is_published
+            and course.is_public
+        ):
+            raise Http404("Course not found.")
+
+        if not _user_has_course_access(request.user, course):
+            raise PermissionDenied("You do not have access to this course.")
+
+        return view_func(request, slug, *args, **kwargs)
+
+    return _wrapped
+
+
 def lesson_course_access_required(view_func):
-    """Require access to the course containing a lesson."""
+    """Require actual access to the course containing a lesson."""
 
     @wraps(view_func)
     def _wrapped(request, slug, lesson_id, *args, **kwargs):
@@ -68,12 +92,6 @@ def lesson_course_access_required(view_func):
             raise Http404("Lesson not found.")
 
         course = lesson.section.course
-        is_owner = course.created_by_id == request.user.id
-        is_admin = request.user.is_staff or request.user.is_superuser
-        preview_requested = request.GET.get("preview") == "1"
-
-        if preview_requested and (is_owner or is_admin):
-            return view_func(request, slug, lesson_id, *args, **kwargs)
 
         if not (
             course.approval_status == Course.APPROVAL_APPROVED
