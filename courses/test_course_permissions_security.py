@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
+from courses.models.section import CourseSection
 from courses.services.permissions import can_edit_course
 from organizations.models.role import OrganizationRole
 
@@ -82,3 +83,31 @@ class CourseEditAuthorizationTests(TestCase):
         )
 
         self.assertTrue(can_edit_course(user, course))
+
+
+class CourseSectionAuthorizationTests(TestCase):
+    @patch("courses.services.permissions.can_edit_course")
+    def test_section_delete_permission_delegates_to_course_authorization(
+        self,
+        can_edit_course_mock,
+    ):
+        user = SimpleNamespace(is_authenticated=True, is_superuser=False)
+        course = SimpleNamespace(created_by=object(), organization=object())
+        section = CourseSection(course=course, title="Section", order=1)
+        can_edit_course_mock.return_value = True
+
+        self.assertTrue(section.can_be_deleted_by(user))
+        can_edit_course_mock.assert_called_once_with(user, course)
+
+    @patch("courses.services.permissions.can_edit_course")
+    def test_section_delete_permission_denies_when_course_edit_is_denied(
+        self,
+        can_edit_course_mock,
+    ):
+        user = SimpleNamespace(is_authenticated=True, is_superuser=False)
+        course = SimpleNamespace(created_by=user, organization=object())
+        section = CourseSection(course=course, title="Section", order=1)
+        can_edit_course_mock.return_value = False
+
+        self.assertFalse(section.can_be_deleted_by(user))
+        can_edit_course_mock.assert_called_once_with(user, course)
