@@ -17,15 +17,19 @@ class CourseEditAuthorizationTests(TestCase):
             is_superuser=superuser,
         )
 
-    def _course(self, *, organization=None, created_by=None):
+    def _course(self, *, organization=None, created_by=None, approval_status="draft"):
         return SimpleNamespace(
             organization=organization,
             created_by=created_by,
+            approval_status=approval_status,
+            APPROVAL_DRAFT="draft",
+            APPROVAL_CHANGES="changes_required",
+            APPROVAL_REJECTED="rejected",
         )
 
     def test_superuser_can_edit_any_course(self):
         user = self._user(superuser=True)
-        course = self._course(organization=object())
+        course = self._course(organization=object(), approval_status="approved")
 
         self.assertTrue(can_edit_course(user, course))
 
