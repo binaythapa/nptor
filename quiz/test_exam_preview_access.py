@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from quiz.models import Category, Choice, Domain, Exam, Question
+from quiz.models import Category, Choice, Domain, Exam, Question, UserExam
 
 
 User = get_user_model()
@@ -69,7 +69,7 @@ class ExamPreviewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["questions"]), 3)
-        self.assertFalse(self.user.userexam_set.exists())
+        self.assertFalse(UserExam.objects.filter(user=self.user).exists())
         self.assertContains(response, "Get full access")
 
     def test_free_exam_preview_redirects_to_real_start(self):
