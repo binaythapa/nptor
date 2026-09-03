@@ -19,6 +19,7 @@ from courses.permissions import (
 )
 from courses.services.permissions import (
     instructor_dashboard_access_required,
+    course_creation_access_required,
 )
 from payments.views.checkout import course_checkout
 
@@ -80,7 +81,11 @@ urlpatterns = [
         instructor_dashboard_access_required(instructor_views.instructor_dashboard),
         name="instructor_dashboard",
     ),
-    path("instructor/course/create/", instructor_views.course_create, name="course_create"),
+    path(
+        "instructor/course/create/",
+        course_creation_access_required(instructor_views.course_create),
+        name="course_create",
+    ),
     path("instructor/course/<slug:slug>/edit/", instructor_views.course_edit, name="course_edit"),
     path("instructor/course/<slug:slug>/delete/", instructor_views.course_delete, name="course_delete"),
     path("instructor/course/<slug:slug>/builder/", instructor_views.course_builder, name="course_builder"),
