@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
 from courses.models import Course
 from payments.models import PaymentOrder
@@ -39,6 +40,12 @@ class CourseCheckoutAuthorizationTests(TestCase):
         course.subscription_plans.add(self.plan)
         return course
 
+    def _checkout_url(self, course):
+        return reverse(
+            "payments:course_checkout",
+            kwargs={"course_id": course.id},
+        )
+
     def test_private_course_cannot_start_checkout(self):
         course = self._course(
             public=False,
@@ -48,9 +55,7 @@ class CourseCheckoutAuthorizationTests(TestCase):
         self.client.force_login(self.user)
 
         with patch("payments.views.checkout._start_payment") as start_payment:
-            response = self.client.get(
-                f"/payments/course/{course.id}/checkout/"
-            )
+            response = self.client.get(self._checkout_url(course))
 
         self.assertEqual(response.status_code, 302)
         start_payment.assert_not_called()
@@ -64,9 +69,7 @@ class CourseCheckoutAuthorizationTests(TestCase):
         self.client.force_login(self.user)
 
         with patch("payments.views.checkout._start_payment") as start_payment:
-            response = self.client.get(
-                f"/payments/course/{course.id}/checkout/"
-            )
+            response = self.client.get(self._checkout_url(course))
 
         self.assertEqual(response.status_code, 302)
         start_payment.assert_not_called()
@@ -80,9 +83,7 @@ class CourseCheckoutAuthorizationTests(TestCase):
         self.client.force_login(self.user)
 
         with patch("payments.views.checkout._start_payment") as start_payment:
-            response = self.client.get(
-                f"/payments/course/{course.id}/checkout/"
-            )
+            response = self.client.get(self._checkout_url(course))
 
         self.assertEqual(response.status_code, 302)
         start_payment.assert_not_called()
@@ -96,16 +97,13 @@ class CourseCheckoutAuthorizationTests(TestCase):
         self.client.force_login(self.user)
 
         with patch("payments.views.checkout._start_payment") as start_payment:
-            start_payment.return_value = response = self.client.get("/")
-            checkout_response = self.client.get(
-                f"/payments/course/{course.id}/checkout/"
-            )
+            start_payment.return_value = object()
+            response = self.client.get(self._checkout_url(course))
 
-        self.assertIs(checkout_response, response)
-        start_payment.assert_called_once_with(
-            request=start_payment.call_args.kwargs["request"],
-            resource_type=PaymentOrder.RESOURCE_COURSE,
-            resource=course,
-            amount=self.plan.price,
-            currency=self.plan.currency,
-        )
+        self.assertIs(response, start_payment.return_value)
+        start_payment.assert_called_once()
+        kwargs = start_payment.call_args.kwargs
+        self.assertEqual(kwargs["resource_type"], PaymentOrder.RESOURCE_COURSE)
+        self.assertEqual(kwargs["resource"], course)
+        self.assertEqual(kwargs["amount"], self.plan.price)
+        self.assertEqual(kwargs["currency"], self.plan.currency)
