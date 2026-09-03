@@ -12,36 +12,21 @@
     <span class="marketplace-kicker">COURSE PREVIEW</span>
     <h1 id="course-preview-title">{{ course.title }}</h1>
     <p>{{ course.description }}</p>
-    <div class="resource-footer"><span class="resource-status">{{ course.level|title }} · Preview lesson</span><a class="resource-action primary" href="{% url 'courses:subscribe_course' course.id %}">Get full access →</a></div>
+    <div class="resource-footer"><span class="resource-status">{{ course.level|title }} · Preview lesson</span><a class="resource-action primary" href="{% url 'courses:subscribe_course' course.id %}?next={% url 'courses:course_learn' course.slug %}">Get full access →</a></div>
   </section>
 
   {% if preview_lesson %}
   <section class="marketplace-section" aria-labelledby="preview-lesson-title">
     <div class="marketplace-section-head"><div><h2 id="preview-lesson-title">Start with this lesson</h2><p>This first lesson is available as a preview. Your progress is not recorded until you have access.</p></div></div>
-    <article class="resource-card">
-      <div class="resource-icon resource-icon-course" aria-hidden="true">1</div>
-      <div class="resource-body">
-        <span class="resource-type">Preview lesson</span>
-        <h3>{{ preview_lesson.title }}</h3>
-        {% if preview_lesson.lesson_type == 'video' %}<p>Video lesson</p>{% elif preview_lesson.lesson_type == 'article' %}<p>Article lesson</p>{% elif preview_lesson.lesson_type == 'quiz' %}<p>Quiz lesson</p>{% else %}<p>Practice lesson</p>{% endif %}
-        {% if preview_lesson.lesson_type == 'article' and preview_lesson.article_content %}<div class="exam-preview-question">{{ preview_lesson.article_content|safe }}</div>{% elif preview_lesson.lesson_type == 'video' and preview_lesson.video_url %}<p class="preview-video-note">Open the full course to continue watching this lesson and record progress.</p>{% elif preview_lesson.lesson_type == 'quiz' %}<p class="preview-video-note">This lesson is part of the full learning experience and requires course access to launch.</p>{% endif %}
-      </div>
-    </article>
+    <article class="resource-card"><div class="resource-icon resource-icon-course" aria-hidden="true">1</div><div class="resource-body"><span class="resource-type">Preview lesson</span><h3>{{ preview_lesson.title }}</h3>{% if preview_lesson.lesson_type == 'video' %}<p>Video lesson</p>{% elif preview_lesson.lesson_type == 'article' %}<p>Article lesson</p>{% elif preview_lesson.lesson_type == 'quiz' %}<p>Quiz lesson</p>{% else %}<p>Practice lesson</p>{% endif %}{% if preview_lesson.lesson_type == 'article' and preview_lesson.article_content %}<div class="exam-preview-question">{{ preview_lesson.article_content|safe }}</div>{% elif preview_lesson.lesson_type == 'video' and preview_lesson.video_url %}<p class="preview-video-note">Open the full course to continue watching this lesson and record progress.</p>{% elif preview_lesson.lesson_type == 'quiz' %}<p class="preview-video-note">This lesson is part of the full learning experience and requires course access to launch.</p>{% endif %}</div></article>
   </section>
   {% endif %}
 
   <section class="marketplace-section" aria-labelledby="course-contents-title">
     <div class="marketplace-section-head"><div><h2 id="course-contents-title">Course contents</h2><p>Explore the structure now; locked lessons become available after enrollment.</p></div></div>
-    <div class="resource-grid">
-      {% for section in sections %}
-      <article class="resource-card">
-        <div class="resource-icon resource-icon-course" aria-hidden="true">{{ forloop.counter }}</div>
-        <div class="resource-body"><span class="resource-type">Section {{ forloop.counter }}</span><h3>{{ section.title }}</h3><p>{{ section.lessons.all|length }} lesson{{ section.lessons.all|length|pluralize }}</p></div>
-      </article>
-      {% endfor %}
-    </div>
+    <div class="resource-grid">{% for section in sections %}<article class="resource-card"><div class="resource-icon resource-icon-course" aria-hidden="true">{{ forloop.counter }}</div><div class="resource-body"><span class="resource-type">Section {{ forloop.counter }}</span><h3>{{ section.title }}</h3><p>{{ section.lessons.all|length }} lesson{{ section.lessons.all|length|pluralize }}</p></div></article>{% endfor %}</div>
   </section>
 
-  <section class="marketplace-section"><div class="marketplace-empty"><strong>Want the complete course?</strong><br>Unlock every lesson, video progress, quizzes, and completion tracking.<br><a class="resource-action primary" href="{% url 'courses:subscribe_course' course.id %}">Enroll →</a></div></section>
+  <section class="marketplace-section"><div class="marketplace-empty"><strong>Want the complete course?</strong><br>Unlock every lesson, video progress, quizzes, and completion tracking.<br><a class="resource-action primary" href="{% url 'courses:subscribe_course' course.id %}?next={% url 'courses:course_learn' course.slug %}">Enroll →</a></div></section>
 </main>
 {% endblock %}
