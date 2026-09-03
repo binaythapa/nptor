@@ -253,6 +253,28 @@
     line-height: 1.4 !important;
 }
 
+/* Result block: keep the next-question action inside the result panel. */
+.practice-result.with-next-action {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+}
+
+.practice-result-content {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+.practice-result-next {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+}
+
+.practice-result-next .practice-btn {
+    white-space: nowrap !important;
+}
+
 .practice-actions {
     margin-top: 12px !important;
 }
@@ -341,6 +363,15 @@
     .practice-option-text {
         font-size: .82rem !important;
     }
+
+    .practice-result.with-next-action {
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .practice-result-next .practice-btn {
+        min-height: 34px !important;
+    }
 }
 
 @media (max-width: 480px) {
@@ -389,6 +420,20 @@
 
     .practice-option-text {
         font-size: .8rem !important;
+    }
+
+    .practice-result.with-next-action {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .practice-result-next {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    .practice-result-next .practice-btn {
+        width: 100% !important;
     }
 
     .practice-actions {
