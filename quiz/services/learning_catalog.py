@@ -19,6 +19,7 @@ def _public_courses():
             is_published=True,
             is_public=True,
             organization__isnull=True,
+            category__is_active=True,
             category__domain__is_active=True,
         )
         .select_related("category", "category__domain")
@@ -31,6 +32,7 @@ def _public_exams():
         .filter(
             is_published=True,
             organization__isnull=True,
+            primary_category__is_active=True,
             primary_category__domain__is_active=True,
         )
         .select_related("primary_category", "primary_category__domain", "track")
@@ -46,6 +48,7 @@ def _public_tracks():
             organization__isnull=True,
             exams__is_published=True,
             exams__organization__isnull=True,
+            exams__primary_category__is_active=True,
             exams__primary_category__domain__is_active=True,
         )
         .prefetch_related("exams", "exams__primary_category__domain")
@@ -67,18 +70,9 @@ def _domain_for_track(track):
 
 
 def _domain_summary(domain, courses, exams, tracks):
-    course_ids = [
-        course.id for course in courses
-        if course.category and course.category.domain_id == domain.id
-    ]
-    exam_ids = [
-        exam.id for exam in exams
-        if exam.primary_category and exam.primary_category.domain_id == domain.id
-    ]
-    track_ids = [
-        track.id for track in tracks
-        if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)
-    ]
+    course_ids = [course.id for course in courses if course.category and course.category.domain_id == domain.id]
+    exam_ids = [exam.id for exam in exams if exam.primary_category and exam.primary_category.domain_id == domain.id]
+    track_ids = [track.id for track in tracks if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)]
     return {
         "domain": domain,
         "course_count": len(course_ids),
@@ -133,32 +127,15 @@ def _add_access_state(user, items):
     return items
 
 
-def build_learning_catalog(
-    *,
-    user,
-    domain=None,
-    query="",
-    resource_type="all",
-    category=None,
-    level=None,
-    access=None,
-    page=1,
-    per_page=DEFAULT_PER_PAGE,
-):
+def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, page=1, per_page=DEFAULT_PER_PAGE):
     """Build the public domain-first learning marketplace catalogue."""
     courses = list(_public_courses().order_by("title"))
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
 
     active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).order_by("name"))
-    domains = [
-        _domain_summary(item, courses, exams, tracks)
-        for item in active_domains
-    ]
-    domains = [
-        item for item in domains
-        if item["course_count"] or item["exam_count"] or item["track_count"]
-    ]
+    domains = [_domain_summary(item, courses, exams, tracks) for item in active_domains]
+    domains = [item for item in domains if item["course_count"] or item["exam_count"] or item["track_count"]]
 
     selected_domain = domain
     if selected_domain is not None:
@@ -169,11 +146,7 @@ def build_learning_catalog(
     if category is not None:
         category_ids = set(category.get_descendants_include_self())
         courses = [item for item in courses if item.category_id in category_ids]
-        exams = [
-            item for item in exams
-            if item.primary_category_id in category_ids
-            or any(cat.id in category_ids for cat in item.categories.all())
-        ]
+        exams = [item for item in exams if item.primary_category_id in category_ids or any(cat.id in category_ids for cat in item.categories.all())]
 
     if resource_type not in VALID_RESOURCE_TYPES:
         resource_type = "all"
@@ -187,10 +160,7 @@ def build_learning_catalog(
 
     courses = [item for item in courses if _matches_level(item, "course", level)]
     exams = [item for item in exams if _matches_level(item, "exam", level)]
-    tracks = [
-        item for item in tracks
-        if not level or any(_matches_level(exam, "exam", level) for exam in item.exams.all())
-    ]
+    tracks = [item for item in tracks if not level or any(_matches_level(exam, "exam", level) for exam in item.exams.all())]
 
     resources = []
     if resource_type in {"all", "courses"}:
@@ -204,11 +174,7 @@ def build_learning_catalog(
 
     if access in {"owned", "available"}:
         resources = _add_access_state(user, resources)
-        resources = [
-            item for item in resources
-            if (access == "owned" and item["has_access"])
-            or (access == "available" and not item["has_access"])
-        ]
+        resources = [item for item in resources if (access == "owned" and item["has_access"]) or (access == "available" and not item["has_access"])]
 
     try:
         page_size = min(max(int(per_page), 1), MAX_PER_PAGE)
@@ -225,12 +191,7 @@ def build_learning_catalog(
         _add_access_state(user, page_obj.object_list)
 
     selected_categories = (
-        Category.objects.filter(
-            is_active=True,
-            domain=selected_domain,
-            organization__isnull=True,
-            parent__isnull=True,
-        ).order_by("name")
+        Category.objects.filter(is_active=True, domain=selected_domain, organization__isnull=True, parent__isnull=True).order_by("name")
         if selected_domain else Category.objects.none()
     )
 
