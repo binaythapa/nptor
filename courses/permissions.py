@@ -25,24 +25,13 @@ def _user_has_course_access(user, course):
 
 
 def course_learning_access_required(view_func):
-    """
-    Enforce access to course learning content before the student
-    learning view runs.
-
-    Public visibility is not the same as paid access. A public course
-    may be listed in the catalog while its lessons remain locked until
-    the user owns an active entitlement.
-
-    Exceptions:
-        - Course owner may use the existing preview mode.
-        - Platform staff/superusers may use the existing preview mode.
-        - Courses with no active plan are treated as legacy/free courses.
-        - A zero-price active plan is treated as free.
-    """
+    """Enforce access to course learning content."""
 
     @wraps(view_func)
     def _wrapped(request, slug, *args, **kwargs):
-        course = Course.objects.get(slug=slug)
+        course = Course.objects.filter(slug=slug).first()
+        if course is None:
+            raise Http404("Course not found.")
 
         is_owner = course.created_by_id == request.user.id
         is_admin = request.user.is_staff or request.user.is_superuser
@@ -59,9 +48,7 @@ def course_learning_access_required(view_func):
             raise Http404("Course not found.")
 
         if not _user_has_course_access(request.user, course):
-            raise PermissionDenied(
-                "You do not have access to this course."
-            )
+            raise PermissionDenied("You do not have access to this course.")
 
         return view_func(request, slug, *args, **kwargs)
 
@@ -73,9 +60,9 @@ def lesson_course_access_required(view_func):
 
     @wraps(view_func)
     def _wrapped(request, slug, lesson_id, *args, **kwargs):
-        lesson = Lesson.objects.select_related(
-            "section__course"
-        ).filter(id=lesson_id).first()
+        lesson = Lesson.objects.select_related("section__course").filter(
+            id=lesson_id
+        ).first()
 
         if lesson is None or lesson.section.course.slug != slug:
             raise Http404("Lesson not found.")
@@ -96,9 +83,7 @@ def lesson_course_access_required(view_func):
             raise Http404("Course not found.")
 
         if not _user_has_course_access(request.user, course):
-            raise PermissionDenied(
-                "You do not have access to this course."
-            )
+            raise PermissionDenied("You do not have access to this course.")
 
         return view_func(request, slug, lesson_id, *args, **kwargs)
 
@@ -117,9 +102,9 @@ def video_progress_access_required(view_func):
         except (TypeError, ValueError):
             return view_func(request, *args, **kwargs)
 
-        lesson = Lesson.objects.select_related(
-            "section__course"
-        ).filter(id=lesson_id).first()
+        lesson = Lesson.objects.select_related("section__course").filter(
+            id=lesson_id
+        ).first()
 
         if lesson is None:
             return view_func(request, *args, **kwargs)
@@ -134,7 +119,7 @@ def video_progress_access_required(view_func):
             return view_func(request, *args, **kwargs)
 
         if not _user_has_course_access(request.user, course):
-            return view_func(request, *args, **kwargs)
+            raise PermissionDenied("You do not have access to this course.")
 
         return view_func(request, *args, **kwargs)
 
