@@ -11,10 +11,7 @@ User = get_user_model()
 
 class LearningCatalogServiceTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="learning-catalog-user",
-            password="test-password",
-        )
+        self.user = User.objects.create_user(username="learning-catalog-user", password="test-password")
         self.snowflake = Domain.objects.create(name="Snowflake", slug="snowflake", is_active=True)
         self.aws = Domain.objects.create(name="AWS", slug="aws", is_active=True)
         self.snowflake_category = Category.objects.create(name="Snowflake Core", slug="snowflake-core", domain=self.snowflake, is_active=True)
@@ -40,24 +37,19 @@ class LearningCatalogServiceTests(TestCase):
     def test_excludes_inactive_domains_and_non_public_resources(self):
         inactive = Domain.objects.create(name="Legacy", slug="legacy", is_active=False)
         inactive_category = Category.objects.create(name="Legacy Core", slug="legacy-core", domain=inactive)
+        Course.objects.create(title="Visible AWS", description="Visible.", category=self.aws_category, level="beginner", is_public=True, is_published=True, approval_status=Course.APPROVAL_APPROVED)
         Course.objects.create(title="Draft Snowflake", description="Hidden.", category=self.snowflake_category, level="beginner", is_public=False, is_published=False, approval_status=Course.APPROVAL_DRAFT)
         Exam.objects.create(title="Legacy Exam", primary_category=inactive_category, question_count=10, duration_seconds=1800, is_published=True, is_free=True)
 
         catalog = build_learning_catalog(user=self.user)
 
-        self.assertEqual({item["domain"].slug for item in catalog["domains"]}, {"snowflake", "aws"})
+        self.assertEqual([item["domain"].slug for item in catalog["domains"]], ["aws"])
         self.assertTrue(all(item["domain"].slug != "legacy" for item in catalog["domains"]))
+        self.assertNotIn("Draft Snowflake", [item["resource"].title for item in catalog["resources"]])
 
     def test_search_and_pagination_are_server_side(self):
         for index in range(15):
-            Exam.objects.create(
-                title=f"Snowflake Practice {index}",
-                primary_category=self.snowflake_category,
-                question_count=10,
-                duration_seconds=1800,
-                is_published=True,
-                is_free=True,
-            )
+            Exam.objects.create(title=f"Snowflake Practice {index}", primary_category=self.snowflake_category, question_count=10, duration_seconds=1800, is_published=True, is_free=True)
 
         catalog = build_learning_catalog(user=self.user, query="Snowflake Practice", resource_type="exams", per_page=5, page=2)
 
