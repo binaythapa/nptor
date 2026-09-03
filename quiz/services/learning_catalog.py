@@ -116,6 +116,9 @@ def _resource_item(resource_type, resource):
     item = {"type": resource_type, "resource": resource, "is_shortlisted": False}
     if resource_type == "exam":
         item["duration_minutes"] = (resource.duration_seconds or 0) // 60
+    elif resource_type == "track":
+        domain = _domain_for_track(resource)
+        item["domain_slug"] = domain.slug if domain else ""
     return item
 
 
@@ -130,13 +133,6 @@ def _add_user_state(user, items):
         resource = item["resource"]
         item["is_shortlisted"] = (item["type"], resource.id) in shortlisted
         item["has_access"] = _has_access(user, resource_type, resource)
-    return items
-
-
-def _add_access_state(user, items):
-    for item in items:
-        access_type = getattr(AccessService, f"RESOURCE_{item['type'].upper()}")
-        item["has_access"] = _has_access(user, access_type, item["resource"])
     return items
 
 
