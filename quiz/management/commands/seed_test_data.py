@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.utils.text import slugify
 
 from quiz.models import Category, Choice, Domain, Exam, ExamCategoryAllocation, ExamTrack, Question
 
@@ -50,13 +49,14 @@ class Command(BaseCommand):
 
     def _domains(self):
         data = [
-            ("AWS Cloud", "aws-cloud"),
-            ("Snowflake", "snowflake"),
-            ("Azure", "azure"),
+            ("AWS Cloud", "seed-aws-cloud"),
+            ("Snowflake", "seed-snowflake"),
+            ("Azure", "seed-azure"),
         ]
         return [
             Domain.objects.update_or_create(
                 slug=slug,
+                organization=None,
                 defaults={"name": f"{SEED_PREFIX} {name}", "is_active": True},
             )[0]
             for name, slug in data
@@ -64,14 +64,14 @@ class Command(BaseCommand):
 
     def _categories(self, domains):
         specs = [
-            (domains[0], "Compute", "compute"),
-            (domains[0], "Storage", "storage"),
-            (domains[0], "IAM", "iam"),
-            (domains[1], "Virtual Warehouses", "virtual-warehouses"),
-            (domains[1], "Data Loading", "data-loading"),
-            (domains[1], "Time Travel", "time-travel"),
-            (domains[2], "Data Factory", "data-factory"),
-            (domains[2], "Storage", "azure-storage"),
+            (domains[0], "Compute", "seed-compute"),
+            (domains[0], "Storage", "seed-storage"),
+            (domains[0], "IAM", "seed-iam"),
+            (domains[1], "Virtual Warehouses", "seed-virtual-warehouses"),
+            (domains[1], "Data Loading", "seed-data-loading"),
+            (domains[1], "Time Travel", "seed-time-travel"),
+            (domains[2], "Data Factory", "seed-data-factory"),
+            (domains[2], "Storage", "seed-azure-storage"),
         ]
         result = []
         for domain, name, slug in specs:
@@ -125,9 +125,9 @@ class Command(BaseCommand):
 
     def _tracks(self):
         specs = [
-            ("AWS SAA-C03", "aws-saa-c03"),
-            ("SnowPro Core", "snowpro-core"),
-            ("Azure Fundamentals", "azure-fundamentals"),
+            ("AWS SAA-C03", "seed-aws-saa-c03"),
+            ("SnowPro Core", "seed-snowpro-core"),
+            ("Azure Fundamentals", "seed-azure-fundamentals"),
         ]
         return [
             ExamTrack.objects.update_or_create(
