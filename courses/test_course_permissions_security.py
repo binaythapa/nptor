@@ -113,6 +113,7 @@ class CourseEditAuthorizationTests(TestCase):
             slug="source-course",
             organization=source_org,
             owner_type="organization",
+            save=lambda: None,
         )
         request.organization = active_org
         get_object_or_404.return_value = course
