@@ -25,3 +25,11 @@ class FrontendAccessibilityTests(SimpleTestCase):
     def test_responsive_styles_honor_reduced_motion(self):
         css = (self.root / "static/css/responsive.css").read_text()
         self.assertIn("prefers-reduced-motion: reduce", css)
+
+    def test_practice_filters_submit_on_change(self):
+        script = (self.root / "static/js/pages/practice.js").read_text()
+        self.assertIn('querySelector(".practice-filter-form")', script)
+        self.assertIn('select[name=\'domain\']', script)
+        self.assertIn('select[name=\'category\']', script)
+        self.assertIn('categorySelect.value = ""', script)
+        self.assertIn('form.requestSubmit()', script)
