@@ -14,8 +14,6 @@ class PracticeResultActionTests(SimpleTestCase):
             / "templates/quiz/student/practice/_answer_result.html"
         ).read_text()
 
-        self.assertNotIn(
-            "class=\"practice-btn practice-btn-secondary\"",
-            template,
-        )
+        self.assertNotIn("class=\"practice-actions\"", template)
+        self.assertNotIn("href=\"{% url 'quiz:practice' %}\"", template)
         self.assertIn("data-practice-next", template)
