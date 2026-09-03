@@ -10,7 +10,12 @@ from .views import (
 )
 
 from courses.views.instructor_views import update_order
-from courses.permissions import course_learning_access_required
+from courses.permissions import (
+    course_learning_access_required,
+    lesson_course_access_required,
+    video_progress_access_required,
+)
+from payments.views.checkout import course_checkout
 
 # ============================================================
 # APP CONFIGURATION
@@ -24,7 +29,6 @@ app_name = "courses"
 # ============================================================
 
 urlpatterns = [
-
     # ========================================================
     # STUDENT
     # ========================================================
@@ -49,25 +53,26 @@ urlpatterns = [
 
     path(
         "<slug:slug>/learn/<int:lesson_id>/complete/",
-        student_views.mark_lesson_completed,
+        lesson_course_access_required(student_views.mark_lesson_completed),
         name="mark_lesson_completed",
     ),
 
     path(
         "<slug:slug>/certificate/pdf/",
-        student_views.download_certificate_pdf,
+        lesson_course_access_required(student_views.download_certificate_pdf),
         name="course_certificate_pdf",
     ),
 
     path(
         "video/progress/",
-        student_views.track_video_progress,
+        video_progress_access_required(student_views.track_video_progress),
         name="track_video_progress",
     ),
 
+    # Paid course checkout is owned by the payment application.
     path(
         "subscribe/<int:course_id>/",
-        student_views.subscribe_course,
+        course_checkout,
         name="subscribe_course",
     ),
 
@@ -83,7 +88,6 @@ urlpatterns = [
         student_views.course_detail,
         name="course_detail",
     ),
-
 
     # ========================================================
     # INSTRUCTOR
@@ -119,14 +123,12 @@ urlpatterns = [
         name="course_builder",
     ),
 
-
-
-
     path(
         "instructor/course/<slug:slug>/update-order/",
         update_order,
         name="update_order",
     ),
+
     # ========================================================
     # COURSE APPROVAL
     # ========================================================
@@ -136,7 +138,6 @@ urlpatterns = [
         instructor_views.submit_course_for_review_view,
         name="submit-course-review",
     ),
-
 
     # ========================================================
     # COURSE PUBLISH
@@ -148,7 +149,6 @@ urlpatterns = [
         name="toggle_publish_course",
     ),
 
-
     # ========================================================
     # LESSON EDIT
     # ========================================================
@@ -159,16 +159,9 @@ urlpatterns = [
         name="lesson_edit",
     ),
 
-
     # ========================================================
     # ADMIN COURSE MODERATION
     # ========================================================
-
-    # --------------------------------------------------------
-    # Main Admin Course Dashboard
-    #
-    # /courses/admin/courses/
-    # --------------------------------------------------------
 
     path(
         "admin/courses/",
@@ -176,23 +169,11 @@ urlpatterns = [
         name="admin-course-dashboard",
     ),
 
-    # --------------------------------------------------------
-    # All Courses
-    #
-    # /courses/admin/courses/all/
-    # --------------------------------------------------------
-
     path(
         "admin/courses/all/",
         admin_views.all_courses,
         name="admin-all-courses",
     ),
-
-    # --------------------------------------------------------
-    # Pending Courses
-    #
-    # /courses/admin/courses/pending/
-    # --------------------------------------------------------
 
     path(
         "admin/courses/pending/",
@@ -200,23 +181,11 @@ urlpatterns = [
         name="admin-pending-courses",
     ),
 
-    # --------------------------------------------------------
-    # Review Course
-    #
-    # /courses/admin/course/<slug>/review/
-    # --------------------------------------------------------
-
     path(
         "admin/course/<slug:slug>/review/",
         admin_views.review_course,
         name="admin-review-course",
     ),
-
-    # --------------------------------------------------------
-    # Approve Course
-    #
-    # /courses/admin/course/<slug>/approve/
-    # --------------------------------------------------------
 
     path(
         "admin/course/<slug:slug>/approve/",
@@ -224,23 +193,11 @@ urlpatterns = [
         name="admin-approve-course",
     ),
 
-    # --------------------------------------------------------
-    # Request Changes
-    #
-    # /courses/admin/course/<slug>/request-changes/
-    # --------------------------------------------------------
-
     path(
         "admin/course/<slug:slug>/request-changes/",
         admin_views.request_course_changes_view,
         name="admin-request-course-changes",
     ),
-
-    # --------------------------------------------------------
-    # Reject Course
-    #
-    # /courses/admin/course/<slug>/reject/
-    # --------------------------------------------------------
 
     path(
         "admin/course/<slug:slug>/reject/",
@@ -248,23 +205,11 @@ urlpatterns = [
         name="admin-reject-course",
     ),
 
-    # --------------------------------------------------------
-    # Publish Course
-    #
-    # /courses/admin/course/<slug>/publish/
-    # --------------------------------------------------------
-
     path(
         "admin/course/<slug:slug>/publish/",
         admin_views.publish_course_view,
         name="admin-publish-course",
     ),
-
-    # --------------------------------------------------------
-    # Unpublish Course
-    #
-    # /courses/admin/course/<slug>/unpublish/
-    # --------------------------------------------------------
 
     path(
         "admin/course/<slug:slug>/unpublish/",
@@ -272,14 +217,9 @@ urlpatterns = [
         name="admin-unpublish-course",
     ),
 
-
     # ========================================================
     # API
     # ========================================================
-
-    # --------------------------------------------------------
-    # SECTION
-    # --------------------------------------------------------
 
     path(
         "api/section/create/",
@@ -292,10 +232,6 @@ urlpatterns = [
         api_views.delete_section,
         name="api_delete_section",
     ),
-
-    # --------------------------------------------------------
-    # LESSON
-    # --------------------------------------------------------
 
     path(
         "api/lesson/create/",
@@ -314,10 +250,6 @@ urlpatterns = [
         api_views.edit_lesson,
         name="api_edit_lesson",
     ),
-
-    # --------------------------------------------------------
-    # ORDER
-    # --------------------------------------------------------
 
     path(
         "api/order/update/",
