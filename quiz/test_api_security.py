@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIRequestFactory, force_authenticate
 
-from quiz.api_views import start_exam
+from quiz.api_urls import start_exam_authorized
 from quiz.models import Exam, UserExam
 
 
@@ -25,7 +25,7 @@ class ExamAPIAuthorizationRegressionTests(TestCase):
         )
         self.factory = APIRequestFactory()
 
-    @patch("quiz.api_views.allocate_questions_for_exam")
+    @patch("quiz.api_urls.api_views.allocate_questions_for_exam")
     def test_paid_exam_api_start_requires_access(self, allocate):
         request = self.factory.post(
             f"/api/exams/{self.exam.id}/start/",
@@ -34,7 +34,7 @@ class ExamAPIAuthorizationRegressionTests(TestCase):
         )
         force_authenticate(request, user=self.user)
 
-        response = start_exam(request, self.exam.id)
+        response = start_exam_authorized(request, self.exam.id)
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(UserExam.objects.filter(user=self.user).count(), 0)
