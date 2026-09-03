@@ -1,7 +1,5 @@
 from pathlib import Path
-
 from django.test import SimpleTestCase
-
 
 class FrontendAccessibilityTests(SimpleTestCase):
     @classmethod
@@ -34,12 +32,13 @@ class FrontendAccessibilityTests(SimpleTestCase):
         self.assertIn('categorySelect.value = ""', script)
         self.assertIn('form.requestSubmit()', script)
 
-    def test_practice_uses_compact_express_style_shell(self):
+    def test_practice_uses_compact_express_style(self):
         template = (self.root / "templates/quiz/student/practice/practice.html").read_text()
-        css = (self.root / "static/css/pages/practice.css").read_text()
+        css = (self.root / "static/css/pages/practice-mobile.css").read_text()
         self.assertIn('class="practice-page"', template)
         self.assertIn('class="practice-page-header"', template)
         self.assertIn('class="practice-progress"', template)
-        self.assertIn('.practice-page {', css)
-        self.assertIn('.practice-page-header {', css)
-        self.assertIn('.practice-progress {', css)
+        self.assertIn('.practice-page { max-width:1100px', css)
+        self.assertIn('.practice-eyebrow,.practice-subtitle { display:none; }', css)
+        self.assertIn('.practice-mode + .practice-mode::before', css)
+        self.assertIn('.practice-question-card { padding:15px', css)
