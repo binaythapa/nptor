@@ -12,17 +12,12 @@ from organizations.permissions import get_active_membership
 
 def can_edit_course(user, course):
     """
-    Determine whether a user can edit a course.
+    Determine whether a user can edit course content.
 
-    Rules:
-        1. Superuser can edit any course.
-        2. Creator can edit a platform course they created.
-        3. Organization courses require active membership in
-           that organization with a teaching/content role.
-
-    An organization course must never be editable solely because
-    the requester is its creator; organization membership is the
-    authoritative boundary for organization-owned content.
+    Only draft, changes-required, and rejected courses are mutable
+    by instructors. Pending and approved courses are frozen so that
+    approved content cannot be changed without another review.
+    Platform administrators can always modify course content.
     """
 
     if not user or not user.is_authenticated:
@@ -30,6 +25,13 @@ def can_edit_course(user, course):
 
     if user.is_superuser:
         return True
+
+    if course.approval_status not in (
+        course.APPROVAL_DRAFT,
+        course.APPROVAL_CHANGES,
+        course.APPROVAL_REJECTED,
+    ):
+        return False
 
     if not course.organization:
         return course.created_by == user
@@ -92,8 +94,6 @@ def course_creation_access_required(view_func):
                 "You are not allowed to create courses."
             )
 
-        # Keep the legacy view's organization context aligned with the
-        # organization that was actually authorized above.
         request.organization = organization
 
         return view_func(request, *args, **kwargs)
@@ -105,11 +105,6 @@ def can_preview_course(user, course):
     """
     Determine whether a user can preview a course that is not
     publicly available yet.
-
-    Platform creators can preview their own platform courses.
-    Organization courses require the same active teaching-role
-    boundary as editing; creator status alone is not sufficient.
-    Platform administrators can preview any course.
     """
 
     if not user or not user.is_authenticated:
@@ -133,15 +128,7 @@ def can_preview_course(user, course):
 
 
 def can_view_instructor_dashboard(user, organization):
-    """
-    Determine whether a user may view organization-specific
-    instructor dashboard data.
-
-    Organization course and student-progress information is
-    restricted to active teaching/content roles. A normal student
-    must never gain access merely because middleware selected the
-    organization as their active organization.
-    """
+    """Determine whether a user may view organization instructor data."""
 
     if not user or not user.is_authenticated:
         return False
@@ -179,8 +166,6 @@ def instructor_dashboard_access_required(view_func):
                     "You are not allowed to view organization instructor data."
                 )
 
-            # instructor_dashboard historically reads request.organization.
-            # Populate it only after the centralized authorization succeeds.
             request.organization = organization
 
         return view_func(request, *args, **kwargs)
@@ -194,12 +179,7 @@ def instructor_dashboard_access_required(view_func):
 
 
 def can_review_course(user, course):
-    """
-    Determine whether a user can review a course.
-
-    Only platform administrators can currently
-    review courses.
-    """
+    """Only platform administrators can currently review courses."""
 
     if not user or not user.is_authenticated:
         return False
@@ -213,9 +193,7 @@ def can_review_course(user, course):
 
 
 def can_publish_course(user, course):
-    """
-    Determine whether a user can publish a course.
-    """
+    """Determine whether a user can publish a course."""
 
     if not user or not user.is_authenticated:
         return False
@@ -232,10 +210,7 @@ def can_publish_course(user, course):
 
 
 def can_submit_course_for_review(user, course):
-    """
-    Determine whether a user can submit a course
-    for administrator review.
-    """
+    """Determine whether a user can submit a course for review."""
 
     if not user or not user.is_authenticated:
         return False
@@ -261,16 +236,10 @@ def can_submit_course_for_review(user, course):
 def can_request_changes(user, course):
     """Determine whether an administrator can request changes."""
 
-    if not can_review_course(
-        user,
-        course,
-    ):
+    if not can_review_course(user, course):
         return False
 
-    return (
-        course.approval_status
-        == course.APPROVAL_PENDING
-    )
+    return course.approval_status == course.APPROVAL_PENDING
 
 
 # ============================================================
@@ -281,16 +250,10 @@ def can_request_changes(user, course):
 def can_approve_course(user, course):
     """Determine whether an administrator can approve a course."""
 
-    if not can_review_course(
-        user,
-        course,
-    ):
+    if not can_review_course(user, course):
         return False
 
-    return (
-        course.approval_status
-        == course.APPROVAL_PENDING
-    )
+    return course.approval_status == course.APPROVAL_PENDING
 
 
 # ============================================================
@@ -301,13 +264,7 @@ def can_approve_course(user, course):
 def can_reject_course(user, course):
     """Determine whether an administrator can reject a course."""
 
-    if not can_review_course(
-        user,
-        course,
-    ):
+    if not can_review_course(user, course):
         return False
 
-    return (
-        course.approval_status
-        == course.APPROVAL_PENDING
-    )
+    return course.approval_status == course.APPROVAL_PENDING
