@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.db.models import Q
+from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -118,6 +119,14 @@ def _platform_or_organization_resource(resource, organization):
     return resource.organization_id is None or resource.organization_id == organization.id
 
 
+def _mutable_course_state(course):
+    return course.approval_status in (
+        Course.APPROVAL_DRAFT,
+        Course.APPROVAL_CHANGES,
+        Course.APPROVAL_REJECTED,
+    )
+
+
 @org_admin_required
 def org_courses(request, slug):
     org = request.organization
@@ -148,7 +157,6 @@ def org_courses(request, slug):
         for course in visible_courses
     ]
 
-    # Only platform resources or resources owned by this organization are actionable.
     visible_tracks = ExamTrack.objects.filter(
         Q(organization=org) | Q(organization__isnull=True)
     ).order_by("title")
@@ -219,6 +227,10 @@ def org_course_attach(request, slug, course_id):
 @require_POST
 @org_admin_required
 def org_course_detach(request, slug, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    if not _platform_or_organization_resource(course, request.organization):
+        messages.error(request, "You cannot detach a resource owned by another organization.")
+        return redirect("organizations_admin:courses", slug=slug)
     success = deactivate_resource_entitlement(
         organization=request.organization,
         resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
@@ -239,18 +251,19 @@ def org_course_list(request, slug):
 def org_course_create(request, slug):
     org = request.organization
     if request.method == "POST":
-        form = CourseForm(request.POST, request.FILES)
+        form = CourseForm(request.POST, request.FILES, organization=org)
         if form.is_valid():
             course = form.save(commit=False)
             course.owner_type = Course.OWNER_ORGANIZATION
             course.organization = org
             course.created_by = request.user
+            course.is_published = False
             course.save()
             form.save_m2m()
             messages.success(request, "Course created successfully.")
             return redirect("organizations_admin:org_course_list", slug=slug)
     else:
-        form = CourseForm()
+        form = CourseForm(organization=org)
     return render(request, "organizations/admin/courses/create.html", {"form": form, "org": org})
 
 
@@ -258,14 +271,19 @@ def org_course_create(request, slug):
 def org_course_edit(request, slug, pk):
     org = request.organization
     course = get_object_or_404(Course, id=pk, organization=org)
+    if not _mutable_course_state(course):
+        return HttpResponseForbidden("Course cannot be modified in its current approval state.")
     if request.method == "POST":
-        form = CourseForm(request.POST, request.FILES, instance=course)
+        form = CourseForm(request.POST, request.FILES, instance=course, organization=org)
         if form.is_valid():
-            form.save()
+            updated = form.save(commit=False)
+            updated.is_published = False
+            updated.save()
+            form.save_m2m()
             messages.success(request, "Course updated successfully.")
             return redirect("organizations_admin:org_course_list", slug=slug)
     else:
-        form = CourseForm(instance=course)
+        form = CourseForm(instance=course, organization=org)
     return render(request, "organizations/admin/courses/edit.html", {"form": form, "course": course, "org": org})
 
 
@@ -273,6 +291,8 @@ def org_course_edit(request, slug, pk):
 @org_admin_required
 def org_course_delete(request, slug, pk):
     course = get_object_or_404(Course, id=pk, organization=request.organization)
+    if not _mutable_course_state(course):
+        return HttpResponseForbidden("Course cannot be deleted in its current approval state.")
     course.delete()
     messages.success(request, "Course deleted successfully.")
     return redirect("organizations_admin:org_course_list", slug=slug)
@@ -298,6 +318,10 @@ def org_track_attach(request, slug, pk):
 @require_POST
 @org_admin_required
 def org_track_detach(request, slug, pk):
+    track = get_object_or_404(ExamTrack, pk=pk)
+    if not _platform_or_organization_resource(track, request.organization):
+        messages.error(request, "You cannot detach a resource owned by another organization.")
+        return redirect("organizations_admin:courses", slug=slug)
     success = deactivate_resource_entitlement(request.organization, SubscriptionEntitlement.RESOURCE_TRACK, pk)
     messages.success(request, "Track detached successfully.") if success else messages.info(request, "Track was not attached.")
     return redirect("organizations_admin:courses", slug=slug)
@@ -323,6 +347,10 @@ def org_exam_attach(request, slug, pk):
 @require_POST
 @org_admin_required
 def org_exam_detach(request, slug, pk):
+    exam = get_object_or_404(Exam, pk=pk)
+    if not _platform_or_organization_resource(exam, request.organization):
+        messages.error(request, "You cannot detach a resource owned by another organization.")
+        return redirect("organizations_admin:courses", slug=slug)
     success = deactivate_resource_entitlement(request.organization, SubscriptionEntitlement.RESOURCE_EXAM, pk)
     messages.success(request, "Exam detached successfully.") if success else messages.info(request, "Exam was not attached.")
     return redirect("organizations_admin:courses", slug=slug)
