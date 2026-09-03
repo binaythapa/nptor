@@ -1,30 +1,8 @@
 from django.db import models
-from django.conf import settings
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-
-from ckeditor.fields import RichTextField
-
-from quiz.models import *
-from .course import *
-
-
-from django.db import models
-from django.db.models import Max, F
 from django.core.exceptions import ValidationError
 
 from .course import Course
-
-
-# =====================================================
-# COURSE SECTION
-# =====================================================
-from django.db import models
-from .course import Course
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.db.models import F
-from .course import Course
+from courses.services.permissions import can_edit_course
 
 
 # =====================================================
@@ -79,7 +57,6 @@ class CourseSection(models.Model):
     # Save (Auto assign order if missing)
     # -------------------------------------------------
     def save(self, *args, **kwargs):
-
         if not self.order:
             max_order = CourseSection.objects.filter(
                 course=self.course
@@ -90,17 +67,17 @@ class CourseSection(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-   
-
     # -------------------------------------------------
-    # Permission Check (Creator + Admin)
+    # Permission Check
     # -------------------------------------------------
     def can_be_deleted_by(self, user):
-        return (
-            user.is_staff or
-            (self.course.created_by and self.course.created_by == user)
-        )
+        """
+        A section inherits deletion permission from its parent course.
+
+        Course ownership and organization membership are authoritative;
+        a creator/staff flag on the section itself must not bypass them.
+        """
+        return can_edit_course(user, self.course)
 
     def __str__(self):
         return f"{self.course.title} → {self.title}"
-        
