@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -17,7 +18,7 @@ class LearningShortlist(models.Model):
     )
 
     user = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="learning_shortlist",
     )
@@ -80,38 +81,32 @@ class LearningShortlist(models.Model):
             )
 
     @classmethod
-    def for_resource(cls, *, user, resource_type, resource):
-        if resource_type == cls.RESOURCE_COURSE:
-            lookup = {"course": resource}
-        elif resource_type == cls.RESOURCE_TRACK:
-            lookup = {"track": resource}
-        elif resource_type == cls.RESOURCE_EXAM:
-            lookup = {"exam": resource}
-        else:
+    def resource_lookup(cls, resource_type, resource):
+        fields = {
+            cls.RESOURCE_COURSE: "course",
+            cls.RESOURCE_TRACK: "track",
+            cls.RESOURCE_EXAM: "exam",
+        }
+        field = fields.get(resource_type)
+        if field is None:
             raise ValueError("Unsupported resource type.")
+        return {field: resource}
 
+    @classmethod
+    def for_resource(cls, *, user, resource_type, resource):
         item, created = cls.objects.get_or_create(
             user=user,
             resource_type=resource_type,
-            defaults=lookup,
+            defaults=cls.resource_lookup(resource_type, resource),
         )
-        return type("ShortlistResult", (), {"item": item, "created": created})
+        return item, created
 
     @classmethod
     def remove_for_resource(cls, *, user, resource_type, resource):
-        if resource_type == cls.RESOURCE_COURSE:
-            lookup = {"course": resource}
-        elif resource_type == cls.RESOURCE_TRACK:
-            lookup = {"track": resource}
-        elif resource_type == cls.RESOURCE_EXAM:
-            lookup = {"exam": resource}
-        else:
-            raise ValueError("Unsupported resource type.")
-
         deleted, _ = cls.objects.filter(
             user=user,
             resource_type=resource_type,
-            **lookup,
+            **cls.resource_lookup(resource_type, resource),
         ).delete()
         return deleted > 0
 
