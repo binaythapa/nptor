@@ -1,6 +1,7 @@
 # quiz/services/access.py
 
 from subscriptions.services import AccessService
+from quiz.models import UserExam
 
 
 # ============================================================
@@ -184,11 +185,12 @@ def can_access_exam(
 
         1. User must be authenticated.
         2. Exam must be published.
-        3. Free exams are accessible.
-        4. Direct Exam ResourceAccess grants access.
-        5. Track ResourceAccess grants access to exams
+        3. All prerequisite exams must have a passed attempt.
+        4. Free exams are accessible.
+        5. Direct Exam ResourceAccess grants access.
+        6. Track ResourceAccess grants access to exams
            belonging to that track.
-        6. Otherwise access is denied.
+        7. Otherwise access is denied.
 
     Returns:
 
@@ -212,6 +214,40 @@ def can_access_exam(
 
     if not exam.is_published:
         return False, "Exam is not published"
+
+    # --------------------------------------------------------
+    # PREREQUISITES
+    # --------------------------------------------------------
+    #
+    # A prerequisite is satisfied only by a submitted,
+    # passed attempt owned by the current user.  Free exams,
+    # direct entitlements, and track access do not bypass a
+    # prerequisite requirement.
+    # --------------------------------------------------------
+
+    prerequisite_ids = list(
+        exam.prerequisite_exams.values_list(
+            "id",
+            flat=True,
+        )
+    )
+
+    if prerequisite_ids:
+        passed_count = (
+            UserExam.objects
+            .filter(
+                user=user,
+                exam_id__in=prerequisite_ids,
+                submitted_at__isnull=False,
+                passed=True,
+            )
+            .values("exam_id")
+            .distinct()
+            .count()
+        )
+
+        if passed_count != len(set(prerequisite_ids)):
+            return False, "Prerequisite exam required"
 
     # --------------------------------------------------------
     # Free exam
