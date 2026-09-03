@@ -24,6 +24,7 @@ from quiz.views.dashboards import *
 from quiz.views.student_learning_dashboard import student_dashboard
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
 from quiz.views.learning_shortlist import learning_shortlist_toggle
+from quiz.views.exam_preview import exam_preview
 from quiz.views.mock import *
 from quiz.views.exams import *
 from quiz.views.exam_list import *
@@ -70,6 +71,7 @@ urlpatterns = [
     path("profile/", profile, name="profile"),
     path("users/", users_list, name="users_list"),
 
+    path("exam/<int:exam_id>/preview/", exam_preview, name="exam_preview"),
     path("exam/<int:exam_id>/start/", exam_start, name="exam_start"),
     path("exam/<int:exam_id>/resume/", exam_resume, name="exam_resume"),
     path("exam/<int:exam_id>/locked/", exam_locked, name="exam_locked"),
