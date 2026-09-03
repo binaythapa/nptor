@@ -48,10 +48,7 @@ def _public_tracks():
             exams__organization__isnull=True,
             exams__primary_category__domain__is_active=True,
         )
-        .prefetch_related(
-            "exams",
-            "exams__primary_category__domain",
-        )
+        .prefetch_related("exams", "exams__primary_category__domain")
         .distinct()
     )
 
@@ -96,8 +93,7 @@ def _domain_summary(domain, courses, exams, tracks):
 def _matches_query(resource, resource_type, needle):
     if not needle:
         return True
-    title = resource.title.lower()
-    if needle in title:
+    if needle in resource.title.lower():
         return True
     if resource_type == "course":
         category = getattr(resource, "category", None)
@@ -105,11 +101,7 @@ def _matches_query(resource, resource_type, needle):
     if resource_type == "exam":
         category = getattr(resource, "primary_category", None)
         return bool(category and needle in category.name.lower())
-    return any(
-        needle in exam.title.lower()
-        for exam in resource.exams.all()
-        if exam.is_published
-    )
+    return any(needle in exam.title.lower() for exam in resource.exams.all() if exam.is_published)
 
 
 def _matches_level(resource, resource_type, level):
@@ -124,23 +116,21 @@ def _matches_level(resource, resource_type, level):
 
 
 def _has_access(user, resource_type, resource):
-    return AccessService.has_access(
-        student=user,
-        resource_type=resource_type,
-        resource=resource,
-    )
+    return AccessService.has_access(student=user, resource_type=resource_type, resource=resource)
 
 
-def _resource_item(user, resource_type, resource):
-    access_type = getattr(AccessService, f"RESOURCE_{resource_type.upper()}")
-    item = {
-        "type": resource_type,
-        "resource": resource,
-        "has_access": _has_access(user, access_type, resource),
-    }
+def _resource_item(resource_type, resource):
+    item = {"type": resource_type, "resource": resource}
     if resource_type == "exam":
         item["duration_minutes"] = (resource.duration_seconds or 0) // 60
     return item
+
+
+def _add_access_state(user, items):
+    for item in items:
+        access_type = getattr(AccessService, f"RESOURCE_{item['type'].upper()}")
+        item["has_access"] = _has_access(user, access_type, item["resource"])
+    return items
 
 
 def build_learning_catalog(
@@ -160,11 +150,7 @@ def build_learning_catalog(
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
 
-    active_domains = list(
-        Domain.objects
-        .filter(is_active=True, organization__isnull=True)
-        .order_by("name")
-    )
+    active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).order_by("name"))
     domains = [
         _domain_summary(item, courses, exams, tracks)
         for item in active_domains
@@ -176,18 +162,9 @@ def build_learning_catalog(
 
     selected_domain = domain
     if selected_domain is not None:
-        courses = [
-            item for item in courses
-            if item.category and item.category.domain_id == selected_domain.id
-        ]
-        exams = [
-            item for item in exams
-            if item.primary_category and item.primary_category.domain_id == selected_domain.id
-        ]
-        tracks = [
-            item for item in tracks
-            if (_domain_for_track(item) and _domain_for_track(item).id == selected_domain.id)
-        ]
+        courses = [item for item in courses if item.category and item.category.domain_id == selected_domain.id]
+        exams = [item for item in exams if item.primary_category and item.primary_category.domain_id == selected_domain.id]
+        tracks = [item for item in tracks if (_domain_for_track(item) and _domain_for_track(item).id == selected_domain.id)]
 
     if category is not None:
         category_ids = set(category.get_descendants_include_self())
@@ -204,10 +181,9 @@ def build_learning_catalog(
         access = ""
 
     needle = query.lower()
-    if needle:
-        courses = [item for item in courses if _matches_query(item, "course", needle)]
-        exams = [item for item in exams if _matches_query(item, "exam", needle)]
-        tracks = [item for item in tracks if _matches_query(item, "track", needle)]
+    courses = [item for item in courses if _matches_query(item, "course", needle)]
+    exams = [item for item in exams if _matches_query(item, "exam", needle)]
+    tracks = [item for item in tracks if _matches_query(item, "track", needle)]
 
     courses = [item for item in courses if _matches_level(item, "course", level)]
     exams = [item for item in exams if _matches_level(item, "exam", level)]
@@ -218,27 +194,35 @@ def build_learning_catalog(
 
     resources = []
     if resource_type in {"all", "courses"}:
-        resources.extend(_resource_item(user, "course", item) for item in courses)
+        resources.extend(_resource_item("course", item) for item in courses)
     if resource_type in {"all", "tracks"}:
-        resources.extend(_resource_item(user, "track", item) for item in tracks)
+        resources.extend(_resource_item("track", item) for item in tracks)
     if resource_type in {"all", "exams"}:
-        resources.extend(_resource_item(user, "exam", item) for item in exams)
+        resources.extend(_resource_item("exam", item) for item in exams)
 
     resources.sort(key=lambda item: item["resource"].title.lower())
 
     if access in {"owned", "available"}:
+        resources = _add_access_state(user, resources)
         resources = [
             item for item in resources
             if (access == "owned" and item["has_access"])
             or (access == "available" and not item["has_access"])
         ]
 
-    paginator = Paginator(resources, min(max(int(per_page), 1), MAX_PER_PAGE))
+    try:
+        page_size = min(max(int(per_page), 1), MAX_PER_PAGE)
+    except (TypeError, ValueError):
+        page_size = DEFAULT_PER_PAGE
+    paginator = Paginator(resources, page_size)
     try:
         page_number = max(int(page), 1)
     except (TypeError, ValueError):
         page_number = 1
     page_obj = paginator.get_page(page_number)
+
+    if access not in {"owned", "available"}:
+        _add_access_state(user, page_obj.object_list)
 
     selected_categories = (
         Category.objects.filter(
