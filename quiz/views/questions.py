@@ -17,6 +17,10 @@ def staff_required(user):
     return user.is_staff
 
 
+def superuser_required(user):
+    return bool(user and user.is_authenticated and user.is_superuser)
+
+
 from django.db.models import Count, Q
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
@@ -51,23 +55,20 @@ def question_dashboard(request):
 
     # ================= ACTIONS (POST) =================
     if request.method == "POST":
+        if not request.user.is_superuser:
+            return HttpResponseForbidden("Not allowed")
 
         if "disable_question" in request.POST:
             qid = request.POST.get("disable_question")
-            Question.objects.filter(id=qid, is_deleted=False)\
-                .update(is_active=False)
+            Question.objects.filter(id=qid, is_deleted=False).update(is_active=False)
             return redirect(request.get_full_path())
 
         if "enable_question" in request.POST:
             qid = request.POST.get("enable_question")
-            Question.objects.filter(id=qid, is_deleted=False)\
-                .update(is_active=True)
+            Question.objects.filter(id=qid, is_deleted=False).update(is_active=True)
             return redirect(request.get_full_path())
 
         if "delete_question" in request.POST:
-            if not request.user.is_superuser:
-                return HttpResponseForbidden("Not allowed")
-
             qid = request.POST.get("delete_question")
             Question.objects.filter(id=qid, is_deleted=False).update(
                 is_deleted=True,
@@ -98,10 +99,7 @@ def question_dashboard(request):
     # ================= DUPLICATE SUBQUERY =================
     duplicate_subquery = (
         Question.objects
-        .filter(
-            is_deleted=False,
-            text=OuterRef("text")
-        )
+        .filter(is_deleted=False, text=OuterRef("text"))
         .values("text")
         .annotate(c=Count("id"))
         .values("c")[:1]
@@ -109,25 +107,12 @@ def question_dashboard(request):
 
     # ================= ANNOTATIONS =================
     questions = questions.annotate(
-        discussion_count=Count(
-            "discussions",
-            filter=Q(discussions__is_deleted=False)
-        ),
-        flag_count=Count(
-            "discussions",
-            filter=Q(
-                discussions__is_answer_incorrect=True,
-                discussions__is_deleted=False
-            )
-        ),
-        latest_comment=Max(
-            "discussions__created_at",
-            filter=Q(discussions__is_deleted=False)
-        ),
+        discussion_count=Count("discussions", filter=Q(discussions__is_deleted=False)),
+        flag_count=Count("discussions", filter=Q(discussions__is_answer_incorrect=True, discussions__is_deleted=False)),
+        latest_comment=Max("discussions__created_at", filter=Q(discussions__is_deleted=False)),
         duplicate_count=Subquery(duplicate_subquery)
     )
 
-    # ================= TAB: NEEDS REVIEW =================
     if tab == "review":
         questions = questions.filter(
             discussions__is_answer_incorrect=True,
@@ -135,57 +120,34 @@ def question_dashboard(request):
             discussions__is_deleted=False
         ).distinct()
 
-    # ================= TAB: DUPLICATES =================
     if tab == "duplicates":
         questions = questions.filter(duplicate_count__gt=1)
 
-    # ================= STATS =================
     total_questions = Question.objects.filter(is_deleted=False).count()
-
-    active_questions = Question.objects.filter(
-        is_active=True,
-        is_deleted=False
-    ).count()
-
-    disabled_questions = Question.objects.filter(
-        is_active=False,
-        is_deleted=False
-    ).count()
-
+    active_questions = Question.objects.filter(is_active=True, is_deleted=False).count()
+    disabled_questions = Question.objects.filter(is_active=False, is_deleted=False).count()
     flagged_questions = Question.objects.filter(
         discussions__is_answer_incorrect=True,
         discussions__is_deleted=False,
         is_deleted=False
     ).distinct().count()
-
     needs_review_count = Question.objects.filter(
         discussions__is_answer_incorrect=True,
         discussions__is_staff_verified=False,
         is_deleted=False
     ).distinct().count()
-
-    # ================= DUPLICATE KPI =================
     duplicate_questions_count = (
-        Question.objects
-        .filter(is_deleted=False)
-        .values("text")
-        .annotate(c=Count("id"))
-        .filter(c__gt=1)
-        .count()
+        Question.objects.filter(is_deleted=False)
+        .values("text").annotate(c=Count("id")).filter(c__gt=1).count()
     )
 
-    # ================= CATEGORIES =================
     categories = (
-        Category.objects
-        .filter(questions__is_deleted=False)
-        .distinct()
-        .order_by("name")
+        Category.objects.filter(questions__is_deleted=False)
+        .distinct().order_by("name")
     )
 
-    # ================= PAGINATION =================
     paginator = Paginator(questions, 10)
     page_number = request.GET.get("page")
-
     try:
         questions_page = paginator.page(page_number)
     except PageNotAnInteger:
@@ -193,21 +155,16 @@ def question_dashboard(request):
     except EmptyPage:
         questions_page = paginator.page(paginator.num_pages)
 
-    # ================= AJAX INFINITE SCROLL =================
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return JsonResponse({
             "html": render_to_string(
                 "quiz/admin/questions/_question_rows.html",
-                {
-                    "questions": questions_page,
-                    "tab": tab,
-                },
+                {"questions": questions_page, "tab": tab},
                 request=request
             ),
             "has_next": questions_page.has_next()
         })
 
-    # ================= CONTEXT =================
     context = {
         "questions": questions_page,
         "search": search,
@@ -215,24 +172,17 @@ def question_dashboard(request):
         "selected_difficulty": difficulty,
         "selected_status": status,
         "categories": categories,
-
         "total_questions": total_questions,
         "active_questions": active_questions,
         "flagged_questions": flagged_questions,
         "disabled_questions": disabled_questions,
-
         "duplicate_questions_count": duplicate_questions_count,
-
         "tab": tab,
         "needs_review_count": needs_review_count,
     }
 
-    return render(
-        request,
-        "quiz/admin/questions/dashboard.html",
-        context
-    )
-# views/questions.py
+    return render(request, "quiz/admin/questions/dashboard.html", context)
+
 
 from django.forms import inlineformset_factory
 from django.shortcuts import render, redirect
@@ -243,11 +193,15 @@ ChoiceFormSet = inlineformset_factory(
     Question,
     Choice,
     fields=("text", "is_correct", "order"),
-    extra=6,          # 👈 shows 5 empty rows
+    extra=6,
     can_delete=True,
 )
 
+
 def add_question(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return HttpResponseForbidden("Not allowed")
+
     if request.method == "POST":
         form = QuestionForm(request.POST)
         formset = ChoiceFormSet(request.POST)
@@ -257,23 +211,15 @@ def add_question(request):
             question.created_by = request.user
             question.updated_by = request.user
             question.save()
-
             formset.instance = question
             formset.save()
-
             return redirect("quiz:question_dashboard")
     else:
         form = QuestionForm()
         formset = ChoiceFormSet()
 
-    return render(
-        request,
-        "quiz/admin/questions/add_question.html",
-        {
-            "form": form,
-            "choice_formset": formset,
-        }
-    )
+    return render(request, "quiz/admin/questions/add_question.html", {"form": form, "choice_formset": formset})
+
 
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -296,24 +242,14 @@ from quiz.models import Question, Choice
 from quiz.forms import QuestionForm
 
 
-def staff_required(user):
-    return user.is_staff
-
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.forms import inlineformset_factory
-from django.db import transaction
-
 @login_required
 @user_passes_test(staff_required)
 @transaction.atomic
 def edit_question(request, pk):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("Not allowed")
 
-    question = get_object_or_404(
-        Question,
-        pk=pk,
-        is_deleted=False
-    )
+    question = get_object_or_404(Question, pk=pk, is_deleted=False)
 
     ChoiceFormSet = inlineformset_factory(
         Question,
@@ -324,73 +260,38 @@ def edit_question(request, pk):
     )
 
     if request.method == "POST":
-
         form = QuestionForm(request.POST, instance=question)
-        formset = ChoiceFormSet(
-            request.POST,
-            instance=question,
-            prefix="choices"   # ✅ IMPORTANT
-        )
-
+        formset = ChoiceFormSet(request.POST, instance=question, prefix="choices")
         if form.is_valid() and formset.is_valid():
-
-            # Save Question
             updated_question = form.save(commit=False)
             updated_question.updated_by = request.user
             updated_question.save()
-
-            # Save Choices
             formset.save()
-
-            return redirect(
-                "quiz:question_review",
-                pk=question.pk
-            )
-
+            return redirect("quiz:question_review", pk=question.pk)
     else:
         form = QuestionForm(instance=question)
-        formset = ChoiceFormSet(
-            instance=question,
-            prefix="choices"   # ✅ IMPORTANT
-        )
+        formset = ChoiceFormSet(instance=question, prefix="choices")
 
-    return render(
-        request,
-        "quiz/admin/questions/edit_question.html",
-        {
-            "form": form,
-            "choice_formset": formset,
-            "question": question,
-        }
-    )
-
+    return render(request, "quiz/admin/questions/edit_question.html", {
+        "form": form,
+        "choice_formset": formset,
+        "question": question,
+    })
 
 
 @login_required
 def delete_question(request, pk):
     if not request.user.is_superuser:
         return HttpResponseForbidden("Not allowed")
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required")
 
     question = get_object_or_404(Question, pk=pk, is_deleted=False)
-
     question.is_deleted = True
     question.deleted_by = request.user
     question.deleted_at = timezone.now()
     question.save()
-
     return redirect("quiz:question_dashboard")
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #################
@@ -400,11 +301,7 @@ def delete_question(request, pk):
 
 @staff_member_required
 def question_review(request, pk):
-    question = get_object_or_404(
-        Question,
-        pk=pk,
-        is_deleted=False
-    )
+    question = get_object_or_404(Question, pk=pk, is_deleted=False)
 
     discussions = QuestionDiscussion.objects.filter(
         question=question,
@@ -412,15 +309,14 @@ def question_review(request, pk):
         discussion_type=QuestionDiscussion.TYPE_DOUBT
     ).order_by("-is_pinned", "-created_at")
 
-
-    # ---------- NON-AJAX FALLBACK ----------
     if request.method == "POST" and not request.headers.get("x-requested-with") == "XMLHttpRequest":
+        if not request.user.is_superuser:
+            return HttpResponseForbidden("Not allowed")
 
         if "toggle_active" in request.POST:
             question.is_active = not question.is_active
             question.updated_by = request.user
             question.save()
-
         elif "delete_question" in request.POST and request.user.is_superuser:
             question.is_deleted = True
             question.deleted_by = request.user
@@ -430,55 +326,27 @@ def question_review(request, pk):
 
         return redirect("quiz:question_review", pk=pk)
 
-    return render(
-        request,
-        "quiz/admin/questions/review.html",
-        {
-            "question": question,
-            "discussions": discussions,
-        }
-    )
-
-
-
+    return render(request, "quiz/admin/questions/review.html", {
+        "question": question,
+        "discussions": discussions,
+    })
 
 
 @staff_member_required
 @require_POST
 def resolve_discussion(request):
-    d = get_object_or_404(
-        QuestionDiscussion,
-        id=request.POST["id"],
-        is_deleted=False
-    )
+    d = get_object_or_404(QuestionDiscussion, id=request.POST["id"], is_deleted=False)
     d.is_resolved = True
     d.save()
     return JsonResponse({"success": True})
 
 
-
-
-
-
-
-
-
-
-
-
-
-from django.views.decorators.http import require_POST
-from django.contrib.admin.views.decorators import staff_member_required
-from django.http import JsonResponse, HttpResponseForbidden
-from django.utils import timezone
-
-from quiz.models import Question, QuestionDiscussion
-
-
 @staff_member_required
 @require_POST
 def toggle_question_active(request):
-    q = Question.objects.get(id=request.POST["id"])
+    if not request.user.is_superuser:
+        return HttpResponseForbidden()
+    q = get_object_or_404(Question, id=request.POST["id"])
     q.is_active = not q.is_active
     q.updated_by = request.user
     q.save()
@@ -490,7 +358,7 @@ def toggle_question_active(request):
 def delete_question_ajax(request):
     if not request.user.is_superuser:
         return HttpResponseForbidden()
-    q = Question.objects.get(id=request.POST["id"])
+    q = get_object_or_404(Question, id=request.POST["id"])
     q.is_deleted = True
     q.deleted_by = request.user
     q.deleted_at = timezone.now()
@@ -501,7 +369,7 @@ def delete_question_ajax(request):
 @staff_member_required
 @require_POST
 def verify_discussion(request):
-    d = QuestionDiscussion.objects.get(id=request.POST["id"])
+    d = get_object_or_404(QuestionDiscussion, id=request.POST["id"])
     d.is_staff_verified = True
     d.save()
     return JsonResponse({"success": True})
@@ -510,7 +378,7 @@ def verify_discussion(request):
 @staff_member_required
 @require_POST
 def pin_discussion(request):
-    d = QuestionDiscussion.objects.get(id=request.POST["id"])
+    d = get_object_or_404(QuestionDiscussion, id=request.POST["id"])
     d.is_pinned = not d.is_pinned
     d.save()
     return JsonResponse({"success": True})
@@ -519,10 +387,7 @@ def pin_discussion(request):
 @staff_member_required
 @require_POST
 def delete_discussion(request):
-    d = QuestionDiscussion.objects.get(id=request.POST["id"])
+    d = get_object_or_404(QuestionDiscussion, id=request.POST["id"])
     d.is_deleted = True
     d.save()
     return JsonResponse({"success": True})
-
-
-
