@@ -12,7 +12,6 @@ from courses.services.permissions import (
     can_request_changes,
     can_reject_course,
     can_publish_course,
-    can_edit_course,
 )
 
 
@@ -138,9 +137,10 @@ def reject_course(*, course, admin_user, notes):
 
 
 @transaction.atomic
-def publish_course(*, course, user):
+def publish_course(*, course, user=None, admin_user=None):
     """Publish an approved course; publication is restricted to platform admins."""
-    if not can_publish_course(user, course):
+    actor = user if user is not None else admin_user
+    if not can_publish_course(actor, course):
         raise PermissionError("You are not allowed to publish this course.")
 
     course.is_published = True
@@ -155,11 +155,12 @@ def publish_course(*, course, user):
 
 
 @transaction.atomic
-def unpublish_course(*, course, user):
+def unpublish_course(*, course, user=None, admin_user=None):
     """Unpublish a course; publication management is restricted to platform admins."""
-    if not user or not user.is_authenticated:
+    actor = user if user is not None else admin_user
+    if not actor or not actor.is_authenticated:
         raise PermissionError("Authentication is required.")
-    if not user.is_superuser:
+    if not actor.is_superuser:
         raise PermissionError("You are not allowed to unpublish this course.")
 
     course.is_published = False
