@@ -1,20 +1,17 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from django.core.exceptions import ValidationError
-
-from ckeditor.fields import RichTextField
 
 from quiz.models import *
 from .lesson import *
-
-
 
 
 # =====================================================
 # LESSON PROGRESS
 # =====================================================
 class LessonProgress(models.Model):
+    MAX_VIDEO_DURATION = 24 * 60 * 60
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -43,10 +40,19 @@ class LessonProgress(models.Model):
             self.save()
 
     def can_mark_complete(self):
-        if not self.video_duration:
-            return self.video_seconds_watched >= 300
-        return (self.video_seconds_watched / self.video_duration) >= 0.9
+        watched = self.video_seconds_watched or 0
+        duration = self.video_duration or 0
 
+        if watched < 0 or duration <= 0:
+            return False
+
+        if duration > self.MAX_VIDEO_DURATION:
+            return False
+
+        if watched > duration:
+            return False
+
+        return (watched / duration) >= 0.9
 
     def __str__(self):
         return f"{self.user} → {self.lesson}"
