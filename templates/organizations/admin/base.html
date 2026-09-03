@@ -10,6 +10,7 @@
   </title>
 
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#1e293b" />
 
   <!-- BULMA -->
   <link rel="stylesheet"
@@ -23,25 +24,38 @@
   <link rel="stylesheet"
         href="{% static 'css/theme.css' %}">
 
+  <!-- ORGANIZATION ADMIN MOBILE -->
+  <link rel="stylesheet"
+        href="{% static 'css/pages/org-admin-mobile.css' %}">
+
   <!-- EXTRA HEAD (CKEDITOR etc) -->
   {% block head_extra %}{% endblock %}
 
 </head>
 
-<body>
+<body class="org-admin-page">
 
 {% with org_slug=request.organization.slug %}
 
 <!-- ================= ORG TOP BAR ================= -->
-<nav class="navbar is-light">
+<nav class="navbar is-light org-admin-topbar" aria-label="Organization admin navigation">
   <div class="navbar-brand">
-    <a class="navbar-item"
+    <button type="button"
+            class="org-mobile-menu-btn"
+            id="orgMobileMenuButton"
+            aria-controls="orgAdminSidebar"
+            aria-expanded="false"
+            aria-label="Open organization navigation">
+      ☰
+    </button>
+
+    <a class="navbar-item org-admin-brand"
        href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
       🏢 {{ request.organization.name }}
     </a>
   </div>
 
-  <div class="navbar-end">
+  <div class="navbar-end org-admin-top-actions">
     <div class="navbar-item">
 
       <span class="tag is-info is-light mr-2">
@@ -58,12 +72,18 @@
 </nav>
 
 <!-- ================= MAIN LAYOUT ================= -->
-<section class="section pt-4">
-  <div class="container">
-    <div class="columns">
+<section class="section pt-4 org-admin-shell">
+  <div class="container is-fluid">
+    <div class="columns org-admin-main">
 
       <!-- ===== SIDEBAR ===== -->
-      <aside class="column is-3">
+      <div class="org-admin-backdrop"
+           id="orgAdminBackdrop"
+           aria-hidden="true"></div>
+
+      <aside class="column is-3 org-admin-sidebar"
+             id="orgAdminSidebar"
+             aria-label="Organization administration navigation">
         <nav class="menu">
 
           <p class="menu-label">Organization</p>
@@ -111,7 +131,7 @@
       </aside>
 
       <!-- ===== MAIN CONTENT ===== -->
-      <main class="column is-9">
+      <main class="column is-9 org-admin-content">
 
         {% block content %}
         {% endblock %}
@@ -123,6 +143,51 @@
 </section>
 
 {% endwith %}
+
+<script>
+(function () {
+  const page = document.body;
+  const menu = document.getElementById("orgMobileMenuButton");
+  const sidebar = document.getElementById("orgAdminSidebar");
+  const backdrop = document.getElementById("orgAdminBackdrop");
+
+  function closeSidebar() {
+    page.classList.remove("org-sidebar-open");
+    if (menu) {
+      menu.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function toggleSidebar() {
+    const open = page.classList.toggle("org-sidebar-open");
+    if (menu) {
+      menu.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+  }
+
+  if (menu) {
+    menu.addEventListener("click", toggleSidebar);
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener("click", closeSidebar);
+  }
+
+  if (sidebar) {
+    sidebar.addEventListener("click", function (event) {
+      if (event.target.closest("a")) {
+        closeSidebar();
+      }
+    });
+  }
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeSidebar();
+    }
+  });
+})();
+</script>
 
 <!-- EXTRA SCRIPTS -->
 {% block scripts_extra %}{% endblock %}
