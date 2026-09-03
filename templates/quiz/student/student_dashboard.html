@@ -2,46 +2,24 @@
 {% load static %}
 
 {% block title %}Student Dashboard | {{ site_name|default:"Nepal Mentor" }}{% endblock %}
+{% block meta_description %}Student learning dashboard for practice exams, courses, certification preparation, mock tests, and progress tracking.{% endblock %}
 
-{% block meta_description %}
-  Student learning dashboard for practice exams, courses, certification preparation, mock tests, and progress tracking.
-{% endblock %}
-
-{% block page_css %}
-<link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">
-{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">{% endblock %}
 
 {% block content %}
 <div class="dashboard-page">
   <section class="dashboard-header">
     <div class="dashboard-header-content">
-      <div>
-        <span class="dashboard-eyebrow">Learning Dashboard</span>
-        <h1 class="dashboard-title">Student Dashboard</h1>
-        <p class="dashboard-subtitle">Continue your preparation, practice questions, and track your progress.</p>
-      </div>
-      <div class="dashboard-header-actions">
-        <a href="{% url 'quiz:practice' %}" class="dashboard-primary-action">
-          <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-          Start Practice
-        </a>
-      </div>
+      <div><span class="dashboard-eyebrow">Learning Dashboard</span><h1 class="dashboard-title">Student Dashboard</h1><p class="dashboard-subtitle">Continue your preparation, practice questions, and track your progress.</p></div>
+      <div class="dashboard-header-actions"><a href="{% url 'quiz:practice' %}" class="dashboard-primary-action"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Start Practice</a></div>
     </div>
   </section>
 
   {% if active_attempt %}
   <section class="dashboard-active-exam" aria-label="Active exam">
     <div class="active-exam-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></div>
-    <div class="active-exam-content">
-      <span class="active-exam-label">Exam in progress</span>
-      <h2>{{ active_attempt.exam.title }}</h2>
-      <p>You have an unfinished exam. Continue where you left off.</p>
-    </div>
-    <div class="active-exam-action">
-      <a href="{% url 'quiz:exam_take' active_attempt.id %}" class="dashboard-warning-action">
-        <i class="fa-solid fa-play" aria-hidden="true"></i> Resume Exam
-      </a>
-    </div>
+    <div class="active-exam-content"><span class="active-exam-label">Exam in progress</span><h2>{{ active_attempt.exam.title }}</h2><p>You have an unfinished exam. Continue where you left off.</p></div>
+    <div class="active-exam-action"><a href="{% url 'quiz:exam_take' active_attempt.id %}" class="dashboard-warning-action"><i class="fa-solid fa-play" aria-hidden="true"></i> Resume Exam</a></div>
   </section>
   {% endif %}
 
@@ -49,34 +27,20 @@
     <div class="dashboard-stat-card"><div class="stat-icon stat-icon-primary"><i class="fa-solid fa-list-check" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Total Attempts</span><strong class="stat-value">{{ total_attempts }}</strong></div></div>
     <div class="dashboard-stat-card"><div class="stat-icon stat-icon-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Passed</span><strong class="stat-value stat-value-success">{{ passed_count }}</strong></div></div>
     <div class="dashboard-stat-card"><div class="stat-icon stat-icon-danger"><i class="fa-solid fa-circle-xmark" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Failed</span><strong class="stat-value stat-value-danger">{{ failed_count }}</strong></div></div>
-    <div class="dashboard-stat-card"><div class="stat-icon stat-icon-info"><i class="fa-solid fa-book-open" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Learning</span><strong class="stat-value">{{ courses|length|add:org_courses|length }}</strong></div></div>
+    <div class="dashboard-stat-card"><div class="stat-icon stat-icon-info"><i class="fa-solid fa-book-open" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Courses</span><strong class="stat-value">{{ courses|length }}</strong></div></div>
   </section>
 
   {% if courses %}
   {% with item=courses.0 %}
   <section class="dashboard-continue" aria-labelledby="continue-title">
-    <div class="dashboard-continue-copy">
-      <span class="section-eyebrow">Continue Learning</span>
-      <h2 id="continue-title">{{ item.course.title }}</h2>
-      <p>{{ item.completed }} of {{ item.total }} lessons completed · {{ item.progress }}% complete</p>
-      <progress class="dashboard-progress" value="{{ item.progress }}" max="100">{{ item.progress }}%</progress>
-    </div>
-    <a href="{% url 'courses:course_learn' item.course.slug %}" class="dashboard-primary-action">
-      <i class="fa-solid fa-play" aria-hidden="true"></i>
-      {% if item.progress > 0 %}Continue{% else %}Start Course{% endif %}
-    </a>
+    <div class="dashboard-continue-copy"><span class="section-eyebrow">Continue Learning</span><h2 id="continue-title">{{ item.course.title }}</h2><p>{{ item.completed }} of {{ item.total }} lessons completed · {{ item.progress }}% complete</p><progress class="dashboard-progress" value="{{ item.progress }}" max="100">{{ item.progress }}%</progress></div>
+    <a href="{% url 'courses:course_learn' item.course.slug %}" class="dashboard-primary-action"><i class="fa-solid fa-play" aria-hidden="true"></i>{% if item.progress > 0 %}Continue{% else %}Start Course{% endif %}</a>
   </section>
   {% endwith %}
   {% endif %}
 
   <section class="dashboard-section dashboard-learning-section" aria-labelledby="learning-title">
-    <div class="section-heading dashboard-learning-heading">
-      <div>
-        <span class="section-eyebrow">Your Resources</span>
-        <h2 id="learning-title">My Learning</h2>
-      </div>
-      <a href="{% url 'quiz:exam_list' %}" class="section-heading-link">Explore all <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-    </div>
+    <div class="section-heading dashboard-learning-heading"><div><span class="section-eyebrow">Your Resources</span><h2 id="learning-title">My Learning</h2></div><a href="{% url 'quiz:exam_list' %}" class="section-heading-link">Explore all <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>
 
     <div class="dashboard-learning-toolbar">
       <div class="dashboard-filter-tabs" role="tablist" aria-label="Learning resource type">
@@ -85,123 +49,53 @@
         <button type="button" class="dashboard-filter" data-dashboard-filter="exams" aria-selected="false">Exams</button>
         <button type="button" class="dashboard-filter" data-dashboard-filter="tracks" aria-selected="false">Tracks</button>
       </div>
-      <label class="dashboard-search">
-        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-        <span class="sr-only">Search learning resources</span>
-        <input type="search" data-dashboard-search placeholder="Search courses, exams or tracks" autocomplete="off">
-      </label>
+      <label class="dashboard-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Search learning resources</span><input type="search" data-dashboard-search placeholder="Search courses, exams or tracks" autocomplete="off"></label>
     </div>
 
     <div class="dashboard-learning-grid" data-dashboard-grid>
-      {% if courses %}
       {% for item in courses %}
       <article class="dashboard-learning-card" data-learning-card data-learning-type="course" data-learning-name="{{ item.course.title|lower }}">
         <div class="learning-card-icon learning-card-icon-course"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></div>
-        <div class="learning-card-body">
-          <span class="learning-card-type">Course</span>
-          <h3>{{ item.course.title }}</h3>
-          <p>{{ item.completed }}/{{ item.total }} lessons · {{ item.progress }}% complete</p>
-          <progress class="dashboard-progress" value="{{ item.progress }}" max="100">{{ item.progress }}%</progress>
-        </div>
-        <a href="{% url 'courses:course_learn' item.course.slug %}" class="learning-card-action" aria-label="Continue {{ item.course.title }}">
-          <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-        </a>
+        <div class="learning-card-body"><span class="learning-card-type">Course</span><h3>{{ item.course.title }}</h3><p>{{ item.completed }}/{{ item.total }} lessons · {{ item.progress }}% complete</p><progress class="dashboard-progress" value="{{ item.progress }}" max="100">{{ item.progress }}%</progress></div>
+        <a href="{% url 'courses:course_learn' item.course.slug %}" class="learning-card-action" aria-label="Continue {{ item.course.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
       </article>
       {% endfor %}
-      {% endif %}
 
-      {% if track_map %}
       {% for track, data in track_map.items %}
       <article class="dashboard-learning-card" data-learning-card data-learning-type="track" data-learning-name="{{ track.title|lower }}">
         <div class="learning-card-icon learning-card-icon-track"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
-        <div class="learning-card-body">
-          <span class="learning-card-type">Exam Track</span>
-          <h3>{{ track.title }}</h3>
-          <p>{{ data.items|length }} exam{{ data.items|length|pluralize }}{% if data.passed %} · {{ data.passed }} passed{% endif %}</p>
-          {% if data.attempted %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> {{ data.passed|default:0 }} passed</span>{% else %}<span class="learning-result">Not started</span>{% endif %}
-        </div>
+        <div class="learning-card-body"><span class="learning-card-type">Exam Track</span><h3>{{ track.title }}</h3><p>{{ data.items|length }} exam{{ data.items|length|pluralize }}{% if data.passed %} · {{ data.passed }} passed{% endif %}</p>{% if data.attempted %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> {{ data.passed|default:0 }} passed</span>{% else %}<span class="learning-result">Not started</span>{% endif %}</div>
         <a href="{% url 'quiz:exam_list' %}" class="learning-card-action" aria-label="View {{ track.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
       </article>
-      {% endfor %}
-      {% endif %}
 
-      {% if track_map %}
-      {% for track, data in track_map.items %}
         {% for item in data.items %}
         <article class="dashboard-learning-card" data-learning-card data-learning-type="exam" data-learning-name="{{ item.exam.title|lower }}">
           <div class="learning-card-icon learning-card-icon-exam"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div>
-          <div class="learning-card-body">
-            <span class="learning-card-type">Exam</span>
-            <h3>{{ item.exam.title }}</h3>
-            <p>Level {{ item.exam.level }} · {{ item.exam.question_count }} questions · {{ item.exam.duration_seconds|divisibleby:60|yesno:"Timed,Timed" }}</p>
-            {% if item.last_score is not None %}
-              <span class="learning-result {% if item.status == 'passed' %}learning-result-success{% else %}learning-result-danger{% endif %}">
-                <i class="fa-solid {% if item.status == 'passed' %}fa-check{% else %}fa-xmark{% endif %}" aria-hidden="true"></i>
-                {{ item.status|title }} · {{ item.last_score }}%
-              </span>
-            {% elif item.action == "locked" %}
-              <span class="learning-result learning-result-danger"><i class="fa-solid fa-lock" aria-hidden="true"></i> {{ item.lock_reason }}</span>
-            {% else %}
-              <span class="learning-result">Not attempted</span>
-            {% endif %}
+          <div class="learning-card-body"><span class="learning-card-type">Exam</span><h3>{{ item.exam.title }}</h3><p>Level {{ item.exam.level }} · {{ item.exam.question_count }} questions · {{ item.exam.duration_seconds|default:0|divisibleby:60|yesno:"Timed,Timed" }}</p>
+            {% if item.last_score is not None %}<span class="learning-result {% if item.status == 'passed' %}learning-result-success{% else %}learning-result-danger{% endif %}"><i class="fa-solid {% if item.status == 'passed' %}fa-check{% else %}fa-xmark{% endif %}" aria-hidden="true"></i> {{ item.status|title }} · {{ item.last_score }}%</span>
+            {% elif item.action == "locked" %}<span class="learning-result learning-result-danger"><i class="fa-solid fa-lock" aria-hidden="true"></i> {{ item.lock_reason }}</span>
+            {% else %}<span class="learning-result">Not attempted</span>{% endif %}
           </div>
-          <div class="learning-card-actions">
-            {% if item.action == "resume" %}
-              <a href="{% url 'quiz:exam_take' item.last_attempt.id %}" class="learning-card-action" aria-label="Resume {{ item.exam.title }}"><i class="fa-solid fa-play" aria-hidden="true"></i></a>
-            {% elif item.action == "start" or item.action == "retake" %}
-              <a href="{% url 'quiz:exam_start' item.exam.id %}" class="learning-card-action" aria-label="Start {{ item.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-            {% elif item.action == "renew" %}
-              <a href="{% url 'quiz:track_checkout' item.exam.track.id %}" class="learning-card-action" aria-label="Renew {{ item.exam.title }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i></a>
-            {% endif %}
-          </div>
+          {% if item.action == "resume" %}<a href="{% url 'quiz:exam_take' item.last_attempt.id %}" class="learning-card-action" aria-label="Resume {{ item.exam.title }}"><i class="fa-solid fa-play" aria-hidden="true"></i></a>{% elif item.action == "start" or item.action == "retake" %}<a href="{% url 'quiz:exam_start' item.exam.id %}" class="learning-card-action" aria-label="Start {{ item.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% elif item.action == "renew" %}<a href="{% url 'quiz:track_checkout' item.exam.track.id %}" class="learning-card-action" aria-label="Renew {{ item.exam.title }}"><i class="fa-solid fa-rotate" aria-hidden="true"></i></a>{% endif %}
         </article>
         {% endfor %}
-      {% endif %}
+      {% endfor %}
     </div>
-
-    <div class="dashboard-no-results" data-dashboard-empty hidden>
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-      <span>No learning resources match your search.</span>
-    </div>
+    <div class="dashboard-no-results" data-dashboard-empty hidden><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>No learning resources match your search.</span></div>
   </section>
 
   {% if org_courses or org_tracks %}
   <section class="dashboard-section dashboard-assignments" aria-labelledby="assignments-title">
-    <div class="section-heading">
-      <div><span class="section-eyebrow">Organization</span><h2 id="assignments-title">Assigned to You</h2></div>
-    </div>
+    <div class="section-heading"><div><span class="section-eyebrow">Organization</span><h2 id="assignments-title">Assigned to You</h2></div></div>
     <div class="assigned-resource-list">
-      {% for org, accesses in org_courses.items %}
-        {% for access in accesses %}
-        <article class="assigned-resource compact-assignment">
-          <div class="assigned-resource-info"><div class="assigned-resource-icon"><i class="fa-solid fa-book" aria-hidden="true"></i></div><div><h4>{{ access.course.title }}</h4><span>{{ org.name }} · Course · {{ access.course.get_level_display }}</span></div></div>
-          <a href="{% url 'courses:course_learn' access.course.slug %}" class="resource-action">Continue <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-        </article>
-        {% endfor %}
-      {% endfor %}
-      {% for org, tracks in org_tracks.items %}
-        {% for track in tracks %}
-        <article class="assigned-resource compact-assignment">
-          <div class="assigned-resource-info"><div class="assigned-resource-icon track-resource-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div><div><h4>{{ track.title }}</h4><span>{{ org.name }} · {{ track.exams.count }} exams</span></div></div>
-          <a href="{% url 'quiz:exam_list' %}" class="resource-action">View <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-        </article>
-        {% endfor %}
-      {% endfor %}
+      {% for org, accesses in org_courses.items %}{% for access in accesses %}<article class="assigned-resource compact-assignment"><div class="assigned-resource-info"><div class="assigned-resource-icon"><i class="fa-solid fa-book" aria-hidden="true"></i></div><div><h4>{{ access.course.title }}</h4><span>{{ org.name }} · Course · {{ access.course.get_level_display }}</span></div></div><a href="{% url 'courses:course_learn' access.course.slug %}" class="resource-action">Continue <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></article>{% endfor %}{% endfor %}
+      {% for org, tracks in org_tracks.items %}{% for track in tracks %}<article class="assigned-resource compact-assignment"><div class="assigned-resource-info"><div class="assigned-resource-icon track-resource-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div><div><h4>{{ track.title }}</h4><span>{{ org.name }} · {{ track.exams.count }} exams</span></div></div><a href="{% url 'quiz:exam_list' %}" class="resource-action">View <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></article>{% endfor %}{% endfor %}
     </div>
   </section>
   {% endif %}
 
-  {% if not courses and not track_map and not org_courses and not org_tracks %}
-  <section class="dashboard-empty">
-    <div class="dashboard-empty-icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></div>
-    <h2>Start Your Learning Journey</h2>
-    <p>Explore practice questions, courses, and exams to begin your preparation.</p>
-    <a href="{% url 'quiz:exam_list' %}" class="dashboard-primary-action"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Explore Exams</a>
-  </section>
-  {% endif %}
+  {% if not courses and not track_map and not org_courses and not org_tracks %}<section class="dashboard-empty"><div class="dashboard-empty-icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></div><h2>Start Your Learning Journey</h2><p>Explore practice questions, courses, and exams to begin your preparation.</p><a href="{% url 'quiz:exam_list' %}" class="dashboard-primary-action"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Explore Exams</a></section>{% endif %}
 </div>
 {% endblock %}
 
-{% block scripts_extra %}
-<script src="{% static 'js/pages/dashboard.js' %}"></script>
-{% endblock %}
+{% block scripts_extra %}<script src="{% static 'js/pages/dashboard.js' %}"></script><script src="{% static 'js/pages/dashboard_resource_filters.js' %}"></script>{% endblock %}
