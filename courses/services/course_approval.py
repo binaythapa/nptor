@@ -11,6 +11,7 @@ from courses.services.permissions import (
     can_approve_course,
     can_request_changes,
     can_reject_course,
+    can_publish_course,
     can_edit_course,
 )
 
@@ -18,533 +19,155 @@ from courses.services.permissions import (
 User = get_user_model()
 
 
-# ============================================================
-# INTERNAL: ADMIN NOTIFICATION
-# ============================================================
-
 def _notify_admins(*, title, message):
-    """
-    Send a notification to all active platform administrators.
-
-    Platform administrators are represented by Django
-    superusers.
-    """
-
-    admins = User.objects.filter(
-        is_superuser=True,
-        is_active=True,
-    )
-
-    notification = Notification.objects.create(
-        title=title,
-        message=message,
-    )
-
+    admins = User.objects.filter(is_superuser=True, is_active=True)
+    notification = Notification.objects.create(title=title, message=message)
     if admins.exists():
-        notification.recipients.add(
-            *admins
-        )
-
+        notification.recipients.add(*admins)
     return notification
 
 
-# ============================================================
-# INTERNAL: COURSE OWNER NOTIFICATION
-# ============================================================
-
-def _notify_course_owner(
-    *,
-    course,
-    title,
-    message,
-):
-    """
-    Send a notification to the user who created the course.
-    """
-
+def _notify_course_owner(*, course, title, message):
     if not course.created_by:
         return None
-
-    notification = Notification.objects.create(
-        title=title,
-        message=message,
-    )
-
-    notification.recipients.add(
-        course.created_by
-    )
-
+    notification = Notification.objects.create(title=title, message=message)
+    notification.recipients.add(course.created_by)
     return notification
 
 
-# ============================================================
-# SUBMIT COURSE FOR REVIEW
-# ============================================================
-
 @transaction.atomic
-def submit_course_for_review(
-    *,
-    course,
-    user,
-):
-    """
-    Submit or resubmit a course for administrator review.
+def submit_course_for_review(*, course, user):
+    if not can_submit_course_for_review(user, course):
+        raise PermissionError("You are not allowed to submit this course for review.")
 
-    Allowed states:
-
-        DRAFT
-        CHANGES_REQUIRED
-        REJECTED
-
-    Result:
-
-        PENDING
-    """
-
-    if not can_submit_course_for_review(
-        user,
-        course,
-    ):
-        raise PermissionError(
-            "You are not allowed to submit this course for review."
-        )
-
-    # --------------------------------------------------------
-    # Update approval state
-    # --------------------------------------------------------
-
-    course.approval_status = (
-        Course.APPROVAL_PENDING
-    )
-
+    course.approval_status = Course.APPROVAL_PENDING
     course.submitted_at = timezone.now()
-
-    # Clear previous review information
     course.reviewed_at = None
     course.reviewed_by = None
     course.review_notes = ""
-
-    # Never publish automatically
     course.is_published = False
+    course.save(update_fields=[
+        "approval_status", "submitted_at", "reviewed_at", "reviewed_by",
+        "review_notes", "is_published", "updated_at",
+    ])
 
-    course.save(
-        update_fields=[
-            "approval_status",
-            "submitted_at",
-            "reviewed_at",
-            "reviewed_by",
-            "review_notes",
-            "is_published",
-            "updated_at",
-        ]
-    )
-
-    # --------------------------------------------------------
-    # Notify administrators
-    # --------------------------------------------------------
-
-    creator_name = (
-        course.created_by.get_username()
-        if course.created_by
-        else "Unknown User"
-    )
-
+    creator_name = course.created_by.get_username() if course.created_by else "Unknown User"
     _notify_admins(
         title="New Course Awaiting Review",
-        message=(
-            f'Course "{course.title}" has been '
-            f"submitted for review by {creator_name}."
-        ),
+        message=f'Course "{course.title}" has been submitted for review by {creator_name}.',
     )
-
     return course
 
 
-# ============================================================
-# APPROVE COURSE
-# ============================================================
-
 @transaction.atomic
-def approve_course(
-    *,
-    course,
-    admin_user,
-):
-    """
-    Approve a course currently awaiting review.
+def approve_course(*, course, admin_user):
+    if not can_approve_course(admin_user, course):
+        raise PermissionError("You are not allowed to approve this course.")
 
-    IMPORTANT:
-
-    Approval does NOT publish the course.
-
-    Result:
-
-        APPROVED
-        is_published = False
-    """
-
-    if not can_approve_course(
-        admin_user,
-        course,
-    ):
-        raise PermissionError(
-            "You are not allowed to approve this course."
-        )
-
-    # --------------------------------------------------------
-    # Update approval state
-    # --------------------------------------------------------
-
-    course.approval_status = (
-        Course.APPROVAL_APPROVED
-    )
-
+    course.approval_status = Course.APPROVAL_APPROVED
     course.reviewed_by = admin_user
     course.reviewed_at = timezone.now()
-
     course.review_notes = ""
-
-    # Approval does not automatically publish
     course.is_published = False
-
-    course.save(
-        update_fields=[
-            "approval_status",
-            "reviewed_by",
-            "reviewed_at",
-            "review_notes",
-            "is_published",
-            "updated_at",
-        ]
-    )
-
-    # --------------------------------------------------------
-    # Notify course owner
-    # --------------------------------------------------------
+    course.save(update_fields=[
+        "approval_status", "reviewed_by", "reviewed_at", "review_notes",
+        "is_published", "updated_at",
+    ])
 
     _notify_course_owner(
         course=course,
         title="Course Approved",
-        message=(
-            f'Your course "{course.title}" '
-            "has been approved by the administrator. "
-            "It can now be published."
-        ),
+        message=f'Your course "{course.title}" has been approved by the administrator. It can now be published.',
     )
-
     return course
 
 
-# ============================================================
-# REQUEST CHANGES
-# ============================================================
-
 @transaction.atomic
-def request_course_changes(
-    *,
-    course,
-    admin_user,
-    notes,
-):
-    """
-    Request changes to a course.
+def request_course_changes(*, course, admin_user, notes):
+    if not can_request_changes(admin_user, course):
+        raise PermissionError("You are not allowed to request changes for this course.")
 
-    Result:
-
-        CHANGES_REQUIRED
-    """
-
-    if not can_request_changes(
-        admin_user,
-        course,
-    ):
-        raise PermissionError(
-            "You are not allowed to request changes "
-            "for this course."
-        )
-
-    notes = (
-        notes or ""
-    ).strip()
-
+    notes = (notes or "").strip()
     if not notes:
-        raise ValueError(
-            "Review notes are required when requesting changes."
-        )
+        raise ValueError("Review notes are required when requesting changes.")
 
-    # --------------------------------------------------------
-    # Update course
-    # --------------------------------------------------------
-
-    course.approval_status = (
-        Course.APPROVAL_CHANGES
-    )
-
+    course.approval_status = Course.APPROVAL_CHANGES
     course.reviewed_by = admin_user
     course.reviewed_at = timezone.now()
-
     course.review_notes = notes
-
-    # Course must not remain published
     course.is_published = False
-
-    course.save(
-        update_fields=[
-            "approval_status",
-            "reviewed_by",
-            "reviewed_at",
-            "review_notes",
-            "is_published",
-            "updated_at",
-        ]
-    )
-
-    # --------------------------------------------------------
-    # Notify instructor
-    # --------------------------------------------------------
+    course.save(update_fields=[
+        "approval_status", "reviewed_by", "reviewed_at", "review_notes",
+        "is_published", "updated_at",
+    ])
 
     _notify_course_owner(
         course=course,
         title="Changes Required for Your Course",
-        message=(
-            f'Your course "{course.title}" '
-            "requires changes before it can be approved.\n\n"
-            f"Administrator feedback:\n{notes}"
-        ),
+        message=f'Your course "{course.title}" requires changes before it can be approved.\n\nAdministrator feedback:\n{notes}',
     )
-
     return course
 
 
-# ============================================================
-# REJECT COURSE
-# ============================================================
-
 @transaction.atomic
-def reject_course(
-    *,
-    course,
-    admin_user,
-    notes,
-):
-    """
-    Reject a course submission.
+def reject_course(*, course, admin_user, notes):
+    if not can_reject_course(admin_user, course):
+        raise PermissionError("You are not allowed to reject this course.")
 
-    The instructor may edit and resubmit the course
-    according to the configured permission workflow.
-    """
-
-    if not can_reject_course(
-        admin_user,
-        course,
-    ):
-        raise PermissionError(
-            "You are not allowed to reject this course."
-        )
-
-    notes = (
-        notes or ""
-    ).strip()
-
+    notes = (notes or "").strip()
     if not notes:
-        raise ValueError(
-            "Rejection reason is required."
-        )
+        raise ValueError("Rejection reason is required.")
 
-    # --------------------------------------------------------
-    # Update course
-    # --------------------------------------------------------
-
-    course.approval_status = (
-        Course.APPROVAL_REJECTED
-    )
-
+    course.approval_status = Course.APPROVAL_REJECTED
     course.reviewed_by = admin_user
     course.reviewed_at = timezone.now()
-
     course.review_notes = notes
-
     course.is_published = False
     course.is_public = False
-
-    course.save(
-        update_fields=[
-            "approval_status",
-            "reviewed_by",
-            "reviewed_at",
-            "review_notes",
-            "is_published",
-            "is_public",
-            "updated_at",
-        ]
-    )
-
-    # --------------------------------------------------------
-    # Notify instructor
-    # --------------------------------------------------------
+    course.save(update_fields=[
+        "approval_status", "reviewed_by", "reviewed_at", "review_notes",
+        "is_published", "is_public", "updated_at",
+    ])
 
     _notify_course_owner(
         course=course,
         title="Course Rejected",
-        message=(
-            f'Your course "{course.title}" '
-            "has been rejected.\n\n"
-            f"Administrator reason:\n{notes}"
-        ),
+        message=f'Your course "{course.title}" has been rejected.\n\nAdministrator reason:\n{notes}',
     )
-
     return course
 
 
-# ============================================================
-# PUBLISH COURSE
-# ============================================================
-# ============================================================
-# PUBLISH COURSE
-# ============================================================
-
 @transaction.atomic
-def publish_course(
-    *,
-    course,
-    user,
-):
-    """
-    Publish an approved course.
-
-    Rules:
-    - User must be authenticated.
-    - User must have permission to edit the course.
-    - Course must already be approved.
-    - Publishing does NOT change approval status.
-    - Publishing does NOT automatically change is_public.
-    """
-
-    # --------------------------------------------------------
-    # Authentication
-    # --------------------------------------------------------
-
-    if not user or not user.is_authenticated:
-        raise PermissionError(
-            "Authentication is required."
-        )
-
-    # --------------------------------------------------------
-    # Course permission
-    # --------------------------------------------------------
-
-    if not can_edit_course(
-        user,
-        course,
-    ):
-        raise PermissionError(
-            "You are not allowed to publish this course."
-        )
-
-    # --------------------------------------------------------
-    # Approval check
-    # --------------------------------------------------------
-
-    if not course.is_approved():
-        raise ValueError(
-            "Only an approved course can be published."
-        )
-
-    # --------------------------------------------------------
-    # Publish
-    # --------------------------------------------------------
+def publish_course(*, course, user):
+    """Publish an approved course; publication is restricted to platform admins."""
+    if not can_publish_course(user, course):
+        raise PermissionError("You are not allowed to publish this course.")
 
     course.is_published = True
-
-    course.save(
-        update_fields=[
-            "is_published",
-            "updated_at",
-        ]
-    )
-
-    # --------------------------------------------------------
-    # Notify course owner
-    # --------------------------------------------------------
+    course.save(update_fields=["is_published", "updated_at"])
 
     _notify_course_owner(
         course=course,
         title="Course Published",
-        message=(
-            f'Your course "{course.title}" '
-            "has been published and is now available "
-            "to eligible learners."
-        ),
+        message=f'Your course "{course.title}" has been published and is now available to eligible learners.',
     )
-
     return course
 
 
-# ============================================================
-# UNPUBLISH COURSE
-# ============================================================
-
 @transaction.atomic
-def unpublish_course(
-    *,
-    course,
-    user,
-):
-    """
-    Unpublish an existing course.
-
-    Rules:
-    - User must be authenticated.
-    - User must have permission to edit the course.
-    - Approval remains APPROVED.
-    - Only publication is changed.
-    """
-
-    # --------------------------------------------------------
-    # Authentication
-    # --------------------------------------------------------
-
+def unpublish_course(*, course, user):
+    """Unpublish a course; publication management is restricted to platform admins."""
     if not user or not user.is_authenticated:
-        raise PermissionError(
-            "Authentication is required."
-        )
-
-    # --------------------------------------------------------
-    # Course permission
-    # --------------------------------------------------------
-
-    if not can_edit_course(
-        user,
-        course,
-    ):
-        raise PermissionError(
-            "You are not allowed to unpublish this course."
-        )
-
-    # --------------------------------------------------------
-    # Unpublish
-    # --------------------------------------------------------
+        raise PermissionError("Authentication is required.")
+    if not user.is_superuser:
+        raise PermissionError("You are not allowed to unpublish this course.")
 
     course.is_published = False
-
-    course.save(
-        update_fields=[
-            "is_published",
-            "updated_at",
-        ]
-    )
-
-    # --------------------------------------------------------
-    # Notify course owner
-    # --------------------------------------------------------
+    course.save(update_fields=["is_published", "updated_at"])
 
     _notify_course_owner(
         course=course,
         title="Course Unpublished",
-        message=(
-            f'Your course "{course.title}" '
-            "has been unpublished."
-        ),
+        message=f'Your course "{course.title}" has been unpublished.',
     )
-
     return course
