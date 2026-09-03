@@ -16,7 +16,7 @@
     <p>Try {{ preview_limit }} sample questions before deciding whether to unlock the full exam.</p>
     <div class="resource-footer">
       <span class="resource-status">{{ exam.question_count }} questions · {% widthratio exam.duration_seconds 60 1 %} min · {{ exam.currency }} {{ exam.price|floatformat:0 }}</span>
-      <a class="resource-action primary" href="{% url 'payments:exam_checkout' exam.id %}">Get full access →</a>
+      <a class="resource-action primary" href="{% url 'payments:exam_checkout' exam.id %}?next={{ request.path|urlencode }}">Get full access →</a>
     </div>
   </section>
 
@@ -29,21 +29,13 @@
         <div class="resource-body">
           <span class="resource-type">Question {{ forloop.counter }}</span>
           <div class="exam-preview-question">{{ question.text|safe }}</div>
-          {% if question.choices.all %}
-          <ul class="exam-preview-options">
-            {% for choice in question.choices.all %}<li>{{ choice.text }}</li>{% endfor %}
-          </ul>
-          {% endif %}
+          {% if question.choices.all %}<ul class="exam-preview-options">{% for choice in question.choices.all %}<li>{{ choice.text }}</li>{% endfor %}</ul>{% endif %}
         </div>
       </article>
-      {% empty %}
-      <div class="marketplace-empty">A sample is not available for this exam yet.</div>
-      {% endfor %}
+      {% empty %}<div class="marketplace-empty">A sample is not available for this exam yet.</div>{% endfor %}
     </div>
   </section>
 
-  <section class="marketplace-section">
-    <div class="marketplace-empty"><strong>Ready for the full exam?</strong><br>Unlock all questions, timing, scoring, and your real exam attempt.<br><a class="resource-action primary" href="{% url 'payments:exam_checkout' exam.id %}">Get full access →</a></div>
-  </section>
+  <section class="marketplace-section"><div class="marketplace-empty"><strong>Ready for the full exam?</strong><br>Unlock all questions, timing, scoring, and your real exam attempt.<br><a class="resource-action primary" href="{% url 'payments:exam_checkout' exam.id %}?next={{ request.path|urlencode }}">Get full access →</a></div></section>
 </main>
 {% endblock %}
