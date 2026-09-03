@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 
 from organizations.permissions import org_admin_required
-from quiz.models import Exam
+from quiz.models import Exam, UserExam
 from quiz.forms import ExamForm
 
 
@@ -41,7 +41,10 @@ def org_exam_list(request, slug):
 @org_admin_required
 def org_exam_create(request, slug):
     """
-    Create a new exam for the organization.
+    Create a new unpublished exam for the organization.
+
+    Organization admins may configure an exam, but publishing is
+    intentionally reserved for the platform moderation boundary.
     """
 
     org = request.organization
@@ -54,6 +57,9 @@ def org_exam_create(request, slug):
 
             exam = form.save(commit=False)
             exam.organization = org
+            # Never allow an organization-admin form submission to
+            # publish an exam by tampering with is_published.
+            exam.is_published = False
             exam.save()
 
             # save ManyToMany fields
@@ -85,7 +91,11 @@ def org_exam_create(request, slug):
 @org_admin_required
 def org_exam_update(request, slug, pk):
     """
-    Update an existing exam belonging to the organization.
+    Update an unpublished exam belonging to the organization.
+
+    Once an exam is published, its commercial/configuration data is
+    frozen to prevent changing an exam after students may have relied
+    on or purchased access to it.
     """
 
     org = request.organization
@@ -95,6 +105,12 @@ def org_exam_update(request, slug, pk):
         pk=pk,
         organization=org,
     )
+
+    if exam.is_published:
+        return _forbidden_exam_mutation(
+            request,
+            "Published exams cannot be modified by organization admins.",
+        )
 
     if request.method == "POST":
 
@@ -108,6 +124,8 @@ def org_exam_update(request, slug, pk):
 
             exam = form.save(commit=False)
             exam.organization = org
+            # Publishing is not an organization-admin capability.
+            exam.is_published = False
             exam.save()
 
             form.save_m2m()
@@ -139,11 +157,19 @@ def org_exam_update(request, slug, pk):
 # ============================================================
 # DELETE EXAM
 # ============================================================
+def _forbidden_exam_mutation(request, message):
+    from django.http import HttpResponseForbidden
+
+    return HttpResponseForbidden(message)
+
+
 @require_POST
 @org_admin_required
 def org_exam_delete(request, slug, pk):
     """
-    Delete an exam belonging to the organization.
+    Delete an organization exam only when it has no student attempt
+    history. Attempt records are part of the audit trail and must not
+    be destroyed by organization administration.
     """
 
     org = request.organization
@@ -153,6 +179,18 @@ def org_exam_delete(request, slug, pk):
         pk=pk,
         organization=org,
     )
+
+    if exam.is_published:
+        return _forbidden_exam_mutation(
+            request,
+            "Published exams cannot be deleted by organization admins.",
+        )
+
+    if UserExam.objects.filter(exam=exam).exists():
+        return _forbidden_exam_mutation(
+            request,
+            "Exams with attempt history cannot be deleted.",
+        )
 
     exam_title = exam.title
     exam.delete()
