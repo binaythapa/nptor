@@ -1,9 +1,10 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from quiz.models import Category, Choice, Domain, Question
 
 
+@override_settings(EXPRESS_ANON_LIMIT=100)
 class PracticeExpressFilterTests(TestCase):
     def setUp(self):
         self.aws = Domain.objects.create(
