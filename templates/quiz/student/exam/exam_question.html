@@ -3,8 +3,6 @@
 
 {% block content %}
 
-
-
 <!-- ================= STICKY EXAM HEADER ================= -->
 <div class="exam-header">
   <div class="exam-header-inner">
@@ -12,17 +10,15 @@
       {{ user_exam.exam.title }}
     </div>
 
-    <div class="exam-timer">
+    <div class="exam-timer" aria-live="polite">
       <div class="timer-label">Time Remaining</div>
-      <div class="timer-value" id="timer">
-        00:00:00
-      </div>
+      <div class="timer-value" id="timer">00:00:00</div>
     </div>
   </div>
 </div>
 
 <!-- PROGRESS -->
-<progress class="progress is-primary" value="{{ progress }}" max="100">
+<progress class="progress is-primary exam-progress" value="{{ progress }}" max="100">
   {{ progress }}%
 </progress>
 
@@ -30,7 +26,7 @@
 <form method="post" id="examForm">
   {% csrf_token %}
 
-  <div class="box">
+  <div class="box exam-question-box">
 
     <!-- QUESTION -->
     <div class="mb-4 question-text">
@@ -81,13 +77,13 @@
   </div>
 
   <!-- ================= NAVIGATION ================= -->
-  <div class="buttons mt-4">
+  <div class="buttons mt-4 exam-navigation">
 
     {% if index > 0 %}
       <button type="submit"
               name="nav"
               value="prev"
-              class="button">
+              class="button exam-nav-button">
         Previous
       </button>
     {% endif %}
@@ -96,14 +92,14 @@
       <button type="submit"
               name="nav"
               value="next"
-              class="button is-primary">
+              class="button is-primary exam-nav-button">
         Next
       </button>
     {% else %}
       <button type="submit"
               name="nav"
               value="review"
-              class="button is-warning">
+              class="button is-warning exam-nav-button">
         Review & Submit
       </button>
     {% endif %}
@@ -111,7 +107,6 @@
   </div>
 
 </form>
-
 
 <!-- ================= TIMER SCRIPT ================= -->
 <script>
@@ -121,7 +116,7 @@
   const timerEl = document.getElementById("timer");
   const form = document.getElementById("examForm");
 
-  if (!timerEl || isNaN(remainingSeconds)) return;
+  if (!timerEl || !form || isNaN(remainingSeconds)) return;
 
   function formatTime(seconds) {
     const h = Math.floor(seconds / 3600);
@@ -145,34 +140,38 @@
     }
   }
 
+  function submitExpiredExam() {
+    clearInterval(interval);
+
+    // IMPORTANT:
+    // Submit directly to exam_submit so the current form values
+    // reach grade_exam(). Posting back to exam_question can be
+    // rejected by the server's expiry guard before the answer is saved.
+    form.action = "{% url 'quiz:exam_submit' user_exam_id=user_exam.id %}";
+    form.removeAttribute("target");
+
+    // Do not route through Review after expiry.
+    // The submit endpoint grades the answers and finalizes the attempt.
+    form.submit();
+  }
+
   timerEl.textContent = formatTime(remainingSeconds);
+  updateColor(remainingSeconds);
 
   const interval = setInterval(() => {
-
     remainingSeconds--;
 
     if (remainingSeconds <= 0) {
-      clearInterval(interval);
-
-      // Create hidden input to simulate Review submit
-      const hiddenNav = document.createElement("input");
-      hiddenNav.type = "hidden";
-      hiddenNav.name = "nav";
-      hiddenNav.value = "review";
-      form.appendChild(hiddenNav);
-
-      form.submit();
+      submitExpiredExam();
       return;
     }
 
     timerEl.textContent = formatTime(remainingSeconds);
     updateColor(remainingSeconds);
-
   }, 1000);
 
 })();
 </script>
-
 
 <!-- ================= SCROLL SHADOW EFFECT ================= -->
 <script>
@@ -187,18 +186,16 @@ window.addEventListener("scroll", function () {
   }
 
   if (document.documentElement.getAttribute("data-theme") === "dark") {
-  header.style.boxShadow = "0 2px 8px rgba(0,0,0,0.6)";
-}
+    header.style.boxShadow = "0 2px 8px rgba(0,0,0,0.6)";
+  }
 });
 </script>
-
 
 <style>
 /* =====================================
    EXAM PAGE STYLING (LIGHT + DARK SAFE)
    ===================================== */
 
-/* Sticky Header */
 .exam-header {
   position: sticky;
   top: 0;
@@ -216,14 +213,19 @@ window.addEventListener("scroll", function () {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .exam-title {
+  min-width: 0;
+  max-width: 100%;
   font-weight: 600;
   font-size: 1.1rem;
+  overflow-wrap: anywhere;
 }
 
 .exam-timer {
+  flex: 0 0 auto;
   text-align: right;
 }
 
@@ -235,9 +237,10 @@ window.addEventListener("scroll", function () {
 .timer-value {
   font-size: 1.2rem;
   font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Timer States */
 .timer-warning {
   color: #f59e0b;
 }
@@ -246,29 +249,45 @@ window.addEventListener("scroll", function () {
   color: #ef4444;
 }
 
-/* Question Box */
-.box {
-  background: var(--card);
-  border-radius: 10px;
+.exam-progress {
+  margin-bottom: 16px;
 }
 
-/* Option Styling */
+.exam-question-box {
+  min-width: 0;
+  background: var(--card);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+.question-text {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 .option-label {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 6px;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
   border: 1px solid rgba(0,0,0,0.06);
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
+  overflow-wrap: anywhere;
+}
+
+.option-label span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .option-label:hover {
   background: rgba(0,0,0,0.03);
 }
 
-/* Dark Mode Fixes */
 :root[data-theme='dark'] .option-label {
   border-color: rgba(255,255,255,0.15);
 }
@@ -281,26 +300,121 @@ window.addEventListener("scroll", function () {
   border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* Inputs */
 input[type="radio"],
 input[type="checkbox"] {
-  margin-top: 3px;
+  flex: 0 0 auto;
+  margin-top: 4px;
 }
 
-/* Progress Bar Fix */
 .progress {
   border-radius: 8px;
 }
 
-/* Responsive */
+.exam-navigation {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.exam-nav-button {
+  min-height: 42px;
+}
+
 @media (max-width: 768px) {
+  .exam-header {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
   .exam-header-inner {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .exam-title {
+    font-size: 1rem;
+    line-height: 1.35;
   }
 
   .exam-timer {
     text-align: left;
+  }
+
+  .timer-label {
+    font-size: 0.7rem;
+  }
+
+  .timer-value {
+    font-size: 1.1rem;
+  }
+
+  .exam-progress {
+    margin-bottom: 12px;
+  }
+
+  .exam-question-box {
+    padding: 16px;
+  }
+
+  .question-text {
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .option-label {
+    padding: 11px 10px;
+    gap: 9px;
+    font-size: 0.95rem;
+  }
+
+  .exam-navigation {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    margin-top: 12px !important;
+  }
+
+  .exam-nav-button {
+    width: 100%;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .exam-header {
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .exam-question-box {
+    padding: 13px;
+    border-radius: 8px;
+  }
+
+  .question-text {
+    font-size: 0.94rem;
+  }
+
+  .option-label {
+    padding: 10px 9px;
+    font-size: 0.9rem;
+  }
+
+  .timer-value {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .exam-question-box {
+    padding: 11px;
+  }
+
+  .option-label {
+    gap: 7px;
+    padding: 9px 8px;
+    font-size: 0.86rem;
   }
 }
 </style>
