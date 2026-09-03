@@ -8,6 +8,7 @@ from .views import (
     api_views,
     admin_views,
 )
+from courses.views.student_preview import course_preview
 
 from courses.views.instructor_views import update_order
 from courses.permissions import (
@@ -37,6 +38,11 @@ app_name = "courses"
 urlpatterns = [
     path("", student_views.course_list, name="course_list"),
 
+    path(
+        "<slug:slug>/preview/",
+        course_preview,
+        name="course_preview",
+    ),
     path(
         "<slug:slug>/learn/",
         course_learning_access_required(student_views.course_learn),
