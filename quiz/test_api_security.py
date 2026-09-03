@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from quiz.api_urls import start_exam_authorized
@@ -107,7 +108,7 @@ class ExamAPIAuthorizationRegressionTests(TestCase):
             user=self.user,
             exam=prerequisite,
             status=UserExam.STATUS_SUBMITTED,
-            submitted_at=__import__("django.utils.timezone", fromlist=["now"]).now(),
+            submitted_at=timezone.now(),
             passed=True,
             score=100,
         )
