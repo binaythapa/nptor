@@ -150,19 +150,21 @@ def practice_express_next(request):
     last_filters = request.session.get("pe_filters")
 
     # -------------------------------
-    # BASE QUERYSET (🔥 FIXED)
-    # ❌ REMOVED question_type filter
+    # BASE QUERYSET
     # -------------------------------
     qs = Question.objects.filter(
-        category__isnull=False ,
-        is_active= True
+        is_active=True,
+        is_deleted=False,
     ).prefetch_related("choices")
 
     # -------------------------------
     # DOMAIN FILTER
     # -------------------------------
     if domain_id:
-        qs = qs.filter(category__domain_id=domain_id)
+        qs = qs.filter(
+            Q(primary_category__domain_id=domain_id)
+            | Q(categories__domain_id=domain_id)
+        ).distinct()
 
     # -------------------------------
     # CATEGORY FILTER (DESCENDANTS)
@@ -174,9 +176,11 @@ def practice_express_next(request):
             is_active=True
         ).first()
         if cat:
+            category_ids = cat.get_descendants_include_self()
             qs = qs.filter(
-                category_id__in=cat.get_descendants_include_self()
-            )
+                Q(primary_category_id__in=category_ids)
+                | Q(categories__id__in=category_ids)
+            ).distinct()
 
     # -------------------------------
     # DIFFICULTY FILTER
