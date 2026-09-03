@@ -8,8 +8,7 @@ from django.utils import timezone
 from courses.models import Course, LessonProgress
 from courses.models.subscription import CourseSubscription
 from organizations.models.access import ResourceAccess
-from quiz.models import Exam, UserExam
-from subscriptions.models import SubscriptionEntitlement
+from quiz.models import Exam, ExamTrack, UserExam
 
 
 def _valid_accesses(queryset):
