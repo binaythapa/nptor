@@ -18,19 +18,9 @@
   </section>
 
   <section class="marketplace-section" aria-labelledby="domain-title">
-    <div class="marketplace-section-head">
-      <div><h2 id="domain-title">Explore by domain</h2><p>Start with the technology or certification you want to learn.</p></div>
-    </div>
+    <div class="marketplace-section-head"><div><h2 id="domain-title">Explore by domain</h2><p>Start with the technology or certification you want to learn.</p></div></div>
     <div class="domain-grid">
-      {% for item in domains %}
-        <a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}">
-          <strong>{{ item.domain.name }}</strong>
-          <span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }} · {{ item.exam_count }} exam{{ item.exam_count|pluralize }}</span>
-          <span class="domain-card-arrow" aria-hidden="true">→</span>
-        </a>
-      {% empty %}
-        <div class="marketplace-empty">No learning domains are available yet.</div>
-      {% endfor %}
+      {% for item in domains %}<a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}"><strong>{{ item.domain.name }}</strong><span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }} · {{ item.exam_count }} exam{{ item.exam_count|pluralize }}</span><span class="domain-card-arrow" aria-hidden="true">→</span></a>{% empty %}<div class="marketplace-empty">No learning domains are available yet.</div>{% endfor %}
     </div>
   </section>
 
@@ -49,12 +39,10 @@
       {% for item in resources %}
         <article class="resource-card">
           <div class="resource-icon resource-icon-{{ item.type }}" aria-hidden="true">{% if item.type == 'course' %}C{% elif item.type == 'track' %}T{% else %}E{% endif %}</div>
-          <div class="resource-body">
-            <span class="resource-type">{{ item.type|title }}</span>
-            <h3>{{ item.resource.title }}</h3>
+          <div class="resource-body"><span class="resource-type">{{ item.type|title }}</span><h3>{{ item.resource.title }}</h3>
             {% if item.type == 'course' %}<p>{{ item.resource.category.name|default:'General learning' }} · {{ item.resource.level|title }}</p>
             {% elif item.type == 'track' %}<p>Structured exam preparation</p>
-            {% else %}<p>{{ item.resource.question_count }} questions · {{ item.resource.duration_seconds|default:0|divisibleby:60 }} min</p>{% endif %}
+            {% else %}<p>{{ item.resource.question_count }} questions · {{ item.duration_minutes }} min</p>{% endif %}
             <div class="resource-footer">
               {% if item.has_access %}<span class="resource-status owned">You have access</span><a class="resource-action primary" href="{% if item.type == 'course' %}{% url 'courses:course_learn' item.resource.slug %}{% else %}{% url 'quiz:exam_start' item.resource.id %}{% endif %}">Open →</a>
               {% elif item.type == 'course' %}<span class="resource-status">Self-paced</span><a class="resource-action primary" href="{% url 'courses:subscribe_course' item.resource.id %}">Enroll →</a>
@@ -64,18 +52,10 @@
             </div>
           </div>
         </article>
-      {% empty %}
-        <div class="marketplace-empty">No resources match your search or filters.</div>
-      {% endfor %}
+      {% empty %}<div class="marketplace-empty">No resources match your search or filters.</div>{% endfor %}
     </div>
 
-    {% if page_obj.has_other_pages %}
-      <nav class="marketplace-pagination" aria-label="Catalogue pages">
-        {% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
-      </nav>
-    {% endif %}
+    {% if page_obj.has_other_pages %}<nav class="marketplace-pagination" aria-label="Catalogue pages">{% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}</nav>{% endif %}
   </section>
 </main>
 {% endblock %}
