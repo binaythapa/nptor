@@ -1,5 +1,3 @@
-# payments/views/checkout.py
-
 from decimal import Decimal
 
 from django.contrib import messages
@@ -9,95 +7,19 @@ from django.shortcuts import get_object_or_404, redirect
 
 from courses.models import Course
 from quiz.models import Exam, ExamTrack
-
-from organizations.models import ResourceAccess
-
 from payments.models import PaymentOrder
-from payments.services import (
-    OrderService,
-    PaymentService,
-)
-
+from payments.services import OrderService, PaymentService
 from subscriptions.services import AccessService
-
-
-# ============================================================
-# CONFIGURATION
-# ============================================================
-
-# Keep Dummy while developing/testing.
-#
-# Later:
-#
-# PAYMENT_GATEWAY = "razorpay"
-#
-# This can eventually come from Django settings.
+from subscriptions.services.plan_service import (
+    get_plan_for_course,
+    get_plan_for_track,
+)
 
 DEFAULT_GATEWAY = "dummy"
 
 
-# ============================================================
-# COMMON PAYMENT STARTER
-# ============================================================
-
-def _start_payment(
-    *,
-    request,
-    resource_type,
-    resource,
-    amount,
-    currency="INR",
-):
-    """
-    Common payment initialization for:
-
-        Course
-        Track
-        Exam
-
-    Flow:
-
-        Resource
-            ↓
-        PaymentOrder
-            ↓
-        PaymentTransaction
-            ↓
-        Payment Gateway
-    """
-
-    # --------------------------------------------------------
-    # Validate amount
-    # --------------------------------------------------------
-
+def _start_payment(*, request, resource_type, resource, amount, currency="INR"):
     try:
-        amount = Decimal(str(amount or 0))
-    except (TypeError, ValueError):
-        messages.error(
-            request,
-            "Invalid payment amount.",
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    if amount < Decimal("0"):
-        messages.error(
-            request,
-            "Invalid payment amount.",
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Create PaymentOrder
-    # --------------------------------------------------------
-
-    try:
-
         order = OrderService.create_order(
             user=request.user,
             resource_type=resource_type,
@@ -105,92 +27,31 @@ def _start_payment(
             amount=amount,
             currency=currency,
         )
-
     except ValidationError as exc:
-
-        messages.error(
-            request,
-            str(exc),
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Initiate gateway
-    # --------------------------------------------------------
+        messages.error(request, str(exc))
+        return redirect("quiz:exam_list")
 
     try:
-
         result = PaymentService.initiate_payment(
             order=order,
             gateway_name=DEFAULT_GATEWAY,
         )
-
-    except Exception as exc:
-
-        messages.error(
-            request,
-            f"Unable to start payment: {exc}",
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Gateway initialization failed
-    # --------------------------------------------------------
+    except Exception:
+        messages.error(request, "Unable to start payment. Please try again.")
+        return redirect("quiz:exam_list")
 
     if not result.get("success"):
-
-        gateway_response = result.get(
-            "gateway_response",
-            {},
-        )
-
+        gateway_response = result.get("gateway_response") or {}
         messages.error(
             request,
-            gateway_response.get(
-                "error",
-                "Unable to initialize payment.",
-            ),
+            gateway_response.get("error", "Unable to initialize payment."),
         )
+        return redirect("quiz:exam_list")
 
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Gateway response
-    # --------------------------------------------------------
-
-    gateway_response = result.get(
-        "gateway_response",
-        {}
-    )
-
-    payment_url = gateway_response.get(
-        "payment_url"
-    )
-
-    # --------------------------------------------------------
-    # Real gateway
-    #
-    # Razorpay / Stripe/etc. can return a hosted
-    # payment URL.
-    # --------------------------------------------------------
-
+    gateway_response = result.get("gateway_response") or {}
+    payment_url = gateway_response.get("payment_url")
     if payment_url:
-
-        return redirect(
-            payment_url
-        )
-
-    # --------------------------------------------------------
-    # Dummy/local gateway
-    # --------------------------------------------------------
+        return redirect(payment_url)
 
     return redirect(
         "payments:payment_checkout",
@@ -198,325 +59,91 @@ def _start_payment(
     )
 
 
-# ============================================================
-# COURSE CHECKOUT
-# ============================================================
-
 @login_required
-def course_checkout(
-    request,
-    course_id,
-):
-    """
-    Start checkout for a Course.
-    """
-
-    course = get_object_or_404(
-        Course,
-        pk=course_id,
-    )
-
-    # --------------------------------------------------------
-    # Existing access
-    # --------------------------------------------------------
+def course_checkout(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
 
     if AccessService.has_access(
         student=request.user,
-        resource_type=(
-            AccessService.RESOURCE_COURSE
-        ),
+        resource_type=AccessService.RESOURCE_COURSE,
         resource=course,
     ):
+        messages.info(request, "You already have access to this course.")
+        return redirect("quiz:exam_list")
 
-        messages.info(
-            request,
-            "You already have access to this course.",
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Price
-    # --------------------------------------------------------
-
-    amount = (
-        getattr(
-            course,
-            "price",
-            0,
-        )
-        or 0
-    )
-
-    currency = (
-        getattr(
-            course,
-            "currency",
-            None,
-        )
-        or "INR"
-    )
-
-    # --------------------------------------------------------
-    # Free course
-    # --------------------------------------------------------
-
-    if Decimal(str(amount)) == Decimal("0"):
-
-        messages.info(
-            request,
-            "This course is free.",
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Start payment
-    # --------------------------------------------------------
-
-    return _start_payment(
-        request=request,
-        resource_type=(
-            PaymentOrder.RESOURCE_COURSE
-        ),
-        resource=course,
-        amount=amount,
-        currency=currency,
-    )
-
-
-# ============================================================
-# TRACK CHECKOUT
-# ============================================================
-
-@login_required
-def track_checkout(
-    request,
-    track_id,
-):
-    """
-    Start checkout for an ExamTrack.
-    """
-
-    track = get_object_or_404(
-        ExamTrack,
-        pk=track_id,
-        is_active=True,
-    )
-
-    # --------------------------------------------------------
-    # Existing Track access
-    # --------------------------------------------------------
-
-    if AccessService.has_access(
-        student=request.user,
-        resource_type=(
-            AccessService.RESOURCE_TRACK
-        ),
-        resource=track,
-    ):
-
-        messages.info(
-            request,
-            "You already have access to this track.",
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Find subscription plan
-    # --------------------------------------------------------
-    # --------------------------------------------------------
-    # Find subscription plan
-    # --------------------------------------------------------
-
-    from subscriptions.services.plan_service import (
-        get_plan_for_track,
-    )
-
-    plan = get_plan_for_track(
-        track,
-        None,
-    )
-
+    plan = get_plan_for_course(course)
     if not plan:
+        messages.error(request, "No subscription plan is available for this course.")
+        return redirect("quiz:exam_list")
 
-        messages.error(
-            request,
-            "No subscription plan is available for this track.",
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Price
-    # --------------------------------------------------------
-
-    amount = (
-        plan.price
-        or 0
-    )
-
-    currency = (
-        plan.currency
-        or "INR"
-    )
-
-    # --------------------------------------------------------
-    # Free track
-    # --------------------------------------------------------
-
-    if Decimal(str(amount)) == Decimal("0"):
-
-        messages.info(
-            request,
-            "This track is free.",
-        )
-
-        return redirect(
-            "quiz:exam_list"
-        )
-
-    # --------------------------------------------------------
-    # Start payment
-    # --------------------------------------------------------
+    if plan.price == 0:
+        messages.info(request, "This course is free.")
+        return redirect("quiz:exam_list")
 
     return _start_payment(
         request=request,
-        resource_type=(
-            PaymentOrder.RESOURCE_TRACK
-        ),
-        resource=track,
-        amount=amount,
-        currency=currency,
+        resource_type=PaymentOrder.RESOURCE_COURSE,
+        resource=course,
+        amount=plan.price,
+        currency=plan.currency,
     )
 
-
-# ============================================================
-# EXAM CHECKOUT
-# ============================================================
 
 @login_required
-def exam_checkout(
-    request,
-    exam_id,
-):
-    """
-    Start checkout for an individual Exam.
-
-    Important:
-
-    Track access is intentionally respected here.
-
-    If the student already owns the Track containing
-    this Exam, the student must NOT purchase the Exam again.
-    """
-
-    exam = get_object_or_404(
-        Exam,
-        pk=exam_id,
-        is_published=True,
-    )
-
-    # --------------------------------------------------------
-    # Existing effective access
-    #
-    # This checks:
-    #
-    # 1. Direct Exam access
-    # 2. Track inherited access
-    # --------------------------------------------------------
+def track_checkout(request, track_id):
+    track = get_object_or_404(ExamTrack, pk=track_id, is_active=True)
 
     if AccessService.has_access(
         student=request.user,
-        resource_type=(
-            AccessService.RESOURCE_EXAM
-        ),
+        resource_type=AccessService.RESOURCE_TRACK,
+        resource=track,
+    ):
+        messages.info(request, "You already have access to this track.")
+        return redirect("quiz:exam_list")
+
+    plan = get_plan_for_track(track)
+    if not plan:
+        messages.error(request, "No subscription plan is available for this track.")
+        return redirect("quiz:exam_list")
+
+    if plan.price == 0:
+        messages.info(request, "This track is free.")
+        return redirect("quiz:exam_list")
+
+    return _start_payment(
+        request=request,
+        resource_type=PaymentOrder.RESOURCE_TRACK,
+        resource=track,
+        amount=plan.price,
+        currency=plan.currency,
+    )
+
+
+@login_required
+def exam_checkout(request, exam_id):
+    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
+
+    if AccessService.has_access(
+        student=request.user,
+        resource_type=AccessService.RESOURCE_EXAM,
         resource=exam,
     ):
-
-        messages.info(
-            request,
-            "You already have access to this exam.",
-        )
-
-        return redirect(
-            "quiz:exam_start",
-            exam_id=exam.id,
-        )
-
-    # --------------------------------------------------------
-    # Free exam
-    # --------------------------------------------------------
+        messages.info(request, "You already have access to this exam.")
+        return redirect("quiz:exam_start", exam_id=exam.id)
 
     if exam.is_free:
+        messages.info(request, "This exam is free.")
+        return redirect("quiz:exam_start", exam_id=exam.id)
 
-        messages.info(
-            request,
-            "This exam is free.",
-        )
-
-        return redirect(
-            "quiz:exam_start",
-            exam_id=exam.id,
-        )
-
-    # --------------------------------------------------------
-    # Price
-    # --------------------------------------------------------
-
-    amount = (
-        getattr(
-            exam,
-            "price",
-            0,
-        )
-        or 0
-    )
-
-    currency = (
-        getattr(
-            exam,
-            "currency",
-            None,
-        )
-        or "INR"
-    )
-
-    # --------------------------------------------------------
-    # Zero-price exam
-    # --------------------------------------------------------
-
-    if Decimal(str(amount)) == Decimal("0"):
-
-        messages.info(
-            request,
-            "This exam does not require payment.",
-        )
-
-        return redirect(
-            "quiz:exam_start",
-            exam_id=exam.id,
-        )
-
-    # --------------------------------------------------------
-    # Start individual exam payment
-    # --------------------------------------------------------
+    amount = Decimal(str(exam.price or 0))
+    if amount == Decimal("0"):
+        messages.info(request, "This exam does not require payment.")
+        return redirect("quiz:exam_start", exam_id=exam.id)
 
     return _start_payment(
         request=request,
-        resource_type=(
-            PaymentOrder.RESOURCE_EXAM
-        ),
+        resource_type=PaymentOrder.RESOURCE_EXAM,
         resource=exam,
         amount=amount,
-        currency=currency,
+        currency=getattr(exam, "currency", None) or "INR",
     )
