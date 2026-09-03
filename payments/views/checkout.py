@@ -63,6 +63,17 @@ def _start_payment(*, request, resource_type, resource, amount, currency="INR"):
 def course_checkout(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
 
+    # Checkout is only available for courses that are officially
+    # public. Private, draft, pending-review, rejected, or unpublished
+    # organization courses are distributed through their organization
+    # access/assignment flow rather than individual purchase.
+    if not course.is_publicly_available():
+        messages.error(
+            request,
+            "This course is not currently available for purchase.",
+        )
+        return redirect("quiz:exam_list")
+
     if AccessService.has_access(
         student=request.user,
         resource_type=AccessService.RESOURCE_COURSE,
