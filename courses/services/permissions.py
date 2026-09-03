@@ -45,6 +45,38 @@ def can_edit_course(user, course):
     return membership.role in OrganizationRole.teaching_roles()
 
 
+def can_create_course(user, organization=None):
+    """
+    Determine whether a user may create a course.
+
+    Platform courses are restricted to platform administrators.
+    Organization courses require active membership in the target
+    organization with a teaching/content role.
+
+    The active organization is a routing/context value, not an
+    authorization grant; callers must pass it through this helper.
+    """
+
+    if not user or not user.is_authenticated:
+        return False
+
+    if user.is_superuser:
+        return True
+
+    if not organization:
+        return False
+
+    membership = get_active_membership(
+        user,
+        organization,
+    )
+
+    if not membership:
+        return False
+
+    return membership.role in OrganizationRole.teaching_roles()
+
+
 def can_preview_course(user, course):
     """
     Determine whether a user can preview a course that is not
