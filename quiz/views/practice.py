@@ -211,7 +211,10 @@ def practice(request):
         ).first()
 
         if selected_domain:
-            qs = qs.filter(category__domain=selected_domain)
+            qs = qs.filter(
+                Q(primary_category__domain=selected_domain)
+                | Q(categories__domain=selected_domain)
+            ).distinct()
 
     if category_id and str(category_id).isdigit() and selected_domain:
         cat = Category.objects.filter(
@@ -221,9 +224,11 @@ def practice(request):
         ).first()
 
         if cat:
+            category_ids = cat.get_descendants_include_self()
             qs = qs.filter(
-                category_id__in=cat.get_descendants_include_self()
-            )
+                Q(primary_category_id__in=category_ids)
+                | Q(categories__id__in=category_ids)
+            ).distinct()
 
     if difficulty:
         qs = qs.filter(difficulty=difficulty)
@@ -615,7 +620,6 @@ def practice_answer_ajax(request):
 
 
 
-from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -733,7 +737,7 @@ def practice_next_ajax(request):
 
 
     # =====================================================
-    # BASE QUESTIONSET
+    # BASE QUERYSET
     # =====================================================
 
     qs = (
@@ -780,8 +784,9 @@ def practice_next_ajax(request):
         if selected_domain:
 
             qs = qs.filter(
-                category__domain=selected_domain
-            )
+                Q(primary_category__domain=selected_domain)
+                | Q(categories__domain=selected_domain)
+            ).distinct()
 
 
     # =====================================================
@@ -813,10 +818,11 @@ def practice_next_ajax(request):
 
         if cat:
 
+            category_ids = cat.get_descendants_include_self()
             qs = qs.filter(
-                category_id__in=
-                    cat.get_descendants_include_self()
-            )
+                Q(primary_category_id__in=category_ids)
+                | Q(categories__id__in=category_ids)
+            ).distinct()
 
 
     # =====================================================
@@ -1110,7 +1116,7 @@ def practice_skip_ajax(request):
 
 
     # =====================================================
-    # BASE QUESTIONSET
+    # BASE QUERYSET
     # =====================================================
 
     qs = (
@@ -1157,9 +1163,9 @@ def practice_skip_ajax(request):
         if selected_domain:
 
             qs = qs.filter(
-                category__domain=
-                    selected_domain
-            )
+                Q(primary_category__domain=selected_domain)
+                | Q(categories__domain=selected_domain)
+            ).distinct()
 
 
     # =====================================================
@@ -1189,10 +1195,11 @@ def practice_skip_ajax(request):
 
         if cat:
 
+            category_ids = cat.get_descendants_include_self()
             qs = qs.filter(
-                category_id__in=
-                    cat.get_descendants_include_self()
-            )
+                Q(primary_category_id__in=category_ids)
+                | Q(categories__id__in=category_ids)
+            ).distinct()
 
 
     # =====================================================
