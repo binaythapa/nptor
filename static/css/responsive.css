@@ -6,7 +6,6 @@
    mobile behavior is consistent across student and admin UI.
    ========================================================= */
 
-/* Prevent flex/grid children from creating accidental overflow. */
 .site-content,
 .site-content > *,
 .nptor-card,
@@ -20,11 +19,22 @@
 .nptor-alert,
 .nptor-alert-content,
 .admin-content,
-.admin-content > * {
+.admin-content > *,
+.dashboard-page,
+.dashboard-page > *,
+.dashboard-header-content,
+.dashboard-active-exam,
+.dashboard-stat-card,
+.quick-action-card,
+.course-card,
+.organization-card,
+.assigned-resource,
+.quick-action-content,
+.course-card-heading,
+.active-exam-content {
     min-width: 0;
 }
 
-/* Any framework table wrapper can scroll independently on narrow screens. */
 .nptor-table-wrapper,
 .nptor-table-wrap,
 .nptor-table-container,
@@ -35,7 +45,6 @@
     -webkit-overflow-scrolling: touch;
 }
 
-/* Responsive images/media never exceed their containing block. */
 .site-content img,
 .site-content video,
 .site-content iframe,
@@ -47,7 +56,6 @@
     max-width: 100%;
 }
 
-/* Long code/content remains readable without breaking the viewport. */
 .site-content pre,
 .site-content code,
 .admin-content pre,
@@ -82,6 +90,23 @@
 
     .nptor-actions-between {
         justify-content: flex-start;
+    }
+
+    /* Dashboard */
+    .dashboard-header-content {
+        align-items: flex-start;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .course-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -187,6 +212,86 @@
     .site-content a.button {
         min-height: 42px;
     }
+
+    /* Dashboard becomes a clean single-column mobile flow. */
+    .dashboard-page {
+        gap: 24px;
+        padding-bottom: 24px;
+    }
+
+    .dashboard-header-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .dashboard-header-actions,
+    .dashboard-primary-action {
+        width: 100%;
+    }
+
+    .dashboard-primary-action {
+        min-height: 44px;
+    }
+
+    .dashboard-stats,
+    .quick-actions-grid,
+    .course-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-stat-card {
+        min-height: 92px;
+        padding: 16px;
+    }
+
+    .quick-action-card {
+        min-height: 0;
+        padding: 18px;
+    }
+
+    .dashboard-active-exam {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        padding: 16px;
+    }
+
+    .active-exam-content {
+        flex: 1 1 calc(100% - 60px);
+    }
+
+    .active-exam-action {
+        width: 100%;
+        padding-left: 60px;
+    }
+
+    .dashboard-warning-action {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .course-card {
+        padding: 18px;
+    }
+
+    .organization-list {
+        gap: 12px;
+    }
+
+    .organization-card {
+        border-radius: 10px;
+    }
+
+    .assigned-resource {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .resource-action {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 /* =========================================================
@@ -231,6 +336,72 @@
     .nptor-empty {
         padding: var(--nptor-space-6) var(--nptor-space-3);
     }
+
+    /* Compact dashboard typography and spacing. */
+    .dashboard-title {
+        font-size: clamp(1.7rem, 9vw, 2.2rem);
+    }
+
+    .dashboard-subtitle {
+        font-size: 14px;
+    }
+
+    .section-heading h2 {
+        font-size: 20px;
+    }
+
+    .dashboard-stat-card {
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+    }
+
+    .quick-action-card,
+    .course-card {
+        padding: 16px;
+    }
+
+    .quick-action-content h3,
+    .course-card-heading h3 {
+        font-size: 16px;
+    }
+
+    .dashboard-active-exam {
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .active-exam-icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+
+    .active-exam-content {
+        flex-basis: calc(100% - 52px);
+    }
+
+    .active-exam-action {
+        padding-left: 0;
+    }
+
+    .organization-title {
+        min-width: 0;
+    }
+
+    .organization-title h3,
+    .assigned-resource h4 {
+        overflow-wrap: anywhere;
+    }
 }
 
 /* =========================================================
@@ -246,6 +417,30 @@
 
     .nptor-table {
         min-width: 520px;
+    }
+
+    .dashboard-page {
+        gap: 20px;
+    }
+
+    .dashboard-stat-card {
+        min-height: 84px;
+        padding: 12px;
+    }
+
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+        font-size: 14px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+
+    .stat-value {
+        font-size: 20px;
     }
 }
 
