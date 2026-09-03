@@ -1,423 +1,88 @@
 {% load static %}
 <!doctype html>
-<html lang="en"
-      {% if request.COOKIES.darkmode == '1' %}data-theme="dark"{% endif %}>
-
+<html lang="en" {% if request.COOKIES.darkmode == '1' %}data-theme="dark"{% endif %}>
 <head>
-
   <meta charset="utf-8">
-
-  <!-- =========================================================
-       BASIC
-       ========================================================= -->
-
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-
-  <meta name="theme-color"
-        content="#ffffff">
-
-  <meta name="robots"
-        content="index, follow">
-
-
-  <!-- =========================================================
-       FAVICON
-       ========================================================= -->
-
-  <link rel="icon"
-        href="{% static 'images/logo.jpg' %}"
-        sizes="32x32">
-
-  <link rel="icon"
-        href="{% static 'images/logo.jpg' %}"
-        sizes="48x48">
-
-
-  <!-- =========================================================
-       SEO TITLE
-       ========================================================= -->
-
-  <title>
-    {% block title %}
-      {{ site_name|default:"Nepal Mentor" }} -
-      Online Exams & Practice Platform
-    {% endblock %}
-  </title>
-
-
-  <!-- =========================================================
-       SEO DESCRIPTION
-       ========================================================= -->
-
-  <meta name="description"
-        content="{% block meta_description %}Practice exams, mock tests, courses, and improve your skills with {{ site_name|default:"Nepal Mentor" }}.{% endblock %}">
-
-
-  <!-- =========================================================
-       CANONICAL
-       ========================================================= -->
-
-  <link rel="canonical"
-        href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
-
-
-  <!-- =========================================================
-       OPEN GRAPH
-       ========================================================= -->
-
-  <meta property="og:title"
-        content="{% block og_title %}{{ site_name|default:"Nepal Mentor" }} - Online Exam Platform{% endblock %}">
-
-  <meta property="og:description"
-        content="{% block og_description %}Practice exams, mock tests, courses, and improve your skills.{% endblock %}">
-
-  <meta property="og:type"
-        content="website">
-
-  <meta property="og:url"
-        content="{{ request.build_absolute_uri }}">
-
-  <meta property="og:image"
-        content="{% block og_image %}{% static 'images/logo.jpg' %}{% endblock %}">
-
-
-  <!-- =========================================================
-       GOOGLE ADSENSE
-       ========================================================= -->
-
-  <meta name="google-adsense-account"
-        content="ca-pub-5294449232420430">
-
-
-  <!-- =========================================================
-       FRAMEWORK CSS
-       ========================================================= -->
-
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-
-  <!-- =========================================================
-       NPTOR DESIGN SYSTEM
-       ========================================================= -->
-
-  <!-- Existing global theme -->
-  <link rel="stylesheet"
-        href="{% static 'css/theme.css' %}">
-
-  <!-- Core design tokens / reset -->
-  <link rel="stylesheet"
-        href="{% static 'css/base.css' %}">
-
-  <!-- Application layout -->
-  <link rel="stylesheet"
-        href="{% static 'css/layout.css' %}">
-
-  <!-- Shared UI components -->
-  <link rel="stylesheet"
-        href="{% static 'css/components.css' %}">
-
-  <!-- Global responsive behavior -->
-  <link rel="stylesheet"
-        href="{% static 'css/responsive.css' %}">
-
-
-  <!-- =========================================================
-       PAGE-SPECIFIC CSS
-       ========================================================= -->
-
-  {% block page_css %}
-  {% endblock %}
-
-
-  <!-- =========================================================
-       FEATURE-SPECIFIC CSS
-       ========================================================= -->
-
-  <link rel="stylesheet"
-        href="{% static 'css/exam_timer.css' %}">
-
-
-  <!-- =========================================================
-       PAGE HEAD EXTENSIONS
-       ========================================================= -->
-
-  {% block head_extra %}
-  {% endblock %}
-
-
-  <!-- =========================================================
-       GOOGLE ADSENSE SCRIPT
-       ========================================================= -->
-
-  <script async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5294449232420430"
-          crossorigin="anonymous">
-  </script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="32x32">
+  <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="48x48">
+  <title>{% block title %}{{ site_name|default:"Nepal Mentor" }} - Online Exams & Practice Platform{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Practice exams, mock tests, courses, and improve your skills with {{ site_name|default:"Nepal Mentor" }}.{% endblock %}">
+  <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+  <meta property="og:title" content="{% block og_title %}{{ site_name|default:"Nepal Mentor" }} - Online Exam Platform{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Practice exams, mock tests, courses, and improve your skills.{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:image" content="{% block og_image %}{% static 'images/logo.jpg' %}{% endblock %}">
+  <meta name="google-adsense-account" content="ca-pub-5294449232420430">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+  {% block page_css %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'css/exam_timer.css' %}">
+  {% block head_extra %}{% endblock %}
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5294449232420430" crossorigin="anonymous"></script>
 </head>
-
-
 <body>
-
-<div id="app"
-     class="app-layout">
-
-
-  <!-- =========================================================
-       HEADER
-       ========================================================= -->
-
+<a class="nptor-skip-link" href="#main-content">Skip to main content</a>
+<div id="app" class="app-layout">
   {% include "layouts/student/header.html" %}
-
-
-  <!-- =========================================================
-       MAIN APPLICATION AREA
-       ========================================================= -->
-
   <div class="container main-area">
-
-
-    <!-- =======================================================
-         SIDEBAR
-         ======================================================= -->
-
     {% include "layouts/student/sidebar.html" %}
-
-
-    <!-- =======================================================
-         PAGE CONTENT
-         ======================================================= -->
-
-    <main class="site-content">
-
-      {% block content %}
-      {% endblock %}
-
+    <main id="main-content" class="site-content" tabindex="-1">
+      {% block content %}{% endblock %}
     </main>
-
-
   </div>
-
-
-  <!-- =========================================================
-       FOOTER
-       ========================================================= -->
-
   {% include "layouts/student/footer.html" %}
-
-
-  <!-- =========================================================
-       LOGOUT FORM
-       ========================================================= -->
-
   {% if user.is_authenticated %}
-
-    <form id="logout-form"
-          method="post"
-          action="{% url 'accounts:logout' %}"
-          style="display:none;">
-
+    <form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">
       {% csrf_token %}
-
     </form>
-
   {% endif %}
-
-
 </div>
-
-
-<!-- ===========================================================
-     LOGOUT CONFIRMATION MODAL
-     =========================================================== -->
-
-<div class="modal"
-     id="logout-modal"
-     role="dialog"
-     aria-modal="true"
-     aria-labelledby="logout-modal-title">
-
-  <div class="modal-background"
-       onclick="closeLogoutModal()">
-  </div>
-
-
+<div class="modal" id="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+  <div class="modal-background" onclick="closeLogoutModal()"></div>
   <div class="modal-card">
-
-    <!-- Header -->
-
     <header class="modal-card-head">
-
-      <p class="modal-card-title"
-         id="logout-modal-title">
-
-        Confirm Logout
-
-      </p>
-
-      <button
-        type="button"
-        class="delete"
-        aria-label="Close"
-        onclick="closeLogoutModal()">
-      </button>
-
+      <p class="modal-card-title" id="logout-modal-title">Confirm Logout</p>
+      <button type="button" class="delete" aria-label="Close" onclick="closeLogoutModal()"></button>
     </header>
-
-
-    <!-- Body -->
-
-    <section class="modal-card-body">
-
-      <p>
-        Are you sure you want to log out?
-      </p>
-
-    </section>
-
-
-    <!-- Footer -->
-
+    <section class="modal-card-body"><p>Are you sure you want to log out?</p></section>
     <footer class="modal-card-foot">
-
-      <button
-        type="button"
-        class="button is-light"
-        onclick="closeLogoutModal()">
-
-        Cancel
-
-      </button>
-
-
-      <button
-        type="button"
-        class="button is-danger"
-        onclick="document.getElementById('logout-form').submit();">
-
-        Logout
-
-      </button>
-
+      <button type="button" class="button is-light" onclick="closeLogoutModal()">Cancel</button>
+      <button type="button" class="button is-danger" onclick="document.getElementById('logout-form').submit();">Logout</button>
     </footer>
-
   </div>
-
 </div>
-
-
-<!-- ===========================================================
-     CORE JAVASCRIPT
-     =========================================================== -->
-
-<script src="{% static 'js/theme.js' %}">
-</script>
-
-<script src="{% static 'js/navigation.js' %}">
-</script>
-
-<script src="{% static 'js/ui.js' %}">
-</script>
-
-
-<!-- ===========================================================
-     LOGOUT MODAL FUNCTIONS
-     =========================================================== -->
-
+<script src="{% static 'js/theme.js' %}"></script>
+<script src="{% static 'js/navigation.js' %}"></script>
+<script src="{% static 'js/ui.js' %}"></script>
 <script>
-
 function openLogoutModal() {
-
-  const modal =
-    document.getElementById("logout-modal");
-
-  if (!modal) {
-    return;
-  }
-
-  modal.classList.add("is-active");
-
+  const modal = document.getElementById("logout-modal");
+  if (modal) modal.classList.add("is-active");
 }
-
-
 function closeLogoutModal() {
-
-  const modal =
-    document.getElementById("logout-modal");
-
-  if (!modal) {
-    return;
-  }
-
-  modal.classList.remove("is-active");
-
+  const modal = document.getElementById("logout-modal");
+  if (modal) modal.classList.remove("is-active");
 }
-
-
-document.addEventListener(
-  "keydown",
-  function (event) {
-
-    if (event.key === "Escape") {
-
-      closeLogoutModal();
-
-    }
-
-  }
-);
-
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") closeLogoutModal();
+});
 </script>
-
-
-<!-- ===========================================================
-     GOOGLE ANALYTICS
-     =========================================================== -->
-
-<script async
-        src="https://www.googletagmanager.com/gtag/js?id=G-0VP1Z2NB44">
-</script>
-
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0VP1Z2NB44"></script>
 <script>
-
-window.dataLayer =
-  window.dataLayer || [];
-
-
-function gtag() {
-
-  dataLayer.push(arguments);
-
-}
-
-
-gtag(
-  'js',
-  new Date()
-);
-
-
-gtag(
-  'config',
-  'G-0VP1Z2NB44'
-);
-
+window.dataLayer = window.dataLayer || [];
+function gtag(){ dataLayer.push(arguments); }
+gtag('js', new Date());
+gtag('config', 'G-0VP1Z2NB44');
 </script>
-
-
-<!-- ===========================================================
-     PAGE-SPECIFIC JAVASCRIPT
-     =========================================================== -->
-
-{% block scripts_extra %}
-{% endblock %}
-
-
+{% block scripts_extra %}{% endblock %}
 </body>
-
 </html>
