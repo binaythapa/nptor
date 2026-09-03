@@ -51,20 +51,20 @@ class LearningShortlistModelTests(TestCase):
         )
 
     def test_for_resource_creates_and_reuses_a_single_course_entry(self):
-        first = LearningShortlist.for_resource(
+        first_item, first_created = LearningShortlist.for_resource(
             user=self.user,
             resource_type=LearningShortlist.RESOURCE_COURSE,
             resource=self.course,
         )
-        second = LearningShortlist.for_resource(
+        second_item, second_created = LearningShortlist.for_resource(
             user=self.user,
             resource_type=LearningShortlist.RESOURCE_COURSE,
             resource=self.course,
         )
 
-        self.assertTrue(first.created)
-        self.assertFalse(second.created)
-        self.assertEqual(first.item.pk, second.item.pk)
+        self.assertTrue(first_created)
+        self.assertFalse(second_created)
+        self.assertEqual(first_item.pk, second_item.pk)
         self.assertEqual(LearningShortlist.objects.count(), 1)
 
     def test_resource_type_must_match_the_selected_resource(self):
