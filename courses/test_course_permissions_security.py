@@ -1,6 +1,9 @@
+from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
+
+from django.test import RequestFactory
 
 from courses.models.section import CourseSection
 from courses.services.permissions import can_edit_course
@@ -83,6 +86,62 @@ class CourseEditAuthorizationTests(TestCase):
         )
 
         self.assertTrue(can_edit_course(user, course))
+
+    @patch("courses.views.instructor_views.render")
+    @patch("courses.views.instructor_views.redirect")
+    @patch("courses.views.instructor_views.CourseSectionFormSet")
+    @patch("courses.views.instructor_views.CourseForm")
+    @patch("courses.views.instructor_views.can_edit_course", return_value=True)
+    @patch("courses.views.instructor_views.get_object_or_404")
+    def test_editing_org_course_does_not_reassign_ownership_to_active_org(
+        self,
+        get_object_or_404,
+        can_edit_course_mock,
+        course_form_class,
+        formset_class,
+        redirect_mock,
+        render_mock,
+    ):
+        from courses.views import instructor_views
+
+        request = RequestFactory().post("/instructor/course/source/edit/")
+        request.user = self._user()
+
+        source_org = object()
+        active_org = object()
+        course = SimpleNamespace(
+            slug="source-course",
+            organization=source_org,
+            owner_type="organization",
+        )
+        request.organization = active_org
+        get_object_or_404.return_value = course
+
+        form = SimpleNamespace(
+            is_valid=lambda: True,
+            save=lambda commit=False: course,
+            save_m2m=lambda: None,
+        )
+        formset = SimpleNamespace(
+            is_valid=lambda: True,
+            save=lambda commit=False: [],
+            deleted_objects=[],
+        )
+        course_form_class.return_value = form
+        formset_class.return_value = formset
+        redirect_mock.return_value = object()
+        render_mock.return_value = object()
+
+        with patch.object(instructor_views.transaction, "atomic", return_value=nullcontext()):
+            instructor_views.course_edit(request, "source-course")
+
+        can_edit_course_mock.assert_called_once_with(request.user, course)
+        self.assertIs(
+            course.organization,
+            source_org,
+            "Editing must not move an existing course into the request's active organization.",
+        )
+        self.assertEqual(course.owner_type, "organization")
 
 
 class CourseSectionAuthorizationTests(TestCase):
