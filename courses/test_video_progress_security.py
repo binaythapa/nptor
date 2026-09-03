@@ -1,5 +1,8 @@
 from pathlib import Path
+from types import SimpleNamespace
 from django.test import SimpleTestCase
+
+from courses.models.progress import LessonProgress
 
 
 class CourseVideoProgressSecurityTests(SimpleTestCase):
@@ -30,3 +33,21 @@ class CourseVideoProgressSecurityTests(SimpleTestCase):
 
         self.assertNotIn("let watchedSeconds=0, duration=390", template)
         self.assertNotIn("watchedSeconds+=5", template)
+
+    def test_video_completion_rejects_invalid_duration_and_overwatch(self):
+        progress = SimpleNamespace(
+            video_seconds_watched=100,
+            video_duration=0,
+        )
+        self.assertFalse(LessonProgress.can_mark_complete(progress))
+
+        progress.video_duration = 100
+        progress.video_seconds_watched = 101
+        self.assertFalse(LessonProgress.can_mark_complete(progress))
+
+    def test_video_completion_rejects_unreasonable_duration(self):
+        progress = SimpleNamespace(
+            video_seconds_watched=90000,
+            video_duration=90000,
+        )
+        self.assertFalse(LessonProgress.can_mark_complete(progress))
