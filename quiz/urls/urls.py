@@ -21,6 +21,7 @@ from quiz.views.auth import *
 from quiz.views.admin_subscription_views import *
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
+from quiz.views.student_learning_dashboard import student_dashboard
 from quiz.views.mock import *
 from quiz.views.exams import *
 from quiz.views.exam_list import *
