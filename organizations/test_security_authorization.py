@@ -12,7 +12,7 @@ from organizations.models.organization import Organization
 from organizations.models.role import OrganizationRole
 from organizations.services.assignments import assign_resource, StudentNotInOrganizationError
 from quiz.models import Exam, ExamTrack
-from subscriptions.models import Subscription, SubscriptionEntitlement
+from subscriptions.models import Subscription, SubscriptionEntitlement, SubscriptionPlan
 from subscriptions.services import AccessService
 from organizations.views.admin.courses import _platform_or_organization_resource
 
@@ -59,8 +59,10 @@ class OrganizationSecurityBoundaryTests(TestCase):
 
     def test_expired_organization_subscription_does_not_grant_access(self):
         course = Course.objects.create(title="Expired Course")
+        plan = SubscriptionPlan.objects.create(name="Security Plan", code="security-plan")
         subscription = Subscription.objects.create(
             organization=self.org_a,
+            plan=plan,
             status=Subscription.STATUS_ACTIVE,
             starts_at=timezone.now() - timedelta(days=10),
             expires_at=timezone.now() - timedelta(days=1),
