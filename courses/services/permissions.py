@@ -77,6 +77,30 @@ def can_create_course(user, organization=None):
     return membership.role in OrganizationRole.teaching_roles()
 
 
+def course_creation_access_required(view_func):
+    """Require platform-admin or active organization teaching access."""
+
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        organization = getattr(request, "active_org", None)
+
+        if organization is None:
+            organization = getattr(request, "organization", None)
+
+        if not can_create_course(request.user, organization):
+            return HttpResponseForbidden(
+                "You are not allowed to create courses."
+            )
+
+        # Keep the legacy view's organization context aligned with the
+        # organization that was actually authorized above.
+        request.organization = organization
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapped
+
+
 def can_preview_course(user, course):
     """
     Determine whether a user can preview a course that is not
