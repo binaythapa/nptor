@@ -2,6 +2,10 @@
 # COURSE PERMISSIONS
 # ============================================================
 
+from functools import wraps
+
+from django.http import HttpResponseForbidden
+
 from organizations.models.role import OrganizationRole
 from organizations.permissions import get_active_membership
 
@@ -101,6 +105,31 @@ def can_view_instructor_dashboard(user, organization):
         return False
 
     return membership.role in OrganizationRole.teaching_roles()
+
+
+def instructor_dashboard_access_required(view_func):
+    """Require an active teaching role for organization dashboard data."""
+
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        organization = getattr(request, "active_org", None)
+
+        if organization:
+            if not can_view_instructor_dashboard(
+                request.user,
+                organization,
+            ):
+                return HttpResponseForbidden(
+                    "You are not allowed to view organization instructor data."
+                )
+
+            # instructor_dashboard historically reads request.organization.
+            # Populate it only after the centralized authorization succeeds.
+            request.organization = organization
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapped
 
 
 # ============================================================
