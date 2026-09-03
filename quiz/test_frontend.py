@@ -33,3 +33,13 @@ class FrontendAccessibilityTests(SimpleTestCase):
         self.assertIn('select[name=\'category\']', script)
         self.assertIn('categorySelect.value = ""', script)
         self.assertIn('form.requestSubmit()', script)
+
+    def test_practice_uses_compact_express_style_shell(self):
+        template = (self.root / "templates/quiz/student/practice/practice.html").read_text()
+        css = (self.root / "static/css/pages/practice.css").read_text()
+        self.assertIn('class="practice-compact-shell"', template)
+        self.assertIn('class="practice-compact-header"', template)
+        self.assertIn('class="practice-compact-stats"', template)
+        self.assertIn('.practice-compact-shell', css)
+        self.assertIn('.practice-compact-header', css)
+        self.assertIn('.practice-compact-stats', css)
