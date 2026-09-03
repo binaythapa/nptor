@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from courses.models import Course
-from quiz.models import Category, Domain, Exam
+from quiz.models import Category, Domain, Exam, LearningShortlist
 
 
 User = get_user_model()
@@ -29,7 +29,7 @@ class LearningMarketplaceViewTests(TestCase):
         )
 
     def test_marketplace_is_domain_first_and_links_to_domain_hub(self):
-        Course.objects.create(
+        course = Course.objects.create(
             title="Snowflake Fundamentals",
             description="Learn Snowflake.",
             category=self.category,
@@ -48,6 +48,14 @@ class LearningMarketplaceViewTests(TestCase):
             response,
             reverse("quiz:learning_domain", kwargs={"slug": "snowflake"}),
         )
+        self.assertContains(
+            response,
+            reverse(
+                "courses:course_preview",
+                kwargs={"slug": course.slug},
+            ),
+        )
+        self.assertContains(response, "Add to shortlist")
 
     def test_search_and_type_filter_are_server_side(self):
         Exam.objects.create(
@@ -75,6 +83,31 @@ class LearningMarketplaceViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Snowflake Core Exam")
         self.assertNotContains(response, "Different Exam")
+
+    def test_shortlisted_resource_is_marked_in_catalog(self):
+        course = Course.objects.create(
+            title="Snowflake Fundamentals",
+            description="Learn Snowflake.",
+            category=self.category,
+            level="beginner",
+            is_public=True,
+            is_published=True,
+            approval_status=Course.APPROVAL_APPROVED,
+        )
+        LearningShortlist.for_resource(
+            user=self.user,
+            resource_type=LearningShortlist.RESOURCE_COURSE,
+            resource=course,
+        )
+
+        response = self.client.get(reverse("quiz:learning_marketplace"))
+
+        self.assertEqual(response.status_code, 200)
+        item = next(
+            item for item in response.context["resources"]
+            if item["resource"].id == course.id
+        )
+        self.assertTrue(item["is_shortlisted"])
 
     def test_domain_hub_excludes_other_domain_resources(self):
         aws = Domain.objects.create(name="AWS", slug="aws", is_active=True)
