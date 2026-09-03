@@ -50,6 +50,7 @@ class PracticeFilterTests(TestCase):
         self.aws_storage_question = self._question(
             "AWS storage question",
             self.aws_storage,
+            difficulty=Question.HARD,
         )
         self.aws_multi_category_question = self._question(
             "AWS multi-category question",
@@ -61,11 +62,17 @@ class PracticeFilterTests(TestCase):
             self.azure_compute,
         )
 
-    def _question(self, text, category, primary_category=True):
+    def _question(
+        self,
+        text,
+        category,
+        primary_category=True,
+        difficulty=Question.EASY,
+    ):
         question = Question.objects.create(
             primary_category=category if primary_category is not None else None,
             question_type=Question.SINGLE,
-            difficulty=Question.EASY,
+            difficulty=difficulty,
             text=text,
             is_active=True,
             is_deleted=False,
@@ -122,6 +129,26 @@ class PracticeFilterTests(TestCase):
         self.assertEqual(
             response.context["category_id"],
             str(self.aws_root.id),
+        )
+
+    def test_difficulty_filter_limits_domain_question_pool(self):
+        response = self.client.get(
+            reverse("quiz:practice"),
+            {
+                "domain": self.aws.id,
+                "difficulty": Question.HARD,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._session()["p_total"], 1)
+        self.assertEqual(
+            response.context["difficulty"],
+            Question.HARD,
+        )
+        self.assertEqual(
+            response.context["question"].id,
+            self.aws_storage_question.id,
         )
 
     def test_switching_domain_resets_previous_question_state(self):
