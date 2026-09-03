@@ -1,41 +1,197 @@
-<form method="post" id="practiceForm">
+<form method="post"
+      id="practiceForm"
+      data-qid="{{ question.id }}"
+      class="practice-question-card">
 
-  {% csrf_token %}
-  <input type="hidden" name="question_id" value="{{ question.id }}">
+    {% csrf_token %}
 
-  <p class="mb-2 has-text-weight-semibold">
-    {{ question.text|safe }}
-  </p>
+    <input type="hidden"
+           name="question_id"
+           value="{{ question.id }}">
 
-  {% if question.question_type != "multi" %}
-    {% for c in choices %}
-    <label class="practice-option">
-      <input type="radio"
-             name="choice"
-             value="{{ c.id }}"
-             required>
-      <span>{{ c.text }}</span>
-    </label>
-    {% endfor %}
-  {% endif %}
+    {% if domain_id %}
+        <input type="hidden"
+               name="domain"
+               value="{{ domain_id }}">
+    {% endif %}
 
-  {% if question.question_type == "multi" %}
-    {% for c in choices %}
-    <label class="practice-option">
-      <input type="checkbox"
-             name="choice_multi"
-             value="{{ c.id }}">
-      <span>{{ c.text }}</span>
-    </label>
-    {% endfor %}
-  {% endif %}
+    {% if category_id %}
+        <input type="hidden"
+               name="category"
+               value="{{ category_id }}">
+    {% endif %}
 
-  <div class="practice-actions mt-4 is-flex is-justify-content-space-between">
-    <div class="is-flex" style="gap:8px;">
-      <button type="submit" class="button is-primary">
-        Submit
-      </button>
+    {% if difficulty %}
+        <input type="hidden"
+               name="difficulty"
+               value="{{ difficulty }}">
+    {% endif %}
+
+
+    <!-- =========================================
+         QUESTION META
+         ========================================= -->
+
+    <div class="practice-question-meta">
+
+        <span>
+            Question #{{ question.id }}
+        </span>
+
+        <span class="practice-question-type">
+
+            {% if question.question_type == "multi" %}
+                Multiple Answers
+            {% elif question.question_type == "tf" %}
+                True / False
+            {% else %}
+                Single Answer
+            {% endif %}
+
+        </span>
+
     </div>
-  </div>
+
+
+    <!-- =========================================
+         ADMIN CONTROLS
+         ========================================= -->
+
+    {% if user.is_staff %}
+
+        <div class="practice-admin-tools">
+
+            <a href="{% url 'admin:quiz_question_change' question.id %}"
+               target="_blank"
+               rel="noopener"
+               class="practice-btn practice-btn-warning">
+
+                Edit Question
+
+            </a>
+
+            <span class="practice-admin-id">
+                ID: {{ question.id }}
+            </span>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- =========================================
+         QUESTION TEXT
+         ========================================= -->
+
+    <div class="practice-question-text">
+
+        {{ question.text|safe }}
+
+    </div>
+
+
+    <!-- =========================================
+         ANSWER OPTIONS
+         ========================================= -->
+
+    <div class="practice-options">
+
+        {% if question.question_type != "multi" %}
+
+            {% for c in choices %}
+
+                <label class="practice-option">
+
+                    <input
+                        type="radio"
+                        name="choice"
+                        value="{{ c.id }}"
+                        required
+                    >
+
+                    <span class="practice-option-text">
+                        {{ c.text|safe }}
+                    </span>
+
+                </label>
+
+            {% endfor %}
+
+        {% endif %}
+
+
+        {% if question.question_type == "multi" %}
+
+            {% for c in choices %}
+
+                <label class="practice-option">
+
+                    <input
+                        type="checkbox"
+                        name="choice_multi"
+                        value="{{ c.id }}"
+                    >
+
+                    <span class="practice-option-text">
+                        {{ c.text|safe }}
+                    </span>
+
+                </label>
+
+            {% endfor %}
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =========================================
+         ACTIONS
+         ========================================= -->
+
+    <div class="practice-actions">
+
+        <div class="practice-actions-left">
+
+            <button
+    type="button"
+    id="practiceSkipBtn"
+    data-practice-skip
+    class="practice-btn practice-btn-warning"
+    {% if is_from_course %}disabled{% endif %}>
+
+    Skip
+
+</button>
+
+
+            {% if not is_from_course %}
+
+                <a
+                    href="{% url 'quiz:practice' %}?reset=1{% if domain_id %}&domain={{ domain_id }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}"
+                    class="practice-btn practice-btn-secondary">
+
+                    Reset
+
+                </a>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="practice-actions-right">
+
+            <button
+                type="submit"
+                class="practice-btn practice-btn-primary">
+
+                Check Answer
+
+            </button>
+
+        </div>
+
+    </div>
 
 </form>

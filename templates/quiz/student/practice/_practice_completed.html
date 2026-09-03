@@ -1,24 +1,43 @@
-<div class="notification is-info is-light p-4">
+<section class="practice-completed-card">
 
-  <h3 class="title is-6 mb-2">
-    🎉 Practice Completed!
-  </h3>
+    <div class="practice-completed-icon"
+         aria-hidden="true">
 
-  <p class="is-size-7 mb-3">
-    Amazing work! You've completed all available questions.
-    Keep pushing forward 🚀
-  </p>
+        ✓
 
-  <div class="buttons">
-    <a href="?reset=1"
-       class="button is-light is-small">
-       🔄 Reset Practice
-    </a>
+    </div>
 
-    <a href="{% url 'quiz:exam_list' %}"
-       class="button is-link is-small">
-       Explore Exams
-    </a>
-  </div>
 
-</div>
+    <h2>
+        Practice Complete!
+    </h2>
+
+
+    <p>
+        You've completed all available questions
+        in this practice session.
+    </p>
+
+
+    <div class="practice-card-actions">
+
+        <a
+            href="{% url 'quiz:exam_list' %}"
+            class="practice-btn practice-btn-primary">
+
+            Explore Courses &amp; Exams
+
+        </a>
+
+
+        <a
+            href="{% url 'quiz:practice' %}?reset=1"
+            class="practice-btn practice-btn-secondary">
+
+            Practice Again
+
+        </a>
+
+    </div>
+
+</section>

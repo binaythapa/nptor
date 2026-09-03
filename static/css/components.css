@@ -1,0 +1,2417 @@
+/* =========================================================
+   NPTOR SHARED COMPONENT SYSTEM
+   static/css/components.css
+
+   RESPONSIBILITIES
+   ---------------------------------------------------------
+   Shared UI components used across the application.
+
+   Includes:
+   - Buttons
+   - Cards
+   - Badges
+   - Alerts
+   - Progress bars
+   - Section headings
+   - Empty states
+   - Action groups
+   - Form helpers
+   - Tables
+   - Pagination
+   - Loading states
+   - Tooltips
+   - Status indicators
+   - Responsive component behavior
+
+   DOES NOT HANDLE
+   ---------------------------------------------------------
+   Application shell:
+       layout.css
+
+   Global design tokens:
+       base.css
+
+   Existing legacy theme:
+       theme.css
+
+   Page-specific styling:
+       css/pages/<page>.css
+   ========================================================= */
+
+
+/* =========================================================
+   1. BUTTON SYSTEM
+   ========================================================= */
+
+.nptor-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: var(--nptor-space-2);
+
+    min-height: 40px;
+
+    padding:
+        8px 16px;
+
+    border:
+        1px solid transparent;
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    background:
+        var(--nptor-surface);
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-sm);
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+    line-height: 1.3;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        background-color var(--nptor-transition),
+        border-color var(--nptor-transition),
+        color var(--nptor-transition),
+        box-shadow var(--nptor-transition),
+        transform var(--nptor-transition);
+
+}
+
+
+.nptor-btn:hover {
+
+    text-decoration: none;
+
+    transform:
+        translateY(-1px);
+
+}
+
+
+.nptor-btn:active {
+
+    transform:
+        translateY(0);
+
+}
+
+
+.nptor-btn:focus-visible {
+
+    outline: none;
+
+    box-shadow:
+        var(--nptor-focus-ring);
+
+}
+
+
+.nptor-btn:disabled {
+
+    transform: none;
+
+}
+
+
+/* Primary */
+
+.nptor-btn-primary {
+
+    background:
+        var(--nptor-primary);
+
+    border-color:
+        var(--nptor-primary);
+
+    color:
+        var(--nptor-text-on-primary);
+
+}
+
+
+.nptor-btn-primary:hover {
+
+    background:
+        var(--nptor-primary-hover);
+
+    border-color:
+        var(--nptor-primary-hover);
+
+    color:
+        var(--nptor-text-on-primary);
+
+}
+
+
+/* Secondary */
+
+.nptor-btn-secondary {
+
+    background:
+        var(--nptor-surface-soft);
+
+    border-color:
+        var(--nptor-border);
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+.nptor-btn-secondary:hover {
+
+    background:
+        var(--nptor-border-light);
+
+    border-color:
+        var(--nptor-border-strong);
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+/* Success */
+
+.nptor-btn-success {
+
+    background:
+        var(--nptor-success);
+
+    border-color:
+        var(--nptor-success);
+
+    color:
+        #ffffff;
+
+}
+
+
+/* Warning */
+
+.nptor-btn-warning {
+
+    background:
+        var(--nptor-warning);
+
+    border-color:
+        var(--nptor-warning);
+
+    color:
+        #ffffff;
+
+}
+
+
+/* Danger */
+
+.nptor-btn-danger {
+
+    background:
+        var(--nptor-danger);
+
+    border-color:
+        var(--nptor-danger);
+
+    color:
+        #ffffff;
+
+}
+
+
+/* Info */
+
+.nptor-btn-info {
+
+    background:
+        var(--nptor-info);
+
+    border-color:
+        var(--nptor-info);
+
+    color:
+        #ffffff;
+
+}
+
+
+/* Outline */
+
+.nptor-btn-outline {
+
+    background:
+        transparent;
+
+    border-color:
+        var(--nptor-border-strong);
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+.nptor-btn-outline:hover {
+
+    background:
+        var(--nptor-surface-soft);
+
+    border-color:
+        var(--nptor-primary);
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+/* Ghost */
+
+.nptor-btn-ghost {
+
+    background:
+        transparent;
+
+    border-color:
+        transparent;
+
+    color:
+        var(--nptor-text-secondary);
+
+}
+
+
+.nptor-btn-ghost:hover {
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+/* Sizes */
+
+.nptor-btn-sm {
+
+    min-height: 34px;
+
+    padding:
+        6px 12px;
+
+    font-size:
+        var(--nptor-font-xs);
+
+}
+
+
+.nptor-btn-lg {
+
+    min-height: 46px;
+
+    padding:
+        10px 20px;
+
+    font-size:
+        var(--nptor-font-md);
+
+}
+
+
+/* Icon-only */
+
+.nptor-btn-icon {
+
+    width: 40px;
+
+    height: 40px;
+
+    min-width: 40px;
+
+    padding: 0;
+
+}
+
+
+.nptor-btn-icon.nptor-btn-sm {
+
+    width: 34px;
+
+    height: 34px;
+
+    min-width: 34px;
+
+}
+
+
+/* Full width */
+
+.nptor-btn-block {
+
+    width: 100%;
+
+}
+
+
+/* =========================================================
+   2. CARD SYSTEM
+   ========================================================= */
+
+.nptor-card {
+
+    width: 100%;
+
+    background:
+        var(--nptor-surface);
+
+    border:
+        1px solid var(--nptor-border);
+
+    border-radius:
+        var(--nptor-radius-lg);
+
+    box-shadow:
+        var(--nptor-shadow-sm);
+
+    color:
+        var(--nptor-text);
+
+    overflow: hidden;
+
+    transition:
+        border-color var(--nptor-transition),
+        box-shadow var(--nptor-transition),
+        transform var(--nptor-transition);
+
+}
+
+
+.nptor-card-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap:
+        var(--nptor-space-4);
+
+    padding:
+        var(--nptor-space-5);
+
+    border-bottom:
+        1px solid var(--nptor-border);
+
+}
+
+
+.nptor-card-body {
+
+    padding:
+        var(--nptor-space-5);
+
+}
+
+
+.nptor-card-footer {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap:
+        var(--nptor-space-3);
+
+    padding:
+        var(--nptor-space-4)
+        var(--nptor-space-5);
+
+    border-top:
+        1px solid var(--nptor-border);
+
+    background:
+        var(--nptor-surface-soft);
+
+}
+
+
+.nptor-card-title {
+
+    margin: 0;
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-lg);
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+}
+
+
+.nptor-card-subtitle {
+
+    margin:
+        4px 0 0;
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+.nptor-card-hover:hover {
+
+    border-color:
+        var(--nptor-border-strong);
+
+    box-shadow:
+        var(--nptor-shadow-md);
+
+    transform:
+        translateY(-2px);
+
+}
+
+
+.nptor-card-clickable {
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================================
+   3. BADGES
+   ========================================================= */
+
+.nptor-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    min-height: 22px;
+
+    padding:
+        3px 9px;
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+    font-size:
+        var(--nptor-font-xs);
+
+    line-height: 1.2;
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+    white-space: nowrap;
+
+}
+
+
+.nptor-badge-primary {
+
+    background:
+        rgba(37, 99, 235, 0.10);
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+.nptor-badge-success {
+
+    background:
+        rgba(22, 163, 74, 0.10);
+
+    color:
+        var(--nptor-success);
+
+}
+
+
+.nptor-badge-warning {
+
+    background:
+        rgba(217, 119, 6, 0.10);
+
+    color:
+        var(--nptor-warning);
+
+}
+
+
+.nptor-badge-danger {
+
+    background:
+        rgba(220, 38, 38, 0.10);
+
+    color:
+        var(--nptor-danger);
+
+}
+
+
+.nptor-badge-info {
+
+    background:
+        rgba(8, 145, 178, 0.10);
+
+    color:
+        var(--nptor-info);
+
+}
+
+
+.nptor-badge-neutral {
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-text-secondary);
+
+}
+
+
+/* =========================================================
+   4. STATUS DOT
+   ========================================================= */
+
+.nptor-status {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    color:
+        var(--nptor-text-secondary);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+.nptor-status-dot {
+
+    width: 8px;
+
+    height: 8px;
+
+    flex: 0 0 8px;
+
+    border-radius:
+        50%;
+
+    background:
+        var(--nptor-text-light);
+
+}
+
+
+.nptor-status-success .nptor-status-dot {
+
+    background:
+        var(--nptor-success);
+
+}
+
+
+.nptor-status-warning .nptor-status-dot {
+
+    background:
+        var(--nptor-warning);
+
+}
+
+
+.nptor-status-danger .nptor-status-dot {
+
+    background:
+        var(--nptor-danger);
+
+}
+
+
+.nptor-status-info .nptor-status-dot {
+
+    background:
+        var(--nptor-info);
+
+}
+
+
+/* =========================================================
+   5. ALERTS
+   ========================================================= */
+
+.nptor-alert {
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap:
+        var(--nptor-space-3);
+
+    padding:
+        var(--nptor-space-4);
+
+    border:
+        1px solid var(--nptor-border);
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    background:
+        var(--nptor-surface);
+
+    color:
+        var(--nptor-text-secondary);
+
+}
+
+
+.nptor-alert-icon {
+
+    flex: 0 0 auto;
+
+    width: 22px;
+
+    height: 22px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.nptor-alert-content {
+
+    min-width: 0;
+
+    flex: 1 1 auto;
+
+}
+
+
+.nptor-alert-title {
+
+    margin: 0 0 3px;
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-sm);
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+}
+
+
+.nptor-alert-message {
+
+    margin: 0;
+
+    color:
+        var(--nptor-text-secondary);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+.nptor-alert-success {
+
+    border-color:
+        rgba(22, 163, 74, 0.25);
+
+    background:
+        rgba(22, 163, 74, 0.06);
+
+}
+
+
+.nptor-alert-success .nptor-alert-icon {
+
+    color:
+        var(--nptor-success);
+
+}
+
+
+.nptor-alert-warning {
+
+    border-color:
+        rgba(217, 119, 6, 0.25);
+
+    background:
+        rgba(217, 119, 6, 0.06);
+
+}
+
+
+.nptor-alert-warning .nptor-alert-icon {
+
+    color:
+        var(--nptor-warning);
+
+}
+
+
+.nptor-alert-danger {
+
+    border-color:
+        rgba(220, 38, 38, 0.25);
+
+    background:
+        rgba(220, 38, 38, 0.06);
+
+}
+
+
+.nptor-alert-danger .nptor-alert-icon {
+
+    color:
+        var(--nptor-danger);
+
+}
+
+
+.nptor-alert-info {
+
+    border-color:
+        rgba(8, 145, 178, 0.25);
+
+    background:
+        rgba(8, 145, 178, 0.06);
+
+}
+
+
+.nptor-alert-info .nptor-alert-icon {
+
+    color:
+        var(--nptor-info);
+
+}
+
+
+/* =========================================================
+   6. SECTION HEADINGS
+   ========================================================= */
+
+.nptor-section {
+
+    width: 100%;
+
+}
+
+
+.nptor-section + .nptor-section {
+
+    margin-top:
+        var(--nptor-space-10);
+
+}
+
+
+.nptor-section-heading {
+
+    margin-bottom:
+        var(--nptor-space-5);
+
+}
+
+
+.nptor-section-heading-row {
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap:
+        var(--nptor-space-4);
+
+}
+
+
+.nptor-section-eyebrow {
+
+    display: block;
+
+    margin-bottom:
+        var(--nptor-space-2);
+
+    color:
+        var(--nptor-primary);
+
+    font-size:
+        var(--nptor-font-xs);
+
+    font-weight:
+        var(--nptor-weight-bold);
+
+    letter-spacing:
+        0.08em;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+.nptor-section-title {
+
+    margin: 0;
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-2xl);
+
+    font-weight:
+        var(--nptor-weight-bold);
+
+}
+
+
+.nptor-section-description {
+
+    margin:
+        6px 0 0;
+
+    max-width:
+        720px;
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+/* =========================================================
+   7. GRID SYSTEM
+   ========================================================= */
+
+.nptor-grid {
+
+    display: grid;
+
+    gap:
+        var(--nptor-space-5);
+
+}
+
+
+.nptor-grid-2 {
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+}
+
+
+.nptor-grid-3 {
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+}
+
+
+.nptor-grid-4 {
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+}
+
+
+.nptor-grid-auto {
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(
+                240px,
+                1fr
+            )
+        );
+
+}
+
+
+/* =========================================================
+   8. PROGRESS
+   ========================================================= */
+
+.nptor-progress {
+
+    width: 100%;
+
+    height: 8px;
+
+    overflow: hidden;
+
+    appearance: none;
+
+    -webkit-appearance: none;
+
+    border: 0;
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+    background:
+        var(--nptor-surface-soft);
+
+}
+
+
+.nptor-progress::-webkit-progress-bar {
+
+    background:
+        var(--nptor-surface-soft);
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+}
+
+
+.nptor-progress::-webkit-progress-value {
+
+    background:
+        var(--nptor-primary);
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+}
+
+
+.nptor-progress::-moz-progress-bar {
+
+    background:
+        var(--nptor-primary);
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+}
+
+
+.nptor-progress-success::-webkit-progress-value {
+
+    background:
+        var(--nptor-success);
+
+}
+
+
+.nptor-progress-success::-moz-progress-bar {
+
+    background:
+        var(--nptor-success);
+
+}
+
+
+.nptor-progress-warning::-webkit-progress-value {
+
+    background:
+        var(--nptor-warning);
+
+}
+
+
+.nptor-progress-warning::-moz-progress-bar {
+
+    background:
+        var(--nptor-warning);
+
+}
+
+
+.nptor-progress-danger::-webkit-progress-value {
+
+    background:
+        var(--nptor-danger);
+
+}
+
+
+.nptor-progress-danger::-moz-progress-bar {
+
+    background:
+        var(--nptor-danger);
+
+}
+
+
+/* =========================================================
+   9. AVATAR
+   ========================================================= */
+
+.nptor-avatar {
+
+    width: 40px;
+
+    height: 40px;
+
+    flex: 0 0 40px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    overflow: hidden;
+
+    border-radius:
+        50%;
+
+    background:
+        var(--nptor-surface-soft);
+
+    border:
+        1px solid var(--nptor-border);
+
+    color:
+        var(--nptor-text-secondary);
+
+    font-size:
+        var(--nptor-font-sm);
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+}
+
+
+.nptor-avatar img {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+}
+
+
+.nptor-avatar-sm {
+
+    width: 32px;
+
+    height: 32px;
+
+    flex-basis: 32px;
+
+    font-size:
+        var(--nptor-font-xs);
+
+}
+
+
+.nptor-avatar-lg {
+
+    width: 56px;
+
+    height: 56px;
+
+    flex-basis: 56px;
+
+    font-size:
+        var(--nptor-font-lg);
+
+}
+
+
+/* =========================================================
+   10. DIVIDER
+   ========================================================= */
+
+.nptor-divider {
+
+    width: 100%;
+
+    height: 1px;
+
+    margin:
+        var(--nptor-space-5) 0;
+
+    background:
+        var(--nptor-border);
+
+    border: 0;
+
+}
+
+
+/* =========================================================
+   11. EMPTY STATE
+   ========================================================= */
+
+.nptor-empty {
+
+    width: 100%;
+
+    padding:
+        var(--nptor-space-12)
+        var(--nptor-space-6);
+
+    text-align: center;
+
+    background:
+        var(--nptor-surface);
+
+    border:
+        1px dashed var(--nptor-border-strong);
+
+    border-radius:
+        var(--nptor-radius-lg);
+
+}
+
+
+.nptor-empty-icon {
+
+    width: 56px;
+
+    height: 56px;
+
+    margin:
+        0 auto var(--nptor-space-4);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius:
+        50%;
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        22px;
+
+}
+
+
+.nptor-empty-title {
+
+    margin:
+        0 0 var(--nptor-space-2);
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-xl);
+
+}
+
+
+.nptor-empty-description {
+
+    max-width:
+        520px;
+
+    margin:
+        0 auto var(--nptor-space-5);
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+/* =========================================================
+   12. ACTION GROUP
+   ========================================================= */
+
+.nptor-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap:
+        var(--nptor-space-2);
+
+}
+
+
+.nptor-actions-right {
+
+    justify-content: flex-end;
+
+}
+
+
+.nptor-actions-center {
+
+    justify-content: center;
+
+}
+
+
+.nptor-actions-between {
+
+    justify-content: space-between;
+
+}
+
+
+/* =========================================================
+   13. FORM GROUP
+   ========================================================= */
+
+.nptor-form-group {
+
+    margin-bottom:
+        var(--nptor-space-4);
+
+}
+
+
+.nptor-form-label {
+
+    display: block;
+
+    margin-bottom:
+        var(--nptor-space-2);
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-sm);
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+}
+
+
+.nptor-form-help {
+
+    display: block;
+
+    margin-top:
+        5px;
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        var(--nptor-font-xs);
+
+}
+
+
+.nptor-form-error {
+
+    display: block;
+
+    margin-top:
+        5px;
+
+    color:
+        var(--nptor-danger);
+
+    font-size:
+        var(--nptor-font-xs);
+
+}
+
+
+/* =========================================================
+   14. SEARCH FIELD
+   ========================================================= */
+
+.nptor-search {
+
+    position: relative;
+
+    width: 100%;
+
+}
+
+
+.nptor-search input {
+
+    padding-right:
+        42px;
+
+}
+
+
+.nptor-search-icon {
+
+    position: absolute;
+
+    top: 50%;
+
+    right: 12px;
+
+    transform:
+        translateY(-50%);
+
+    color:
+        var(--nptor-text-muted);
+
+    pointer-events: none;
+
+}
+
+
+/* =========================================================
+   15. DATA TABLE
+   ========================================================= */
+
+.nptor-table-wrapper {
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    border:
+        1px solid var(--nptor-border);
+
+    border-radius:
+        var(--nptor-radius-lg);
+
+    background:
+        var(--nptor-surface);
+
+}
+
+
+.nptor-table {
+
+    width: 100%;
+
+    min-width: 640px;
+
+    border-collapse: collapse;
+
+}
+
+
+.nptor-table th {
+
+    padding:
+        12px 16px;
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-text);
+
+    border-bottom:
+        1px solid var(--nptor-border);
+
+    font-size:
+        var(--nptor-font-xs);
+
+    font-weight:
+        var(--nptor-weight-bold);
+
+    letter-spacing:
+        0.03em;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+.nptor-table td {
+
+    padding:
+        13px 16px;
+
+    color:
+        var(--nptor-text-secondary);
+
+    border-bottom:
+        1px solid var(--nptor-border);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+.nptor-table tbody tr:last-child td {
+
+    border-bottom: 0;
+
+}
+
+
+.nptor-table tbody tr:hover {
+
+    background:
+        var(--nptor-surface-hover);
+
+}
+
+
+/* =========================================================
+   16. LIST
+   ========================================================= */
+
+.nptor-list {
+
+    width: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+
+.nptor-list-item {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap:
+        var(--nptor-space-4);
+
+    padding:
+        var(--nptor-space-4) 0;
+
+    border-bottom:
+        1px solid var(--nptor-border);
+
+}
+
+
+.nptor-list-item:first-child {
+
+    padding-top: 0;
+
+}
+
+
+.nptor-list-item:last-child {
+
+    padding-bottom: 0;
+
+    border-bottom: 0;
+
+}
+
+
+.nptor-list-item-main {
+
+    min-width: 0;
+
+    flex: 1 1 auto;
+
+}
+
+
+.nptor-list-item-title {
+
+    margin: 0;
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-sm);
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+}
+
+
+.nptor-list-item-meta {
+
+    margin-top: 3px;
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        var(--nptor-font-xs);
+
+}
+
+
+/* =========================================================
+   17. PAGINATION
+   ========================================================= */
+
+.nptor-pagination {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap:
+        5px;
+
+    margin-top:
+        var(--nptor-space-5);
+
+}
+
+
+.nptor-page-link {
+
+    min-width: 36px;
+
+    height: 36px;
+
+    padding:
+        0 10px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border:
+        1px solid var(--nptor-border);
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    background:
+        var(--nptor-surface);
+
+    color:
+        var(--nptor-text-secondary);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+.nptor-page-link:hover {
+
+    background:
+        var(--nptor-surface-soft);
+
+    border-color:
+        var(--nptor-border-strong);
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+.nptor-page-link.is-active {
+
+    background:
+        var(--nptor-primary);
+
+    border-color:
+        var(--nptor-primary);
+
+    color:
+        #ffffff;
+
+}
+
+
+.nptor-page-link.is-disabled {
+
+    opacity: 0.5;
+
+    pointer-events: none;
+
+}
+
+
+/* =========================================================
+   18. LOADING STATE
+   ========================================================= */
+
+.nptor-spinner {
+
+    width: 20px;
+
+    height: 20px;
+
+    display: inline-block;
+
+    border:
+        2px solid var(--nptor-border);
+
+    border-top-color:
+        var(--nptor-primary);
+
+    border-radius:
+        50%;
+
+    animation:
+        nptor-spin 0.7s linear infinite;
+
+}
+
+
+@keyframes nptor-spin {
+
+    to {
+
+        transform:
+            rotate(360deg);
+
+    }
+
+}
+
+
+.nptor-loading {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap:
+        var(--nptor-space-2);
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+/* =========================================================
+   19. SKELETON
+   ========================================================= */
+
+.nptor-skeleton {
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        var(--nptor-surface-soft);
+
+    border-radius:
+        var(--nptor-radius-sm);
+
+}
+
+
+.nptor-skeleton::after {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    transform:
+        translateX(-100%);
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.35),
+            transparent
+        );
+
+    animation:
+        nptor-skeleton 1.4s infinite;
+
+}
+
+
+@keyframes nptor-skeleton {
+
+    100% {
+
+        transform:
+            translateX(100%);
+
+    }
+
+}
+
+
+/* =========================================================
+   20. TOOLTIP
+   ========================================================= */
+
+[data-tooltip] {
+
+    position: relative;
+
+}
+
+
+[data-tooltip]::after {
+
+    content:
+        attr(data-tooltip);
+
+    position: absolute;
+
+    left: 50%;
+
+    bottom:
+        calc(100% + 8px);
+
+    z-index: 3000;
+
+    max-width: 240px;
+
+    padding:
+        6px 9px;
+
+    border-radius:
+        var(--nptor-radius-sm);
+
+    background:
+        #0f172a;
+
+    color:
+        #ffffff;
+
+    font-size:
+        var(--nptor-font-xs);
+
+    line-height: 1.3;
+
+    white-space: normal;
+
+    text-align: center;
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transform:
+        translate(-50%, 4px);
+
+    transition:
+        opacity var(--nptor-transition),
+        visibility var(--nptor-transition),
+        transform var(--nptor-transition);
+
+}
+
+
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+
+    opacity: 1;
+
+    visibility: visible;
+
+    transform:
+        translate(-50%, 0);
+
+}
+
+
+/* =========================================================
+   21. CHIP / FILTER
+   ========================================================= */
+
+.nptor-chip {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    min-height: 30px;
+
+    padding:
+        5px 10px;
+
+    border:
+        1px solid var(--nptor-border);
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+    background:
+        var(--nptor-surface);
+
+    color:
+        var(--nptor-text-secondary);
+
+    font-size:
+        var(--nptor-font-xs);
+
+    font-weight:
+        var(--nptor-weight-medium);
+
+}
+
+
+.nptor-chip:hover {
+
+    border-color:
+        var(--nptor-border-strong);
+
+    background:
+        var(--nptor-surface-soft);
+
+}
+
+
+.nptor-chip.is-active {
+
+    border-color:
+        var(--nptor-primary);
+
+    background:
+        rgba(37, 99, 235, 0.08);
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+/* =========================================================
+   22. STAT COMPONENT
+   ========================================================= */
+
+.nptor-stat {
+
+    display: flex;
+
+    align-items: center;
+
+    gap:
+        var(--nptor-space-3);
+
+}
+
+
+.nptor-stat-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    flex: 0 0 42px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+.nptor-stat-label {
+
+    display: block;
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        var(--nptor-font-xs);
+
+}
+
+
+.nptor-stat-value {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-xl);
+
+    font-weight:
+        var(--nptor-weight-bold);
+
+}
+
+
+/* =========================================================
+   23. ICON CONTAINER
+   ========================================================= */
+
+.nptor-icon-box {
+
+    width: 44px;
+
+    height: 44px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex: 0 0 44px;
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+.nptor-icon-box-success {
+
+    background:
+        rgba(22, 163, 74, 0.10);
+
+    color:
+        var(--nptor-success);
+
+}
+
+
+.nptor-icon-box-warning {
+
+    background:
+        rgba(217, 119, 6, 0.10);
+
+    color:
+        var(--nptor-warning);
+
+}
+
+
+.nptor-icon-box-danger {
+
+    background:
+        rgba(220, 38, 38, 0.10);
+
+    color:
+        var(--nptor-danger);
+
+}
+
+
+.nptor-icon-box-info {
+
+    background:
+        rgba(8, 145, 178, 0.10);
+
+    color:
+        var(--nptor-info);
+
+}
+
+
+/* =========================================================
+   24. CALLOUT
+   ========================================================= */
+
+.nptor-callout {
+
+    padding:
+        var(--nptor-space-5);
+
+    border-left:
+        4px solid var(--nptor-primary);
+
+    border-radius:
+        0 var(--nptor-radius-md)
+        var(--nptor-radius-md) 0;
+
+    background:
+        var(--nptor-surface-soft);
+
+}
+
+
+.nptor-callout-title {
+
+    margin: 0 0 5px;
+
+    color:
+        var(--nptor-text);
+
+    font-size:
+        var(--nptor-font-md);
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+}
+
+
+.nptor-callout-text {
+
+    margin: 0;
+
+    color:
+        var(--nptor-text-secondary);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+/* =========================================================
+   25. RESPONSIVE COMPONENTS
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .nptor-grid-4 {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
+
+
+    .nptor-grid-3 {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
+
+}
+
+
+@media (max-width: 640px) {
+
+    .nptor-card-header {
+
+        padding:
+            var(--nptor-space-4);
+
+    }
+
+
+    .nptor-card-body {
+
+        padding:
+            var(--nptor-space-4);
+
+    }
+
+
+    .nptor-card-footer {
+
+        padding:
+            var(--nptor-space-3)
+            var(--nptor-space-4);
+
+    }
+
+
+    .nptor-grid-2,
+    .nptor-grid-3,
+    .nptor-grid-4 {
+
+        grid-template-columns:
+            minmax(0, 1fr);
+
+    }
+
+
+    .nptor-section-heading-row {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+    }
+
+
+    .nptor-actions {
+
+        width: 100%;
+
+    }
+
+
+    .nptor-actions .nptor-btn {
+
+        flex: 1 1 auto;
+
+    }
+
+
+    .nptor-list-item {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+    }
+
+
+    .nptor-list-item > * {
+
+        width: 100%;
+
+    }
+
+
+    .nptor-empty {
+
+        padding:
+            var(--nptor-space-8)
+            var(--nptor-space-4);
+
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .nptor-btn {
+
+        min-height: 38px;
+
+        padding:
+            8px 12px;
+
+    }
+
+
+    .nptor-btn-lg {
+
+        min-height: 42px;
+
+        padding:
+            9px 16px;
+
+    }
+
+
+    .nptor-actions .nptor-btn {
+
+        width: 100%;
+
+        flex: 1 1 100%;
+
+    }
+
+
+    .nptor-alert {
+
+        padding:
+            var(--nptor-space-3);
+
+    }
+
+}
+
+
+/* =========================================================
+   26. DARK MODE
+   ========================================================= */
+
+html[data-theme="dark"] .nptor-skeleton::after {
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.06),
+            transparent
+        );
+
+}
+
+
+html[data-theme="dark"] [data-tooltip]::after {
+
+    background:
+        #f8fafc;
+
+    color:
+        #0f172a;
+
+}
+
+
+/* =========================================================
+   27. REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .nptor-btn,
+    .nptor-card,
+    [data-tooltip]::after {
+
+        transition: none !important;
+
+    }
+
+
+    .nptor-spinner,
+    .nptor-skeleton::after {
+
+        animation: none !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   28. PRINT
+   ========================================================= */
+
+@media print {
+
+    .nptor-btn {
+
+        border:
+            1px solid #000;
+
+        color:
+            #000;
+
+        background:
+            #fff;
+
+    }
+
+
+    .nptor-card {
+
+        box-shadow: none;
+
+        border:
+            1px solid #000;
+
+    }
+
+
+    .nptor-table-wrapper {
+
+        overflow: visible;
+
+        border:
+            1px solid #000;
+
+    }
+
+
+    [data-tooltip]::after {
+
+        display: none;
+
+    }
+
+}

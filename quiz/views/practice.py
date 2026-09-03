@@ -494,53 +494,123 @@ def practice_answer_ajax(request):
         Question,
         id=question_id,
         is_active=True,
-        is_deleted=False
+        is_deleted=False,
     )
 
-    choices = question.choices.order_by("order", "id")
+    choices = question.choices.order_by(
+        "order",
+        "id",
+    )
 
     result = "wrong"
+
     show_next = False
+
     selected_choice_id = None
+
     selected_multi_ids = []
 
+
+    # =====================================================
+    # CORRECT ANSWERS
+    # =====================================================
+
     correct_ids = list(
-        choices.filter(is_correct=True)
-        .values_list("id", flat=True)
+        choices
+        .filter(is_correct=True)
+        .values_list(
+            "id",
+            flat=True,
+        )
     )
+
+
+    # =====================================================
+    # MULTIPLE ANSWER
+    # =====================================================
 
     if question.question_type == Question.MULTI:
-        selected_multi_ids = list(
-            map(int, request.POST.getlist("choice_multi"))
-        )
-        if set(selected_multi_ids) == set(correct_ids):
+
+        selected_multi_ids = [
+            int(value)
+            for value in request.POST.getlist(
+                "choice_multi"
+            )
+            if value
+        ]
+
+        if (
+            set(selected_multi_ids)
+            == set(correct_ids)
+        ):
+
             result = "correct"
+
             show_next = True
+
+
+    # =====================================================
+    # SINGLE / TRUE-FALSE
+    # =====================================================
+
     else:
-        selected_choice_id = request.POST.get("choice")
-        if selected_choice_id and int(selected_choice_id) in correct_ids:
+
+        selected_choice_id = (
+            request.POST.get("choice")
+        )
+
+        if (
+            selected_choice_id
+            and selected_choice_id.isdigit()
+            and int(selected_choice_id)
+            in correct_ids
+        ):
+
             result = "correct"
+
             show_next = True
+
+
+    # =====================================================
+    # RENDER RESULT
+    # =====================================================
 
     html = render_to_string(
-        "quiz/practice/_answer_result.html",
+        "quiz/student/practice/_answer_result.html",
         {
             "question": question,
+
             "choices": choices,
+
             "result": result,
-            "selected_choice_id": selected_choice_id,
-            "selected_multi_ids": selected_multi_ids,
-            "show_next": show_next,
-            "explanation": question.explanation,   # 👈 MUST BE HERE
+
+            "selected_choice_id":
+                selected_choice_id,
+
+            "selected_multi_ids":
+                selected_multi_ids,
+
+            "show_next":
+                show_next,
+
+            "explanation":
+                question.explanation,
         },
-        request=request
+        request=request,
     )
 
-    return JsonResponse({
-        "success": True,
-        "html": html
-    })
 
+    # =====================================================
+    # AJAX RESPONSE
+    # =====================================================
+
+    return JsonResponse(
+        {
+            "success": True,
+
+            "html": html,
+        }
+    )
 
 
 
@@ -550,54 +620,121 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 
+
+
 @require_POST
 def practice_next_ajax(request):
     """
-    AJAX: Move to next question
-    Handles:
-    - Course threshold logic
-    - Session tracking
-    - Filter persistence
+    AJAX: Move to the next Practice question.
+
+    Responsibilities:
+    - Mark current question as seen
+    - Maintain session state
+    - Respect current Practice filters
+    - Preserve category descendant behavior
+    - Handle course-practice threshold
+    - Return the next question without page reload
+    - Return completion markup when no questions remain
     """
 
-    # ===============================
-    # SESSION STATE UPDATE FIRST
-    # ===============================
-    seen = request.session.get("p_seen", [])
-    qid = request.session.get("p_qid")
+    # =====================================================
+    # SESSION STATE
+    # =====================================================
+
+    seen = request.session.get(
+        "p_seen",
+        []
+    )
+
+    qid = request.session.get(
+        "p_qid"
+    )
+
+
+    # =====================================================
+    # MARK CURRENT QUESTION AS SEEN
+    # =====================================================
 
     if qid:
-        seen.append(qid)
-        request.session["p_seen"] = seen
-        request.session.pop("p_qid", None)
 
-    # ===============================
-    # COURSE THRESHOLD CHECK
-    # ===============================
-    course_slug, lesson, threshold = get_course_context(request)
+        # Avoid duplicate IDs in session.
+        if qid not in seen:
+
+            seen.append(qid)
+
+        request.session["p_seen"] = seen
+
+        request.session.pop(
+            "p_qid",
+            None
+        )
+
+
+    # =====================================================
+    # COURSE CONTEXT
+    # =====================================================
+
+    course_slug, lesson, threshold = (
+        get_course_context(request)
+    )
+
+
+    # =====================================================
+    # COURSE PRACTICE COMPLETION
+    # =====================================================
 
     if lesson:
-        count = track_practice_completion(request, lesson)
 
-        if threshold and count >= threshold:
+        count = track_practice_completion(
+            request,
+            lesson
+        )
+
+
+        if (
+            threshold
+            and count >= threshold
+        ):
+
             return JsonResponse({
                 "success": True,
+
                 "redirect": reverse(
                     "courses:course_learn_lesson",
                     kwargs={
                         "slug": course_slug,
-                        "lesson_id": lesson.id
+                        "lesson_id": lesson.id,
                     }
-                )
+                ),
             })
 
-    # ===============================
-    # REBUILD FILTERS FROM SESSION
-    # ===============================
-    filters = request.session.get("p_filters", {})
-    domain_id = filters.get("domain")
-    category_id = filters.get("category")
-    difficulty = filters.get("difficulty")
+
+    # =====================================================
+    # READ SAVED FILTERS
+    # =====================================================
+
+    filters = request.session.get(
+        "p_filters",
+        {}
+    )
+
+
+    domain_id = filters.get(
+        "domain"
+    )
+
+    category_id = filters.get(
+        "category"
+    )
+
+    difficulty = filters.get(
+        "difficulty"
+    )
+
+
+    # =====================================================
+    # BASE QUESTIONSET
+    # =====================================================
 
     qs = (
         Question.objects
@@ -607,55 +744,208 @@ def practice_next_ajax(request):
                 Question.MULTI,
                 Question.TRUE_FALSE,
             ],
+
             is_active=True,
+
             is_deleted=False,
         )
-        .prefetch_related("choices")
+        .prefetch_related(
+            "choices"
+        )
     )
 
-    if domain_id and str(domain_id).isdigit():
-        qs = qs.filter(category__domain_id=domain_id)
 
-    if category_id and str(category_id).isdigit():
-        qs = qs.filter(category_id=category_id)
+    # =====================================================
+    # DOMAIN FILTER
+    # =====================================================
+
+    selected_domain = None
+
+
+    if (
+        domain_id
+        and str(domain_id).isdigit()
+    ):
+
+        selected_domain = (
+            Domain.objects
+            .filter(
+                id=domain_id,
+                is_active=True
+            )
+            .first()
+        )
+
+
+        if selected_domain:
+
+            qs = qs.filter(
+                category__domain=selected_domain
+            )
+
+
+    # =====================================================
+    # CATEGORY FILTER
+    #
+    # IMPORTANT:
+    # Same descendant behavior as the main
+    # practice() view.
+    # =====================================================
+
+    if (
+        category_id
+        and str(category_id).isdigit()
+        and selected_domain
+    ):
+
+        cat = (
+            Category.objects
+            .filter(
+                id=category_id,
+
+                domain=selected_domain,
+
+                is_active=True,
+            )
+            .first()
+        )
+
+
+        if cat:
+
+            qs = qs.filter(
+                category_id__in=
+                    cat.get_descendants_include_self()
+            )
+
+
+    # =====================================================
+    # DIFFICULTY FILTER
+    # =====================================================
 
     if difficulty:
-        qs = qs.filter(difficulty=difficulty)
 
-    remaining = qs.exclude(id__in=seen)
+        qs = qs.filter(
+            difficulty=difficulty
+        )
 
-    # ===============================
-    # COMPLETED (NO MORE QUESTIONS)
-    # ===============================
+
+    # =====================================================
+    # REMAINING QUESTIONS
+    # =====================================================
+
+    remaining = (
+        qs.exclude(
+            id__in=seen
+        )
+    )
+
+
+    # =====================================================
+    # NO QUESTIONS REMAIN
+    # =====================================================
+
     if not remaining.exists():
+
         html = render_to_string(
-            "quiz/practice/_practice_completed.html",
+            "quiz/student/practice/_practice_completed.html",
             {},
             request=request
         )
-        return JsonResponse({"success": True, "html": html})
 
-    # ===============================
-    # PICK NEXT QUESTION
-    # ===============================
-    question = remaining.order_by("?").first()
-    request.session["p_qid"] = question.id
+
+        return JsonResponse({
+            "success": True,
+
+            "html": html,
+        })
+
+
+    # =====================================================
+    # SELECT NEXT QUESTION
+    # =====================================================
+
+    question = (
+        remaining
+        .order_by("?")
+        .first()
+    )
+
+
+    if not question:
+
+        return JsonResponse({
+            "success": False,
+
+            "message":
+                "Unable to load the next question."
+        })
+
+
+    request.session["p_qid"] = (
+        question.id
+    )
+
+
+    # =====================================================
+    # STABLE CHOICE ORDER
+    #
+    # Same behavior as the main Practice view.
+    # =====================================================
+
+    choices = list(
+        question.choices.all()
+    )
+
+
+    random.seed(
+        question.id
+    )
+
+    random.shuffle(
+        choices
+    )
+
+
+    # =====================================================
+    # RENDER QUESTION
+    # =====================================================
 
     html = render_to_string(
-        "quiz/practice/_practice_question.html",
+        "quiz/student/practice/_practice_question.html",
         {
             "question": question,
-            "choices": question.choices.order_by("order", "id"),
-            "explanation": question.explanation,
+
+            "choices": choices,
+
+            "explanation":
+                question.explanation,
+
+            "domain_id":
+                domain_id,
+
+            "category_id":
+                category_id,
+
+            "difficulty":
+                difficulty,
+
+            "is_from_course":
+                bool(lesson),
         },
         request=request
     )
 
+
+    # =====================================================
+    # RESPONSE
+    # =====================================================
+
     return JsonResponse({
         "success": True,
-        "html": html
-    })
 
+        "html": html,
+    })
 
 
 
@@ -703,4 +993,337 @@ def discussion_submit_ajax(request):
     return JsonResponse({
         "success": True,
         "html": html
+    })
+
+
+
+
+@require_POST
+def practice_skip_ajax(request):
+    """
+    AJAX: Skip the current Practice question.
+
+    Responsibilities:
+    - Mark current question as seen
+    - Clear current question
+    - Preserve active filters
+    - Respect course-practice context
+    - Return the next question
+    - Return completion markup when no questions remain
+    """
+
+    # =====================================================
+    # CURRENT QUESTION
+    # =====================================================
+
+    qid = request.session.get(
+        "p_qid"
+    )
+
+    seen = request.session.get(
+        "p_seen",
+        []
+    )
+
+
+    # =====================================================
+    # MARK CURRENT QUESTION AS SEEN
+    # =====================================================
+
+    if qid:
+
+        if qid not in seen:
+
+            seen.append(qid)
+
+        request.session["p_seen"] = seen
+
+
+    request.session.pop(
+        "p_qid",
+        None
+    )
+
+
+    # =====================================================
+    # COURSE CONTEXT
+    # =====================================================
+
+    course_slug, lesson, threshold = (
+        get_course_context(request)
+    )
+
+
+    # =====================================================
+    # COURSE PROGRESS
+    # =====================================================
+
+    if lesson:
+
+        count = track_practice_completion(
+            request,
+            lesson
+        )
+
+
+        if (
+            threshold
+            and count >= threshold
+        ):
+
+            return JsonResponse({
+
+                "success": True,
+
+                "redirect": reverse(
+                    "courses:course_learn_lesson",
+                    kwargs={
+                        "slug": course_slug,
+                        "lesson_id": lesson.id,
+                    }
+                ),
+
+            })
+
+
+    # =====================================================
+    # ACTIVE FILTERS
+    # =====================================================
+
+    filters = request.session.get(
+        "p_filters",
+        {}
+    )
+
+
+    domain_id = filters.get(
+        "domain"
+    )
+
+    category_id = filters.get(
+        "category"
+    )
+
+    difficulty = filters.get(
+        "difficulty"
+    )
+
+
+    # =====================================================
+    # BASE QUESTIONSET
+    # =====================================================
+
+    qs = (
+        Question.objects
+        .filter(
+            question_type__in=[
+                Question.SINGLE,
+                Question.MULTI,
+                Question.TRUE_FALSE,
+            ],
+
+            is_active=True,
+
+            is_deleted=False,
+        )
+        .prefetch_related(
+            "choices"
+        )
+    )
+
+
+    # =====================================================
+    # DOMAIN FILTER
+    # =====================================================
+
+    selected_domain = None
+
+
+    if (
+        domain_id
+        and str(domain_id).isdigit()
+    ):
+
+        selected_domain = (
+            Domain.objects
+            .filter(
+                id=domain_id,
+                is_active=True,
+            )
+            .first()
+        )
+
+
+        if selected_domain:
+
+            qs = qs.filter(
+                category__domain=
+                    selected_domain
+            )
+
+
+    # =====================================================
+    # CATEGORY FILTER
+    #
+    # IMPORTANT:
+    # Include child categories exactly like
+    # the main Practice and Next Question views.
+    # =====================================================
+
+    if (
+        category_id
+        and str(category_id).isdigit()
+        and selected_domain
+    ):
+
+        cat = (
+            Category.objects
+            .filter(
+                id=category_id,
+                domain=selected_domain,
+                is_active=True,
+            )
+            .first()
+        )
+
+
+        if cat:
+
+            qs = qs.filter(
+                category_id__in=
+                    cat.get_descendants_include_self()
+            )
+
+
+    # =====================================================
+    # DIFFICULTY
+    # =====================================================
+
+    if difficulty:
+
+        qs = qs.filter(
+            difficulty=difficulty
+        )
+
+
+    # =====================================================
+    # REMOVE SEEN QUESTIONS
+    # =====================================================
+
+    remaining = (
+        qs.exclude(
+            id__in=seen
+        )
+    )
+
+
+    # =====================================================
+    # NO QUESTIONS REMAIN
+    # =====================================================
+
+    if not remaining.exists():
+
+        html = render_to_string(
+            "quiz/student/practice/_practice_completed.html",
+            {},
+            request=request,
+        )
+
+
+        return JsonResponse({
+
+            "success": True,
+
+            "html": html,
+
+        })
+
+
+    # =====================================================
+    # SELECT NEXT QUESTION
+    # =====================================================
+
+    question = (
+        remaining
+        .order_by("?")
+        .first()
+    )
+
+
+    if not question:
+
+        return JsonResponse({
+
+            "success": False,
+
+            "message":
+                "Unable to load the next question.",
+
+        })
+
+
+    request.session["p_qid"] = (
+        question.id
+    )
+
+
+    # =====================================================
+    # STABLE CHOICE ORDER
+    # =====================================================
+
+    choices = list(
+        question.choices.all()
+    )
+
+
+    random.seed(
+        question.id
+    )
+
+    random.shuffle(
+        choices
+    )
+
+
+    # =====================================================
+    # RENDER QUESTION
+    # =====================================================
+
+    html = render_to_string(
+        "quiz/student/practice/_practice_question.html",
+        {
+            "question": question,
+
+            "choices": choices,
+
+            "explanation":
+                question.explanation,
+
+            "domain_id":
+                domain_id,
+
+            "category_id":
+                category_id,
+
+            "difficulty":
+                difficulty,
+
+            "is_from_course":
+                bool(lesson),
+
+        },
+        request=request,
+    )
+
+
+    # =====================================================
+    # RESPONSE
+    # =====================================================
+
+    return JsonResponse({
+
+        "success": True,
+
+        "html": html,
+
     })

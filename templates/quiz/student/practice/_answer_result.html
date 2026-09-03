@@ -1,74 +1,278 @@
-<div id="practiceContainer">
+<div class="practice-question-card"
+     id="practiceResult"
+     data-qid="{{ question.id }}">
 
-<form method="post" id="practiceForm">
-{% csrf_token %}
+    <!-- =========================================
+         QUESTION META
+         ========================================= -->
+    <div class="practice-question-meta">
 
-<input type="hidden" name="question_id" value="{{ question.id }}">
+        <span>
+            Question #{{ question.id }}
+        </span>
 
-<p class="mb-2 has-text-weight-semibold">
-  {{ question.text|safe }}
-</p>
+        <span class="practice-question-type">
+            {% if result == "correct" %}
+                Correct
+            {% else %}
+                Review Answer
+            {% endif %}
+        </span>
 
-{% for c in choices %}
-<label class="practice-option
-  {% if result and c.is_correct %}correct{% endif %}
-  {% if result == 'wrong' and c.id|stringformat:'s' == selected_choice_id %}wrong{% endif %}">
-  <input type="radio" disabled>
-  <span>{{ c.text }}</span>
-</label>
-{% endfor %}
-
-{% if result == "correct" %}
-  <div class="notification is-success mt-3">✅ Correct!</div>
-{% elif result == "wrong" %}
-  <div class="notification mt-3"
-       style="background:#fff7f7; border-left:4px solid #fca5a5;">
-    <p style="color:#7f1d1d; font-weight:600;">
-      ❌ Incorrect
-    </p>
-
-    <p class="mt-2" style="color:#374151; font-weight:500;">
-      Correct answer:
-    </p>
-
-    <ul class="mt-2 ml-3">
-      {% for c in choices %}
-        {% if c.is_correct %}
-          <li style="color:#065f46;">
-            ✔ {{ c.text }}
-          </li>
-        {% endif %}
-      {% endfor %}
-    </ul>
-  </div>
-
-  {% if explanation %}
-    <button type="button"
-            class="button is-small is-info mt-2"
-            onclick="toggleExplanation()"
-            id="explanationToggleBtn">
-      📘 Show Explanation
-    </button>
-
-    <div id="explanationBox"
-         class="notification is-info mt-3"
-         style="display:none;">
-      {{ explanation|linebreaks }}
     </div>
-  {% endif %}
-{% endif %}
 
-<div class="practice-actions mt-4">
-  {% if show_next %}
-    <button type="submit"
-            name="next"
-            value="1"
-            class="button is-link">
-      Next →
-    </button>
-  {% endif %}
-</div>
 
-</form>
+    <!-- =========================================
+         QUESTION
+         ========================================= -->
+    <div class="practice-question-text">
+        {{ question.text|safe }}
+    </div>
+
+
+    <!-- =========================================
+         ANSWER OPTIONS
+         ========================================= -->
+    <div class="practice-options">
+
+        {% for c in choices %}
+
+            {% if question.question_type == "multi" %}
+
+                <label class="practice-option
+                    {% if c.is_correct %}
+                        correct
+                    {% elif c.id in selected_multi_ids %}
+                        wrong
+                    {% endif %}
+                ">
+
+                    <input
+                        type="checkbox"
+                        disabled
+                        {% if c.id in selected_multi_ids %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span class="practice-option-text">
+                        {{ c.text|safe }}
+                    </span>
+
+                </label>
+
+            {% else %}
+
+                <label class="practice-option
+                    {% if c.is_correct %}
+                        correct
+                    {% elif c.id|stringformat:'s' == selected_choice_id %}
+                        wrong
+                    {% endif %}
+                ">
+
+                    <input
+                        type="radio"
+                        disabled
+                        {% if c.id|stringformat:'s' == selected_choice_id %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <span class="practice-option-text">
+                        {{ c.text|safe }}
+                    </span>
+
+                </label>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- =========================================
+         RESULT MESSAGE
+         ========================================= -->
+    {% if result == "correct" %}
+
+        <div class="practice-result correct">
+
+            <div class="practice-result-title">
+                Correct!
+            </div>
+
+            <p class="practice-result-message">
+                Excellent. Your answer is correct.
+            </p>
+
+        </div>
+
+    {% else %}
+
+        <div class="practice-result wrong">
+
+            <div class="practice-result-title">
+                Incorrect
+            </div>
+
+            <p class="practice-result-message">
+                Don't worry. Review the correct answer
+                and explanation below.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- =========================================
+         CORRECT ANSWER
+         ========================================= -->
+    {% if result == "wrong" %}
+
+        <section class="practice-correct-answer">
+
+            <div class="practice-result-title">
+                Correct Answer
+            </div>
+
+            {% for c in choices %}
+
+                {% if c.is_correct %}
+
+                    <div class="practice-option correct">
+
+                        <span class="practice-option-text">
+                            {{ c.text|safe }}
+                        </span>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </section>
+
+    {% endif %}
+
+
+    <!-- =========================================
+         EXPLANATION
+         ========================================= -->
+    {% if explanation %}
+
+        <section class="practice-explanation">
+
+            <button
+                type="button"
+                class="practice-explanation-toggle"
+                aria-expanded="false">
+
+                Show Explanation
+
+            </button>
+
+            <div
+                class="practice-explanation-content rich-content"
+                hidden>
+
+                {{ explanation|safe }}
+
+            </div>
+
+        </section>
+
+    {% endif %}
+
+
+    <!-- =========================================
+         ACTIONS
+         ========================================= -->
+    <div class="practice-actions">
+
+        <div class="practice-actions-left">
+
+            <a
+                href="{% url 'quiz:practice' %}"
+                class="practice-btn practice-btn-secondary">
+
+                Practice
+
+            </a>
+
+        </div>
+
+
+        <div class="practice-actions-right">
+
+            <button
+                type="button"
+                class="practice-btn practice-btn-primary"
+                data-practice-next>
+
+                {% if show_next %}
+                    Next Question
+                {% else %}
+                    Try Next Question
+                {% endif %}
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         FEEDBACK
+         ========================================= -->
+    {% if user.is_authenticated %}
+
+        <section class="practice-feedback">
+
+            <div class="practice-feedback-title">
+                Report a Problem
+            </div>
+
+            <p class="practice-feedback-help">
+                Found an incorrect or confusing question?
+                Let us know.
+            </p>
+
+
+            <textarea
+                id="studentComment"
+                class="practice-feedback-textarea"
+                placeholder="Describe the problem..."></textarea>
+
+
+            <label class="practice-feedback-checkbox">
+
+                <input
+                    type="checkbox"
+                    id="answerIncorrect">
+
+                <span>
+                    Answer is incorrect or confusing
+                </span>
+
+            </label>
+
+
+            <button
+                type="button"
+                id="feedbackSubmitBtn"
+                class="practice-btn practice-btn-secondary">
+
+                Submit Feedback
+
+            </button>
+
+        </section>
+
+    {% endif %}
 
 </div>

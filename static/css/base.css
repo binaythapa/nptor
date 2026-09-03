@@ -1,0 +1,903 @@
+/* =========================================================
+   NPTOR DESIGN SYSTEM
+   static/css/base.css
+
+   Layer:
+   1. Design tokens
+   2. Reset
+   3. Typography
+   4. Links
+   5. Forms
+   6. Buttons
+   7. Accessibility
+   8. Utility helpers
+
+   This file should contain GLOBAL styling only.
+
+   Page-specific styling belongs in:
+   static/css/pages/<page>.css
+   ========================================================= */
+
+
+/* =========================================================
+   1. DESIGN TOKENS
+   ========================================================= */
+
+:root {
+
+    /* -----------------------------------------------------
+       Brand
+       ----------------------------------------------------- */
+
+    --nptor-primary: #2563eb;
+    --nptor-primary-hover: #1d4ed8;
+    --nptor-primary-active: #1e40af;
+
+    --nptor-secondary: #64748b;
+
+    --nptor-success: #16a34a;
+    --nptor-warning: #d97706;
+    --nptor-danger: #dc2626;
+    --nptor-info: #0891b2;
+
+
+    /* -----------------------------------------------------
+       Backgrounds
+       ----------------------------------------------------- */
+
+    --nptor-bg: #f8fafc;
+    --nptor-surface: #ffffff;
+    --nptor-surface-soft: #f1f5f9;
+    --nptor-surface-hover: #f8fafc;
+
+    --nptor-overlay: rgba(15, 23, 42, 0.55);
+
+
+    /* -----------------------------------------------------
+       Text
+       ----------------------------------------------------- */
+
+    --nptor-text: #0f172a;
+    --nptor-text-secondary: #475569;
+    --nptor-text-muted: #64748b;
+    --nptor-text-light: #94a3b8;
+
+    --nptor-text-on-primary: #ffffff;
+
+
+    /* -----------------------------------------------------
+       Borders
+       ----------------------------------------------------- */
+
+    --nptor-border: #e2e8f0;
+    --nptor-border-light: #f1f5f9;
+    --nptor-border-strong: #cbd5e1;
+
+
+    /* -----------------------------------------------------
+       Radius
+       ----------------------------------------------------- */
+
+    --nptor-radius-xs: 4px;
+    --nptor-radius-sm: 6px;
+    --nptor-radius-md: 8px;
+    --nptor-radius-lg: 12px;
+    --nptor-radius-xl: 16px;
+    --nptor-radius-2xl: 20px;
+
+    --nptor-radius-pill: 999px;
+
+
+    /* -----------------------------------------------------
+       Shadows
+       ----------------------------------------------------- */
+
+    --nptor-shadow-xs:
+        0 1px 2px rgba(15, 23, 42, 0.04);
+
+    --nptor-shadow-sm:
+        0 1px 3px rgba(15, 23, 42, 0.08);
+
+    --nptor-shadow-md:
+        0 4px 12px rgba(15, 23, 42, 0.08);
+
+    --nptor-shadow-lg:
+        0 10px 30px rgba(15, 23, 42, 0.10);
+
+
+    /* -----------------------------------------------------
+       Spacing
+       ----------------------------------------------------- */
+
+    --nptor-space-1: 4px;
+    --nptor-space-2: 8px;
+    --nptor-space-3: 12px;
+    --nptor-space-4: 16px;
+    --nptor-space-5: 20px;
+    --nptor-space-6: 24px;
+    --nptor-space-8: 32px;
+    --nptor-space-10: 40px;
+    --nptor-space-12: 48px;
+    --nptor-space-16: 64px;
+
+
+    /* -----------------------------------------------------
+       Typography
+       ----------------------------------------------------- */
+
+    --nptor-font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+    --nptor-font-mono:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+
+
+    --nptor-font-xs: 0.75rem;
+    --nptor-font-sm: 0.875rem;
+    --nptor-font-md: 1rem;
+    --nptor-font-lg: 1.125rem;
+    --nptor-font-xl: 1.25rem;
+    --nptor-font-2xl: 1.5rem;
+    --nptor-font-3xl: 1.875rem;
+    --nptor-font-4xl: 2.25rem;
+
+
+    --nptor-line-tight: 1.2;
+    --nptor-line-normal: 1.5;
+    --nptor-line-relaxed: 1.7;
+
+
+    /* -----------------------------------------------------
+       Font weights
+       ----------------------------------------------------- */
+
+    --nptor-weight-normal: 400;
+    --nptor-weight-medium: 500;
+    --nptor-weight-semibold: 600;
+    --nptor-weight-bold: 700;
+
+
+    /* -----------------------------------------------------
+       Layout
+       ----------------------------------------------------- */
+
+    --nptor-content-max-width: 1440px;
+
+    --nptor-header-height: 64px;
+
+    --nptor-sidebar-width: 240px;
+
+    --nptor-content-padding: 24px;
+
+
+    /* -----------------------------------------------------
+       Transitions
+       ----------------------------------------------------- */
+
+    --nptor-transition-fast:
+        120ms ease;
+
+    --nptor-transition:
+        180ms ease;
+
+    --nptor-transition-slow:
+        280ms ease;
+
+
+    /* -----------------------------------------------------
+       Focus
+       ----------------------------------------------------- */
+
+    --nptor-focus-ring:
+        0 0 0 3px rgba(37, 99, 235, 0.20);
+
+}
+
+
+/* =========================================================
+   2. DARK THEME TOKENS
+   ========================================================= */
+
+html[data-theme="dark"] {
+
+    --nptor-bg: #0f172a;
+
+    --nptor-surface: #111827;
+
+    --nptor-surface-soft: #1e293b;
+
+    --nptor-surface-hover: #1e293b;
+
+
+    --nptor-text: #f8fafc;
+
+    --nptor-text-secondary: #cbd5e1;
+
+    --nptor-text-muted: #94a3b8;
+
+    --nptor-text-light: #64748b;
+
+
+    --nptor-border: #334155;
+
+    --nptor-border-light: #1e293b;
+
+    --nptor-border-strong: #475569;
+
+
+    --nptor-overlay:
+        rgba(2, 6, 23, 0.72);
+
+
+    --nptor-shadow-xs:
+        0 1px 2px rgba(0, 0, 0, 0.20);
+
+    --nptor-shadow-sm:
+        0 1px 3px rgba(0, 0, 0, 0.25);
+
+    --nptor-shadow-md:
+        0 4px 12px rgba(0, 0, 0, 0.30);
+
+    --nptor-shadow-lg:
+        0 10px 30px rgba(0, 0, 0, 0.35);
+
+}
+
+
+/* =========================================================
+   3. GLOBAL RESET
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+
+html {
+    margin: 0;
+    padding: 0;
+
+    font-size: 16px;
+
+    scroll-behavior: smooth;
+
+    -webkit-text-size-adjust: 100%;
+}
+
+
+body {
+    margin: 0;
+    padding: 0;
+
+    min-height: 100vh;
+
+    background: var(--nptor-bg);
+
+    color: var(--nptor-text);
+
+    font-family: var(--nptor-font-family);
+
+    font-size: var(--nptor-font-md);
+
+    line-height: var(--nptor-line-normal);
+
+    text-rendering: optimizeLegibility;
+
+    -webkit-font-smoothing: antialiased;
+
+    -moz-osx-font-smoothing: grayscale;
+
+    transition:
+        background-color var(--nptor-transition),
+        color var(--nptor-transition);
+}
+
+
+/* =========================================================
+   4. MEDIA ELEMENTS
+   ========================================================= */
+
+img,
+svg,
+video,
+canvas {
+    display: block;
+
+    max-width: 100%;
+}
+
+
+img {
+    height: auto;
+}
+
+
+iframe {
+    max-width: 100%;
+}
+
+
+/* =========================================================
+   5. TYPOGRAPHY
+   ========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+
+    margin-top: 0;
+
+    color: var(--nptor-text);
+
+    font-weight: var(--nptor-weight-bold);
+
+    line-height: var(--nptor-line-tight);
+}
+
+
+h1 {
+    font-size: var(--nptor-font-4xl);
+}
+
+
+h2 {
+    font-size: var(--nptor-font-3xl);
+}
+
+
+h3 {
+    font-size: var(--nptor-font-2xl);
+}
+
+
+h4 {
+    font-size: var(--nptor-font-xl);
+}
+
+
+h5 {
+    font-size: var(--nptor-font-lg);
+}
+
+
+h6 {
+    font-size: var(--nptor-font-md);
+}
+
+
+p {
+    margin-top: 0;
+
+    margin-bottom: var(--nptor-space-4);
+
+    color: var(--nptor-text-secondary);
+}
+
+
+small {
+    font-size: var(--nptor-font-sm);
+
+    color: var(--nptor-text-muted);
+}
+
+
+strong,
+b {
+    font-weight: var(--nptor-weight-semibold);
+}
+
+
+code,
+pre,
+kbd,
+samp {
+    font-family: var(--nptor-font-mono);
+}
+
+
+code {
+    padding: 2px 5px;
+
+    border-radius: var(--nptor-radius-xs);
+
+    background: var(--nptor-surface-soft);
+
+    color: var(--nptor-text);
+
+    font-size: 0.9em;
+}
+
+
+pre {
+    overflow-x: auto;
+
+    padding: var(--nptor-space-4);
+
+    border: 1px solid var(--nptor-border);
+
+    border-radius: var(--nptor-radius-md);
+
+    background: var(--nptor-surface-soft);
+
+    color: var(--nptor-text);
+
+}
+
+
+/* =========================================================
+   6. LINKS
+   ========================================================= */
+
+a {
+
+    color: var(--nptor-primary);
+
+    text-decoration: none;
+
+    transition:
+        color var(--nptor-transition),
+        background-color var(--nptor-transition),
+        border-color var(--nptor-transition),
+        box-shadow var(--nptor-transition),
+        transform var(--nptor-transition);
+}
+
+
+a:hover {
+    color: var(--nptor-primary-hover);
+}
+
+
+a:focus-visible {
+
+    outline: none;
+
+    box-shadow: var(--nptor-focus-ring);
+
+    border-radius: var(--nptor-radius-sm);
+}
+
+
+/* =========================================================
+   7. BUTTONS
+   ========================================================= */
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+
+button {
+    cursor: pointer;
+}
+
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+
+    cursor: not-allowed;
+
+    opacity: 0.6;
+}
+
+
+button:focus-visible {
+
+    outline: none;
+
+    box-shadow: var(--nptor-focus-ring);
+}
+
+
+/* =========================================================
+   8. FORM ELEMENTS
+   ========================================================= */
+
+input,
+select,
+textarea {
+
+    width: 100%;
+
+    border: 1px solid var(--nptor-border-strong);
+
+    border-radius: var(--nptor-radius-md);
+
+    background: var(--nptor-surface);
+
+    color: var(--nptor-text);
+
+    transition:
+        border-color var(--nptor-transition),
+        box-shadow var(--nptor-transition),
+        background-color var(--nptor-transition);
+
+}
+
+
+input,
+select {
+
+    min-height: 40px;
+
+    padding:
+        8px
+        12px;
+}
+
+
+textarea {
+
+    min-height: 120px;
+
+    padding:
+        10px
+        12px;
+
+    resize: vertical;
+}
+
+
+input::placeholder,
+textarea::placeholder {
+
+    color: var(--nptor-text-light);
+
+}
+
+
+input:hover,
+select:hover,
+textarea:hover {
+
+    border-color: var(--nptor-border-strong);
+
+}
+
+
+input:focus,
+select:focus,
+textarea:focus {
+
+    outline: none;
+
+    border-color: var(--nptor-primary);
+
+    box-shadow: var(--nptor-focus-ring);
+
+}
+
+
+/* =========================================================
+   9. TABLES
+   ========================================================= */
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+}
+
+
+th,
+td {
+
+    padding:
+        var(--nptor-space-3)
+        var(--nptor-space-4);
+
+    border-bottom:
+        1px solid var(--nptor-border);
+
+    text-align: left;
+
+}
+
+
+th {
+
+    color: var(--nptor-text);
+
+    font-weight: var(--nptor-weight-semibold);
+
+}
+
+
+td {
+
+    color: var(--nptor-text-secondary);
+
+}
+
+
+/* =========================================================
+   10. LISTS
+   ========================================================= */
+
+ul,
+ol {
+
+    margin-top: 0;
+
+}
+
+
+button,
+a {
+
+    -webkit-tap-highlight-color: transparent;
+
+}
+
+
+/* =========================================================
+   11. SELECTION
+   ========================================================= */
+
+::selection {
+
+    background: rgba(37, 99, 235, 0.18);
+
+    color: var(--nptor-text);
+
+}
+
+
+/* =========================================================
+   12. SCROLLBAR
+   ========================================================= */
+
+* {
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        var(--nptor-border-strong)
+        var(--nptor-surface-soft);
+
+}
+
+
+*::-webkit-scrollbar {
+
+    width: 8px;
+
+    height: 8px;
+
+}
+
+
+*::-webkit-scrollbar-track {
+
+    background:
+        var(--nptor-surface-soft);
+
+}
+
+
+*::-webkit-scrollbar-thumb {
+
+    background:
+        var(--nptor-border-strong);
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+}
+
+
+*::-webkit-scrollbar-thumb:hover {
+
+    background:
+        var(--nptor-text-light);
+
+}
+
+
+/* =========================================================
+   13. ACCESSIBILITY
+   ========================================================= */
+
+.visually-hidden {
+
+    position: absolute !important;
+
+    width: 1px !important;
+
+    height: 1px !important;
+
+    padding: 0 !important;
+
+    margin: -1px !important;
+
+    overflow: hidden !important;
+
+    clip: rect(0, 0, 0, 0) !important;
+
+    white-space: nowrap !important;
+
+    border: 0 !important;
+
+}
+
+
+[aria-disabled="true"] {
+
+    cursor: not-allowed;
+
+}
+
+
+/* =========================================================
+   14. GLOBAL UTILITY CLASSES
+   ========================================================= */
+
+.text-primary {
+    color: var(--nptor-primary) !important;
+}
+
+
+.text-success {
+    color: var(--nptor-success) !important;
+}
+
+
+.text-warning {
+    color: var(--nptor-warning) !important;
+}
+
+
+.text-danger {
+    color: var(--nptor-danger) !important;
+}
+
+
+.text-muted {
+    color: var(--nptor-text-muted) !important;
+}
+
+
+.bg-surface {
+    background: var(--nptor-surface) !important;
+}
+
+
+.bg-soft {
+    background: var(--nptor-surface-soft) !important;
+}
+
+
+.border-default {
+    border: 1px solid var(--nptor-border) !important;
+}
+
+
+.rounded {
+    border-radius: var(--nptor-radius-md) !important;
+}
+
+
+.rounded-lg {
+    border-radius: var(--nptor-radius-lg) !important;
+}
+
+
+.shadow-sm {
+    box-shadow: var(--nptor-shadow-sm) !important;
+}
+
+
+.shadow-md {
+    box-shadow: var(--nptor-shadow-md) !important;
+}
+
+
+/* =========================================================
+   15. REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+
+        animation-duration: 0.01ms !important;
+
+        animation-iteration-count: 1 !important;
+
+        transition-duration: 0.01ms !important;
+
+        scroll-behavior: auto !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   16. MOBILE TYPOGRAPHY
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    h1 {
+        font-size: 1.875rem;
+    }
+
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+
+    h4 {
+        font-size: 1.125rem;
+    }
+
+}
+
+
+/* =========================================================
+   17. PRINT
+   ========================================================= */
+
+@media print {
+
+    body {
+
+        background: #ffffff !important;
+
+        color: #000000 !important;
+
+    }
+
+
+    a {
+
+        color: #000000 !important;
+
+        text-decoration: underline;
+
+    }
+
+
+    button,
+    .no-print {
+
+        display: none !important;
+
+    }
+
+}

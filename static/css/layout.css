@@ -1,0 +1,1700 @@
+/* =========================================================
+   NPTOR APPLICATION LAYOUT
+   static/css/layout.css
+
+   RESPONSIBILITIES
+   ---------------------------------------------------------
+   - Application shell
+   - Header layout
+   - Header brand
+   - Header search
+   - Header actions
+   - Main application area
+   - Sidebar
+   - Sidebar navigation structure
+   - Mobile sidebar
+   - Sidebar overlay
+   - Site content
+   - Footer
+   - Responsive layout
+
+   DOES NOT HANDLE
+   ---------------------------------------------------------
+   - Dashboard-specific UI
+   - Exam-specific UI
+   - Practice-specific UI
+   - Cards
+   - Tables
+   - Forms
+   - Page-specific components
+
+   Those belong in their respective CSS files.
+
+   Architecture:
+
+       base.css
+           ↓
+       layout.css
+           ↓
+       components.css
+           ↓
+       pages/<page>.css
+   ========================================================= */
+
+
+/* =========================================================
+   1. APPLICATION SHELL
+   ========================================================= */
+
+html,
+body {
+    min-height: 100%;
+}
+
+
+body {
+    overflow-x: hidden;
+}
+
+
+#app {
+    min-height: 100vh;
+}
+
+
+.app-layout {
+    min-height: 100vh;
+
+    display: flex;
+
+    flex-direction: column;
+
+    background: var(--nptor-bg);
+
+    color: var(--nptor-text);
+}
+
+
+/* =========================================================
+   2. GLOBAL CONTAINER
+   ========================================================= */
+
+.container {
+    width: 100%;
+
+    max-width: var(--nptor-content-max-width);
+
+    margin-left: auto;
+    margin-right: auto;
+
+    padding-left: var(--nptor-content-padding);
+    padding-right: var(--nptor-content-padding);
+}
+
+
+/* =========================================================
+   3. SITE HEADER
+   ========================================================= */
+
+.site-header {
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 1000;
+
+    width: 100%;
+
+    min-height: var(--nptor-header-height);
+
+    background: var(--nptor-surface);
+
+    border-bottom:
+        1px solid var(--nptor-border);
+
+    color: var(--nptor-text);
+
+    box-shadow:
+        0 1px 3px rgba(15, 23, 42, 0.04);
+
+    transition:
+        background-color var(--nptor-transition),
+        border-color var(--nptor-transition),
+        box-shadow var(--nptor-transition);
+}
+
+
+/* =========================================================
+   4. HEADER INNER
+   ========================================================= */
+
+.header-inner {
+
+    min-height: var(--nptor-header-height);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: var(--nptor-space-4);
+
+}
+
+
+/* =========================================================
+   5. HEADER LEFT
+   ========================================================= */
+
+.header-left {
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: var(--nptor-space-3);
+
+    flex: 1 1 auto;
+
+}
+
+
+/* =========================================================
+   6. BRAND
+   ========================================================= */
+
+.brand-group {
+    flex: 0 0 auto;
+}
+
+
+.brand {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: var(--nptor-space-3);
+
+    min-width: 0;
+
+    color: var(--nptor-text);
+
+    text-decoration: none;
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+}
+
+
+.brand:hover {
+
+    color: var(--nptor-text);
+
+}
+
+
+.brand:focus-visible {
+
+    color: var(--nptor-text);
+
+}
+
+
+.brand-logo {
+
+    width: 36px;
+
+    height: 36px;
+
+    flex: 0 0 36px;
+
+    object-fit: cover;
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    border:
+        1px solid var(--nptor-border);
+
+}
+
+
+.brand-text {
+
+    max-width: 180px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size:
+        var(--nptor-font-lg);
+
+    line-height: 1;
+
+    font-weight:
+        var(--nptor-weight-bold);
+
+}
+
+
+/* =========================================================
+   7. SIDEBAR TOGGLE
+   ========================================================= */
+
+#sidebar-toggle {
+
+    width: 40px;
+
+    height: 40px;
+
+    min-width: 40px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 0;
+
+    border: 1px solid var(--nptor-border);
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    background:
+        var(--nptor-surface);
+
+    color:
+        var(--nptor-text);
+
+    transition:
+        background-color var(--nptor-transition),
+        border-color var(--nptor-transition),
+        color var(--nptor-transition),
+        box-shadow var(--nptor-transition);
+
+}
+
+
+#sidebar-toggle:hover {
+
+    background:
+        var(--nptor-surface-soft);
+
+    border-color:
+        var(--nptor-border-strong);
+
+}
+
+
+#sidebar-toggle:active {
+
+    transform: translateY(1px);
+
+}
+
+
+/* =========================================================
+   8. HEADER SEARCH
+   ========================================================= */
+
+.header-search {
+
+    position: relative;
+
+    width: min(100%, 420px);
+
+    flex: 1 1 320px;
+
+    display: flex;
+
+    align-items: center;
+
+}
+
+
+.header-search .input {
+
+    width: 100%;
+
+    min-height: 40px;
+
+    padding-right: 44px;
+
+    margin: 0;
+
+    background:
+        var(--nptor-surface-soft);
+
+    border-color:
+        transparent;
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+.header-search .input:hover {
+
+    border-color:
+        var(--nptor-border);
+
+}
+
+
+.header-search .input:focus {
+
+    background:
+        var(--nptor-surface);
+
+    border-color:
+        var(--nptor-primary);
+
+}
+
+
+.header-search .search-btn {
+
+    position: absolute;
+
+    right: 0;
+
+    top: 0;
+
+    width: 42px;
+
+    height: 40px;
+
+    min-height: 40px;
+
+    padding: 0;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 0;
+
+    background: transparent;
+
+    color:
+        var(--nptor-text-muted);
+
+}
+
+
+.header-search .search-btn:hover {
+
+    background:
+        transparent;
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+/* =========================================================
+   9. HEADER RIGHT
+   ========================================================= */
+
+.header-right {
+
+    flex: 0 0 auto;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: var(--nptor-space-2);
+
+}
+
+
+/* =========================================================
+   10. WELCOME USER
+   ========================================================= */
+
+.welcome-user {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    padding:
+        8px 10px;
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    color:
+        var(--nptor-text-secondary);
+
+    white-space: nowrap;
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+.welcome-user:hover {
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+.welcome-user strong {
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+/* =========================================================
+   11. HEADER ICON BUTTON
+   ========================================================= */
+
+.icon-btn {
+
+    position: relative;
+
+    width: 40px;
+
+    height: 40px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    color:
+        var(--nptor-text-secondary);
+
+    background:
+        transparent;
+
+}
+
+
+.icon-btn:hover {
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+.icon-btn:focus-visible {
+
+    box-shadow:
+        var(--nptor-focus-ring);
+
+}
+
+
+/* =========================================================
+   12. NOTIFICATION BADGE
+   ========================================================= */
+
+.notif-badge {
+
+    position: absolute;
+
+    top: 2px;
+
+    right: 1px;
+
+    min-width: 17px;
+
+    height: 17px;
+
+    padding:
+        0 4px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+    background:
+        var(--nptor-danger);
+
+    color:
+        #ffffff;
+
+    font-size:
+        10px;
+
+    line-height: 1;
+
+    font-weight:
+        var(--nptor-weight-bold);
+
+}
+
+
+/* =========================================================
+   13. THEME TOGGLE
+   ========================================================= */
+
+#theme-toggle {
+
+    width: 40px;
+
+    height: 40px;
+
+    min-width: 40px;
+
+    padding: 0;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border:
+        1px solid var(--nptor-border);
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    background:
+        var(--nptor-surface);
+
+    color:
+        var(--nptor-text-secondary);
+
+}
+
+
+#theme-toggle:hover {
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+/* =========================================================
+   14. MAIN APPLICATION AREA
+   ========================================================= */
+
+.main-area {
+
+    width: 100%;
+
+    max-width: var(--nptor-content-max-width);
+
+    flex: 1 1 auto;
+
+    display: grid;
+
+    grid-template-columns:
+        var(--nptor-sidebar-width)
+        minmax(0, 1fr);
+
+    align-items: stretch;
+
+    padding-top:
+        var(--nptor-space-6);
+
+    padding-bottom:
+        var(--nptor-space-8);
+
+    gap:
+        var(--nptor-space-8);
+
+}
+
+
+/* =========================================================
+   15. SITE SIDEBAR
+   ========================================================= */
+
+.site-sidebar {
+
+    position: sticky;
+
+    top:
+        calc(
+            var(--nptor-header-height)
+            + var(--nptor-space-6)
+        );
+
+    align-self: start;
+
+    width: var(--nptor-sidebar-width);
+
+    max-height:
+        calc(
+            100vh
+            - var(--nptor-header-height)
+            - var(--nptor-space-12)
+        );
+
+    overflow-y: auto;
+
+    padding:
+        var(--nptor-space-4);
+
+    background:
+        var(--nptor-surface);
+
+    border:
+        1px solid var(--nptor-border);
+
+    border-radius:
+        var(--nptor-radius-lg);
+
+    box-shadow:
+        var(--nptor-shadow-sm);
+
+    color:
+        var(--nptor-text);
+
+    transition:
+        background-color var(--nptor-transition),
+        border-color var(--nptor-transition),
+        box-shadow var(--nptor-transition),
+        transform var(--nptor-transition);
+
+}
+
+
+/* =========================================================
+   16. STUDENT NAVIGATION
+   ========================================================= */
+
+.student-navigation {
+
+    width: 100%;
+
+}
+
+
+.student-navigation .menu-label {
+
+    margin-top:
+        var(--nptor-space-5);
+
+    margin-bottom:
+        var(--nptor-space-2);
+
+    padding-left:
+        var(--nptor-space-2);
+
+    color:
+        var(--nptor-text-light);
+
+    font-size:
+        0.68rem;
+
+    line-height: 1.3;
+
+    font-weight:
+        var(--nptor-weight-bold);
+
+    letter-spacing:
+        0.08em;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+.student-navigation .menu-label:first-child {
+
+    margin-top: 0;
+
+}
+
+
+.student-navigation .menu-list {
+
+    margin: 0;
+
+}
+
+
+.student-navigation .menu-list li {
+
+    margin: 2px 0;
+
+}
+
+
+/* =========================================================
+   17. NAVIGATION LINKS
+   ========================================================= */
+
+.student-navigation .menu-list a {
+
+    min-height: 40px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: var(--nptor-space-2);
+
+    padding:
+        8px 10px;
+
+    border-radius:
+        var(--nptor-radius-md);
+
+    color:
+        var(--nptor-text-secondary);
+
+    font-size:
+        var(--nptor-font-sm);
+
+    font-weight:
+        var(--nptor-weight-medium);
+
+    line-height: 1.3;
+
+    transition:
+        background-color var(--nptor-transition-fast),
+        color var(--nptor-transition-fast),
+        transform var(--nptor-transition-fast);
+
+}
+
+
+.student-navigation .menu-list a:hover {
+
+    background:
+        var(--nptor-surface-soft);
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+.student-navigation .menu-list a:focus-visible {
+
+    outline: none;
+
+    box-shadow:
+        var(--nptor-focus-ring);
+
+}
+
+
+.student-navigation .menu-list a:active {
+
+    transform:
+        translateY(1px);
+
+}
+
+
+/* =========================================================
+   18. NAVIGATION ICON
+   ========================================================= */
+
+.student-navigation .nav-icon {
+
+    width: 24px;
+
+    min-width: 24px;
+
+    height: 24px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color:
+        var(--nptor-text-muted);
+
+    font-size:
+        14px;
+
+}
+
+
+.student-navigation .menu-list a:hover .nav-icon {
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+/* =========================================================
+   19. NAVIGATION LABEL
+   ========================================================= */
+
+.student-navigation .nav-label {
+
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    flex: 1 1 auto;
+
+}
+
+
+/* =========================================================
+   20. NAVIGATION BADGES
+   ========================================================= */
+
+.student-navigation .nav-badge {
+
+    flex: 0 0 auto;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 20px;
+
+    padding:
+        2px 7px;
+
+    border-radius:
+        var(--nptor-radius-pill);
+
+    font-size:
+        10px;
+
+    line-height: 1.2;
+
+    font-weight:
+        var(--nptor-weight-semibold);
+
+}
+
+
+.student-navigation .nav-badge.success {
+
+    background:
+        rgba(22, 163, 74, 0.10);
+
+    color:
+        var(--nptor-success);
+
+}
+
+
+.student-navigation .nav-badge.warning {
+
+    background:
+        rgba(217, 119, 6, 0.10);
+
+    color:
+        var(--nptor-warning);
+
+}
+
+
+.student-navigation .nav-badge.primary {
+
+    background:
+        rgba(37, 99, 235, 0.10);
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+.student-navigation .nav-badge.link {
+
+    background:
+        rgba(8, 145, 178, 0.10);
+
+    color:
+        var(--nptor-info);
+
+}
+
+
+.student-navigation .nav-badge.info {
+
+    background:
+        rgba(8, 145, 178, 0.10);
+
+    color:
+        var(--nptor-info);
+
+}
+
+
+/* =========================================================
+   21. DISABLED NAVIGATION
+   ========================================================= */
+
+.student-navigation .menu-list a.is-disabled {
+
+    opacity: 0.48;
+
+    cursor: not-allowed;
+
+}
+
+
+.student-navigation .menu-list a.is-disabled:hover {
+
+    background:
+        transparent;
+
+    color:
+        var(--nptor-text-secondary);
+
+}
+
+
+.student-navigation .menu-list a.is-disabled:active {
+
+    transform: none;
+
+}
+
+
+/* =========================================================
+   22. SITE CONTENT
+   ========================================================= */
+
+.site-content {
+
+    min-width: 0;
+
+    width: 100%;
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+/* Prevent long content from breaking layout */
+
+.site-content > * {
+
+    min-width: 0;
+
+}
+
+
+/* =========================================================
+   23. CONTENT WIDTH HELPERS
+   ========================================================= */
+
+.site-content .container {
+
+    max-width: none;
+
+    padding-left: 0;
+
+    padding-right: 0;
+
+}
+
+
+/* =========================================================
+   24. FOOTER
+   ========================================================= */
+
+.site-footer {
+
+    width: 100%;
+
+    margin-top: auto;
+
+    padding:
+        var(--nptor-space-6)
+        0;
+
+    background:
+        var(--nptor-surface);
+
+    border-top:
+        1px solid var(--nptor-border);
+
+    color:
+        var(--nptor-text-muted);
+
+}
+
+
+.footer-inner {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap:
+        var(--nptor-space-4);
+
+}
+
+
+.footer-links {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap:
+        var(--nptor-space-2);
+
+    font-size:
+        var(--nptor-font-sm);
+
+}
+
+
+.footer-links a {
+
+    color:
+        var(--nptor-text-muted);
+
+}
+
+
+.footer-links a:hover {
+
+    color:
+        var(--nptor-primary);
+
+}
+
+
+.footer-meta {
+
+    flex: 0 0 auto;
+
+    color:
+        var(--nptor-text-light);
+
+    font-size:
+        var(--nptor-font-xs);
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+   25. SIDEBAR OVERLAY
+   ========================================================= */
+
+.sidebar-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1090;
+
+    background:
+        var(--nptor-overlay);
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity var(--nptor-transition),
+        visibility var(--nptor-transition);
+
+}
+
+
+.sidebar-overlay.is-active {
+
+    opacity: 1;
+
+    visibility: visible;
+
+    pointer-events: auto;
+
+}
+
+
+/* =========================================================
+   26. MOBILE SIDEBAR STATE
+   ========================================================= */
+
+body.sidebar-open {
+
+    overflow: hidden;
+
+}
+
+
+/* =========================================================
+   27. MODAL BASE COMPATIBILITY
+   ========================================================= */
+
+.modal {
+
+    z-index: 2000;
+
+}
+
+
+.modal-card {
+
+    max-width: calc(
+        100vw - 32px
+    );
+
+}
+
+
+.modal-card-head,
+.modal-card-body,
+.modal-card-foot {
+
+    background:
+        var(--nptor-surface);
+
+    color:
+        var(--nptor-text);
+
+    border-color:
+        var(--nptor-border);
+
+}
+
+
+.modal-card-title {
+
+    color:
+        var(--nptor-text);
+
+}
+
+
+/* =========================================================
+   28. TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .main-area {
+
+        grid-template-columns:
+            220px
+            minmax(0, 1fr);
+
+        gap:
+            var(--nptor-space-6);
+
+    }
+
+
+    .site-sidebar {
+
+        width: 220px;
+
+    }
+
+
+    .header-search {
+
+        max-width: 320px;
+
+    }
+
+
+    .brand-text {
+
+        max-width: 150px;
+
+    }
+
+}
+
+
+/* =========================================================
+   29. MOBILE NAVIGATION BREAKPOINT
+   ========================================================= */
+
+@media (max-width: 980px) {
+
+    .main-area {
+
+        display: block;
+
+        padding-top:
+            var(--nptor-space-4);
+
+        padding-bottom:
+            var(--nptor-space-6);
+
+    }
+
+
+    .site-sidebar {
+
+        position: fixed;
+
+        top: var(--nptor-header-height);
+
+        left: 0;
+
+        z-index: 1100;
+
+        width:
+            min(
+                var(--nptor-sidebar-width),
+                86vw
+            );
+
+        height:
+            calc(
+                100vh
+                - var(--nptor-header-height)
+            );
+
+        max-height: none;
+
+        overflow-y: auto;
+
+        border-radius: 0;
+
+        border-top: 0;
+
+        border-left: 0;
+
+        border-bottom: 0;
+
+        box-shadow:
+            var(--nptor-shadow-lg);
+
+        transform:
+            translateX(-105%);
+
+        transition:
+            transform var(--nptor-transition-slow);
+
+    }
+
+
+    .site-sidebar.is-active {
+
+        transform:
+            translateX(0);
+
+    }
+
+
+    .site-content {
+
+        width: 100%;
+
+    }
+
+
+    .sidebar-overlay {
+
+        top: var(--nptor-header-height);
+
+    }
+
+}
+
+
+/* =========================================================
+   30. MOBILE HEADER
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    :root {
+
+        --nptor-content-padding: 16px;
+
+        --nptor-header-height: 60px;
+
+    }
+
+
+    .header-inner {
+
+        min-height:
+            var(--nptor-header-height);
+
+        gap:
+            var(--nptor-space-2);
+
+    }
+
+
+    .header-left {
+
+        gap:
+            var(--nptor-space-2);
+
+    }
+
+
+    .header-right {
+
+        gap:
+            4px;
+
+    }
+
+
+    .brand {
+
+        gap:
+            var(--nptor-space-2);
+
+    }
+
+
+    .brand-logo {
+
+        width: 34px;
+
+        height: 34px;
+
+        flex-basis: 34px;
+
+    }
+
+
+    .brand-text {
+
+        max-width: 130px;
+
+        font-size:
+            var(--nptor-font-md);
+
+    }
+
+
+    .header-search {
+
+        display: none;
+
+    }
+
+
+    .welcome-user {
+
+        display: none;
+
+    }
+
+
+    .main-area {
+
+        padding-top:
+            var(--nptor-space-4);
+
+    }
+
+
+    .site-sidebar {
+
+        top:
+            var(--nptor-header-height);
+
+        height:
+            calc(
+                100vh
+                - var(--nptor-header-height)
+            );
+
+    }
+
+
+    .sidebar-overlay {
+
+        top:
+            var(--nptor-header-height);
+
+    }
+
+
+    .footer-inner {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+    }
+
+
+    .footer-meta {
+
+        white-space: normal;
+
+    }
+
+}
+
+
+/* =========================================================
+   31. SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+    .container {
+
+        padding-left:
+            12px;
+
+        padding-right:
+            12px;
+
+    }
+
+
+    .brand-text {
+
+        max-width: 100px;
+
+    }
+
+
+    #theme-toggle,
+    #sidebar-toggle {
+
+        width: 38px;
+
+        height: 38px;
+
+        min-width: 38px;
+
+    }
+
+
+    .icon-btn {
+
+        width: 38px;
+
+        height: 38px;
+
+    }
+
+
+    .header-right {
+
+        gap:
+            2px;
+
+    }
+
+
+    .site-sidebar {
+
+        width:
+            min(
+                300px,
+                88vw
+            );
+
+    }
+
+
+    .student-navigation .menu-list a {
+
+        min-height: 42px;
+
+        padding:
+            9px 10px;
+
+    }
+
+
+    .footer-links {
+
+        gap:
+            6px;
+
+        line-height:
+            1.6;
+
+    }
+
+}
+
+
+/* =========================================================
+   32. VERY SMALL SCREENS
+   ========================================================= */
+
+@media (max-width: 360px) {
+
+    .brand-text {
+
+        display: none;
+
+    }
+
+
+    .header-left {
+
+        flex: 0 0 auto;
+
+    }
+
+
+    .header-right {
+
+        flex: 1 1 auto;
+
+    }
+
+}
+
+
+/* =========================================================
+   33. DARK MODE OVERRIDES
+   ========================================================= */
+
+html[data-theme="dark"] .site-header {
+
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.20);
+
+}
+
+
+html[data-theme="dark"] .site-sidebar {
+
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.25);
+
+}
+
+
+html[data-theme="dark"] .site-footer {
+
+    box-shadow:
+        0 -1px 0 rgba(255, 255, 255, 0.02);
+
+}
+
+
+/* =========================================================
+   34. REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .site-sidebar,
+    .sidebar-overlay,
+    .site-header,
+    .site-sidebar *,
+    .site-header * {
+
+        transition: none !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   35. PRINT
+   ========================================================= */
+
+@media print {
+
+    .site-header {
+
+        position: static;
+
+        box-shadow: none;
+
+    }
+
+
+    .site-sidebar,
+    .sidebar-overlay,
+    #sidebar-toggle,
+    #theme-toggle,
+    .header-search,
+    .header-right,
+    .site-footer {
+
+        display: none !important;
+
+    }
+
+
+    .main-area {
+
+        display: block;
+
+        max-width: none;
+
+        padding: 0;
+
+    }
+
+
+    .site-content {
+
+        width: 100%;
+
+    }
+
+}

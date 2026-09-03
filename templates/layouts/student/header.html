@@ -3,79 +3,176 @@
 <header class="site-header">
   <div class="container header-inner">
 
-    <!-- LEFT -->
+    <!-- =====================================================
+         LEFT SIDE
+         ===================================================== -->
     <div class="header-left">
 
-      <button id="sidebar-toggle" class="button is-white is-hidden-desktop">
+      <!-- Mobile sidebar toggle -->
+      <button
+        id="sidebar-toggle"
+        type="button"
+        class="button is-white is-hidden-desktop"
+        aria-label="Open navigation"
+        aria-controls="site-sidebar"
+        aria-expanded="false">
         <i class="fa fa-bars"></i>
       </button>
 
+
+      <!-- Brand -->
       <div class="brand-group">
-        <a class="brand"
-           href="{% if user.is_authenticated %}
-                    {% url 'quiz:dashboard' %}
-                 {% else %}
-                    {% url 'quiz:practice' %}
-                 {% endif %}">
-          <img src="{% static 'images/logo.jpg' %}"
-               class="brand-logo"
-               alt="{{ site_name }}">
+
+        <a
+          class="brand"
+          href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'quiz:practice' %}{% endif %}">
+
+          <img
+            src="{% static 'images/logo.jpg' %}"
+            class="brand-logo"
+            alt="{{ site_name|default:'Nepal Mentor' }}">
+
           <span class="brand-text">
             {{ site_name|default:"Nepal Mentor" }}
           </span>
+
         </a>
+
       </div>
 
+
+      <!-- =================================================
+           SEARCH
+           ================================================= -->
+
       {% if user.is_authenticated %}
-      <form action="{% url 'quiz:exam_list' %}"
-            method="get"
-            class="header-search">
-        <input class="input"
-               name="q"
-               placeholder="Search exams, questions...">
-        <button class="button is-white search-btn">
-          <i class="fa fa-search"></i>
-        </button>
-      </form>
+
+        <form
+          action="{% url 'quiz:exam_list' %}"
+          method="get"
+          class="header-search"
+          role="search">
+
+          <label
+            for="header-search-input"
+            class="is-sr-only">
+            Search exams and questions
+          </label>
+
+          <input
+            id="header-search-input"
+            class="input"
+            type="search"
+            name="q"
+            value="{{ request.GET.q|default:'' }}"
+            placeholder="Search exams, questions..."
+            autocomplete="off">
+
+          <button
+            type="submit"
+            class="button is-white search-btn"
+            aria-label="Search">
+
+            <i class="fa fa-search"></i>
+
+          </button>
+
+        </form>
+
       {% endif %}
+
     </div>
 
-    <!-- RIGHT -->
+
+    <!-- =====================================================
+         RIGHT SIDE
+         ===================================================== -->
+
     <div class="header-right">
 
       {% if user.is_authenticated %}
 
-        <a href="{% url 'quiz:profile' %}"
-           class="welcome-user is-hidden-mobile">
-          Welcome,
-          <strong>{{ user.first_name|default:user.username }}</strong>
+        <!-- User -->
+        <a
+          href="{% url 'quiz:profile' %}"
+          class="welcome-user is-hidden-mobile">
+
+          <span>Welcome,</span>
+
+          <strong>
+            {{ user.first_name|default:user.username }}
+          </strong>
+
         </a>
 
-        <a href="{% url 'quiz:notifications_list' %}" class="icon-btn">
+
+        <!-- Notifications -->
+        <a
+          href="{% url 'quiz:notifications_list' %}"
+          class="icon-btn"
+          aria-label="Notifications">
+
           <i class="fa fa-bell"></i>
+
           {% if unread_count|default:0 > 0 %}
-            <span class="notif-badge">{{ unread_count }}</span>
+
+            <span
+              class="notif-badge"
+              aria-label="{{ unread_count }} unread notifications">
+              {{ unread_count }}
+            </span>
+
           {% endif %}
+
         </a>
 
-        <a href="#"
-           class="button is-light"
-           onclick="event.preventDefault();
-                    document.getElementById('logout-form').submit();">
-          <i class="fa fa-right-from-bracket"></i>&nbsp; Logout
+
+        <!-- Logout -->
+        <a
+          href="#"
+          class="button is-light"
+          onclick="event.preventDefault(); openLogoutModal();">
+
+          <i class="fa fa-right-from-bracket"></i>
+
+          <span class="ml-1">
+            Logout
+          </span>
+
         </a>
 
       {% else %}
-        <a href="{% url 'accounts:request-login-otp' %}"
-           class="button is-primary">
+
+        <!-- Guest login -->
+        <a
+          href="{% url 'accounts:request-login-otp' %}"
+          class="button is-primary">
+
+          <i class="fa fa-right-to-bracket mr-1"></i>
+
           Login
+
         </a>
+
       {% endif %}
 
-      <button id="theme-toggle" class="button is-white">
-        <i class="fa fa-moon"></i>
+
+      <!-- =================================================
+           THEME TOGGLE
+           ================================================= -->
+
+      <button
+        id="theme-toggle"
+        type="button"
+        class="button is-white"
+        aria-label="Toggle dark mode"
+        title="Toggle dark mode">
+
+        <i class="fa fa-moon" aria-hidden="true"></i>
+
       </button>
 
     </div>
+
   </div>
 </header>

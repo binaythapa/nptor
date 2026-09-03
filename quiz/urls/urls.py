@@ -41,7 +41,11 @@ from quiz.views.practice import (
     practice_answer_ajax,
     practice_next_ajax,
     discussion_submit_ajax,
+    practice_skip_ajax
 )
+
+
+
 
 
 # ============================================================
@@ -326,11 +330,7 @@ urlpatterns = [
         name="track_checkout",
     ),
 
-    path(
-        "exam/<int:exam_id>/checkout/",
-        exam_checkout,
-        name="exam_checkout",
-    ),
+    
 
 
     # ========================================================
@@ -655,6 +655,13 @@ urlpatterns = [
         "study-plan/<int:plan_id>/",
         study_plan_detail,
         name="study_plan_detail",
+    ),
+
+
+    path(
+        "practice/skip/ajax/",
+        practice_skip_ajax,
+        name="practice_skip_ajax",
     ),
 ]
 
