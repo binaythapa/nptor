@@ -35,7 +35,7 @@ ChoiceFormSet = inlineformset_factory(
 def org_add_question(request, slug):
     org = request.organization
     if request.method == "POST":
-        form = QuestionForm(request.POST)
+        form = QuestionForm(request.POST, organization=org)
         formset = ChoiceFormSet(request.POST, prefix="choices")
         if form.is_valid() and formset.is_valid():
             question = form.save(commit=False)
@@ -47,7 +47,7 @@ def org_add_question(request, slug):
             formset.save()
             return redirect("organizations_admin:questions", slug=slug)
     else:
-        form = QuestionForm()
+        form = QuestionForm(organization=org)
         formset = ChoiceFormSet(prefix="choices")
     return render(
         request,
@@ -66,7 +66,11 @@ def org_edit_question(request, slug, pk):
         is_deleted=False,
     )
     if request.method == "POST":
-        form = QuestionForm(request.POST, instance=question)
+        form = QuestionForm(
+            request.POST,
+            instance=question,
+            organization=org,
+        )
         formset = ChoiceFormSet(request.POST, instance=question, prefix="choices")
         if form.is_valid() and formset.is_valid():
             updated = form.save(commit=False)
@@ -76,7 +80,7 @@ def org_edit_question(request, slug, pk):
             formset.save()
             return redirect("organizations_admin:questions", slug=slug)
     else:
-        form = QuestionForm(instance=question)
+        form = QuestionForm(instance=question, organization=org)
         formset = ChoiceFormSet(instance=question, prefix="choices")
     return render(
         request,
