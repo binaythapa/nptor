@@ -16,6 +16,8 @@ from courses.permissions import (
     course_entitlement_required,
     lesson_course_access_required,
     video_progress_access_required,
+)
+from courses.services.permissions import (
     instructor_dashboard_access_required,
 )
 from payments.views.checkout import course_checkout
