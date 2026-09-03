@@ -11,6 +11,7 @@ from .views import (
 
 from courses.views.instructor_views import update_order
 from courses.permissions import (
+    course_detail_access_required,
     course_learning_access_required,
     course_entitlement_required,
     lesson_course_access_required,
@@ -65,7 +66,11 @@ urlpatterns = [
         name="subscribe_course",
     ),
 
-    path("<slug:slug>/", student_views.course_detail, name="course_detail"),
+    path(
+        "<slug:slug>/",
+        course_detail_access_required(student_views.course_detail),
+        name="course_detail",
+    ),
 
     path("instructor/dashboard/", instructor_views.instructor_dashboard, name="instructor_dashboard"),
     path("instructor/course/create/", instructor_views.course_create, name="course_create"),
