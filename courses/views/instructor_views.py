@@ -27,6 +27,7 @@ from courses.forms import (
 
 from courses.services.permissions import (
     can_edit_course,
+    can_view_instructor_dashboard,
 )
 
 from courses.services.course_approval import (
@@ -300,6 +301,24 @@ def toggle_publish_course(request, slug):
 @login_required
 def instructor_dashboard(request):
 
+    # --------------------------------------------------
+    # ORGANIZATION VISIBILITY
+    # --------------------------------------------------
+
+    organization = getattr(
+        request,
+        "organization",
+        None,
+    )
+
+    if organization and not can_view_instructor_dashboard(
+        request.user,
+        organization,
+    ):
+        return HttpResponseForbidden(
+            "You are not allowed to view organization instructor data."
+        )
+
     base_queryset = (
         Course.objects
         .select_related(
@@ -330,14 +349,11 @@ def instructor_dashboard(request):
         base_queryset.none()
     )
 
-    if (
-        hasattr(request, "organization")
-        and request.organization
-    ):
+    if organization:
 
         organization_courses = (
             base_queryset.filter(
-                organization=request.organization
+                organization=organization
             )
         )
 
