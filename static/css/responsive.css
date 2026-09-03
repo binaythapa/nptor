@@ -1,10 +1,4 @@
-/* =========================================================
-   NPTOR RESPONSIVE FRAMEWORK
-   static/css/responsive.css
-
-   Global responsive layer. Loaded after shared components so
-   mobile behavior is consistent across student and admin UI.
-   ========================================================= */
+/* NPTOR global responsive layer */
 
 .site-content,
 .site-content > *,
@@ -31,19 +25,13 @@
 .assigned-resource,
 .quick-action-content,
 .course-card-heading,
-.active-exam-content {
-    min-width: 0;
-}
+.active-exam-content { min-width: 0; }
 
 .nptor-table-wrapper,
 .nptor-table-wrap,
 .nptor-table-container,
 .table-container,
-.admin-content .table-container {
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
+.admin-content .table-container { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 .site-content img,
 .site-content video,
@@ -52,474 +40,109 @@
 .admin-content img,
 .admin-content video,
 .admin-content iframe,
-.admin-content canvas {
-    max-width: 100%;
-}
+.admin-content canvas { max-width: 100%; }
 
 .site-content pre,
 .site-content code,
 .admin-content pre,
-.admin-content code {
-    overflow-wrap: anywhere;
-}
+.admin-content code { overflow-wrap: anywhere; }
 
-/* =========================================================
-   STUDENT TABLET / MOBILE
-   ========================================================= */
+.nptor-skip-link { position: fixed; left: 12px; top: 8px; z-index: 3000; padding: 10px 14px; border-radius: 6px; background: #fff; color: #111827; font-weight: 700; text-decoration: none; transform: translateY(-150%); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+.nptor-skip-link:focus { transform: translateY(0); }
+
+.site-content:focus-visible,
+#admin-main:focus-visible { outline: 3px solid #2563eb; outline-offset: 4px; }
 
 @media (max-width: 980px) {
-    .nptor-grid-4,
-    .nptor-grid-3 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .nptor-grid-2 {
-        grid-template-columns: 1fr;
-    }
-
-    .nptor-grid-auto {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-
-    .nptor-card-header,
-    .nptor-card-footer,
-    .nptor-section-heading-row {
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .nptor-actions-between {
-        justify-content: flex-start;
-    }
-
-    /* Dashboard */
-    .dashboard-header-content {
-        align-items: flex-start;
-    }
-
-    .dashboard-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .quick-actions-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .course-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    .nptor-grid-4, .nptor-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .nptor-grid-2 { grid-template-columns: 1fr; }
+    .nptor-grid-auto { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .nptor-card-header, .nptor-card-footer, .nptor-section-heading-row { align-items: flex-start; flex-wrap: wrap; }
+    .nptor-actions-between { justify-content: flex-start; }
+    .dashboard-header-content { align-items: flex-start; }
+    .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .quick-actions-grid, .course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-/* =========================================================
-   LARGE MOBILE
-   ========================================================= */
 
 @media (max-width: 768px) {
-    :root {
-        --nptor-content-padding: 16px;
-        --nptor-space-8: 28px;
-        --nptor-space-10: 32px;
-        --nptor-space-12: 40px;
-        --nptor-space-16: 48px;
-    }
-
-    h1 {
-        font-size: clamp(1.75rem, 7vw, var(--nptor-font-4xl));
-    }
-
-    h2 {
-        font-size: clamp(1.4rem, 6vw, var(--nptor-font-3xl));
-    }
-
-    h3 {
-        font-size: clamp(1.2rem, 5vw, var(--nptor-font-2xl));
-    }
-
-    .nptor-grid-2,
-    .nptor-grid-3,
-    .nptor-grid-4,
-    .nptor-grid-auto {
-        grid-template-columns: 1fr;
-    }
-
-    .nptor-card-header,
-    .nptor-card-body,
-    .nptor-card-footer {
-        padding: var(--nptor-space-4);
-    }
-
-    .nptor-card-footer,
-    .nptor-section-heading-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .nptor-actions,
-    .nptor-actions-right,
-    .nptor-actions-center,
-    .nptor-actions-between {
-        width: 100%;
-        justify-content: stretch;
-    }
-
-    .nptor-actions .nptor-btn,
-    .nptor-actions > .button,
-    .nptor-actions > a.button,
-    .nptor-actions > button.button {
-        flex: 1 1 auto;
-    }
-
-    .nptor-empty {
-        padding: var(--nptor-space-8) var(--nptor-space-4);
-    }
-
-    .nptor-list-item {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: var(--nptor-space-2);
-    }
-
-    .nptor-alert {
-        padding: var(--nptor-space-3);
-    }
-
-    .nptor-table {
-        min-width: 560px;
-    }
-
-    .nptor-table-wrapper,
-    .nptor-table-wrap,
-    .nptor-table-container,
-    .table-container {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    .site-content .columns {
-        margin-left: 0;
-        margin-right: 0;
-    }
-
-    .site-content .column {
-        min-width: 0;
-    }
-
-    .site-content input,
-    .site-content select,
-    .site-content textarea,
-    .site-content button,
-    .site-content .button,
-    .site-content a.button {
-        min-height: 42px;
-    }
-
-    /* Dashboard becomes a clean single-column mobile flow. */
-    .dashboard-page {
-        gap: 24px;
-        padding-bottom: 24px;
-    }
-
-    .dashboard-header-content {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 16px;
-    }
-
-    .dashboard-header-actions,
-    .dashboard-primary-action {
-        width: 100%;
-    }
-
-    .dashboard-primary-action {
-        min-height: 44px;
-    }
-
-    .dashboard-stats,
-    .quick-actions-grid,
-    .course-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .dashboard-stat-card {
-        min-height: 92px;
-        padding: 16px;
-    }
-
-    .quick-action-card {
-        min-height: 0;
-        padding: 18px;
-    }
-
-    .dashboard-active-exam {
-        align-items: flex-start;
-        flex-wrap: wrap;
-        padding: 16px;
-    }
-
-    .active-exam-content {
-        flex: 1 1 calc(100% - 60px);
-    }
-
-    .active-exam-action {
-        width: 100%;
-        padding-left: 60px;
-    }
-
-    .dashboard-warning-action {
-        width: 100%;
-        min-height: 44px;
-    }
-
-    .course-card {
-        padding: 18px;
-    }
-
-    .organization-list {
-        gap: 12px;
-    }
-
-    .organization-card {
-        border-radius: 10px;
-    }
-
-    .assigned-resource {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .resource-action {
-        width: 100%;
-        justify-content: center;
-    }
+    :root { --nptor-content-padding: 16px; --nptor-space-8: 28px; --nptor-space-10: 32px; --nptor-space-12: 40px; --nptor-space-16: 48px; }
+    h1 { font-size: clamp(1.75rem, 7vw, var(--nptor-font-4xl)); }
+    h2 { font-size: clamp(1.4rem, 6vw, var(--nptor-font-3xl)); }
+    h3 { font-size: clamp(1.2rem, 5vw, var(--nptor-font-2xl)); }
+    .nptor-grid-2, .nptor-grid-3, .nptor-grid-4, .nptor-grid-auto { grid-template-columns: 1fr; }
+    .nptor-card-header, .nptor-card-body, .nptor-card-footer { padding: var(--nptor-space-4); }
+    .nptor-card-footer, .nptor-section-heading-row { flex-direction: column; align-items: stretch; }
+    .nptor-actions, .nptor-actions-right, .nptor-actions-center, .nptor-actions-between { width: 100%; justify-content: stretch; }
+    .nptor-actions .nptor-btn, .nptor-actions > .button, .nptor-actions > a.button, .nptor-actions > button.button { flex: 1 1 auto; }
+    .nptor-empty { padding: var(--nptor-space-8) var(--nptor-space-4); }
+    .nptor-list-item { align-items: flex-start; flex-direction: column; gap: var(--nptor-space-2); }
+    .nptor-alert { padding: var(--nptor-space-3); }
+    .nptor-table { min-width: 560px; }
+    .nptor-table-wrapper, .nptor-table-wrap, .nptor-table-container, .table-container { width: 100%; overflow-x: auto; }
+    .site-content .columns { margin-left: 0; margin-right: 0; }
+    .site-content .column { min-width: 0; }
+    .site-content input, .site-content select, .site-content textarea, .site-content button, .site-content .button, .site-content a.button { min-height: 42px; }
+    .dashboard-page { gap: 24px; padding-bottom: 24px; }
+    .dashboard-header-content { flex-direction: column; align-items: stretch; gap: 16px; }
+    .dashboard-header-actions, .dashboard-primary-action { width: 100%; }
+    .dashboard-primary-action, .dashboard-warning-action { min-height: 44px; }
+    .dashboard-stats, .quick-actions-grid, .course-grid { grid-template-columns: 1fr; }
+    .dashboard-stat-card { min-height: 92px; padding: 16px; }
+    .quick-action-card { min-height: 0; padding: 18px; }
+    .dashboard-active-exam { align-items: flex-start; flex-wrap: wrap; padding: 16px; }
+    .active-exam-content { flex: 1 1 calc(100% - 60px); }
+    .active-exam-action { width: 100%; padding-left: 60px; }
+    .course-card { padding: 18px; }
+    .organization-list { gap: 12px; }
+    .organization-card { border-radius: 10px; }
+    .assigned-resource { align-items: flex-start; flex-direction: column; gap: 12px; }
+    .resource-action { width: 100%; justify-content: center; }
 }
-
-/* =========================================================
-   SMALL MOBILE
-   ========================================================= */
 
 @media (max-width: 480px) {
-    :root {
-        --nptor-content-padding: 12px;
-        --nptor-space-4: 14px;
-        --nptor-space-5: 16px;
-        --nptor-space-6: 20px;
-    }
-
-    .nptor-card {
-        border-radius: var(--nptor-radius-md);
-    }
-
-    .nptor-btn,
-    .nptor-btn-lg,
-    .nptor-btn-sm {
-        width: 100%;
-    }
-
-    .nptor-btn-icon,
-    .nptor-actions .nptor-btn-icon {
-        width: 42px;
-        min-width: 42px;
-    }
-
-    .nptor-pagination {
-        justify-content: flex-start;
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        padding-bottom: 2px;
-    }
-
-    .nptor-page-link {
-        flex: 0 0 auto;
-    }
-
-    .nptor-empty {
-        padding: var(--nptor-space-6) var(--nptor-space-3);
-    }
-
-    /* Compact dashboard typography and spacing. */
-    .dashboard-title {
-        font-size: clamp(1.7rem, 9vw, 2.2rem);
-    }
-
-    .dashboard-subtitle {
-        font-size: 14px;
-    }
-
-    .section-heading h2 {
-        font-size: 20px;
-    }
-
-    .dashboard-stat-card {
-        gap: 12px;
-        padding: 14px;
-    }
-
-    .stat-icon {
-        width: 40px;
-        height: 40px;
-        flex-basis: 40px;
-    }
-
-    .stat-value {
-        font-size: 22px;
-    }
-
-    .quick-action-card,
-    .course-card {
-        padding: 16px;
-    }
-
-    .quick-action-content h3,
-    .course-card-heading h3 {
-        font-size: 16px;
-    }
-
-    .dashboard-active-exam {
-        gap: 12px;
-        padding: 14px;
-    }
-
-    .active-exam-icon {
-        width: 40px;
-        height: 40px;
-        flex-basis: 40px;
-    }
-
-    .active-exam-content {
-        flex-basis: calc(100% - 52px);
-    }
-
-    .active-exam-action {
-        padding-left: 0;
-    }
-
-    .organization-title {
-        min-width: 0;
-    }
-
-    .organization-title h3,
-    .assigned-resource h4 {
-        overflow-wrap: anywhere;
-    }
+    :root { --nptor-content-padding: 12px; --nptor-space-4: 14px; --nptor-space-5: 16px; --nptor-space-6: 20px; }
+    .nptor-card { border-radius: var(--nptor-radius-md); }
+    .nptor-btn, .nptor-btn-lg, .nptor-btn-sm { width: 100%; }
+    .nptor-btn-icon, .nptor-actions .nptor-btn-icon { width: 42px; min-width: 42px; }
+    .nptor-pagination { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+    .nptor-page-link { flex: 0 0 auto; }
+    .nptor-empty { padding: var(--nptor-space-6) var(--nptor-space-3); }
+    .dashboard-title { font-size: clamp(1.7rem, 9vw, 2.2rem); }
+    .dashboard-subtitle { font-size: 14px; }
+    .section-heading h2 { font-size: 20px; }
+    .dashboard-stat-card { gap: 12px; padding: 14px; }
+    .stat-icon { width: 40px; height: 40px; flex-basis: 40px; }
+    .stat-value { font-size: 22px; }
+    .quick-action-card, .course-card { padding: 16px; }
+    .quick-action-content h3, .course-card-heading h3 { font-size: 16px; }
+    .dashboard-active-exam { gap: 12px; padding: 14px; }
+    .active-exam-icon { width: 40px; height: 40px; flex-basis: 40px; }
+    .active-exam-content { flex-basis: calc(100% - 52px); }
+    .active-exam-action { padding-left: 0; }
+    .organization-title { min-width: 0; }
+    .organization-title h3, .assigned-resource h4 { overflow-wrap: anywhere; }
 }
-
-/* =========================================================
-   VERY SMALL DEVICES
-   ========================================================= */
 
 @media (max-width: 360px) {
-    .nptor-card-header,
-    .nptor-card-body,
-    .nptor-card-footer {
-        padding: 12px;
-    }
-
-    .nptor-table {
-        min-width: 520px;
-    }
-
-    .dashboard-page {
-        gap: 20px;
-    }
-
-    .dashboard-stat-card {
-        min-height: 84px;
-        padding: 12px;
-    }
-
-    .stat-icon {
-        width: 36px;
-        height: 36px;
-        flex-basis: 36px;
-        font-size: 14px;
-    }
-
-    .stat-label {
-        font-size: 12px;
-    }
-
-    .stat-value {
-        font-size: 20px;
-    }
+    .nptor-card-header, .nptor-card-body, .nptor-card-footer { padding: 12px; }
+    .nptor-table { min-width: 520px; }
+    .dashboard-page { gap: 20px; }
+    .dashboard-stat-card { min-height: 84px; padding: 12px; }
+    .stat-icon { width: 36px; height: 36px; flex-basis: 36px; font-size: 14px; }
+    .stat-label { font-size: 12px; }
+    .stat-value { font-size: 20px; }
 }
 
-/* =========================================================
-   ADMIN RESPONSIVE FOUNDATION
-   ========================================================= */
+.admin-content { overflow-x: auto; }
+.admin-content .container { min-width: 0; }
 
-.admin-content {
-    overflow-x: auto;
-}
-
-.admin-content .container {
-    min-width: 0;
-}
-
-@media (max-width: 900px) {
-    .admin-content .admin-kpi-card {
-        width: calc(50% - 14px);
-    }
-}
+@media (max-width: 900px) { .admin-content .admin-kpi-card { width: calc(50% - 14px); } }
 
 @media (max-width: 650px) {
-    .admin-header {
-        height: 60px;
-        padding: 0 12px;
-    }
-
-    .admin-layout {
-        padding-top: 60px;
-    }
-
-    .admin-content {
-        margin-left: 0;
-        width: 100%;
-        min-height: calc(100vh - 60px);
-        padding: 12px;
-    }
-
-    .admin-content .admin-kpi-card {
-        display: flex;
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: 12px;
-        min-height: 112px;
-        padding: 16px;
-    }
-
-    .admin-brand-text,
-    .admin-user {
-        display: none;
-    }
-
-    .admin-header-left,
-    .admin-header-right {
-        gap: 6px;
-    }
-
-    .admin-header button,
-    .admin-header a.button {
-        min-height: 40px;
-        min-width: 40px;
-    }
-
-    .admin-content .columns {
-        margin-left: 0;
-        margin-right: 0;
-    }
-
-    .admin-content .column {
-        min-width: 0;
-    }
+    .admin-content .columns { margin-left: 0; margin-right: 0; }
+    .admin-content .column { min-width: 0; }
 }
 
-@media (max-width: 400px) {
-    .admin-content {
-        padding: 10px;
-    }
-
-    .admin-kpi-value {
-        font-size: 24px;
-    }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
