@@ -93,34 +93,64 @@
 
 
     <!-- =========================================
-         RESULT MESSAGE
+         RESULT MESSAGE + NEXT ACTION
          ========================================= -->
     {% if result == "correct" %}
 
-        <div class="practice-result correct">
+        <div class="practice-result correct with-next-action">
 
-            <div class="practice-result-title">
-                Correct!
+            <div class="practice-result-content">
+                <div class="practice-result-title">
+                    Correct!
+                </div>
+
+                <p class="practice-result-message">
+                    Excellent. Your answer is correct.
+                </p>
             </div>
 
-            <p class="practice-result-message">
-                Excellent. Your answer is correct.
-            </p>
+            <div class="practice-result-next">
+                <button
+                    type="button"
+                    class="practice-btn practice-btn-primary"
+                    data-practice-next>
+                    {% if show_next %}
+                        Next Question
+                    {% else %}
+                        Try Next Question
+                    {% endif %}
+                </button>
+            </div>
 
         </div>
 
     {% else %}
 
-        <div class="practice-result wrong">
+        <div class="practice-result wrong with-next-action">
 
-            <div class="practice-result-title">
-                Incorrect
+            <div class="practice-result-content">
+                <div class="practice-result-title">
+                    Incorrect
+                </div>
+
+                <p class="practice-result-message">
+                    Don't worry. Review the correct answer
+                    and explanation below.
+                </p>
             </div>
 
-            <p class="practice-result-message">
-                Don't worry. Review the correct answer
-                and explanation below.
-            </p>
+            <div class="practice-result-next">
+                <button
+                    type="button"
+                    class="practice-btn practice-btn-primary"
+                    data-practice-next>
+                    {% if show_next %}
+                        Next Question
+                    {% else %}
+                        Try Next Question
+                    {% endif %}
+                </button>
+            </div>
 
         </div>
 
@@ -202,24 +232,6 @@
                 Practice
 
             </a>
-
-        </div>
-
-
-        <div class="practice-actions-right">
-
-            <button
-                type="button"
-                class="practice-btn practice-btn-primary"
-                data-practice-next>
-
-                {% if show_next %}
-                    Next Question
-                {% else %}
-                    Try Next Question
-                {% endif %}
-
-            </button>
 
         </div>
 
