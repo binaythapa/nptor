@@ -7,7 +7,7 @@ from django.urls import reverse
 from courses.models import Course
 from organizations.models.access import ResourceAccess
 from payments.models import PaymentOrder
-from quiz.models import Exam, ExamTrack
+from quiz.models import Exam
 from subscriptions.models import SubscriptionEntitlement, SubscriptionPlan
 from subscriptions.services import SubscriptionService
 
@@ -42,18 +42,21 @@ class PurchasedLearningDashboardTests(TestCase):
         course.subscription_plans.add(self.plan)
         return course
 
-    def test_individual_course_access_appears_on_dashboard(self):
-        course = self._course()
-        subscription = SubscriptionService.create_subscription(
+    def _subscription(self, order_id):
+        return SubscriptionService.create_subscription(
             plan=self.plan,
             user=self.user,
             organization=None,
             granted_by=None,
             subscribed_by_admin=False,
             payment_status="success",
-            order_id="DASH-COURSE-1",
+            order_id=order_id,
             start_at=None,
         )
+
+    def test_individual_course_access_appears_on_dashboard(self):
+        course = self._course()
+        subscription = self._subscription("DASH-COURSE-1")
         SubscriptionEntitlement.objects.create(
             subscription=subscription,
             resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
@@ -84,16 +87,7 @@ class PurchasedLearningDashboardTests(TestCase):
             is_free=False,
             price=Decimal("100.00"),
         )
-        subscription = SubscriptionService.create_subscription(
-            plan=self.plan,
-            user=self.user,
-            organization=None,
-            granted_by=None,
-            subscribed_by_admin=False,
-            payment_status="success",
-            order_id="DASH-EXAM-1",
-            start_at=None,
-        )
+        subscription = self._subscription("DASH-EXAM-1")
         SubscriptionEntitlement.objects.create(
             subscription=subscription,
             resource_type=SubscriptionEntitlement.RESOURCE_EXAM,
@@ -134,3 +128,30 @@ class PurchasedLearningDashboardTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Start Learning")
+
+    def test_unpaid_order_cannot_render_success_page(self):
+        course = self._course()
+        order = PaymentOrder.objects.create(
+            user=self.user,
+            resource_type=PaymentOrder.RESOURCE_COURSE,
+            course=course,
+            amount=Decimal("100.00"),
+            currency="INR",
+            status=PaymentOrder.STATUS_PENDING,
+        )
+
+        response = self.client.get(
+            reverse(
+                "payments:payment_success",
+                kwargs={"order_number": order.order_number},
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                "payments:payment_checkout",
+                kwargs={"order_number": order.order_number},
+            ),
+            response.url,
+        )
