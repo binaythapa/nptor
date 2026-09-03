@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from payments.models import PaymentOrder
+from payments.views.checkout import PAYMENT_RETURN_SESSION_KEY, _safe_return_url
 
 
 @login_required
@@ -33,6 +34,11 @@ def payment_success(
             "payments:payment_checkout",
             order_number=order.order_number,
         )
+
+    return_to = request.session.pop(PAYMENT_RETURN_SESSION_KEY, None)
+    safe_return = _safe_return_url(request, return_to)
+    if safe_return:
+        return redirect(safe_return)
 
     return render(
         request,
