@@ -131,6 +131,18 @@ def _has_access(user, resource_type, resource):
     )
 
 
+def _resource_item(user, resource_type, resource):
+    access_type = getattr(AccessService, f"RESOURCE_{resource_type.upper()}")
+    item = {
+        "type": resource_type,
+        "resource": resource,
+        "has_access": _has_access(user, access_type, resource),
+    }
+    if resource_type == "exam":
+        item["duration_minutes"] = (resource.duration_seconds or 0) // 60
+    return item
+
+
 def build_learning_catalog(
     *,
     user,
@@ -206,23 +218,20 @@ def build_learning_catalog(
 
     resources = []
     if resource_type in {"all", "courses"}:
-        resources.extend({"type": "course", "resource": item} for item in courses)
+        resources.extend(_resource_item(user, "course", item) for item in courses)
     if resource_type in {"all", "tracks"}:
-        resources.extend({"type": "track", "resource": item} for item in tracks)
+        resources.extend(_resource_item(user, "track", item) for item in tracks)
     if resource_type in {"all", "exams"}:
-        resources.extend({"type": "exam", "resource": item} for item in exams)
+        resources.extend(_resource_item(user, "exam", item) for item in exams)
 
     resources.sort(key=lambda item: item["resource"].title.lower())
 
     if access in {"owned", "available"}:
-        filtered_resources = []
-        for item in resources:
-            resource_type_name = item["type"]
-            access_type = getattr(AccessService, f"RESOURCE_{resource_type_name.upper()}")
-            item["has_access"] = _has_access(user, access_type, item["resource"])
-            if (access == "owned" and item["has_access"]) or (access == "available" and not item["has_access"]):
-                filtered_resources.append(item)
-        resources = filtered_resources
+        resources = [
+            item for item in resources
+            if (access == "owned" and item["has_access"])
+            or (access == "available" and not item["has_access"])
+        ]
 
     paginator = Paginator(resources, min(max(int(per_page), 1), MAX_PER_PAGE))
     try:
@@ -230,11 +239,6 @@ def build_learning_catalog(
     except (TypeError, ValueError):
         page_number = 1
     page_obj = paginator.get_page(page_number)
-
-    for item in page_obj.object_list:
-        if "has_access" not in item:
-            access_type = getattr(AccessService, f"RESOURCE_{item['type'].upper()}")
-            item["has_access"] = _has_access(user, access_type, item["resource"])
 
     selected_categories = (
         Category.objects.filter(
