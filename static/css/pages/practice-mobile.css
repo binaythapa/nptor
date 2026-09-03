@@ -1,0 +1,327 @@
+/* =========================================================
+   NPTOR PRACTICE MOBILE OVERRIDES
+   Page-specific responsive refinements.
+
+   This file intentionally contains presentation-only overrides.
+   Practice behavior, filtering, AJAX flow, grading, and navigation
+   remain unchanged.
+   ========================================================= */
+
+.practice-page,
+.practice-page > *,
+.practice-page-header,
+.practice-page-heading,
+.practice-mode-nav,
+.practice-login-note,
+.practice-login-content,
+.practice-filter-panel,
+.practice-filter-form,
+.practice-filter-grid,
+.practice-filter-field,
+.practice-filter-locked,
+.practice-progress,
+.practice-container,
+.practice-question-card,
+.practice-question-meta,
+.practice-question-text,
+.practice-options,
+.practice-option,
+.practice-option-text,
+.practice-actions,
+.practice-actions-left,
+.practice-actions-right,
+.practice-card-actions,
+.practice-completed-card,
+.practice-limit-card {
+    min-width: 0;
+}
+
+.practice-question-text,
+.practice-option-text,
+.practice-filter-locked,
+.practice-login-content,
+.practice-subtitle {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+    .practice-page-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .practice-mode-nav {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .practice-mode {
+        flex: 1 1 0;
+    }
+
+    .practice-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .practice-page {
+        padding: 18px 14px 36px;
+    }
+
+    .practice-page-header {
+        display: block;
+        margin-bottom: 18px;
+    }
+
+    .practice-title {
+        font-size: clamp(1.55rem, 6vw, 2rem);
+    }
+
+    .practice-subtitle {
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    .practice-mode-nav {
+        margin-top: 14px;
+    }
+
+    .practice-mode {
+        min-height: 40px;
+        padding: 0 10px;
+        font-size: 0.76rem;
+    }
+
+    .practice-login-note {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 13px;
+    }
+
+    .practice-login-content {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .practice-login-link {
+        align-self: flex-start;
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .practice-filter-grid {
+        grid-template-columns: 1fr;
+        gap: 11px;
+    }
+
+    .practice-filter-form {
+        padding: 0 12px 13px;
+    }
+
+    .practice-filter-header {
+        min-height: 50px;
+        padding: 0 12px;
+    }
+
+    .practice-filter-heading small {
+        display: none;
+    }
+
+    .practice-filter-locked {
+        align-items: flex-start;
+        line-height: 1.45;
+    }
+
+    .practice-progress {
+        margin: 15px 0 17px;
+    }
+
+    .practice-question-card {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .practice-question-meta {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 13px;
+    }
+
+    .practice-question-text {
+        margin-bottom: 16px;
+        font-size: 0.96rem;
+        line-height: 1.6;
+    }
+
+    .practice-options {
+        gap: 9px;
+    }
+
+    .practice-option {
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .practice-option input {
+        flex: 0 0 auto;
+        margin-top: 3px;
+    }
+
+    .practice-option-text {
+        min-width: 0;
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    .practice-actions {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .practice-actions-left,
+    .practice-actions-right {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+
+    .practice-actions-left .practice-btn,
+    .practice-actions-right .practice-btn,
+    .practice-card-actions .practice-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 42px;
+    }
+
+    .practice-actions-right {
+        order: -1;
+    }
+
+    .practice-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 9px;
+    }
+
+    .practice-card-actions .practice-btn {
+        width: 100%;
+    }
+
+    .practice-admin-tools {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .practice-admin-tools .practice-btn {
+        width: 100%;
+    }
+
+    .practice-completed-card,
+    .practice-limit-card {
+        padding: 22px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .practice-page {
+        padding: 14px 10px 28px;
+    }
+
+    .practice-eyebrow {
+        font-size: 0.66rem;
+    }
+
+    .practice-title {
+        font-size: 1.45rem;
+    }
+
+    .practice-subtitle {
+        font-size: 0.82rem;
+    }
+
+    .practice-mode-nav {
+        gap: 2px;
+        padding: 3px;
+        border-radius: 9px;
+    }
+
+    .practice-mode {
+        min-height: 38px;
+        padding: 0 7px;
+        font-size: 0.7rem;
+    }
+
+    .practice-question-card {
+        padding: 13px;
+    }
+
+    .practice-question-meta {
+        font-size: 0.68rem;
+    }
+
+    .practice-question-type {
+        padding: 4px 7px;
+        font-size: 0.62rem;
+    }
+
+    .practice-question-text {
+        font-size: 0.9rem;
+    }
+
+    .practice-option {
+        padding: 10px;
+    }
+
+    .practice-option-text {
+        font-size: 0.84rem;
+    }
+
+    .practice-actions-left {
+        flex-direction: column;
+    }
+
+    .practice-actions-left .practice-btn,
+    .practice-actions-right .practice-btn {
+        width: 100%;
+        flex: none;
+    }
+
+    .practice-filter-field label {
+        font-size: 0.7rem;
+    }
+
+    .practice-select-wrap select {
+        min-height: 42px;
+        font-size: 0.78rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .practice-page {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .practice-mode {
+        font-size: 0.66rem;
+    }
+
+    .practice-question-card {
+        padding: 11px;
+    }
+
+    .practice-option {
+        gap: 8px;
+        padding: 9px;
+    }
+}
