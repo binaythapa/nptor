@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from organizations.permissions import org_admin_required
+from organizations.models.access import ResourceAccess
+from organizations.models.assignment import ResourceAssignment
 from organizations.models.membership import OrganizationMember
 from organizations.models.role import OrganizationRole
 
@@ -107,6 +110,32 @@ def org_student_remove(request, slug, member_id):
     if member.role in OrganizationRole.administrative_roles():
         messages.error(request, "Cannot remove an organization administrator here.")
         return redirect("organizations_admin:students", slug=slug)
+
+    # Removing membership must also revoke organization-granted access.
+    # Keep ResourceAssignment rows as historical audit records.
+    now = timezone.now()
+
+    ResourceAssignment.objects.filter(
+        student=member.user,
+        organization=org,
+        is_active=True,
+    ).update(
+        is_active=False,
+        status=ResourceAssignment.STATUS_REVOKED,
+        revoked_at=now,
+        revoked_by=request.user,
+        revoke_reason="Student removed from organization.",
+    )
+
+    ResourceAccess.objects.filter(
+        user=member.user,
+        organization=org,
+        source=ResourceAccess.SOURCE_ORGANIZATION,
+        is_active=True,
+    ).update(
+        is_active=False,
+        revoked_at=now,
+    )
 
     member.delete()
     messages.success(request, "Student removed from organization.")
