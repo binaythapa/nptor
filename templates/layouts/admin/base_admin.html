@@ -1,540 +1,90 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        {% block title %}
-            Admin Dashboard
-        {% endblock %}
-    </title>
-
-
-    <!-- =====================================================
-         ADMIN CSS
-    ====================================================== -->
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111827">
+    <title>{% block title %}Admin Dashboard{% endblock %}</title>
     <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-
-            font-family:
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                Roboto,
-                Arial,
-                sans-serif;
-
-            background: #f4f6f9;
-
-            color: #1f2937;
-        }
-
-
-        /* =====================================================
-           HEADER
-        ===================================================== */
-
-        .admin-header {
-            height: 64px;
-
-            background: #111827;
-
-            color: white;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            padding: 0 20px;
-
-            position: fixed;
-
-            top: 0;
-            left: 0;
-            right: 0;
-
-            z-index: 1000;
-
-            box-shadow:
-                0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-
-        .admin-header-left {
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-        }
-
-
-        .admin-header-right {
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-        }
-
-
-        .admin-brand {
-            display: flex;
-
-            align-items: center;
-
-            gap: 10px;
-
-            color: white;
-
-            text-decoration: none;
-
-            font-weight: 600;
-        }
-
-
-        .admin-logo {
-            width: 38px;
-
-            height: 38px;
-
-            object-fit: cover;
-
-            border-radius: 6px;
-        }
-
-
-        .admin-brand-text {
-            font-size: 18px;
-        }
-
-
-        .admin-user {
-            color: #d1d5db;
-
-            font-size: 14px;
-        }
-
-
-        .admin-header button,
-        .admin-header a.button {
-            border: 0;
-
-            cursor: pointer;
-        }
-
-
-        /* =====================================================
-           LAYOUT
-        ===================================================== */
-
-        .admin-layout {
-            display: flex;
-
-            min-height: 100vh;
-
-            padding-top: 64px;
-        }
-
-
-        /* =====================================================
-           SIDEBAR
-        ===================================================== */
-
-        .admin-sidebar {
-            position: fixed;
-
-            top: 64px;
-
-            left: 0;
-
-            bottom: 0;
-
-            width: 250px;
-
-            background: #ffffff;
-
-            border-right: 1px solid #e5e7eb;
-
-            padding: 20px 14px;
-
-            overflow-y: auto;
-
-            z-index: 900;
-        }
-
-
-        .admin-sidebar .menu-label {
-            margin: 18px 10px 8px;
-
-            font-size: 11px;
-
-            font-weight: 700;
-
-            text-transform: uppercase;
-
-            letter-spacing: 0.08em;
-
-            color: #9ca3af;
-        }
-
-
-        .admin-sidebar .menu-list {
-            list-style: none;
-
-            margin: 0;
-
-            padding: 0;
-        }
-
-
-        .admin-sidebar .menu-list li {
-            margin: 3px 0;
-        }
-
-
-        .admin-sidebar .menu-list a {
-            display: flex;
-
-            align-items: center;
-
-            gap: 10px;
-
-            padding: 10px 12px;
-
-            border-radius: 7px;
-
-            color: #374151;
-
-            text-decoration: none;
-
-            font-size: 14px;
-
-            transition:
-                background 0.2s ease,
-                color 0.2s ease;
-        }
-
-
-        .admin-sidebar .menu-list a:hover {
-            background: #f3f4f6;
-
-            color: #111827;
-        }
-
-
-        .admin-sidebar .icon {
-            width: 20px;
-
-            min-width: 20px;
-
-            text-align: center;
-
-            color: #6b7280;
-        }
-
-
-        .admin-sidebar .menu-text {
-            flex: 1;
-        }
-
-
-        /* =====================================================
-           CONTENT
-        ===================================================== */
-
-        .admin-content {
-            margin-left: 250px;
-
-            width: calc(100% - 250px);
-
-            min-height: calc(100vh - 64px);
-
-            padding: 30px;
-        }
-
-
-        .admin-content .section {
-            padding: 0;
-        }
-
-
-        .admin-content .container {
-            width: 100%;
-
-            max-width: 1400px;
-
-            margin: 0 auto;
-        }
-
-
-        /* =====================================================
-           KPI GRID
-        ===================================================== */
-
-        .admin-content .admin-kpi-card {
-            display: inline-flex;
-
-            vertical-align: top;
-
-            flex-direction: column;
-
-            justify-content: center;
-
-            width: calc(25% - 18px);
-
-            min-height: 135px;
-
-            margin: 0 14px 14px 0;
-
-            padding: 20px;
-
-            background: #ffffff;
-
-            border: 1px solid #e5e7eb;
-
-            border-radius: 10px;
-
-            box-shadow:
-                0 3px 10px
-                rgba(0, 0, 0, 0.04);
-
-            transition:
-                transform 0.15s ease,
-                box-shadow 0.15s ease;
-        }
-
-
-        .admin-kpi-card:hover {
-            transform: translateY(-2px);
-
-            box-shadow:
-                0 6px 18px
-                rgba(0, 0, 0, 0.08);
-        }
-
-
-        .admin-kpi-value {
-            font-size: 27px;
-
-            font-weight: 700;
-
-            color: #111827;
-
-            line-height: 1.25;
-
-            overflow-wrap: anywhere;
-        }
-
-
-        .admin-kpi-label {
-            margin-top: 8px;
-
-            font-size: 13px;
-
-            color: #6b7280;
-        }
-
-
-        .admin-danger {
-            color: #dc2626 !important;
-        }
-
-
-        /* =====================================================
-           COURSE MODERATION LINKS
-        ===================================================== */
-
-        .admin-kpi-card a {
-            text-decoration: none;
-        }
-
-
-        .admin-kpi-card a:hover {
-            opacity: 0.9;
-        }
-
-
-        /* =====================================================
-           FOOTER
-        ===================================================== */
-
-        .admin-footer {
-            margin-left: 250px;
-        }
-
-
-        /* =====================================================
-           RESPONSIVE
-        ===================================================== */
-
-        @media (max-width: 1200px) {
-
-            .admin-content .admin-kpi-card {
-                width: calc(33.333% - 16px);
-            }
-
-        }
-
-
-        @media (max-width: 900px) {
-
-            .admin-sidebar {
-                width: 210px;
-            }
-
-            .admin-content {
-                margin-left: 210px;
-
-                width: calc(100% - 210px);
-
-                padding: 20px;
-            }
-
-            .admin-content .admin-kpi-card {
-                width: calc(50% - 14px);
-            }
-
-        }
-
-
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f4f6f9; color: #1f2937; }
+        :focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+        .admin-skip-link { position: fixed; left: 12px; top: 8px; transform: translateY(-150%); z-index: 3000; padding: 10px 14px; border-radius: 6px; background: #fff; color: #111827; font-weight: 700; text-decoration: none; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+        .admin-skip-link:focus { transform: translateY(0); }
+        .admin-header { height: 64px; background: #111827; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; inset: 0 0 auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+        .admin-header-left, .admin-header-right { display: flex; align-items: center; gap: 12px; }
+        .admin-brand { display: flex; align-items: center; gap: 10px; color: white; text-decoration: none; font-weight: 600; }
+        .admin-logo { width: 38px; height: 38px; object-fit: cover; border-radius: 6px; }
+        .admin-brand-text { font-size: 18px; }
+        .admin-user { color: #d1d5db; font-size: 14px; }
+        .admin-header button, .admin-header a.button { border: 0; cursor: pointer; }
+        .admin-layout { display: flex; min-height: 100vh; padding-top: 64px; }
+        .admin-sidebar { position: fixed; top: 64px; left: 0; bottom: 0; width: 250px; background: #fff; border-right: 1px solid #e5e7eb; padding: 20px 14px; overflow-y: auto; z-index: 1100; }
+        .admin-sidebar .menu-label { margin: 18px 10px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9ca3af; }
+        .admin-sidebar .menu-list { list-style: none; margin: 0; padding: 0; }
+        .admin-sidebar .menu-list li { margin: 3px 0; }
+        .admin-sidebar .menu-list a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 7px; color: #374151; text-decoration: none; font-size: 14px; transition: background .2s ease, color .2s ease; }
+        .admin-sidebar .menu-list a:hover, .admin-sidebar .menu-list a:focus-visible { background: #f3f4f6; color: #111827; }
+        .admin-sidebar .icon { width: 20px; min-width: 20px; text-align: center; color: #6b7280; }
+        .admin-sidebar .menu-text { flex: 1; }
+        .admin-content { margin-left: 250px; width: calc(100% - 250px); min-height: calc(100vh - 64px); padding: 30px; overflow-x: auto; }
+        .admin-content .section { padding: 0; }
+        .admin-content .container { width: 100%; max-width: 1400px; margin: 0 auto; min-width: 0; }
+        .admin-content .admin-kpi-card { display: inline-flex; vertical-align: top; flex-direction: column; justify-content: center; width: calc(25% - 18px); min-height: 135px; margin: 0 14px 14px 0; padding: 20px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,.04); transition: transform .15s ease, box-shadow .15s ease; }
+        .admin-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+        .admin-kpi-value { font-size: 27px; font-weight: 700; color: #111827; line-height: 1.25; overflow-wrap: anywhere; }
+        .admin-kpi-label { margin-top: 8px; font-size: 13px; color: #6b7280; }
+        .admin-danger { color: #dc2626 !important; }
+        .admin-kpi-card a { text-decoration: none; }
+        .admin-sidebar-overlay { display: none; }
+        @media (max-width: 1200px) { .admin-content .admin-kpi-card { width: calc(33.333% - 16px); } }
+        @media (max-width: 900px) { .admin-sidebar { width: 210px; } .admin-content { margin-left: 210px; width: calc(100% - 210px); padding: 20px; } .admin-content .admin-kpi-card { width: calc(50% - 14px); } }
         @media (max-width: 650px) {
-
-            .admin-sidebar {
-                display: none;
-            }
-
-            .admin-content {
-                margin-left: 0;
-
-                width: 100%;
-
-                padding: 15px;
-            }
-
-            .admin-content .admin-kpi-card {
-                width: 100%;
-
-                margin-right: 0;
-            }
-
-            .admin-brand-text {
-                display: none;
-            }
-
-            .admin-user {
-                display: none;
-            }
-
+            .admin-header { height: 60px; padding: 0 12px; }
+            .admin-layout { padding-top: 60px; }
+            .admin-sidebar { display: block; top: 60px; width: min(290px, 86vw); transform: translateX(-105%); transition: transform .2s ease; box-shadow: 8px 0 24px rgba(0,0,0,.12); }
+            .admin-sidebar.is-active { transform: translateX(0); }
+            .admin-sidebar-overlay { display: block; position: fixed; inset: 60px 0 0; z-index: 1050; border: 0; padding: 0; background: rgba(15,23,42,.45); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+            .admin-sidebar-overlay.is-active { opacity: 1; pointer-events: auto; }
+            body.admin-sidebar-open { overflow: hidden; }
+            .admin-content { margin-left: 0; width: 100%; min-height: calc(100vh - 60px); padding: 12px; }
+            .admin-content .admin-kpi-card { display: flex; width: 100%; margin-right: 0; margin-bottom: 12px; min-height: 112px; padding: 16px; }
+            .admin-brand-text, .admin-user { display: none; }
+            .admin-header-left, .admin-header-right { gap: 6px; }
+            .admin-header button, .admin-header a.button { min-height: 40px; min-width: 40px; }
         }
-
+        @media (max-width: 400px) { .admin-content { padding: 10px; } .admin-kpi-value { font-size: 24px; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
     </style>
-
-    <!-- Shared responsive framework -->
-    <link rel="stylesheet"
-          href="{% static 'css/responsive.css' %}">
-
-
-    {% block head_extra %}
-    {% endblock %}
-
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    {% block head_extra %}{% endblock %}
 </head>
-
-
 <body>
-
-
-    <!-- =====================================================
-         ADMIN HEADER
-    ====================================================== -->
-
+<a class="admin-skip-link" href="#admin-main">Skip to main content</a>
+<div class="admin-layout">
     <header class="admin-header">
-
         {% include "layouts/admin/header_admin.html" %}
-
     </header>
-
-
-    <!-- =====================================================
-         ADMIN LAYOUT
-    ====================================================== -->
-
-    <div class="admin-layout">
-
-
-        <!-- =================================================
-             SIDEBAR
-        ================================================== -->
-
-        <aside class="admin-sidebar">
-
-            {% include "layouts/admin/sidebar_admin.html" %}
-
-        </aside>
-
-
-        <!-- =================================================
-             CONTENT
-        ================================================== -->
-
-        <main class="admin-content">
-
-            <section class="section">
-
-                <div class="container">
-
-                    {% block content %}
-                    {% endblock %}
-
-                </div>
-
-            </section>
-
-        </main>
-
-    </div>
-
-
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
-
-    {% include "layouts/student/footer.html" %}
-
-
-    <!-- =====================================================
-         EXTRA SCRIPTS
-    ====================================================== -->
-
-    {% if user.is_authenticated %}
-
-        {% block scripts_extra %}
-        {% endblock %}
-
-    {% endif %}
-
-
+    <aside id="admin-sidebar" class="admin-sidebar" aria-label="Admin navigation">
+        {% include "layouts/admin/sidebar_admin.html" %}
+    </aside>
+    <main id="admin-main" class="admin-content" tabindex="-1">
+        <section class="section">
+            <div class="container">
+                {% block content %}{% endblock %}
+            </div>
+        </section>
+    </main>
+</div>
+{% include "layouts/student/footer.html" %}
+<form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">
+    {% csrf_token %}
+</form>
+{% if user.is_authenticated %}
+    <script src="{% static 'js/admin_navigation.js' %}"></script>
+    {% block scripts_extra %}{% endblock %}
+{% endif %}
 </body>
-
 </html>
