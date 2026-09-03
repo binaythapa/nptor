@@ -1,724 +1,251 @@
 {% extends "layouts/student/base.html" %}
 {% load static %}
 
-{% block title %}
-    Practice
-{% endblock %}
+{% block title %}Practice{% endblock %}
 
 {% block head_extra %}
-
-<link rel="stylesheet"
-      href="{% static 'css/pages/practice.css' %}">
-
-<link rel="stylesheet"
-      href="{% static 'css/pages/practice-mobile.css' %}">
-
+<link rel="stylesheet" href="{% static 'css/pages/practice.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/practice-mobile.css' %}">
 {% endblock %}
-
 
 {% block content %}
-
 <div class="practice-page">
 
-
-    <!-- =====================================================
-         PAGE HEADER
-         ===================================================== -->
-
     <header class="practice-page-header">
-
         <div class="practice-page-heading">
-
-            <div class="practice-eyebrow">
-                PRACTICE
-            </div>
-
-            <h1 class="practice-title">
-                Practice Questions
-            </h1>
-
-            <p class="practice-subtitle">
-                Strengthen your knowledge one question at a time.
-            </p>
-
+            <div class="practice-eyebrow">PRACTICE</div>
+            <h1 class="practice-title">Practice Questions</h1>
+            <p class="practice-subtitle">Strengthen your knowledge one question at a time.</p>
         </div>
 
-
-        <!-- =================================================
-             PRACTICE MODES
-             ================================================= -->
-
-        <nav class="practice-mode-nav"
-             aria-label="Practice modes">
-
-            <a href="{% url 'quiz:practice' %}"
-               class="practice-mode active">
-                Basics
-            </a>
-
-
-            <a href="{% if not is_from_course %}
-                        {% url 'quiz:practice_express' %}
-                      {% else %}
-                        javascript:void(0);
-                      {% endif %}"
-               class="practice-mode
-                      {% if is_from_course %}is-disabled{% endif %}"
-
-               {% if is_from_course %}
-                   title="Disabled during course practice"
-                   aria-disabled="true"
-               {% endif %}>
-
-                Express
-
-            </a>
-
-
-            <a href="{% if not is_from_course %}
-                        {% url 'quiz:exam_list' %}
-                      {% else %}
-                        javascript:void(0);
-                      {% endif %}"
-               class="practice-mode
-                      {% if is_from_course %}is-disabled{% endif %}"
-
-               {% if is_from_course %}
-                   title="Disabled during course practice"
-                   aria-disabled="true"
-               {% endif %}>
-
-                Pro
-
-            </a>
-
+        <nav class="practice-mode-nav" aria-label="Practice modes">
+            <a href="{% url 'quiz:practice' %}" class="practice-mode active">Basics</a>
+            <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}"
+               class="practice-mode{% if is_from_course %} is-disabled{% endif %}"
+               {% if is_from_course %}title="Disabled during course practice" aria-disabled="true"{% endif %}>Express</a>
+            <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}"
+               class="practice-mode{% if is_from_course %} is-disabled{% endif %}"
+               {% if is_from_course %}title="Disabled during course practice" aria-disabled="true"{% endif %}>Pro</a>
         </nav>
-
     </header>
 
-
-
-    <!-- =====================================================
-         GUEST / LOGIN NOTICE
-         ===================================================== -->
-
     {% if not user.is_authenticated %}
-
     <section class="practice-login-note">
-
         <div class="practice-login-content">
-
-            <strong>
-                Guest Practice
-            </strong>
-
-            <span>
-                You're practicing as a guest with limited access.
-            </span>
-
+            <strong>Guest Practice</strong>
+            <span>You're practicing as a guest with limited access.</span>
         </div>
-
-
-        <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}"
-           class="practice-login-link">
-
-            Log in
-
-        </a>
-
+        <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}" class="practice-login-link">Log in</a>
     </section>
-
     {% endif %}
-
-
-
-    <!-- =====================================================
-         FILTER PANEL
-         ===================================================== -->
 
     <section class="practice-panel practice-filter-panel">
-
-
-        <!-- FILTER HEADER -->
-
-        <button type="button"
-                id="filterToggle"
-                class="practice-filter-header"
-                aria-expanded="false"
-                aria-controls="filterBody">
-
+        <button type="button" id="filterToggle" class="practice-filter-header" aria-expanded="false" aria-controls="filterBody">
             <span class="practice-filter-heading">
-
-                <span class="practice-filter-icon"
-                      aria-hidden="true">
-                    ☰
-                </span>
-
-                <span>
-                    Filters
-                </span>
-
-                <small id="filterHint">
-                    Click to expand
-                </small>
-
+                <span class="practice-filter-icon" aria-hidden="true">☰</span>
+                <span>Filters</span>
+                <small id="filterHint">Click to expand</small>
             </span>
-
-
-            <span id="filterToggleIcon"
-                  class="practice-filter-arrow"
-                  aria-hidden="true">
-
-                ▾
-
-            </span>
-
+            <span id="filterToggleIcon" class="practice-filter-arrow" aria-hidden="true">▾</span>
         </button>
 
-
-
-        <!-- FILTER BODY -->
-
-        <div id="filterBody"
-             class="practice-filter-body">
-
-
-            <form method="get"
-                  class="practice-filter-form">
-
-
+        <div id="filterBody" class="practice-filter-body">
+            <form method="get" class="practice-filter-form">
                 <div class="practice-filter-grid">
-
-
-                    <!-- =====================================
-                         DOMAIN
-                         ===================================== -->
-
                     <div class="practice-filter-field">
-
-                        <label for="practice-domain">
-                            Domain
-                        </label>
-
-
+                        <label for="practice-domain">Domain</label>
                         <div class="practice-select-wrap">
-
-                            <select
-                                id="practice-domain"
-                                name="domain"
-
-                                {% if is_from_course %}
-                                    disabled
-                                {% endif %}>
-
-                                <option value="">
-                                    All Domains
-                                </option>
-
-
+                            <select id="practice-domain" name="domain" {% if is_from_course %}disabled{% endif %}>
+                                <option value="">All Domains</option>
                                 {% for d in domains %}
-
-                                <option
-                                    value="{{ d.id }}"
-
-                                    {% if is_from_course %}
-
-                                        {% if d.id|stringformat:"s" == locked_filters.domain|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-
-                                    {% else %}
-
-                                        {% if d.id|stringformat:"s" == domain_id|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-
-                                    {% endif %}>
-
+                                <option value="{{ d.id }}"
+                                    {% if is_from_course %}{% if d.id|stringformat:"s" == locked_filters.domain|stringformat:"s" %}selected{% endif %}
+                                    {% else %}{% if d.id|stringformat:"s" == domain_id|stringformat:"s" %}selected{% endif %}{% endif %}>
                                     {{ d.name }}
-
                                 </option>
-
                                 {% endfor %}
-
                             </select>
-
                         </div>
-
-
-                        {% if is_from_course %}
-
-                            <input type="hidden"
-                                   name="domain"
-                                   value="{{ locked_filters.domain }}">
-
-                        {% endif %}
-
+                        {% if is_from_course %}<input type="hidden" name="domain" value="{{ locked_filters.domain }}">{% endif %}
                     </div>
 
-
-
-                    <!-- =====================================
-                         CATEGORY
-                         ===================================== -->
-
                     <div class="practice-filter-field">
-
-                        <label for="practice-category">
-                            Category
-                        </label>
-
-
+                        <label for="practice-category">Category</label>
                         <div class="practice-select-wrap">
-
-                            <select
-                                id="practice-category"
-                                name="category"
-
-                                {% if is_from_course or not domain_id %}
-                                    disabled
-                                {% endif %}>
-
-                                <option value="">
-                                    All Categories
-                                </option>
-
-
+                            <select id="practice-category" name="category" {% if is_from_course or not domain_id %}disabled{% endif %}>
+                                <option value="">All Categories</option>
                                 {% for cat in categories %}
-
                                     {% if not cat.parent %}
-
-                                    <option
-                                        value="{{ cat.id }}"
-
-                                        {% if is_from_course %}
-
-                                            {% if cat.id|stringformat:"s" == locked_filters.category|stringformat:"s" %}
-                                                selected
-                                            {% endif %}
-
-                                        {% else %}
-
-                                            {% if cat.id|stringformat:"s" == category_id|stringformat:"s" %}
-                                                selected
-                                            {% endif %}
-
-                                        {% endif %}>
-
-                                        {{ cat.name }}
-
-                                    </option>
-
-
+                                    <option value="{{ cat.id }}" {% if is_from_course %}{% if cat.id|stringformat:"s" == locked_filters.category|stringformat:"s" %}selected{% endif %}{% else %}{% if cat.id|stringformat:"s" == category_id|stringformat:"s" %}selected{% endif %}{% endif %}>{{ cat.name }}</option>
                                     {% for child in cat.children.all %}
-
-                                    <option
-                                        value="{{ child.id }}"
-
-                                        {% if is_from_course %}
-
-                                            {% if child.id|stringformat:"s" == locked_filters.category|stringformat:"s" %}
-                                                selected
-                                            {% endif %}
-
-                                        {% else %}
-
-                                            {% if child.id|stringformat:"s" == category_id|stringformat:"s" %}
-                                                selected
-                                            {% endif %}
-
-                                        {% endif %}>
-
-                                        ↳ {{ child.name }}
-
-                                    </option>
-
+                                    <option value="{{ child.id }}" {% if is_from_course %}{% if child.id|stringformat:"s" == locked_filters.category|stringformat:"s" %}selected{% endif %}{% else %}{% if child.id|stringformat:"s" == category_id|stringformat:"s" %}selected{% endif %}{% endif %}>↳ {{ child.name }}</option>
                                     {% endfor %}
-
                                     {% endif %}
-
                                 {% endfor %}
-
                             </select>
-
                         </div>
-
-
-                        {% if is_from_course %}
-
-                            <input type="hidden"
-                                   name="category"
-                                   value="{{ locked_filters.category }}">
-
-                        {% endif %}
-
+                        {% if is_from_course %}<input type="hidden" name="category" value="{{ locked_filters.category }}">{% endif %}
                     </div>
-
-
-
-                    <!-- =====================================
-                         DIFFICULTY
-                         ===================================== -->
 
                     <div class="practice-filter-field">
-
-                        <label for="practice-difficulty">
-                            Difficulty
-                        </label>
-
-
+                        <label for="practice-difficulty">Difficulty</label>
                         <div class="practice-select-wrap">
-
-                            <select
-                                id="practice-difficulty"
-                                name="difficulty"
-
-                                {% if is_from_course %}
-                                    disabled
-                                {% endif %}>
-
-                                <option value="">
-                                    All Difficulty
-                                </option>
-
-
+                            <select id="practice-difficulty" name="difficulty" {% if is_from_course %}disabled{% endif %}>
+                                <option value="">All Difficulty</option>
                                 {% for value, label in difficulty_choices %}
-
-                                <option
-                                    value="{{ value }}"
-
-                                    {% if is_from_course %}
-
-                                        {% if value == locked_filters.difficulty %}
-                                            selected
-                                        {% endif %}
-
-                                    {% else %}
-
-                                        {% if value == difficulty %}
-                                            selected
-                                        {% endif %}
-
-                                    {% endif %}>
-
-                                    {{ label }}
-
-                                </option>
-
+                                <option value="{{ value }}" {% if is_from_course %}{% if value == locked_filters.difficulty %}selected{% endif %}{% else %}{% if value == difficulty %}selected{% endif %}{% endif %}>{{ label }}</option>
                                 {% endfor %}
-
                             </select>
-
                         </div>
-
-
-                        {% if is_from_course %}
-
-                            <input type="hidden"
-                                   name="difficulty"
-                                   value="{{ locked_filters.difficulty }}">
-
-                        {% endif %}
-
+                        {% if is_from_course %}<input type="hidden" name="difficulty" value="{{ locked_filters.difficulty }}">{% endif %}
                     </div>
-
                 </div>
-
-
-
-                <!-- =========================================
-                     COURSE LOCK NOTICE
-                     ========================================= -->
 
                 {% if is_from_course %}
-
-                <div class="practice-filter-locked">
-
-                    <span aria-hidden="true">
-                        🔒
-                    </span>
-
-                    <span>
-                        Filters are locked because this practice
-                        session belongs to a course lesson.
-                    </span>
-
-                </div>
-
+                <div class="practice-filter-locked"><span aria-hidden="true">🔒</span><span>Filters are locked because this practice session belongs to a course lesson.</span></div>
                 {% endif %}
-
-
             </form>
-
         </div>
-
     </section>
 
-
-
-    <!-- =====================================================
-         PROGRESS
-         ===================================================== -->
-
-    <section class="practice-progress"
-             aria-label="Practice progress">
-
-
+    <section class="practice-progress" aria-label="Practice progress">
         <div class="practice-progress-top">
-
-            <span>
-                Progress
-            </span>
-
-            <strong>
-                {{ progress_done }} / {{ progress_total }}
-            </strong>
-
+            <span>Progress</span>
+            <strong>{{ progress_done }} / {{ progress_total }}</strong>
         </div>
-
-
-        <div class="practice-progress-track"
-             role="progressbar"
-
-             aria-valuemin="0"
-             aria-valuemax="{{ progress_total|default:0 }}"
-             aria-valuenow="{{ progress_done|default:0 }}">
-
-            <div class="practice-progress-bar"
-
-                 {% if progress_total %}
-                     style="width: {% widthratio progress_done progress_total 100 %}%;"
-                 {% else %}
-                     style="width: 0%;"
-                 {% endif %}>
-
-            </div>
-
+        <div class="practice-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="{{ progress_total|default:0 }}" aria-valuenow="{{ progress_done|default:0 }}">
+            <div class="practice-progress-bar" {% if progress_total %}style="width: {% widthratio progress_done progress_total 100 %}%;"{% else %}style="width: 0%;"{% endif %}></div>
         </div>
-
     </section>
-
-
-
-    <!-- =====================================================
-         ANONYMOUS LIMIT
-         ===================================================== -->
 
     {% if anon_limit_reached %}
-
     <section class="practice-limit-card">
-
-        <div class="practice-limit-icon"
-             aria-hidden="true">
-            🔐
-        </div>
-
-
-        <h2>
-            Free Practice Limit Reached
-        </h2>
-
-
-        <p>
-
-            You've completed
-            <strong>{{ anon_limit }}</strong>
-            free practice questions.
-
-            Log in to continue practicing.
-
-        </p>
-
-
+        <div class="practice-limit-icon" aria-hidden="true">🔐</div>
+        <h2>Free Practice Limit Reached</h2>
+        <p>You've completed <strong>{{ anon_limit }}</strong> free practice questions. Log in to continue practicing.</p>
         <div class="practice-card-actions">
-
-            <a
-                href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}"
-                class="practice-btn practice-btn-primary">
-
-                Log in to Continue
-
-            </a>
-
-
-            {% if not is_from_course %}
-
-            <a
-                href="{% url 'quiz:practice' %}?reset=1{% if domain_id %}&domain={{ domain_id }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}"
-                class="practice-btn practice-btn-secondary">
-
-                Reset
-
-            </a>
-
-            {% endif %}
-
+            <a href="{% url 'accounts:request-login-otp' %}?next={{ request.path }}" class="practice-btn practice-btn-primary">Log in to Continue</a>
+            {% if not is_from_course %}<a href="{% url 'quiz:practice' %}?reset=1{% if domain_id %}&amp;domain={{ domain_id }}{% endif %}{% if category_id %}&amp;category={{ category_id }}{% endif %}{% if difficulty %}&amp;difficulty={{ difficulty }}{% endif %}" class="practice-btn practice-btn-secondary">Reset</a>{% endif %}
         </div>
-
     </section>
-
     {% endif %}
-
-
-
-    <!-- =====================================================
-         COMPLETED
-         ===================================================== -->
 
     {% if completed %}
-
-    <section id="endMessage"
-             class="practice-completed-card">
-
-
-        <div class="practice-completed-icon"
-             aria-hidden="true">
-
-            ✓
-
-        </div>
-
-
-        <h2>
-            Practice Complete!
-        </h2>
-
-
-        <p>
-
-            Great work!
-
-            You've completed
-            <strong>{{ progress_done }}</strong>
-            questions.
-
-        </p>
-
-
+    <section id="endMessage" class="practice-completed-card">
+        <div class="practice-completed-icon" aria-hidden="true">✓</div>
+        <h2>Practice Complete!</h2>
+        <p>Great work! You've completed <strong>{{ progress_done }}</strong> questions.</p>
         <div class="practice-card-actions">
-
-            <a
-                href="{% url 'quiz:exam_list' %}"
-                class="practice-btn practice-btn-primary">
-
-                Explore Courses &amp; Exams
-
-            </a>
-
-
-            {% if not is_from_course %}
-
-            <a
-                href="{% url 'quiz:practice' %}?reset=1"
-                class="practice-btn practice-btn-secondary">
-
-                Practice Again
-
-            </a>
-
-            {% endif %}
-
+            <a href="{% url 'quiz:exam_list' %}" class="practice-btn practice-btn-primary">Explore Courses &amp; Exams</a>
+            {% if not is_from_course %}<a href="{% url 'quiz:practice' %}?reset=1" class="practice-btn practice-btn-secondary">Practice Again</a>{% endif %}
         </div>
-
     </section>
-
     {% endif %}
-
-
-
-    <!-- =====================================================
-         PRACTICE QUESTION
-         ===================================================== -->
 
     {% if question %}
-
-    <main id="practiceContainer"
-          class="practice-container">
-
+    <main id="practiceContainer" class="practice-container">
         {% include "quiz/student/practice/_practice_question.html" %}
-
     </main>
-
     {% endif %}
-
-
-
-    <!-- =====================================================
-         NO QUESTION STATE
-         ===================================================== -->
 
     {% if not question and not completed and not anon_limit_reached %}
-
     <section class="practice-completed-card">
-
-        <div class="practice-completed-icon"
-             aria-hidden="true">
-
-            ✓
-
-        </div>
-
-
-        <h2>
-            No Questions Available
-        </h2>
-
-
-        <p>
-            No questions match the selected filters.
-            Try changing your filters and search again.
-        </p>
-
-
-        <div class="practice-card-actions">
-
-            <a
-                href="{% url 'quiz:practice' %}"
-                class="practice-btn practice-btn-primary">
-
-                Clear Filters
-
-            </a>
-
-        </div>
-
+        <div class="practice-completed-icon" aria-hidden="true">✓</div>
+        <h2>No Questions Available</h2>
+        <p>No questions match the selected filters. Try changing your filters and search again.</p>
+        <div class="practice-card-actions"><a href="{% url 'quiz:practice' %}" class="practice-btn practice-btn-primary">Clear Filters</a></div>
     </section>
-
     {% endif %}
 
-
 </div>
-
 {% endblock %}
 
-
-
 {% block scripts_extra %}
-
 <script>
-
-
-
-
 window.PRACTICE_CONFIG = {
-
-    answerUrl:
-        "{% url 'quiz:practice_answer_ajax' %}",
-
-    nextUrl:
-        "{% url 'quiz:practice_next_ajax' %}",
-
-    skipUrl:
-        "{% url 'quiz:practice_skip_ajax' %}",
-
-    feedbackUrl:
-        "{% url 'quiz:practice_feedback_ajax' %}"
-
+    answerUrl: "{% url 'quiz:practice_answer_ajax' %}",
+    nextUrl: "{% url 'quiz:practice_next_ajax' %}",
+    skipUrl: "{% url 'quiz:practice_skip_ajax' %}",
+    feedbackUrl: "{% url 'quiz:practice_feedback_ajax' %}"
 };
-
 </script>
-
-
 <script src="{% static 'js/pages/practice.js' %}"></script>
+<script>
+(function () {
+    "use strict";
 
+    function progressElements() {
+        return {
+            section: document.querySelector(".practice-progress"),
+            value: document.querySelector(".practice-progress-top strong"),
+            bar: document.querySelector(".practice-progress-bar"),
+            track: document.querySelector(".practice-progress-track")
+        };
+    }
+
+    function syncFilter() {
+        const body = document.getElementById("filterBody");
+        const toggle = document.getElementById("filterToggle");
+        if (!body) return;
+        const expanded = body.classList.contains("is-open");
+        body.hidden = !expanded;
+        body.style.display = expanded ? "grid" : "none";
+        if (toggle) toggle.setAttribute("aria-expanded", String(expanded));
+    }
+
+    function updateProgress(increment) {
+        const el = progressElements();
+        if (!el.value || !el.bar || !el.track) return;
+
+        const match = el.value.textContent.trim().match(/^(\d+)\s*\/\s*(\d+)$/);
+        if (!match) return;
+
+        const current = Number(match[1]);
+        const total = Number(match[2]);
+        const done = Math.min(total, Math.max(0, current + increment));
+        const percent = total > 0 ? (done / total) * 100 : 0;
+
+        el.value.textContent = done + " / " + total;
+        el.track.setAttribute("aria-valuenow", String(done));
+        el.bar.style.width = percent + "%";
+    }
+
+    /* Practice JS marks the current question seen when Next/Skip succeeds.
+       Keep the progress display, which lives outside the AJAX container,
+       synchronized with that session transition. */
+    const nativeFetch = window.fetch;
+    const nextUrl = window.PRACTICE_CONFIG?.nextUrl;
+    const skipUrl = window.PRACTICE_CONFIG?.skipUrl;
+
+    if (typeof nativeFetch === "function") {
+        window.fetch = async function () {
+            const response = await nativeFetch.apply(this, arguments);
+            const request = arguments[0];
+            const requestUrl = typeof request === "string" ? request : request?.url;
+
+            if (requestUrl === nextUrl || requestUrl === skipUrl) {
+                try {
+                    const data = await response.clone().json();
+                    if (data.success || data.redirect) {
+                        updateProgress(1);
+                    }
+                } catch (error) {
+                    /* Keep the original response available to practice.js. */
+                }
+            }
+
+            return response;
+        };
+    }
+
+    syncFilter();
+
+    const toggle = document.getElementById("filterToggle");
+    if (toggle) {
+        toggle.addEventListener("click", function () {
+            window.requestAnimationFrame(syncFilter);
+        });
+    }
+})();
+</script>
 {% endblock %}
