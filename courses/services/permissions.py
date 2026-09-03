@@ -2,6 +2,9 @@
 # COURSE PERMISSIONS
 # ============================================================
 
+from organizations.models.role import OrganizationRole
+from organizations.permissions import get_active_membership
+
 
 def can_edit_course(user, course):
     """
@@ -9,9 +12,13 @@ def can_edit_course(user, course):
 
     Rules:
         1. Superuser can edit any course.
-        2. Course creator can edit their own course.
-        3. Organization user can edit courses belonging
-           to their organization.
+        2. Creator can edit a platform course they created.
+        3. Organization courses require active membership in
+           that organization with a teaching/content role.
+
+    An organization course must never be editable solely because
+    the requester is its creator; organization membership is the
+    authoritative boundary for organization-owned content.
     """
 
     if not user or not user.is_authenticated:
@@ -25,32 +32,32 @@ def can_edit_course(user, course):
         return True
 
     # --------------------------------------------------------
-    # COURSE CREATOR
+    # PLATFORM COURSE CREATOR
     # --------------------------------------------------------
 
-    if course.created_by == user:
-        return True
+    # A course without an organization is platform-owned content.
+    if not course.organization:
+        return course.created_by == user
 
     # --------------------------------------------------------
-    # ORGANIZATION USER
+    # ORGANIZATION COURSE
     # --------------------------------------------------------
 
-    if (
-        course.organization
-        and hasattr(user, "organization")
-        and user.organization
-    ):
-        return (
-            course.organization
-            == user.organization
-        )
+    membership = get_active_membership(
+        user,
+        course.organization,
+    )
 
-    return False
+    if not membership:
+        return False
+
+    return membership.role in OrganizationRole.teaching_roles()
 
 
 # ============================================================
 # COURSE REVIEW PERMISSION
 # ============================================================
+
 
 def can_review_course(user, course):
     """
@@ -72,6 +79,7 @@ def can_review_course(user, course):
 # ============================================================
 # COURSE PUBLISH PERMISSION
 # ============================================================
+
 
 def can_publish_course(user, course):
     """
@@ -95,6 +103,7 @@ def can_publish_course(user, course):
 # ============================================================
 # COURSE SUBMISSION PERMISSION
 # ============================================================
+
 
 def can_submit_course_for_review(user, course):
     """
@@ -134,6 +143,7 @@ def can_submit_course_for_review(user, course):
 # REQUEST CHANGES
 # ============================================================
 
+
 def can_request_changes(user, course):
     """
     Determine whether an administrator can request
@@ -158,6 +168,7 @@ def can_request_changes(user, course):
 # APPROVE COURSE
 # ============================================================
 
+
 def can_approve_course(user, course):
     """
     Determine whether an administrator can approve
@@ -179,6 +190,7 @@ def can_approve_course(user, course):
 # ============================================================
 # REJECT COURSE
 # ============================================================
+
 
 def can_reject_course(user, course):
     """
