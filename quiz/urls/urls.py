@@ -22,6 +22,7 @@ from quiz.views.admin_subscription_views import *
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
 from quiz.views.student_learning_dashboard import student_dashboard
+from quiz.views.learning_marketplace import learning_marketplace, learning_domain
 from quiz.views.mock import *
 from quiz.views.exams import *
 from quiz.views.exam_list import *
@@ -57,7 +58,9 @@ app_name = "quiz"
 
 
 urlpatterns = [
-    path("", exam_list, name="exam_list"),
+    path("", learning_marketplace, name="exam_list"),
+    path("learning/", learning_marketplace, name="learning_marketplace"),
+    path("learning/domain/<slug:slug>/", learning_domain, name="learning_domain"),
     path("dashboard/", dashboard_dispatch, name="dashboard"),
     path("dashboard/admin/", admin_dashboard, name="admin_dashboard"),
     path("dashboard/student/", student_dashboard, name="student_dashboard"),
