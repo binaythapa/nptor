@@ -93,7 +93,6 @@ urlpatterns = [
 
     path("track/<int:track_id>/checkout/", track_checkout, name="track_checkout"),
     path("exam/<int:exam_id>/checkout/", exam_checkout, name="exam_checkout"),
-    path("track/<int:track_id>/checkout/", track_checkout, name="track_checkout"),
 
     path("dashboard/admin/subscriptions/", subscription_admin_panel, name="subscription_admin_panel"),
     path("dashboard/admin/subscribe/exam/", admin_subscribe_exam, name="admin_subscribe_exam"),
