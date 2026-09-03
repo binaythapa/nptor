@@ -23,6 +23,7 @@ from quiz.views.notifications import *
 from quiz.views.dashboards import *
 from quiz.views.student_learning_dashboard import student_dashboard
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
+from quiz.views.learning_shortlist import learning_shortlist_toggle
 from quiz.views.mock import *
 from quiz.views.exams import *
 from quiz.views.exam_list import *
@@ -61,6 +62,7 @@ urlpatterns = [
     path("", learning_marketplace, name="exam_list"),
     path("learning/", learning_marketplace, name="learning_marketplace"),
     path("learning/domain/<slug:slug>/", learning_domain, name="learning_domain"),
+    path("learning/shortlist/<str:resource_type>/<int:resource_id>/", learning_shortlist_toggle, name="learning_shortlist_toggle"),
     path("dashboard/", dashboard_dispatch, name="dashboard"),
     path("dashboard/admin/", admin_dashboard, name="admin_dashboard"),
     path("dashboard/student/", student_dashboard, name="student_dashboard"),
@@ -102,8 +104,8 @@ urlpatterns = [
     path("dashboard/admin/revoke/exam/", admin_revoke_exam, name="admin_revoke_exam"),
     path("dashboard/admin/subscribe/track/", admin_subscribe_track, name="admin_subscribe_track"),
     path("dashboard/admin/revoke/track/", admin_revoke_track, name="admin_revoke_track"),
-    path("dashboard/admin/update-expiry/exam/", admin_update_exam_expiry, name="admin_update_exam_expiry"),
-    path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_track_expiry"),
+    path("dashboard/admin/update-expiry/exam/", admin_update_expiry_exam, name="admin_update_expiry_exam"),
+    path("dashboard/admin/update-expiry/track/", admin_update_expiry_track, name="admin_update_expiry_track"),
     path("dashboard/admin/add-exam-days/", admin_add_exam_days, name="admin_add_exam_days"),
     path("dashboard/admin/add-track-days/", admin_add_track_days, name="admin_add_track_days"),
 
