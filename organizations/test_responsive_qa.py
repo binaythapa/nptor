@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.test import SimpleTestCase
 from django.template.loader import get_template
 
@@ -11,13 +14,10 @@ class ResponsiveQATemplateTests(SimpleTestCase):
         self.assertIn("static 'css/responsive.css'", source)
 
     def test_student_navigation_uses_shared_mobile_breakpoint_contract(self):
-        template = get_template("layouts/student/base.html")
-        source = template.template.source
-        self.assertIn("static 'js/navigation.js'", source)
+        navigation_path = Path(settings.BASE_DIR) / "static" / "js" / "navigation.js"
+        source = navigation_path.read_text(encoding="utf-8")
 
-        navigation_template = get_template("layouts/student/header.html")
-        navigation_source = navigation_template.template.source
-        self.assertIn('class="button is-white is-hidden-desktop"', navigation_source)
+        self.assertIn("const MOBILE_BREAKPOINT = 1023;", source)
 
     def test_org_admin_shell_has_mobile_navigation_and_responsive_css(self):
         template = get_template("organizations/admin/base.html")
