@@ -4,6 +4,7 @@
 
    Responsibilities:
    - Filter accordion
+   - Submit practice filters on change
    - Submit practice answer via AJAX
    - Load next question via AJAX
    - Skip practice question via AJAX
@@ -151,6 +152,62 @@
 
 
         setFilterState(savedState);
+    }
+
+
+    /* =====================================================
+       FILTER SUBMISSION
+       ===================================================== */
+
+    function initFilterForm() {
+
+        const form = document.querySelector(
+            ".practice-filter-form"
+        );
+
+        if (!form) {
+            return;
+        }
+
+        const domainSelect = form.querySelector(
+            "select[name='domain']"
+        );
+
+        const categorySelect = form.querySelector(
+            "select[name='category']"
+        );
+
+        form.addEventListener(
+            "change",
+            function (event) {
+
+                const select = event.target.closest(
+                    "select"
+                );
+
+                if (
+                    !select ||
+                    !form.contains(select) ||
+                    select.disabled
+                ) {
+                    return;
+                }
+
+                /*
+                 * A domain change invalidates the previous category.
+                 * Clear it before submitting so the new domain starts
+                 * with its complete question pool.
+                 */
+                if (
+                    select === domainSelect &&
+                    categorySelect
+                ) {
+                    categorySelect.value = "";
+                }
+
+                form.requestSubmit();
+            }
+        );
     }
 
 
@@ -1113,6 +1170,8 @@
     function init() {
 
         initFilter();
+
+        initFilterForm();
 
         initEvents();
     }
