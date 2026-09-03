@@ -37,18 +37,27 @@
 
     <div class="resource-grid">
       {% for item in resources %}
-        <article class="resource-card">
-          <div class="resource-icon resource-icon-{{ item.type }}" aria-hidden="true">{% if item.type == 'course' %}C{% elif item.type == 'track' %}T{% else %}E{% endif %}</div>
+        <article class="resource-card" data-shortlist-card>
+          <div class="resource-card-topline">
+            <div class="resource-icon resource-icon-{{ item.type }}" aria-hidden="true">{% if item.type == 'course' %}C{% elif item.type == 'track' %}T{% else %}E{% endif %}</div>
+            <form method="post" action="{% url 'quiz:learning_shortlist_toggle' item.type item.resource.id %}" data-shortlist-form>
+              {% csrf_token %}
+              <button class="shortlist-button{% if item.is_shortlisted %} is-shortlisted{% endif %}" type="submit" aria-pressed="{% if item.is_shortlisted %}true{% else %}false{% endif %}" title="{% if item.is_shortlisted %}Remove from shortlist{% else %}Add to shortlist{% endif %}">
+                <span aria-hidden="true">{% if item.is_shortlisted %}★{% else %}☆{% endif %}</span>
+                <span class="sr-only">{% if item.is_shortlisted %}Remove from shortlist{% else %}Add to shortlist{% endif %}</span>
+              </button>
+            </form>
+          </div>
           <div class="resource-body"><span class="resource-type">{{ item.type|title }}</span><h3>{{ item.resource.title }}</h3>
             {% if item.type == 'course' %}<p>{{ item.resource.category.name|default:'General learning' }} · {{ item.resource.level|title }}</p>
             {% elif item.type == 'track' %}<p>Structured exam preparation</p>
             {% else %}<p>{{ item.resource.question_count }} questions · {{ item.duration_minutes }} min</p>{% endif %}
             <div class="resource-footer">
-              {% if item.has_access %}<span class="resource-status owned">You have access</span><a class="resource-action primary" href="{% if item.type == 'course' %}{% url 'courses:course_learn' item.resource.slug %}{% else %}{% url 'quiz:exam_start' item.resource.id %}{% endif %}">Open →</a>
-              {% elif item.type == 'course' %}<span class="resource-status">Self-paced</span><a class="resource-action primary" href="{% url 'courses:subscribe_course' item.resource.id %}">Enroll →</a>
-              {% elif item.type == 'track' %}<span class="resource-status">Exam track</span><a class="resource-action primary" href="{% url 'payments:track_checkout' item.resource.id %}">Buy →</a>
+              {% if item.has_access %}<span class="resource-status owned">You have access</span><a class="resource-action primary" href="{% if item.type == 'course' %}{% url 'courses:course_learn' item.resource.slug %}{% else %}{% url 'quiz:exam_start' item.resource.id %}{% endif %}">Continue →</a>
+              {% elif item.type == 'course' %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'courses:course_learn' item.resource.slug %}">Start →</a>
+              {% elif item.type == 'track' %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'quiz:learning_domain' item.resource.exams.first.primary_category.domain.slug %}">Explore →</a>
               {% elif item.resource.is_free %}<span class="resource-status">Free exam</span><a class="resource-action primary" href="{% url 'quiz:exam_start' item.resource.id %}">Start →</a>
-              {% else %}<span class="resource-status">{{ item.resource.currency|default:'INR' }} {{ item.resource.price|floatformat:0 }}</span><a class="resource-action primary" href="{% url 'payments:exam_checkout' item.resource.id %}">Buy →</a>{% endif %}
+              {% else %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'quiz:exam_preview' item.resource.id %}">Try →</a>{% endif %}
             </div>
           </div>
         </article>
@@ -58,4 +67,5 @@
     {% if page_obj.has_other_pages %}<nav class="marketplace-pagination" aria-label="Catalogue pages">{% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}</nav>{% endif %}
   </section>
 </main>
+<script src="{% static 'js/pages/learning_shortlist.js' %}"></script>
 {% endblock %}
