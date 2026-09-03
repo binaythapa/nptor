@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from courses.models import Course
 from quiz.models import Exam, ExamTrack
@@ -16,9 +17,28 @@ from subscriptions.services.plan_service import (
 )
 
 DEFAULT_GATEWAY = "dummy"
+PAYMENT_RETURN_SESSION_KEY = "payment_return_to"
 
 
-def _start_payment(*, request, resource_type, resource, amount, currency="INR"):
+def _safe_return_url(request, value):
+    if not value:
+        return None
+    if not value.startswith("/") or value.startswith("//"):
+        return None
+    if not url_has_allowed_host_and_scheme(
+        value,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return None
+    return value
+
+
+def _start_payment(*, request, resource_type, resource, amount, currency="INR", return_to=None):
+    safe_return = _safe_return_url(request, return_to)
+    if safe_return:
+        request.session[PAYMENT_RETURN_SESSION_KEY] = safe_return
+
     try:
         order = OrderService.create_order(
             user=request.user,
@@ -63,10 +83,6 @@ def _start_payment(*, request, resource_type, resource, amount, currency="INR"):
 def course_checkout(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
 
-    # Checkout is only available for courses that are officially
-    # public. Private, draft, pending-review, rejected, or unpublished
-    # organization courses are distributed through their organization
-    # access/assignment flow rather than individual purchase.
     if not course.is_publicly_available():
         messages.error(
             request,
@@ -97,6 +113,7 @@ def course_checkout(request, course_id):
         resource=course,
         amount=plan.price,
         currency=plan.currency,
+        return_to=request.GET.get("next"),
     )
 
 
@@ -127,6 +144,7 @@ def track_checkout(request, track_id):
         resource=track,
         amount=plan.price,
         currency=plan.currency,
+        return_to=request.GET.get("next"),
     )
 
 
@@ -157,4 +175,5 @@ def exam_checkout(request, exam_id):
         resource=exam,
         amount=amount,
         currency=getattr(exam, "currency", None) or "INR",
+        return_to=request.GET.get("next"),
     )
