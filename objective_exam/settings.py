@@ -1,6 +1,7 @@
 # objective_exam/settings.py
 import os
 from pathlib import Path
+from logging.handlers import RotatingFileHandler
 
 # Load .env only in local/dev (safe in prod)
 try:
@@ -8,11 +9,6 @@ try:
     load_dotenv()
 except Exception:
     pass
-
-# objective_exam/settings.py
-import os
-from pathlib import Path
-from logging.handlers import RotatingFileHandler
 
 # ============================================================
 # BASE DIRECTORY
@@ -26,15 +22,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SITE_NAME = os.environ.get("SITE_NAME", "nptor.com")
 SITE_URL = "https://nptor.com"
 SITE_ID = 1
+
 # ============================================================
 # SECURITY
 # ============================================================
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-change-me-please"
-)
-
 DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+
+if not SECRET_KEY:
+    raise RuntimeError("DJANGO_SECRET_KEY must be set in the environment.")
 
 if DEBUG:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
@@ -68,8 +64,6 @@ INSTALLED_APPS = [
     "ckeditor_uploader",
     "django_ratelimit",
 
-    
-
     # Apps
     "quiz.apps.QuizConfig",
     "courses",
@@ -79,8 +73,6 @@ INSTALLED_APPS = [
     "subscriptions",
     "payments",
 ]
-
-
 
 
 # ============================================================
@@ -124,7 +116,6 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "quiz.context_processors.unread_notifications_count",
                 "pages.context_processors.site_globals",
-                
             ],
         },
     },
@@ -172,20 +163,16 @@ USE_I18N = True
 USE_TZ = True
 
 
-
 # ============================================================
 # SESSIONS (PRODUCTION SAFE + OTP SAFE)
 # ============================================================
-
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
-
 SESSION_COOKIE_AGE = 60 * 60 * 2   # 2 hours
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 
@@ -193,28 +180,12 @@ CSRF_COOKIE_SAMESITE = "Lax"
 # ============================================================
 # SECURITY HEADERS
 # ============================================================
-
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
-
-
-
-
-
-
-SESSION_COOKIE_SAMESITE = "None"
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-
 
 
 # ============================================================
@@ -226,20 +197,17 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 
-
 if DEBUG:
     MEDIA_ROOT = BASE_DIR / "media"
 else:
     MEDIA_ROOT = Path("/home/nptorcom/public_html/media")
 
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-
 CKEDITOR_ALLOW_NONIMAGE_FILES = True
+
 # ============================================================
 # AUTHENTICATION
 # ============================================================
@@ -260,9 +228,9 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "contact.nptor@gmail.com"
-EMAIL_HOST_PASSWORD = 'jvwj mfjo vyxc mowx'
-DEFAULT_FROM_EMAIL = "NPTOR <contact.nptor@gmail.com>"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "NPTOR <contact.nptor@gmail.com>")
 
 
 # ============================================================
@@ -297,8 +265,6 @@ else:
     }
 
 RATELIMIT_USE_CACHE = "default"
-
-
 
 
 # ============================================================
@@ -359,20 +325,17 @@ EXPRESS_ANON_LIMIT = 10
 RETAKE_COOLDOWN_MINUTES = 240
 QUESTION_AUTO_DISABLE_THRESHOLD = 3
 
-
 SILENCED_SYSTEM_CHECKS = [
     "django_ratelimit.E003",
     "django_ratelimit.W001",
 ]
 
 
-
-
-
+# ============================================================
+# CKEDITOR
+# ============================================================
 CKEDITOR_ALLOW_NONIMAGE_FILES = True
 CKEDITOR_IMAGE_BACKEND = "pillow"
-
-
 CKEDITOR_UPLOAD_PATH = "lesson_uploads/"
 
 CKEDITOR_CONFIGS = {
@@ -387,7 +350,6 @@ CKEDITOR_CONFIGS = {
             "autogrow",
         ]),
         "removePlugins": "stylesheetparser",
-
         "toolbar_Custom": [
             ["Format", "Font", "FontSize"],
             ["Bold", "Italic", "Underline", "Strike"],
@@ -402,7 +364,6 @@ CKEDITOR_CONFIGS = {
             ["RemoveFormat"],
             ["Undo", "Redo"],
         ],
-
         "codeSnippet_theme": "monokai_sublime",
     }
 }
