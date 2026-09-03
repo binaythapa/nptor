@@ -103,3 +103,7 @@ from .study_plan_analytics import (
 from .leaderboard import (
     LeaderboardEntry,
 )
+
+from .learning_shortlist import (
+    LearningShortlist,
+)
