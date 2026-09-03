@@ -12,48 +12,47 @@ VALID_ACCESS_FILTERS = {"", "owned", "available"}
 
 
 def _public_courses():
-    return (
-        Course.objects
-        .filter(
-            approval_status=Course.APPROVAL_APPROVED,
-            is_published=True,
-            is_public=True,
-            organization__isnull=True,
-            category__is_active=True,
-            category__domain__is_active=True,
-        )
-        .select_related("category", "category__domain")
-    )
+    return Course.objects.filter(
+        approval_status=Course.APPROVAL_APPROVED,
+        is_published=True,
+        is_public=True,
+        organization__isnull=True,
+        category__is_active=True,
+        category__organization__isnull=True,
+        category__domain__is_active=True,
+        category__domain__organization__isnull=True,
+    ).select_related("category", "category__domain")
 
 
 def _public_exams():
-    return (
-        Exam.objects
-        .filter(
-            is_published=True,
-            organization__isnull=True,
-            primary_category__is_active=True,
-            primary_category__domain__is_active=True,
-        )
-        .select_related("primary_category", "primary_category__domain", "track")
-        .prefetch_related("categories")
-    )
+    return Exam.objects.filter(
+        is_published=True,
+        organization__isnull=True,
+        primary_category__is_active=True,
+        primary_category__organization__isnull=True,
+        primary_category__domain__is_active=True,
+        primary_category__domain__organization__isnull=True,
+    ).select_related(
+        "primary_category",
+        "primary_category__domain",
+        "track",
+    ).prefetch_related("categories")
 
 
 def _public_tracks():
-    return (
-        ExamTrack.objects
-        .filter(
-            is_active=True,
-            organization__isnull=True,
-            exams__is_published=True,
-            exams__organization__isnull=True,
-            exams__primary_category__is_active=True,
-            exams__primary_category__domain__is_active=True,
-        )
-        .prefetch_related("exams", "exams__primary_category__domain")
-        .distinct()
-    )
+    return ExamTrack.objects.filter(
+        is_active=True,
+        organization__isnull=True,
+        exams__is_published=True,
+        exams__organization__isnull=True,
+        exams__primary_category__is_active=True,
+        exams__primary_category__organization__isnull=True,
+        exams__primary_category__domain__is_active=True,
+        exams__primary_category__domain__organization__isnull=True,
+    ).prefetch_related(
+        "exams",
+        "exams__primary_category__domain",
+    ).distinct()
 
 
 def _domain_for_track(track):
@@ -62,7 +61,7 @@ def _domain_for_track(track):
         if not exam.is_published or exam.organization_id is not None:
             continue
         category = exam.primary_category
-        if category and category.domain and category.domain.is_active:
+        if category and category.domain and category.domain.is_active and category.domain.organization_id is None:
             domains.append(category.domain)
     if not domains:
         return None
@@ -191,7 +190,12 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         _add_access_state(user, page_obj.object_list)
 
     selected_categories = (
-        Category.objects.filter(is_active=True, domain=selected_domain, organization__isnull=True, parent__isnull=True).order_by("name")
+        Category.objects.filter(
+            is_active=True,
+            domain=selected_domain,
+            organization__isnull=True,
+            parent__isnull=True,
+        ).order_by("name")
         if selected_domain else Category.objects.none()
     )
 
