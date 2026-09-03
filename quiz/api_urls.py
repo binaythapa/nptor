@@ -1,11 +1,16 @@
 from django.http import JsonResponse
 from django.urls import path
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
 from . import api_views
-from quiz.services.access import can_access_exam
 from quiz.models import Exam
+from quiz.services.access import can_access_exam
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def start_exam_authorized(request, pk):
     """Enforce exam access before delegating to the legacy API view."""
     exam = Exam.objects.filter(pk=pk, is_published=True).first()
