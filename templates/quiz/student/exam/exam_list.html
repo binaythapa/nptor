@@ -1,713 +1,104 @@
 {% extends "layouts/student/base.html" %}
 
+{% block head_extra %}
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/pages/exam-mobile.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <style>
-
-    .exam-page {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 30px 20px 60px;
-    }
-
-    .section-title {
-        font-size: 30px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        color: #333;
-    }
-
-    .section-description {
-        font-size: 18px;
-        color: #777;
-        margin-bottom: 25px;
-    }
-
-    /* =====================================================
-       TRACK
-       ===================================================== */
-
-    .track-card {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 25px;
-        margin-bottom: 35px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-    }
-
-    .track-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-        padding: 5px 5px 20px;
-        border-bottom: 1px solid #eeeeee;
-    }
-
-    .track-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: #333;
-        margin: 0;
-    }
-
-    .track-meta {
-        margin-top: 5px;
-        color: #777;
-        font-size: 15px;
-    }
-
-    .track-status {
-        padding: 10px 18px;
-        border-radius: 7px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .track-status.subscribed {
-        background: #e8f8f0;
-        color: #188754;
-    }
-
-    .track-status.paid {
-        background: #fff7e3;
-        color: #a06d00;
-    }
-
-    .track-banner {
-        margin-top: 20px;
-        background: #edf5fc;
-        border-radius: 8px;
-        padding: 28px;
-    }
-
-    .track-banner-title {
-        font-size: 22px;
-        font-weight: 700;
-        color: #2874b2;
-        margin-bottom: 8px;
-    }
-
-    .track-banner-text {
-        font-size: 19px;
-        color: #2874b2;
-        margin-bottom: 20px;
-    }
-
-    /* =====================================================
-       BUTTONS
-       ===================================================== */
-
-    .buy-button {
-        display: inline-block;
-        background: #00c7b7;
-        color: white;
-        border-radius: 5px;
-        padding: 10px 18px;
-        font-weight: 600;
-        text-decoration: none;
-        border: none;
-    }
-
-    .buy-button:hover {
-        background: #00ae9f;
-        color: white;
-        text-decoration: none;
-    }
-
-    .start-button {
-        display: inline-block;
-        background: #00c7b7;
-        color: white;
-        border-radius: 20px;
-        padding: 10px 22px;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .start-button:hover {
-        color: white;
-        background: #00ae9f;
-    }
-
-    .locked-button {
-        display: inline-block;
-        background: #fff8e7;
-        color: #a37300;
-        border-radius: 5px;
-        padding: 10px 18px;
-        font-weight: 600;
-    }
-
-    .access-button {
-        display: inline-block;
-        background: #e8f8f0;
-        color: #188754;
-        border-radius: 5px;
-        padding: 10px 18px;
-        font-weight: 600;
-    }
-
-    /* =====================================================
-       EXAM CARD
-       ===================================================== */
-
-    .exam-card {
-        border: 1px solid #e5e5e5;
-        border-radius: 16px;
-        padding: 30px 25px;
-        margin-top: 18px;
-        text-align: center;
-        background: #ffffff;
-    }
-
-    .exam-title {
-        font-size: 22px;
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 12px;
-    }
-
-    .exam-meta {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 12px;
-    }
-
-    .meta-pill {
-        background: #f4f4f4;
-        border-radius: 18px;
-        padding: 7px 13px;
-        color: #555;
-        font-size: 14px;
-    }
-
-    .price-pill {
-        background: #edf5fc;
-        color: #2874b2;
-    }
-
-    .exam-actions {
-        margin-top: 10px;
-    }
-
-    .locked-reason {
-        margin-top: 8px;
-        color: #999;
-        font-size: 13px;
-    }
-
-    /* =====================================================
-       INDIVIDUAL EXAMS
-       ===================================================== */
-
-    .individual-section {
-        margin-top: 50px;
-    }
-
-    .individual-card {
-        background: #ffffff;
-        border: 1px solid #e5e5e5;
-        border-radius: 16px;
-        padding: 30px 25px;
-        margin-bottom: 18px;
-        text-align: center;
-    }
-
-    .individual-title {
-        font-size: 22px;
-        font-weight: 700;
-        margin-bottom: 12px;
-        color: #333;
-    }
-
-    .empty-state {
-        padding: 35px;
-        text-align: center;
-        color: #777;
-        background: #ffffff;
-        border-radius: 12px;
-    }
-
-    @media (max-width: 768px) {
-
-        .track-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .track-title {
-            font-size: 24px;
-        }
-
-        .track-banner {
-            padding: 20px;
-        }
-
-        .section-title {
-            font-size: 25px;
-        }
-
-    }
-
+.exam-page { max-width:1280px; margin:0 auto; padding:30px 20px 60px; }
+.section-title { font-size:30px; font-weight:700; margin-bottom:8px; color:#333; }
+.section-description { font-size:18px; color:#777; margin-bottom:25px; }
+.track-card { background:#fff; border-radius:16px; padding:25px; margin-bottom:35px; box-shadow:0 8px 30px rgba(0,0,0,.06); }
+.track-header { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:5px 5px 20px; border-bottom:1px solid #eee; }
+.track-title { font-size:28px; font-weight:700; color:#333; margin:0; }
+.track-meta { margin-top:5px; color:#777; font-size:15px; }
+.track-status { padding:10px 18px; border-radius:7px; font-weight:600; white-space:nowrap; }
+.track-status.subscribed { background:#e8f8f0; color:#188754; }
+.track-status.paid { background:#fff7e3; color:#a06d00; }
+.track-banner { margin-top:20px; background:#edf5fc; border-radius:8px; padding:28px; }
+.track-banner-title { font-size:22px; font-weight:700; color:#2874b2; margin-bottom:8px; }
+.track-banner-text { font-size:19px; color:#2874b2; margin-bottom:20px; }
+.buy-button { display:inline-block; background:#00c7b7; color:#fff; border-radius:5px; padding:10px 18px; font-weight:600; text-decoration:none; border:none; }
+.buy-button:hover { background:#00ae9f; color:#fff; text-decoration:none; }
+.start-button { display:inline-block; background:#00c7b7; color:#fff; border-radius:20px; padding:10px 22px; font-weight:600; text-decoration:none; }
+.start-button:hover { color:#fff; background:#00ae9f; }
+.locked-button { display:inline-block; background:#fff8e7; color:#a37300; border-radius:5px; padding:10px 18px; font-weight:600; }
+.access-button { display:inline-block; background:#e8f8f0; color:#188754; border-radius:5px; padding:10px 18px; font-weight:600; }
+.exam-card { border:1px solid #e5e5e5; border-radius:16px; padding:30px 25px; margin-top:18px; text-align:center; background:#fff; }
+.exam-title { font-size:22px; font-weight:700; color:#333; margin-bottom:12px; }
+.exam-meta { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+.meta-pill { background:#f4f4f4; border-radius:18px; padding:7px 13px; color:#555; font-size:14px; }
+.price-pill { background:#edf5fc; color:#2874b2; }
+.exam-actions { margin-top:10px; }
+.locked-reason { margin-top:8px; color:#999; font-size:13px; }
+.individual-section { margin-top:50px; }
+.individual-card { background:#fff; border:1px solid #e5e5e5; border-radius:16px; padding:30px 25px; margin-bottom:18px; text-align:center; }
+.individual-title { font-size:22px; font-weight:700; margin-bottom:12px; color:#333; }
+.empty-state { padding:35px; text-align:center; color:#777; background:#fff; border-radius:12px; }
+@media (max-width:768px) { .track-header{flex-direction:column;align-items:flex-start}.track-title{font-size:24px}.track-banner{padding:20px}.section-title{font-size:25px} }
 </style>
 
-
 <div class="exam-page">
-
-    <!-- =====================================================
-         PAGE HEADER
-         ===================================================== -->
-
-    <h1 class="section-title">
-        📚 Available Exam Tracks
-    </h1>
-
-    <p class="section-description">
-        Free content can be accessed instantly.
-        Paid subscriptions and individual exams require purchase.
-    </p>
-
-
-    <!-- =====================================================
-         EXAM TRACKS
-         ===================================================== -->
-
-    {% if track_map %}
-
-        {% for track, items in track_map.items %}
-
-            <div class="track-card">
-
-                <!-- TRACK HEADER -->
-
-                <div class="track-header">
-
-                    <div>
-
-                        <h2 class="track-title">
-                            {{ track.title }}
-                        </h2>
-
-                        <div class="track-meta">
-
-                            {{ items|length }} Levels
-
-                            • Subscription:
-                            {{ track.get_subscription_scope_display }}
-
-                        </div>
-
-                    </div>
-
-
-                    {% if items.0.has_track_access %}
-
-                        <div class="track-status subscribed">
-                            ✓ Subscribed
-                        </div>
-
-                    {% else %}
-
-                        <div class="track-status paid">
-                            🔒 Paid Track
-                        </div>
-
-                    {% endif %}
-
-                </div>
-
-
-                <!-- TRACK PURCHASE AREA -->
-
-                {% if not items.0.has_track_access %}
-
-                    <div class="track-banner">
-
-                        <div class="track-banner-title">
-                            {{ track.title }}
-                        </div>
-
-                        <div class="track-banner-text">
-
-                            This track requires a paid subscription.
-
-                        </div>
-
-                        <a
-                            href="{% url 'payments:track_checkout' track.id %}"
-                            class="buy-button">
-
-                            💳 Buy Full Track
-
-                        </a>
-
-                    </div>
-
-                {% endif %}
-
-
-                <!-- =================================================
-                     TRACK EXAMS
-                     ================================================= -->
-
-                {% for item in items %}
-
-                    <div class="exam-card">
-
-                        <div class="exam-title">
-
-                            {{ item.exam.title }}
-
-                        </div>
-
-
-                        <div class="exam-meta">
-
-                            {% if item.exam.level %}
-
-                                <span class="meta-pill">
-
-                                    Level {{ item.exam.level }}
-
-                                </span>
-
-                            {% endif %}
-
-
-                            <span class="meta-pill">
-
-                                {{ item.exam.question_count }}
-                                Questions
-
-                            </span>
-
-
-                            <span class="meta-pill">
-
-                                {{ item.duration_minutes }}
-                                Minutes
-
-                            </span>
-
-
-                            {% if not item.exam.is_free %}
-
-                                <span class="meta-pill price-pill">
-
-                                    {{ item.exam.currency|default:"INR" }}
-                                    {{ item.exam.price|floatformat:2 }}
-
-                                </span>
-
-                            {% else %}
-
-                                <span class="meta-pill price-pill">
-
-                                    Free
-
-                                </span>
-
-                            {% endif %}
-
-                        </div>
-
-
-                        <!-- =================================================
-                             EXAM ACTION
-                             ================================================= -->
-
-                        <div class="exam-actions">
-
-
-                            {% if item.has_exam_access %}
-
-                                <div class="access-button">
-
-                                    ✓ Access Available
-
-                                </div>
-
-
-                                <div style="margin-top: 10px;">
-
-                                    <a
-                                        href="{% url 'quiz:exam_start' item.exam.id %}"
-                                        class="start-button">
-
-                                        ▶ Start Exam
-
-                                    </a>
-
-                                </div>
-
-
-                            {% elif item.locked %}
-
-                                <div class="locked-button">
-
-                                    🔒
-                                    {{ item.locked_reason|default:"Access Locked" }}
-
-                                </div>
-
-
-                            {% elif item.exam.is_free %}
-
-                                <a
-                                    href="{% url 'quiz:exam_start' item.exam.id %}"
-                                    class="start-button">
-
-                                    ▶ Start Free Exam
-
-                                </a>
-
-
-                            {% elif item.can_buy_exam %}
-
-                                <a
-                                    href="{% url 'payments:exam_checkout' item.exam.id %}"
-                                    class="buy-button">
-
-                                    💳 Buy Now
-
-                                </a>
-
-
-                            {% elif item.can_subscribe %}
-
-                                <a
-                                    href="{% url 'payments:exam_checkout' item.exam.id %}"
-                                    class="buy-button">
-
-                                    💳 Subscribe
-
-                                </a>
-
-
-                            {% else %}
-
-                                <div class="locked-button">
-
-                                    🔒 Subscription Required
-
-                                </div>
-
-                            {% endif %}
-
-
-                            {% if item.locked_reason %}
-
-                                <div class="locked-reason">
-
-                                    {{ item.locked_reason }}
-
-                                </div>
-
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-
-                {% endfor %}
-
-            </div>
-
-        {% endfor %}
-
-    {% else %}
-
-        <div class="empty-state">
-
-            No exam tracks available at the moment.
-
-        </div>
-
-    {% endif %}
-
-
-    <!-- =====================================================
-         INDIVIDUAL EXAMS
-         ===================================================== -->
-
-    <div class="individual-section">
-
-        <h2 class="section-title">
-
-            📝 Individual Exams
-
-        </h2>
-
-        <p class="section-description">
-
-            Purchase individual exams without subscribing
-            to a track.
-
-        </p>
-
-
-        {% if standalone_exams %}
-
-            {% for item in standalone_exams %}
-
-                <div class="individual-card">
-
-                    <div class="individual-title">
-
-                        {{ item.exam.title }}
-
-                    </div>
-
-
-                    <div class="exam-meta">
-
-                        {% if item.exam.level %}
-
-                            <span class="meta-pill">
-
-                                Level {{ item.exam.level }}
-
-                            </span>
-
-                        {% endif %}
-
-
-                        <span class="meta-pill">
-
-                            {{ item.exam.question_count }}
-                            Questions
-
-                        </span>
-
-
-                        <span class="meta-pill">
-
-                            {{ item.duration_minutes }}
-                            Minutes
-
-                        </span>
-
-
-                        {% if item.exam.is_free %}
-
-                            <span class="meta-pill price-pill">
-
-                                Free
-
-                            </span>
-
-                        {% else %}
-
-                            <span class="meta-pill price-pill">
-
-                                {{ item.exam.currency|default:"INR" }}
-                                {{ item.exam.price|floatformat:2 }}
-
-                            </span>
-
-                        {% endif %}
-
-                    </div>
-
-
-                    <div class="exam-actions">
-
-
-                        {% if item.has_exam_access %}
-
-                            <div class="access-button">
-
-                                ✓ Access Available
-
-                            </div>
-
-                            <div style="margin-top: 10px;">
-
-                                <a
-                                    href="{% url 'quiz:exam_start' item.exam.id %}"
-                                    class="start-button">
-
-                                    ▶ Start Exam
-
-                                </a>
-
-                            </div>
-
-
-                        {% elif item.locked %}
-
-                            <div class="locked-button">
-
-                                🔒
-                                {{ item.locked_reason|default:"Access Locked" }}
-
-                            </div>
-
-
-                        {% elif item.exam.is_free %}
-
-                            <a
-                                href="{% url 'quiz:exam_start' item.exam.id %}"
-                                class="start-button">
-
-                                ▶ Start Free Exam
-
-                            </a>
-
-
-                        {% elif item.can_buy_exam %}
-
-                            <a
-                                href="{% url 'payments:exam_checkout' item.exam.id %}"
-                                class="buy-button">
-
-                                💳 Buy Now
-
-                            </a>
-
-
-                        {% else %}
-
-                            <div class="locked-button">
-
-                                🔒 Subscription Required
-
-                            </div>
-
-                        {% endif %}
-
-
-                        {% if item.locked_reason %}
-
-                            <div class="locked-reason">
-
-                                {{ item.locked_reason }}
-
-                            </div>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            {% endfor %}
-
-        {% else %}
-
-            <div class="empty-state">
-
-                No individual exams available at the moment.
-
-            </div>
-
-        {% endif %}
-
-    </div>
-
+<h1 class="section-title">📚 Available Exam Tracks</h1>
+<p class="section-description">Free content can be accessed instantly. Paid subscriptions and individual exams require purchase.</p>
+{% if track_map %}
+{% for track, items in track_map.items %}
+<div class="track-card">
+<div class="track-header">
+<div><h2 class="track-title">{{ track.title }}</h2><div class="track-meta">{{ items|length }} Levels • Subscription: {{ track.get_subscription_scope_display }}</div></div>
+{% if items.0.has_track_access %}<div class="track-status subscribed">✓ Subscribed</div>{% else %}<div class="track-status paid">🔒 Paid Track</div>{% endif %}
 </div>
-
+{% if not items.0.has_track_access %}
+<div class="track-banner"><div class="track-banner-title">{{ track.title }}</div><div class="track-banner-text">This track requires a paid subscription.</div><a href="{% url 'payments:track_checkout' track.id %}" class="buy-button">💳 Buy Full Track</a></div>
+{% endif %}
+{% for item in items %}
+<div class="exam-card">
+<div class="exam-title">{{ item.exam.title }}</div>
+<div class="exam-meta">
+{% if item.exam.level %}<span class="meta-pill">Level {{ item.exam.level }}</span>{% endif %}
+<span class="meta-pill">{{ item.exam.question_count }} Questions</span>
+<span class="meta-pill">{{ item.duration_minutes }} Minutes</span>
+{% if not item.exam.is_free %}<span class="meta-pill price-pill">{{ item.exam.currency|default:"INR" }} {{ item.exam.price|floatformat:2 }}</span>{% else %}<span class="meta-pill price-pill">Free</span>{% endif %}
+</div>
+<div class="exam-actions">
+{% if item.has_exam_access %}
+<div class="access-button">✓ Access Available</div><div style="margin-top:10px;"><a href="{% url 'quiz:exam_start' item.exam.id %}" class="start-button">▶ Start Exam</a></div>
+{% elif item.locked %}<div class="locked-button">🔒 {{ item.locked_reason|default:"Access Locked" }}</div>
+{% elif item.exam.is_free %}<a href="{% url 'quiz:exam_start' item.exam.id %}" class="start-button">▶ Start Free Exam</a>
+{% elif item.can_buy_exam %}<a href="{% url 'payments:exam_checkout' item.exam.id %}" class="buy-button">💳 Buy Now</a>
+{% elif item.can_subscribe %}<a href="{% url 'payments:exam_checkout' item.exam.id %}" class="buy-button">💳 Subscribe</a>
+{% else %}<div class="locked-button">🔒 Subscription Required</div>{% endif %}
+{% if item.locked_reason %}<div class="locked-reason">{{ item.locked_reason }}</div>{% endif %}
+</div></div>
+{% endfor %}
+</div>
+{% endfor %}
+{% else %}<div class="empty-state">No exam tracks available at the moment.</div>{% endif %}
+<div class="individual-section">
+<h2 class="section-title">📝 Individual Exams</h2>
+<p class="section-description">Purchase individual exams without subscribing to a track.</p>
+{% if standalone_exams %}
+{% for item in standalone_exams %}
+<div class="individual-card">
+<div class="individual-title">{{ item.exam.title }}</div>
+<div class="exam-meta">
+{% if item.exam.level %}<span class="meta-pill">Level {{ item.exam.level }}</span>{% endif %}
+<span class="meta-pill">{{ item.exam.question_count }} Questions</span>
+<span class="meta-pill">{{ item.duration_minutes }} Minutes</span>
+{% if item.exam.is_free %}<span class="meta-pill price-pill">Free</span>{% else %}<span class="meta-pill price-pill">{{ item.exam.currency|default:"INR" }} {{ item.exam.price|floatformat:2 }}</span>{% endif %}
+</div>
+<div class="exam-actions">
+{% if item.has_exam_access %}<div class="access-button">✓ Access Available</div><div style="margin-top:10px;"><a href="{% url 'quiz:exam_start' item.exam.id %}" class="start-button">▶ Start Exam</a></div>
+{% elif item.locked %}<div class="locked-button">🔒 {{ item.locked_reason|default:"Access Locked" }}</div>
+{% elif item.exam.is_free %}<a href="{% url 'quiz:exam_start' item.exam.id %}" class="start-button">▶ Start Free Exam</a>
+{% elif item.can_buy_exam %}<a href="{% url 'payments:exam_checkout' item.exam.id %}" class="buy-button">💳 Buy Now</a>
+{% else %}<div class="locked-button">🔒 Subscription Required</div>{% endif %}
+{% if item.locked_reason %}<div class="locked-reason">{{ item.locked_reason }}</div>{% endif %}
+</div></div>
+{% endfor %}
+{% else %}<div class="empty-state">No individual exams available at the moment.</div>{% endif %}
+</div></div>
 {% endblock %}
