@@ -12,6 +12,7 @@ from .views import (
 from courses.views.instructor_views import update_order
 from courses.permissions import (
     course_learning_access_required,
+    course_entitlement_required,
     lesson_course_access_required,
     video_progress_access_required,
 )
@@ -48,7 +49,7 @@ urlpatterns = [
     ),
     path(
         "<slug:slug>/certificate/pdf/",
-        course_learning_access_required(student_views.download_certificate_pdf),
+        course_entitlement_required(student_views.download_certificate_pdf),
         name="course_certificate_pdf",
     ),
     path(
