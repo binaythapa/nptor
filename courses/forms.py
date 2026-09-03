@@ -1,9 +1,11 @@
 from django import forms
 from django.forms import inlineformset_factory
+from django.db.models import Q
 
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 from .models import Course, CourseSection, Lesson
+from quiz.models import Category
 
 
 # =====================================================
@@ -37,6 +39,16 @@ class CourseForm(forms.ModelForm):
         widgets = {
             "subscription_plans": forms.CheckboxSelectMultiple(),
         }
+
+    def __init__(self, *args, **kwargs):
+        organization = kwargs.pop("organization", None)
+        super().__init__(*args, **kwargs)
+
+        if organization is not None:
+            self.fields["category"].queryset = Category.objects.filter(
+                Q(organization=organization) | Q(organization__isnull=True),
+                is_active=True,
+            ).order_by("name")
 
 
 # =====================================================
