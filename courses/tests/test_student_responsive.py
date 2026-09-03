@@ -24,3 +24,10 @@ class CourseStudentResponsiveTemplateTests(SimpleTestCase):
         self.assertIn('class="course-detail-card"', source)
         self.assertIn('class="course-detail-actions"', source)
         self.assertIn("course-mobile.css", source)
+
+
+class PreviousLessonHelperTests(SimpleTestCase):
+    def test_previous_lesson_helper_is_exposed_by_progress_service(self):
+        from courses.services.progress import get_previous_lesson
+
+        self.assertTrue(callable(get_previous_lesson))
