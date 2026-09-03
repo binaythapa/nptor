@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}My Learning | {{ site_name|default:"Nepal Mentor" }}{% endblock %}
-{% block meta_description %}Your purchased and assigned courses, exams, and certification tracks.{% endblock %}
+{% block meta_description %}Your purchased and assigned courses, exams, certification tracks, and saved learning resources.{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">
@@ -16,7 +16,7 @@
       <div>
         <span class="dashboard-eyebrow">Learning Hub</span>
         <h1 class="dashboard-title">My Learning</h1>
-        <p class="dashboard-subtitle">Everything you have purchased, subscribed to, or been assigned — in one place.</p>
+        <p class="dashboard-subtitle">Everything you have purchased, subscribed to, been assigned, or saved for later — in one place.</p>
       </div>
       <div class="dashboard-header-actions">
         <a href="{% url 'quiz:exam_list' %}" class="dashboard-secondary-action"><i class="fa-solid fa-compass" aria-hidden="true"></i> Explore</a>
@@ -37,7 +37,7 @@
     <div class="dashboard-stat-card"><div class="stat-icon stat-icon-primary"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Resources</span><strong class="stat-value">{{ learning_count }}</strong></div></div>
     <div class="dashboard-stat-card"><div class="stat-icon stat-icon-info"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Courses</span><strong class="stat-value">{{ courses|length }}</strong></div></div>
     <div class="dashboard-stat-card"><div class="stat-icon stat-icon-primary"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Exams</span><strong class="stat-value">{{ exams|length }}</strong></div></div>
-    <div class="dashboard-stat-card"><div class="stat-icon stat-icon-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Passed</span><strong class="stat-value stat-value-success">{{ passed_count }}</strong></div></div>
+    <div class="dashboard-stat-card"><div class="stat-icon stat-icon-success"><i class="fa-solid fa-star" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Shortlisted</span><strong class="stat-value">{{ shortlist_count }}</strong></div></div>
   </section>
 
   {% if courses %}
@@ -47,6 +47,24 @@
     <a href="{% url 'courses:course_learn' item.course.slug %}" class="dashboard-primary-action"><i class="fa-solid fa-play" aria-hidden="true"></i>{% if item.progress %}Continue{% else %}Start Course{% endif %}</a>
   </section>
   {% endwith %}
+  {% endif %}
+
+  {% if shortlist_items %}
+  <section class="dashboard-section dashboard-shortlist-section" aria-labelledby="shortlist-title">
+    <div class="section-heading"><div><span class="section-eyebrow">Saved for later</span><h2 id="shortlist-title">Your Shortlist <span class="shortlist-heading-count">{{ shortlist_count }}</span></h2></div><a href="{% url 'quiz:exam_list' %}" class="dashboard-section-link">Explore more →</a></div>
+    <div class="dashboard-shortlist-grid">
+      {% for item in shortlist_items %}
+      <article class="dashboard-shortlist-card" data-shortlist-card>
+        <div class="shortlist-card-icon"><i class="fa-solid {% if item.type == 'course' %}fa-graduation-cap{% elif item.type == 'exam' %}fa-file-lines{% else %}fa-layer-group{% endif %}" aria-hidden="true"></i></div>
+        <div class="shortlist-card-body"><span class="learning-card-type">{{ item.type|title }}</span><h3>{{ item.resource.title }}</h3><p>{% if item.type == 'course' %}Course{% elif item.type == 'exam' %}Exam{% else %}Certification track{% endif %}</p></div>
+        <div class="shortlist-card-actions">
+          <form method="post" action="{% url 'quiz:learning_shortlist_toggle' item.type item.resource.id %}" data-shortlist-form>{% csrf_token %}<button type="submit" class="shortlist-remove" title="Remove from shortlist"><i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="sr-only">Remove {{ item.resource.title }} from shortlist</span></button></form>
+          {% if item.type == 'course' %}<a href="{% url 'courses:course_learn' item.resource.slug %}" aria-label="Open {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% elif item.type == 'exam' %}{% if item.resource.is_free %}<a href="{% url 'quiz:exam_start' item.resource.id %}" aria-label="Try {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% else %}<a href="{% url 'quiz:exam_preview' item.resource.id %}" aria-label="Preview {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% endif %}{% else %}<a href="{% url 'quiz:exam_list' %}" aria-label="Explore {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
   {% endif %}
 
   <section class="dashboard-section dashboard-learning-section" aria-labelledby="learning-title">
@@ -88,9 +106,9 @@
     </div>
 
     <div class="dashboard-no-results" data-dashboard-empty hidden><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>No learning resources match your search.</span></div>
-    {% if not learning_count %}<div class="dashboard-empty dashboard-empty-inline"><div class="dashboard-empty-icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></div><h2>Nothing here yet</h2><p>Explore courses, exams and certification tracks to start building your learning library.</p><a href="{% url 'quiz:exam_list' %}" class="dashboard-primary-action"><i class="fa-solid fa-compass" aria-hidden="true"></i> Explore Learning</a></div>{% endif %}
+    {% if not learning_count and not shortlist_count %}<div class="dashboard-empty dashboard-empty-inline"><div class="dashboard-empty-icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></div><h2>Nothing here yet</h2><p>Explore courses, exams and certification tracks to start building your learning library.</p><a href="{% url 'quiz:exam_list' %}" class="dashboard-primary-action"><i class="fa-solid fa-compass" aria-hidden="true"></i> Explore Learning</a></div>{% endif %}
   </section>
 </div>
 {% endblock %}
 
-{% block scripts_extra %}<script src="{% static 'js/pages/dashboard.js' %}"></script><script src="{% static 'js/pages/dashboard_resource_filters.js' %}"></script>{% endblock %}
+{% block scripts_extra %}<script src="{% static 'js/pages/dashboard.js' %}"></script><script src="{% static 'js/pages/dashboard_resource_filters.js' %}"></script><script src="{% static 'js/pages/learning_shortlist.js' %}"></script>{% endblock %}
