@@ -1,146 +1,43 @@
 {% extends "layouts/student/base.html" %}
 
 {% block content %}
-
 <div class="container">
+  <div class="columns is-centered">
+    <div class="column is-7">
+      <div class="box has-text-centered">
+        <div class="mb-5"><span class="icon is-large has-text-success"><i class="fas fa-check-circle fa-3x"></i></span></div>
+        <h1 class="title is-3 has-text-success">Payment Successful</h1>
+        <p class="subtitle is-6 has-text-grey">Your purchase is complete and access has been granted.</p>
+        <hr>
 
-    <div class="columns is-centered">
-
-        <div class="column is-7">
-
-            <div class="box has-text-centered">
-
-                <div class="mb-5">
-
-                    <span
-                        class="icon is-large has-text-success">
-
-                        <i class="fas fa-check-circle fa-3x"></i>
-
-                    </span>
-
-                </div>
-
-
-                <h1 class="title is-3 has-text-success">
-
-                    Payment Successful
-
-                </h1>
-
-
-                <p class="subtitle is-6 has-text-grey">
-
-                    Your purchase has been completed successfully.
-
-                </p>
-
-
-                <hr>
-
-
-                <!-- =================================================
-                     ORDER
-                ================================================== -->
-
-                <div class="mb-5">
-
-                    <p class="has-text-grey is-size-7">
-                        Order Number
-                    </p>
-
-                    <p class="has-text-weight-semibold">
-
-                        {{ order.order_number }}
-
-                    </p>
-
-                </div>
-
-
-                <!-- =================================================
-                     RESOURCE
-                ================================================== -->
-
-                <div class="mb-5">
-
-                    <p class="has-text-grey is-size-7">
-                        Purchased Resource
-                    </p>
-
-                    <p class="title is-5">
-
-                        {{ resource }}
-
-                    </p>
-
-                </div>
-
-
-                <!-- =================================================
-                     AMOUNT
-                ================================================== -->
-
-                <div class="notification is-success is-light">
-
-                    <div
-                        class="is-flex
-                               is-justify-content-space-between
-                               is-align-items-center">
-
-                        <span>
-                            Amount Paid
-                        </span>
-
-                        <strong class="is-size-4">
-
-                            {{ order.currency }}
-                            {{ order.amount }}
-
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <!-- =================================================
-                     STATUS
-                ================================================== -->
-
-                <div class="mb-5">
-
-                    <span class="tag is-success is-medium">
-
-                        ✔ Payment Completed
-
-                    </span>
-
-                </div>
-
-
-                <!-- =================================================
-                     ACTIONS
-                ================================================== -->
-
-                <div class="buttons is-centered">
-
-                    <a
-                        href="{% url 'quiz:exam_list' %}"
-                        class="button is-primary">
-
-                        📚 Go to Catalogue
-
-                    </a>
-
-                </div>
-
-            </div>
-
+        <div class="mb-5">
+          <p class="has-text-grey is-size-7">Purchased Resource</p>
+          <p class="title is-5">{{ resource }}</p>
         </div>
 
+        <div class="notification is-success is-light">
+          <div class="is-flex is-justify-content-space-between is-align-items-center">
+            <span>Amount Paid</span>
+            <strong class="is-size-4">{{ order.currency }} {{ order.amount }}</strong>
+          </div>
+        </div>
+
+        <div class="mb-5"><span class="tag is-success is-medium">✔ Access Granted</span></div>
+
+        <div class="buttons is-centered">
+          {% if order.resource_type == 'course' and resource %}
+            <a href="{% url 'courses:course_learn' resource.slug %}" class="button is-primary">🎓 Start Learning</a>
+          {% elif order.resource_type == 'exam' and resource %}
+            <a href="{% url 'quiz:exam_start' resource.id %}" class="button is-primary">📝 Start Exam</a>
+          {% elif order.resource_type == 'track' %}
+            <a href="{% url 'quiz:exam_list' %}" class="button is-primary">🗂 Open Track</a>
+          {% endif %}
+          <a href="{% url 'quiz:student_dashboard' %}" class="button is-light">My Learning</a>
+        </div>
+
+        <p class="has-text-grey is-size-7 mt-4">Order {{ order.order_number }}</p>
+      </div>
     </div>
-
+  </div>
 </div>
-
 {% endblock %}
