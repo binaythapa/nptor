@@ -4,6 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 
 from courses.models import Course, Lesson
+from courses.services.permissions import can_preview_course
 from subscriptions.services.access_service import AccessService
 from subscriptions.services.plan_service import get_plan_for_course
 
@@ -24,6 +25,29 @@ def _user_has_course_access(user, course):
     )
 
 
+def course_detail_access_required(view_func):
+    """Allow public courses or authorized course previews only."""
+
+    @wraps(view_func)
+    def _wrapped(request, slug, *args, **kwargs):
+        course = Course.objects.filter(slug=slug).first()
+        if course is None:
+            raise Http404("Course not found.")
+
+        is_publicly_available = (
+            course.approval_status == Course.APPROVAL_APPROVED
+            and course.is_published
+            and course.is_public
+        )
+
+        if is_publicly_available or can_preview_course(request.user, course):
+            return view_func(request, slug, *args, **kwargs)
+
+        raise Http404("Course not found.")
+
+    return _wrapped
+
+
 def course_learning_access_required(view_func):
     """Enforce access to course learning content."""
 
@@ -33,11 +57,9 @@ def course_learning_access_required(view_func):
         if course is None:
             raise Http404("Course not found.")
 
-        is_owner = course.created_by_id == request.user.id
-        is_admin = request.user.is_staff or request.user.is_superuser
         preview_requested = request.GET.get("preview") == "1"
 
-        if preview_requested and (is_owner or is_admin):
+        if preview_requested and can_preview_course(request.user, course):
             return view_func(request, slug, *args, **kwargs)
 
         if not (
