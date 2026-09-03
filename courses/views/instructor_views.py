@@ -479,41 +479,11 @@ def course_edit(request, slug):
                     commit=False
                 )
 
-                # --------------------------------------
-                # OWNERSHIP
-                # --------------------------------------
-
-                if request.user.is_superuser:
-
-                    pass
-
-                elif (
-                    hasattr(
-                        request,
-                        "organization"
-                    )
-                    and request.organization
-                ):
-
-                    course.organization = (
-                        request.organization
-                    )
-
-                    course.owner_type = (
-                        Course.OWNER_ORGANIZATION
-                    )
-
-                else:
-
-                    course.organization = None
-
-                    course.owner_type = (
-                        Course.OWNER_PLATFORM
-                    )
-
-                # --------------------------------------
-                # SAVE COURSE
-                # --------------------------------------
+                # Existing-course ownership is immutable here.
+                # can_edit_course() already authorized the request
+                # against the course's current organization. Never
+                # replace that boundary with request.organization,
+                # which may represent a different active organization.
 
                 course.save()
 
