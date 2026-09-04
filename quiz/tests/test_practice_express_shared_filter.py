@@ -66,6 +66,14 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertIn('filterBody.classList.toggle("is-open", expanded)', shared_ui)
         self.assertIn('body.className = "practice-filter-body"', shared_ui)
 
+    def test_express_filter_reapplies_state_after_legacy_domcontentloaded_handler(self):
+        root = Path(__file__).resolve().parents[2]
+        shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
+
+        self.assertIn('setTimeout(() => {', shared_ui)
+        self.assertIn('filterBody.style.maxHeight = ""', shared_ui)
+        self.assertIn('setFilterState(localStorage.getItem("practiceFilterExpanded") === "1")', shared_ui)
+
     def test_express_page_shell_is_visual_wrapper_not_a_shared_card(self):
         root = Path(__file__).resolve().parents[2]
         express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
