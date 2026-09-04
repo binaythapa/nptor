@@ -14,6 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    /* The page-level .box is only a legacy wrapper. Remove its card
+       styling/class so every direct child block remains independent. */
+    page.classList.remove("box");
     page.classList.add("practice-express-page");
 
     const header = page.firstElementChild;
@@ -170,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 color: var(--primary-color, #3273dc) !important;
             }
 
+            /* Only actual child blocks receive card styling. */
             .practice-express-page > .box {
                 border: 1px solid var(--border-color, #e5e7eb);
                 border-radius: 10px;
