@@ -38,6 +38,23 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
         self.assertIn('@media (max-width: 760px)', css)
         self.assertNotIn('data-learning-type="exam-results"', template)
 
+    def test_exam_history_is_paginated_in_small_dashboard_pages(self):
+        root = Path(__file__).resolve().parents[2]
+        view_source = (root / "quiz" / "views" / "student_learning_dashboard.py").read_text(encoding="utf-8")
+        template = (root / "templates" / "quiz" / "student" / "student_dashboard.html").read_text(encoding="utf-8")
+        css = (root / "static" / "css" / "dashboard_learning_hub.css").read_text(encoding="utf-8")
+
+        self.assertIn("from django.core.paginator import Paginator", view_source)
+        self.assertIn("Paginator(submitted_attempts, 5)", view_source)
+        self.assertIn('"exam_history": exam_history', view_source)
+        self.assertIn("exam_history.object_list", template)
+        self.assertIn("exam_history.has_previous", template)
+        self.assertIn("exam_history.has_next", template)
+        self.assertIn("exam_history.number", template)
+        self.assertIn("exam_history.paginator.num_pages", template)
+        self.assertIn("dashboard-exam-history-pagination", template)
+        self.assertIn("dashboard-exam-history-pagination", css)
+
     def test_dashboard_resource_filters_ignore_recent_result_cards(self):
         root = Path(__file__).resolve().parents[2]
         script = (root / "static" / "js" / "pages" / "dashboard_resource_filters.js").read_text(encoding="utf-8")
