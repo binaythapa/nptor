@@ -5,18 +5,39 @@ from quiz.models import UserExam
 from quiz.services.grading import grade_exam
 
 
+def _finish_course_quiz_if_needed(request, user_exam):
+    course_context = request.session.get("course_exam_context")
+    if not course_context or request.session.get(f"course_exam_handled_{user_exam.id}"):
+        return
+
+    from courses.services.quiz_completion import handle_course_quiz_completion
+
+    handle_course_quiz_completion(
+        request=request,
+        user_exam=user_exam,
+        context=course_context,
+    )
+    request.session[f"course_exam_handled_{user_exam.id}"] = True
+
+
 @login_required
 def exam_submit_dashboard(request, user_exam_id):
-    """Grade a submitted attempt and return the student to their dashboard."""
+    """Finalize an exam once and return the student to the dashboard."""
     user_exam = get_object_or_404(
         UserExam,
         pk=user_exam_id,
         user=request.user,
     )
 
-    # A direct browser visit or refresh of the submit URL must never
-    # attempt a submission. Send the student back to the dashboard.
+    # A direct browser visit/refresh is harmless while the attempt is active.
+    # If the server confirms that the attempt has expired, however, finalize
+    # it from the answers already persisted in UserAnswer. This is the server-
+    # side fallback for a timer that expires between browser requests.
     if request.method == "GET":
+        if not user_exam.submitted_at and user_exam.time_remaining() <= 0:
+            is_mock = request.session.get(f"mock_exam_{user_exam.id}", False)
+            grade_exam(user_exam, None, is_mock=is_mock)
+            _finish_course_quiz_if_needed(request, user_exam)
         return redirect("quiz:student_dashboard")
 
     if request.method != "POST":
@@ -27,16 +48,6 @@ def exam_submit_dashboard(request, user_exam_id):
 
     is_mock = request.session.get(f"mock_exam_{user_exam.id}", False)
     grade_exam(user_exam, request.POST, is_mock=is_mock)
-
-    course_context = request.session.get("course_exam_context")
-    if course_context and not request.session.get(f"course_exam_handled_{user_exam.id}"):
-        from courses.services.quiz_completion import handle_course_quiz_completion
-
-        handle_course_quiz_completion(
-            request=request,
-            user_exam=user_exam,
-            context=course_context,
-        )
-        request.session[f"course_exam_handled_{user_exam.id}"] = True
+    _finish_course_quiz_if_needed(request, user_exam)
 
     return redirect("quiz:student_dashboard")
