@@ -10,6 +10,17 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertNotIn("function initExpressFilterLayout()", shared_ui)
         self.assertNotIn("initExpressFilterLayout();", shared_ui)
 
+    def test_express_filter_collapse_is_scoped_to_express_page(self):
+        root = Path(__file__).resolve().parents[2]
+        shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
+
+        marker = "function initPracticeFilterCollapse() {"
+        start = shared_ui.index(marker)
+        end = shared_ui.index("\n        }", start)
+        function_body = shared_ui[start:end]
+
+        self.assertIn('if (window.location.pathname !== "/quiz/practice/express/") return;', function_body)
+
     def test_express_filter_uses_practice_filter_structure_and_state(self):
         root = Path(__file__).resolve().parents[2]
         shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
@@ -47,6 +58,16 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertIn('justify-content: space-between;', express_ui)
         self.assertIn('.practice-express-filter .practice-filter-icon', express_ui)
         self.assertIn('display: none !important;', express_ui)
+
+    def test_express_filter_has_deterministic_collapsed_and_open_states(self):
+        root = Path(__file__).resolve().parents[2]
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+
+        self.assertIn('.practice-express-filter .practice-filter-body {', express_ui)
+        self.assertIn('max-height: 0 !important;', express_ui)
+        self.assertIn('overflow: hidden !important;', express_ui)
+        self.assertIn('.practice-express-filter .practice-filter-body.is-open {', express_ui)
+        self.assertIn('max-height: 600px !important;', express_ui)
 
     def test_express_filter_removes_legacy_inline_collapse_styles(self):
         root = Path(__file__).resolve().parents[2]
