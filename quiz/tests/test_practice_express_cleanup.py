@@ -25,7 +25,7 @@ class PracticeExpressCleanupTests(unittest.TestCase):
         self.assertNotIn('filterHint.textContent = ""', shared_ui)
         self.assertNotIn('filterHint.hidden = true', shared_ui)
 
-    def test_express_uses_the_practice_question_layout(self):
+    def test_express_uses_the_practice_question_layout_without_skip(self):
         root = Path(__file__).resolve().parents[2]
         express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
 
@@ -35,7 +35,8 @@ class PracticeExpressCleanupTests(unittest.TestCase):
         self.assertIn('className = "practice-question-text"', express_ui)
         self.assertIn('textContent = `Question #${', express_ui)
         self.assertIn('textContent = "Check Answer"', express_ui)
-        self.assertIn('textContent = "Skip"', express_ui)
+        self.assertNotIn('id = "expressSkipBtn"', express_ui)
+        self.assertNotIn('textContent = "Skip"', express_ui)
         self.assertIn('className = "practice-btn practice-btn-secondary"', express_ui)
         self.assertIn('className = "practice-btn practice-btn-primary"', express_ui)
 
