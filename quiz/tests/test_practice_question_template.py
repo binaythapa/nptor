@@ -103,6 +103,24 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         self.assertIn("font-size: .75rem", script)
         self.assertIn("font-weight: 500", script)
 
+    def test_practice_express_uses_shared_practice_page_shell(self):
+        script_path = (
+            Path(__file__).resolve().parents[2]
+            / "static"
+            / "js"
+            / "ui.js"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn('practice-express-page', script)
+        self.assertIn('practice-page-header', script)
+        self.assertIn('practice-eyebrow', script)
+        self.assertIn('practice-title', script)
+        self.assertIn('practice-subtitle', script)
+        self.assertIn('practice-question-card', script)
+        self.assertIn('practice-express-filter', script)
+        self.assertIn('practice-express-option', script)
+
 
 if __name__ == "__main__":
     unittest.main()
