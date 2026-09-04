@@ -27,3 +27,12 @@ class StudentLibraryUITests(SimpleTestCase):
         self.assertIn("course-library-grid", source)
         self.assertIn("course-progress", source)
         self.assertIn("course-mobile.css", source)
+
+    def test_course_catalog_template_uses_shared_student_layout(self):
+        template = get_template("courses/student/course_list.html")
+        source = Path(template.origin.name).read_text(encoding="utf-8")
+
+        self.assertIn("layouts/student/base.html", source)
+        self.assertIn("course-catalog-grid", source)
+        self.assertIn("View Course", source)
+        self.assertIn("course-catalog.css", source)
