@@ -100,6 +100,8 @@
 
             {% for c in choices %}
 
+                {% cycle "A" "B" "C" "D" as choice_letter_single %}
+
                 <label class="practice-option">
 
                     <input
@@ -110,7 +112,7 @@
                     >
 
                     <span class="practice-option-marker" aria-hidden="true">
-                        {{ forloop.counter0|add:65|make_list|join:"" }}
+                        {{ choice_letter_single }}
                     </span>
 
                     <span class="practice-option-text">
@@ -128,6 +130,8 @@
 
             {% for c in choices %}
 
+                {% cycle "A" "B" "C" "D" as choice_letter_multi %}
+
                 <label class="practice-option">
 
                     <input
@@ -137,7 +141,7 @@
                     >
 
                     <span class="practice-option-marker practice-option-marker-checkbox" aria-hidden="true">
-                        {{ forloop.counter0|add:65|make_list|join:"" }}
+                        {{ choice_letter_multi }}
                     </span>
 
                     <span class="practice-option-text">
