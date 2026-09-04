@@ -104,26 +104,6 @@ document.addEventListener(
         initPracticeModeNavigation();
 
         /* ====================================================
-           EXPRESS FILTER LABEL
-           Keep the collapsed filter control compact. The arrow
-           remains as the visual affordance for expanding it.
-           ==================================================== */
-        function initExpressCompactFilterLabel() {
-            if (window.location.pathname !== "/quiz/practice/express/") {
-                return;
-            }
-
-            const filterHint = document.getElementById("filterHint");
-            if (filterHint) {
-                filterHint.textContent = "";
-                filterHint.hidden = true;
-            }
-        }
-
-        initExpressCompactFilterLabel();
-
-
-        /* ====================================================
            PRACTICE STATS
            ==================================================== */
 
@@ -237,7 +217,6 @@ document.addEventListener(
 
         updatePracticeUI();
 
-
         /* ====================================================
            TRACK ACCORDION
            ==================================================== */
@@ -293,7 +272,6 @@ document.addEventListener(
                     );
                 }
             );
-
 
         /* ====================================================
            COPY EMAIL
