@@ -40,14 +40,17 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertIn('filterBody.classList.toggle("is-open", expanded)', shared_ui)
         self.assertIn('localStorage.setItem("practiceFilterExpanded", expanded ? "1" : "0")', shared_ui)
 
-    def test_express_filter_legacy_markup_is_neutralized_by_shared_initializer(self):
+    def test_express_filter_replaces_legacy_dom_with_shared_structure(self):
         root = Path(__file__).resolve().parents[2]
         shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
 
-        self.assertIn('filter.removeAttribute("onclick")', shared_ui)
-        self.assertIn('body.style.maxHeight = ""', shared_ui)
-        self.assertIn('body.style.transition = ""', shared_ui)
         self.assertIn('filter.classList.remove("box", "mb-3", "p-3")', shared_ui)
+        self.assertIn('filter.classList.add("practice-panel", "practice-filter-panel")', shared_ui)
+        self.assertIn('body.replaceChildren(form)', shared_ui)
+        self.assertIn('filter.replaceChildren(toggle, body)', shared_ui)
+        self.assertIn('body.style.maxHeight = ""', shared_ui)
+        self.assertIn('body.style.padding = ""', shared_ui)
+        self.assertIn('body.style.transition = ""', shared_ui)
 
     def test_express_page_shell_is_visual_wrapper_not_a_shared_card(self):
         root = Path(__file__).resolve().parents[2]
