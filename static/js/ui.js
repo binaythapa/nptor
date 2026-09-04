@@ -176,6 +176,8 @@ document.addEventListener(
            SHARED PRACTICE FILTER COLLAPSE
            ==================================================== */
         function initPracticeFilterCollapse() {
+            if (window.location.pathname !== "/quiz/practice/express/") return;
+
             const filterToggle = document.getElementById("filterToggle");
             const filterBody = document.getElementById("filterBody");
             const filterHint = document.getElementById("filterHint");
