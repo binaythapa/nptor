@@ -46,11 +46,7 @@ def _shortlist_items(user):
             resource = valid_exams.get(row.exam_id)
         if resource is None:
             continue
-        items.append({
-            "item": row,
-            "resource": resource,
-            "type": row.resource_type,
-        })
+        items.append({"item": row, "resource": resource, "type": row.resource_type})
     return items
 
 
@@ -82,7 +78,6 @@ def student_dashboard(request):
     course_access = {}
     track_access = {}
     exam_access = {}
-
     for access in accesses:
         if access.resource_type == ResourceAccess.RESOURCE_COURSE and access.course_id:
             course_access.setdefault(access.course_id, access)
@@ -91,12 +86,7 @@ def student_dashboard(request):
         elif access.resource_type == ResourceAccess.RESOURCE_EXAM and access.exam_id:
             exam_access.setdefault(access.exam_id, access)
 
-    legacy_course_subs = (
-        CourseSubscription.objects
-        .filter(user=user, is_active=True)
-        .select_related("course")
-    )
-    for subscription in legacy_course_subs:
+    for subscription in CourseSubscription.objects.filter(user=user, is_active=True).select_related("course"):
         if subscription.course_id and subscription.course_id not in course_access:
             course_access[subscription.course_id] = None
 
@@ -118,7 +108,6 @@ def student_dashboard(request):
             .annotate(total=Count("id"))
         )
         completed_by_course.update({row["lesson__section__course_id"]: row["total"] for row in completed_rows})
-
         last_activity_rows = (
             LessonProgress.objects
             .filter(user=user, lesson__section__course_id__in=course_ids)
@@ -141,11 +130,7 @@ def student_dashboard(request):
             "last_activity": last_activity_by_course.get(course.id) or course.created_at,
         })
 
-    tracks = (
-        ExamTrack.objects
-        .filter(id__in=list(track_access), is_active=True)
-        .order_by("title")
-    )
+    tracks = ExamTrack.objects.filter(id__in=list(track_access), is_active=True).order_by("title")
     track_exams = defaultdict(list)
     if tracks:
         for exam in (
@@ -164,10 +149,7 @@ def student_dashboard(request):
     for track in tracks:
         exams = track_exams.get(track.id, [])
         track_attempts = [attempt for exam in exams for attempt in attempts_by_exam.get(exam.id, [])]
-        passed = sum(
-            1 for exam in exams
-            if any(attempt.passed is True for attempt in attempts_by_exam.get(exam.id, []))
-        )
+        passed = sum(1 for exam in exams if any(attempt.passed is True for attempt in attempts_by_exam.get(exam.id, [])))
         tracks_data.append({
             "track": track,
             "exam_count": len(exams),
@@ -177,22 +159,16 @@ def student_dashboard(request):
             "last_activity": max((attempt.submitted_at for attempt in track_attempts if attempt.submitted_at), default=track.created_at),
         })
 
-    accessed_exams = (
-        Exam.objects
-        .filter(id__in=list(exam_access), is_published=True)
-        .select_related("track")
-        .order_by("title")
-    )
+    accessed_exams = Exam.objects.filter(id__in=list(exam_access), is_published=True).select_related("track").order_by("title")
     exams_data = []
     for exam in accessed_exams:
         attempts = attempts_by_exam.get(exam.id, [])
         last = attempts[0] if attempts else None
-        passed = any(attempt.passed is True for attempt in attempts)
         exams_data.append({
             "exam": exam,
             "attempts": len(attempts),
             "last_score": last.score if last else None,
-            "passed": passed,
+            "passed": any(attempt.passed is True for attempt in attempts),
             "source": exam_access[exam.id].source,
         })
 
@@ -221,10 +197,7 @@ def student_dashboard(request):
             "activity_date": item["last_activity"],
             "progress": item["progress"],
             "status": "Completed" if item["progress"] >= 100 else ("In Progress" if item["progress"] else "Not Started"),
-            "source": item["source"],
-            "url": f"/courses/{item['course'].slug}/learn/",
         })
-
     for attempt in submitted_attempts:
         learning_activity.append({
             "activity_type": "exam",
@@ -234,7 +207,6 @@ def student_dashboard(request):
             "status": "Passed" if attempt.passed else "Failed",
             "attempt": attempt,
         })
-
     for item in tracks_data:
         learning_activity.append({
             "activity_type": "track",
@@ -243,8 +215,6 @@ def student_dashboard(request):
             "progress": item["passed"],
             "total": item["exam_count"],
             "status": "Completed" if item["completed"] else "In Progress",
-            "source": item["source"],
-            "url": "/quiz/exams/",
         })
 
     learning_activity.sort(key=lambda item: item["activity_date"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
