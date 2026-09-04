@@ -99,7 +99,10 @@ document.addEventListener(
 
             const syncFilterPadding = () => {
                 const expanded = body.style.maxHeight && body.style.maxHeight !== "0px";
-                body.style.padding = expanded ? "4px 15px 15px" : "0";
+                const padding = expanded ? "4px 15px 15px" : "0";
+                if (body.style.padding !== padding) {
+                    body.style.padding = padding;
+                }
             };
 
             syncFilterPadding();
