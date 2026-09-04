@@ -19,11 +19,18 @@ class ExamPreviewUITests(unittest.TestCase):
         ):
             self.assertIn(marker, template)
 
-    def test_exam_preview_has_no_inline_style_block_or_duplicate_page_css(self):
+    def test_exam_preview_has_no_inline_styling(self):
         root = Path(__file__).resolve().parents[2]
         template = (root / "templates" / "quiz" / "student" / "exam" / "exam_preview.html").read_text(encoding="utf-8")
         self.assertNotIn("<style>", template)
         self.assertNotIn("style=\"", template)
+
+    def test_exam_preview_loads_dedicated_stylesheet(self):
+        root = Path(__file__).resolve().parents[2]
+        template = (root / "templates" / "quiz" / "student" / "exam" / "exam_preview.html").read_text(encoding="utf-8")
+        stylesheet = root / "static" / "css" / "pages" / "exam-preview.css"
+        self.assertTrue(stylesheet.exists())
+        self.assertIn("css/pages/exam-preview.css", template)
 
     def test_exam_preview_keeps_purchase_flow_and_sample_disclaimer(self):
         root = Path(__file__).resolve().parents[2]
