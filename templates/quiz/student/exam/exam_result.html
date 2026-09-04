@@ -1,0 +1,128 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}Exam Result — {{ user_exam.exam.title }}{% endblock %}
+
+{% block page_css %}
+  <link rel="stylesheet" href="{% static 'css/pages/exam-result.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="exam-result-page" aria-labelledby="exam-result-title">
+  <section class="exam-result-hero">
+    <p class="exam-result-eyebrow">EXAM RESULT</p>
+    <h1 id="exam-result-title">{{ user_exam.exam.title }}</h1>
+
+    {% if is_mock %}
+      <span class="exam-result-status is-neutral">Mock Exam</span>
+    {% elif user_exam.passed %}
+      <span class="exam-result-status is-success">Passed</span>
+    {% else %}
+      <span class="exam-result-status is-danger">Not Passed</span>
+    {% endif %}
+
+    <div class="exam-result-score" aria-label="Exam score">
+      <strong>{{ user_exam.score|default:0|floatformat:0 }}%</strong>
+      <span>Score</span>
+    </div>
+
+    <div class="exam-result-meta">
+      <span>{{ user_exam.exam.question_count }} questions</span>
+      <span>Passing score: {{ user_exam.exam.passing_score|floatformat:0 }}%</span>
+      {% if user_exam.submitted_at %}
+        <span>Submitted {{ user_exam.submitted_at|date:"M d, Y H:i" }}</span>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="exam-result-actions" aria-label="Result actions">
+    <a class="exam-result-button primary" href="{% url 'quiz:student_dashboard' %}">
+      Back to Dashboard
+    </a>
+    <a class="exam-result-button" href="{% url 'quiz:exam_list' %}">
+      Browse Exams
+    </a>
+    {% if next_lesson %}
+      <a class="exam-result-button" href="{% url 'courses:course_learn_lesson' next_lesson.section.course.slug next_lesson.id %}">
+        Continue Course →
+      </a>
+    {% endif %}
+  </section>
+
+  <section class="exam-result-answers" aria-labelledby="answer-review-title">
+    <div class="exam-result-section-heading">
+      <div>
+        <p class="exam-result-eyebrow">ANSWER REVIEW</p>
+        <h2 id="answer-review-title">Review your answers</h2>
+      </div>
+      <span>{{ answers|length }} questions</span>
+    </div>
+
+    {% for answer in answers %}
+      <article class="exam-result-answer-card">
+        <div class="exam-result-answer-header">
+          <span class="exam-result-question-number">Q{{ forloop.counter }}</span>
+          {% if answer.is_correct == True %}
+            <span class="exam-result-answer-status is-success">Correct</span>
+          {% elif answer.is_correct == False %}
+            <span class="exam-result-answer-status is-danger">Incorrect</span>
+          {% else %}
+            <span class="exam-result-answer-status is-neutral">Needs Review</span>
+          {% endif %}
+        </div>
+
+        <h3>{{ answer.question.text|safe }}</h3>
+
+        {% if answer.user_answers_display %}
+          <div class="exam-result-answer-block">
+            <span class="exam-result-label">Your answer</span>
+            <ul>
+              {% for item in answer.user_answers_display %}
+                <li>{{ item|safe }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% else %}
+          <div class="exam-result-answer-block is-muted">
+            <span class="exam-result-label">Your answer</span>
+            <p>Not answered</p>
+          </div>
+        {% endif %}
+
+        {% if answer.correct_answers_display %}
+          <div class="exam-result-answer-block is-correct-answer">
+            <span class="exam-result-label">Correct answer</span>
+            <ul>
+              {% for item in answer.correct_answers_display %}
+                <li>{{ item|safe }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <details class="exam-result-feedback">
+          <summary>Report an issue with this question</summary>
+          <form method="post" class="exam-result-feedback-form">
+            {% csrf_token %}
+            <input type="hidden" name="question_id" value="{{ answer.question.id }}">
+            <label>
+              Comment
+              <textarea name="comment" rows="3" maxlength="2000" placeholder="Tell us what looks incorrect..."></textarea>
+            </label>
+            <label class="exam-result-checkbox">
+              <input type="checkbox" name="is_answer_incorrect" value="1">
+              My answer or the grading appears incorrect
+            </label>
+            <button type="submit" class="exam-result-button small">Send Feedback</button>
+          </form>
+        </details>
+      </article>
+    {% empty %}
+      <div class="exam-result-empty">
+        <h3>No answer details available</h3>
+        <p>Your exam was submitted, but there are no answer records to review.</p>
+      </div>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}
