@@ -204,6 +204,7 @@ def student_dashboard(request):
         "quiz/student/student_dashboard.html",
         {
             "active_attempt": active_attempt,
+            "submitted_attempts": submitted_attempts,
             "total_attempts": len(submitted_attempts),
             "passed_count": sum(1 for attempt in submitted_attempts if attempt.passed is True),
             "failed_count": sum(1 for attempt in submitted_attempts if attempt.passed is False),
