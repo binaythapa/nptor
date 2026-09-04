@@ -3,25 +3,77 @@
 
 {% block title %}Try {{ exam.title }} | {{ site_name|default:"Nepal Mentor" }}{% endblock %}
 
-{% block page_css %}<link rel="stylesheet" href="{% static 'css/pages/learning_marketplace.css' %}">{% endblock %}
+{% block page_css %}
+  <link rel="stylesheet" href="{% static 'css/pages/exam-preview.css' %}">
+{% endblock %}
 
 {% block content %}
-<main class="learning-marketplace" aria-labelledby="exam-preview-title">
-  <div class="marketplace-breadcrumb"><a href="{% url 'quiz:exam_list' %}">Learning</a><span aria-hidden="true">/</span><span>Exam preview</span></div>
-  <section class="domain-hero">
-    <span class="marketplace-kicker">EXAM PREVIEW</span>
-    <h1 id="exam-preview-title">{{ exam.title }}</h1>
-    <p>Try {{ preview_limit }} sample questions before deciding whether to unlock the full exam.</p>
-    <div class="resource-footer"><span class="resource-status">{{ exam.question_count }} questions · {% widthratio exam.duration_seconds 60 1 %} min · {{ exam.currency }} {{ exam.price|floatformat:0 }}</span><a class="resource-action primary" href="{% url 'payments:exam_checkout' exam.id %}?next={% url 'quiz:exam_start' exam.id %}">Get full access →</a></div>
-  </section>
+<main class="exam-preview-page" aria-labelledby="exam-preview-title">
+  <nav class="exam-preview-breadcrumb" aria-label="Breadcrumb">
+    <a href="{% url 'quiz:exam_list' %}">Learning</a>
+    <span aria-hidden="true">/</span>
+    <span>Exam preview</span>
+  </nav>
 
-  <section class="marketplace-section" aria-labelledby="sample-title">
-    <div class="marketplace-section-head"><div><h2 id="sample-title">Sample questions</h2><p>Answers are intentionally not submitted or scored in preview mode.</p></div></div>
-    <div class="resource-grid">
-      {% for question in questions %}<article class="resource-card"><div class="resource-icon resource-icon-exam" aria-hidden="true">{{ forloop.counter }}</div><div class="resource-body"><span class="resource-type">Question {{ forloop.counter }}</span><div class="exam-preview-question">{{ question.text|safe }}</div>{% if question.choices.all %}<ul class="exam-preview-options">{% for choice in question.choices.all %}<li>{{ choice.text }}</li>{% endfor %}</ul>{% endif %}</div></article>{% empty %}<div class="marketplace-empty">A sample is not available for this exam yet.</div>{% endfor %}
+  <header class="exam-preview-header">
+    <span class="exam-preview-kicker">EXAM PREVIEW</span>
+    <h1 id="exam-preview-title" class="exam-preview-title">{{ exam.title }}</h1>
+    <p class="exam-preview-description">
+      Try {{ preview_limit }} sample questions before deciding whether to unlock the full exam.
+    </p>
+
+    <div class="exam-preview-meta" aria-label="Exam details">
+      <span class="exam-preview-meta-item">{{ exam.question_count }} questions</span>
+      <span class="exam-preview-meta-item">{% widthratio exam.duration_seconds 60 1 %} min</span>
+      <span class="exam-preview-meta-item">{{ exam.currency }} {{ exam.price|floatformat:0 }}</span>
+    </div>
+
+    <div class="exam-preview-actions">
+      <a class="exam-preview-action primary" href="{% url 'payments:exam_checkout' exam.id %}?next={% url 'quiz:exam_start' exam.id %}">
+        Get full access →
+      </a>
+    </div>
+  </header>
+
+  <section class="exam-preview-section" aria-labelledby="sample-title">
+    <div class="exam-preview-section-header">
+      <h2 id="sample-title" class="exam-preview-section-title">Sample questions</h2>
+      <p class="exam-preview-section-description">
+        Answers are intentionally not submitted or scored in preview mode.
+      </p>
+    </div>
+
+    <div class="exam-preview-question-list">
+      {% for question in questions %}
+        <article class="exam-preview-question-card">
+          <span class="exam-preview-question-number" aria-hidden="true">{{ forloop.counter }}</span>
+          <div class="exam-preview-question-body">
+            <span class="exam-preview-question-label">Question {{ forloop.counter }}</span>
+            <div class="exam-preview-question-text">{{ question.text|safe }}</div>
+
+            {% if question.choices.all %}
+              <ul class="exam-preview-options" aria-label="Answer choices">
+                {% for choice in question.choices.all %}
+                  <li class="exam-preview-option">{{ choice.text|safe }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </article>
+      {% empty %}
+        <div class="exam-preview-empty">A sample is not available for this exam yet.</div>
+      {% endfor %}
     </div>
   </section>
 
-  <section class="marketplace-section"><div class="marketplace-empty"><strong>Ready for the full exam?</strong><br>Unlock all questions, timing, scoring, and your real exam attempt.<br><a class="resource-action primary" href="{% url 'payments:exam_checkout' exam.id %}?next={% url 'quiz:exam_start' exam.id %}">Get full access →</a></div></section>
+  <section class="exam-preview-section" aria-label="Full exam access">
+    <div class="exam-preview-cta">
+      <strong>Ready for the full exam?</strong><br>
+      Unlock all questions, timing, scoring, and your real exam attempt.<br>
+      <a class="exam-preview-action primary" href="{% url 'payments:exam_checkout' exam.id %}?next={% url 'quiz:exam_start' exam.id %}">
+        Get full access →
+      </a>
+    </div>
+  </section>
 </main>
 {% endblock %}
