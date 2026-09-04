@@ -42,10 +42,10 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertIn('<span>Filters</span>', shared_ui)
         self.assertIn('<small id="filterHint">Click to expand</small>', shared_ui)
         self.assertIn('<span id="filterToggleIcon" class="practice-filter-arrow"', shared_ui)
-        self.assertIn('.practice-express-filter #filterToggle', express_ui)
+        self.assertIn('.practice-express-filter > div:first-child', express_ui)
         self.assertIn('display: flex;', express_ui)
         self.assertIn('justify-content: space-between;', express_ui)
-        self.assertIn('.practice-filter-icon', express_ui)
+        self.assertIn('.practice-express-filter .practice-filter-icon', express_ui)
         self.assertIn('display: none !important;', express_ui)
 
     def test_express_filter_removes_legacy_inline_collapse_styles(self):
