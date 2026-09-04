@@ -3,44 +3,21 @@ import unittest
 
 
 class PracticeExpressSharedFilterTests(unittest.TestCase):
-    def test_express_loads_the_shared_practice_stylesheet(self):
+    def test_express_filter_does_not_override_legacy_layout_with_shared_mapper(self):
         root = Path(__file__).resolve().parents[2]
         shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
 
-        start = shared_ui.index("function initExpressFilterLayout()")
-        end = shared_ui.index("initExpressFilterLayout();", start)
-        filter_code = shared_ui[start:end]
+        self.assertNotIn("function initExpressFilterLayout()", shared_ui)
+        self.assertNotIn("initExpressFilterLayout();", shared_ui)
 
-        self.assertIn("/css/pages/practice.css", filter_code)
-        self.assertIn('rel = "stylesheet"', filter_code)
-        self.assertIn('data-practice-shared-styles', filter_code)
-
-    def test_express_filter_does_not_keep_legacy_filter_class_after_shared_mapping(self):
+    def test_express_filter_is_not_forced_into_practice_grid_classes(self):
         root = Path(__file__).resolve().parents[2]
         shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
 
-        start = shared_ui.index("function initExpressFilterLayout()")
-        end = shared_ui.index("initExpressFilterLayout();", start)
-        filter_code = shared_ui[start:end]
-
-        self.assertIn("practice-express-filter", filter_code)
-        self.assertIn("classList.remove(\"practice-express-filter\", \"box\", \"mb-3\", \"p-3\")", filter_code)
-        self.assertIn('classList.add("practice-filter-body")', filter_code)
-        self.assertIn('classList.add("practice-filter-form")', filter_code)
-        self.assertIn('classList.toggle("is-open"', filter_code)
-
-    def test_express_filter_syncs_shared_open_state_after_legacy_toggle(self):
-        root = Path(__file__).resolve().parents[2]
-        shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
-
-        start = shared_ui.index("function initExpressFilterLayout()")
-        end = shared_ui.index("initExpressFilterLayout();", start)
-        filter_code = shared_ui[start:end]
-
-        self.assertIn("setTimeout(syncOpenState, 0)", filter_code)
-        self.assertIn('new MutationObserver', filter_code)
-        self.assertIn('attributes: true', filter_code)
-        self.assertIn('attributeFilter: ["style"]', filter_code)
+        self.assertNotIn('classList.add("practice-filter-panel")', shared_ui)
+        self.assertNotIn('classList.add("practice-filter-body")', shared_ui)
+        self.assertNotIn('classList.add("practice-filter-grid")', shared_ui)
+        self.assertNotIn('classList.remove("practice-express-filter", "box", "mb-3", "p-3")', shared_ui)
 
 
 if __name__ == "__main__":
