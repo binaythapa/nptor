@@ -65,6 +65,13 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertIn("border: 0;", shell_rule)
         self.assertIn("box-shadow: none;", shell_rule)
 
+    def test_express_root_box_is_removed_so_child_blocks_are_independent(self):
+        root = Path(__file__).resolve().parents[2]
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+
+        self.assertIn('page.classList.remove("box")', express_ui)
+        self.assertIn('.practice-express-page > .box {', express_ui)
+
 
 if __name__ == "__main__":
     unittest.main()
