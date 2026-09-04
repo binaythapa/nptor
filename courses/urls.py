@@ -9,6 +9,11 @@ from .views import (
     admin_views,
 )
 from courses.views.student_preview import course_preview
+from courses.views.student_library import (
+    my_courses,
+    continue_learning,
+    completed_courses,
+)
 
 from courses.views.instructor_views import update_order
 from courses.permissions import (
@@ -37,6 +42,11 @@ app_name = "courses"
 
 urlpatterns = [
     path("", student_views.course_list, name="course_list"),
+
+    # Student learning library
+    path("my-courses/", my_courses, name="my_courses"),
+    path("continue-learning/", continue_learning, name="continue_learning"),
+    path("completed/", completed_courses, name="completed_courses"),
 
     path(
         "<slug:slug>/preview/",
