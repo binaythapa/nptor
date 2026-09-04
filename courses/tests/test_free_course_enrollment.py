@@ -74,6 +74,33 @@ class FreeCourseEnrollmentTests(TestCase):
         self.assertContains(response, "Enroll Free")
         self.assertNotContains(response, "Get Full Access")
 
+    def test_free_course_preview_uses_free_enrollment_action(self):
+        response = self.client.get(
+            reverse("courses:course_preview", args=[self.free_course.slug])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Enroll Free")
+        self.assertContains(
+            response,
+            reverse("courses:enroll_free_course", args=[self.free_course.slug]),
+        )
+        self.assertNotContains(response, "Get full access")
+        self.assertNotContains(response, "subscribe")
+
+    def test_paid_course_preview_keeps_paid_checkout_action(self):
+        response = self.client.get(
+            reverse("courses:course_preview", args=[self.paid_course.slug])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Get full access")
+        self.assertContains(
+            response,
+            reverse("courses:subscribe_course", args=[self.paid_course.id]),
+        )
+        self.assertNotContains(response, "Enroll Free")
+
     def test_free_course_enrollment_creates_active_enrollment(self):
         response = self.client.post(
             reverse("courses:enroll_free_course", args=[self.free_course.slug])
