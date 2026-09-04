@@ -217,6 +217,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 font-size: .75rem;
             }
 
+            .practice-express-page .practice-express-filter .practice-filter-icon {
+                display: none !important;
+            }
+
             .practice-express-page .practice-express-filter #filterBody {
                 width: 100%;
                 padding: 4px 15px 15px;
