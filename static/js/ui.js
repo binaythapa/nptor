@@ -98,8 +98,9 @@ document.addEventListener(
 
         /* ====================================================
            EXPRESS FILTER LAYOUT
-           Only the Express filter receives the Practice filter
-           dimensions and spacing. The rest of Express is untouched.
+           Reuse the exact Practice filter stylesheet/classes.
+           The legacy Express filter class is removed after the
+           markup is mapped so its old rules cannot override them.
            ==================================================== */
         function initExpressFilterLayout() {
             if (window.location.pathname !== "/quiz/practice/express/") return;
@@ -153,109 +154,41 @@ document.addEventListener(
                 });
             }
 
-            if (!document.getElementById("practice-express-filter-style")) {
-                const style = document.createElement("style");
-                style.id = "practice-express-filter-style";
-                style.textContent = `
-                    /* Same filter properties as Practice Questions, scoped only to Express. */
-                    .practice-express-page .practice-express-filter.practice-filter-panel {
-                        display: block;
-                        width: 100%;
-                        margin: 0 0 18px;
-                        border: 1px solid var(--border-color, #e5e7eb);
-                        border-radius: 12px;
-                        background: var(--surface-color, #ffffff);
-                        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.04);
-                        overflow: hidden;
-                        box-sizing: border-box;
-                    }
-                    .practice-express-page .practice-filter-header {
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        width: 100%;
-                        min-height: 48px;
-                        padding: 0 15px;
-                        border: 0;
-                        background: transparent;
-                        color: var(--text-color, #1f2937);
-                        font: inherit;
-                        text-align: left;
-                        cursor: pointer;
-                        box-sizing: border-box;
-                    }
-                    .practice-express-page .practice-filter-heading {
-                        display: flex;
-                        align-items: center;
-                        gap: 9px;
-                        min-width: 0;
-                        margin: 0;
-                        font-size: 0.84rem;
-                        font-weight: 800;
-                    }
-                    .practice-express-page .practice-filter-heading small,
-                    .practice-express-page .practice-filter-hint {
-                        color: var(--muted-text-color, #9ca3af);
-                        font-size: 0.7rem;
-                        font-weight: 500;
-                    }
-                    .practice-express-page .practice-filter-arrow {
-                        flex-shrink: 0;
-                        color: var(--muted-text-color, #6b7280);
-                        font-size: 0.75rem;
-                    }
-                    .practice-express-page .practice-filter-body {
-                        width: 100%;
-                        box-sizing: border-box;
-                    }
-                    .practice-express-page .practice-filter-grid {
-                        display: grid;
-                        grid-template-columns: repeat(3, minmax(0, 1fr));
-                        gap: 13px;
-                        padding: 4px 15px 15px;
-                        box-sizing: border-box;
-                        margin: 0;
-                    }
-                    .practice-express-page .practice-filter-field {
-                        min-width: 0;
-                    }
-                    .practice-express-page .practice-filter-field-inner {
-                        margin: 0;
-                    }
-                    .practice-express-page .practice-filter-field label {
-                        display: block;
-                        margin: 0 0 6px;
-                        color: var(--muted-text-color, #6b7280);
-                        font-size: 0.72rem;
-                        font-weight: 700;
-                    }
-                    .practice-express-page .practice-select-wrap {
-                        width: 100%;
-                    }
-                    .practice-express-page .practice-select-wrap select {
-                        width: 100%;
-                        min-height: 39px;
-                        padding: 0 10px;
-                        border: 1px solid var(--border-color, #dfe3e8);
-                        border-radius: 8px;
-                        background: var(--surface-color, #ffffff);
-                        color: var(--text-color, #374151);
-                        font: inherit;
-                        font-size: 0.8rem;
-                        outline: none;
-                        cursor: pointer;
-                        box-sizing: border-box;
-                    }
-                    .practice-express-page .practice-filter-header:hover {
-                        background: var(--surface-hover-color, #f8fafc);
-                    }
-                    @media (max-width: 700px) {
-                        .practice-express-page .practice-filter-grid {
-                            grid-template-columns: 1fr;
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
+            /*
+             * Practice Questions loads this stylesheet in head_extra.
+             * Express uses the same stylesheet here so the filter has
+             * one source of truth instead of a second copy of the CSS.
+             */
+            if (!document.querySelector('link[data-practice-shared-styles="1"]')) {
+                const sharedStyles = document.querySelector('link[href*="/css/pages/practice.css"]');
+                if (sharedStyles) {
+                    sharedStyles.dataset.practiceSharedStyles = "1";
+                } else {
+                    const link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = "/static/css/pages/practice.css";
+                    link.dataset.practiceSharedStyles = "1";
+                    document.head.appendChild(link);
+                }
+            }
+
+            /* Remove the legacy Express selector so its old filter rules
+               cannot compete with the shared Practice stylesheet. */
+            filter.classList.remove("practice-express-filter");
+
+            /* Keep the existing Express toggle, while also updating the
+               shared Practice open-state class used by practice.css. */
+            if (body && !body.dataset.sharedFilterToggleInitialized) {
+                body.dataset.sharedFilterToggleInitialized = "1";
+                const syncOpenState = () => {
+                    body.classList.toggle("is-open", body.style.maxHeight && body.style.maxHeight !== "0px");
+                };
+                syncOpenState();
+                if (header) {
+                    header.addEventListener("click", () => {
+                        setTimeout(syncOpenState, 0);
+                    });
+                }
             }
         }
 
