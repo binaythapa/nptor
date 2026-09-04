@@ -49,19 +49,13 @@ class ExamAttemptExpiryTests(TestCase):
 
     def test_timer_expiry_submits_directly_to_exam_submit_endpoint(self):
         response = self.client.get(
-            reverse(
-                "quiz:exam_question",
-                args=[self.ue.id, 0],
-            )
+            reverse("quiz:exam_question", args=[self.ue.id, 0])
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            reverse(
-                "quiz:exam_submit",
-                args=[self.ue.id],
-            )
+            reverse("quiz:exam_submit", args=[self.ue.id]),
         )
         self.assertContains(response, "form.action =")
 
@@ -71,22 +65,14 @@ class ExamAttemptExpiryTests(TestCase):
         )
 
         response = self.client.post(
-            reverse(
-                "quiz:exam_submit",
-                args=[self.ue.id],
-            ),
-            {
-                f"question_{self.question.id}": str(self.correct.id),
-            },
+            reverse("quiz:exam_submit", args=[self.ue.id]),
+            {f"question_{self.question.id}": str(self.correct.id)},
         )
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
-            reverse(
-                "quiz:exam_result",
-                args=[self.ue.id],
-            ),
+            reverse("quiz:exam_result", args=[self.ue.id]),
         )
 
         self.ue.refresh_from_db()
@@ -99,21 +85,46 @@ class ExamAttemptExpiryTests(TestCase):
         self.assertTrue(answer.is_correct)
         self.assertEqual(self.ue.score, 100.0)
         self.assertTrue(self.ue.passed)
-        self.assertEqual(
-            self.ue.status,
-            UserExam.STATUS_SUBMITTED,
-        )
+        self.assertEqual(self.ue.status, UserExam.STATUS_SUBMITTED)
         self.assertIsNotNone(self.ue.submitted_at)
 
-    def test_exam_submit_requires_post(self):
-        response = self.client.get(
-            reverse(
-                "quiz:exam_submit",
-                args=[self.ue.id],
-            )
+    def test_expired_page_finalizes_saved_answer_without_clearing_it(self):
+        UserAnswer.objects.filter(pk=self.ue.answers.get().pk).update(
+            choice=self.correct,
+        )
+        UserExam.objects.filter(pk=self.ue.pk).update(
+            started_at=timezone.now() - timedelta(seconds=120),
         )
 
-        self.assertEqual(response.status_code, 405)
+        response = self.client.get(
+            reverse("quiz:exam_question", args=[self.ue.id, 0])
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse("quiz:student_dashboard"),
+        )
+
+        self.ue.refresh_from_db()
+        answer = self.ue.answers.get()
+        self.assertEqual(answer.choice_id, self.correct.id)
+        self.assertTrue(answer.is_correct)
+        self.assertEqual(self.ue.score, 100.0)
+        self.assertTrue(self.ue.passed)
+        self.assertEqual(self.ue.status, UserExam.STATUS_SUBMITTED)
+        self.assertIsNotNone(self.ue.submitted_at)
+
+    def test_exam_submit_direct_get_does_not_submit_attempt(self):
+        response = self.client.get(
+            reverse("quiz:exam_submit", args=[self.ue.id])
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse("quiz:student_dashboard"),
+        )
         self.ue.refresh_from_db()
         self.assertIsNone(self.ue.submitted_at)
         self.assertIsNone(self.ue.score)
