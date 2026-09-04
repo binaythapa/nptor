@@ -35,13 +35,18 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
     def test_express_filter_matches_practice_collapsed_header(self):
         root = Path(__file__).resolve().parents[2]
         shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
 
         self.assertIn('toggle.className = "practice-filter-header"', shared_ui)
         self.assertIn('toggle.setAttribute("aria-controls", "filterBody")', shared_ui)
         self.assertIn('<span>Filters</span>', shared_ui)
         self.assertIn('<small id="filterHint">Click to expand</small>', shared_ui)
         self.assertIn('<span id="filterToggleIcon" class="practice-filter-arrow"', shared_ui)
-        self.assertNotIn('practice-filter-icon', shared_ui)
+        self.assertIn('.practice-express-filter #filterToggle', express_ui)
+        self.assertIn('display: flex;', express_ui)
+        self.assertIn('justify-content: space-between;', express_ui)
+        self.assertIn('.practice-filter-icon', express_ui)
+        self.assertIn('display: none !important;', express_ui)
 
     def test_express_filter_removes_legacy_inline_collapse_styles(self):
         root = Path(__file__).resolve().parents[2]
