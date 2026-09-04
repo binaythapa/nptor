@@ -30,20 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (heading) {
             heading.classList.remove("title", "is-5", "mb-0", "has-text-weight-semibold");
             heading.classList.add("practice-title");
-
-            if (!header.querySelector(".practice-eyebrow")) {
-                const eyebrow = document.createElement("div");
-                eyebrow.className = "practice-eyebrow";
-                eyebrow.textContent = "PRACTICE";
-                heading.parentNode.insertBefore(eyebrow, heading);
-            }
-
-            if (!header.querySelector(".practice-subtitle")) {
-                const subtitle = document.createElement("p");
-                subtitle.className = "practice-subtitle";
-                subtitle.textContent = "Strengthen your knowledge one question at a time.";
-                heading.insertAdjacentElement("afterend", subtitle);
-            }
         }
 
         const nav = header.querySelector(".practice-mode-nav");
@@ -123,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             .practice-express-page .practice-page-header {
                 display: flex;
-                align-items: flex-end;
+                align-items: center;
                 justify-content: space-between;
                 width: 100%;
                 gap: 24px;
@@ -137,23 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 font-size: clamp(1.8rem, 3vw, 2.35rem);
                 line-height: 1.15;
                 font-weight: 800;
-            }
-
-            .practice-express-page .practice-eyebrow {
-                margin: 0 0 6px;
-                color: var(--primary-color, #3273dc);
-                font-size: .72rem;
-                font-weight: 800;
-                letter-spacing: .12em;
-                text-transform: uppercase;
-            }
-
-            .practice-express-page .practice-subtitle {
-                max-width: 650px;
-                margin: 8px 0 0;
-                color: var(--muted-text-color, #6b7280);
-                font-size: .95rem;
-                line-height: 1.6;
             }
 
             .practice-express-page .practice-mode-nav {
@@ -302,16 +271,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 .practice-express-page .practice-page-header {
-                    align-items: flex-start;
+                    align-items: center;
                     gap: 12px;
                 }
 
                 .practice-express-page .practice-title {
                     font-size: 1.65rem;
-                }
-
-                .practice-express-page .practice-subtitle {
-                    font-size: .82rem;
                 }
             }
 
