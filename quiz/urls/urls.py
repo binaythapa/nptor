@@ -82,7 +82,6 @@ urlpatterns = [
     path("exam/attempt/<int:user_exam_id>/result/", exam_result, name="exam_result"),
     path("exam/attempt/<int:user_exam_id>/expired/", exam_expired, name="exam_expired"),
     path("exam/attempt/<int:user_exam_id>/review/", exam_review, name="exam_review"),
-    path("exam/<int:exam_id>/mock/", mock_exam_start, name="mock_exam_start"),
 
     path("practice/", practice, name="practice"),
     path("practice/express/", practice_express, name="practice_express"),
