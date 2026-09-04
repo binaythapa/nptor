@@ -1,13 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
-from django.views.decorators.http import require_POST
 
 from quiz.models import UserExam
 from quiz.services.grading import grade_exam
 
 
 @login_required
-@require_POST
 def exam_submit_dashboard(request, user_exam_id):
     """Grade a submitted attempt and return the student to their dashboard."""
     user_exam = get_object_or_404(
@@ -15,6 +13,14 @@ def exam_submit_dashboard(request, user_exam_id):
         pk=user_exam_id,
         user=request.user,
     )
+
+    # A direct browser visit or refresh of the submit URL must never
+    # attempt a submission. Send the student back to the dashboard.
+    if request.method == "GET":
+        return redirect("quiz:student_dashboard")
+
+    if request.method != "POST":
+        return redirect("quiz:student_dashboard")
 
     if user_exam.submitted_at:
         return redirect("quiz:student_dashboard")
