@@ -101,10 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 margin: 0 auto;
                 padding: 24px 20px 48px;
                 box-sizing: border-box;
-                background: var(--surface-color, #ffffff);
-                border: 1px solid var(--border-color, #e5e7eb);
-                border-radius: 14px;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+                box-shadow: none;
             }
 
             .practice-express-page .practice-page-header {
@@ -347,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
             @media (max-width: 700px) {
                 .practice-express-page {
                     padding: 18px 14px 32px;
-                    border-radius: 10px;
+                    border-radius: 0;
                 }
 
                 .practice-express-page .practice-page-header {
