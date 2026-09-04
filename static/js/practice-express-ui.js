@@ -120,9 +120,9 @@ document.addEventListener("DOMContentLoaded", () => {
             .practice-express-page .practice-title {
                 margin: 0;
                 color: var(--text-color, #1f2937);
-                font-size: clamp(1.8rem, 3vw, 2.35rem);
-                line-height: 1.15;
-                font-weight: 800;
+                font-size: 1.5rem;
+                line-height: 1.3;
+                font-weight: 400;
             }
 
             .practice-express-page .practice-mode-nav {
@@ -178,7 +178,85 @@ document.addEventListener("DOMContentLoaded", () => {
 
             .practice-express-page .practice-express-filter {
                 margin-bottom: 16px !important;
-                padding: 14px !important;
+                padding: 0 !important;
+                overflow: hidden;
+            }
+
+            .practice-express-page .practice-express-filter > div:first-child {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                min-height: 48px;
+                margin: 0 !important;
+                padding: 0 15px;
+                box-sizing: border-box;
+            }
+
+            .practice-express-page .practice-express-filter > div:first-child p {
+                margin: 0 !important;
+                font-size: .84rem;
+                font-weight: 800;
+                line-height: 1.35;
+            }
+
+            .practice-express-page .practice-express-filter #filterHint {
+                display: inline;
+                color: var(--muted-text-color, #9ca3af) !important;
+                font-size: .7rem !important;
+                font-weight: 500 !important;
+                margin-left: 6px !important;
+            }
+
+            .practice-express-page .practice-express-filter #filterToggleIcon {
+                flex-shrink: 0;
+                font-size: .75rem;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody {
+                width: 100%;
+                padding: 4px 15px 15px;
+                box-sizing: border-box;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody > .columns {
+                margin: 0 !important;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody .column {
+                padding: 0 .375rem !important;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody .column:first-child {
+                padding-left: 0 !important;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody .column:last-child {
+                padding-right: 0 !important;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody .field {
+                margin: 0 !important;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody .label {
+                display: block;
+                margin: 0 0 6px !important;
+                color: var(--muted-text-color, #6b7280) !important;
+                font-size: .72rem !important;
+                font-weight: 700 !important;
+                line-height: 1.35;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody .select,
+            .practice-express-page .practice-express-filter #filterBody select {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .practice-express-page .practice-express-filter #filterBody .select select {
+                min-height: 39px;
+                font-size: .8rem;
             }
 
             .practice-express-page .practice-express-stats {
@@ -277,7 +355,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 .practice-express-page .practice-title {
-                    font-size: 1.65rem;
+                    font-size: 1.5rem;
+                }
+
+                .practice-express-page .practice-express-filter #filterBody .column {
+                    padding: .375rem 0 !important;
                 }
             }
 
