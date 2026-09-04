@@ -10,7 +10,7 @@ class ExamLockedUITests(unittest.TestCase):
         self.assertTrue(template_path.exists())
         template = template_path.read_text(encoding="utf-8")
         self.assertIn("class=\"exam-locked-page\"", template)
-        self.assertIn("exam_locked", template)
+        self.assertIn("class=\"exam-locked-card\"", template)
         self.assertIn("{% url 'quiz:exam_list' %}", template)
 
     def test_exam_locked_template_has_no_inline_styles(self):
@@ -30,6 +30,7 @@ class ExamLockedUITests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         css = (root / "static" / "css" / "pages" / "exam-locked.css").read_text(encoding="utf-8")
         self.assertIn(".exam-locked-page", css)
+        self.assertIn(".exam-locked-card", css)
         self.assertNotIn(".practice-", css)
 
 
