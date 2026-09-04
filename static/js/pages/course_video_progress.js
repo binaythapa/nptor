@@ -80,9 +80,20 @@
         }, 5000);
     }
 
+    function onStateChange(event) {
+        if (event.data === YT.PlayerState.ENDED) {
+            sendProgress();
+        }
+    }
+
     function initializePlayer() {
         if (!window.YT || !window.YT.Player) return;
-        new YT.Player("courseVideoPlayer", { events: { onReady: onReady } });
+        new YT.Player("courseVideoPlayer", {
+            events: {
+                onReady: onReady,
+                onStateChange: onStateChange
+            }
+        });
     }
 
     function loadApi() {
