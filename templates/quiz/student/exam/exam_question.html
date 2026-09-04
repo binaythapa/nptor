@@ -35,7 +35,9 @@
         <div class="exam-options">
           {% for c in choices %}
             <label class="option-label">
-              <span class="option-marker">{{ forloop.counter|add:64|stringformat:"c" }}</span>
+              <span class="option-marker">
+                {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+              </span>
               <input type="radio"
                      name="question_{{ question.id }}"
                      value="{{ c.id }}"
@@ -50,7 +52,9 @@
         <div class="exam-options">
           {% for c in choices %}
             <label class="option-label">
-              <span class="option-marker">{{ forloop.counter|add:64|stringformat:"c" }}</span>
+              <span class="option-marker">
+                {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+              </span>
               <input type="checkbox"
                      name="question_{{ question.id }}"
                      value="{{ c.id }}"
@@ -125,3 +129,4 @@
   }, 1000);
 })();
 </script>
+{% endblock %}
