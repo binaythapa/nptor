@@ -215,3 +215,12 @@ select {
 select:focus {
   border-color: #3273dc;
 }
+
+/* ================= PRACTICE CHOICE LABEL DEDUP ================= */
+
+/* Practice pages render one explicit A/B/C/D marker. Suppress any legacy pseudo-label. */
+.practice-option::before,
+.choice-item::before {
+  content: none !important;
+  display: none !important;
+}
