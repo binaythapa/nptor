@@ -19,29 +19,44 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertNotIn('classList.add("practice-filter-grid")', shared_ui)
         self.assertNotIn('classList.remove("practice-express-filter", "box", "mb-3", "p-3")', shared_ui)
 
-    def test_express_filter_clears_body_padding_when_collapsed(self):
+    def test_express_filter_uses_the_shared_practice_markup_and_styles(self):
+        root = Path(__file__).resolve().parents[2]
+        template = (root / "templates" / "quiz" / "student" / "practice_express" / "practice_express.html").read_text(encoding="utf-8")
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+
+        for marker in (
+            'class="practice-panel practice-filter-panel"',
+            'id="filterToggle" class="practice-filter-header"',
+            'class="practice-filter-heading"',
+            'class="practice-filter-arrow"',
+            'id="filterBody" class="practice-filter-body"',
+            'class="practice-filter-form"',
+            'class="practice-filter-grid"',
+            'class="practice-filter-field"',
+            'class="practice-select-wrap"',
+        ):
+            self.assertIn(marker, template)
+
+        self.assertIn("css/pages/practice.css", template)
+        self.assertNotIn("onclick=\"toggleFilters()\"", template)
+        self.assertNotIn("function toggleFilters()", template)
+        self.assertNotIn("expressFilterExpanded", template)
+        self.assertNotIn("practice-express-filter", express_ui)
+
+    def test_express_filter_uses_the_same_practice_filter_state_key(self):
+        root = Path(__file__).resolve().parents[2]
+        practice_js = (root / "static" / "js" / "pages" / "practice.js").read_text(encoding="utf-8")
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+
+        self.assertIn('"practiceFilterExpanded"', practice_js)
+        self.assertIn('"practiceFilterExpanded"', express_ui)
+        self.assertIn('classList.toggle(\n            "is-open",', express_ui)
+
+    def test_express_filter_has_no_legacy_compatibility_hook(self):
         root = Path(__file__).resolve().parents[2]
         shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
 
-        start = shared_ui.index("function initExpressFilterCollapseCompatibility()")
-        end = shared_ui.index("initExpressFilterCollapseCompatibility();", start)
-        filter_code = shared_ui[start:end]
-
-        self.assertIn('const padding = expanded ? "4px 15px 15px" : "0"', filter_code)
-        self.assertIn('if (body.style.padding !== padding)', filter_code)
-        self.assertIn('new MutationObserver(syncFilterPadding)', filter_code)
-        self.assertIn('attributeFilter: ["style"]', filter_code)
-
-    def test_express_filter_has_extra_space_below_select_row(self):
-        root = Path(__file__).resolve().parents[2]
-        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
-
-        marker = ".practice-express-page .practice-express-filter #filterBody > .columns {"
-        start = express_ui.index(marker)
-        end = express_ui.index("}", start)
-        columns_rule = express_ui[start:end]
-
-        self.assertIn("padding-bottom: 8px !important;", columns_rule)
+        self.assertNotIn("initExpressFilterCollapseCompatibility", shared_ui)
 
     def test_express_page_shell_is_visual_wrapper_not_a_shared_card(self):
         root = Path(__file__).resolve().parents[2]
