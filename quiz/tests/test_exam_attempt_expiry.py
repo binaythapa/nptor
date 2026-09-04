@@ -129,6 +129,28 @@ class ExamAttemptExpiryTests(TestCase):
         self.assertIsNone(self.ue.submitted_at)
         self.assertIsNone(self.ue.score)
 
+    def test_submitted_exam_result_page_renders(self):
+        response = self.client.post(
+            reverse("quiz:exam_submit", args=[self.ue.id]),
+            {f"question_{self.question.id}": str(self.correct.id)},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("quiz:exam_result", args=[self.ue.id]),
+        )
+
+        result = self.client.get(
+            reverse("quiz:exam_result", args=[self.ue.id])
+        )
+
+        self.assertEqual(result.status_code, 200)
+        self.assertContains(result, "Exam Result")
+        self.assertContains(result, "100")
+        self.assertContains(result, "Passed")
+        self.assertContains(result, self.question.text)
+        self.assertContains(result, self.correct.text)
+
 
 class ExamAccessLockReasonTests(TestCase):
     def setUp(self):
