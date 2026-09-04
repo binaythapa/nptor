@@ -13,10 +13,9 @@
   Practice Express
 </h1>
 
-    <div class="practice-modes">
-      <a href="{% url 'quiz:practice' %}" class="practice-link">Basics</a>
-      <span class="mx-1 has-text-grey">|</span>
-      <a href="{% url 'quiz:exam_list' %}" class="practice-link">Pro</a>
+    <div class="practice-mode-nav">
+      <a href="{% url 'quiz:practice' %}" class="practice-mode">Basics</a>
+      <a href="{% url 'quiz:exam_list' %}" class="practice-mode">Pro</a>
     </div>
   </div>
 
@@ -695,4 +694,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </style>
 {% endblock %}
-
