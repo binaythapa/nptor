@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from courses.models import Course, CourseEnrollment
+from courses.models import Course, CourseEnrollment, CourseSection, Lesson
 from organizations.models import ResourceAccess
 from subscriptions.models import SubscriptionPlan
 
@@ -31,6 +31,18 @@ class FreeCourseEnrollmentTests(TestCase):
             is_published=True,
             approval_status=Course.APPROVAL_APPROVED,
             created_by=self.owner,
+        )
+        section = CourseSection.objects.create(
+            course=self.free_course,
+            title="Python Fundamentals",
+            order=1,
+        )
+        Lesson.objects.create(
+            section=section,
+            title="Python Introduction",
+            lesson_type=Lesson.TYPE_ARTICLE,
+            order=1,
+            article_content="Welcome to the free Python course.",
         )
         self.paid_course = Course.objects.create(
             title="Paid Python Course",
@@ -85,6 +97,21 @@ class FreeCourseEnrollmentTests(TestCase):
         )
         self.assertTrue(access.is_active)
         self.assertTrue(access.is_valid())
+
+    def test_free_enrollment_grants_course_access(self):
+        from subscriptions.services.access_service import AccessService
+
+        self.client.post(
+            reverse("courses:enroll_free_course", args=[self.free_course.slug])
+        )
+
+        self.assertTrue(
+            AccessService.has_access(
+                student=self.student,
+                resource_type=AccessService.RESOURCE_COURSE,
+                resource=self.free_course,
+            )
+        )
 
     def test_reenrolling_free_course_does_not_create_duplicate(self):
         url = reverse("courses:enroll_free_course", args=[self.free_course.slug])
