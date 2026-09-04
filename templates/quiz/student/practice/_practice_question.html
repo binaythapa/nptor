@@ -110,7 +110,7 @@
                     >
 
                     <span class="practice-option-marker" aria-hidden="true">
-                        {{ forloop.counter0|add:65|make_list|join:"" }}
+                        {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% endif %}
                     </span>
 
                     <span class="practice-option-text">
@@ -137,7 +137,7 @@
                     >
 
                     <span class="practice-option-marker practice-option-marker-checkbox" aria-hidden="true">
-                        {{ forloop.counter0|add:65|make_list|join:"" }}
+                        {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% endif %}
                     </span>
 
                     <span class="practice-option-text">
