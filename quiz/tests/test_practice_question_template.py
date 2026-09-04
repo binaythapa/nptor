@@ -25,6 +25,25 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         self.assertNotIn('{{ choice_letter_single }}', template)
         self.assertNotIn('{{ choice_letter_multi }}', template)
 
+    def test_answer_choices_use_compact_layout(self):
+        template_path = (
+            Path(__file__).resolve().parents[2]
+            / "templates"
+            / "quiz"
+            / "student"
+            / "practice"
+            / "_practice_question.html"
+        )
+        template = template_path.read_text(encoding="utf-8")
+
+        self.assertIn('.practice-question-card .practice-options {', template)
+        self.assertIn('gap: 7px;', template)
+        self.assertIn('min-height: 46px;', template)
+        self.assertIn('padding: 7px 10px;', template)
+        self.assertIn('flex: 0 0 34px;', template)
+        self.assertIn('width: 34px;', template)
+        self.assertIn('height: 34px;', template)
+
 
 if __name__ == "__main__":
     unittest.main()
