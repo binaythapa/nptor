@@ -103,6 +103,25 @@ document.addEventListener(
 
         initPracticeModeNavigation();
 
+        /* ====================================================
+           EXPRESS FILTER LABEL
+           Keep the collapsed filter control compact. The arrow
+           remains as the visual affordance for expanding it.
+           ==================================================== */
+        function initExpressCompactFilterLabel() {
+            if (window.location.pathname !== "/quiz/practice/express/") {
+                return;
+            }
+
+            const filterHint = document.getElementById("filterHint");
+            if (filterHint) {
+                filterHint.textContent = "";
+                filterHint.hidden = true;
+            }
+        }
+
+        initExpressCompactFilterLabel();
+
 
         /* ====================================================
            PRACTICE STATS
@@ -157,10 +176,6 @@ document.addEventListener(
             }
         }
 
-        /*
-         * Keep this global function because
-         * practice templates may call it directly.
-         */
         window.practiceAttempt =
             function ({
                 correct,
@@ -194,22 +209,13 @@ document.addEventListener(
                         "/quiz/practice/save/",
                         {
                             method: "POST",
-
                             headers: {
-                                "X-CSRFToken":
-                                    csrf,
-
-                                "Content-Type":
-                                    "application/x-www-form-urlencoded"
+                                "X-CSRFToken": csrf,
+                                "Content-Type": "application/x-www-form-urlencoded"
                             },
-
                             body:
-                                `question_id=${encodeURIComponent(
-                                    questionId
-                                )}` +
-                                `&is_correct=${encodeURIComponent(
-                                    correct
-                                )}`
+                                `question_id=${encodeURIComponent(questionId)}` +
+                                `&is_correct=${encodeURIComponent(correct)}`
                         }
                     ).catch(
                         (error) => {
@@ -224,15 +230,8 @@ document.addEventListener(
 
         window.resetPracticeStats =
             function () {
-
-                sessionStorage.removeItem(
-                    "practice_total"
-                );
-
-                sessionStorage.removeItem(
-                    "practice_correct"
-                );
-
+                sessionStorage.removeItem("practice_total");
+                sessionStorage.removeItem("practice_correct");
                 updatePracticeUI();
             };
 
@@ -271,9 +270,7 @@ document.addEventListener(
                                     ".track-accordion"
                                 );
 
-                            if (
-                                !accordion
-                            ) {
+                            if (!accordion) {
                                 return;
                             }
 
@@ -312,50 +309,31 @@ document.addEventListener(
                 "copy-toast"
             );
 
-        if (
-            copyBtn &&
-            toast
-        ) {
-
+        if (copyBtn && toast) {
             copyBtn.addEventListener(
                 "click",
                 () => {
-
-                    const email =
-                        copyBtn.dataset.email;
+                    const email = copyBtn.dataset.email;
 
                     if (!email) {
                         return;
                     }
 
                     navigator.clipboard
-                        .writeText(
-                            email
-                        )
-                        .then(
-                            () => {
-                                toast.classList.add(
-                                    "show"
-                                );
+                        .writeText(email)
+                        .then(() => {
+                            toast.classList.add("show");
 
-                                setTimeout(
-                                    () => {
-                                        toast.classList.remove(
-                                            "show"
-                                        );
-                                    },
-                                    2000
-                                );
-                            }
-                        )
-                        .catch(
-                            (error) => {
-                                console.error(
-                                    "Unable to copy email:",
-                                    error
-                                );
-                            }
-                        );
+                            setTimeout(() => {
+                                toast.classList.remove("show");
+                            }, 2000);
+                        })
+                        .catch((error) => {
+                            console.error(
+                                "Unable to copy email:",
+                                error
+                            );
+                        });
                 }
             );
         }
