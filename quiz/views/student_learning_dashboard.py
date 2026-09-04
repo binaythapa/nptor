@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Count
 from django.shortcuts import render
 from django.utils import timezone
@@ -62,6 +63,7 @@ def student_dashboard(request):
         .select_related("exam")
         .order_by("-submitted_at")
     )
+    exam_history = Paginator(submitted_attempts, 5).get_page(request.GET.get("exam_page", 1))
     active_attempt = (
         UserExam.objects
         .filter(user=user, submitted_at__isnull=True)
@@ -204,7 +206,8 @@ def student_dashboard(request):
         "quiz/student/student_dashboard.html",
         {
             "active_attempt": active_attempt,
-            "submitted_attempts": submitted_attempts,
+            "submitted_attempts": exam_history,
+            "exam_history": exam_history,
             "total_attempts": len(submitted_attempts),
             "passed_count": sum(1 for attempt in submitted_attempts if attempt.passed is True),
             "failed_count": sum(1 for attempt in submitted_attempts if attempt.passed is False),
