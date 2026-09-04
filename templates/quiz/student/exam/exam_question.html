@@ -1,422 +1,127 @@
 {% extends 'layouts/student/base.html' %}
 {% load dict_extras %}
+{% load static %}
+
+{% block page_css %}
+  <link rel="stylesheet" href="{% static 'css/pages/exam-question.css' %}">
+{% endblock %}
 
 {% block content %}
-
-<!-- ================= STICKY EXAM HEADER ================= -->
-<div class="exam-header">
-  <div class="exam-header-inner">
-    <div class="exam-title">
-      {{ user_exam.exam.title }}
+<div class="exam-question-page">
+  <header class="exam-header">
+    <div class="exam-header-inner">
+      <div class="exam-title">{{ user_exam.exam.title }}</div>
+      <div class="exam-timer" aria-live="polite">
+        <span class="timer-label">Time Remaining</span>
+        <span class="timer-value" id="timer">00:00:00</span>
+      </div>
     </div>
+  </header>
 
-    <div class="exam-timer" aria-live="polite">
-      <div class="timer-label">Time Remaining</div>
-      <div class="timer-value" id="timer">00:00:00</div>
-    </div>
-  </div>
+  <progress class="progress is-primary exam-progress" value="{{ progress }}" max="100">
+    {{ progress }}%
+  </progress>
+
+  <form method="post" id="examForm">
+    {% csrf_token %}
+
+    <section class="exam-question-box" aria-labelledby="question-heading">
+      <div class="question-text" id="question-heading">
+        <strong>Q{{ index|add:1 }}.</strong>
+        {{ question.text|safe }}
+      </div>
+
+      {% if question.question_type in 'single dropdown tf' %}
+        <div class="exam-options">
+          {% for c in choices %}
+            <label class="option-label">
+              <span class="option-marker">{{ forloop.counter|add:64|stringformat:"c" }}</span>
+              <input type="radio"
+                     name="question_{{ question.id }}"
+                     value="{{ c.id }}"
+                     {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}>
+              <span class="option-text">{{ c.text|safe }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if question.question_type == 'multi' %}
+        <div class="exam-options">
+          {% for c in choices %}
+            <label class="option-label">
+              <span class="option-marker">{{ forloop.counter|add:64|stringformat:"c" }}</span>
+              <input type="checkbox"
+                     name="question_{{ question.id }}"
+                     value="{{ c.id }}"
+                     {% if ua.selections and c.id in ua.selections %}checked{% endif %}>
+              <span class="option-text">{{ c.text|safe }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if question.question_type in 'fill numeric order' %}
+        <input class="input exam-text-answer"
+               type="text"
+               name="question_{{ question.id }}"
+               value="{{ ua.raw_answer|default_if_none:'' }}">
+      {% endif %}
+    </section>
+
+    <nav class="exam-navigation" aria-label="Exam question navigation">
+      {% if index > 0 %}
+        <button type="submit" name="nav" value="prev" class="button exam-nav-button">Previous</button>
+      {% endif %}
+
+      {% if index < total|add:-1 %}
+        <button type="submit" name="nav" value="next" class="button is-primary exam-nav-button">Next</button>
+      {% else %}
+        <button type="submit" name="nav" value="review" class="button is-warning exam-nav-button">Review &amp; Submit</button>
+      {% endif %}
+    </nav>
+  </form>
 </div>
 
-<!-- PROGRESS -->
-<progress class="progress is-primary exam-progress" value="{{ progress }}" max="100">
-  {{ progress }}%
-</progress>
-
-<!-- ================= EXAM FORM ================= -->
-<form method="post" id="examForm">
-  {% csrf_token %}
-
-  <div class="box exam-question-box">
-
-    <!-- QUESTION -->
-    <div class="mb-4 question-text">
-      <strong>Q{{ index|add:1 }}.</strong>
-      {{ question.text|safe }}
-    </div>
-
-    <!-- SINGLE / DROPDOWN / TF -->
-    {% if question.question_type in 'single dropdown tf' %}
-      {% for c in choices %}
-        <div class="mb-2">
-          <label class="option-label">
-            <input type="radio"
-                   name="question_{{ question.id }}"
-                   value="{{ c.id }}"
-                   {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}>
-            <span>{{ c.text|safe }}</span>
-          </label>
-        </div>
-      {% endfor %}
-    {% endif %}
-
-    <!-- MULTI -->
-    {% if question.question_type == 'multi' %}
-      {% for c in choices %}
-        <div class="mb-2">
-          <label class="option-label">
-            <input type="checkbox"
-                   name="question_{{ question.id }}"
-                   value="{{ c.id }}"
-                   {% if ua.selections and c.id in ua.selections %}
-                     checked
-                   {% endif %}>
-            <span>{{ c.text|safe }}</span>
-          </label>
-        </div>
-      {% endfor %}
-    {% endif %}
-
-    <!-- FILL / NUMERIC / ORDER -->
-    {% if question.question_type in 'fill numeric order' %}
-      <input class="input"
-             type="text"
-             name="question_{{ question.id }}"
-             value="{{ ua.raw_answer|default_if_none:'' }}">
-    {% endif %}
-
-  </div>
-
-  <!-- ================= NAVIGATION ================= -->
-  <div class="buttons mt-4 exam-navigation">
-
-    {% if index > 0 %}
-      <button type="submit"
-              name="nav"
-              value="prev"
-              class="button exam-nav-button">
-        Previous
-      </button>
-    {% endif %}
-
-    {% if index < total|add:-1 %}
-      <button type="submit"
-              name="nav"
-              value="next"
-              class="button is-primary exam-nav-button">
-        Next
-      </button>
-    {% else %}
-      <button type="submit"
-              name="nav"
-              value="review"
-              class="button is-warning exam-nav-button">
-        Review & Submit
-      </button>
-    {% endif %}
-
-  </div>
-
-</form>
-
-<!-- ================= TIMER SCRIPT ================= -->
 <script>
 (function () {
-
   let remainingSeconds = Number("{{ remaining }}");
   const timerEl = document.getElementById("timer");
   const form = document.getElementById("examForm");
 
-  if (!timerEl || !form || isNaN(remainingSeconds)) return;
+  if (!timerEl || !form || Number.isNaN(remainingSeconds)) return;
 
   function formatTime(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-
-    return (
-      String(h).padStart(2, "0") + ":" +
-      String(m).padStart(2, "0") + ":" +
-      String(s).padStart(2, "0")
-    );
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return [hours, minutes, secs].map(value => String(value).padStart(2, "0")).join(":");
   }
 
-  function updateColor(seconds) {
-    if (seconds <= 60) {
-      timerEl.classList.remove("timer-warning");
-      timerEl.classList.add("timer-danger");
-    } else if (seconds <= 300) {
-      timerEl.classList.add("timer-warning");
-      timerEl.classList.remove("timer-danger");
-    }
+  function updateTimerState(seconds) {
+    timerEl.classList.toggle("timer-warning", seconds <= 300 && seconds > 60);
+    timerEl.classList.toggle("timer-danger", seconds <= 60);
   }
 
   function submitExpiredExam() {
     clearInterval(interval);
-
-    // IMPORTANT:
-    // Submit directly to exam_submit so the current form values
-    // reach grade_exam(). Posting back to exam_question can be
-    // rejected by the server's expiry guard before the answer is saved.
     form.action = "{% url 'quiz:exam_submit' user_exam_id=user_exam.id %}";
     form.removeAttribute("target");
-
-    // Do not route through Review after expiry.
-    // The submit endpoint grades the answers and finalizes the attempt.
     form.submit();
   }
 
-  timerEl.textContent = formatTime(remainingSeconds);
-  updateColor(remainingSeconds);
+  timerEl.textContent = formatTime(Math.max(remainingSeconds, 0));
+  updateTimerState(remainingSeconds);
 
   const interval = setInterval(() => {
-    remainingSeconds--;
-
+    remainingSeconds -= 1;
     if (remainingSeconds <= 0) {
+      timerEl.textContent = "00:00:00";
       submitExpiredExam();
       return;
     }
-
     timerEl.textContent = formatTime(remainingSeconds);
-    updateColor(remainingSeconds);
+    updateTimerState(remainingSeconds);
   }, 1000);
-
 })();
 </script>
-
-<!-- ================= SCROLL SHADOW EFFECT ================= -->
-<script>
-window.addEventListener("scroll", function () {
-  const header = document.querySelector(".exam-header");
-  if (!header) return;
-
-  if (window.scrollY > 5) {
-    header.style.boxShadow = "0 2px 8px rgba(0,0,0,0.12)";
-  } else {
-    header.style.boxShadow = "none";
-  }
-
-  if (document.documentElement.getAttribute("data-theme") === "dark") {
-    header.style.boxShadow = "0 2px 8px rgba(0,0,0,0.6)";
-  }
-});
-</script>
-
-<style>
-/* =====================================
-   EXAM PAGE STYLING (LIGHT + DARK SAFE)
-   ===================================== */
-
-.exam-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: var(--card);
-  padding: 14px 16px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  transition: box-shadow 0.2s ease, background 0.2s ease;
-}
-
-.exam-header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.exam-title {
-  min-width: 0;
-  max-width: 100%;
-  font-weight: 600;
-  font-size: 1.1rem;
-  overflow-wrap: anywhere;
-}
-
-.exam-timer {
-  flex: 0 0 auto;
-  text-align: right;
-}
-
-.timer-label {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.timer-value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.timer-warning {
-  color: #f59e0b;
-}
-
-.timer-danger {
-  color: #ef4444;
-}
-
-.exam-progress {
-  margin-bottom: 16px;
-}
-
-.exam-question-box {
-  min-width: 0;
-  background: var(--card);
-  border-radius: 10px;
-  overflow-wrap: anywhere;
-}
-
-.question-text {
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.option-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-  min-width: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.06);
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  overflow-wrap: anywhere;
-}
-
-.option-label span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.option-label:hover {
-  background: rgba(0,0,0,0.03);
-}
-
-:root[data-theme='dark'] .option-label {
-  border-color: rgba(255,255,255,0.15);
-}
-
-:root[data-theme='dark'] .option-label:hover {
-  background: rgba(255,255,255,0.06);
-}
-
-:root[data-theme='dark'] .exam-header {
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-input[type="radio"],
-input[type="checkbox"] {
-  flex: 0 0 auto;
-  margin-top: 4px;
-}
-
-.progress {
-  border-radius: 8px;
-}
-
-.exam-navigation {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.exam-nav-button {
-  min-height: 42px;
-}
-
-@media (max-width: 768px) {
-  .exam-header {
-    padding: 12px;
-    margin-bottom: 12px;
-  }
-
-  .exam-header-inner {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .exam-title {
-    font-size: 1rem;
-    line-height: 1.35;
-  }
-
-  .exam-timer {
-    text-align: left;
-  }
-
-  .timer-label {
-    font-size: 0.7rem;
-  }
-
-  .timer-value {
-    font-size: 1.1rem;
-  }
-
-  .exam-progress {
-    margin-bottom: 12px;
-  }
-
-  .exam-question-box {
-    padding: 16px;
-  }
-
-  .question-text {
-    font-size: 0.98rem;
-    line-height: 1.55;
-  }
-
-  .option-label {
-    padding: 11px 10px;
-    gap: 9px;
-    font-size: 0.95rem;
-  }
-
-  .exam-navigation {
-    display: grid;
-    grid-template-columns: 1fr;
-    width: 100%;
-    margin-top: 12px !important;
-  }
-
-  .exam-nav-button {
-    width: 100%;
-    margin: 0 !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .exam-header {
-    border-radius: 8px;
-    padding: 10px;
-  }
-
-  .exam-question-box {
-    padding: 13px;
-    border-radius: 8px;
-  }
-
-  .question-text {
-    font-size: 0.94rem;
-  }
-
-  .option-label {
-    padding: 10px 9px;
-    font-size: 0.9rem;
-  }
-
-  .timer-value {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 360px) {
-  .exam-question-box {
-    padding: 11px;
-  }
-
-  .option-label {
-    gap: 7px;
-    padding: 9px 8px;
-    font-size: 0.86rem;
-  }
-}
-</style>
-
-{% endblock %}
