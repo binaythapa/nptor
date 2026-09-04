@@ -22,9 +22,21 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
         template = (root / "templates" / "quiz" / "student" / "student_dashboard.html").read_text(encoding="utf-8")
 
         self.assertIn('"submitted_attempts": submitted_attempts', view_source)
-        self.assertIn("Recent Exam Results", template)
+        self.assertIn("Exam History", template)
         self.assertIn("View Answers", template)
         self.assertIn("quiz:exam_result", template)
+
+    def test_exam_history_uses_responsive_table_not_dashboard_cards(self):
+        root = Path(__file__).resolve().parents[2]
+        template = (root / "templates" / "quiz" / "student" / "student_dashboard.html").read_text(encoding="utf-8")
+        css = (root / "static" / "css" / "dashboard_learning_hub.css").read_text(encoding="utf-8")
+
+        self.assertIn('class="dashboard-exam-history-table"', template)
+        self.assertIn('class="dashboard-exam-history-row"', template)
+        self.assertIn('class="dashboard-exam-history-action"', template)
+        self.assertIn('.dashboard-exam-history-table', css)
+        self.assertIn('@media (max-width: 760px)', css)
+        self.assertNotIn('data-learning-type="exam-results"', template)
 
     def test_dashboard_resource_filters_ignore_recent_result_cards(self):
         root = Path(__file__).resolve().parents[2]
