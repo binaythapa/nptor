@@ -73,7 +73,6 @@ urlpatterns = [
 
     path("exam/<int:exam_id>/preview/", exam_preview, name="exam_preview"),
     path("exam/<int:exam_id>/start/", exam_start, name="exam_start"),
-    path("exam/<int:exam_id>/resume/", exam_resume, name="exam_resume"),
     path("exam/<int:exam_id>/locked/", exam_locked, name="exam_locked"),
     path("exam/attempt/<int:user_exam_id>/", exam_take, name="exam_take"),
     path("exam/attempt/<int:user_exam_id>/question/<int:index>/", exam_question, name="exam_question"),
@@ -117,7 +116,7 @@ urlpatterns = [
     path("dashboard/admin/exams/<int:pk>/delete/", admin_exam_delete, name="admin_exam_delete"),
     path("dashboard/admin/tracks/", admin_track_list, name="admin_track_list"),
     path("dashboard/admin/tracks/add/", admin_track_create, name="admin_track_create"),
-    path("dashboard/admin/tracks/<int:pk>/edit/", admin_track_update, name="admin_track_update"),
+    path("dashboard/admin/tracks/<int:pk>/edit/", admin_track_create, name="admin_track_create"),
     path("dashboard/admin/tracks/<int:pk>/delete/", admin_track_delete, name="admin_track_delete"),
     path("dashboard/admin/coupons/", admin_coupon_list, name="admin_coupon_list"),
     path("dashboard/admin/coupons/add/", admin_coupon_create, name="admin_coupon_create"),
@@ -128,40 +127,3 @@ urlpatterns = [
 
     path("dashboard/admin/reset-mock/", reset_mock_attempts, name="reset_mock_attempts"),
     path("dashboard/admin/reset-mock/<int:user_id>/<int:exam_id>/", reset_mock_attempts, name="reset_mock_attempts_user"),
-    path("dashboard/admin/mock-attempts/", admin_mock_attempts, name="admin_mock_attempts"),
-    path("dashboard/admin/mock-attempts/history/", admin_mock_attempt_history, name="admin_mock_attempt_history"),
-
-    path("dashboard/questions/", question_dashboard, name="question_dashboard"),
-    path("dashboard/questions/add/", add_question, name="add_question"),
-    path("dashboard/questions/<int:pk>/edit/", edit_question, name="edit_question"),
-    path("dashboard/questions/<int:pk>/delete/", delete_question, name="delete_question"),
-    path("staff/questions/<int:pk>/review/", question_review, name="question_review"),
-    path("ajax/question/toggle/", toggle_question_active, name="toggle_question_active"),
-    path("ajax/question/delete/", delete_question_ajax, name="delete_question_ajax"),
-
-    path("ajax/discussion/verify/", verify_discussion, name="verify_discussion"),
-    path("ajax/discussion/pin/", pin_discussion, name="pin_discussion"),
-    path("ajax/discussion/delete/", delete_discussion, name="delete_discussion"),
-    path("review/discussion/resolve/", resolve_discussion, name="resolve_discussion"),
-
-    path("ajax/categories-by-domain/", ajax_categories_by_domain, name="ajax_categories_by_domain"),
-
-    path("study-plan/", study_plan_dashboard, name="study_plan_dashboard"),
-    path("study-plan/practice/", study_plan_practice, name="study_plan_practice"),
-    path("study-plan/create/", create_study_plan, name="create_study_plan"),
-    path("study-plan/clone/<int:plan_id>/", clone_study_plan, name="clone_study_plan"),
-    path("study-plan/adaptive/", create_adaptive_plan, name="create_adaptive_plan"),
-    path("study-plan/leaderboard/", study_plan_leaderboard, name="study_plan_leaderboard"),
-    path("study-plan/completed/<int:plan_id>/", study_plan_completed, name="study_plan_completed"),
-    path("study-plan/history/", study_plan_history, name="study_plan_history"),
-    path("study-plan/<int:plan_id>/", study_plan_detail, name="study_plan_detail"),
-
-    path("practice/skip/ajax/", practice_skip_ajax, name="practice_skip_ajax"),
-]
-
-
-if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT,
-    )
