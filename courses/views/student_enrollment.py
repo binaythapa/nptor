@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
 from courses.models import Course, CourseEnrollment
+from organizations.models import ResourceAccess
 from subscriptions.services.plan_service import get_plan_for_course
 
 
@@ -37,5 +38,15 @@ def enroll_free_course(request, slug):
     if not enrollment.is_active:
         enrollment.is_active = True
         enrollment.save(update_fields=["is_active"])
+
+    ResourceAccess.objects.get_or_create(
+        user=request.user,
+        resource_type=ResourceAccess.RESOURCE_COURSE,
+        course=course,
+        source=ResourceAccess.SOURCE_PUBLIC,
+        defaults={
+            "is_active": True,
+        },
+    )
 
     return redirect("courses:course_learn", slug=course.slug)
