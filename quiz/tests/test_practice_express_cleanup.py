@@ -25,6 +25,28 @@ class PracticeExpressCleanupTests(unittest.TestCase):
         self.assertNotIn('filterHint.textContent = ""', shared_ui)
         self.assertNotIn('filterHint.hidden = true', shared_ui)
 
+    def test_express_uses_the_practice_question_layout(self):
+        root = Path(__file__).resolve().parents[2]
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+
+        self.assertIn('className = "practice-progress"', express_ui)
+        self.assertIn('className = "practice-question-meta"', express_ui)
+        self.assertIn('className = "practice-question-type"', express_ui)
+        self.assertIn('className = "practice-question-text"', express_ui)
+        self.assertIn('textContent = `Question #${', express_ui)
+        self.assertIn('textContent = "Check Answer"', express_ui)
+        self.assertIn('textContent = "Skip"', express_ui)
+        self.assertIn('className = "practice-btn practice-btn-secondary"', express_ui)
+        self.assertIn('className = "practice-btn practice-btn-primary"', express_ui)
+
+    def test_express_hides_legacy_stats_and_timer_visuals(self):
+        root = Path(__file__).resolve().parents[2]
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+
+        self.assertIn('stats.style.display = "none"', express_ui)
+        self.assertIn('timer.style.display = "none"', express_ui)
+        self.assertIn('filterBody.style.maxHeight = "0px"', express_ui)
+
 
 if __name__ == "__main__":
     unittest.main()
