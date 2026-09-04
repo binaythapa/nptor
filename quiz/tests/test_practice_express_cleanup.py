@@ -18,8 +18,9 @@ class PracticeExpressCleanupTests(unittest.TestCase):
         self.assertIn("font-weight: 400;", express_ui)
         self.assertIn("min-height: 48px;", express_ui)
         self.assertIn("padding: 0 15px;", express_ui)
-        self.assertIn("padding: 4px 15px 15px;", express_ui)
+        self.assertIn("padding: 4px 0 15px;", express_ui)
         self.assertIn("margin-bottom: 0 !important;", express_ui)
+        self.assertIn('filterHint.textContent = "Click to expand"', express_ui)
         self.assertIn('filterHint.textContent = "Click to expand"', shared_ui)
         self.assertIn("filterHint.hidden = false", shared_ui)
         self.assertNotIn('filterHint.textContent = ""', shared_ui)
@@ -44,8 +45,8 @@ class PracticeExpressCleanupTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
 
-        self.assertIn('stats.style.display = "none"', express_ui)
-        self.assertIn('timer.style.display = "none"', express_ui)
+        self.assertIn('legacyStats.style.display = "none"', express_ui)
+        self.assertIn('element.style.display = "none"', express_ui)
         self.assertIn('filterBody.style.maxHeight = "0px"', express_ui)
 
 
