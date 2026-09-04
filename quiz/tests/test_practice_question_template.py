@@ -58,6 +58,20 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         self.assertIn("Question #{{ request.session.p_seen|length|add:\"1\" }}", template)
         self.assertNotIn("Question #{{ question.id }}", template)
 
+    def test_answer_result_uses_practice_sequence_not_database_id(self):
+        template_path = (
+            Path(__file__).resolve().parents[2]
+            / "templates"
+            / "quiz"
+            / "student"
+            / "practice"
+            / "_answer_result.html"
+        )
+        template = template_path.read_text(encoding="utf-8")
+
+        self.assertIn("Question #{{ request.session.p_seen|length|add:\"1\" }}", template)
+        self.assertNotIn("Question #{{ question.id }}", template)
+
 
 if __name__ == "__main__":
     unittest.main()
