@@ -14,9 +14,10 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         )
         template = template_path.read_text(encoding="utf-8")
 
+        self.assertIn('{% cycle "A" "B" "C" "D" as choice_letter %}', template)
         self.assertIn('class="practice-option-marker"', template)
         self.assertIn('class="practice-option-text"', template)
-        self.assertIn("{{ forloop.counter0|add:65|yesno:\"A,B\" }}", template)
+        self.assertIn('{{ choice_letter }}', template)
 
 
 if __name__ == "__main__":
