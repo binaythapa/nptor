@@ -3,7 +3,7 @@ import unittest
 
 
 class PracticeExpressCleanupTests(unittest.TestCase):
-    def test_express_shell_matches_practice_typography_and_filter_hint(self):
+    def test_express_shell_matches_practice_typography_and_filter_layout(self):
         root = Path(__file__).resolve().parents[2]
 
         express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
@@ -20,16 +20,10 @@ class PracticeExpressCleanupTests(unittest.TestCase):
         self.assertIn("padding: 0 15px;", express_ui)
         self.assertIn("padding: 4px 15px 15px;", express_ui)
         self.assertIn("margin-bottom: 0 !important;", express_ui)
+        self.assertIn('filterHint.textContent = "Click to expand"', shared_ui)
+        self.assertIn("filterHint.hidden = false", shared_ui)
         self.assertNotIn('filterHint.textContent = ""', shared_ui)
         self.assertNotIn('filterHint.hidden = true', shared_ui)
-
-    def test_express_filter_keeps_expand_hint(self):
-        root = Path(__file__).resolve().parents[2]
-        express_template = (
-            root / "templates" / "quiz" / "student" / "practice_express" / "practice_express.html"
-        ).read_text(encoding="utf-8")
-
-        self.assertIn('(Click to expand)', express_template)
 
 
 if __name__ == "__main__":
