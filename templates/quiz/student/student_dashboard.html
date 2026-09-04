@@ -60,7 +60,7 @@
             {% endif %}
           {% endif %}
         </div>
-        <a href="{% url 'quiz:exam_result' attempt.id %}" class="learning-card-action" aria-label="View answers for {{ attempt.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        <a href="{% url 'quiz:exam_result' attempt.id %}" class="learning-card-action" aria-label="View answers for {{ attempt.exam.title }}"><span>View Answers</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
       </article>
       {% endfor %}
     </div>
