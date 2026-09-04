@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const nav = header.querySelector(".practice-mode-nav");
         if (nav) {
             const basicsLink = nav.querySelector('a[href*="/quiz/practice/"]');
-            const proLink = nav.querySelector('a[href*="/quiz/"]');
+            const proLink = nav.querySelector('a[href*="/quiz/exam"]');
             let expressLink = nav.querySelector('[data-practice-express-link="1"]');
 
             if (!expressLink) {
