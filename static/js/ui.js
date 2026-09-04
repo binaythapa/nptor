@@ -122,6 +122,85 @@ document.addEventListener(
         initExpressFilterLabel();
 
         /* ====================================================
+           EXPRESS FILTER LAYOUT
+           Apply the same filter properties used by Practice Questions,
+           without changing the rest of the Express page.
+           ==================================================== */
+        function initExpressFilterLayout() {
+            if (window.location.pathname !== "/quiz/practice/express/") {
+                return;
+            }
+
+            const filter = document.querySelector(".practice-express-filter");
+            if (!filter) {
+                return;
+            }
+
+            filter.classList.add("practice-filter-panel");
+
+            const header = filter.querySelector(":scope > div:first-child");
+            const hint = document.getElementById("filterHint");
+            const heading = header?.querySelector("p");
+            const body = document.getElementById("filterBody");
+            const grid = body?.querySelector(":scope > .columns");
+
+            if (header) {
+                header.className = "practice-filter-header";
+                header.removeAttribute("style");
+            }
+
+            if (heading) {
+                heading.className = "practice-filter-heading";
+                heading.classList.remove("has-text-weight-semibold", "is-size-7", "mb-0");
+            }
+
+            if (hint) {
+                hint.className = "practice-filter-hint";
+                hint.hidden = false;
+                hint.textContent = "Click to expand";
+
+                if (hint.tagName.toLowerCase() !== "small") {
+                    const small = document.createElement("small");
+                    small.id = hint.id;
+                    small.className = hint.className;
+                    small.textContent = hint.textContent;
+                    hint.replaceWith(small);
+                }
+            }
+
+            const arrow = document.getElementById("filterToggleIcon");
+            if (arrow) {
+                arrow.className = "practice-filter-arrow";
+            }
+
+            if (body) {
+                body.classList.add("practice-filter-body");
+                body.removeAttribute("style");
+            }
+
+            if (grid) {
+                grid.className = "practice-filter-grid";
+
+                grid.querySelectorAll(":scope > .column").forEach((column) => {
+                    column.className = "practice-filter-field";
+
+                    const field = column.querySelector(":scope > .field");
+                    if (field) {
+                        field.className = "practice-filter-field-inner";
+                        field.removeAttribute("style");
+                    }
+
+                    const selectWrap = column.querySelector(".select");
+                    if (selectWrap) {
+                        selectWrap.classList.add("practice-select-wrap");
+                    }
+                });
+            }
+        }
+
+        initExpressFilterLayout();
+
+        /* ====================================================
            PRACTICE STATS
            ==================================================== */
 
