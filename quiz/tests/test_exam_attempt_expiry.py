@@ -164,7 +164,7 @@ class ExamAccessLockReasonTests(TestCase):
         self.assertEqual(
             response.url,
             f"{reverse('quiz:exam_locked', args=[self.exam.id])}"
-            "?reason=Prerequisite%20exam%20required",
+            "?reason=Prerequisite+exam+required",
         )
 
     def test_free_locked_exam_explains_prerequisite_instead_of_unlocking(self):
