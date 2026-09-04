@@ -27,7 +27,8 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         end = shared_ui.index("initExpressFilterCollapseCompatibility();", start)
         filter_code = shared_ui[start:end]
 
-        self.assertIn('body.style.padding = expanded ? "4px 15px 15px" : "0"', filter_code)
+        self.assertIn('const padding = expanded ? "4px 15px 15px" : "0"', filter_code)
+        self.assertIn('if (body.style.padding !== padding)', filter_code)
         self.assertIn('new MutationObserver(syncFilterPadding)', filter_code)
         self.assertIn('attributeFilter: ["style"]', filter_code)
 
