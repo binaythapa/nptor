@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const filters = document.querySelectorAll("[data-dashboard-filter]");
     const search = document.querySelector("[data-dashboard-search]");
-    const cards = document.querySelectorAll("[data-learning-card]");
+    const cards = document.querySelectorAll("[data-dashboard-grid] [data-learning-card]");
     const empty = document.querySelector("[data-dashboard-empty]");
 
     function applyFilters() {
