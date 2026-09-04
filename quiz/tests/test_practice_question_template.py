@@ -83,16 +83,25 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         )
         template = template_path.read_text(encoding="utf-8")
 
-        self.assertIn("{% static 'css/pages/practice.css' %}", template)
-        self.assertIn("{% static 'css/pages/practice-mobile.css' %}", template)
         self.assertIn('class="practice-mode-nav"', template)
         self.assertIn('class="practice-mode"', template)
-        self.assertIn('class="practice-mode active"', template)
-        self.assertIn(">Basics</a>", template)
-        self.assertIn(">Express</a>", template)
-        self.assertIn(">Pro</a>", template)
-        self.assertNotIn('class="practice-modes"', template)
         self.assertNotIn('class="practice-link"', template)
+
+        script_path = (
+            Path(__file__).resolve().parents[2]
+            / "static"
+            / "js"
+            / "ui.js"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn("/quiz/practice/express/", script)
+        self.assertIn('textContent = "Express"', script)
+        self.assertIn('className = "practice-mode active"', script)
+        self.assertIn("practice-mode-nav", script)
+        self.assertIn("practice-mode + .practice-mode::before", script)
+        self.assertIn("font-size: .75rem", script)
+        self.assertIn("font-weight: 500", script)
 
 
 if __name__ == "__main__":
