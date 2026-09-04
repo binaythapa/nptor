@@ -91,7 +91,7 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
             Path(__file__).resolve().parents[2]
             / "static"
             / "js"
-            / "ui.js"
+            / "practice-express-ui.js"
         )
         script = script_path.read_text(encoding="utf-8")
 
@@ -108,7 +108,7 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
             Path(__file__).resolve().parents[2]
             / "static"
             / "js"
-            / "ui.js"
+            / "practice-express-ui.js"
         )
         script = script_path.read_text(encoding="utf-8")
 
