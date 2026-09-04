@@ -86,8 +86,97 @@ document.addEventListener(
         initPracticeModeNavigation();
 
         /* ====================================================
+           PRACTICE FILTER NORMALIZATION
+           Express historically rendered a Bulma-specific filter.
+           Normalize that block to the exact Practice filter DOM,
+           then use the same collapse state and stylesheet.
+           ==================================================== */
+        function normalizeExpressPracticeFilter() {
+            if (window.location.pathname !== "/quiz/practice/express/") return;
+
+            const page = document.querySelector("#main-content > .box");
+            const filter = page?.querySelector(".box.mb-3.p-3");
+            if (!filter) return;
+
+            const domainSelect = filter.querySelector("#domainSelect");
+            const categorySelect = filter.querySelector("#categorySelect");
+            const difficultySelect = filter.querySelector("#difficultySelect");
+            if (!domainSelect || !categorySelect || !difficultySelect) return;
+
+            const stylesheet = document.querySelector('link[href*="css/pages/practice.css"]');
+            if (!stylesheet) {
+                const link = document.createElement("link");
+                link.rel = "stylesheet";
+                link.href = "/static/css/pages/practice.css";
+                document.head.appendChild(link);
+            }
+
+            filter.classList.remove("box", "mb-3", "p-3");
+            filter.classList.add("practice-panel", "practice-filter-panel");
+
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.id = "filterToggle";
+            toggle.className = "practice-filter-header";
+            toggle.setAttribute("aria-expanded", "false");
+            toggle.setAttribute("aria-controls", "filterBody");
+            toggle.innerHTML = `
+                <span class="practice-filter-heading">
+                    <span class="practice-filter-icon" aria-hidden="true">☰</span>
+                    <span>Filters</span>
+                    <small id="filterHint">Click to expand</small>
+                </span>
+                <span id="filterToggleIcon" class="practice-filter-arrow" aria-hidden="true">▾</span>
+            `;
+
+            const body = filter.querySelector("#filterBody");
+            if (!body) return;
+            const form = document.createElement("form");
+            form.method = "get";
+            form.className = "practice-filter-form";
+
+            const grid = document.createElement("div");
+            grid.className = "practice-filter-grid";
+
+            const fields = [
+                ["Domain", domainSelect, "practice-domain"],
+                ["Category", categorySelect, "practice-category"],
+                ["Difficulty", difficultySelect, "practice-difficulty"],
+            ];
+
+            fields.forEach(([labelText, select, id]) => {
+                const field = document.createElement("div");
+                field.className = "practice-filter-field";
+
+                const label = document.createElement("label");
+                label.htmlFor = id;
+                label.textContent = labelText;
+
+                const wrap = document.createElement("div");
+                wrap.className = "practice-select-wrap";
+
+                select.id = id;
+                select.name = id.replace("practice-", "");
+                wrap.appendChild(select);
+                field.append(label, wrap);
+                grid.appendChild(field);
+            });
+
+            form.appendChild(grid);
+            body.className = "practice-filter-body";
+            body.replaceChildren(form);
+            body.style.maxHeight = "";
+            body.style.padding = "";
+            body.style.transition = "";
+            filter.replaceChildren(toggle, body);
+        }
+
+        normalizeExpressPracticeFilter();
+
+        /* ====================================================
            SHARED PRACTICE FILTER COLLAPSE
-           Used by both Practice and Practice Express.
+           Same state key, class state, labels and arrow behavior
+           as the main Practice page.
            ==================================================== */
         function initPracticeFilterCollapse() {
             const filterToggle = document.getElementById("filterToggle");
@@ -95,11 +184,7 @@ document.addEventListener(
             const filterHint = document.getElementById("filterHint");
             const filterIcon = document.getElementById("filterToggleIcon");
 
-            if (!filterToggle || !filterBody || filterToggle.dataset.practiceFilterInitialized === "1") {
-                return;
-            }
-
-            filterToggle.dataset.practiceFilterInitialized = "1";
+            if (!filterToggle || !filterBody) return;
 
             const updateFilterUI = (expanded) => {
                 if (!filterHint || !filterIcon) return;
