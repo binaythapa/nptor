@@ -154,11 +154,9 @@ document.addEventListener(
                 });
             }
 
-            /*
-             * Practice Questions loads this stylesheet in head_extra.
-             * Express uses the same stylesheet here so the filter has
-             * one source of truth instead of a second copy of the CSS.
-             */
+            /* Practice Questions loads this stylesheet in head_extra.
+               Express loads the same stylesheet here so the filter has
+               one source of truth. */
             if (!document.querySelector('link[data-practice-shared-styles="1"]')) {
                 const sharedStyles = document.querySelector('link[href*="/css/pages/practice.css"]');
                 if (sharedStyles) {
@@ -172,9 +170,9 @@ document.addEventListener(
                 }
             }
 
-            /* Remove the legacy Express selector so its old filter rules
-               cannot compete with the shared Practice stylesheet. */
-            filter.classList.remove("practice-express-filter");
+            /* Remove legacy Bulma/Express filter selectors. From this point,
+               practice.css is the sole source of the filter's visual styling. */
+            filter.classList.remove("practice-express-filter", "box", "mb-3", "p-3");
 
             /* Keep the existing Express toggle, while also updating the
                shared Practice open-state class used by practice.css. */
