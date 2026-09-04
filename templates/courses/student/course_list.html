@@ -1,0 +1,53 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}Courses | Nepal Mentor{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/pages/course-library.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/course-catalog.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/course-mobile.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="student-page course-catalog-page">
+  <div class="page-header course-library-header">
+    <div>
+      <p class="eyebrow">Learning</p>
+      <h1 class="title is-3">Courses</h1>
+      <p class="subtitle is-6">Explore approved courses and find your next learning path.</p>
+    </div>
+    <a class="button is-link is-light" href="{% url 'courses:my_courses' %}">
+      <span class="icon"><i class="fa fa-book"></i></span>
+      <span>My Courses</span>
+    </a>
+  </div>
+
+  {% if courses %}
+    <div class="course-catalog-grid">
+      {% for course in courses %}
+        <article class="course-catalog-card">
+          <div class="course-catalog-content">
+            <span class="tag is-link is-light">Course</span>
+            <h2 class="course-catalog-title">{{ course.title }}</h2>
+            <p class="course-catalog-description">
+              {{ course.description|striptags|truncatechars:180 }}
+            </p>
+            <div class="course-catalog-meta">
+              {% if course.level %}<span><i class="fa fa-signal"></i> {{ course.level|title }}</span>{% endif %}
+              {% if course.duration %}<span><i class="fa fa-clock"></i> {{ course.duration }}</span>{% endif %}
+            </div>
+            <a class="button is-link is-fullwidth" href="{% url 'courses:course_detail' slug=course.slug %}">View Course</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state course-library-empty">
+      <div class="empty-state-icon"><i class="fa fa-compass"></i></div>
+      <h2 class="title is-5">No courses available</h2>
+      <p>There are no published courses available right now. Please check back soon.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
