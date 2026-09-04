@@ -72,7 +72,7 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         self.assertIn("Question #{{ request.session.p_seen|length|add:\"1\" }}", template)
         self.assertNotIn("Question #{{ question.id }}", template)
 
-    def test_practice_express_uses_shared_practice_mode_navigation_class(self):
+    def test_practice_express_uses_shared_practice_mode_navigation(self):
         template_path = (
             Path(__file__).resolve().parents[2]
             / "templates"
@@ -83,7 +83,15 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         )
         template = template_path.read_text(encoding="utf-8")
 
+        self.assertIn("{% static 'css/pages/practice.css' %}", template)
+        self.assertIn("{% static 'css/pages/practice-mobile.css' %}", template)
+        self.assertIn('class="practice-mode-nav"', template)
         self.assertIn('class="practice-mode"', template)
+        self.assertIn('class="practice-mode active"', template)
+        self.assertIn(">Basics</a>", template)
+        self.assertIn(">Express</a>", template)
+        self.assertIn(">Pro</a>", template)
+        self.assertNotIn('class="practice-modes"', template)
         self.assertNotIn('class="practice-link"', template)
 
 
