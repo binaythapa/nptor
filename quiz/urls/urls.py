@@ -26,6 +26,8 @@ from quiz.views.exam_access import exam_locked, exam_expired, exam_review
 from quiz.views.exam_submission import exam_submit_dashboard
 from quiz.views.mock import *
 from quiz.views.exams import *
+from quiz.views.exams import exam_start as standard_exam_start
+from quiz.views.course_exam_start import course_exam_start
 from quiz.views.exam_list import *
 from quiz.views.study_plan import *
 
@@ -68,7 +70,7 @@ urlpatterns = [
     path("users/", users_list, name="users_list"),
 
     path("exam/<int:exam_id>/preview/", exam_preview, name="exam_preview"),
-    path("exam/<int:exam_id>/start/", exam_start, name="exam_start"),
+    path("exam/<int:exam_id>/start/", course_exam_start, name="exam_start"),
     path("exam/<int:exam_id>/locked/", exam_locked, name="exam_locked"),
     path("exam/attempt/<int:user_exam_id>/", exam_take, name="exam_take"),
     path("exam/attempt/<int:user_exam_id>/question/<int:index>/", exam_question, name="exam_question"),
