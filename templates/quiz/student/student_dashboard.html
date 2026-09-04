@@ -35,33 +35,46 @@
 
   {% if submitted_attempts %}
   <section class="dashboard-section dashboard-exam-history" aria-labelledby="exam-history-title">
-    <div class="section-heading">
+    <div class="section-heading dashboard-exam-history-heading">
       <div>
         <span class="section-eyebrow">Completed</span>
-        <h2 id="exam-history-title">Recent Exam Results</h2>
+        <h2 id="exam-history-title">Exam History</h2>
       </div>
+      <span class="dashboard-exam-history-count">{{ total_attempts }} attempt{{ total_attempts|pluralize }}</span>
     </div>
-    <div class="dashboard-learning-grid">
-      {% for attempt in submitted_attempts|slice:":5" %}
-      <article class="dashboard-learning-card" data-learning-card data-learning-type="exam-results" data-learning-name="{{ attempt.exam.title|lower }}">
-        <div class="learning-card-icon learning-card-icon-exam"><i class="fa-solid fa-file-circle-check" aria-hidden="true"></i></div>
-        <div class="learning-card-body">
-          <div class="learning-card-topline">
-            <span class="learning-card-type">Exam Result</span>
-            {% if attempt.passed %}<span class="learning-source">Passed</span>{% else %}<span class="learning-source">Failed</span>{% endif %}
-          </div>
-          <h3>{{ attempt.exam.title }}</h3>
-          <p>{% if attempt.submitted_at %}{{ attempt.submitted_at|date:"M j, Y · g:i A" }}{% endif %}</p>
-          {% if attempt.score is not None %}
-            {% if attempt.passed %}
-              <span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> {{ attempt.score }}%</span>
-            {% else %}
-              <span class="learning-result learning-result-danger"><i class="fa-solid fa-xmark" aria-hidden="true"></i> {{ attempt.score }}%</span>
-            {% endif %}
+
+    <div class="dashboard-exam-history-table" role="table" aria-label="Exam history">
+      <div class="dashboard-exam-history-row dashboard-exam-history-header" role="row">
+        <div role="columnheader">Exam</div>
+        <div role="columnheader">Date</div>
+        <div role="columnheader">Score</div>
+        <div role="columnheader">Status</div>
+        <div role="columnheader" class="dashboard-exam-history-action-cell">Action</div>
+      </div>
+
+      {% for attempt in submitted_attempts|slice:":10" %}
+      <div class="dashboard-exam-history-row" role="row">
+        <div class="dashboard-exam-history-exam" role="cell">
+          <span class="dashboard-exam-history-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-check"></i></span>
+          <span class="dashboard-exam-history-name" title="{{ attempt.exam.title }}">{{ attempt.exam.title }}</span>
+        </div>
+        <div class="dashboard-exam-history-date" role="cell">
+          {% if attempt.submitted_at %}{{ attempt.submitted_at|date:"M j, Y · g:i A" }}{% else %}—{% endif %}
+        </div>
+        <div class="dashboard-exam-history-score" role="cell">
+          {% if attempt.score is not None %}{{ attempt.score }}%{% else %}—{% endif %}
+        </div>
+        <div role="cell">
+          {% if attempt.passed %}
+            <span class="dashboard-exam-history-status is-passed"><i class="fa-solid fa-check" aria-hidden="true"></i> Passed</span>
+          {% else %}
+            <span class="dashboard-exam-history-status is-failed"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Failed</span>
           {% endif %}
         </div>
-        <a href="{% url 'quiz:exam_result' attempt.id %}" class="learning-card-action" aria-label="View answers for {{ attempt.exam.title }}"><span>View Answers</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-      </article>
+        <div class="dashboard-exam-history-action-cell" role="cell">
+          <a href="{% url 'quiz:exam_result' attempt.id %}" class="dashboard-exam-history-action" aria-label="View answers for {{ attempt.exam.title }}">View Answers <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+      </div>
       {% endfor %}
     </div>
   </section>
