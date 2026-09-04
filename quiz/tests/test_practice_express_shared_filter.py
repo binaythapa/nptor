@@ -52,6 +52,25 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertIn('body.style.padding = ""', shared_ui)
         self.assertIn('body.style.transition = ""', shared_ui)
 
+    def test_express_filter_keeps_legacy_select_ids_for_existing_express_logic(self):
+        root = Path(__file__).resolve().parents[2]
+        shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
+
+        self.assertIn('const domainSelect = filter.querySelector("#domainSelect")', shared_ui)
+        self.assertIn('const categorySelect = filter.querySelector("#categorySelect")', shared_ui)
+        self.assertIn('const difficultySelect = filter.querySelector("#difficultySelect")', shared_ui)
+        self.assertNotIn('select.id = id;', shared_ui)
+        self.assertNotIn('select.name = id.replace("practice-", "");', shared_ui)
+
+    def test_express_filter_uses_grid_row_collapse_like_practice(self):
+        root = Path(__file__).resolve().parents[2]
+        practice_css = (root / "static" / "css" / "pages" / "practice.css").read_text(encoding="utf-8")
+        shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
+
+        self.assertIn('grid-template-rows:0fr;', practice_css.replace(" ", ""))
+        self.assertIn('filterBody.classList.toggle("is-open", expanded)', shared_ui)
+        self.assertIn('filterBody.style.maxHeight', shared_ui)
+
     def test_express_page_shell_is_visual_wrapper_not_a_shared_card(self):
         root = Path(__file__).resolve().parents[2]
         express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
