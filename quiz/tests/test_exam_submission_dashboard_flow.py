@@ -21,7 +21,7 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
         view_source = (root / "quiz" / "views" / "student_learning_dashboard.py").read_text(encoding="utf-8")
         template = (root / "templates" / "quiz" / "student" / "student_dashboard.html").read_text(encoding="utf-8")
 
-        self.assertIn('"submitted_attempts": submitted_attempts', view_source)
+        self.assertIn('"submitted_attempts": exam_history', view_source)
         self.assertIn("Exam History", template)
         self.assertIn("View Answers", template)
         self.assertIn("quiz:exam_result", template)
@@ -45,13 +45,14 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
         css = (root / "static" / "css" / "dashboard_learning_hub.css").read_text(encoding="utf-8")
 
         self.assertIn("from django.core.paginator import Paginator", view_source)
-        self.assertIn("Paginator(submitted_attempts, 5)", view_source)
+        self.assertIn("Paginator(submitted_attempts, 5).get_page", view_source)
         self.assertIn('"exam_history": exam_history', view_source)
         self.assertIn("exam_history.object_list", template)
         self.assertIn("exam_history.has_previous", template)
         self.assertIn("exam_history.has_next", template)
         self.assertIn("exam_history.number", template)
         self.assertIn("exam_history.paginator.num_pages", template)
+        self.assertIn("get_elided_page_range", template)
         self.assertIn("dashboard-exam-history-pagination", template)
         self.assertIn("dashboard-exam-history-pagination", css)
 
