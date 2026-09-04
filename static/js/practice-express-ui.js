@@ -221,15 +221,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 display: none !important;
             }
 
-            .practice-express-page .practice-express-filter #filterBody {
+            /* Express gets a deterministic height-based collapse so the
+               legacy inline max-height cannot leave labels peeking out. */
+            .practice-express-page .practice-express-filter .practice-filter-body {
                 width: 100%;
-                padding: 4px 15px 15px;
+                max-height: 0 !important;
+                overflow: hidden !important;
+                padding: 0 !important;
                 box-sizing: border-box;
+                transition: max-height .22s ease;
+            }
+
+            .practice-express-page .practice-express-filter .practice-filter-body.is-open {
+                max-height: 600px !important;
             }
 
             .practice-express-page .practice-express-filter #filterBody > .columns {
                 margin: 0 !important;
-                padding-bottom: 8px !important;
+                padding: 4px 15px 15px !important;
             }
 
             .practice-express-page .practice-express-filter #filterBody .column {
