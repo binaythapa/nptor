@@ -1,0 +1,55 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}{{ exam.title }} — Access Required{% endblock %}
+{% block page_css %}
+  <link rel="stylesheet" href="{% static 'css/pages/exam-locked.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="exam-locked-page" aria-labelledby="exam-locked-title">
+  <section class="exam-locked-card">
+    <div class="exam-locked-icon" aria-hidden="true">🔒</div>
+
+    <h1 id="exam-locked-title" class="exam-locked-title">
+      Exam Access Required
+    </h1>
+
+    <p class="exam-locked-exam">{{ exam.title }}</p>
+
+    <p class="exam-locked-message">
+      This exam is not included in your current access. Unlock it to start the full timed assessment.
+    </p>
+
+    <div class="exam-locked-details" aria-label="Exam details">
+      {% if exam.question_count %}
+        <span class="exam-locked-detail">{{ exam.question_count }} questions</span>
+      {% endif %}
+      {% if exam.duration_seconds %}
+        <span class="exam-locked-detail">{% widthratio exam.duration_seconds 60 1 %} min</span>
+      {% endif %}
+      {% if exam.is_free %}
+        <span class="exam-locked-detail">Free</span>
+      {% elif exam.price %}
+        <span class="exam-locked-detail">{{ exam.currency|default:"INR" }} {{ exam.price|floatformat:0 }}</span>
+      {% endif %}
+    </div>
+
+    {% if reason %}
+      <p class="exam-locked-message">{{ reason }}</p>
+    {% endif %}
+
+    <div class="exam-locked-actions">
+      {% if not exam.is_free %}
+        <a class="exam-locked-action primary"
+           href="{% url 'payments:exam_checkout' exam.id %}?next={% url 'quiz:exam_start' exam.id %}">
+          Get Full Access →
+        </a>
+      {% endif %}
+      <a class="exam-locked-action" href="{% url 'quiz:exam_list' %}">
+        Back to Exams
+      </a>
+    </div>
+  </section>
+</main>
+{% endblock %}
