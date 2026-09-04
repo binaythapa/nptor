@@ -221,6 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             .practice-express-page .practice-express-filter #filterBody > .columns {
                 margin: 0 !important;
+                padding-bottom: 8px !important;
             }
 
             .practice-express-page .practice-express-filter #filterBody .column {
