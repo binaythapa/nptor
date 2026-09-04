@@ -1,0 +1,63 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/course-free-preview.css' %}">
+
+<main class="course-free-preview" aria-labelledby="preview-title">
+  <div class="preview-breadcrumb"><a href="{% url 'quiz:exam_list' %}">Learning</a><span>›</span><a href="{% url 'courses:course_detail' course.slug %}">{{ course.title }}</a><span>›</span><span>Preview</span></div>
+
+  <section class="preview-header">
+    <div>
+      <span class="preview-kicker">FREE COURSE PREVIEW</span>
+      <h1 id="preview-title">{{ course.title }}</h1>
+      <p>Try the first {{ free_preview_count }} lessons before unlocking the full course.</p>
+    </div>
+    <a class="preview-unlock" href="{% url 'courses:subscribe_course' course.id %}">Unlock Full Course →</a>
+  </section>
+
+  <div class="preview-layout">
+    <aside class="preview-sidebar" aria-label="Course preview lessons">
+      <div class="preview-sidebar-title">Preview lessons</div>
+      {% for section in sections %}
+        <h2>{{ section.title }}</h2>
+        {% for item in section.lessons.all %}
+          {% if item in preview_lessons %}
+            <a class="preview-lesson-link{% if lesson.id == item.id %} active{% endif %}" href="{% url 'courses:course_learn_lesson' course.slug item.id %}?preview=1"><span>{{ forloop.counter }}</span>{{ item.title }}</a>
+          {% else %}
+            <div class="preview-lesson-link locked"><span>🔒</span>{{ item.title }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    </aside>
+
+    <section class="preview-content">
+      {% if preview_locked %}
+        <div class="preview-lock-card">
+          <div class="preview-lock-icon">🔒</div>
+          <span class="preview-kicker">PREVIEW LIMIT REACHED</span>
+          <h2>Unlock Full Course</h2>
+          <p>The first {{ free_preview_count }} lessons are free to preview. Unlock the course to continue learning all {{ total }} lessons.</p>
+          <a class="preview-unlock large" href="{% url 'courses:subscribe_course' course.id %}">Unlock Full Course →</a>
+        </div>
+      {% elif lesson %}
+        <div class="preview-lesson-heading"><span class="preview-kicker">LESSON {{ lesson.order }}</span><h2>{{ lesson.title }}</h2></div>
+        {% if lesson.lesson_type == lesson.TYPE_VIDEO and video_embed_url %}
+          <div class="preview-video"><iframe src="{{ video_embed_url }}" title="{{ lesson.title }}" allowfullscreen></iframe></div>
+        {% elif lesson.lesson_type == lesson.TYPE_ARTICLE %}
+          <article class="preview-article">{{ lesson.article_content|safe }}</article>
+        {% elif lesson.lesson_type == lesson.TYPE_QUIZ %}
+          <div class="preview-info-card"><strong>Quiz lesson</strong><p>{{ lesson.article_content|safe }}</p><span>Quiz attempts are available after unlocking the course.</span></div>
+        {% elif lesson.lesson_type == lesson.TYPE_PRACTICE %}
+          <div class="preview-info-card"><strong>Practice lesson</strong><p>{{ lesson.article_content|safe }}</p><span>Practice attempts are available after unlocking the course.</span></div>
+        {% endif %}
+        <div class="preview-navigation">
+          {% if next_lesson %}<a class="preview-next" href="{% url 'courses:course_learn_lesson' course.slug next_lesson.id %}?preview=1">Next Preview Lesson →</a>{% else %}<a class="preview-unlock" href="{% url 'courses:subscribe_course' course.id %}">Unlock Full Course →</a>{% endif %}
+        </div>
+      {% else %}
+        <div class="preview-empty">No lessons are available for preview yet.</div>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

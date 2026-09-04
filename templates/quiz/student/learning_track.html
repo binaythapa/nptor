@@ -1,0 +1,37 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/learning_track.css' %}">
+
+<main class="learning-track-page">
+  <div class="track-breadcrumb"><a href="{% url 'quiz:exam_list' %}">Learning</a><span>›</span><span>{{ track.title }}</span></div>
+
+  <section class="track-hero">
+    <span class="track-kicker">EXAM TRACK</span>
+    <h1>{{ track.title }}</h1>
+    {% if track.description %}<p>{{ track.description }}</p>{% else %}<p>Follow the exams in this track and build your preparation step by step.</p>{% endif %}
+    <div class="track-meta"><span>{{ exams|length }} exam{{ exams|length|pluralize }}</span>{% if has_access %}<span class="track-access owned">You have access</span>{% elif is_free %}<span class="track-access free">Free track</span>{% else %}<span class="track-access">Full track access required</span>{% endif %}</div>
+    {% if not has_access and not is_free %}<a class="track-primary-action" href="{% url 'quiz:track_checkout' track.id %}">Unlock Full Track →</a>{% endif %}
+  </section>
+
+  <section class="track-section" aria-labelledby="track-exams-title">
+    <div class="track-section-head"><div><h2 id="track-exams-title">Exams in this track</h2><p>{% if has_access %}Start any available exam from your track.{% else %}Preview the track structure and see what you will practice.{% endif %}</p></div></div>
+    <div class="track-exam-list">
+      {% for exam in exams %}
+        <article class="track-exam-card">
+          <div class="track-exam-number">{{ forloop.counter }}</div>
+          <div class="track-exam-body">
+            <span class="track-exam-type">EXAM</span>
+            <h3>{{ exam.title }}</h3>
+            <p>{{ exam.question_count }} questions · {{ exam.duration_seconds|default:0|floatformat:0 }} sec · Level {{ exam.level }}</p>
+          </div>
+          <div class="track-exam-action">
+            {% if has_access or exam.is_free %}<a class="track-secondary-action primary" href="{% url 'quiz:exam_start' exam.id %}">Start →</a>{% else %}<a class="track-secondary-action" href="{% url 'quiz:exam_preview' exam.id %}">Preview →</a>{% endif %}
+          </div>
+        </article>
+      {% empty %}<div class="track-empty">No published exams are available in this track yet.</div>{% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}

@@ -6,22 +6,20 @@ from django.conf.urls.static import static
 
 from quiz.forms import EmailOrUsernameLoginForm
 
-
 # ============================================================
 # QUIZ VIEWS
 # ============================================================
 
 from quiz.views.admin import *
 from quiz.views.questions import *
-
 from quiz.views.practice_express import *
 from quiz.views.auth import *
-
 from quiz.views.admin_subscription_views import *
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
 from quiz.views.student_learning_dashboard import student_dashboard
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
+from quiz.views.learning_track import learning_track
 from quiz.views.learning_shortlist import learning_shortlist_toggle
 from quiz.views.exam_preview import exam_preview
 from quiz.views.exam_access import exam_locked, exam_expired, exam_review
@@ -30,7 +28,6 @@ from quiz.views.mock import *
 from quiz.views.exams import *
 from quiz.views.exam_list import *
 from quiz.views.study_plan import *
-
 
 # ============================================================
 # PRACTICE
@@ -46,7 +43,6 @@ from quiz.views.practice import (
     practice_skip_ajax
 )
 
-
 # ============================================================
 # PAYMENT CHECKOUT
 # ============================================================
@@ -56,14 +52,13 @@ from payments.views.checkout import (
     exam_checkout,
 )
 
-
 app_name = "quiz"
-
 
 urlpatterns = [
     path("", learning_marketplace, name="exam_list"),
     path("learning/", learning_marketplace, name="learning_marketplace"),
     path("learning/domain/<slug:slug>/", learning_domain, name="learning_domain"),
+    path("learning/track/<slug:slug>/", learning_track, name="learning_track"),
     path("learning/shortlist/<str:resource_type>/<int:resource_id>/", learning_shortlist_toggle, name="learning_shortlist_toggle"),
     path("dashboard/", dashboard_dispatch, name="dashboard"),
     path("dashboard/admin/", admin_dashboard, name="admin_dashboard"),
@@ -142,7 +137,6 @@ urlpatterns = [
     path("ajax/discussion/pin/", pin_discussion, name="pin_discussion"),
     path("ajax/discussion/delete/", delete_discussion, name="delete_discussion"),
     path("review/discussion/resolve/", resolve_discussion, name="resolve_discussion"),
-
     path("ajax/categories-by-domain/", ajax_categories_by_domain, name="ajax_categories_by_domain"),
 
     path("study-plan/", study_plan_dashboard, name="study_plan_dashboard"),
@@ -154,10 +148,8 @@ urlpatterns = [
     path("study-plan/completed/<int:plan_id>/", study_plan_completed, name="study_plan_completed"),
     path("study-plan/history/", study_plan_history, name="study_plan_history"),
     path("study-plan/<int:plan_id>/", study_plan_detail, name="study_plan_detail"),
-
     path("practice/skip/ajax/", practice_skip_ajax, name="practice_skip_ajax"),
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(

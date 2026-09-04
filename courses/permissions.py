@@ -49,7 +49,7 @@ def course_detail_access_required(view_func):
 
 
 def course_learning_access_required(view_func):
-    """Enforce access to course learning content."""
+    """Enforce access to course learning content, including public previews."""
 
     @wraps(view_func)
     def _wrapped(request, slug, *args, **kwargs):
@@ -57,20 +57,25 @@ def course_learning_access_required(view_func):
         if course is None:
             raise Http404("Course not found.")
 
-        preview_requested = request.GET.get("preview") == "1"
-
-        if preview_requested and can_preview_course(request.user, course):
-            return view_func(request, slug, *args, **kwargs)
-
-        if not (
+        is_publicly_available = (
             course.approval_status == Course.APPROVAL_APPROVED
             and course.is_published
             and course.is_public
-        ):
+        )
+        preview_requested = request.GET.get("preview") == "1"
+
+        if preview_requested:
+            if can_preview_course(request.user, course):
+                return view_func(request, slug, *args, **kwargs)
+            if is_publicly_available:
+                from courses.views.free_preview import course_free_preview
+                return course_free_preview(request, slug, *args, **kwargs)
+
+        if not is_publicly_available:
             raise Http404("Course not found.")
 
         if not _user_has_course_access(request.user, course):
-            raise PermissionDenied("You do not have access to this course.")
+            raise Http404("Course not found.")
 
         return view_func(request, slug, *args, **kwargs)
 

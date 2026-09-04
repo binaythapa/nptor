@@ -53,11 +53,11 @@
             {% elif item.type == 'track' %}<p>Structured exam preparation</p>
             {% else %}<p>{{ item.resource.question_count }} questions · {{ item.duration_minutes }} min</p>{% endif %}
             <div class="resource-footer">
-              {% if item.has_access %}<span class="resource-status owned">You have access</span><a class="resource-action primary" href="{% if item.type == 'course' %}{% url 'courses:course_learn' item.resource.slug %}{% else %}{% url 'quiz:exam_start' item.resource.id %}{% endif %}">Continue →</a>
-              {% elif item.type == 'course' %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'courses:course_preview' item.resource.slug %}">Start →</a>
-              {% elif item.type == 'track' %}<span class="resource-status">Preview available</span>{% if item.domain_slug %}<a class="resource-action primary" href="{% url 'quiz:learning_domain' item.domain_slug %}">Explore →</a>{% else %}<a class="resource-action primary" href="{% url 'quiz:exam_list' %}">Explore →</a>{% endif %}
+              {% if item.has_access %}<span class="resource-status owned">You have access</span><a class="resource-action primary" href="{% if item.type == 'course' %}{% url 'courses:course_learn' item.resource.slug %}{% else %}{% url 'quiz:exam_start' item.resource.id %}{% endif %}">{% if item.type == 'course' %}Continue →{% else %}Start →{% endif %}</a>
+              {% elif item.type == 'course' %}<span class="resource-status">Free preview: first 3 lessons</span><a class="resource-action primary" href="{% url 'courses:course_preview' item.resource.slug %}">Preview →</a>
+              {% elif item.type == 'track' %}<span class="resource-status">Explore track</span><a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">Explore →</a>
               {% elif item.resource.is_free %}<span class="resource-status">Free exam</span><a class="resource-action primary" href="{% url 'quiz:exam_start' item.resource.id %}">Start →</a>
-              {% else %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'quiz:exam_preview' item.resource.id %}">Try →</a>{% endif %}
+              {% else %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'quiz:exam_preview' item.resource.id %}">Preview →</a>{% endif %}
             </div>
           </div>
         </article>
