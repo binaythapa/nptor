@@ -121,6 +121,18 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         self.assertIn('practice-express-filter', script)
         self.assertIn('practice-express-option', script)
 
+    def test_student_base_loads_practice_express_ui(self):
+        base_path = (
+            Path(__file__).resolve().parents[2]
+            / "templates"
+            / "layouts"
+            / "student"
+            / "base.html"
+        )
+        base = base_path.read_text(encoding="utf-8")
+
+        self.assertIn("static 'js/practice-express-ui.js'", base)
+
 
 if __name__ == "__main__":
     unittest.main()
