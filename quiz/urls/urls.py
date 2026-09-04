@@ -24,6 +24,7 @@ from quiz.views.student_learning_dashboard import student_dashboard
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
 from quiz.views.learning_shortlist import learning_shortlist_toggle
 from quiz.views.exam_preview import exam_preview
+from quiz.views.exam_access import exam_locked
 from quiz.views.exam_submission import exam_submit_dashboard
 from quiz.views.mock import *
 from quiz.views.exams import *
