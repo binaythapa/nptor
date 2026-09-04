@@ -17,6 +17,15 @@ class PracticeExpressCleanupTests(unittest.TestCase):
         self.assertIn('practice-select-wrap', shared_ui)
         self.assertIn('filterHint.tagName', shared_ui)
 
+        self.assertIn('min-height: 48px', shared_ui)
+        self.assertIn('padding: 0 15px', shared_ui)
+        self.assertIn('font-size: 0.84rem', shared_ui)
+        self.assertIn('font-weight: 800', shared_ui)
+        self.assertIn('gap: 13px', shared_ui)
+        self.assertIn('padding: 0 15px 15px', shared_ui)
+        self.assertIn('min-height: 39px', shared_ui)
+        self.assertIn('font-size: 0.8rem', shared_ui)
+
     def test_express_filter_is_the_only_practice_block_restyled(self):
         root = Path(__file__).resolve().parents[2]
         shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
