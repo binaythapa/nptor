@@ -29,6 +29,19 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertIn('classList.add("practice-filter-form")', filter_code)
         self.assertIn('classList.toggle("is-open"', filter_code)
 
+    def test_express_filter_syncs_shared_open_state_after_legacy_toggle(self):
+        root = Path(__file__).resolve().parents[2]
+        shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
+
+        start = shared_ui.index("function initExpressFilterLayout()")
+        end = shared_ui.index("initExpressFilterLayout();", start)
+        filter_code = shared_ui[start:end]
+
+        self.assertIn("setTimeout(syncOpenState, 0)", filter_code)
+        self.assertIn('new MutationObserver', filter_code)
+        self.assertIn('attributes: true', filter_code)
+        self.assertIn('attributeFilter: ["style"]', filter_code)
+
 
 if __name__ == "__main__":
     unittest.main()
