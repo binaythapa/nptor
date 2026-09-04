@@ -3,7 +3,7 @@ import unittest
 
 
 class PracticeExpressCleanupTests(unittest.TestCase):
-    def test_express_shell_removes_unnecessary_heading_text(self):
+    def test_express_shell_matches_practice_typography_and_filter_hint(self):
         root = Path(__file__).resolve().parents[2]
 
         express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
@@ -14,15 +14,14 @@ class PracticeExpressCleanupTests(unittest.TestCase):
             'subtitle.textContent = "Strengthen your knowledge one question at a time."',
             express_ui,
         )
+        self.assertIn("font-size: 1.5rem;", express_ui)
+        self.assertIn("font-weight: 400;", express_ui)
+        self.assertIn("min-height: 48px;", express_ui)
+        self.assertIn("padding: 0 15px;", express_ui)
+        self.assertIn("padding: 4px 15px 15px;", express_ui)
+        self.assertIn("margin-bottom: 0 !important;", express_ui)
         self.assertNotIn('filterHint.textContent = ""', shared_ui)
         self.assertNotIn('filterHint.hidden = true', shared_ui)
-
-    def test_express_question_text_matches_practice_scale(self):
-        root = Path(__file__).resolve().parents[2]
-        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
-
-        self.assertIn("font-size: 1.05rem;", express_ui)
-        self.assertIn("font-weight: 400;", express_ui)
 
     def test_express_filter_keeps_expand_hint(self):
         root = Path(__file__).resolve().parents[2]
