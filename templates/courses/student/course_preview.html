@@ -12,7 +12,17 @@
     <span class="marketplace-kicker">COURSE PREVIEW</span>
     <h1 id="course-preview-title">{{ course.title }}</h1>
     <p>{{ course.description }}</p>
-    <div class="resource-footer"><span class="resource-status">{{ course.level|title }} · Preview lesson</span><a class="resource-action primary" href="{% url 'courses:subscribe_course' course.id %}?next={% url 'courses:course_learn' course.slug %}">Get full access →</a></div>
+    <div class="resource-footer">
+      <span class="resource-status">{{ course.level|title }} · Preview lesson</span>
+      {% if is_free %}
+        <form method="post" action="{% url 'courses:enroll_free_course' course.slug %}">
+          {% csrf_token %}
+          <button class="resource-action primary" type="submit">Enroll Free →</button>
+        </form>
+      {% else %}
+        <a class="resource-action primary" href="{% url 'courses:subscribe_course' course.id %}?next={% url 'courses:course_learn' course.slug %}">Get full access →</a>
+      {% endif %}
+    </div>
   </section>
 
   {% if preview_lesson %}
@@ -27,6 +37,22 @@
     <div class="resource-grid">{% for section in sections %}<article class="resource-card"><div class="resource-icon resource-icon-course" aria-hidden="true">{{ forloop.counter }}</div><div class="resource-body"><span class="resource-type">Section {{ forloop.counter }}</span><h3>{{ section.title }}</h3><p>{{ section.lessons.all|length }} lesson{{ section.lessons.all|length|pluralize }}</p></div></article>{% endfor %}</div>
   </section>
 
-  <section class="marketplace-section"><div class="marketplace-empty"><strong>Want the complete course?</strong><br>Unlock every lesson, video progress, quizzes, and completion tracking.<br><a class="resource-action primary" href="{% url 'courses:subscribe_course' course.id %}?next={% url 'courses:course_learn' course.slug %}">Enroll →</a></div></section>
+  <section class="marketplace-section">
+    <div class="marketplace-empty">
+      <strong>{% if is_free %}Ready to start the course?{% else %}Want the complete course?{% endif %}</strong><br>
+      {% if is_free %}
+        Enroll for free to unlock every lesson and track your progress.
+        <br>
+        <form method="post" action="{% url 'courses:enroll_free_course' course.slug %}">
+          {% csrf_token %}
+          <button class="resource-action primary" type="submit">Enroll Free →</button>
+        </form>
+      {% else %}
+        Unlock every lesson, video progress, quizzes, and completion tracking.
+        <br>
+        <a class="resource-action primary" href="{% url 'courses:subscribe_course' course.id %}?next={% url 'courses:course_learn' course.slug %}">Get Full Access →</a>
+      {% endif %}
+    </div>
+  </section>
 </main>
 {% endblock %}
