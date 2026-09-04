@@ -157,9 +157,6 @@ document.addEventListener(
                 });
             }
 
-            /* Practice Questions loads this stylesheet in head_extra.
-               Express loads the same stylesheet here so the filter has
-               one source of truth. */
             if (!document.querySelector('link[data-practice-shared-styles="1"]')) {
                 const sharedStyles = document.querySelector('link[href*="/css/pages/practice.css"]');
                 if (sharedStyles) {
@@ -173,23 +170,29 @@ document.addEventListener(
                 }
             }
 
-            /* Remove legacy Bulma/Express filter selectors. From this point,
-               practice.css is the sole source of the filter's visual styling. */
             filter.classList.remove("practice-express-filter", "box", "mb-3", "p-3");
 
-            /* Keep the existing Express toggle, while also updating the
-               shared Practice open-state class used by practice.css. */
             if (body && !body.dataset.sharedFilterToggleInitialized) {
                 body.dataset.sharedFilterToggleInitialized = "1";
+
                 const syncOpenState = () => {
-                    body.classList.toggle("is-open", body.style.maxHeight && body.style.maxHeight !== "0px");
+                    const expanded = body.style.maxHeight && body.style.maxHeight !== "0px";
+                    body.classList.toggle("is-open", Boolean(expanded));
                 };
+
                 syncOpenState();
-                if (header) {
-                    header.addEventListener("click", () => {
-                        setTimeout(syncOpenState, 0);
-                    });
-                }
+
+                /* Existing Express toggle changes inline max-height.
+                   Keep the shared Practice CSS state synchronized. */
+                const filterObserver = new MutationObserver(syncOpenState);
+                filterObserver.observe(body, {
+                    attributes: true,
+                    attributeFilter: ["style"],
+                });
+
+                /* Express registers its legacy DOMContentLoaded toggle
+                   after ui.js, so sync once more after that handler runs. */
+                setTimeout(syncOpenState, 0);
             }
         }
 
