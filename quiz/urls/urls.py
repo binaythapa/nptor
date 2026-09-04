@@ -3,7 +3,6 @@ from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.decorators.http import require_POST
 
 from quiz.forms import EmailOrUsernameLoginForm
 
@@ -79,7 +78,7 @@ urlpatterns = [
     path("exam/attempt/<int:user_exam_id>/", exam_take, name="exam_take"),
     path("exam/attempt/<int:user_exam_id>/question/<int:index>/", exam_question, name="exam_question"),
     path("exam/attempt/<int:user_exam_id>/autosave/", autosave, name="exam_autosave"),
-    path("exam/attempt/<int:user_exam_id>/submit/", require_POST(exam_submit_dashboard), name="exam_submit"),
+    path("exam/attempt/<int:user_exam_id>/submit/", exam_submit_dashboard, name="exam_submit"),
     path("exam/attempt/<int:user_exam_id>/result/", exam_result, name="exam_result"),
     path("exam/attempt/<int:user_exam_id>/expired/", exam_expired, name="exam_expired"),
     path("exam/attempt/<int:user_exam_id>/review/", exam_review, name="exam_review"),
@@ -107,8 +106,8 @@ urlpatterns = [
     path("dashboard/admin/revoke/exam/", admin_revoke_exam, name="admin_revoke_exam"),
     path("dashboard/admin/subscribe/track/", admin_subscribe_track, name="admin_subscribe_track"),
     path("dashboard/admin/revoke/track/", admin_revoke_track, name="admin_revoke_track"),
-    path("dashboard/admin/update-expiry/exam/", admin_update_exam_expiry, name="admin_update_expiry_exam"),
-    path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_expiry_track"),
+    path("dashboard/admin/update-expiry/exam/", admin_update_expiry_exam, name="admin_update_expiry_exam"),
+    path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_track_expiry"),
     path("dashboard/admin/add-exam-days/", admin_add_exam_days, name="admin_add_exam_days"),
     path("dashboard/admin/add-track-days/", admin_add_track_days, name="admin_add_track_days"),
 
