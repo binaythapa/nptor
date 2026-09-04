@@ -39,7 +39,7 @@ def enroll_free_course(request, slug):
         enrollment.is_active = True
         enrollment.save(update_fields=["is_active"])
 
-    ResourceAccess.objects.get_or_create(
+    access, _ = ResourceAccess.objects.get_or_create(
         user=request.user,
         resource_type=ResourceAccess.RESOURCE_COURSE,
         course=course,
@@ -48,5 +48,10 @@ def enroll_free_course(request, slug):
             "is_active": True,
         },
     )
+
+    if not access.is_active or access.revoked_at:
+        access.is_active = True
+        access.revoked_at = None
+        access.save(update_fields=["is_active", "revoked_at", "updated_at"])
 
     return redirect("courses:course_learn", slug=course.slug)
