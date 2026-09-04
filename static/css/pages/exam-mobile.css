@@ -1,290 +1,225 @@
 /* =========================================================
-   EXAM LIST — MOBILE RESPONSIVE OVERRIDES
-   Keeps desktop layout intact and prevents narrow-screen overflow.
+   NPTOR — EXAM CATALOG MOBILE RESPONSIVE STYLES
+   The exam catalog uses catalog-* classes from exam_list.html.
+   Keep these rules scoped to the current catalog markup.
    ========================================================= */
 
-.exam-page,
-.exam-page > *,
+.catalog-page,
+.catalog-page > *,
+.catalog-grid,
+.catalog-card,
+.catalog-card-head,
+.catalog-card-footer,
 .track-card,
-.track-header,
-.track-header > *,
-.track-banner,
-.exam-card,
-.individual-section,
-.individual-card,
-.exam-meta,
-.exam-actions {
+.track-head,
+.track-buy,
+.exam-list,
+.exam-row,
+.exam-row-main,
+.exam-row-action,
+.individual-grid {
   min-width: 0;
 }
 
-.track-title,
-.track-meta,
-.track-banner-title,
-.track-banner-text,
-.exam-title,
-.individual-title,
-.locked-button,
-.locked-reason,
-.section-description,
-.meta-pill {
+.catalog-title,
+.catalog-subtitle,
+.catalog-section-title,
+.catalog-card-title,
+.track-name,
+.track-info,
+.track-buy-text,
+.exam-row-title,
+.exam-row-meta,
+.catalog-note,
+.empty-state {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-@media (max-width: 980px) {
-  .exam-page {
-    padding: 24px 16px 48px;
+.catalog-action {
+  box-sizing: border-box;
+}
+
+@media (max-width: 950px) {
+  .catalog-page {
+    padding: 18px 16px 40px;
   }
 
-  .track-header {
+  .catalog-grid,
+  .individual-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .track-head {
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .catalog-page {
+    padding: 16px 12px 32px;
+  }
+
+  .catalog-title {
+    font-size: 22px;
+    line-height: 1.25;
+  }
+
+  .catalog-subtitle {
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .catalog-section {
+    margin-top: 18px;
+  }
+
+  .catalog-section-header {
+    align-items: flex-start;
+  }
+
+  .catalog-section-title {
+    font-size: 16px;
+  }
+
+  .catalog-grid,
+  .individual-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-card,
+  .track-card {
+    padding: 12px;
+    border-radius: 9px;
+  }
+
+  .track-head {
+    gap: 8px;
+  }
+
+  .track-name {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .track-info {
+    font-size: 10px;
+    line-height: 1.45;
   }
 
   .track-status {
     flex-shrink: 0;
-  }
-
-  .track-banner {
-    padding: 22px;
-  }
-
-  .exam-card,
-  .individual-card {
-    padding: 24px 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .exam-page {
-    padding: 20px 14px 40px;
-  }
-
-  .section-title {
-    font-size: 25px;
-    line-height: 1.25;
-  }
-
-  .section-description {
-    font-size: 16px;
-    line-height: 1.5;
-    margin-bottom: 20px;
-  }
-
-  .track-card {
-    padding: 18px;
-    margin-bottom: 24px;
-    border-radius: 14px;
-  }
-
-  .track-header {
-    gap: 12px;
-    padding: 2px 2px 16px;
-  }
-
-  .track-title {
-    font-size: 23px;
-    line-height: 1.25;
-  }
-
-  .track-meta {
-    font-size: 14px;
-    line-height: 1.45;
-  }
-
-  .track-status {
-    padding: 8px 12px;
-    font-size: 14px;
-  }
-
-  .track-banner {
-    margin-top: 16px;
-    padding: 18px;
-  }
-
-  .track-banner-title {
-    font-size: 19px;
-  }
-
-  .track-banner-text {
-    font-size: 16px;
-    line-height: 1.5;
-    margin-bottom: 16px;
-  }
-
-  .buy-button,
-  .locked-button,
-  .access-button,
-  .start-button {
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  .buy-button,
-  .locked-button,
-  .access-button {
-    display: block;
-    width: 100%;
+    max-width: 45%;
+    white-space: normal;
     text-align: center;
   }
 
-  .start-button {
-    display: block;
-    width: 100%;
-    text-align: center;
-  }
-
-  .exam-card,
-  .individual-card {
-    padding: 20px 16px;
-    margin-top: 14px;
-    margin-bottom: 14px;
-    border-radius: 14px;
-  }
-
-  .exam-title,
-  .individual-title {
-    font-size: 19px;
-    line-height: 1.35;
-    margin-bottom: 10px;
-  }
-
-  .exam-meta {
-    justify-content: flex-start;
+  .track-buy {
+    align-items: flex-start;
+    flex-direction: column;
     gap: 7px;
-    margin-bottom: 14px;
   }
 
-  .meta-pill {
-    padding: 6px 10px;
-    font-size: 13px;
-    line-height: 1.3;
+  .track-buy .catalog-action {
+    width: 100%;
   }
 
-  .exam-actions {
-    margin-top: 8px;
+  .exam-row {
+    grid-template-columns: 1fr;
+    gap: 7px;
   }
 
-  .exam-actions > div[style*="margin-top"] {
-    margin-top: 8px !important;
+  .exam-row-action {
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
-  .locked-reason {
-    font-size: 12px;
-    line-height: 1.45;
+  .exam-row-action .catalog-action,
+  .exam-row-action a.catalog-action {
+    min-width: 78px;
   }
 
-  .individual-section {
-    margin-top: 34px;
+  .catalog-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .empty-state {
-    padding: 26px 18px;
+  .catalog-card-footer .catalog-action {
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .exam-page {
-    padding: 16px 10px 32px;
+  .catalog-page {
+    padding: 14px 10px 28px;
   }
 
-  .section-title {
-    font-size: 22px;
-  }
-
-  .section-description {
-    font-size: 15px;
-  }
-
-  .track-card {
-    padding: 14px;
-    border-radius: 12px;
-  }
-
-  .track-header {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .track-title {
+  .catalog-title {
     font-size: 21px;
   }
 
-  .track-status {
-    width: 100%;
-    box-sizing: border-box;
-    text-align: center;
+  .catalog-subtitle {
+    font-size: 11px;
   }
 
-  .track-banner {
-    padding: 15px;
-  }
-
-  .track-banner-title {
-    font-size: 18px;
-  }
-
-  .track-banner-text {
+  .catalog-section-title {
     font-size: 15px;
   }
 
-  .exam-card,
-  .individual-card {
-    padding: 17px 13px;
-    border-radius: 12px;
+  .catalog-count {
+    font-size: 9px;
   }
 
-  .exam-title,
-  .individual-title {
-    font-size: 18px;
+  .catalog-card,
+  .track-card {
+    padding: 11px;
   }
 
-  .exam-meta {
-    gap: 6px;
+  .track-head {
+    flex-direction: column;
   }
 
-  .meta-pill {
-    font-size: 12px;
-    padding: 5px 8px;
+  .track-status {
+    max-width: 100%;
   }
 
-  .buy-button,
-  .locked-button,
-  .access-button,
-  .start-button {
-    padding: 9px 12px;
-    font-size: 14px;
+  .exam-row {
+    padding: 8px;
   }
 
-  .individual-section {
-    margin-top: 28px;
+  .exam-row-title {
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .exam-row-meta {
+    line-height: 1.45;
+  }
+
+  .catalog-action {
+    max-width: 100%;
+    white-space: normal;
   }
 }
 
 @media (max-width: 360px) {
-  .exam-page {
+  .catalog-page {
     padding-left: 8px;
     padding-right: 8px;
   }
 
+  .catalog-card,
   .track-card {
-    padding: 12px;
+    padding: 10px;
   }
 
-  .exam-card,
-  .individual-card {
-    padding: 15px 11px;
-  }
-
-  .section-title {
+  .catalog-title {
     font-size: 20px;
   }
+}
 
-  .track-title {
-    font-size: 19px;
-  }
-
-  .exam-title,
-  .individual-title {
-    font-size: 17px;
+@media (prefers-reduced-motion: reduce) {
+  .catalog-card {
+    transition: none;
   }
 }
