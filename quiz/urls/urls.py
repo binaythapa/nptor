@@ -25,6 +25,7 @@ from quiz.views.student_learning_dashboard import student_dashboard
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
 from quiz.views.learning_shortlist import learning_shortlist_toggle
 from quiz.views.exam_preview import exam_preview
+from quiz.views.exam_submission import exam_submit_dashboard
 from quiz.views.mock import *
 from quiz.views.exams import *
 from quiz.views.exam_list import *
@@ -78,7 +79,7 @@ urlpatterns = [
     path("exam/attempt/<int:user_exam_id>/", exam_take, name="exam_take"),
     path("exam/attempt/<int:user_exam_id>/question/<int:index>/", exam_question, name="exam_question"),
     path("exam/attempt/<int:user_exam_id>/autosave/", autosave, name="exam_autosave"),
-    path("exam/attempt/<int:user_exam_id>/submit/", require_POST(exam_submit), name="exam_submit"),
+    path("exam/attempt/<int:user_exam_id>/submit/", require_POST(exam_submit_dashboard), name="exam_submit"),
     path("exam/attempt/<int:user_exam_id>/result/", exam_result, name="exam_result"),
     path("exam/attempt/<int:user_exam_id>/expired/", exam_expired, name="exam_expired"),
     path("exam/attempt/<int:user_exam_id>/review/", exam_review, name="exam_review"),
