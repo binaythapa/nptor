@@ -16,6 +16,14 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
         self.assertIn("grade_exam(user_exam, request.POST, is_mock=is_mock)", view_source)
         self.assertIn('return redirect("quiz:student_dashboard")', view_source)
 
+    def test_submit_endpoint_handles_direct_get_without_405(self):
+        root = Path(__file__).resolve().parents[2]
+        view_source = (root / "quiz" / "views" / "exam_submission.py").read_text(encoding="utf-8")
+
+        self.assertNotIn("@require_POST", view_source)
+        self.assertIn('if request.method == "GET":', view_source)
+        self.assertIn('return redirect("quiz:student_dashboard")', view_source)
+
     def test_unified_learning_activity_table_supports_courses_exams_and_tracks(self):
         root = Path(__file__).resolve().parents[2]
         view_source = (root / "quiz" / "views" / "student_learning_dashboard.py").read_text(encoding="utf-8")
