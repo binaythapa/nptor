@@ -9,9 +9,7 @@
   padding-bottom: 32px;
 }
 
-.exam-review-header {
-  margin-bottom: 16px;
-}
+.exam-review-header { margin-bottom: 16px; }
 
 .exam-review-title {
   margin: 0 0 14px;
@@ -61,6 +59,7 @@
 }
 
 .exam-review-option {
+  position: relative;
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
@@ -75,10 +74,35 @@
   color: var(--text-color, #374151);
   font-size: .88rem;
   line-height: 1.4;
+  cursor: pointer;
   box-sizing: border-box;
+  transition: background-color .15s ease, border-color .15s ease;
 }
 
-.exam-review-option.is-selected {
+.exam-review-option:hover {
+  background: var(--subtle-surface-color, #f8fafc);
+}
+
+.exam-review-option-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.exam-review-option:focus-within {
+  outline: 2px solid var(--link-color, #3273dc);
+  outline-offset: 2px;
+}
+
+.exam-review-option:has(.exam-review-option-input:checked) {
   border-color: var(--link-color, #3273dc);
   background: var(--link-light, #eef5ff);
 }
@@ -98,7 +122,7 @@
   box-sizing: border-box;
 }
 
-.exam-review-option.is-selected .exam-review-option-marker {
+.exam-review-option:has(.exam-review-option-input:checked) .exam-review-option-marker {
   border-color: var(--link-color, #3273dc);
   color: var(--link-color, #3273dc);
   font-weight: 800;
@@ -109,13 +133,8 @@
   overflow-wrap: anywhere;
 }
 
-.exam-review-answer {
-  margin-top: 8px;
-}
-
-.exam-review-match {
-  margin-top: 10px;
-}
+.exam-review-answer { margin-top: 8px; }
+.exam-review-match { margin-top: 10px; }
 
 .exam-review-match-row {
   display: grid;
@@ -139,9 +158,7 @@
   text-align: center;
 }
 
-.exam-review-submit {
-  min-height: 42px;
-}
+.exam-review-submit { min-height: 42px; }
 
 @media (max-width: 700px) {
   .exam-review-page { padding-bottom: 24px; }
