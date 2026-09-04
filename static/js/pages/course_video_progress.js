@@ -6,7 +6,7 @@
     "use strict";
 
     const iframe = document.getElementById("courseVideoPlayer");
-    if (!iframe || typeof YT === "undefined" || !YT.Player) return;
+    if (!iframe) return;
 
     const endpoint = iframe.dataset.progressUrl;
     const lessonId = iframe.dataset.lessonId;
@@ -14,6 +14,7 @@
     let player;
     let completed = false;
     let lastSent = 0;
+    let progressTimer;
 
     function getCookie(name) {
         const prefix = name + "=";
@@ -58,6 +59,10 @@
                 if (data.completed && !completed) {
                     completed = true;
                     if (status) status.textContent = "✔ Video watched. Lesson completed";
+                    if (progressTimer) {
+                        window.clearInterval(progressTimer);
+                        progressTimer = null;
+                    }
                 }
             })
             .catch(function (error) {
@@ -67,23 +72,29 @@
 
     function onReady(event) {
         player = event.target;
-        window.setInterval(function () {
+        if (progressTimer) window.clearInterval(progressTimer);
+        progressTimer = window.setInterval(function () {
             if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {
                 sendProgress();
             }
         }, 5000);
     }
 
+    function initializePlayer() {
+        if (!window.YT || !window.YT.Player) return;
+        new YT.Player("courseVideoPlayer", { events: { onReady: onReady } });
+    }
+
     function loadApi() {
         if (window.YT && window.YT.Player) {
-            new YT.Player("courseVideoPlayer", { events: { onReady: onReady } });
+            initializePlayer();
             return;
         }
 
         const previous = window.onYouTubeIframeAPIReady;
         window.onYouTubeIframeAPIReady = function () {
             if (typeof previous === "function") previous();
-            new YT.Player("courseVideoPlayer", { events: { onReady: onReady } });
+            initializePlayer();
         };
 
         if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
