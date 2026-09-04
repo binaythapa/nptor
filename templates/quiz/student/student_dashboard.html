@@ -33,7 +33,7 @@
   </section>
   {% endif %}
 
-  {% if submitted_attempts %}
+  {% if exam_history %}
   <section class="dashboard-section dashboard-exam-history" aria-labelledby="exam-history-title">
     <div class="section-heading dashboard-exam-history-heading">
       <div>
@@ -52,7 +52,7 @@
         <div role="columnheader" class="dashboard-exam-history-action-cell">Action</div>
       </div>
 
-      {% for attempt in submitted_attempts|slice:":10" %}
+      {% for attempt in exam_history.object_list %}
       <div class="dashboard-exam-history-row" role="row">
         <div class="dashboard-exam-history-exam" role="cell">
           <span class="dashboard-exam-history-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-check"></i></span>
@@ -77,6 +77,26 @@
       </div>
       {% endfor %}
     </div>
+
+    {% if exam_history.paginator.num_pages > 1 %}
+    <nav class="dashboard-exam-history-pagination" aria-label="Exam history pages">
+      {% if exam_history.has_previous %}
+        <a href="?exam_page={{ exam_history.previous_page_number }}" class="dashboard-exam-history-page dashboard-exam-history-page-prev">← Previous</a>
+      {% endif %}
+      <div class="dashboard-exam-history-page-list">
+        {% for page_number in exam_history.paginator.page_range %}
+          {% if page_number == exam_history.number %}
+            <span class="dashboard-exam-history-page is-current" aria-current="page">{{ page_number }}</span>
+          {% else %}
+            <a href="?exam_page={{ page_number }}" class="dashboard-exam-history-page">{{ page_number }}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% if exam_history.has_next %}
+        <a href="?exam_page={{ exam_history.next_page_number }}" class="dashboard-exam-history-page dashboard-exam-history-page-next">Next →</a>
+      {% endif %}
+    </nav>
+    {% endif %}
   </section>
   {% endif %}
 
