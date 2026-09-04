@@ -8,7 +8,7 @@ class PracticeExpressCleanupTests(unittest.TestCase):
             Path(__file__).resolve().parents[2]
             / "static"
             / "js"
-            / "practice-express-ui.js"
+            / "ui.js"
         )
         script = script_path.read_text(encoding="utf-8")
 
