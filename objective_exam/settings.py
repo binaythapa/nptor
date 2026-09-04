@@ -222,15 +222,24 @@ AUTHENTICATION_BACKENDS = [
 
 
 # ============================================================
-# EMAIL (OTP — keep async in code)
+# EMAIL (OTP)
 # ============================================================
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+
+# Gmail SMTP requires an authenticated account. Keep the password in the
+# environment/.env (use a Gmail App Password, never the normal account password).
+# The default username matches the existing NPTOR sender so a missing
+# EMAIL_HOST_USER cannot silently turn the SMTP request into an unauthenticated
+# sendmail() call that Gmail rejects with 530 Authentication Required.
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "contact.nptor@gmail.com").strip()
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "NPTOR <contact.nptor@gmail.com>")
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    f"NPTOR <{EMAIL_HOST_USER}>",
+).strip()
 
 
 # ============================================================
