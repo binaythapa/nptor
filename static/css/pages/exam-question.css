@@ -132,6 +132,9 @@
   justify-content: center;
   width: 32px;
   height: 32px;
+  flex: 0 0 32px;
+  min-width: 32px;
+  max-width: 32px;
   border: 1px solid var(--border-color, #dfe3e8);
   border-radius: 50%;
   color: var(--muted-text-color, #667085);
@@ -139,6 +142,15 @@
   font-weight: 750;
   line-height: 1;
   box-sizing: border-box;
+}
+
+/* Override the legacy .option-label span { flex: 1; } rule. */
+.exam-question-page .option-label span.option-marker {
+  flex: 0 0 32px;
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  height: 32px;
 }
 
 .option-text {
@@ -203,6 +215,17 @@
   .option-marker {
     width: 30px;
     height: 30px;
+    flex-basis: 30px;
+    min-width: 30px;
+    max-width: 30px;
+  }
+
+  .exam-question-page .option-label span.option-marker {
+    flex-basis: 30px;
+    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
+    height: 30px;
   }
 
   .exam-navigation {
@@ -227,7 +250,18 @@
   .option-marker {
     width: 28px;
     height: 28px;
+    flex-basis: 28px;
+    min-width: 28px;
+    max-width: 28px;
     font-size: .72rem;
+  }
+
+  .exam-question-page .option-label span.option-marker {
+    flex-basis: 28px;
+    width: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    height: 28px;
   }
 }
 
