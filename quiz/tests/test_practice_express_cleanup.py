@@ -29,7 +29,7 @@ class PracticeExpressCleanupTests(unittest.TestCase):
             root / "templates" / "quiz" / "student" / "practice_express" / "practice_express.html"
         ).read_text(encoding="utf-8")
 
-        self.assertIn('(Expand)', express_template)
+        self.assertIn('(Click to expand)', express_template)
 
 
 if __name__ == "__main__":
