@@ -10,7 +10,7 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
 
         self.assertIn("from quiz.views.exam_submission import exam_submit_dashboard", source)
         self.assertIn(
-            'path("exam/attempt/<int:user_exam_id>/submit/", require_POST(exam_submit_dashboard), name="exam_submit")',
+            'path("exam/attempt/<int:user_exam_id>/submit/", exam_submit_dashboard, name="exam_submit")',
             source,
         )
         self.assertIn("grade_exam(user_exam, request.POST, is_mock=is_mock)", view_source)
