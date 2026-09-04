@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from courses.models import Course, CourseEnrollment
+from organizations.models import ResourceAccess
 from subscriptions.models import SubscriptionPlan
 
 
@@ -76,6 +77,15 @@ class FreeCourseEnrollmentTests(TestCase):
         )
         self.assertTrue(enrollment.is_active)
 
+        access = ResourceAccess.objects.get(
+            user=self.student,
+            resource_type=ResourceAccess.RESOURCE_COURSE,
+            course=self.free_course,
+            source=ResourceAccess.SOURCE_PUBLIC,
+        )
+        self.assertTrue(access.is_active)
+        self.assertTrue(access.is_valid())
+
     def test_reenrolling_free_course_does_not_create_duplicate(self):
         url = reverse("courses:enroll_free_course", args=[self.free_course.slug])
 
@@ -86,6 +96,15 @@ class FreeCourseEnrollmentTests(TestCase):
             CourseEnrollment.objects.filter(
                 user=self.student,
                 course=self.free_course,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            ResourceAccess.objects.filter(
+                user=self.student,
+                resource_type=ResourceAccess.RESOURCE_COURSE,
+                course=self.free_course,
+                source=ResourceAccess.SOURCE_PUBLIC,
             ).count(),
             1,
         )
