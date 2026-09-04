@@ -32,6 +32,17 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         self.assertIn('new MutationObserver(syncFilterPadding)', filter_code)
         self.assertIn('attributeFilter: ["style"]', filter_code)
 
+    def test_express_filter_has_extra_space_below_select_row(self):
+        root = Path(__file__).resolve().parents[2]
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+
+        marker = ".practice-express-page .practice-express-filter #filterBody > .columns {"
+        start = express_ui.index(marker)
+        end = express_ui.index("}", start)
+        columns_rule = express_ui[start:end]
+
+        self.assertIn("padding-bottom: 8px !important;", columns_rule)
+
 
 if __name__ == "__main__":
     unittest.main()
