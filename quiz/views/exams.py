@@ -504,7 +504,7 @@ def exam_question(request, user_exam_id, index):
 
     choices = list(q.choices.all()) if q.question_type in ('single', 'multi', 'tf', 'dropdown') else []
     if choices:
-        random.shuffle(choices)
+        random.Random(f"{ue.id}:{q.id}").shuffle(choices)
 
     ue.current_index = index
     ue.save()
