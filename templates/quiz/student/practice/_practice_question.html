@@ -27,19 +27,12 @@
                value="{{ difficulty }}">
     {% endif %}
 
-
-    <!-- =========================================
-         QUESTION META
-         ========================================= -->
-
     <div class="practice-question-meta">
-
         <span>
             Question #{{ question.id }}
         </span>
 
         <span class="practice-question-type">
-
             {% if question.question_type == "multi" %}
                 Multiple Answers
             {% elif question.question_type == "tf" %}
@@ -47,61 +40,32 @@
             {% else %}
                 Single Answer
             {% endif %}
-
         </span>
-
     </div>
 
-
-    <!-- =========================================
-         ADMIN CONTROLS
-         ========================================= -->
-
     {% if user.is_staff %}
-
         <div class="practice-admin-tools">
-
             <a href="{% url 'admin:quiz_question_change' question.id %}"
                target="_blank"
                rel="noopener"
                class="practice-btn practice-btn-warning">
-
                 Edit Question
-
             </a>
-
             <span class="practice-admin-id">
                 ID: {{ question.id }}
             </span>
-
         </div>
-
     {% endif %}
 
-
-    <!-- =========================================
-         QUESTION TEXT
-         ========================================= -->
-
     <div class="practice-question-text">
-
         {{ question.text|safe }}
-
     </div>
-
-
-    <!-- =========================================
-         ANSWER OPTIONS
-         ========================================= -->
 
     <div class="practice-options">
 
         {% if question.question_type != "multi" %}
-
             {% for c in choices %}
-
                 <label class="practice-option">
-
                     <input
                         type="radio"
                         name="choice"
@@ -116,20 +80,13 @@
                     <span class="practice-option-text">
                         {{ c.text|safe }}
                     </span>
-
                 </label>
-
             {% endfor %}
-
         {% endif %}
 
-
         {% if question.question_type == "multi" %}
-
             {% for c in choices %}
-
                 <label class="practice-option">
-
                     <input
                         type="checkbox"
                         name="choice_multi"
@@ -143,63 +100,82 @@
                     <span class="practice-option-text">
                         {{ c.text|safe }}
                     </span>
-
                 </label>
-
             {% endfor %}
-
         {% endif %}
 
     </div>
 
-
-    <!-- =========================================
-         ACTIONS
-         ========================================= -->
-
     <div class="practice-actions">
-
         <div class="practice-actions-left">
-
             <button
-    type="button"
-    id="practiceSkipBtn"
-    data-practice-skip
-    class="practice-btn practice-btn-warning"
-    {% if is_from_course %}disabled{% endif %}>
-
-    Skip
-
-</button>
-
+                type="button"
+                id="practiceSkipBtn"
+                data-practice-skip
+                class="practice-btn practice-btn-warning"
+                {% if is_from_course %}disabled{% endif %}>
+                Skip
+            </button>
 
             {% if not is_from_course %}
-
                 <a
                     href="{% url 'quiz:practice' %}?reset=1{% if domain_id %}&domain={{ domain_id }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}"
                     class="practice-btn practice-btn-secondary">
-
                     Reset
-
                 </a>
-
             {% endif %}
-
         </div>
 
-
         <div class="practice-actions-right">
-
             <button
                 type="submit"
                 class="practice-btn practice-btn-primary">
-
                 Check Answer
-
             </button>
-
         </div>
-
     </div>
 
 </form>
+
+<style>
+/* Compact answer choices: keep the same A/B/C/D design with less vertical space. */
+.practice-question-card .practice-options {
+    gap: 7px;
+}
+
+.practice-question-card .practice-option {
+    align-items: center;
+    gap: 9px;
+    min-height: 46px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
+.practice-question-card .practice-option:hover {
+    transform: none;
+}
+
+.practice-question-card .practice-option-marker {
+    display: inline-flex;
+    flex: 0 0 34px;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    box-sizing: border-box;
+    font-size: 0.88rem;
+    line-height: 1;
+}
+
+.practice-question-card .practice-option input {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+}
+
+.practice-question-card .practice-option-text {
+    line-height: 1.35;
+}
+</style>
