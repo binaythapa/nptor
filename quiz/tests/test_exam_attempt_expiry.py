@@ -128,3 +128,52 @@ class ExamAttemptExpiryTests(TestCase):
         self.ue.refresh_from_db()
         self.assertIsNone(self.ue.submitted_at)
         self.assertIsNone(self.ue.score)
+
+
+class ExamAccessLockReasonTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="exam-access-reason-user",
+            password="test-password",
+        )
+        self.prerequisite = Exam.objects.create(
+            title="Required Foundation Exam",
+            question_count=1,
+            duration_seconds=60,
+            passing_score=50,
+            is_free=True,
+            is_published=True,
+        )
+        self.exam = Exam.objects.create(
+            title="Free Final Assessment",
+            question_count=10,
+            duration_seconds=1800,
+            passing_score=50,
+            is_free=True,
+            is_published=True,
+        )
+        self.exam.prerequisite_exams.add(self.prerequisite)
+        self.client.force_login(self.user)
+
+    def test_locked_exam_redirect_preserves_prerequisite_reason(self):
+        response = self.client.get(
+            reverse("quiz:exam_start", args=[self.exam.id])
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            f"{reverse('quiz:exam_locked', args=[self.exam.id])}"
+            "?reason=Prerequisite%20exam%20required",
+        )
+
+    def test_free_locked_exam_explains_prerequisite_instead_of_unlocking(self):
+        response = self.client.get(
+            reverse("quiz:exam_locked", args=[self.exam.id])
+            + "?reason=Prerequisite%20exam%20required"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Complete the prerequisite exam first.")
+        self.assertNotContains(response, "Unlock it to start the full timed assessment.")
+        self.assertNotContains(response, "Get Full Access")
