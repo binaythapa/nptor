@@ -39,6 +39,13 @@ class ExamPreviewUITests(unittest.TestCase):
         self.assertIn("{% url 'quiz:exam_start' exam.id %}", template)
         self.assertIn("Answers are intentionally not submitted or scored in preview mode.", template)
 
+    def test_exam_preview_styles_are_scoped_to_exam_preview(self):
+        root = Path(__file__).resolve().parents[2]
+        css = (root / "static" / "css" / "pages" / "exam-preview.css").read_text(encoding="utf-8")
+        self.assertIn(".exam-preview-page", css)
+        self.assertIn(".exam-preview-question-card", css)
+        self.assertNotIn(".practice-", css)
+
 
 if __name__ == "__main__":
     unittest.main()
