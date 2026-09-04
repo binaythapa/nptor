@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -221,8 +222,7 @@ def student_dashboard(request):
             "progress": item["progress"],
             "status": "Completed" if item["progress"] >= 100 else ("In Progress" if item["progress"] else "Not Started"),
             "source": item["source"],
-            "url_name": "courses:course_learn",
-            "url_value": item["course"].slug,
+            "url": f"/courses/{item['course'].slug}/learn/",
         })
 
     for attempt in submitted_attempts:
@@ -244,9 +244,10 @@ def student_dashboard(request):
             "total": item["exam_count"],
             "status": "Completed" if item["completed"] else "In Progress",
             "source": item["source"],
+            "url": "/quiz/exams/",
         })
 
-    learning_activity.sort(key=lambda item: item["activity_date"] or timezone.make_aware(timezone.datetime.min), reverse=True)
+    learning_activity.sort(key=lambda item: item["activity_date"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
     activity_search = request.GET.get("activity_search", "").strip()
     activity_type = request.GET.get("activity_type", "all").strip().lower()
     if activity_type in {"course", "exam", "track"}:
