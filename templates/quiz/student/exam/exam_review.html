@@ -44,35 +44,37 @@
           </p>
 
           {% if question.question_type in 'single tf dropdown' %}
-            {% if ua and ua.choice %}
-              <input type="hidden" name="question_{{ question.id }}" value="{{ ua.choice.id }}">
-            {% endif %}
-            <div class="exam-review-options">
+            <div class="exam-review-options" role="radiogroup" aria-label="Answer options for question {{ forloop.counter }}">
               {% for c in question.choices.all %}
-                <div class="exam-review-option {% if ua and ua.choice and ua.choice.id == c.id %}is-selected{% endif %}">
+                <label class="exam-review-option {% if ua and ua.choice and ua.choice.id == c.id %}is-selected{% endif %}">
+                  <input class="exam-review-option-input"
+                         type="radio"
+                         name="question_{{ question.id }}"
+                         value="{{ c.id }}"
+                         {% if ua and ua.choice and ua.choice.id == c.id %}checked{% endif %}>
                   <span class="exam-review-option-marker">
                     {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
                   </span>
                   <span class="exam-review-option-text">{{ c.text|safe }}</span>
-                </div>
+                </label>
               {% endfor %}
             </div>
           {% endif %}
 
           {% if question.question_type == 'multi' %}
-            {% if ua and ua.selections %}
-              {% for selected_id in ua.selections %}
-                <input type="hidden" name="question_{{ question.id }}" value="{{ selected_id }}">
-              {% endfor %}
-            {% endif %}
-            <div class="exam-review-options">
+            <div class="exam-review-options" role="group" aria-label="Answer options for question {{ forloop.counter }}">
               {% for c in question.choices.all %}
-                <div class="exam-review-option {% if ua and ua.selections and c.id|stringformat:'s' in ua.selections|stringformat:'s' %}is-selected{% endif %}">
+                <label class="exam-review-option {% if ua and ua.selections and c.id|stringformat:'s' in ua.selections|stringformat:'s' %}is-selected{% endif %}">
+                  <input class="exam-review-option-input"
+                         type="checkbox"
+                         name="question_{{ question.id }}"
+                         value="{{ c.id }}"
+                         {% if ua and ua.selections and c.id|stringformat:'s' in ua.selections|stringformat:'s' %}checked{% endif %}>
                   <span class="exam-review-option-marker">
                     {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
                   </span>
                   <span class="exam-review-option-text">{{ c.text|safe }}</span>
-                </div>
+                </label>
               {% endfor %}
             </div>
           {% endif %}
