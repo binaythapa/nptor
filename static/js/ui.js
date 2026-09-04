@@ -141,7 +141,10 @@ document.addEventListener(
             const arrow = document.getElementById("filterToggleIcon");
             if (arrow) arrow.className = "practice-filter-arrow";
 
-            if (body) body.classList.add("practice-filter-body");
+            if (body) {
+                body.classList.add("practice-filter-body");
+                body.classList.add("practice-filter-form");
+            }
 
             if (grid) {
                 grid.className = "practice-filter-grid";
