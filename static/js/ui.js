@@ -206,12 +206,12 @@ document.addEventListener(
                handler that writes max-height. Clear that legacy inline style
                after all DOMContentLoaded listeners have run so the shared
                grid-row collapse remains authoritative. */
-            queueMicrotask(() => {
+            setTimeout(() => {
                 filterBody.style.maxHeight = "";
                 filterBody.style.padding = "";
                 filterBody.style.transition = "";
                 setFilterState(localStorage.getItem("practiceFilterExpanded") === "1");
-            });
+            }, 0);
         }
 
         initPracticeFilterCollapse();
