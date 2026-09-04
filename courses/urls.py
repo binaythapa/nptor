@@ -14,6 +14,7 @@ from courses.views.student_library import (
     continue_learning,
     completed_courses,
 )
+from courses.views.student_enrollment import enroll_free_course
 
 from courses.views.instructor_views import update_order
 from courses.permissions import (
@@ -47,6 +48,7 @@ urlpatterns = [
     path("my-courses/", my_courses, name="my_courses"),
     path("continue-learning/", continue_learning, name="continue_learning"),
     path("completed/", completed_courses, name="completed_courses"),
+    path("<slug:slug>/enroll-free/", enroll_free_course, name="enroll_free_course"),
 
     path(
         "<slug:slug>/preview/",
