@@ -85,6 +85,34 @@ document.addEventListener(
 
         initPracticeModeNavigation();
 
+        /* ====================================================
+           EXPRESS FILTER COLLAPSE COMPATIBILITY
+           Keep the existing Express max-height behavior, but
+           remove the shared filter padding while collapsed so
+           the block closes completely.
+           ==================================================== */
+        function initExpressFilterCollapseCompatibility() {
+            if (window.location.pathname !== "/quiz/practice/express/") return;
+
+            const body = document.getElementById("filterBody");
+            if (!body) return;
+
+            const syncFilterPadding = () => {
+                const expanded = body.style.maxHeight && body.style.maxHeight !== "0px";
+                body.style.padding = expanded ? "4px 15px 15px" : "0";
+            };
+
+            syncFilterPadding();
+
+            const filterObserver = new MutationObserver(syncFilterPadding);
+            filterObserver.observe(body, {
+                attributes: true,
+                attributeFilter: ["style"],
+            });
+        }
+
+        initExpressFilterCollapseCompatibility();
+
         const practiceCounter = document.getElementById("practice-count");
         const practiceAccuracy = document.getElementById("practice-accuracy");
 
