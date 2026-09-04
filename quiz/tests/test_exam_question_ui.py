@@ -28,6 +28,14 @@ class ExamQuestionUITests(unittest.TestCase):
         self.assertIn(".option-marker", css)
         self.assertNotIn(".practice-", css)
 
+    def test_exam_question_hides_native_radio_and_checkbox_controls(self):
+        root = Path(__file__).resolve().parents[2]
+        css = (root / "static" / "css" / "pages" / "exam-question.css").read_text(encoding="utf-8")
+        self.assertIn("position: absolute", css)
+        self.assertIn("opacity: 0", css)
+        self.assertIn("grid-template-columns: 32px minmax(0, 1fr)", css)
+        self.assertIn(".option-label:focus-within", css)
+
 
 if __name__ == "__main__":
     unittest.main()
