@@ -33,69 +33,97 @@
   </section>
   {% endif %}
 
-  {% if exam_history %}
-  <section class="dashboard-section dashboard-exam-history" aria-labelledby="exam-history-title">
-    <div class="section-heading dashboard-exam-history-heading">
+  {% if learning_activity_page %}
+  <section class="dashboard-section dashboard-learning-activity" aria-labelledby="learning-activity-title">
+    <div class="section-heading dashboard-learning-activity-heading">
       <div>
-        <span class="section-eyebrow">Completed</span>
-        <h2 id="exam-history-title">Exam History</h2>
+        <span class="section-eyebrow">Recent Activity</span>
+        <h2 id="learning-activity-title">Learning Activity</h2>
       </div>
-      <span class="dashboard-exam-history-count">{{ total_attempts }} attempt{{ total_attempts|pluralize }}</span>
+      <span class="dashboard-learning-activity-count">{{ learning_activity_page.paginator.count }} item{{ learning_activity_page.paginator.count|pluralize }}</span>
     </div>
 
-    <div class="dashboard-exam-history-table" role="table" aria-label="Exam history">
-      <div class="dashboard-exam-history-row dashboard-exam-history-header" role="row">
-        <div role="columnheader">Exam</div>
+    <form class="dashboard-learning-activity-toolbar" method="get" role="search">
+      <label class="dashboard-learning-activity-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <span class="sr-only">Search learning activity</span>
+        <input type="search" name="activity_search" value="{{ activity_search }}" placeholder="Search courses, exams or tracks..." autocomplete="off">
+      </label>
+      <label class="dashboard-learning-activity-filter">
+        <span class="sr-only">Filter learning activity by type</span>
+        <select name="activity_type" aria-label="Filter learning activity by type">
+          <option value="all"{% if activity_type == "all" %} selected{% endif %}>All</option>
+          <option value="course"{% if activity_type == "course" %} selected{% endif %}>Courses</option>
+          <option value="exam"{% if activity_type == "exam" %} selected{% endif %}>Exams</option>
+          <option value="track"{% if activity_type == "track" %} selected{% endif %}>Tracks</option>
+        </select>
+      </label>
+      <button type="submit" class="dashboard-learning-activity-search-button">Search</button>
+    </form>
+
+    <div class="dashboard-learning-activity-table" role="table" aria-label="Learning activity">
+      <div class="dashboard-learning-activity-row dashboard-learning-activity-header" role="row">
+        <div role="columnheader">Type</div>
+        <div role="columnheader">Resource</div>
         <div role="columnheader">Date</div>
-        <div role="columnheader">Score</div>
+        <div role="columnheader">Progress</div>
         <div role="columnheader">Status</div>
-        <div role="columnheader" class="dashboard-exam-history-action-cell">Action</div>
+        <div role="columnheader" class="dashboard-learning-activity-action-cell">Action</div>
       </div>
 
-      {% for attempt in exam_history.object_list %}
-      <div class="dashboard-exam-history-row" role="row">
-        <div class="dashboard-exam-history-exam" role="cell">
-          <span class="dashboard-exam-history-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-check"></i></span>
-          <span class="dashboard-exam-history-name" title="{{ attempt.exam.title }}">{{ attempt.exam.title }}</span>
+      {% for item in learning_activity_page.object_list %}
+      <div class="dashboard-learning-activity-row" role="row" data-activity-type="{{ item.activity_type }}">
+        <div role="cell">
+          <span class="dashboard-learning-activity-type type-{{ item.activity_type }}">
+            {% if item.activity_type == "course" %}Course{% elif item.activity_type == "exam" %}Exam{% else %}Track{% endif %}
+          </span>
         </div>
-        <div class="dashboard-exam-history-date" role="cell">
-          {% if attempt.submitted_at %}{{ attempt.submitted_at|date:"M j, Y · g:i A" }}{% else %}—{% endif %}
+        <div class="dashboard-learning-activity-resource" role="cell">
+          <span class="dashboard-learning-activity-icon type-{{ item.activity_type }}" aria-hidden="true">
+            <i class="fa-solid {% if item.activity_type == "course" %}fa-graduation-cap{% elif item.activity_type == "exam" %}fa-file-lines{% else %}fa-layer-group{% endif %}"></i>
+          </span>
+          <span class="dashboard-learning-activity-name" title="{{ item.resource.title }}">{{ item.resource.title }}</span>
         </div>
-        <div class="dashboard-exam-history-score" role="cell">
-          {% if attempt.score is not None %}{{ attempt.score }}%{% else %}—{% endif %}
+        <div class="dashboard-learning-activity-date" role="cell">
+          {% if item.activity_date %}{{ item.activity_date|date:"M j, Y · g:i A" }}{% else %}—{% endif %}
+        </div>
+        <div class="dashboard-learning-activity-progress" role="cell">
+          {% if item.activity_type == "track" %}{{ item.progress }}/{{ item.total }}{% elif item.progress is not None %}{{ item.progress }}%{% else %}—{% endif %}
         </div>
         <div role="cell">
-          {% if attempt.passed %}
-            <span class="dashboard-exam-history-status is-passed"><i class="fa-solid fa-check" aria-hidden="true"></i> Passed</span>
-          {% else %}
-            <span class="dashboard-exam-history-status is-failed"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Failed</span>
-          {% endif %}
+          <span class="dashboard-learning-activity-status status-{{ item.status|lower|cut:' ' }}">{{ item.status }}</span>
         </div>
-        <div class="dashboard-exam-history-action-cell" role="cell">
-          <a href="{% url 'quiz:exam_result' attempt.id %}" class="dashboard-exam-history-action" aria-label="View answers for {{ attempt.exam.title }}">View Answers <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        <div class="dashboard-learning-activity-action-cell" role="cell">
+          {% if item.activity_type == "exam" %}
+            <a href="{% url 'quiz:exam_result' item.attempt.id %}" class="dashboard-learning-activity-action">View Answers <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+          {% elif item.activity_type == "course" %}
+            <a href="{% url 'courses:course_learn' item.resource.slug %}" class="dashboard-learning-activity-action">Continue <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+          {% else %}
+            <a href="{% url 'quiz:exam_list' %}" class="dashboard-learning-activity-action">Open Track <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
     </div>
 
-    {% if exam_history.paginator.num_pages > 1 %}
-    <nav class="dashboard-exam-history-pagination" aria-label="Exam history pages">
-      {% if exam_history.has_previous %}
-        <a href="?exam_page={{ exam_history.previous_page_number }}" class="dashboard-exam-history-page dashboard-exam-history-page-prev">← Previous</a>
+    {% if learning_activity_page.paginator.num_pages > 1 %}
+    <nav class="dashboard-learning-activity-pagination" aria-label="Learning activity pages">
+      {% if learning_activity_page.has_previous %}
+        <a href="?activity_page={{ learning_activity_page.previous_page_number }}&activity_search={{ activity_search|urlencode }}&activity_type={{ activity_type }}" class="dashboard-learning-activity-page">← Previous</a>
       {% endif %}
-      <div class="dashboard-exam-history-page-list">
-        {% for page_number in exam_history.paginator.get_elided_page_range %}
-          {% if page_number == exam_history.paginator.ELLIPSIS %}
-            <span class="dashboard-exam-history-page dashboard-exam-history-page-ellipsis" aria-hidden="true">{{ page_number }}</span>
-          {% elif page_number == exam_history.number %}
-            <span class="dashboard-exam-history-page is-current" aria-current="page">{{ page_number }}</span>
+      <div class="dashboard-learning-activity-page-list">
+        {% for page_number in learning_activity_page.paginator.get_elided_page_range %}
+          {% if page_number == learning_activity_page.paginator.ELLIPSIS %}
+            <span class="dashboard-learning-activity-page is-ellipsis" aria-hidden="true">{{ page_number }}</span>
+          {% elif page_number == learning_activity_page.number %}
+            <span class="dashboard-learning-activity-page is-current" aria-current="page">{{ page_number }}</span>
           {% else %}
-            <a href="?exam_page={{ page_number }}" class="dashboard-exam-history-page">{{ page_number }}</a>
+            <a href="?activity_page={{ page_number }}&activity_search={{ activity_search|urlencode }}&activity_type={{ activity_type }}" class="dashboard-learning-activity-page">{{ page_number }}</a>
           {% endif %}
         {% endfor %}
       </div>
-      {% if exam_history.has_next %}
-        <a href="?exam_page={{ exam_history.next_page_number }}" class="dashboard-exam-history-page dashboard-exam-history-page-next">Next →</a>
+      {% if learning_activity_page.has_next %}
+        <a href="?activity_page={{ learning_activity_page.next_page_number }}&activity_search={{ activity_search|urlencode }}&activity_type={{ activity_type }}" class="dashboard-learning-activity-page">Next →</a>
       {% endif %}
     </nav>
     {% endif %}
