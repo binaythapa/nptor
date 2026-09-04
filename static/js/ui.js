@@ -86,35 +86,42 @@ document.addEventListener(
         initPracticeModeNavigation();
 
         /* ====================================================
-           EXPRESS FILTER COLLAPSE COMPATIBILITY
-           Keep the existing Express max-height behavior, but
-           remove the shared filter padding while collapsed so
-           the block closes completely.
+           SHARED PRACTICE FILTER COLLAPSE
+           Used by both Practice and Practice Express.
            ==================================================== */
-        function initExpressFilterCollapseCompatibility() {
-            if (window.location.pathname !== "/quiz/practice/express/") return;
+        function initPracticeFilterCollapse() {
+            const filterToggle = document.getElementById("filterToggle");
+            const filterBody = document.getElementById("filterBody");
+            const filterHint = document.getElementById("filterHint");
+            const filterIcon = document.getElementById("filterToggleIcon");
 
-            const body = document.getElementById("filterBody");
-            if (!body) return;
+            if (!filterToggle || !filterBody || filterToggle.dataset.practiceFilterInitialized === "1") {
+                return;
+            }
 
-            const syncFilterPadding = () => {
-                const expanded = body.style.maxHeight && body.style.maxHeight !== "0px";
-                const padding = expanded ? "4px 15px 15px" : "0";
-                if (body.style.padding !== padding) {
-                    body.style.padding = padding;
-                }
+            filterToggle.dataset.practiceFilterInitialized = "1";
+
+            const updateFilterUI = (expanded) => {
+                if (!filterHint || !filterIcon) return;
+                filterHint.textContent = expanded ? "(Click to collapse)" : "(Click to expand)";
+                filterIcon.textContent = expanded ? "▴" : "▾";
+                filterToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
             };
 
-            syncFilterPadding();
+            const setFilterState = (expanded) => {
+                filterBody.classList.toggle("is-open", expanded);
+                localStorage.setItem("practiceFilterExpanded", expanded ? "1" : "0");
+                updateFilterUI(expanded);
+            };
 
-            const filterObserver = new MutationObserver(syncFilterPadding);
-            filterObserver.observe(body, {
-                attributes: true,
-                attributeFilter: ["style"],
+            filterToggle.addEventListener("click", () => {
+                setFilterState(!filterBody.classList.contains("is-open"));
             });
+
+            setFilterState(localStorage.getItem("practiceFilterExpanded") === "1");
         }
 
-        initExpressFilterCollapseCompatibility();
+        initPracticeFilterCollapse();
 
         const practiceCounter = document.getElementById("practice-count");
         const practiceAccuracy = document.getElementById("practice-accuracy");
