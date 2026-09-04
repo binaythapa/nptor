@@ -87,9 +87,10 @@ document.addEventListener(
 
         /* ====================================================
            PRACTICE FILTER NORMALIZATION
-           Express historically rendered a Bulma-specific filter.
-           Normalize that block to the exact Practice filter DOM,
-           then use the same collapse state and stylesheet.
+           Express uses the same filter classes and collapse
+           behavior as the main Practice page. Existing Express
+           select IDs are deliberately preserved because the
+           Express question loader reads them directly.
            ==================================================== */
         function normalizeExpressPracticeFilter() {
             if (window.location.pathname !== "/quiz/practice/express/") return;
@@ -131,6 +132,7 @@ document.addEventListener(
 
             const body = filter.querySelector("#filterBody");
             if (!body) return;
+
             const form = document.createElement("form");
             form.method = "get";
             form.className = "practice-filter-form";
@@ -139,24 +141,21 @@ document.addEventListener(
             grid.className = "practice-filter-grid";
 
             const fields = [
-                ["Domain", domainSelect, "practice-domain"],
-                ["Category", categorySelect, "practice-category"],
-                ["Difficulty", difficultySelect, "practice-difficulty"],
+                ["Domain", domainSelect],
+                ["Category", categorySelect],
+                ["Difficulty", difficultySelect],
             ];
 
-            fields.forEach(([labelText, select, id]) => {
+            fields.forEach(([labelText, select]) => {
                 const field = document.createElement("div");
                 field.className = "practice-filter-field";
 
                 const label = document.createElement("label");
-                label.htmlFor = id;
                 label.textContent = labelText;
+                label.htmlFor = select.id;
 
                 const wrap = document.createElement("div");
                 wrap.className = "practice-select-wrap";
-
-                select.id = id;
-                select.name = id.replace("practice-", "");
                 wrap.appendChild(select);
                 field.append(label, wrap);
                 grid.appendChild(field);
@@ -175,8 +174,6 @@ document.addEventListener(
 
         /* ====================================================
            SHARED PRACTICE FILTER COLLAPSE
-           Same state key, class state, labels and arrow behavior
-           as the main Practice page.
            ==================================================== */
         function initPracticeFilterCollapse() {
             const filterToggle = document.getElementById("filterToggle");
@@ -204,6 +201,17 @@ document.addEventListener(
             });
 
             setFilterState(localStorage.getItem("practiceFilterExpanded") === "1");
+
+            /* The legacy Express template still contains a DOMContentLoaded
+               handler that writes max-height. Clear that legacy inline style
+               after all DOMContentLoaded listeners have run so the shared
+               grid-row collapse remains authoritative. */
+            queueMicrotask(() => {
+                filterBody.style.maxHeight = "";
+                filterBody.style.padding = "";
+                filterBody.style.transition = "";
+                setFilterState(localStorage.getItem("practiceFilterExpanded") === "1");
+            });
         }
 
         initPracticeFilterCollapse();
