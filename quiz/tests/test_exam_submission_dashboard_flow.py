@@ -3,11 +3,15 @@ import unittest
 
 
 class ExamSubmissionDashboardFlowTests(unittest.TestCase):
-    def test_exam_submit_returns_student_to_dashboard_after_submission(self):
+    def test_exam_submit_route_uses_dashboard_first_submit_view(self):
         root = Path(__file__).resolve().parents[2]
-        source = (root / "quiz" / "views" / "exams.py").read_text(encoding="utf-8")
+        source = (root / "quiz" / "urls" / "urls.py").read_text(encoding="utf-8")
 
-        self.assertIn("return redirect('quiz:student_dashboard')", source)
+        self.assertIn("from quiz.views.exam_submission import exam_submit_dashboard", source)
+        self.assertIn(
+            'path("exam/attempt/<int:user_exam_id>/submit/", require_POST(exam_submit_dashboard), name="exam_submit")',
+            source,
+        )
 
     def test_student_dashboard_exposes_submitted_attempts_for_answer_review(self):
         root = Path(__file__).resolve().parents[2]
@@ -19,12 +23,12 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
         self.assertIn("View Answers", template)
         self.assertIn("quiz:exam_result", template)
 
-    def test_result_page_no_longer_contains_the_answer_review_section(self):
+    def test_exam_result_remains_the_read_only_answer_review_destination(self):
         root = Path(__file__).resolve().parents[2]
         template = (root / "templates" / "quiz" / "student" / "exam" / "result.html").read_text(encoding="utf-8")
 
-        self.assertNotIn("ANSWER REVIEW", template)
-        self.assertNotIn("📋 Answer Review", template)
+        self.assertIn("ANSWER REVIEW", template)
+        self.assertIn("📋 Answer Review", template)
 
 
 if __name__ == "__main__":
