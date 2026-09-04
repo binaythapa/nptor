@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from quiz.services.exam_question_allocator import (
     allocate_questions_for_exam,
@@ -59,7 +60,7 @@ from django.shortcuts import (
     render,
     redirect,
 )
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.utils.dateformat import DateFormat
 from django.utils.formats import get_format
@@ -243,18 +244,33 @@ def exam_start(request, exam_id):
             reason,
         )
 
-        messages.info(
-            request,
-            (
-                "This exam is premium. "
-                "Please subscribe to unlock access."
-            ),
-        )
+        if reason == "Prerequisite exam required":
+            messages.info(
+                request,
+                "Complete the prerequisite exam first.",
+            )
+        elif exam.is_free:
+            messages.info(
+                request,
+                "This free exam is currently unavailable.",
+            )
+        else:
+            messages.info(
+                request,
+                (
+                    "This exam is premium. "
+                    "Please subscribe to unlock access."
+                ),
+            )
 
-        return redirect(
+        locked_url = reverse(
             "quiz:exam_locked",
-            exam_id=exam.id,
+            args=[exam.id],
         )
+        if reason:
+            locked_url = f"{locked_url}?{urlencode({'reason': reason})}"
+
+        return redirect(locked_url)
 
     # =========================================================
     # CREATE / RESUME EXAM ATTEMPT

@@ -17,9 +17,19 @@
 
     <p class="exam-locked-exam">{{ exam.title }}</p>
 
-    <p class="exam-locked-message">
-      This exam is not included in your current access. Unlock it to start the full timed assessment.
-    </p>
+    {% if reason == "Prerequisite exam required" %}
+      <p class="exam-locked-message">
+        This free exam becomes available after you complete the required prerequisite exam.
+      </p>
+    {% elif exam.is_free %}
+      <p class="exam-locked-message">
+        This free exam is currently unavailable.
+      </p>
+    {% else %}
+      <p class="exam-locked-message">
+        This exam is not included in your current access. Unlock it to start the full timed assessment.
+      </p>
+    {% endif %}
 
     <div class="exam-locked-details" aria-label="Exam details">
       {% if exam.question_count %}
