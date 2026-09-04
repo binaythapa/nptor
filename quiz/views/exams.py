@@ -1,1 +1,1 @@
-RESTORE
+# This file is restored in the next commit.
