@@ -22,17 +22,16 @@ def _finish_course_quiz_if_needed(request, user_exam):
 
 @login_required
 def exam_submit_dashboard(request, user_exam_id):
-    """Finalize an exam once and return the student to the dashboard."""
+    """Finalize an exam safely for both timer expiry and explicit submit."""
     user_exam = get_object_or_404(
         UserExam,
         pk=user_exam_id,
         user=request.user,
     )
 
-    # A direct browser visit/refresh is harmless while the attempt is active.
-    # If the server confirms that the attempt has expired, however, finalize
-    # it from the answers already persisted in UserAnswer. This is the server-
-    # side fallback for a timer that expires between browser requests.
+    # A direct browser visit/refresh while the attempt is active must never
+    # submit it. If the server confirms expiry, finalize the answers already
+    # persisted in UserAnswer as the timer-expiry fallback.
     if request.method == "GET":
         if not user_exam.submitted_at and user_exam.time_remaining() <= 0:
             is_mock = request.session.get(f"mock_exam_{user_exam.id}", False)
@@ -43,11 +42,13 @@ def exam_submit_dashboard(request, user_exam_id):
     if request.method != "POST":
         return redirect("quiz:student_dashboard")
 
+    # POST is the explicit final submission. The grading service persists the
+    # submitted answers, score, pass/fail state, and submitted timestamp.
     if user_exam.submitted_at:
-        return redirect("quiz:student_dashboard")
+        return redirect("quiz:exam_result", user_exam_id=user_exam.id)
 
     is_mock = request.session.get(f"mock_exam_{user_exam.id}", False)
     grade_exam(user_exam, request.POST, is_mock=is_mock)
     _finish_course_quiz_if_needed(request, user_exam)
 
-    return redirect("quiz:student_dashboard")
+    return redirect("quiz:exam_result", user_exam_id=user_exam.id)
