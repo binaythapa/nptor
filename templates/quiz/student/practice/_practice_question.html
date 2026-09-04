@@ -29,7 +29,7 @@
 
     <div class="practice-question-meta">
         <span>
-            Question #{{ question.id }}
+            Question #{{ request.session.p_seen|length|add:"1" }}
         </span>
 
         <span class="practice-question-type">
