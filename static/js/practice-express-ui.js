@@ -193,8 +193,9 @@ document.addEventListener("DOMContentLoaded", () => {
             .practice-express-page .question-text {
                 margin-bottom: 16px !important;
                 color: var(--text-color, #1f2937);
-                font-size: 1rem;
-                line-height: 1.55;
+                font-size: 1.05rem;
+                font-weight: 400;
+                line-height: 1.7;
             }
 
             .practice-express-page .practice-options {
