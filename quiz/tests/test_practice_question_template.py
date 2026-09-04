@@ -44,6 +44,20 @@ class PracticeQuestionTemplateTests(unittest.TestCase):
         self.assertIn('width: 34px;', template)
         self.assertIn('height: 34px;', template)
 
+    def test_question_number_uses_practice_sequence_not_database_id(self):
+        template_path = (
+            Path(__file__).resolve().parents[2]
+            / "templates"
+            / "quiz"
+            / "student"
+            / "practice"
+            / "_practice_question.html"
+        )
+        template = template_path.read_text(encoding="utf-8")
+
+        self.assertIn("Question #{{ request.session.p_seen|length|add:\"1\" }}", template)
+        self.assertNotIn("Question #{{ question.id }}", template)
+
 
 if __name__ == "__main__":
     unittest.main()
