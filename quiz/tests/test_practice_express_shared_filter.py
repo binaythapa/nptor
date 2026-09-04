@@ -24,7 +24,9 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
         filter_code = shared_ui[start:end]
 
         self.assertIn("practice-express-filter", filter_code)
-        self.assertIn("classList.remove(\"practice-express-filter\")", filter_code)
+        self.assertIn("classList.remove(\"practice-express-filter\", \"box\", \"mb-3\", \"p-3\")", filter_code)
+        self.assertIn('classList.add("practice-filter-body")', filter_code)
+        self.assertIn('classList.add("practice-filter-form")', filter_code)
         self.assertIn('classList.toggle("is-open"', filter_code)
 
 
