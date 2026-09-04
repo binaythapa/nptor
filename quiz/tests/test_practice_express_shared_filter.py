@@ -43,6 +43,19 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
 
         self.assertIn("padding-bottom: 8px !important;", columns_rule)
 
+    def test_express_page_shell_is_visual_wrapper_not_a_shared_card(self):
+        root = Path(__file__).resolve().parents[2]
+        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+
+        marker = ".practice-express-page {"
+        start = express_ui.index(marker)
+        end = express_ui.index("}", start)
+        shell_rule = express_ui[start:end]
+
+        self.assertIn("background: transparent;", shell_rule)
+        self.assertIn("border: 0;", shell_rule)
+        self.assertIn("box-shadow: none;", shell_rule)
+
 
 if __name__ == "__main__":
     unittest.main()
