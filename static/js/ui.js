@@ -7,6 +7,104 @@ document.addEventListener(
     () => {
 
         /* ====================================================
+           PRACTICE MODE NAVIGATION
+           Keep Practice Express visually identical to the
+           shared Practice mode navigation.
+           ==================================================== */
+
+        function initPracticeModeNavigation() {
+            const nav = document.querySelector(".practice-mode-nav");
+
+            if (!nav || window.location.pathname !== "/quiz/practice/express/") {
+                return;
+            }
+
+            const basicsLink = nav.querySelector('a[href*="/quiz/practice/"]');
+            const proLink = nav.querySelector('a[href*="/quiz/exam"]');
+
+            if (!basicsLink || !proLink) {
+                return;
+            }
+
+            let expressLink = nav.querySelector('[data-practice-express-link="1"]');
+
+            if (!expressLink) {
+                expressLink = document.createElement("a");
+                expressLink.href = "/quiz/practice/express/";
+                expressLink.textContent = "Express";
+                expressLink.className = "practice-mode active";
+                expressLink.dataset.practiceExpressLink = "1";
+                nav.insertBefore(expressLink, proLink);
+            }
+
+            nav.style.display = "flex";
+            nav.style.alignItems = "center";
+            nav.style.justifyContent = "flex-end";
+            nav.style.flex = "0 0 auto";
+            nav.style.width = "auto";
+            nav.style.gap = "0";
+            nav.style.padding = "0";
+            nav.style.border = "0";
+            nav.style.borderRadius = "0";
+            nav.style.background = "transparent";
+            nav.style.boxShadow = "none";
+            nav.style.whiteSpace = "nowrap";
+
+            nav.querySelectorAll(".practice-mode").forEach((link) => {
+                link.style.display = "inline-flex";
+                link.style.alignItems = "center";
+                link.style.justifyContent = "center";
+                link.style.minHeight = "auto";
+                link.style.padding = "0";
+                link.style.borderRadius = "0";
+                link.style.color = "var(--muted-text-color, #6b7280)";
+                link.style.fontSize = ".75rem";
+                link.style.fontWeight = "500";
+                link.style.lineHeight = "1.5";
+                link.style.textDecoration = "none";
+                link.style.whiteSpace = "nowrap";
+            });
+
+            expressLink.style.color = "var(--primary-color, #3273dc)";
+
+            if (!document.getElementById("practice-express-nav-style")) {
+                const style = document.createElement("style");
+                style.id = "practice-express-nav-style";
+                style.textContent = `
+                    .practice-mode-nav .practice-mode + .practice-mode::before {
+                        content: "|";
+                        display: inline-block;
+                        margin: 0 8px;
+                        color: var(--muted-text-color, #9ca3af);
+                    }
+                    .practice-mode-nav .practice-mode:hover,
+                    .practice-mode-nav .practice-mode.active {
+                        background: transparent !important;
+                        box-shadow: none !important;
+                    }
+                    .practice-mode-nav .practice-mode:hover {
+                        color: var(--text-color, #1f2937);
+                    }
+                    .practice-mode-nav .practice-mode.active {
+                        color: var(--primary-color, #3273dc) !important;
+                    }
+                    @media (max-width: 480px) {
+                        .practice-mode-nav .practice-mode {
+                            font-size: .68rem;
+                        }
+                        .practice-mode-nav .practice-mode + .practice-mode::before {
+                            margin: 0 5px;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        initPracticeModeNavigation();
+
+
+        /* ====================================================
            PRACTICE STATS
            ==================================================== */
 
