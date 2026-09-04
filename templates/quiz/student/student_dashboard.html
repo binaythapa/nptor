@@ -33,6 +33,40 @@
   </section>
   {% endif %}
 
+  {% if submitted_attempts %}
+  <section class="dashboard-section dashboard-exam-history" aria-labelledby="exam-history-title">
+    <div class="section-heading">
+      <div>
+        <span class="section-eyebrow">Completed</span>
+        <h2 id="exam-history-title">Recent Exam Results</h2>
+      </div>
+    </div>
+    <div class="dashboard-learning-grid">
+      {% for attempt in submitted_attempts|slice:":5" %}
+      <article class="dashboard-learning-card" data-learning-card data-learning-type="exam-results" data-learning-name="{{ attempt.exam.title|lower }}">
+        <div class="learning-card-icon learning-card-icon-exam"><i class="fa-solid fa-file-circle-check" aria-hidden="true"></i></div>
+        <div class="learning-card-body">
+          <div class="learning-card-topline">
+            <span class="learning-card-type">Exam Result</span>
+            {% if attempt.passed %}<span class="learning-source">Passed</span>{% else %}<span class="learning-source">Failed</span>{% endif %}
+          </div>
+          <h3>{{ attempt.exam.title }}</h3>
+          <p>{% if attempt.submitted_at %}{{ attempt.submitted_at|date:"M j, Y · g:i A" }}{% endif %}</p>
+          {% if attempt.score is not None %}
+            {% if attempt.passed %}
+              <span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> {{ attempt.score }}%</span>
+            {% else %}
+              <span class="learning-result learning-result-danger"><i class="fa-solid fa-xmark" aria-hidden="true"></i> {{ attempt.score }}%</span>
+            {% endif %}
+          {% endif %}
+        </div>
+        <a href="{% url 'quiz:exam_result' attempt.id %}" class="learning-card-action" aria-label="View answers for {{ attempt.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   <section class="dashboard-stats" aria-label="Learning statistics">
     <div class="dashboard-stat-card"><div class="stat-icon stat-icon-primary"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Resources</span><strong class="stat-value">{{ learning_count }}</strong></div></div>
     <div class="dashboard-stat-card"><div class="stat-icon stat-icon-info"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></div><div class="stat-content"><span class="stat-label">Courses</span><strong class="stat-value">{{ courses|length }}</strong></div></div>
