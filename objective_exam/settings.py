@@ -3,17 +3,19 @@ import os
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
-# Load .env only in local/dev (safe in prod)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except Exception:
-    pass
-
 # ============================================================
 # BASE DIRECTORY
 # ============================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load the project-root .env explicitly for local/dev. This avoids relying on
+# the process working directory when Django is started from an IDE or another
+# directory. Production deployments should provide environment variables.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / ".env")
+except Exception:
+    pass
 
 
 # ============================================================
@@ -228,14 +230,23 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
-# Gmail SMTP requires an authenticated account. Keep the password in the
-# environment/.env (use a Gmail App Password, never the normal account password).
-# The default username matches the existing NPTOR sender so a missing
-# EMAIL_HOST_USER cannot silently turn the SMTP request into an unauthenticated
-# sendmail() call that Gmail rejects with 530 Authentication Required.
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "contact.nptor@gmail.com").strip()
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+# Prefer EMAIL_HOST_PASSWORD. GMAIL_APP_PASSWORD is supported as an explicit
+# local/dev alias. Gmail App Passwords are often copied with spaces, so strip
+# whitespace before handing the credential to smtplib.
+EMAIL_HOST_PASSWORD = (
+    os.environ.get("EMAIL_HOST_PASSWORD")
+    or os.environ.get("GMAIL_APP_PASSWORD")
+    or ""
+).strip().replace(" ", "")
+
+if not EMAIL_HOST_PASSWORD:
+    raise RuntimeError(
+        "EMAIL_HOST_PASSWORD (or GMAIL_APP_PASSWORD) must be set for Gmail SMTP. "
+        "Use a Gmail App Password, not the normal Gmail account password."
+    )
+
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
     f"NPTOR <{EMAIL_HOST_USER}>",
