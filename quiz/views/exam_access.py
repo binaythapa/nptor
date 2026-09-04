@@ -69,10 +69,6 @@ def exam_review(request, user_exam_id):
         .prefetch_related("question__choices")
     )
     answer_map = {answer.question_id: answer for answer in answers}
-    questions_by_id = {
-        question.id: question
-        for question in user_exam.answers.select_related("question").values_list("question", flat=True)
-    }
 
     # Resolve questions in the exact attempt order stored on UserExam.
     questions = []
@@ -91,10 +87,16 @@ def exam_review(request, user_exam_id):
             return bool(answer.selections)
         if question_type in ("fill", "numeric"):
             return bool((answer.raw_answer or "").strip())
-        return bool(answer.choice_id or answer.selections or (answer.raw_answer or "").strip())
+        return bool(
+            answer.choice_id
+            or answer.selections
+            or (answer.raw_answer or "").strip()
+        )
 
     answered_count = sum(
-        1 for question_id in question_ids if is_answered(answer_map.get(question_id))
+        1
+        for question_id in question_ids
+        if is_answered(answer_map.get(question_id))
     )
     total_questions = len(question_ids)
 
