@@ -26,6 +26,12 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
         self.assertIn("View Answers", template)
         self.assertIn("quiz:exam_result", template)
 
+    def test_dashboard_resource_filters_ignore_recent_result_cards(self):
+        root = Path(__file__).resolve().parents[2]
+        script = (root / "static" / "js" / "pages" / "dashboard_resource_filters.js").read_text(encoding="utf-8")
+
+        self.assertIn('document.querySelectorAll("[data-dashboard-grid] [data-learning-card]")', script)
+
     def test_exam_result_remains_the_read_only_answer_review_destination(self):
         root = Path(__file__).resolve().parents[2]
         template = (root / "templates" / "quiz" / "student" / "exam" / "result.html").read_text(encoding="utf-8")
