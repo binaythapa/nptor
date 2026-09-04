@@ -12,7 +12,7 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
 
     def test_express_filter_uses_shared_practice_filter_classes_at_runtime(self):
         root = Path(__file__).resolve().parents[2]
-        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+        shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
 
         for marker in (
             'practice-filter-panel',
@@ -25,37 +25,29 @@ class PracticeExpressSharedFilterTests(unittest.TestCase):
             'practice-filter-field',
             'practice-select-wrap',
         ):
-            self.assertIn(marker, express_ui)
+            self.assertIn(marker, shared_ui)
 
-        self.assertIn("practice.css", express_ui)
-        self.assertIn('filterToggle.setAttribute("aria-expanded"', express_ui)
+        self.assertIn("css/pages/practice.css", shared_ui)
+        self.assertIn('filterToggle.setAttribute("aria-expanded"', shared_ui)
 
     def test_express_filter_uses_the_same_practice_filter_state_key_and_logic(self):
         root = Path(__file__).resolve().parents[2]
         practice_js = (root / "static" / "js" / "pages" / "practice.js").read_text(encoding="utf-8")
-        express_ui = (root / "static" / "js" / "practice-express-ui.js").read_text(encoding="utf-8")
+        shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
 
         self.assertIn('"practiceFilterExpanded"', practice_js)
-        self.assertIn('"practiceFilterExpanded"', express_ui)
-        self.assertIn('classList.toggle("is-open", expanded)', express_ui)
-        self.assertIn('localStorage.setItem("practiceFilterExpanded", expanded ? "1" : "0")', express_ui)
+        self.assertIn('"practiceFilterExpanded"', shared_ui)
+        self.assertIn('filterBody.classList.toggle("is-open", expanded)', shared_ui)
+        self.assertIn('localStorage.setItem("practiceFilterExpanded", expanded ? "1" : "0")', shared_ui)
 
-    def test_express_filter_has_no_legacy_inline_toggle(self):
-        root = Path(__file__).resolve().parents[2]
-        template = (root / "templates" / "quiz" / "student" / "practice_express" / "practice_express.html").read_text(encoding="utf-8")
-
-        self.assertNotIn('onclick="toggleFilters()"', template)
-        self.assertNotIn("function toggleFilters()", template)
-        self.assertNotIn("expressFilterExpanded", template)
-
-    def test_shared_filter_collapse_is_initialized_once(self):
+    def test_express_filter_legacy_markup_is_neutralized_by_shared_initializer(self):
         root = Path(__file__).resolve().parents[2]
         shared_ui = (root / "static" / "js" / "ui.js").read_text(encoding="utf-8")
-        practice_js = (root / "static" / "js" / "pages" / "practice.js").read_text(encoding="utf-8")
 
-        self.assertIn("function initPracticeFilterCollapse()", shared_ui)
-        self.assertIn("data.practiceFilterInitialized", practice_js)
-        self.assertNotIn("initExpressFilterCollapseCompatibility", shared_ui)
+        self.assertIn('filter.removeAttribute("onclick")', shared_ui)
+        self.assertIn('body.style.maxHeight = ""', shared_ui)
+        self.assertIn('body.style.transition = ""', shared_ui)
+        self.assertIn('filter.classList.remove("box", "mb-3", "p-3")', shared_ui)
 
     def test_express_page_shell_is_visual_wrapper_not_a_shared_card(self):
         root = Path(__file__).resolve().parents[2]
