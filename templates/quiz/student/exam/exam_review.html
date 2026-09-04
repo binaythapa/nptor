@@ -1,266 +1,162 @@
 {% extends "layouts/student/base.html" %}
-{% load dict_extras %}
+{% load dict_extras static %}
+
+{% block page_css %}
+  <link rel="stylesheet" href="{% static 'css/pages/exam-review.css' %}">
+{% endblock %}
 
 {% block content %}
-
-<!-- ================= STICKY EXAM HEADER ================= -->
-<div class="exam-header">
-  <div class="exam-header-inner">
-    <div class="exam-title">
-      Final Review
-    </div>
-
-    <div class="exam-timer">
-      <div class="timer-label">Time Remaining</div>
-      <div class="timer-value" id="timer">
-        00:00:00
+<main class="exam-review-page" aria-labelledby="exam-review-title">
+  <header class="exam-header exam-review-header">
+    <div class="exam-header-inner">
+      <div class="exam-title">Final Review</div>
+      <div class="exam-timer" aria-live="polite">
+        <span class="timer-label">Time Remaining</span>
+        <span class="timer-value" id="timer">00:00:00</span>
       </div>
     </div>
+  </header>
+
+  <h1 id="exam-review-title" class="exam-review-title">Review your answers</h1>
+
+  <div class="exam-review-summary" role="status">
+    <strong>Total:</strong> {{ total_questions }} |
+    <span class="is-success"><strong>Answered:</strong> {{ answered_count }}</span> |
+    <span class="is-danger"><strong>Unanswered:</strong> {{ unanswered_count }}</span>
   </div>
-</div>
 
-<h2 class="title is-4">Final Review</h2>
+  <form method="post" action="{% url 'quiz:exam_submit' user_exam.id %}">
+    {% csrf_token %}
 
-<div class="notification is-light mb-4">
-  <strong>Total:</strong> {{ total_questions }} |
-  <span class="has-text-success">
-    <strong>Answered:</strong> {{ answered_count }}
-  </span> |
-  <span class="has-text-danger">
-    <strong>Unanswered:</strong> {{ unanswered_count }}
-  </span>
-</div>
+    {% for question in questions %}
+      {% with ua=user_answers|dict_get:question.id %}
+        <section class="exam-review-card
+          {% if not ua %}is-unanswered
+          {% elif question.question_type in 'single tf dropdown' and not ua.choice %}is-unanswered
+          {% elif question.question_type == 'multi' and not ua.selections %}is-unanswered
+          {% elif question.question_type in 'fill numeric order' and not ua.raw_answer %}is-unanswered
+          {% elif question.question_type == 'match' and not ua.selections %}is-unanswered
+          {% endif %}"
+          aria-labelledby="review-question-{{ question.id }}">
 
-<form method="post" action="{% url 'quiz:exam_submit' user_exam.id %}">
-  {% csrf_token %}
+          <p id="review-question-{{ question.id }}" class="exam-review-question">
+            <strong>Q{{ forloop.counter }}.</strong> {{ question.text|safe }}
+          </p>
 
-  {% for question in questions %}
-    {% with ua=user_answers|dict_get:question.id %}
-
-    <div class="box mb-4
-        {% if not ua %}
-            unanswered
-        {% elif question.question_type in "single tf dropdown" and not ua.choice %}
-            unanswered
-        {% elif question.question_type == "multi" and not ua.selections %}
-            unanswered
-        {% elif question.question_type in "fill numeric order" and not ua.raw_answer %}
-            unanswered
-        {% elif question.question_type == "match" and not ua.selections %}
-            unanswered
-        {% endif %}
-    ">
-
-      <p><strong>Q{{ forloop.counter }}.</strong> {{ question.text|safe }}</p>
-
-      <!-- SINGLE / TF / DROPDOWN -->
-      {% if question.question_type in "single tf dropdown" %}
-        {% for c in question.choices.all %}
-          <label class="option-label">
-            <input type="radio"
-                   name="question_{{ question.id }}"
-                   value="{{ c.id }}"
-                   {% if ua and ua.choice and ua.choice.id == c.id %}
-                     checked
-                   {% endif %}>
-            {{ c.text|safe }}
-          </label>
-        {% endfor %}
-      {% endif %}
-
-      <!-- MULTI -->
-      {% if question.question_type == "multi" %}
-        {% for c in question.choices.all %}
-          <label class="option-label">
-            <input type="checkbox"
-                   name="question_{{ question.id }}"
-                   value="{{ c.id }}"
-                   {% if ua and ua.selections and c.id|stringformat:"s" in ua.selections|stringformat:"s" %}
-                     checked
-                   {% endif %}>
-            {{ c.text|safe }}
-          </label>
-        {% endfor %}
-      {% endif %}
-
-      <!-- TEXT BASED -->
-      {% if question.question_type in "fill numeric order" %}
-        <input class="input mt-2"
-               type="text"
-               name="question_{{ question.id }}"
-               value="{{ ua.raw_answer|default_if_none:'' }}">
-      {% endif %}
-
-      <!-- MATCH -->
-      {% if question.question_type == "match" %}
-        {% for pair in question.matching_pairs %}
-          {% with idx=forloop.counter0 %}
-          <div class="mt-2">
-            <strong>{{ pair.left }}</strong>
-            <div class="select is-fullwidth mt-1">
-              <select name="match_{{ question.id }}_{{ idx }}">
-                <option value="">-- pick --</option>
-                {% for opt in question.matching_pairs %}
-                  <option value="{{ opt.right }}"
-                    {% if ua and ua.selections and ua.selections|dict_get:idx == opt.right %}
-                      selected
-                    {% endif %}>
-                    {{ opt.right }}
-                  </option>
-                {% endfor %}
-              </select>
+          {% if question.question_type in 'single tf dropdown' %}
+            {% if ua and ua.choice %}
+              <input type="hidden" name="question_{{ question.id }}" value="{{ ua.choice.id }}">
+            {% endif %}
+            <div class="exam-review-options">
+              {% for c in question.choices.all %}
+                <div class="exam-review-option {% if ua and ua.choice and ua.choice.id == c.id %}is-selected{% endif %}">
+                  <span class="exam-review-option-marker">
+                    {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+                  </span>
+                  <span class="exam-review-option-text">{{ c.text|safe }}</span>
+                </div>
+              {% endfor %}
             </div>
-          </div>
-          {% endwith %}
-        {% endfor %}
-      {% endif %}
+          {% endif %}
 
-      {% if not ua %}
-        <p class="has-text-danger is-size-7 mt-2">Not Answered</p>
-      {% endif %}
+          {% if question.question_type == 'multi' %}
+            {% if ua and ua.selections %}
+              {% for selected_id in ua.selections %}
+                <input type="hidden" name="question_{{ question.id }}" value="{{ selected_id }}">
+              {% endfor %}
+            {% endif %}
+            <div class="exam-review-options">
+              {% for c in question.choices.all %}
+                <div class="exam-review-option {% if ua and ua.selections and c.id|stringformat:'s' in ua.selections|stringformat:'s' %}is-selected{% endif %}">
+                  <span class="exam-review-option-marker">
+                    {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+                  </span>
+                  <span class="exam-review-option-text">{{ c.text|safe }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
 
+          {% if question.question_type in 'fill numeric order' %}
+            <input class="input exam-review-answer"
+                   type="text"
+                   name="question_{{ question.id }}"
+                   value="{{ ua.raw_answer|default_if_none:'' }}">
+          {% endif %}
+
+          {% if question.question_type == 'match' %}
+            <div class="exam-review-match">
+              {% for pair in question.matching_pairs %}
+                {% with idx=forloop.counter0 %}
+                  <div class="exam-review-match-row">
+                    <strong>{{ pair.left }}</strong>
+                    <div class="select is-fullwidth">
+                      <select name="match_{{ question.id }}_{{ idx }}">
+                        <option value="">-- pick --</option>
+                        {% for opt in question.matching_pairs %}
+                          <option value="{{ opt.right }}"
+                            {% if ua and ua.selections and ua.selections|dict_get:idx == opt.right %}selected{% endif %}>
+                            {{ opt.right }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                {% endwith %}
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if not ua %}
+            <p class="exam-review-unanswered">Not Answered</p>
+          {% endif %}
+        </section>
+      {% endwith %}
+    {% endfor %}
+
+    <div class="exam-review-actions">
+      <button type="submit" class="button is-success is-medium exam-review-submit">
+        Confirm &amp; Submit Exam
+      </button>
     </div>
+  </form>
+</main>
 
-    {% endwith %}
-  {% endfor %}
-
-  <div class="has-text-centered mt-5">
-    <button type="submit" class="button is-success is-medium">
-      Confirm & Submit Exam
-    </button>
-  </div>
-
-</form>
-
-
-
-<style>
-/* =====================================
-   FINAL REVIEW – LIGHT + DARK SAFE
-   ===================================== */
-
-/* Option styling */
-.option-label {
-  display: block;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid rgba(0,0,0,0.06);
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.option-label:hover {
-  background: rgba(0,0,0,0.03);
-}
-
-/* Unanswered box */
-.unanswered {
-  border: 1px solid #ef4444;
-  background: rgba(239,68,68,0.06);
-}
-
-/* Sticky header */
-.exam-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: var(--card);
-  padding: 14px 16px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  transition: box-shadow 0.2s ease;
-}
-
-.exam-header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.timer-label {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.timer-value {
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-/* Dark Mode Overrides */
-:root[data-theme='dark'] .option-label {
-  border-color: rgba(255,255,255,0.15);
-}
-
-:root[data-theme='dark'] .option-label:hover {
-  background: rgba(255,255,255,0.06);
-}
-
-:root[data-theme='dark'] .unanswered {
-  border-color: #f87171;
-  background: rgba(239,68,68,0.15);
-}
-
-:root[data-theme='dark'] .notification {
-  background: var(--card);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: var(--text);
-}
-
-
-.timer-danger { color: #ef4444; }
-.timer-warning { color: #f59e0b; }
-</style>
 <script>
 (function () {
-
   let remainingSeconds = Number("{{ remaining }}");
   const timerEl = document.getElementById("timer");
   const form = document.querySelector("form");
 
-  if (!timerEl || isNaN(remainingSeconds)) return;
+  if (!timerEl || !form || Number.isNaN(remainingSeconds)) return;
 
   function formatTime(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-
-    return (
-      String(h).padStart(2, "0") + ":" +
-      String(m).padStart(2, "0") + ":" +
-      String(s).padStart(2, "0")
-    );
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return [hours, minutes, secs].map(value => String(value).padStart(2, "0")).join(":");
   }
 
-  function updateColor(seconds) {
-    if (seconds <= 60) {
-      timerEl.classList.add("timer-danger");
-    } else if (seconds <= 300) {
-      timerEl.style.color = "#ff9800";
-    }
+  function updateTimerState(seconds) {
+    timerEl.classList.toggle("timer-warning", seconds <= 300 && seconds > 60);
+    timerEl.classList.toggle("timer-danger", seconds <= 60);
   }
 
-  timerEl.textContent = formatTime(remainingSeconds);
+  timerEl.textContent = formatTime(Math.max(remainingSeconds, 0));
+  updateTimerState(remainingSeconds);
 
   const interval = setInterval(() => {
-
-    remainingSeconds--;
+    remainingSeconds -= 1;
 
     if (remainingSeconds <= 0) {
       clearInterval(interval);
-
-      // Auto submit exam
       form.submit();
       return;
     }
 
     timerEl.textContent = formatTime(remainingSeconds);
-    updateColor(remainingSeconds);
-
+    updateTimerState(remainingSeconds);
   }, 1000);
-
 })();
 </script>
-
 {% endblock %}
