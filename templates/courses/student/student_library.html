@@ -1,0 +1,114 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} | Nepal Mentor{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/pages/course-library.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/course-mobile.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="student-page course-library-page">
+  <div class="page-header course-library-header">
+    <div>
+      <p class="eyebrow">Learning</p>
+      <h1 class="title is-3">{{ page_title }}</h1>
+      <p class="subtitle is-6">Pick up where you left off or review courses you have completed.</p>
+    </div>
+    <a class="button is-link is-light" href="{% url 'courses:course_list' %}">
+      <span class="icon"><i class="fa fa-compass"></i></span>
+      <span>Browse Courses</span>
+    </a>
+  </div>
+
+  <div class="course-library-tabs" role="tablist" aria-label="Course library">
+    <a class="{% if library_mode == 'all' %}is-active{% endif %}" href="{% url 'courses:my_courses' %}">My Courses</a>
+    <a class="{% if library_mode == 'continue' %}is-active{% endif %}" href="{% url 'courses:continue_learning' %}">Continue Learning</a>
+    <a class="{% if library_mode == 'completed' %}is-active{% endif %}" href="{% url 'courses:completed_courses' %}">Completed Courses</a>
+  </div>
+
+  {% if course_items %}
+    <div class="course-library-grid">
+      {% for item in course_items %}
+        <article class="course-library-card">
+          <div class="course-card-body">
+            <div class="course-card-topline">
+              <span class="tag is-light">Course</span>
+              {% if item.progress >= 100 %}
+                <span class="tag is-success is-light">Completed</span>
+              {% elif item.progress > 0 %}
+                <span class="tag is-info is-light">In progress</span>
+              {% else %}
+                <span class="tag is-light">Not started</span>
+              {% endif %}
+            </div>
+
+            <h2 class="course-card-title">{{ item.course.title }}</h2>
+            <p class="course-card-description">
+              {{ item.course.description|striptags|truncatechars:150 }}
+            </p>
+
+            <div class="course-progress" aria-label="Course progress">
+              <div class="course-progress-meta">
+                <span>Progress</span>
+                <strong>{{ item.progress }}%</strong>
+              </div>
+              <progress class="progress is-link" value="{{ item.progress }}" max="100">{{ item.progress }}%</progress>
+              <small>{{ item.completed }} of {{ item.total }} lessons completed</small>
+            </div>
+
+            <div class="course-card-footer">
+              <span class="course-enrolled-date">Enrolled {{ item.enrolled_at|date:"M j, Y" }}</span>
+              {% if item.progress >= 100 %}
+                <a class="button is-light" href="{% url 'courses:course_detail' slug=item.course.slug %}">Review Course</a>
+              {% else %}
+                <a class="button is-link" href="{% url 'courses:course_learn' slug=item.course.slug %}">
+                  {% if item.progress > 0 %}Continue{% else %}Start Learning{% endif %}
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="pagination is-centered course-library-pagination" role="navigation" aria-label="Course pagination">
+        {% if page_obj.has_previous %}
+          <a class="pagination-previous" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+          <a class="pagination-next" href="?page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+        <ul class="pagination-list">
+          {% for page_number in page_obj.paginator.get_elided_page_range %}
+            {% if page_number == page_obj.paginator.ELLIPSIS %}
+              <li><span class="pagination-ellipsis">&hellip;</span></li>
+            {% elif page_number == page_obj.number %}
+              <li><a class="pagination-link is-current" aria-current="page">{{ page_number }}</a></li>
+            {% else %}
+              <li><a class="pagination-link" href="?page={{ page_number }}">{{ page_number }}</a></li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="empty-state course-library-empty">
+      <div class="empty-state-icon"><i class="fa fa-book-open"></i></div>
+      <h2 class="title is-5">Nothing here yet</h2>
+      <p>
+        {% if library_mode == 'continue' %}
+          Start a course and your unfinished learning will appear here.
+        {% elif library_mode == 'completed' %}
+          Complete your first course and it will appear here.
+        {% else %}
+          Enroll in a course to build your personal learning library.
+        {% endif %}
+      </p>
+      <a class="button is-link" href="{% url 'courses:course_list' %}">Explore Courses</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
