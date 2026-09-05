@@ -1,7 +1,9 @@
 from django.core.paginator import Paginator
+from django.db.models import Prefetch
 
 from courses.models import Course
 from quiz.models import Category, Domain, Exam, ExamTrack, LearningShortlist
+from subscriptions.models import SubscriptionPlan
 from subscriptions.services import AccessService
 
 
@@ -21,7 +23,12 @@ def _public_courses():
         category__organization__isnull=True,
         category__domain__is_active=True,
         category__domain__organization__isnull=True,
-    ).select_related("category", "category__domain")
+    ).select_related("category", "category__domain").prefetch_related(
+        Prefetch(
+            "subscription_plans",
+            queryset=SubscriptionPlan.objects.filter(is_active=True),
+        )
+    )
 
 
 def _public_exams():
@@ -52,6 +59,10 @@ def _public_tracks():
     ).prefetch_related(
         "exams",
         "exams__primary_category__domain",
+        Prefetch(
+            "subscription_plans",
+            queryset=SubscriptionPlan.objects.filter(is_active=True),
+        ),
     ).distinct()
 
 
@@ -112,6 +123,13 @@ def _has_access(user, resource_type, resource):
     return AccessService.has_access(student=user, resource_type=resource_type, resource=resource)
 
 
+def _has_active_plans(resource):
+    prefetched = getattr(resource, "_prefetched_objects_cache", {}).get("subscription_plans")
+    if prefetched is not None:
+        return bool(prefetched)
+    return resource.subscription_plans.filter(is_active=True).exists()
+
+
 def _resource_item(resource_type, resource):
     """Build presentation metadata without making access decisions."""
     item = {
@@ -124,11 +142,7 @@ def _resource_item(resource_type, resource):
     }
 
     if resource_type == "course":
-        has_active_plan = any(
-            getattr(plan, "is_active", False)
-            for plan in resource.subscription_plans.all()
-        )
-        item["pricing_label"] = "Premium" if has_active_plan else "Free"
+        item["pricing_label"] = "Premium" if _has_active_plans(resource) else "Free"
         item["description_label"] = "Structured learning course"
 
     elif resource_type == "exam":
@@ -156,9 +170,10 @@ def _resource_item(resource_type, resource):
         )
         item["exam_count"] = len(published_exams)
         item["question_count"] = sum(exam.question_count for exam in published_exams)
-        item["pricing_label"] = "Free" if resource.is_free() else "Premium"
+        is_free = not _has_active_plans(resource) and resource.pricing_type == resource.PRICING_FREE
+        item["pricing_label"] = "Free" if is_free else "Premium"
         item["description_label"] = "Structured certification preparation"
-        if resource.is_free():
+        if is_free:
             item["price_label"] = "Free"
         elif resource.lifetime_price is not None:
             item["price_label"] = f"{resource.currency} {resource.lifetime_price:,.2f}"
