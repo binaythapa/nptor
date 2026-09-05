@@ -80,13 +80,10 @@ class PDFGenerator(DocumentGenerator):
             details.append(payload["portfolio_url"])
 
         header_align = "center" if config["header_style"] == "centered" else "left"
-        header_x = margin if header_align == "left" else margin
+        header_x = margin
         header_width = width - (2 * margin)
         y = height - margin
-        if config["header_style"] == "compact":
-            name_size = config["heading_size"] + 5
-        else:
-            name_size = config["heading_size"] + 8
+        name_size = config["heading_size"] + (5 if config["header_style"] == "compact" else 8)
         if name:
             y = draw_wrapped(name, header_x, y, header_width, name_size, bold=True, color=accent_color, leading=name_size + 3, align=header_align)
         if payload.get("professional_title"):
@@ -108,7 +105,7 @@ class PDFGenerator(DocumentGenerator):
                 location = item.get("location")
                 y = draw_wrapped(title, x, y, max_width, config["font_size"], bold=True, leading=line_gap)
                 if location:
-                    y = draw_wrapped(location, x, y, max_width, max(8, config["font_size"] - 1), color=body_color, leading=line_gap)
+                    y = draw_wrapped(location, x, y, max_width, max(8, config["font_size"] - 1), leading=line_gap)
                 if body:
                     y = draw_wrapped(body, x, y, max_width, max(8, config["font_size"] - 1), leading=line_gap)
             elif kind == "education":
@@ -173,11 +170,13 @@ class PDFGenerator(DocumentGenerator):
                 ("Education", payload.get("educations", []), "education"),
                 ("Certifications", payload.get("certifications", []), "certification"),
             )
-            # Sidebar headings and text use white on the accent panel.
             original_accent = accent_color
+            original_body = body_color
             accent_color = sidebar_body
+            body_color = sidebar_body
             side_y = render_sections(sidebar_sections, side_x, side_y, sidebar_width - 12)
             accent_color = original_accent
+            body_color = original_body
             main_sections = (
                 ("Summary", payload.get("summary"), "text"),
                 ("Experience", payload.get("experiences", []), "experience"),
