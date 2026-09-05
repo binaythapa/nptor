@@ -1,10 +1,10 @@
 from courses.models import Lesson, LessonProgress
 
+
 def get_course_progress(user, course):
     """
-    Returns (completed_count, total_count, percentage)
+    Returns (completed_count, total_count, percentage).
     """
-
     lessons = Lesson.objects.filter(section__course=course)
     total = lessons.count()
 
@@ -14,7 +14,7 @@ def get_course_progress(user, course):
     completed = LessonProgress.objects.filter(
         user=user,
         lesson__in=lessons,
-        completed=True
+        completed=True,
     ).count()
 
     percentage = int((completed / total) * 100)
@@ -22,27 +22,24 @@ def get_course_progress(user, course):
     return completed, total, percentage
 
 
+def _course_lessons(course):
+    return Lesson.objects.filter(
+        section__course=course,
+    ).order_by("section__order", "order")
 
-from courses.models import Lesson, LessonProgress
+
 def is_lesson_unlocked(user, lesson):
     """
-    A lesson is unlocked if:
-    - it is the first lesson in the course
-    - OR the previous lesson is completed
+    A lesson is unlocked if it is the first lesson in the course
+    or the previous lesson has been completed.
     """
-
-    lessons = list(
-        Lesson.objects.filter(
-            section__course=lesson.section.course
-        ).order_by("section__order", "order")
-    )
+    lessons = list(_course_lessons(lesson.section.course))
 
     try:
         index = lessons.index(lesson)
     except ValueError:
-        return False  # lesson not part of course
+        return False
 
-    # First lesson always unlocked
     if index == 0:
         return True
 
@@ -51,54 +48,37 @@ def is_lesson_unlocked(user, lesson):
     return LessonProgress.objects.filter(
         user=user,
         lesson=previous_lesson,
-        completed=True
+        completed=True,
     ).exists()
 
 
-from courses.models import Lesson, LessonProgress
-
-from courses.models import Lesson, LessonProgress
-
 def get_resume_lesson(user, course):
     """
-    Returns:
-    - First incomplete lesson if exists
-    - Otherwise FIRST lesson of the course
+    Returns the first incomplete lesson, otherwise the first lesson.
     """
-
     completed_ids = LessonProgress.objects.filter(
         user=user,
         completed=True,
-        lesson__section__course=course
+        lesson__section__course=course,
     ).values_list("lesson_id", flat=True)
 
     lesson = (
-        Lesson.objects
-        .filter(section__course=course)
+        _course_lessons(course)
         .exclude(id__in=completed_ids)
-        .order_by("section__order", "order")
         .first()
     )
 
     if lesson:
         return lesson
 
-    return (
-        Lesson.objects
-        .filter(section__course=course)
-        .order_by("section__order", "order")
-        .first()
-    )
+    return _course_lessons(course).first()
+
 
 def get_next_lesson(lesson):
     """
-    Returns the next lesson in course order, or None
+    Returns the physically next lesson in course order, or None.
     """
-    lessons = list(
-        Lesson.objects.filter(
-            section__course=lesson.section.course
-        ).order_by("section__order", "order")
-    )
+    lessons = list(_course_lessons(lesson.section.course))
 
     try:
         index = lessons.index(lesson)
@@ -111,4 +91,41 @@ def get_next_lesson(lesson):
     return None
 
 
+def get_next_learning_lesson(user, course, lesson):
+    """
+    Return the best next destination for a learner.
 
+    Preference order:
+    1. First incomplete lesson after the current lesson.
+    2. First incomplete lesson in the course (when reviewing an older lesson).
+    3. None when the whole course is complete.
+
+    This keeps the player useful when students revisit completed lessons
+    without sending them through already-completed content again.
+    """
+    lessons = list(_course_lessons(course))
+    if not lessons:
+        return None
+
+    completed_ids = set(
+        LessonProgress.objects.filter(
+            user=user,
+            completed=True,
+            lesson__section__course=course,
+        ).values_list("lesson_id", flat=True)
+    )
+
+    try:
+        current_index = lessons.index(lesson)
+    except ValueError:
+        current_index = -1
+
+    for candidate in lessons[current_index + 1:]:
+        if candidate.id not in completed_ids:
+            return candidate
+
+    for candidate in lessons:
+        if candidate.id not in completed_ids:
+            return candidate
+
+    return None
