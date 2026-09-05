@@ -1,0 +1,92 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}{{ program.name }} Dashboard - {{ site_name|default:"Nepal Mentor" }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/government_catalog.css' %}">
+
+<main class="gov-catalog gov-dashboard">
+  <nav class="gov-breadcrumb">
+    <a href="{% url 'quiz:government_catalog' %}">Government Exams</a><span>›</span>
+    <a href="{% url 'quiz:government_country' country.slug %}">{{ country.name }}</a><span>›</span>
+    <a href="{% url 'quiz:government_body' country.slug body.slug %}">{{ body.name }}</a><span>›</span>
+    <strong>{{ program.name }}</strong>
+  </nav>
+
+  <header class="gov-hero gov-dashboard-hero">
+    <div>
+      <span class="gov-kicker">GOVERNMENT EXAM DASHBOARD</span>
+      <h1>{{ program.name }}</h1>
+      <p>{{ program.description|default:'Your preparation hub for courses, practice, mock exams and progress.' }}</p>
+      <div class="gov-meta"><span>{{ country.name }}</span><span>{{ body.name }}</span></div>
+    </div>
+    <div class="gov-progress-ring" aria-label="{{ stats.overall_progress }} percent course progress">
+      <strong>{{ stats.overall_progress }}%</strong><span>course progress</span>
+    </div>
+  </header>
+
+  <section class="gov-kpi-grid" aria-label="Preparation summary">
+    <article class="gov-kpi"><span>COURSES</span><strong>{{ stats.course_count }}</strong><small>Mapped preparation courses</small></article>
+    <article class="gov-kpi"><span>MOCK EXAMS</span><strong>{{ stats.exam_count }}</strong><small>{{ stats.attempted_exams }} attempted</small></article>
+    <article class="gov-kpi"><span>PASSED</span><strong>{{ stats.passed_exams }}</strong><small>Mapped exams passed</small></article>
+    <article class="gov-kpi"><span>AVERAGE SCORE</span><strong>{% if stats.average_score != None %}{{ stats.average_score }}%{% else %}—{% endif %}</strong><small>{{ stats.total_attempts }} completed attempts</small></article>
+  </section>
+
+  {% if latest_attempt %}
+  <section class="gov-next-card">
+    <div><span class="gov-kicker">LATEST PERFORMANCE</span><h2>{{ latest_attempt.exam.title }}</h2><p>Latest score: <strong>{{ latest_attempt.score|default:0 }}%</strong> · {% if latest_attempt.passed %}Passed{% else %}Keep practicing{% endif %}</p></div>
+    <a class="gov-primary-btn" href="{% url 'quiz:exam_detail' latest_attempt.exam.id %}">Open exam →</a>
+  </section>
+  {% endif %}
+
+  <section class="gov-section">
+    <div class="gov-section-head"><div><h2>Continue learning</h2><p>Track lesson completion across courses mapped to this program.</p></div></div>
+    <div class="gov-resource-grid">
+      {% for item in courses %}
+      <article class="gov-dashboard-card">
+        <div class="gov-card-top"><span>COURSE</span><strong>{{ item.progress }}%</strong></div>
+        <h3>{{ item.course.title }}</h3>
+        <p>{{ item.completed }} of {{ item.total }} lessons completed.</p>
+        <div class="gov-progress-bar"><span style="width:{{ item.progress }}%"></span></div>
+        <a href="{% url 'courses:course_detail' item.course.slug %}">{% if item.progress %}Continue course{% else %}Start course{% endif %} →</a>
+      </article>
+      {% empty %}
+      <div class="gov-empty">No published preparation courses are mapped to this program yet.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="gov-section">
+    <div class="gov-section-head"><div><h2>Practice & mock exams</h2><p>Use your mapped NPTOR assessments to measure readiness.</p></div></div>
+    <div class="gov-resource-grid">
+      {% for item in exams %}
+      <article class="gov-dashboard-card">
+        <div class="gov-card-top"><span>MOCK EXAM</span>{% if item.passed %}<strong class="gov-status-pass">PASSED</strong>{% elif item.attempts %}<strong>{{ item.latest_score|default:0 }}%</strong>{% else %}<strong>NEW</strong>{% endif %}</div>
+        <h3>{{ item.exam.title }}</h3>
+        <p>{{ item.exam.question_count }} questions · {{ item.exam.passing_score }}% passing score.</p>
+        {% if item.attempts %}<small>{{ item.attempts }} completed attempt{{ item.attempts|pluralize }}{% if item.latest_score != None %} · Latest {{ item.latest_score }}%{% endif %}</small>{% else %}<small>Not attempted yet</small>{% endif %}
+        <a href="{% url 'quiz:exam_detail' item.exam.id %}">{% if item.attempts %}Practice again{% else %}Start practice{% endif %} →</a>
+      </article>
+      {% empty %}
+      <div class="gov-empty">No published mock exams are mapped to this program yet.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="gov-section">
+    <div class="gov-section-head"><div><h2>Preparation stages</h2><p>Assessment stages currently mapped in NPTOR.</p></div></div>
+    <div class="gov-stage-list">
+      {% for stage in stages %}
+      <article class="gov-stage"><span>{{ stage.order }}</span><div><h3>{{ stage.name }}</h3><p>{{ stage.description|default:'Assessment stage' }}</p></div><a href="{% url 'quiz:exam_detail' stage.exam.id %}">View →</a></article>
+      {% empty %}<div class="gov-empty">No active preparation stages have been mapped yet.</div>{% endfor %}
+    </div>
+  </section>
+
+  <section class="gov-dashboard-actions">
+    <a href="{% url 'quiz:government_program' country.slug body.slug program.slug %}">← Program overview</a>
+    <a href="{% url 'quiz:practice' %}">Practice</a>
+    <a href="{% url 'quiz:study_plan_dashboard' %}">Study plan</a>
+  </section>
+</main>
+{% endblock %}
