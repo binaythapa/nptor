@@ -31,6 +31,12 @@ from quiz.views.exams import exam_start as standard_exam_start
 from quiz.views.course_exam_start import course_exam_start
 from quiz.views.exam_list import *
 from quiz.views.study_plan import *
+from quiz.views.government_catalog import (
+    government_catalog,
+    government_country,
+    government_body,
+    government_program,
+)
 
 # ============================================================
 # PRACTICE
@@ -63,6 +69,12 @@ urlpatterns = [
     path("learning/domain/<slug:slug>/", learning_domain, name="learning_domain"),
     path("learning/track/<slug:slug>/", learning_track, name="learning_track"),
     path("learning/shortlist/<str:resource_type>/<int:resource_id>/", learning_shortlist_toggle, name="learning_shortlist_toggle"),
+
+    path("government-exams/", government_catalog, name="government_catalog"),
+    path("government-exams/<slug:country_slug>/", government_country, name="government_country"),
+    path("government-exams/<slug:country_slug>/<slug:body_slug>/", government_body, name="government_body"),
+    path("government-exams/<slug:country_slug>/<slug:body_slug>/<slug:program_slug>/", government_program, name="government_program"),
+
     path("dashboard/", dashboard_dispatch, name="dashboard"),
     path("dashboard/admin/", admin_dashboard, name="admin_dashboard"),
     path("dashboard/student/", student_dashboard, name="student_dashboard"),
