@@ -68,6 +68,8 @@ app_name = "quiz"
 
 urlpatterns = [
     path("", learning_marketplace, name="exam_list"),
+    path("certifications/", learning_marketplace, name="certifications"),
+    path("academic-entrance/", learning_marketplace, name="academic_entrance"),
     path("learning/", learning_marketplace, name="learning_marketplace"),
     path("learning/domain/<slug:slug>/", learning_domain, name="learning_domain"),
     path("learning/track/<slug:slug>/", learning_track, name="learning_track"),
@@ -123,7 +125,7 @@ urlpatterns = [
     path("dashboard/admin/subscribe/track/", admin_subscribe_track, name="admin_subscribe_track"),
     path("dashboard/admin/revoke/track/", admin_revoke_track, name="admin_revoke_track"),
     path("dashboard/admin/update-expiry/exam/", admin_update_exam_expiry, name="admin_update_expiry_exam"),
-    path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_expiry_track"),
+    path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_track_expiry"),
     path("dashboard/admin/add-exam-days/", admin_add_exam_days, name="admin_add_exam_days"),
     path("dashboard/admin/add-track-days/", admin_add_track_days, name="admin_add_track_days"),
 
