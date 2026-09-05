@@ -31,3 +31,6 @@ class CVForm(forms.ModelForm):
             self.fields["template"].initial = CVTemplate.objects.filter(is_active=True).first()
             self.fields["status"].initial = CV.STATUS_DRAFT
         self.owner = owner
+
+    def clean_status(self):
+        return self.cleaned_data.get("status") or CV.STATUS_DRAFT
