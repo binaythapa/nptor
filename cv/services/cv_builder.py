@@ -24,12 +24,11 @@ def _serialize(instance, fields):
 
 
 def _selected_records(cv, section, queryset):
-    selected = cv.selected_sections.get(section)
-    records = list(queryset)
-    if not selected:
-        return records
+    if section not in (cv.selected_sections or {}):
+        return list(queryset)
+    selected = cv.selected_sections.get(section) or []
     ids = {int(value) for value in selected}
-    return [item for item in records if item.id in ids]
+    return [item for item in queryset if item.id in ids]
 
 
 def create_cv(user, title, template):

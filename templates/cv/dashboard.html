@@ -14,7 +14,7 @@
         <div class="level py-3 {% if not forloop.last %}border-bottom{% endif %}">
           <div><p class="has-text-weight-semibold">{{ cv.title }}</p><p class="is-size-7 has-text-grey">{{ cv.template.name }} · {{ cv.get_status_display }}</p></div>
           <div class="buttons are-small">
-            <a class="button" href="{% url 'cv:cv_edit' cv.pk %}">Edit</a>
+            <a class="button is-primary is-light" href="{% url 'cv:cv_builder' cv.pk %}">Build</a>
             <a class="button" href="{% url 'cv:cv_preview' cv.pk %}">Preview</a>
             <a class="button" href="{% url 'cv:cv_duplicate' cv.pk %}">Duplicate</a>
             <a class="button" href="{% url 'cv:cv_versions' cv.pk %}">Versions</a>
