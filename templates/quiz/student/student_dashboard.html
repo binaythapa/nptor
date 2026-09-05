@@ -40,16 +40,7 @@
         <span class="section-eyebrow">Recent Activity</span>
         <h2 id="learning-activity-title">Learning Activity</h2>
       </div>
-      <div class="dashboard-learning-activity-heading-actions">
-        <span class="dashboard-learning-activity-count">{{ learning_activity_page.paginator.count }} item{{ learning_activity_page.paginator.count|pluralize }}</span>
-        <form method="post" action="{% url 'quiz:clear_learning_history' %}" class="dashboard-clear-history-form" onsubmit="return confirm('Clear your learning activity history? This will permanently remove completed exam attempts and course progress. Your purchases, subscriptions, access, and unfinished exams will not be affected.');">
-          {% csrf_token %}
-          <button type="submit" class="dashboard-clear-history-button">
-            <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-            Clear History
-          </button>
-        </form>
-      </div>
+      <span class="dashboard-learning-activity-count">{{ learning_activity_page.paginator.count }} item{{ learning_activity_page.paginator.count|pluralize }}</span>
     </div>
 
     <form class="dashboard-learning-activity-toolbar" method="get" role="search">
@@ -103,15 +94,26 @@
           <span class="dashboard-learning-activity-status status-{{ item.status|lower|cut:' ' }}">{{ item.status }}</span>
         </div>
         <div class="dashboard-learning-activity-action-cell" role="cell">
-          {% if item.activity_type == "exam" %}
-            <a href="{% url 'quiz:exam_result' item.attempt.id %}" class="dashboard-learning-activity-action">View Answers <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-          {% elif item.activity_type == "course" %}
-            <a href="{% url 'courses:course_learn' item.resource.slug %}" class="dashboard-learning-activity-action">Continue <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-          {% else %}
-            <a href="{% url 'quiz:exam_list' %}" class="dashboard-learning-activity-action">Open Track <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-          {% endif %}
+          <div class="dashboard-learning-activity-actions">
+            {% if item.activity_type == "exam" %}
+              <a href="{% url 'quiz:exam_result' item.attempt.id %}" class="dashboard-learning-activity-action">View Answers <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            {% elif item.activity_type == "course" %}
+              <a href="{% url 'courses:course_learn' item.resource.slug %}" class="dashboard-learning-activity-action">Continue <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            {% else %}
+              <a href="{% url 'quiz:exam_list' %}" class="dashboard-learning-activity-action">Open Track <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            {% endif %}
+            <form method="post" action="{% url 'quiz:remove_learning_activity' item.activity_type item.resource.id %}" class="dashboard-learning-activity-remove-form" onsubmit="return confirm('Remove this item from your Learning Activity? Your course, exam, track, purchases, and access will not be deleted.');">
+              {% csrf_token %}
+              <button type="submit" class="dashboard-learning-activity-remove" title="Remove from Learning Activity" aria-label="Remove {{ item.resource.title }} from Learning Activity">
+                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                <span class="sr-only">Remove</span>
+              </button>
+            </form>
+          </div>
         </div>
       </div>
+      {% empty %}
+      <div class="dashboard-no-results"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>No learning activity to display.</span></div>
       {% endfor %}
     </div>
 
