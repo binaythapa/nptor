@@ -1,0 +1,14 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+<section class="section"><div class="container">
+  <h1 class="title">Import Existing CV</h1>
+  <p class="subtitle is-6">Upload your current PDF or DOCX CV. Imported information will be shown for your review before it becomes trusted profile data.</p>
+  <div class="box">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="buttons mt-4"><button class="button is-primary" type="submit">Upload &amp; Review</button><a class="button" href="{% url 'cv:dashboard' %}">Cancel</a></div>
+    </form>
+  </div>
+</div></section>
+{% endblock %}
