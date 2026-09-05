@@ -9,9 +9,9 @@ from quiz.services.learning_catalog import build_learning_catalog
 def learning_marketplace(request):
     query = request.GET.get("q", "").strip()
     resource_type = request.GET.get("type", "all").strip().lower()
-    category_slug = request.GET.get("category", "").strip()
     level = request.GET.get("level", "").strip()
     access = request.GET.get("access", "").strip().lower()
+    pricing = request.GET.get("pricing", "").strip().lower()
 
     catalog = build_learning_catalog(
         user=request.user,
@@ -19,23 +19,17 @@ def learning_marketplace(request):
         resource_type=resource_type,
         level=level,
         access=access,
+        pricing=pricing,
         page=request.GET.get("page", 1),
     )
 
-    return render(
-        request,
-        "quiz/student/learning_marketplace.html",
-        catalog,
-    )
+    return render(request, "quiz/student/learning_marketplace.html", catalog)
 
 
 @login_required
 def learning_domain(request, slug):
     domain = get_object_or_404(
-        Domain.objects.filter(
-            is_active=True,
-            organization__isnull=True,
-        ),
+        Domain.objects.filter(is_active=True, organization__isnull=True),
         slug=slug,
     )
 
@@ -44,6 +38,7 @@ def learning_domain(request, slug):
     category_slug = request.GET.get("category", "").strip()
     level = request.GET.get("level", "").strip()
     access = request.GET.get("access", "").strip().lower()
+    pricing = request.GET.get("pricing", "").strip().lower()
 
     category = None
     if category_slug:
@@ -64,12 +59,9 @@ def learning_domain(request, slug):
         category=category,
         level=level,
         access=access,
+        pricing=pricing,
         page=request.GET.get("page", 1),
     )
     catalog["category"] = category
 
-    return render(
-        request,
-        "quiz/student/domain_hub.html",
-        catalog,
-    )
+    return render(request, "quiz/student/domain_hub.html", catalog)

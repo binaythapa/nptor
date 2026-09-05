@@ -11,6 +11,7 @@ DEFAULT_PER_PAGE = 12
 MAX_PER_PAGE = 48
 VALID_RESOURCE_TYPES = {"all", "courses", "tracks", "exams"}
 VALID_ACCESS_FILTERS = {"", "owned", "available"}
+VALID_PRICING_FILTERS = {"", "free", "premium"}
 
 
 def _public_courses():
@@ -24,10 +25,7 @@ def _public_courses():
         category__domain__is_active=True,
         category__domain__organization__isnull=True,
     ).select_related("category", "category__domain").prefetch_related(
-        Prefetch(
-            "subscription_plans",
-            queryset=SubscriptionPlan.objects.filter(is_active=True),
-        )
+        Prefetch("subscription_plans", queryset=SubscriptionPlan.objects.filter(is_active=True))
     )
 
 
@@ -39,11 +37,7 @@ def _public_exams():
         primary_category__organization__isnull=True,
         primary_category__domain__is_active=True,
         primary_category__domain__organization__isnull=True,
-    ).select_related(
-        "primary_category",
-        "primary_category__domain",
-        "track",
-    ).prefetch_related("categories")
+    ).select_related("primary_category", "primary_category__domain", "track").prefetch_related("categories")
 
 
 def _public_tracks():
@@ -59,10 +53,7 @@ def _public_tracks():
     ).prefetch_related(
         "exams",
         "exams__primary_category__domain",
-        Prefetch(
-            "subscription_plans",
-            queryset=SubscriptionPlan.objects.filter(is_active=True),
-        ),
+        Prefetch("subscription_plans", queryset=SubscriptionPlan.objects.filter(is_active=True)),
     ).distinct()
 
 
@@ -83,15 +74,7 @@ def _domain_summary(domain, courses, exams, tracks):
     course_ids = [course.id for course in courses if course.category and course.category.domain_id == domain.id]
     exam_ids = [exam.id for exam in exams if exam.primary_category and exam.primary_category.domain_id == domain.id]
     track_ids = [track.id for track in tracks if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)]
-    return {
-        "domain": domain,
-        "course_count": len(course_ids),
-        "exam_count": len(exam_ids),
-        "track_count": len(track_ids),
-        "course_ids": course_ids,
-        "exam_ids": exam_ids,
-        "track_ids": track_ids,
-    }
+    return {"domain": domain, "course_count": len(course_ids), "exam_count": len(exam_ids), "track_count": len(track_ids), "course_ids": course_ids, "exam_ids": exam_ids, "track_ids": track_ids}
 
 
 def _matches_query(resource, resource_type, needle):
@@ -131,7 +114,6 @@ def _active_plans(resource):
 
 
 def _resource_item(resource_type, resource):
-    """Build presentation metadata without making access decisions."""
     item = {
         "type": resource_type,
         "presentation_type": resource_type,
@@ -141,7 +123,6 @@ def _resource_item(resource_type, resource):
         "pricing_label": "Free",
         "price_label": "Free",
     }
-
     if resource_type == "course":
         plans = _active_plans(resource)
         item["pricing_label"] = "Premium" if plans else "Free"
@@ -149,24 +130,15 @@ def _resource_item(resource_type, resource):
         if plans:
             plan = min(plans, key=lambda value: value.price)
             item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
-
     elif resource_type == "exam":
         item["duration_minutes"] = (resource.duration_seconds or 0) // 60
         item["pricing_label"] = "Free" if resource.is_free else "Premium"
         item["description_label"] = "Timed practice and assessment"
-        item["metrics_label"] = (
-            f"{resource.question_count} questions · "
-            f"{item['duration_minutes']} min · "
-            f"Pass {resource.passing_score:g}%"
-        )
+        item["metrics_label"] = f"{resource.question_count} questions · {item['duration_minutes']} min · Pass {resource.passing_score:g}%"
         if not resource.is_free and resource.price is not None:
             item["price_label"] = f"{resource.currency} {resource.price:,.2f}"
-
     elif resource_type == "track":
-        published_exams = [
-            exam for exam in resource.exams.all()
-            if exam.is_published and exam.organization_id is None
-        ]
+        published_exams = [exam for exam in resource.exams.all() if exam.is_published and exam.organization_id is None]
         domain = _domain_for_track(resource)
         item["domain_slug"] = domain.slug if domain else ""
         item["exam_count"] = len(published_exams)
@@ -185,20 +157,13 @@ def _resource_item(resource_type, resource):
             item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
         else:
             item["price_label"] = "Premium"
-        item["metrics_label"] = (
-            f"{item['exam_count']} exams included · "
-            f"{item['question_count']} questions"
-        )
-
+        item["metrics_label"] = f"{item['exam_count']} exams included · {item['question_count']} questions"
     return item
 
 
 def _add_user_state(user, items):
     shortlist_rows = LearningShortlist.objects.filter(user=user)
-    shortlisted = {
-        (row.resource_type, row.course_id or row.track_id or row.exam_id)
-        for row in shortlist_rows
-    }
+    shortlisted = {(row.resource_type, row.course_id or row.track_id or row.exam_id) for row in shortlist_rows}
     for item in items:
         resource_type = getattr(AccessService, f"RESOURCE_{item['type'].upper()}")
         resource = item["resource"]
@@ -213,8 +178,7 @@ def _add_user_state(user, items):
     return items
 
 
-def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, page=1, per_page=DEFAULT_PER_PAGE):
-    """Build the public domain-first learning marketplace catalogue."""
+def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, pricing="", page=1, per_page=DEFAULT_PER_PAGE):
     courses = list(_public_courses().order_by("title"))
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
@@ -238,12 +202,13 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         resource_type = "all"
     if access not in VALID_ACCESS_FILTERS:
         access = ""
+    if pricing not in VALID_PRICING_FILTERS:
+        pricing = ""
 
     needle = query.lower()
     courses = [item for item in courses if _matches_query(item, "course", needle)]
     exams = [item for item in exams if _matches_query(item, "exam", needle)]
     tracks = [item for item in tracks if _matches_query(item, "track", needle)]
-
     courses = [item for item in courses if _matches_level(item, "course", level)]
     exams = [item for item in exams if _matches_level(item, "exam", level)]
     tracks = [item for item in tracks if not level or any(_matches_level(exam, "exam", level) for exam in item.exams.all())]
@@ -255,6 +220,9 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         resources.extend(_resource_item("track", item) for item in tracks)
     if resource_type in {"all", "exams"}:
         resources.extend(_resource_item("exam", item) for item in exams)
+
+    if pricing:
+        resources = [item for item in resources if item["pricing_label"].lower() == pricing]
 
     resources.sort(key=lambda item: item["resource"].title.lower())
 
@@ -277,12 +245,7 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         _add_user_state(user, page_obj.object_list)
 
     selected_categories = (
-        Category.objects.filter(
-            is_active=True,
-            domain=selected_domain,
-            organization__isnull=True,
-            parent__isnull=True,
-        ).order_by("name")
+        Category.objects.filter(is_active=True, domain=selected_domain, organization__isnull=True, parent__isnull=True).order_by("name")
         if selected_domain else Category.objects.none()
     )
 
@@ -297,4 +260,5 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         "category": category,
         "level": level,
         "access": access,
+        "pricing": pricing,
     }
