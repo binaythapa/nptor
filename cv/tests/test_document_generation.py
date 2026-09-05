@@ -5,7 +5,7 @@ from cv.models import CareerProfile, CV, CVTemplate
 from cv.services.cv_builder import create_cv_version
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
-from cv.services.documents.renderer import get_template_snapshot
+from cv.services.documents.renderer import get_render_config, get_template_snapshot
 
 
 class DocumentGenerationTests(TestCase):
@@ -14,9 +14,21 @@ class DocumentGenerationTests(TestCase):
             username="document-user", email="document@example.com", password="password"
         )
         self.template = CVTemplate.objects.create(
-            slug="ats-classic", name="ATS Classic", config={"font_size": 11}
+            slug="ats-classic",
+            name="ATS Classic",
+            config={
+                "font_name": "Times-Roman",
+                "font_size": 11,
+                "heading_size": 13,
+                "margin": 54,
+                "accent_color": "#1f2937",
+            },
         )
-        self.profile = CareerProfile.objects.create(user=self.user)
+        self.profile = CareerProfile.objects.create(
+            user=self.user,
+            professional_title="Senior Data Engineer",
+            summary="Builds reliable data platforms.",
+        )
         self.cv = CV.objects.create(
             owner=self.user,
             profile=self.profile,
@@ -47,3 +59,28 @@ class DocumentGenerationTests(TestCase):
         self.template.config = {"font_size": 20}
         self.template.save(update_fields=["config"])
         self.assertEqual(self.version.snapshot["template"]["config"]["font_size"], 11)
+
+    def test_render_config_normalizes_template_style_settings(self):
+        config = get_render_config(self.version.snapshot["template"])
+        self.assertEqual(config["font_name"], "Times-Roman")
+        self.assertEqual(config["font_size"], 11)
+        self.assertEqual(config["heading_size"], 13)
+        self.assertEqual(config["margin"], 54)
+        self.assertEqual(config["accent_color"], "#1f2937")
+
+    def test_render_config_rejects_unsafe_style_values(self):
+        template = {
+            "config": {
+                "font_name": "Comic Sans",
+                "font_size": 99,
+                "heading_size": 1,
+                "margin": 500,
+                "accent_color": "not-a-color",
+            }
+        }
+        config = get_render_config(template)
+        self.assertEqual(config["font_name"], "Helvetica")
+        self.assertEqual(config["font_size"], 10)
+        self.assertEqual(config["heading_size"], 12)
+        self.assertEqual(config["margin"], 48)
+        self.assertEqual(config["accent_color"], "#111827")
