@@ -1,0 +1,17 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title">{{ cv.title }} — Versions</h1>
+    <div class="box">
+      {% for version in versions %}
+        <div class="level py-3 {% if not forloop.last %}border-bottom{% endif %}">
+          <div><strong>Version {{ version.version_number }}</strong><p class="is-size-7 has-text-grey">{{ version.created_at }}</p></div>
+        </div>
+      {% empty %}<p class="has-text-grey">No saved versions yet.</p>{% endfor %}
+    </div>
+    <a class="button" href="{% url 'cv:cv_edit' cv.pk %}">Back to CV</a>
+  </div>
+</section>
+{% endblock %}
