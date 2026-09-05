@@ -31,9 +31,23 @@ class LearningMarketplaceContractTests(SimpleTestCase):
             self.assertIn(hook, self.template)
 
     def test_catalog_exposes_course_track_and_exam_presentation_metadata(self):
-        course = SimpleNamespace(level="beginner")
-        exam = SimpleNamespace(duration_seconds=5400)
-        track = SimpleNamespace(exams=SimpleNamespace(all=lambda: []))
+        course = SimpleNamespace(
+            level="beginner",
+            subscription_plans=SimpleNamespace(all=lambda: []),
+        )
+        exam = SimpleNamespace(
+            duration_seconds=5400,
+            question_count=65,
+            passing_score=70.0,
+            is_free=True,
+        )
+        track = SimpleNamespace(
+            exams=SimpleNamespace(all=lambda: []),
+            is_free=lambda: True,
+            lifetime_price=None,
+            monthly_price=None,
+            currency="INR",
+        )
 
         course_item = _resource_item("course", course)
         exam_item = _resource_item("exam", exam)
