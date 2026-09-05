@@ -20,6 +20,24 @@ def _finish_course_quiz_if_needed(request, user_exam):
     request.session[f"course_exam_handled_{user_exam.id}"] = True
 
 
+def _course_quiz_return_redirect(request):
+    """Return the course lesson redirect when this attempt came from a course."""
+    course_context = request.session.get("course_exam_context")
+    if not course_context:
+        return None
+
+    course_slug = course_context.get("course_slug")
+    lesson_id = course_context.get("lesson_id")
+    if not course_slug or not lesson_id:
+        return None
+
+    return redirect(
+        "courses:course_learn_lesson",
+        slug=course_slug,
+        lesson_id=lesson_id,
+    )
+
+
 @login_required
 def exam_submit_dashboard(request, user_exam_id):
     """Finalize an exam safely for both timer expiry and explicit submit."""
@@ -37,6 +55,11 @@ def exam_submit_dashboard(request, user_exam_id):
             is_mock = request.session.get(f"mock_exam_{user_exam.id}", False)
             grade_exam(user_exam, None, is_mock=is_mock)
             _finish_course_quiz_if_needed(request, user_exam)
+
+            course_redirect = _course_quiz_return_redirect(request)
+            if course_redirect:
+                return course_redirect
+
         return redirect("quiz:student_dashboard")
 
     if request.method != "POST":
@@ -45,10 +68,17 @@ def exam_submit_dashboard(request, user_exam_id):
     # POST is the explicit final submission. The grading service persists the
     # submitted answers, score, pass/fail state, and submitted timestamp.
     if user_exam.submitted_at:
+        course_redirect = _course_quiz_return_redirect(request)
+        if course_redirect:
+            return course_redirect
         return redirect("quiz:exam_result", user_exam_id=user_exam.id)
 
     is_mock = request.session.get(f"mock_exam_{user_exam.id}", False)
     grade_exam(user_exam, request.POST, is_mock=is_mock)
     _finish_course_quiz_if_needed(request, user_exam)
+
+    course_redirect = _course_quiz_return_redirect(request)
+    if course_redirect:
+        return course_redirect
 
     return redirect("quiz:exam_result", user_exam_id=user_exam.id)
