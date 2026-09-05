@@ -22,7 +22,7 @@ class CareerProfile(models.Model):
 
 
 class CareerProfileChild(models.Model):
-    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE, related_name="%(class)s_records")
+    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE)
     sort_order = models.PositiveIntegerField(default=0)
     is_confirmed = models.BooleanField(default=True)
     source = models.CharField(max_length=40, default="user", blank=True)
@@ -35,6 +35,7 @@ class CareerProfileChild(models.Model):
 
 
 class CareerExperience(CareerProfileChild):
+    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE, related_name="careerexperience_records")
     job_title = models.CharField(max_length=255)
     employer = models.CharField(max_length=255)
     location = models.CharField(max_length=255, blank=True)
@@ -47,6 +48,7 @@ class CareerExperience(CareerProfileChild):
 
 
 class CareerEducation(CareerProfileChild):
+    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE, related_name="careereducation_records")
     institution = models.CharField(max_length=255)
     qualification = models.CharField(max_length=255)
     field_of_study = models.CharField(max_length=255, blank=True)
@@ -59,6 +61,7 @@ class CareerEducation(CareerProfileChild):
 
 
 class CareerProject(CareerProfileChild):
+    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE, related_name="careerproject_records")
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=255, blank=True)
     url = models.URLField(blank=True)
@@ -69,6 +72,7 @@ class CareerProject(CareerProfileChild):
 
 
 class CareerSkill(CareerProfileChild):
+    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE, related_name="careerskill_records")
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=100, blank=True)
     proficiency = models.CharField(max_length=100, blank=True)
@@ -77,6 +81,7 @@ class CareerSkill(CareerProfileChild):
 
 
 class CareerAchievement(CareerProfileChild):
+    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE, related_name="careerachievement_records")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     achieved_on = models.DateField(null=True, blank=True)
@@ -85,6 +90,7 @@ class CareerAchievement(CareerProfileChild):
 
 
 class CareerCertification(CareerProfileChild):
+    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE, related_name="careercertification_records")
     name = models.CharField(max_length=255)
     issuer = models.CharField(max_length=255, blank=True)
     credential_id = models.CharField(max_length=255, blank=True)
