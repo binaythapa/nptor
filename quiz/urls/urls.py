@@ -21,6 +21,7 @@ from quiz.views.student_learning_dashboard import student_dashboard
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
 from quiz.views.learning_track import learning_track
 from quiz.views.learning_shortlist import learning_shortlist_toggle
+from quiz.views.exam_detail import exam_detail
 from quiz.views.exam_preview import exam_preview
 from quiz.views.exam_access import exam_locked, exam_expired, exam_review
 from quiz.views.exam_submission import exam_submit_dashboard
@@ -69,6 +70,7 @@ urlpatterns = [
     path("profile/", profile, name="profile"),
     path("users/", users_list, name="users_list"),
 
+    path("exam/<int:exam_id>/", exam_detail, name="exam_detail"),
     path("exam/<int:exam_id>/preview/", exam_preview, name="exam_preview"),
     path("exam/<int:exam_id>/start/", course_exam_start, name="exam_start"),
     path("exam/<int:exam_id>/locked/", exam_locked, name="exam_locked"),
