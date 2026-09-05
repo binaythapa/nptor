@@ -68,14 +68,25 @@ class CourseExamReturnRedirectTests(SimpleTestCase):
 
 class CoursePracticeAjaxContextTests(SimpleTestCase):
     def test_practice_ajax_urls_forward_course_context(self):
-        template_path = Path(__file__).resolve().parents[1] / "templates/quiz/student/practice/practice.html"
+        template_path = (
+            Path(__file__).resolve().parents[1]
+            / "templates/quiz/student/practice/practice.html"
+        )
         template = template_path.read_text(encoding="utf-8")
 
         self.assertIn(
-            'nextUrl: "{% url \'quiz:practice_next_ajax\' %}?course={{ request.GET.course }}&amp;lesson={{ request.GET.lesson }}"',
+            "nextUrl: \"{% url 'quiz:practice_next_ajax' %}",
             template,
         )
         self.assertIn(
-            'skipUrl: "{% url \'quiz:practice_skip_ajax\' %}?course={{ request.GET.course }}&amp;lesson={{ request.GET.lesson }}"',
+            "skipUrl: \"{% url 'quiz:practice_skip_ajax' %}",
+            template,
+        )
+        self.assertIn(
+            "{% if request.GET.course and request.GET.lesson %}?course=",
+            template,
+        )
+        self.assertIn(
+            "&amp;lesson={{ request.GET.lesson|urlencode }}{% endif %}",
             template,
         )
