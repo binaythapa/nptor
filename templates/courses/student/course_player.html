@@ -154,9 +154,18 @@
 
         {% if not is_preview and certificate %}
         <div class="certificate-card">
-            <div><span class="certificate-icon">★</span><div><strong>Course completed</strong><span>Your certificate is ready.</span></div></div>
+            <div class="certificate-card-main">
+                <span class="certificate-icon">★</span>
+                <div>
+                    <strong>Course completed</strong>
+                    <span>Your certificate is ready.</span>
+                </div>
+            </div>
             <div class="completion-stat"><strong>{{ progress }}%</strong><span>Complete</span></div>
-            <a href="{% url 'courses:course_certificate_pdf' course.slug %}" class="btn-primary">Download Certificate</a>
+            <div class="certificate-actions">
+                <a href="{% url 'courses:certificate_verify' certificate.certificate_id %}" class="btn-secondary certificate-verify-btn">View &amp; Verify Certificate</a>
+                <a href="{% url 'courses:course_certificate_pdf' course.slug %}" class="btn-primary">Download Certificate</a>
+            </div>
         </div>
         {% endif %}
 
@@ -177,7 +186,10 @@
         <span class="celebration-icon">🎉</span>
         <h1 id="celebration-title">Congratulations!</h1>
         <p>You’ve completed <strong>{{ course.title }}</strong></p>
-        <a href="{% url 'courses:course_certificate_pdf' course.slug %}" class="btn-primary">Download Certificate</a>
+        <div class="celebration-actions">
+            <a href="{% url 'courses:certificate_verify' certificate.certificate_id %}" class="btn-secondary">View &amp; Verify Certificate</a>
+            <a href="{% url 'courses:course_certificate_pdf' course.slug %}" class="btn-primary">Download Certificate</a>
+        </div>
         <button type="button" onclick="document.getElementById('celebration-modal').style.display='none'" class="btn-secondary">Continue learning</button>
     </div>
 </div>
