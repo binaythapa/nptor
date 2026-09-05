@@ -17,7 +17,8 @@ from quiz.views.auth import *
 from quiz.views.admin_subscription_views import *
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
-from quiz.views.student_learning_dashboard import student_dashboard, remove_learning_activity
+from quiz.views.student_dashboard import student_dashboard
+from quiz.views.student_learning_dashboard import learning_hub, remove_learning_activity
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
 from quiz.views.learning_track import learning_track
 from quiz.views.learning_shortlist import learning_shortlist_toggle
@@ -80,6 +81,7 @@ urlpatterns = [
     path("dashboard/", dashboard_dispatch, name="dashboard"),
     path("dashboard/admin/", admin_dashboard, name="admin_dashboard"),
     path("dashboard/student/", student_dashboard, name="student_dashboard"),
+    path("learning/my/", learning_hub, name="learning_hub"),
     path("dashboard/student/activity/<str:resource_type>/<int:resource_id>/remove/", remove_learning_activity, name="remove_learning_activity"),
 
     path("profile/", profile, name="profile"),
