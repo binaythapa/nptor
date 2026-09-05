@@ -43,6 +43,10 @@ from .exam import (
     Exam,
 )
 
+from .track_exam import (
+    TrackExam,
+)
+
 from .coupon import (
     Coupon,
     CouponRedemption,
