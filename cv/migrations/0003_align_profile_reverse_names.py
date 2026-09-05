@@ -1,4 +1,5 @@
 from django.db import migrations, models
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -11,7 +12,7 @@ class Migration(migrations.Migration):
             model_name="careerachievement",
             name="profile",
             field=models.ForeignKey(
-                on_delete=models.deletion.CASCADE,
+                on_delete=django.db.models.deletion.CASCADE,
                 related_name="careerachievement_records",
                 to="cv.careerprofile",
             ),
@@ -20,7 +21,7 @@ class Migration(migrations.Migration):
             model_name="careercertification",
             name="profile",
             field=models.ForeignKey(
-                on_delete=models.deletion.CASCADE,
+                on_delete=django.db.models.deletion.CASCADE,
                 related_name="careercertification_records",
                 to="cv.careerprofile",
             ),
@@ -29,7 +30,7 @@ class Migration(migrations.Migration):
             model_name="careereducation",
             name="profile",
             field=models.ForeignKey(
-                on_delete=models.deletion.CASCADE,
+                on_delete=django.db.models.deletion.CASCADE,
                 related_name="careereducation_records",
                 to="cv.careerprofile",
             ),
@@ -38,7 +39,7 @@ class Migration(migrations.Migration):
             model_name="careerexperience",
             name="profile",
             field=models.ForeignKey(
-                on_delete=models.deletion.CASCADE,
+                on_delete=django.db.models.deletion.CASCADE,
                 related_name="careerexperience_records",
                 to="cv.careerprofile",
             ),
@@ -47,7 +48,7 @@ class Migration(migrations.Migration):
             model_name="careerproject",
             name="profile",
             field=models.ForeignKey(
-                on_delete=models.deletion.CASCADE,
+                on_delete=django.db.models.deletion.CASCADE,
                 related_name="careerproject_records",
                 to="cv.careerprofile",
             ),
@@ -56,7 +57,7 @@ class Migration(migrations.Migration):
             model_name="careerskill",
             name="profile",
             field=models.ForeignKey(
-                on_delete=models.deletion.CASCADE,
+                on_delete=django.db.models.deletion.CASCADE,
                 related_name="careerskill_records",
                 to="cv.careerprofile",
             ),
