@@ -8,6 +8,9 @@ from cv.models import (
     CareerProfile,
     CareerProject,
     CareerSkill,
+    CV,
+    CVTemplate,
+    CVVersion,
 )
 
 
@@ -52,3 +55,24 @@ class CareerAchievementAdmin(admin.ModelAdmin):
 class CareerCertificationAdmin(admin.ModelAdmin):
     list_display = ("name", "issuer", "profile", "issued_on", "sort_order")
     search_fields = ("name", "issuer", "profile__user__username")
+
+
+@admin.register(CVTemplate)
+class CVTemplateAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "slug")
+
+
+@admin.register(CV)
+class CVAdmin(admin.ModelAdmin):
+    list_display = ("title", "owner", "template", "status", "updated_at")
+    list_filter = ("status", "template")
+    search_fields = ("title", "owner__username", "owner__email")
+
+
+@admin.register(CVVersion)
+class CVVersionAdmin(admin.ModelAdmin):
+    list_display = ("cv", "version_number", "created_at")
+    search_fields = ("cv__title", "cv__owner__username", "cv__owner__email")
+    readonly_fields = ("cv", "version_number", "snapshot", "created_at")
