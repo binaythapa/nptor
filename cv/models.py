@@ -109,3 +109,10 @@ class CareerCertification(CareerProfileChild):
 
     def __str__(self):
         return self.name
+
+
+# Keep the feature split into focused model modules while ensuring Django
+# imports/registers those models when it loads the cv application.
+from cv.models_cv import CV  # noqa: E402,F401
+from cv.models_template import CVTemplate  # noqa: E402,F401
+from cv.models_version import CVVersion  # noqa: E402,F401
