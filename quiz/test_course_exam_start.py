@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from quiz.views.course_exam_start import _course_access_allows_quiz
+from quiz.views.exam_submission import _course_quiz_return_redirect
 
 
 class CourseExamAccessTests(SimpleTestCase):
@@ -37,3 +38,28 @@ class CourseExamAccessTests(SimpleTestCase):
 
         self.assertFalse(_course_access_allows_quiz(user, course))
         has_access.assert_called_once()
+
+
+class CourseExamReturnRedirectTests(SimpleTestCase):
+    def test_course_quiz_returns_to_course_lesson(self):
+        request = SimpleNamespace(
+            session={
+                "course_exam_context": {
+                    "course_slug": "demo-aws-cloud-course",
+                    "lesson_id": 8,
+                }
+            }
+        )
+
+        response = _course_quiz_return_redirect(request)
+
+        self.assertIsNotNone(response)
+        self.assertEqual(
+            response.url,
+            "/courses/demo-aws-cloud-course/learn/8/",
+        )
+
+    def test_standalone_exam_has_no_course_return_redirect(self):
+        request = SimpleNamespace(session={})
+
+        self.assertIsNone(_course_quiz_return_redirect(request))
