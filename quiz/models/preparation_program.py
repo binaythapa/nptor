@@ -1,10 +1,7 @@
 from django.db import models
 
-from courses.models import Course
-
 from .content_vertical import ContentVertical
 from .country import Country
-from .exam import Exam
 
 
 class PreparationProgram(models.Model):
@@ -29,12 +26,12 @@ class PreparationProgram(models.Model):
     official_website = models.URLField(blank=True)
 
     courses = models.ManyToManyField(
-        Course,
+        "courses.Course",
         blank=True,
         related_name="preparation_programs",
     )
     exams = models.ManyToManyField(
-        Exam,
+        "quiz.Exam",
         blank=True,
         related_name="preparation_programs",
     )
