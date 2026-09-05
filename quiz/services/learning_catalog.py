@@ -9,9 +9,12 @@ from subscriptions.services import AccessService
 
 DEFAULT_PER_PAGE = 12
 MAX_PER_PAGE = 48
+DOMAIN_PER_PAGE = 24
+POPULAR_DOMAIN_COUNT = 8
 VALID_RESOURCE_TYPES = {"all", "courses", "tracks", "exams"}
 VALID_ACCESS_FILTERS = {"", "owned", "available"}
 VALID_PRICING_FILTERS = {"", "free", "premium"}
+VALID_DOMAIN_SORTS = {"az", "za"}
 
 
 def _public_courses():
@@ -178,7 +181,36 @@ def _add_user_state(user, items):
     return items
 
 
-def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, pricing="", page=1, per_page=DEFAULT_PER_PAGE):
+def _build_domain_explorer(domains, domain_query="", domain_sort="az", domain_page=1):
+    needle = (domain_query or "").strip().lower()
+    if needle:
+        domains = [item for item in domains if needle in item["domain"].name.lower()]
+
+    if domain_sort not in VALID_DOMAIN_SORTS:
+        domain_sort = "az"
+    if domain_sort == "za":
+        domains = sorted(domains, key=lambda item: item["domain"].name.lower(), reverse=True)
+    else:
+        domains = sorted(domains, key=lambda item: item["domain"].name.lower())
+
+    popular_domains = sorted(
+        domains,
+        key=lambda item: (
+            -(item["course_count"] + item["track_count"] + item["exam_count"]),
+            item["domain"].name.lower(),
+        ),
+    )[:POPULAR_DOMAIN_COUNT]
+
+    paginator = Paginator(domains, DOMAIN_PER_PAGE)
+    try:
+        page_number = max(int(domain_page), 1)
+    except (TypeError, ValueError):
+        page_number = 1
+
+    return popular_domains, paginator.get_page(page_number), domain_sort
+
+
+def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, pricing="", page=1, per_page=DEFAULT_PER_PAGE, domain_query="", domain_sort="az", domain_page=1):
     courses = list(_public_courses().order_by("title"))
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
@@ -186,6 +218,7 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).order_by("name"))
     domains = [_domain_summary(item, courses, exams, tracks) for item in active_domains]
     domains = [item for item in domains if item["course_count"] or item["exam_count"] or item["track_count"]]
+    popular_domains, domain_page_obj, domain_sort = _build_domain_explorer(domains, domain_query, domain_sort, domain_page)
 
     selected_domain = domain
     if selected_domain is not None:
@@ -250,7 +283,11 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     )
 
     return {
-        "domains": domains,
+        "domains": domain_page_obj.object_list,
+        "popular_domains": popular_domains,
+        "domain_page_obj": domain_page_obj,
+        "domain_query": domain_query,
+        "domain_sort": domain_sort,
         "resources": page_obj.object_list,
         "page_obj": page_obj,
         "selected_domain": selected_domain,
