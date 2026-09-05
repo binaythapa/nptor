@@ -1,0 +1,56 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="level mb-5">
+      <div>
+        <h1 class="title mb-1">CV Builder</h1>
+        <p class="subtitle is-6">Create professional CVs from your reusable career profile.</p>
+      </div>
+      <div class="buttons">
+        <a class="button is-primary" href="{% url 'cv:cv_create' %}">Create New CV</a>
+        <a class="button" href="{% url 'cv:profile' %}">Career Profile</a>
+      </div>
+    </div>
+
+    <div class="columns">
+      <div class="column is-8">
+        <div class="box">
+          <h2 class="title is-5">My CVs</h2>
+          {% for cv in cvs %}
+            <div class="level py-3 {% if not forloop.last %}border-bottom{% endif %}">
+              <div>
+                <p class="has-text-weight-semibold">{{ cv.title }}</p>
+                <p class="is-size-7 has-text-grey">{{ cv.template.name }} · {{ cv.get_status_display }}</p>
+              </div>
+              <div class="buttons are-small">
+                <a class="button" href="{% url 'cv:cv_edit' cv.pk %}">Edit</a>
+                <a class="button" href="{% url 'cv:cv_preview' cv.pk %}">Preview</a>
+                <a class="button" href="{% url 'cv:cv_versions' cv.pk %}">Versions</a>
+              </div>
+            </div>
+          {% empty %}
+            <p class="has-text-grey">You haven't created a CV yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="column is-4">
+        <div class="box">
+          <h2 class="title is-5">Profile</h2>
+          <p class="mb-2"><strong>{{ contact.first_name }} {{ contact.last_name }}</strong></p>
+          <p class="is-size-7">{{ contact.email }}</p>
+          {% if contact.phone %}<p class="is-size-7">{{ contact.phone }}</p>{% endif %}
+          {% if contact.location %}<p class="is-size-7">{{ contact.location }}</p>{% endif %}
+          <a class="button is-small mt-4" href="{% url 'cv:profile' %}">Edit Profile</a>
+        </div>
+        <div class="box">
+          <h2 class="title is-5">Templates</h2>
+          <p class="is-size-7 mb-3">Choose a layout independently for each CV.</p>
+          <a class="button is-small" href="{% url 'cv:cv_templates' %}">Browse Templates</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
