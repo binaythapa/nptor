@@ -4,7 +4,7 @@ from django.test import RequestFactory, TestCase
 
 
 class StudentSidebarTests(TestCase):
-    def test_student_sidebar_uses_clear_learning_and_government_labels(self):
+    def test_student_sidebar_uses_clear_learning_and_catalog_labels(self):
         user = get_user_model().objects.create_user(
             username="sidebar-user",
             password="test-pass-123",
@@ -22,6 +22,8 @@ class StudentSidebarTests(TestCase):
         )
 
         self.assertIn("My Learning", html)
+        self.assertIn("Certifications", html)
         self.assertIn("Government Exams", html)
+        self.assertIn("Academic &amp; Entrance", html)
         self.assertIn("My Content", html)
         self.assertNotIn('<span class="nav-label">Learning</span>', html)
