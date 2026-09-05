@@ -1,0 +1,24 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="level">
+      <div><h1 class="title">{{ cv.title }}</h1><p class="subtitle is-6">{{ payload.template.name }}</p></div>
+      <div class="buttons"><a class="button" href="{% url 'cv:cv_edit' cv.pk %}">Edit</a><a class="button" href="{% url 'cv:dashboard' %}">Back</a></div>
+    </div>
+    <div class="box">
+      <h2 class="title is-3">{{ payload.contact.first_name }} {{ payload.contact.last_name }}</h2>
+      <p>{{ payload.professional_title }}</p>
+      <p class="is-size-7">{{ payload.contact.email }}{% if payload.contact.phone %} · {{ payload.contact.phone }}{% endif %}{% if payload.contact.location %} · {{ payload.contact.location }}{% endif %}</p>
+      {% if payload.summary %}<hr><h3 class="title is-5">Professional Summary</h3><p>{{ payload.summary }}</p>{% endif %}
+      {% if payload.experiences %}<hr><h3 class="title is-5">Experience</h3>{% for item in payload.experiences %}<div class="mb-4"><strong>{{ item.job_title }}</strong> · {{ item.employer }}{% if item.location %} · {{ item.location }}{% endif %}<p>{{ item.description }}</p></div>{% endfor %}{% endif %}
+      {% if payload.educations %}<hr><h3 class="title is-5">Education</h3>{% for item in payload.educations %}<div class="mb-3"><strong>{{ item.qualification }}</strong> · {{ item.institution }}{% if item.field_of_study %} · {{ item.field_of_study }}{% endif %}<p>{{ item.description }}</p></div>{% endfor %}{% endif %}
+      {% if payload.skills %}<hr><h3 class="title is-5">Skills</h3><p>{% for item in payload.skills %}{{ item.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+      {% if payload.projects %}<hr><h3 class="title is-5">Projects</h3>{% for item in payload.projects %}<div class="mb-3"><strong>{{ item.name }}</strong>{% if item.role %} · {{ item.role }}{% endif %}<p>{{ item.description }}</p></div>{% endfor %}{% endif %}
+      {% if payload.certifications %}<hr><h3 class="title is-5">Certifications</h3>{% for item in payload.certifications %}<p><strong>{{ item.name }}</strong>{% if item.issuer %} · {{ item.issuer }}{% endif %}</p>{% endfor %}{% endif %}
+      {% if payload.achievements %}<hr><h3 class="title is-5">Achievements</h3>{% for item in payload.achievements %}<p><strong>{{ item.title }}</strong> — {{ item.description }}</p>{% endfor %}{% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
