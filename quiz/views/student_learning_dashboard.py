@@ -1,10 +1,9 @@
 from collections import defaultdict
 from datetime import datetime
 
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db import transaction
 from django.db.models import Count, Max
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -13,7 +12,14 @@ from django.views.decorators.http import require_POST
 from courses.models import Course, LessonProgress
 from courses.models.subscription import CourseSubscription
 from organizations.models.access import ResourceAccess
-from quiz.models import Exam, ExamTrack, LearningShortlist, TrackExam, UserExam
+from quiz.models import (
+    Exam,
+    ExamTrack,
+    LearningActivityDismissal,
+    LearningShortlist,
+    TrackExam,
+    UserExam,
+)
 from quiz.services.learning_catalog import _public_courses, _public_exams, _public_tracks
 
 
@@ -55,26 +61,22 @@ def _shortlist_items(user):
 
 @login_required
 @require_POST
-def clear_learning_history(request):
-    """Permanently clear the student's completed learning activity history.
+def remove_learning_activity(request, resource_type, resource_id):
+    """Hide one learning resource from this student's Learning Activity list."""
+    if resource_type not in {
+        LearningActivityDismissal.RESOURCE_COURSE,
+        LearningActivityDismissal.RESOURCE_EXAM,
+        LearningActivityDismissal.RESOURCE_TRACK,
+    }:
+        messages.error(request, "Invalid learning activity resource.")
+        return redirect("quiz:student_dashboard")
 
-    Access/subscription records are deliberately preserved. An unfinished exam
-    attempt is also preserved so that clearing history cannot interrupt an exam
-    currently in progress.
-    """
-    user = request.user
-
-    with transaction.atomic():
-        LessonProgress.objects.filter(user=user).delete()
-        UserExam.objects.filter(
-            user=user,
-            submitted_at__isnull=False,
-        ).delete()
-
-    messages.success(
-        request,
-        "Your learning activity history has been cleared.",
+    LearningActivityDismissal.objects.get_or_create(
+        user=request.user,
+        resource_type=resource_type,
+        resource_id=resource_id,
     )
+    messages.success(request, "The selected item was removed from Learning Activity.")
     return redirect("quiz:student_dashboard")
 
 
@@ -217,8 +219,16 @@ def student_dashboard(request):
     exams_data.sort(key=lambda item: item["exam"].title.lower())
     shortlist_items = _shortlist_items(user)
 
+    dismissed = set(
+        LearningActivityDismissal.objects
+        .filter(user=user)
+        .values_list("resource_type", "resource_id")
+    )
+
     learning_activity = []
     for item in courses_data:
+        if (LearningActivityDismissal.RESOURCE_COURSE, item["course"].id) in dismissed:
+            continue
         learning_activity.append({
             "activity_type": "course",
             "resource": item["course"],
@@ -227,6 +237,8 @@ def student_dashboard(request):
             "status": "Completed" if item["progress"] >= 100 else ("In Progress" if item["progress"] else "Not Started"),
         })
     for attempt in submitted_attempts:
+        if (LearningActivityDismissal.RESOURCE_EXAM, attempt.exam_id) in dismissed:
+            continue
         learning_activity.append({
             "activity_type": "exam",
             "resource": attempt.exam,
@@ -236,6 +248,8 @@ def student_dashboard(request):
             "attempt": attempt,
         })
     for item in tracks_data:
+        if (LearningActivityDismissal.RESOURCE_TRACK, item["track"].id) in dismissed:
+            continue
         learning_activity.append({
             "activity_type": "track",
             "resource": item["track"],
