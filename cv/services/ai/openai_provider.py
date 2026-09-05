@@ -14,31 +14,18 @@ class OpenAIProvider(AIProvider):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "").strip()
         self.model = model or os.environ.get("CV_AI_MODEL", "gpt-5.6-luna").strip()
         self.timeout = int(timeout or os.environ.get("CV_AI_TIMEOUT_SECONDS", "60"))
-        if not self.api_key:
-            raise AIProviderNotConfigured("OPENAI_API_KEY is not configured.")
 
     def _request(self, input_text, *, system_prompt="", model=None, schema=None):
-        payload = {
-            "model": model or self.model,
-            "input": input_text,
-        }
+        if not self.api_key:
+            raise AIProviderNotConfigured("OPENAI_API_KEY is not configured.")
+        payload = {"model": model or self.model, "input": input_text}
         if system_prompt:
             payload["instructions"] = system_prompt
         if schema:
-            payload["text"] = {
-                "format": {
-                    "type": "json_schema",
-                    "name": "cv_ai_result",
-                    "strict": True,
-                    "schema": schema,
-                }
-            }
+            payload["text"] = {"format": {"type": "json_schema", "name": "cv_ai_result", "strict": True, "schema": schema}}
         response = requests.post(
             self.endpoint,
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
             json=payload,
             timeout=self.timeout,
         )
