@@ -2,7 +2,7 @@ from django.core.paginator import Paginator
 from django.db.models import Prefetch
 
 from courses.models import Course
-from quiz.models import Category, Domain, Exam, ExamTrack, LearningShortlist
+from quiz.models import Category, Domain, ExamTrack, LearningShortlist, TrackExam
 from subscriptions.models.plan import SubscriptionPlan
 from subscriptions.services import AccessService
 
@@ -11,7 +11,7 @@ DEFAULT_PER_PAGE = 12
 MAX_PER_PAGE = 48
 DOMAIN_PER_PAGE = 24
 POPULAR_DOMAIN_COUNT = 8
-VALID_RESOURCE_TYPES = {"all", "courses", "tracks", "exams"}
+VALID_RESOURCE_TYPES = {"all", "courses", "tracks"}
 VALID_ACCESS_FILTERS = {"", "owned", "available"}
 VALID_PRICING_FILTERS = {"", "free", "premium"}
 VALID_DOMAIN_SORTS = {"az", "za"}
@@ -32,39 +32,34 @@ def _public_courses():
     )
 
 
-def _public_exams():
-    return Exam.objects.filter(
-        is_published=True,
-        organization__isnull=True,
-        primary_category__is_active=True,
-        primary_category__organization__isnull=True,
-        primary_category__domain__is_active=True,
-        primary_category__domain__organization__isnull=True,
-    ).select_related("primary_category", "primary_category__domain", "track").prefetch_related("categories")
-
-
 def _public_tracks():
     return ExamTrack.objects.filter(
         is_active=True,
         organization__isnull=True,
-        exams__is_published=True,
-        exams__organization__isnull=True,
-        exams__primary_category__is_active=True,
-        exams__primary_category__organization__isnull=True,
-        exams__primary_category__domain__is_active=True,
-        exams__primary_category__domain__organization__isnull=True,
+        track_exams__exam__is_published=True,
+        track_exams__exam__organization__isnull=True,
+        track_exams__exam__primary_category__is_active=True,
+        track_exams__exam__primary_category__organization__isnull=True,
+        track_exams__exam__primary_category__domain__is_active=True,
+        track_exams__exam__primary_category__domain__organization__isnull=True,
     ).prefetch_related(
-        "exams",
-        "exams__primary_category__domain",
+        "track_exams__exam",
+        "track_exams__exam__primary_category__domain",
         Prefetch("subscription_plans", queryset=SubscriptionPlan.objects.filter(is_active=True)),
     ).distinct()
 
 
+def _track_exams(track):
+    return [
+        item.exam
+        for item in track.track_exams.all()
+        if item.exam.is_published and item.exam.organization_id is None
+    ]
+
+
 def _domain_for_track(track):
     domains = []
-    for exam in track.exams.all():
-        if not exam.is_published or exam.organization_id is not None:
-            continue
+    for exam in _track_exams(track):
         category = exam.primary_category
         if category and category.domain and category.domain.is_active and category.domain.organization_id is None:
             domains.append(category.domain)
@@ -73,11 +68,18 @@ def _domain_for_track(track):
     return sorted(domains, key=lambda domain: domain.name.lower())[0]
 
 
-def _domain_summary(domain, courses, exams, tracks):
+def _domain_summary(domain, courses, tracks):
     course_ids = [course.id for course in courses if course.category and course.category.domain_id == domain.id]
-    exam_ids = [exam.id for exam in exams if exam.primary_category and exam.primary_category.domain_id == domain.id]
     track_ids = [track.id for track in tracks if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)]
-    return {"domain": domain, "course_count": len(course_ids), "exam_count": len(exam_ids), "track_count": len(track_ids), "course_ids": course_ids, "exam_ids": exam_ids, "track_ids": track_ids}
+    return {
+        "domain": domain,
+        "course_count": len(course_ids),
+        "exam_count": 0,
+        "track_count": len(track_ids),
+        "course_ids": course_ids,
+        "exam_ids": [],
+        "track_ids": track_ids,
+    }
 
 
 def _matches_query(resource, resource_type, needle):
@@ -88,10 +90,7 @@ def _matches_query(resource, resource_type, needle):
     if resource_type == "course":
         category = getattr(resource, "category", None)
         return bool(category and needle in category.name.lower())
-    if resource_type == "exam":
-        category = getattr(resource, "primary_category", None)
-        return bool(category and needle in category.name.lower())
-    return any(needle in exam.title.lower() for exam in resource.exams.all() if exam.is_published)
+    return any(needle in exam.title.lower() for exam in _track_exams(resource))
 
 
 def _matches_level(resource, resource_type, level):
@@ -100,7 +99,7 @@ def _matches_level(resource, resource_type, level):
     if resource_type == "course":
         return resource.level == level
     try:
-        return resource.level == int(level)
+        return any(exam.level == int(level) for exam in _track_exams(resource))
     except (TypeError, ValueError):
         return False
 
@@ -133,33 +132,20 @@ def _resource_item(resource_type, resource):
         if plans:
             plan = min(plans, key=lambda value: value.price)
             item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
-    elif resource_type == "exam":
-        item["duration_minutes"] = (resource.duration_seconds or 0) // 60
-        item["pricing_label"] = "Free" if resource.is_free else "Premium"
-        item["description_label"] = "Timed practice and assessment"
-        item["metrics_label"] = f"{resource.question_count} questions · {item['duration_minutes']} min · Pass {resource.passing_score:g}%"
-        if not resource.is_free and resource.price is not None:
-            item["price_label"] = f"{resource.currency} {resource.price:,.2f}"
-    elif resource_type == "track":
-        published_exams = [exam for exam in resource.exams.all() if exam.is_published and exam.organization_id is None]
+    else:
+        exams = _track_exams(resource)
         domain = _domain_for_track(resource)
+        plans = _active_plans(resource)
         item["domain_slug"] = domain.slug if domain else ""
-        item["exam_count"] = len(published_exams)
-        item["question_count"] = sum(exam.question_count for exam in published_exams)
-        is_free = not _active_plans(resource) and resource.pricing_type == resource.PRICING_FREE
-        item["pricing_label"] = "Free" if is_free else "Premium"
+        item["exam_count"] = len(exams)
+        item["question_count"] = sum(exam.question_count for exam in exams)
+        item["pricing_label"] = "Free" if not plans else "Premium"
         item["description_label"] = "Structured certification preparation"
-        if is_free:
+        if not plans:
             item["price_label"] = "Free"
-        elif resource.lifetime_price is not None:
-            item["price_label"] = f"{resource.currency} {resource.lifetime_price:,.2f}"
-        elif resource.monthly_price is not None:
-            item["price_label"] = f"{resource.currency} {resource.monthly_price:,.2f} / month"
-        elif _active_plans(resource):
-            plan = min(_active_plans(resource), key=lambda value: value.price)
-            item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
         else:
-            item["price_label"] = "Premium"
+            plan = min(plans, key=lambda value: value.price)
+            item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
         item["metrics_label"] = f"{item['exam_count']} exams included · {item['question_count']} questions"
     return item
 
@@ -184,53 +170,40 @@ def _add_user_state(user, items):
 def _build_domain_explorer(domains, domain_query="", domain_sort="az", domain_page=1):
     popular_domains = sorted(
         domains,
-        key=lambda item: (
-            -(item["course_count"] + item["track_count"] + item["exam_count"]),
-            item["domain"].name.lower(),
-        ),
+        key=lambda item: (-(item["course_count"] + item["track_count"]), item["domain"].name.lower()),
     )[:POPULAR_DOMAIN_COUNT]
-
     needle = (domain_query or "").strip().lower()
     if needle:
         domains = [item for item in domains if needle in item["domain"].name.lower()]
-
     if domain_sort not in VALID_DOMAIN_SORTS:
         domain_sort = "az"
-    domains = sorted(
-        domains,
-        key=lambda item: item["domain"].name.lower(),
-        reverse=domain_sort == "za",
-    )
-
+    domains = sorted(domains, key=lambda item: item["domain"].name.lower(), reverse=domain_sort == "za")
     paginator = Paginator(domains, DOMAIN_PER_PAGE)
     try:
         page_number = max(int(domain_page), 1)
     except (TypeError, ValueError):
         page_number = 1
-
     return popular_domains, paginator.get_page(page_number), domain_sort
 
 
 def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, pricing="", page=1, per_page=DEFAULT_PER_PAGE, domain_query="", domain_sort="az", domain_page=1):
     courses = list(_public_courses().order_by("title"))
-    exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
 
     active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).order_by("name"))
-    domains = [_domain_summary(item, courses, exams, tracks) for item in active_domains]
-    domains = [item for item in domains if item["course_count"] or item["exam_count"] or item["track_count"]]
+    domains = [_domain_summary(item, courses, tracks) for item in active_domains]
+    domains = [item for item in domains if item["course_count"] or item["track_count"]]
     popular_domains, domain_page_obj, domain_sort = _build_domain_explorer(domains, domain_query, domain_sort, domain_page)
 
     selected_domain = domain
     if selected_domain is not None:
         courses = [item for item in courses if item.category and item.category.domain_id == selected_domain.id]
-        exams = [item for item in exams if item.primary_category and item.primary_category.domain_id == selected_domain.id]
         tracks = [item for item in tracks if (_domain_for_track(item) and _domain_for_track(item).id == selected_domain.id)]
 
     if category is not None:
         category_ids = set(category.get_descendants_include_self())
         courses = [item for item in courses if item.category_id in category_ids]
-        exams = [item for item in exams if item.primary_category_id in category_ids or any(cat.id in category_ids for cat in item.categories.all())]
+        tracks = [item for item in tracks if any(exam.primary_category_id in category_ids or any(cat.id in category_ids for cat in exam.categories.all()) for exam in _track_exams(item))]
 
     if resource_type not in VALID_RESOURCE_TYPES:
         resource_type = "all"
@@ -241,19 +214,15 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
 
     needle = query.lower()
     courses = [item for item in courses if _matches_query(item, "course", needle)]
-    exams = [item for item in exams if _matches_query(item, "exam", needle)]
     tracks = [item for item in tracks if _matches_query(item, "track", needle)]
     courses = [item for item in courses if _matches_level(item, "course", level)]
-    exams = [item for item in exams if _matches_level(item, "exam", level)]
-    tracks = [item for item in tracks if not level or any(_matches_level(exam, "exam", level) for exam in item.exams.all())]
+    tracks = [item for item in tracks if _matches_level(item, "track", level)]
 
     resources = []
     if resource_type in {"all", "courses"}:
         resources.extend(_resource_item("course", item) for item in courses)
     if resource_type in {"all", "tracks"}:
         resources.extend(_resource_item("track", item) for item in tracks)
-    if resource_type in {"all", "exams"}:
-        resources.extend(_resource_item("exam", item) for item in exams)
 
     if pricing:
         resources = [item for item in resources if item["pricing_label"].lower() == pricing]
