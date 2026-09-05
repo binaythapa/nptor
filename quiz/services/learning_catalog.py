@@ -113,12 +113,64 @@ def _has_access(user, resource_type, resource):
 
 
 def _resource_item(resource_type, resource):
-    item = {"type": resource_type, "resource": resource, "is_shortlisted": False}
-    if resource_type == "exam":
+    """Build presentation metadata without making access decisions."""
+    item = {
+        "type": resource_type,
+        "presentation_type": resource_type,
+        "resource": resource,
+        "is_shortlisted": False,
+        "access_label": "Available",
+        "pricing_label": "Free",
+    }
+
+    if resource_type == "course":
+        has_active_plan = any(
+            getattr(plan, "is_active", False)
+            for plan in resource.subscription_plans.all()
+        )
+        item["pricing_label"] = "Premium" if has_active_plan else "Free"
+        item["description_label"] = "Structured learning course"
+
+    elif resource_type == "exam":
         item["duration_minutes"] = (resource.duration_seconds or 0) // 60
+        item["pricing_label"] = "Free" if resource.is_free else "Premium"
+        item["description_label"] = "Timed practice and assessment"
+        item["metrics_label"] = (
+            f"{resource.question_count} questions · "
+            f"{item['duration_minutes']} min · "
+            f"Pass {resource.passing_score:g}%"
+        )
+        if not resource.is_free and resource.price is not None:
+            item["price_label"] = f"{resource.currency} {resource.price:,.2f}"
+        else:
+            item["price_label"] = "Free"
+
     elif resource_type == "track":
-        domain = _domain_for_track(resource)
-        item["domain_slug"] = domain.slug if domain else ""
+        published_exams = [
+            exam for exam in resource.exams.all()
+            if exam.is_published and exam.organization_id is None
+        ]
+        item["domain_slug"] = (
+            _domain_for_track(resource).slug
+            if _domain_for_track(resource) else ""
+        )
+        item["exam_count"] = len(published_exams)
+        item["question_count"] = sum(exam.question_count for exam in published_exams)
+        item["pricing_label"] = "Free" if resource.is_free() else "Premium"
+        item["description_label"] = "Structured certification preparation"
+        if resource.is_free():
+            item["price_label"] = "Free"
+        elif resource.lifetime_price is not None:
+            item["price_label"] = f"{resource.currency} {resource.lifetime_price:,.2f}"
+        elif resource.monthly_price is not None:
+            item["price_label"] = f"{resource.currency} {resource.monthly_price:,.2f} / month"
+        else:
+            item["price_label"] = "Premium"
+        item["metrics_label"] = (
+            f"{item['exam_count']} exams included · "
+            f"{item['question_count']} questions"
+        )
+
     return item
 
 
@@ -133,6 +185,12 @@ def _add_user_state(user, items):
         resource = item["resource"]
         item["is_shortlisted"] = (item["type"], resource.id) in shortlisted
         item["has_access"] = _has_access(user, resource_type, resource)
+        if item["has_access"]:
+            item["access_label"] = "Purchased"
+        elif item["pricing_label"] == "Premium":
+            item["access_label"] = "Premium"
+        else:
+            item["access_label"] = "Free"
     return items
 
 
