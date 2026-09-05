@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404, render
 
 from quiz.models import ExamTrack
 from subscriptions.services import AccessService
+from quiz.services.track_progress import build_track_progress
 
 
 @login_required
@@ -14,11 +15,12 @@ def learning_track(request, slug):
         ).prefetch_related(
             "exams",
             "exams__primary_category",
+            "exams__prerequisite_exams",
         ),
         slug=slug,
     )
 
-    exams = [exam for exam in track.exams.all() if exam.is_published and exam.organization_id is None]
+    progress = build_track_progress(request.user, track)
     has_access = AccessService.has_access(
         student=request.user,
         resource_type=AccessService.RESOURCE_TRACK,
@@ -30,7 +32,11 @@ def learning_track(request, slug):
         "quiz/student/learning_track.html",
         {
             "track": track,
-            "exams": exams,
+            "exams": [item["exam"] for item in progress["items"]],
+            "track_items": progress["items"],
+            "completed_count": progress["completed_count"],
+            "total_count": progress["total_count"],
+            "track_progress": progress["percent"],
             "has_access": has_access,
             "is_free": track.is_free(),
         },
