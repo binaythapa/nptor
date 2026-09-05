@@ -25,4 +25,7 @@ class CVForm(forms.ModelForm):
         owner = kwargs.pop("owner", None)
         super().__init__(*args, **kwargs)
         self.fields["template"].queryset = CVTemplate.objects.filter(is_active=True)
+        self.fields["template"].required = False
+        if not self.instance.pk:
+            self.fields["template"].initial = CVTemplate.objects.filter(is_active=True).first()
         self.owner = owner
