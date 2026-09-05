@@ -6,7 +6,9 @@ def _published_track_exams(track):
         track.exams.filter(
             is_published=True,
             organization__isnull=True,
-        ).order_by("created_at", "id")
+        )
+        .prefetch_related("prerequisite_exams")
+        .order_by("created_at", "id")
     )
 
 
@@ -40,7 +42,11 @@ def track_exam_lock(user, exam, ordered_exams=None, passed_exam_ids=None):
     )
 
     try:
-        index = next(item_index for item_index, item in enumerate(exams) if item.id == exam.id)
+        index = next(
+            item_index
+            for item_index, item in enumerate(exams)
+            if item.id == exam.id
+        )
     except StopIteration:
         return False, None
 
@@ -76,12 +82,7 @@ def build_track_progress(user, track):
             is_unlocked = False
             lock_reason = "Complete the prerequisite exam(s) first."
         elif not is_unlocked:
-            previous = exams[index - 1]
-            lock_reason = (
-                "Complete the previous exam with a passing score."
-                if previous.id not in passed_ids
-                else "Pass the previous exam to unlock this exam."
-            )
+            lock_reason = "Complete the previous exam with a passing score."
 
         items.append(
             {
@@ -90,6 +91,9 @@ def build_track_progress(user, track):
                 "is_completed": is_completed,
                 "is_unlocked": is_unlocked,
                 "lock_reason": lock_reason,
+                "duration_minutes": (exam.duration_seconds or 0) // 60,
+                "question_count": exam.question_count,
+                "passing_score": exam.passing_score,
             }
         )
 
