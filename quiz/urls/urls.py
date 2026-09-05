@@ -18,7 +18,8 @@ from quiz.views.admin_subscription_views import *
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
 from quiz.views.student_dashboard import student_dashboard
-from quiz.views.student_learning_dashboard import learning_hub, remove_learning_activity
+from quiz.views.learning_hub import learning_hub
+from quiz.views.student_learning_dashboard import remove_learning_activity
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
 from quiz.views.learning_track import learning_track
 from quiz.views.learning_shortlist import learning_shortlist_toggle
