@@ -20,11 +20,62 @@
     </form>
   </section>
 
-  <section class="marketplace-section" aria-labelledby="domain-title">
+  <section class="marketplace-section domain-explorer" aria-labelledby="domain-title">
     <div class="marketplace-section-head">
-      <div><h2 id="domain-title">Explore by domain</h2><p>Start with the technology or certification you want to learn.</p></div>
+      <div>
+        <h2 id="domain-title">Explore by domain</h2>
+        <p>Start with the technology or certification you want to learn.</p>
+      </div>
     </div>
-    <div class="domain-grid">
+
+    <div class="domain-explorer-toolbar">
+      <form class="domain-search" method="get" role="search">
+        <label class="sr-only" for="domain-search-input">Search domains</label>
+        <input id="domain-search-input" name="domain_q" value="{{ domain_query }}" placeholder="Search domains..." autocomplete="off">
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="type" value="{{ resource_type }}">
+        <input type="hidden" name="level" value="{{ level }}">
+        <input type="hidden" name="access" value="{{ access }}">
+        <input type="hidden" name="pricing" value="{{ pricing }}">
+        <button type="submit">Search domains</button>
+      </form>
+      <form class="domain-sort" method="get">
+        <input type="hidden" name="domain_q" value="{{ domain_query }}">
+        <label for="domain-sort-select">Sort domains</label>
+        <select id="domain-sort-select" name="domain_sort" onchange="this.form.submit()">
+          <option value="az" {% if domain_sort == 'az' %}selected{% endif %}>A → Z</option>
+          <option value="za" {% if domain_sort == 'za' %}selected{% endif %}>Z → A</option>
+        </select>
+      </form>
+    </div>
+
+    {% if popular_domains and not domain_query %}
+      <div class="domain-subsection-head">
+        <div>
+          <h3>Popular domains</h3>
+          <p>Most learning resources across the catalogue.</p>
+        </div>
+      </div>
+      <div class="domain-grid domain-grid-popular" aria-label="Popular learning domains">
+        {% for item in popular_domains %}
+          <a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}">
+            <strong>{{ item.domain.name }}</strong>
+            <span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }} · {{ item.exam_count }} exam{{ item.exam_count|pluralize }}</span>
+            <span class="domain-card-arrow" aria-hidden="true">→</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="domain-subsection-head all-domains-head">
+      <div>
+        <h3>{% if domain_query %}Domain search results{% else %}All domains{% endif %}</h3>
+        <p>{{ domain_page_obj.paginator.count }} domain{{ domain_page_obj.paginator.count|pluralize }} found</p>
+      </div>
+      {% if domain_query %}<a class="domain-clear" href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Clear search</a>{% endif %}
+    </div>
+
+    <div class="domain-grid domain-grid-all" aria-label="All learning domains">
       {% for item in domains %}
         <a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}">
           <strong>{{ item.domain.name }}</strong>
@@ -32,9 +83,17 @@
           <span class="domain-card-arrow" aria-hidden="true">→</span>
         </a>
       {% empty %}
-        <div class="marketplace-empty">No learning domains are available yet.</div>
+        <div class="marketplace-empty">No learning domains match your search.</div>
       {% endfor %}
     </div>
+
+    {% if domain_page_obj.has_other_pages %}
+      <nav class="domain-pagination" aria-label="Domain pages">
+        {% if domain_page_obj.has_previous %}<a href="?domain_q={{ domain_query|urlencode }}&domain_sort={{ domain_sort }}&domain_page={{ domain_page_obj.previous_page_number }}&q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">← Previous</a>{% endif %}
+        <span>Page {{ domain_page_obj.number }} of {{ domain_page_obj.paginator.num_pages }}</span>
+        {% if domain_page_obj.has_next %}<a href="?domain_q={{ domain_query|urlencode }}&domain_sort={{ domain_sort }}&domain_page={{ domain_page_obj.next_page_number }}&q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Next →</a>{% endif %}
+      </nav>
+    {% endif %}
   </section>
 
   <section class="marketplace-section" aria-labelledby="results-title">
