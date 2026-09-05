@@ -126,7 +126,7 @@
               {% if item.has_access %}
                 {% if item.type == 'course' %}<a class="resource-action primary" href="{% url 'courses:course_learn' item.resource.slug %}">Continue</a>
                 {% elif item.type == 'track' %}<a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">Continue</a>
-                {% else %}<a class="resource-action primary" href="{% url 'quiz:exam_start' item.resource.id %}">Start</a>{% endif %}
+                {% else %}<a class="resource-action primary" href="{% url 'quiz:exam_detail' item.resource.id %}">View Exam</a>{% endif %}
               {% elif item.type == 'course' and item.pricing_label == 'Free' %}
                 <form method="post" action="{% url 'courses:enroll_free_course' item.resource.slug %}">{% csrf_token %}<button class="resource-action primary" type="submit">Enroll Free</button></form>
               {% elif item.type == 'course' %}
@@ -134,9 +134,9 @@
               {% elif item.type == 'track' %}
                 <a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">View Track</a>
               {% elif item.resource.is_free %}
-                <a class="resource-action primary" href="{% url 'quiz:exam_start' item.resource.id %}">Start Free</a>
+                <a class="resource-action primary" href="{% url 'quiz:exam_detail' item.resource.id %}">View Exam</a>
               {% else %}
-                <a class="resource-action" href="{% url 'quiz:exam_preview' item.resource.id %}">View Exam</a>
+                <a class="resource-action" href="{% url 'quiz:exam_detail' item.resource.id %}">View Exam</a>
               {% endif %}
             </div>
           </div>
