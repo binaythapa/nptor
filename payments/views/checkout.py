@@ -146,33 +146,6 @@ def track_checkout(request, track_id):
 
 @login_required
 def exam_checkout(request, exam_id):
-    exam = get_object_or_404(Exam, pk=exam_id, is_published=True)
-
-    if AccessService.has_access(
-        student=request.user,
-        resource_type=AccessService.RESOURCE_EXAM,
-        resource=exam,
-    ):
-        messages.info(request, "You already have direct access to this exam.")
-        return redirect("quiz:exam_start", exam_id=exam.id)
-
-    plan = get_plan_for_exam(exam)
-    if not plan:
-        messages.error(
-            request,
-            "This exam has no direct purchase plan. Access it through an eligible track.",
-        )
-        return redirect("quiz:exam_detail", exam_id=exam.id)
-
-    if plan.price == 0:
-        messages.info(request, "This exam is free.")
-        return redirect("quiz:exam_start", exam_id=exam.id)
-
-    return _start_payment(
-        request=request,
-        resource_type=PaymentOrder.RESOURCE_EXAM,
-        resource=exam,
-        amount=plan.price,
-        currency=plan.currency,
-        return_to=request.GET.get("next"),
-    )
+    """Disable standalone exam purchases; students purchase/access the parent course or track."""
+    messages.info(request, "Exams are accessed through their course or certification track.")
+    return redirect("quiz:exam_list")

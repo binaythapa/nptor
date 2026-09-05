@@ -68,8 +68,18 @@ app_name = "quiz"
 
 urlpatterns = [
     path("", learning_marketplace, name="exam_list"),
-    path("certifications/", learning_marketplace, name="certifications"),
-    path("academic-entrance/", learning_marketplace, name="academic_entrance"),
+    path(
+        "certifications/",
+        learning_marketplace,
+        {"catalog_vertical": "professional_certification"},
+        name="certifications",
+    ),
+    path(
+        "academic-entrance/",
+        learning_marketplace,
+        {"catalog_vertical": "academic_exam"},
+        name="academic_entrance",
+    ),
     path("learning/", learning_marketplace, name="learning_marketplace"),
     path("learning/domain/<slug:slug>/", learning_domain, name="learning_domain"),
     path("learning/track/<slug:slug>/", learning_track, name="learning_track"),

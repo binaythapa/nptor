@@ -6,7 +6,7 @@ from quiz.services.learning_catalog import build_learning_catalog
 
 
 @login_required
-def learning_marketplace(request):
+def learning_marketplace(request, catalog_vertical=None):
     query = request.GET.get("q", "").strip()
     resource_type = request.GET.get("type", "all").strip().lower()
     level = request.GET.get("level", "").strip()
@@ -27,6 +27,7 @@ def learning_marketplace(request):
         domain_query=domain_query,
         domain_sort=domain_sort,
         domain_page=domain_page,
+        catalog_vertical=catalog_vertical,
     )
 
     return render(request, "quiz/student/learning_marketplace.html", catalog)

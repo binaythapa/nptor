@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from quiz.models import Exam, Question
+from quiz.models import Exam, ExamTrack, Question
 
 
 PREVIEW_QUESTION_COUNT = 3
@@ -15,8 +15,18 @@ def exam_preview(request, exam_id):
         is_published=True,
     )
 
-    if exam.is_free:
-        return redirect("quiz:exam_start", exam_id=exam.id)
+    track_slug = request.GET.get("track")
+    if not track_slug:
+        return redirect("quiz:exam_list")
+
+    track = get_object_or_404(
+        ExamTrack,
+        slug=track_slug,
+        is_active=True,
+        organization__isnull=True,
+    )
+    if not track.track_exams.filter(exam=exam).exists():
+        return redirect("quiz:exam_list")
 
     category = exam.primary_category
     questions = Question.objects.filter(
@@ -25,9 +35,7 @@ def exam_preview(request, exam_id):
         organization__isnull=True,
     )
     if category:
-        questions = questions.filter(
-            primary_category=category
-        )
+        questions = questions.filter(primary_category=category)
     else:
         questions = questions.none()
 
@@ -44,5 +52,6 @@ def exam_preview(request, exam_id):
             "exam": exam,
             "questions": questions,
             "preview_limit": PREVIEW_QUESTION_COUNT,
+            "track": track,
         },
     )
