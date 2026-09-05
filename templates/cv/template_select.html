@@ -1,0 +1,23 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title">CV Templates</h1>
+    <div class="columns is-multiline">
+      {% for template in templates %}
+        <div class="column is-one-quarter">
+          <div class="box" style="height:100%">
+            <h2 class="title is-5">{{ template.name }}</h2>
+            <p class="is-size-7 mb-4">{{ template.description }}</p>
+            <span class="tag is-light">{{ template.slug }}</span>
+          </div>
+        </div>
+      {% empty %}
+        <div class="column"><p>No active templates are available yet.</p></div>
+      {% endfor %}
+    </div>
+    <a class="button" href="{% url 'cv:dashboard' %}">Back to CVs</a>
+  </div>
+</section>
+{% endblock %}
