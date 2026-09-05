@@ -5,32 +5,79 @@
 <link rel="stylesheet" href="{% static 'css/pages/learning_track.css' %}">
 
 <main class="learning-track-page">
-  <div class="track-breadcrumb"><a href="{% url 'quiz:exam_list' %}">Learning</a><span>›</span><span>{{ track.title }}</span></div>
+  <div class="track-breadcrumb" aria-label="Breadcrumb">
+    <a href="{% url 'quiz:exam_list' %}">Learning</a><span aria-hidden="true">›</span><span>{{ track.title }}</span>
+  </div>
 
-  <section class="track-hero">
-    <span class="track-kicker">EXAM TRACK</span>
-    <h1>{{ track.title }}</h1>
-    {% if track.description %}<p>{{ track.description }}</p>{% else %}<p>Follow the exams in this track and build your preparation step by step.</p>{% endif %}
-    <div class="track-meta"><span>{{ exams|length }} exam{{ exams|length|pluralize }}</span>{% if has_access %}<span class="track-access owned">You have access</span>{% elif is_free %}<span class="track-access free">Free track</span>{% else %}<span class="track-access">Full track access required</span>{% endif %}</div>
-    {% if not has_access and not is_free %}<a class="track-primary-action" href="{% url 'quiz:track_checkout' track.id %}">Unlock Full Track →</a>{% endif %}
+  <section class="track-hero" aria-labelledby="track-title">
+    <div class="track-hero-copy">
+      <span class="track-kicker">CERTIFICATION TRACK</span>
+      <h1 id="track-title">{{ track.title }}</h1>
+      {% if track.description %}<p>{{ track.description }}</p>{% else %}<p>Follow a structured exam sequence and build your certification readiness step by step.</p>{% endif %}
+      <div class="track-meta">
+        <span>{{ total_count }} exam{{ total_count|pluralize }}</span>
+        <span>{{ completed_count }} completed</span>
+        {% if has_access %}<span class="track-access owned">You have access</span>{% elif is_free %}<span class="track-access free">Free track</span>{% else %}<span class="track-access">Full track access required</span>{% endif %}
+      </div>
+      {% if not has_access and not is_free %}<a class="track-primary-action" href="{% url 'quiz:track_checkout' track.id %}">Unlock Full Track →</a>{% endif %}
+    </div>
+    <div class="track-hero-summary" aria-label="Track summary">
+      <span class="track-summary-label">CERTIFICATION PROGRESS</span>
+      <strong>{{ track_progress }}%</strong>
+      <div class="track-progress" role="progressbar" aria-label="Track progress" aria-valuenow="{{ track_progress }}" aria-valuemin="0" aria-valuemax="100">
+        <span style="width: {{ track_progress }}%"></span>
+      </div>
+      <p>{{ completed_count }} of {{ total_count }} exams completed</p>
+    </div>
+  </section>
+
+  <section class="track-overview-grid" aria-label="Track overview">
+    <div class="track-overview-card">
+      <span>Structured path</span><strong>{{ total_count }} exams</strong><p>Complete each stage in order to unlock the next assessment.</p>
+    </div>
+    <div class="track-overview-card">
+      <span>Passing gates</span><strong>Score-based</strong><p>A passing result unlocks the next exam in the sequence.</p>
+    </div>
+    <div class="track-overview-card">
+      <span>Access</span><strong>{% if has_access %}Included{% elif is_free %}Free{% else %}Premium{% endif %}</strong><p>{% if has_access %}Your track entitlement is active.{% elif is_free %}Start the track without purchasing access.{% else %}Unlock the track to access premium exams.{% endif %}</p>
+    </div>
   </section>
 
   <section class="track-section" aria-labelledby="track-exams-title">
-    <div class="track-section-head"><div><h2 id="track-exams-title">Exams in this track</h2><p>{% if has_access %}Start any available exam from your track.{% else %}Preview the track structure and see what you will practice.{% endif %}</p></div></div>
-    <div class="track-exam-list">
-      {% for exam in exams %}
-        <article class="track-exam-card">
-          <div class="track-exam-number">{{ forloop.counter }}</div>
+    <div class="track-section-head">
+      <div><span class="track-section-label">YOUR CERTIFICATION PATH</span><h2 id="track-exams-title">Exams in this track</h2><p>Work through the assessments in sequence. Passing an exam unlocks the next stage.</p></div>
+    </div>
+
+    <div class="track-exam-list" aria-label="Exams in this track">
+      {% for item in track_items %}
+        <article class="track-exam-card{% if item.is_completed %} completed{% elif not item.is_unlocked %} locked{% endif %}">
+          <div class="track-exam-number" aria-hidden="true">{{ item.index }}</div>
           <div class="track-exam-body">
-            <span class="track-exam-type">EXAM</span>
-            <h3>{{ exam.title }}</h3>
-            <p>{{ exam.question_count }} questions · {{ exam.duration_seconds|default:0|floatformat:0 }} sec · Level {{ exam.level }}</p>
+            <div class="track-exam-topline"><span class="track-exam-type">EXAM {{ item.index }}</span>{% if item.is_completed %}<span class="track-exam-status completed">Completed</span>{% elif not item.is_unlocked %}<span class="track-exam-status locked">Locked</span>{% else %}<span class="track-exam-status ready">Ready</span>{% endif %}</div>
+            <h3>{{ item.exam.title }}</h3>
+            {% if item.exam.primary_category %}<p class="track-exam-category">{{ item.exam.primary_category.name }}</p>{% endif %}
+            <div class="track-exam-metrics">
+              <span>{{ item.question_count }} questions</span><span>{{ item.duration_minutes }} min</span><span>Pass {{ item.passing_score|floatformat:0 }}%</span>
+            </div>
+            {% if item.lock_reason %}<p class="track-lock-message">🔒 {{ item.lock_reason }}</p>{% endif %}
           </div>
           <div class="track-exam-action">
-            {% if has_access or exam.is_free %}<a class="track-secondary-action primary" href="{% url 'quiz:exam_start' exam.id %}">Start →</a>{% else %}<a class="track-secondary-action" href="{% url 'quiz:exam_preview' exam.id %}">Preview →</a>{% endif %}
+            {% if item.is_completed %}
+              <a class="track-secondary-action" href="{% url 'quiz:exam_preview' item.exam.id %}">Review →</a>
+            {% elif item.is_unlocked and has_access %}
+              <a class="track-secondary-action primary" href="{% url 'quiz:exam_start' item.exam.id %}">Start Exam →</a>
+            {% elif item.is_unlocked and item.exam.is_free %}
+              <a class="track-secondary-action primary" href="{% url 'quiz:exam_start' item.exam.id %}">Start Free →</a>
+            {% elif item.is_unlocked %}
+              <a class="track-secondary-action" href="{% url 'quiz:exam_preview' item.exam.id %}">Preview →</a>
+            {% else %}
+              <span class="track-secondary-action disabled" aria-disabled="true">Locked</span>
+            {% endif %}
           </div>
         </article>
-      {% empty %}<div class="track-empty">No published exams are available in this track yet.</div>{% endfor %}
+      {% empty %}
+        <div class="track-empty">No published exams are available in this track yet.</div>
+      {% endfor %}
     </div>
   </section>
 </main>
