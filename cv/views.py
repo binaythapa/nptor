@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from cv.forms import CareerProfileForm, CVForm
+from cv.forms import CareerProfileForm, CVBuilderForm, CVForm
 from cv.forms_import import CVImportForm
 from cv.models import CV, CVTemplate
 from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
@@ -10,6 +10,16 @@ from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
 from cv.services.importers.service import confirm_import_field, import_cv_source
 from cv.services.profile import account_contact_defaults, get_or_create_career_profile
+
+
+BUILDER_SECTIONS = (
+    ("experiences", "Work Experience", "careerexperience_records"),
+    ("educations", "Education", "careereducation_records"),
+    ("skills", "Skills", "careerskill_records"),
+    ("certifications", "Certifications", "careercertification_records"),
+    ("projects", "Projects", "careerproject_records"),
+    ("achievements", "Achievements", "careerachievement_records"),
+)
 
 
 @login_required
@@ -41,25 +51,71 @@ def cv_create(request):
                 cv.status = form.cleaned_data["status"]
                 cv.overrides = form.cleaned_data.get("overrides") or {}
                 cv.save(update_fields=["status", "overrides", "updated_at"])
-                return redirect("cv:cv_edit", pk=cv.pk)
+                return redirect("cv:cv_builder", pk=cv.pk)
     else: form = CVForm(owner=request.user, initial={"status": CV.STATUS_DRAFT})
     return render(request, "cv/cv_form.html", {"form": form, "heading": "Create CV"})
 
 
 @login_required
 def cv_edit(request, pk):
-    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    return redirect("cv:cv_builder", pk=pk)
+
+
+@login_required
+def cv_builder(request, pk):
+    cv = get_object_or_404(CV.objects.select_related("profile", "template"), pk=pk, owner=request.user)
+    profile = cv.profile
+
     if request.method == "POST":
-        form = CVForm(request.POST, instance=cv, owner=request.user)
-        if form.is_valid(): form.save(); return redirect("cv:cv_edit", pk=cv.pk)
-    else: form = CVForm(instance=cv, owner=request.user)
-    return render(request, "cv/cv_form.html", {"form": form, "cv": cv, "heading": "Edit CV"})
+        form = CVBuilderForm(request.POST, instance=cv)
+        if form.is_valid():
+            cv.title = form.cleaned_data["title"]
+            cv.template = form.cleaned_data["template"]
+            cv.status = form.cleaned_data["status"]
+            cv.overrides = {
+                "professional_title": form.cleaned_data["professional_title"],
+                "summary": form.cleaned_data["summary"],
+                "linkedin_url": form.cleaned_data["linkedin_url"],
+                "portfolio_url": form.cleaned_data["portfolio_url"],
+            }
+            selected_sections = {}
+            for key, _label, related_name in BUILDER_SECTIONS:
+                valid_ids = set(getattr(profile, related_name).values_list("id", flat=True))
+                selected_sections[key] = [
+                    int(value)
+                    for value in request.POST.getlist(key)
+                    if value.isdigit() and int(value) in valid_ids
+                ]
+            cv.selected_sections = selected_sections
+            cv.save(update_fields=["title", "template", "status", "overrides", "selected_sections", "updated_at"])
+            return redirect("cv:cv_builder", pk=cv.pk)
+    else:
+        form = CVBuilderForm(instance=cv)
+
+    sections = []
+    for key, label, related_name in BUILDER_SECTIONS:
+        records = list(getattr(profile, related_name).all())
+        selected = cv.selected_sections.get(key) if cv.selected_sections else None
+        selected_ids = {int(value) for value in selected} if selected is not None else {record.id for record in records}
+        sections.append({"key": key, "label": label, "records": records, "selected_ids": selected_ids})
+
+    return render(
+        request,
+        "cv/builder.html",
+        {
+            "cv": cv,
+            "form": form,
+            "contact": account_contact_defaults(request.user),
+            "sections": sections,
+            "payload": build_cv_payload(cv),
+        },
+    )
 
 
 @login_required
 def cv_duplicate(request, pk):
     cv = get_object_or_404(CV, pk=pk, owner=request.user)
-    return redirect("cv:cv_edit", pk=duplicate_cv(cv).pk)
+    return redirect("cv:cv_builder", pk=duplicate_cv(cv).pk)
 
 
 @login_required
