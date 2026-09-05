@@ -108,3 +108,4 @@ from cv.models_version import CVVersion  # noqa: E402,F401
 from cv.models_document import DocumentArtifact  # noqa: E402,F401
 from cv.models_import import CVImport, ImportedField  # noqa: E402,F401
 from cv.models_ai import AIConversation, AIMessage, AIExtraction, ATSAnalysis  # noqa: E402,F401
+from cv.models_delivery import DeliveryRecord  # noqa: E402,F401
