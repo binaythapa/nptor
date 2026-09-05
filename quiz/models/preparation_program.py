@@ -24,7 +24,7 @@ class PreparationProgram(models.Model):
     )
     name = models.CharField(max_length=255)
     code = models.SlugField(max_length=140)
-    slug = models.SlugField(max_length=300, unique=True)
+    slug = models.SlugField(max_length=140, unique=True)
     description = models.TextField(blank=True)
     official_website = models.URLField(blank=True)
 
