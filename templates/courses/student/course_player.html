@@ -70,7 +70,8 @@
                 {% for l in section.lessons.all %}
                     <a href="{% url 'courses:course_learn_lesson' course.slug l.id %}{% if is_preview %}?preview=1{% endif %}"
                        class="lesson-link{% if lesson.id == l.id %} active{% endif %}{% if not is_preview and l.id in completed_lesson_ids %} completed{% endif %}"
-                       {% if lesson.id == l.id %}aria-current="page"{% endif %}>
+                       {% if lesson.id == l.id %}aria-current="page"{% endif %}
+                       data-completed="{% if not is_preview and l.id in completed_lesson_ids %}true{% else %}false{% endif %}">
                         <span class="lesson-status" aria-hidden="true">
                             {% if not is_preview and l.id in completed_lesson_ids %}✓{% elif lesson.id == l.id %}▶{% else %}{{ forloop.counter|stringformat:"02d" }}{% endif %}
                         </span>
@@ -172,9 +173,11 @@
         <nav class="lesson-navigation" aria-label="Lesson navigation">
             <a href="#" class="lesson-nav-prev" id="lessonPrev" hidden><span>←</span><span><small>PREVIOUS</small>Previous Lesson</span></a>
             {% if next_lesson %}
-                <a href="{% url 'courses:course_learn_lesson' course.slug next_lesson.id %}{% if is_preview %}?preview=1{% endif %}" class="lesson-nav-next" id="lessonNext"><span><small>NEXT LESSON</small>Continue learning</span><span>→</span></a>
-            {% elif not is_preview %}
-                <span class="course-complete"><span>✓</span> Course Complete</span>
+                <a href="{% url 'courses:course_learn_lesson' course.slug next_lesson.id %}{% if is_preview %}?preview=1{% endif %}" class="lesson-nav-next" id="lessonNext" data-server-next="true"><span><small>NEXT LESSON</small><span id="lessonNextLabel">Continue learning</span></span><span>→</span></a>
+            {% endif %}
+            {% if not is_preview %}
+                <span class="course-complete" id="courseComplete" hidden><span>✓</span> Course Complete</span>
+                <span class="lesson-continue-hint" id="lessonContinueHint" hidden>Complete this lesson to continue</span>
             {% endif %}
         </nav>
     </main>
@@ -209,8 +212,43 @@
     if(backdrop)backdrop.addEventListener("click",closeSidebar);
     if(sidebar)sidebar.addEventListener("click",event=>{if(event.target.closest(".lesson-link"))closeSidebar();});
     document.addEventListener("keydown",event=>{if(event.key==="Escape")closeSidebar();});
-    const active=sidebar&&sidebar.querySelector(".lesson-link.active"),previous=document.getElementById("lessonPrev"),links=sidebar?Array.from(sidebar.querySelectorAll(".lesson-link")):[];
-    if(active&&previous){const index=links.indexOf(active);if(index>0){previous.href=links[index-1].href;previous.hidden=false;}}
+
+    const active=sidebar&&sidebar.querySelector(".lesson-link.active");
+    const previous=document.getElementById("lessonPrev");
+    const next=document.getElementById("lessonNext");
+    const complete=document.getElementById("courseComplete");
+    const continueHint=document.getElementById("lessonContinueHint");
+    const nextLabel=document.getElementById("lessonNextLabel");
+    const links=sidebar?Array.from(sidebar.querySelectorAll(".lesson-link")):[];
+    const isPreview=document.body.classList.contains("course-preview-page") || !!document.querySelector(".preview-badge");
+    const currentCompleted=!!active && active.dataset.completed === "true";
+
+    if(active&&previous){
+        const index=links.indexOf(active);
+        if(index>0){previous.href=links[index-1].href;previous.hidden=false;}
+    }
+
+    if(next && !isPreview){
+        if(!currentCompleted){
+            next.hidden=true;
+            if(continueHint)continueHint.hidden=false;
+        }else{
+            const index=links.indexOf(active);
+            let candidate=links.slice(index+1).find(link=>link.dataset.completed !== "true");
+            if(!candidate)candidate=links.find(link=>link.dataset.completed !== "true");
+            if(candidate){
+                next.href=candidate.href;
+                next.classList.add("next-incomplete");
+                if(nextLabel)nextLabel.textContent="Continue learning";
+                next.hidden=false;
+            }else{
+                next.hidden=true;
+                if(complete)complete.hidden=false;
+            }
+        }
+    }else if(!next && !isPreview && complete && links.length && links.every(link=>link.dataset.completed === "true")){
+        complete.hidden=false;
+    }
 })();
 </script>
 </body>
