@@ -39,13 +39,13 @@
       <span>Passing gates</span><strong>Score-based</strong><p>Pass the previous exam to unlock the next stage. Your exam's passing score is the gate.</p>
     </div>
     <div class="track-overview-card">
-      <span>Access</span><strong>{% if has_access %}Included{% elif is_free %}Free{% else %}Premium{% endif %}</strong><p>{% if has_access %}Your track entitlement is active.{% elif is_free %}Start the track without purchasing access.{% else %}Unlock the track to access premium exams.{% endif %}</p>
+      <span>Access</span><strong>{% if has_access %}Included{% elif is_free %}Free{% else %}Premium{% endif %}</strong><p>{% if has_access %}Your track entitlement is active.{% elif is_free %}Start the track without purchasing access.{% else %}Unlock the track to access the exams in this certification path.{% endif %}</p>
     </div>
   </section>
 
   <section class="track-section" aria-labelledby="track-exams-title">
     <div class="track-section-head">
-      <div><span class="track-section-label">YOUR CERTIFICATION PATH</span><h2 id="track-exams-title">Exams in this track</h2><p>Work through the assessments in sequence. Pass the previous exam to unlock the next one. Prerequisite exam rules also apply.</p></div>
+      <div><span class="track-section-label">YOUR CERTIFICATION PATH</span><h2 id="track-exams-title">Exams in this track</h2><p>Work through the assessments in sequence. Pass the previous exam to unlock the next one. Track-specific prerequisite rules also apply.</p></div>
     </div>
 
     <div class="track-exam-list" aria-label="Exams in this track">
@@ -66,8 +66,8 @@
               <span class="track-secondary-action disabled" aria-disabled="true">Completed</span>
             {% elif item.is_unlocked and has_access %}
               <a class="track-secondary-action primary" href="{% url 'quiz:exam_start' item.exam.id %}">Start Exam →</a>
-            {% elif item.is_unlocked and item.exam.is_free %}
-              <a class="track-secondary-action primary" href="{% url 'quiz:exam_start' item.exam.id %}">Start Free →</a>
+            {% elif item.is_unlocked and is_free %}
+              <a class="track-secondary-action primary" href="{% url 'quiz:exam_start' item.exam.id %}">Start Exam →</a>
             {% elif item.is_unlocked %}
               <a class="track-secondary-action" href="{% url 'quiz:exam_preview' item.exam.id %}">Preview →</a>
             {% else %}
