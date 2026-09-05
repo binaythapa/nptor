@@ -18,7 +18,7 @@
 
     {% if is_preview %}
         <div class="preview-banner" role="status">
-            <strong>Developer Preview Mode.</strong>
+            <strong>Preview mode.</strong>
             This course is being viewed before publication. Student progress and learning actions are not recorded in preview mode.
         </div>
         <div class="status-banner">
@@ -26,18 +26,39 @@
         </div>
     {% endif %}
 
-    <section class="course-overview-hero" aria-labelledby="course-title">
-        <div class="course-overview-hero-copy">
+    <section class="course-detail-hero" aria-labelledby="course-title">
+        <div class="course-detail-hero-copy">
+            <div class="course-detail-breadcrumb">
+                {% if course.category and course.category.domain %}
+                    <span>{{ course.category.domain.name }}</span><span aria-hidden="true">›</span>
+                {% endif %}
+                {% if course.category %}<span>{{ course.category.name }}</span>{% endif %}
+            </div>
             <span class="course-overview-eyebrow">ONLINE COURSE</span>
             <h1 id="course-title">{{ course.title }}</h1>
-            <p class="course-overview-summary">{{ course.description|truncatewords:36 }}</p>
-            <div class="course-overview-meta" aria-label="Course metadata">
+            <p class="course-overview-summary">{{ course.description|truncatewords:42 }}</p>
+
+            <div class="course-detail-badges" aria-label="Course highlights">
                 {% if course.level %}<span>{{ course.level|title }}</span>{% endif %}
-                {% if course.category %}<span>{{ course.category.name }}</span>{% endif %}
                 <span>{{ total }} lesson{{ total|pluralize }}</span>
                 <span>Certificate included</span>
+                {% course_is_free course as is_free_course %}
+                {% if is_free_course %}<span class="badge-free">Free</span>{% else %}<span class="badge-premium">Premium</span>{% endif %}
             </div>
+
+            {% if not is_preview and is_enrolled %}
+                <div class="course-hero-progress" aria-label="Your course progress">
+                    <div>
+                        <span>You are enrolled</span>
+                        <strong>{{ progress }}% complete</strong>
+                    </div>
+                    <div class="course-progress-track" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                        <div class="course-progress-fill" style="width:{{ progress }}%;"></div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
+
         <div class="course-overview-hero-media">
             {% if course.thumbnail %}
                 <img src="{{ course.thumbnail.url }}" alt="{{ course.title }} course thumbnail">
@@ -49,34 +70,27 @@
 
     <div class="course-overview-grid">
         <section class="course-overview-main">
-            <span class="course-section-label">COURSE OVERVIEW</span>
-            <h2>Build your knowledge step by step</h2>
+            <section aria-labelledby="outcomes-heading" class="course-outcomes">
+                <span class="course-section-label">WHAT YOU'LL LEARN</span>
+                <h2 id="outcomes-heading">Build practical knowledge step by step</h2>
+                <div class="course-outcomes-grid">
+                    <div>✓ Learn the core concepts covered by this course</div>
+                    <div>✓ Practice key topics through structured lessons</div>
+                    <div>✓ Check your knowledge with course assessments</div>
+                    <div>✓ Track your progress from start to completion</div>
+                </div>
+            </section>
 
-            <div class="course-overview-stats">
-                <div class="course-stat">
-                    <strong>{{ total }}</strong>
-                    <span>Lessons</span>
-                </div>
-                <div class="course-stat">
-                    <strong>{{ course.level|title }}</strong>
-                    <span>Level</span>
-                </div>
-                <div class="course-stat">
-                    <strong>Certificate</strong>
-                    <span>On completion</span>
-                </div>
-                <div class="course-stat">
-                    <strong>{% if is_enrolled %}Enrolled{% else %}Available{% endif %}</strong>
-                    <span>Access status</span>
-                </div>
-            </div>
+            <section class="course-overview-stats" aria-label="Course information">
+                <div class="course-stat"><strong>{{ total }}</strong><span>Lessons</span></div>
+                <div class="course-stat"><strong>{{ course.level|title }}</strong><span>Level</span></div>
+                <div class="course-stat"><strong>Self-paced</strong><span>Learning</span></div>
+                <div class="course-stat"><strong>Certificate</strong><span>On completion</span></div>
+            </section>
 
             {% if not is_preview and is_enrolled %}
                 <div class="course-overview-progress" aria-label="Your course progress">
-                    <div class="course-progress-heading">
-                        <span>Your progress</span>
-                        <strong>{{ progress }}%</strong>
-                    </div>
+                    <div class="course-progress-heading"><span>Your progress</span><strong>{{ progress }}%</strong></div>
                     <div class="course-progress-track" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
                         <div class="course-progress-fill" style="width:{{ progress }}%;"></div>
                     </div>
@@ -90,9 +104,16 @@
                 <div class="course-description">{{ course.description }}</div>
             </section>
 
-            <section class="course-curriculum-preview" aria-labelledby="curriculum-heading">
+            <section class="course-curriculum-preview" aria-labelledby="curriculum-heading" aria-label="Course curriculum">
                 <span class="course-section-label">CURRICULUM</span>
-                <h2 id="curriculum-heading">Course curriculum</h2>
+                <div class="course-section-heading-row">
+                    <div>
+                        <h2 id="curriculum-heading">Course curriculum</h2>
+                        <p>Follow the learning path in order and complete each lesson to unlock the next step.</p>
+                    </div>
+                    <span class="curriculum-total">{{ total }} lesson{{ total|pluralize }}</span>
+                </div>
+
                 <div class="course-curriculum-list">
                     {% for section in course.sections.all %}
                         <section class="course-curriculum-section">
@@ -104,7 +125,11 @@
                                 {% for lesson in section.lessons.all %}
                                     <li>
                                         <span class="course-curriculum-icon" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</span>
-                                        <span>{{ lesson.title }}</span>
+                                        <span class="curriculum-lesson-copy">
+                                            <strong>{{ lesson.title }}</strong>
+                                            <small>{% if lesson.lesson_type == "video" %}Video{% elif lesson.lesson_type == "quiz" %}Quiz{% elif lesson.lesson_type == "practice" %}Practice{% else %}Lesson{% endif %}</small>
+                                        </span>
+                                        {% if is_preview %}<span class="curriculum-state">Preview</span>{% elif is_enrolled %}<span class="curriculum-state">Available</span>{% else %}<span class="curriculum-state locked">Unlock</span>{% endif %}
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -114,25 +139,44 @@
                     {% endfor %}
                 </div>
             </section>
-        </section>
-
-        <aside class="course-overview-sidebar-card" aria-label="Course enrollment">
-            <span class="course-section-label">YOUR LEARNING PLAN</span>
-            <h2>Start learning today</h2>
 
             {% if course.created_by %}
-                <div class="course-instructor">
-                    <span class="course-instructor-avatar" aria-hidden="true">{{ course.created_by.get_full_name|default:course.created_by.username|slice:":1"|upper }}</span>
-                    <div>
-                        <strong>{{ course.created_by.get_full_name|default:course.created_by.username }}</strong>
-                        <span>Course instructor</span>
+                <section class="course-instructor-panel" aria-labelledby="instructor-heading">
+                    <span class="course-section-label">INSTRUCTOR</span>
+                    <h2 id="instructor-heading">Meet your instructor</h2>
+                    <div class="course-instructor">
+                        <span class="course-instructor-avatar" aria-hidden="true">{{ course.created_by.get_full_name|default:course.created_by.username|slice:":1"|upper }}</span>
+                        <div>
+                            <strong>{{ course.created_by.get_full_name|default:course.created_by.username }}</strong>
+                            <span>Course instructor</span>
+                        </div>
                     </div>
+                </section>
+            {% endif %}
+        </section>
+
+        <aside class="course-overview-sidebar-card course-detail-purchase-card" aria-label="Course enrollment and purchase">
+            <div class="purchase-card-heading">
+                <span class="course-section-label">YOUR LEARNING PLAN</span>
+                {% if not is_preview and is_enrolled %}<span class="enrolled-pill">✓ Enrolled</span>{% endif %}
+            </div>
+            <h2>{% if is_enrolled %}Continue your learning{% else %}Start learning today{% endif %}</h2>
+
+            <div class="purchase-value-list">
+                <div><span>✓</span> Structured lessons and assessments</div>
+                <div><span>✓</span> Progress tracking</div>
+                <div><span>✓</span> Certificate included</div>
+                <div><span>✓</span> Learn at your own pace</div>
+            </div>
+
+            {% if not is_preview and is_enrolled %}
+                <div class="purchase-progress-summary">
+                    <strong>{{ progress }}%</strong>
+                    <span>{{ completed }} of {{ total }} lessons completed</span>
                 </div>
             {% endif %}
 
             <div class="course-detail-actions">
-                {% course_is_free course as is_free_course %}
-
                 {% if is_preview %}
                     <a href="{% url 'courses:course_learn' course.slug %}?preview=1" class="btn btn-preview">▶ Preview Course</a>
                 {% elif is_enrolled %}
@@ -144,19 +188,46 @@
                         <a href="{% url 'courses:course_learn' course.slug %}" class="btn btn-primary">▶ Start Learning</a>
                     {% endif %}
                 {% elif is_free_course %}
+                    <div class="price-line"><strong>Free</strong><span>No payment required</span></div>
                     <form method="post" action="{% url 'courses:enroll_free_course' course.slug %}">
                         {% csrf_token %}
                         <button type="submit" class="btn-success">✓ Enroll Free</button>
                     </form>
                 {% else %}
+                    {% with plan=course.subscription_plans.all|first %}
+                        <div class="price-line">
+                            {% if plan %}<strong>{{ plan.currency }} {{ plan.price|floatformat:2 }}</strong><span>Access plan</span>{% else %}<strong>Premium</strong><span>Paid access</span>{% endif %}
+                        </div>
+                    {% endwith %}
                     <a href="{% url 'courses:subscribe_course' course.id %}" class="btn btn-primary">Get Full Access</a>
                 {% endif %}
             </div>
 
-            <p class="course-access-note">Learn at your own pace with progress tracking and a completion certificate.</p>
-            <p class="course-overview-footer-note">Course access and completion requirements are enforced by NPTOR's learning system.</p>
+            <p class="course-access-note">Secure access is managed by NPTOR. Your learning progress is saved automatically after enrollment.</p>
         </aside>
     </div>
+
+    <section class="course-related-resources" aria-labelledby="related-heading">
+        <div class="course-section-heading-row">
+            <div>
+                <span class="course-section-label">CONTINUE YOUR PATH</span>
+                <h2 id="related-heading">Take the next step</h2>
+                <p>Pair your course with certification practice when you're ready.</p>
+            </div>
+        </div>
+        <div class="related-resource-grid">
+            <a class="related-resource-card" href="/quiz/?type=tracks">
+                <span class="related-resource-icon track">T</span>
+                <div><strong>Related certification paths</strong><span>Explore exam tracks and structured certification preparation.</span></div>
+                <b aria-hidden="true">→</b>
+            </a>
+            <a class="related-resource-card" href="/quiz/?type=exams">
+                <span class="related-resource-icon exam">E</span>
+                <div><strong>Related exams</strong><span>Test your knowledge with timed practice and assessment exams.</span></div>
+                <b aria-hidden="true">→</b>
+            </a>
+        </div>
+    </section>
 </main>
 </body>
 </html>
