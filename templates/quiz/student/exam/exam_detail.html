@@ -20,7 +20,6 @@
       <div>
         <div class="exam-detail-eyebrow">
           <span class="exam-detail-type">CERTIFICATION EXAM</span>
-          <span class="exam-detail-badge {% if exam.is_free %}free{% else %}premium{% endif %}">{% if exam.is_free %}FREE{% else %}PREMIUM{% endif %}</span>
           {% if has_access %}<span class="exam-detail-badge owned">YOUR ACCESS</span>{% endif %}
         </div>
         <h1 id="exam-detail-title">{{ exam.title }}</h1>
@@ -35,7 +34,7 @@
       </div>
 
       <aside class="exam-detail-access" data-section="exam-detail-access" aria-label="Exam access">
-        <div class="exam-detail-price">{% if exam.is_free %}Free{% elif exam.price %}{{ exam.currency }} {{ exam.price|floatformat:0 }}{% else %}Premium{% endif %}</div>
+        <div class="exam-detail-price">{% if has_access %}Available{% else %}Access required{% endif %}</div>
         {% if has_access %}
           <p class="exam-detail-access-state success">You have access to this exam.</p>
         {% elif access_reason %}
@@ -73,30 +72,42 @@
         </div>
       </section>
 
-      {% if exam.track %}
+      {% if track_contexts %}
       <section class="exam-detail-card" data-section="exam-detail-track" aria-labelledby="track-title">
         <div class="exam-detail-card-heading">
-          <div><span class="exam-detail-section-kicker">CERTIFICATION PATH</span><h2 id="track-title">{{ exam.track.title }}</h2></div>
-          <a href="{% url 'quiz:learning_track' exam.track.slug %}">View track</a>
+          <div><span class="exam-detail-section-kicker">CERTIFICATION PATHS</span><h2 id="track-title">Used in {{ track_contexts|length }} track{{ track_contexts|length|pluralize }}</h2></div>
         </div>
-        {% if track_progress %}
-          <div class="exam-track-progress"><span>{{ track_progress.completed_count }} of {{ track_progress.total_count }} exams completed</span><strong>{{ track_progress.percent }}%</strong></div>
-          <div class="exam-track-bar" role="progressbar" aria-valuenow="{{ track_progress.percent }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ track_progress.percent }}%"></span></div>
-        {% endif %}
-        {% if track_item and not track_item.is_unlocked %}
-          <div class="exam-lock-callout">{{ track_item.lock_reason }}</div>
-        {% else %}
-          <p>This exam is part of the certification sequence. Complete it to progress to the next track exam.</p>
-        {% endif %}
+        {% for context in track_contexts %}
+          <div class="exam-track-context">
+            <div class="exam-detail-card-heading">
+              <div><strong>{{ context.track.title }}</strong></div>
+              <a href="{% url 'quiz:learning_track' context.track.slug %}">View track</a>
+            </div>
+            {% if context.progress %}
+              <div class="exam-track-progress"><span>{{ context.progress.completed_count }} of {{ context.progress.total_count }} exams completed</span><strong>{{ context.progress.percent }}%</strong></div>
+              <div class="exam-track-bar" role="progressbar" aria-valuenow="{{ context.progress.percent }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ context.progress.percent }}%"></span></div>
+            {% endif %}
+            {% if context.item and context.item.lock_reason %}
+              <div class="exam-lock-callout">{{ context.item.lock_reason }}</div>
+            {% else %}
+              <p>This exam is configured as part of this certification sequence.</p>
+            {% endif %}
+          </div>
+        {% endfor %}
       </section>
       {% endif %}
 
       <section class="exam-detail-card" aria-labelledby="prerequisites-title">
         <div class="exam-detail-card-heading"><div><span class="exam-detail-section-kicker">ELIGIBILITY</span><h2 id="prerequisites-title">Prerequisites</h2></div></div>
-        {% if prerequisite_count %}
-          <p>This exam has {{ prerequisite_count }} prerequisite exam{{ prerequisite_count|pluralize }}. Each prerequisite must be passed before this exam can be started.</p>
+        {% if track_contexts %}
+          <p>Prerequisites are defined by each certification track that includes this reusable exam. The same exam can therefore have different prerequisites in different tracks.</p>
+          <ul>
+            {% for context in track_contexts %}
+              <li><strong>{{ context.track.title }}:</strong> {{ context.item.track_exam.prerequisite_exams.count }} prerequisite exam{{ context.item.track_exam.prerequisite_exams.count|pluralize }}</li>
+            {% endfor %}
+          </ul>
         {% else %}
-          <p>No separate prerequisite exams are configured for this assessment.</p>
+          <p>This standalone exam has no track-specific prerequisites.</p>
         {% endif %}
       </section>
     </div>
