@@ -1,5 +1,6 @@
 from django.db import models
 
+from courses.models import Course
 from .content_vertical import ContentVertical
 from .country import Country
 from .government_body import GovernmentBody
@@ -17,6 +18,7 @@ class GovernmentExamProgram(models.Model):
     slug = models.SlugField(max_length=300)
     description = models.TextField(blank=True)
     jobs = models.ManyToManyField(GovernmentJob, blank=True, related_name="exam_programs")
+    courses = models.ManyToManyField(Course, blank=True, related_name="government_exam_programs")
     official_website = models.URLField(blank=True)
     is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
