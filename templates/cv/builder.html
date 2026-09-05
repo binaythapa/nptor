@@ -1,0 +1,188 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container is-fluid" style="max-width: 1440px;">
+    <div class="level mb-5">
+      <div>
+        <p class="is-size-7 has-text-grey mb-1">CV Builder</p>
+        <h1 class="title mb-1">{{ cv.title }}</h1>
+        <p class="subtitle is-6 mb-0">Choose profile content for this CV without changing your master career profile.</p>
+      </div>
+      <div class="buttons">
+        <a class="button" href="{% url 'cv:dashboard' %}">All CVs</a>
+        <a class="button" href="{% url 'cv:cv_preview' cv.pk %}">Preview</a>
+        <a class="button is-light" href="{% url 'cv:cv_versions' cv.pk %}">Versions</a>
+        <a class="button is-light" href="{% url 'cv:cv_export_pdf' cv.pk %}">PDF</a>
+        <a class="button is-light" href="{% url 'cv:cv_export_docx' cv.pk %}">Word</a>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="notification is-danger is-light">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" id="cv-builder-form">
+      {% csrf_token %}
+      <div class="columns is-variable is-5">
+        <div class="column is-8">
+          <div class="box">
+            <h2 class="title is-5">CV settings</h2>
+            <div class="columns is-multiline">
+              <div class="column is-7">
+                <div class="field">
+                  <label class="label" for="{{ form.title.id_for_label }}">CV name</label>
+                  <div class="control">{{ form.title }}</div>
+                  {{ form.title.errors }}
+                </div>
+              </div>
+              <div class="column is-5">
+                <div class="field">
+                  <label class="label" for="{{ form.status.id_for_label }}">Status</label>
+                  <div class="control">{{ form.status }}</div>
+                  {{ form.status.errors }}
+                </div>
+              </div>
+              <div class="column is-12">
+                <div class="field">
+                  <label class="label" for="{{ form.template.id_for_label }}">Template</label>
+                  <div class="control">{{ form.template }}</div>
+                  {{ form.template.errors }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h2 class="title is-5">Personal information</h2>
+            <div class="notification is-light mb-4">
+              <p class="has-text-weight-semibold">{{ contact.first_name }} {{ contact.last_name }}</p>
+              <p>{{ contact.email }}{% if contact.phone %} · {{ contact.phone }}{% endif %}</p>
+              {% if contact.location %}<p>{{ contact.location }}</p>{% endif %}
+              <p class="is-size-7 has-text-grey mt-2">Contact details come from your account profile.</p>
+            </div>
+            <div class="columns is-multiline">
+              <div class="column is-12">
+                <div class="field">
+                  <label class="label" for="{{ form.professional_title.id_for_label }}">Professional title</label>
+                  <div class="control">{{ form.professional_title }}</div>
+                  {{ form.professional_title.errors }}
+                </div>
+              </div>
+              <div class="column is-12">
+                <div class="field">
+                  <label class="label" for="{{ form.summary.id_for_label }}">Professional Summary</label>
+                  <div class="control">{{ form.summary }}</div>
+                  {{ form.summary.errors }}
+                </div>
+              </div>
+              <div class="column is-6">
+                <div class="field">
+                  <label class="label" for="{{ form.linkedin_url.id_for_label }}">LinkedIn</label>
+                  <div class="control">{{ form.linkedin_url }}</div>
+                  {{ form.linkedin_url.errors }}
+                </div>
+              </div>
+              <div class="column is-6">
+                <div class="field">
+                  <label class="label" for="{{ form.portfolio_url.id_for_label }}">Portfolio</label>
+                  <div class="control">{{ form.portfolio_url }}</div>
+                  {{ form.portfolio_url.errors }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% for section in sections %}
+            <div class="box builder-section">
+              <div class="level mb-4">
+                <div>
+                  <h2 class="title is-5 mb-1">{{ section.label }}</h2>
+                  <p class="is-size-7 has-text-grey">Select the {{ section.label|lower }} records to include in this CV.</p>
+                </div>
+                {% if section.records %}
+                  <button class="button is-small is-light section-toggle" type="button" data-section="{{ section.key }}">Toggle all</button>
+                {% endif %}
+              </div>
+
+              {% for record in section.records %}
+                <label class="media p-3 mb-2 has-background-light" style="cursor:pointer; border-radius:6px;">
+                  <div class="media-left">
+                    <input type="checkbox" name="{{ section.key }}" value="{{ record.pk }}" data-section-input="{{ section.key }}" {% if record.id in section.selected_ids %}checked{% endif %}>
+                  </div>
+                  <div class="media-content">
+                    {% if section.key == "experiences" %}
+                      <p class="has-text-weight-semibold">{{ record.job_title }}</p>
+                      <p>{{ record.employer }}{% if record.location %} · {{ record.location }}{% endif %}</p>
+                      {% if record.start_date %}<p class="is-size-7 has-text-grey">{{ record.start_date|date:"M Y" }} – {% if record.is_current %}Present{% elif record.end_date %}{{ record.end_date|date:"M Y" }}{% endif %}</p>{% endif %}
+                    {% elif section.key == "educations" %}
+                      <p class="has-text-weight-semibold">{{ record.qualification }}</p>
+                      <p>{{ record.institution }}{% if record.field_of_study %} · {{ record.field_of_study }}{% endif %}</p>
+                    {% elif section.key == "skills" %}
+                      <p class="has-text-weight-semibold">{{ record.name }}</p>
+                      <p class="is-size-7 has-text-grey">{{ record.category }}{% if record.proficiency %} · {{ record.proficiency }}{% endif %}</p>
+                    {% elif section.key == "certifications" %}
+                      <p class="has-text-weight-semibold">{{ record.name }}</p>
+                      <p>{{ record.issuer }}</p>
+                    {% elif section.key == "projects" %}
+                      <p class="has-text-weight-semibold">{{ record.name }}</p>
+                      <p>{{ record.role }}</p>
+                    {% elif section.key == "achievements" %}
+                      <p class="has-text-weight-semibold">{{ record.title }}</p>
+                      <p>{{ record.description|truncatewords:20 }}</p>
+                    {% endif %}
+                  </div>
+                </label>
+              {% empty %}
+                <p class="has-text-grey">No {{ section.label|lower }} have been added to your Career Profile yet.</p>
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+          <div class="box">
+            <div class="level">
+              <div>
+                <p class="has-text-weight-semibold">Ready to save?</p>
+                <p class="is-size-7 has-text-grey">Builder changes are specific to this CV and do not overwrite your master profile.</p>
+              </div>
+              <button class="button is-primary" type="submit">Save CV</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-4">
+          <div class="box" style="position:sticky; top:1rem;">
+            <h2 class="title is-5">Current CV</h2>
+            <div class="content is-small">
+              <p><strong>Template:</strong> {{ cv.template.name }}</p>
+              <p><strong>Status:</strong> {{ cv.get_status_display }}</p>
+              <hr>
+              <p class="has-text-weight-semibold">{{ payload.professional_title }}</p>
+              {% if payload.summary %}<p>{{ payload.summary|truncatewords:35 }}</p>{% endif %}
+              <p><strong>{{ payload.experiences|length }}</strong> experience · <strong>{{ payload.educations|length }}</strong> education</p>
+              <p><strong>{{ payload.skills|length }}</strong> skills · <strong>{{ payload.certifications|length }}</strong> certifications</p>
+              <p><strong>{{ payload.projects|length }}</strong> projects · <strong>{{ payload.achievements|length }}</strong> achievements</p>
+            </div>
+            <div class="buttons">
+              <a class="button is-fullwidth" href="{% url 'cv:cv_preview' cv.pk %}">Open Preview</a>
+              <a class="button is-light is-fullwidth" href="{% url 'cv:cv_export_pdf' cv.pk %}">Export PDF</a>
+              <a class="button is-light is-fullwidth" href="{% url 'cv:cv_export_docx' cv.pk %}">Export Word</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.section-toggle').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var section = button.dataset.section;
+      var inputs = document.querySelectorAll('[data-section-input="' + section + '"]');
+      var shouldCheck = Array.from(inputs).some(function (input) { return !input.checked; });
+      inputs.forEach(function (input) { input.checked = shouldCheck; });
+    });
+  });
+</script>
+{% endblock %}
