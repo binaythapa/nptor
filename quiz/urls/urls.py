@@ -25,12 +25,21 @@ from quiz.views.learning_track import learning_track
 from quiz.views.learning_shortlist import learning_shortlist_toggle
 from quiz.views.exam_detail import exam_detail
 from quiz.views.exam_preview import exam_preview
-from quiz.views.exam_access import exam_locked, exam_expired, exam_review
+from quiz.views.exam_access import exam_locked
 from quiz.views.exam_submission import exam_submit_dashboard
 from quiz.views.mock import *
 from quiz.views.exams import *
 from quiz.views.exams import exam_start as standard_exam_start
 from quiz.views.course_exam_start import course_exam_start
+from quiz.views.contextual_exam_attempt import (
+    exam_take,
+    exam_question,
+    autosave,
+    exam_submit,
+    exam_result,
+    exam_expired,
+    exam_review,
+)
 from quiz.views.exam_list import *
 from quiz.views.study_plan import *
 from quiz.views.government_catalog import (
@@ -107,7 +116,7 @@ urlpatterns = [
     path("exam/attempt/<int:user_exam_id>/", exam_take, name="exam_take"),
     path("exam/attempt/<int:user_exam_id>/question/<int:index>/", exam_question, name="exam_question"),
     path("exam/attempt/<int:user_exam_id>/autosave/", autosave, name="exam_autosave"),
-    path("exam/attempt/<int:user_exam_id>/submit/", exam_submit_dashboard, name="exam_submit"),
+    path("exam/attempt/<int:user_exam_id>/submit/", exam_submit, name="exam_submit"),
     path("exam/attempt/<int:user_exam_id>/result/", exam_result, name="exam_result"),
     path("exam/attempt/<int:user_exam_id>/expired/", exam_expired, name="exam_expired"),
     path("exam/attempt/<int:user_exam_id>/review/", exam_review, name="exam_review"),
