@@ -3,7 +3,7 @@ from django.db.models import Prefetch
 
 from courses.models import Course
 from quiz.models import Category, Domain, Exam, ExamTrack, LearningShortlist
-from subscriptions.models import SubscriptionPlan
+from subscriptions.models.plan import SubscriptionPlan
 from subscriptions.services import AccessService
 
 
@@ -123,11 +123,11 @@ def _has_access(user, resource_type, resource):
     return AccessService.has_access(student=user, resource_type=resource_type, resource=resource)
 
 
-def _has_active_plans(resource):
+def _active_plans(resource):
     prefetched = getattr(resource, "_prefetched_objects_cache", {}).get("subscription_plans")
     if prefetched is not None:
-        return bool(prefetched)
-    return resource.subscription_plans.filter(is_active=True).exists()
+        return list(prefetched)
+    return list(resource.subscription_plans.filter(is_active=True))
 
 
 def _resource_item(resource_type, resource):
@@ -139,11 +139,16 @@ def _resource_item(resource_type, resource):
         "is_shortlisted": False,
         "access_label": "Available",
         "pricing_label": "Free",
+        "price_label": "Free",
     }
 
     if resource_type == "course":
-        item["pricing_label"] = "Premium" if _has_active_plans(resource) else "Free"
+        plans = _active_plans(resource)
+        item["pricing_label"] = "Premium" if plans else "Free"
         item["description_label"] = "Structured learning course"
+        if plans:
+            plan = min(plans, key=lambda value: value.price)
+            item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
 
     elif resource_type == "exam":
         item["duration_minutes"] = (resource.duration_seconds or 0) // 60
@@ -156,21 +161,17 @@ def _resource_item(resource_type, resource):
         )
         if not resource.is_free and resource.price is not None:
             item["price_label"] = f"{resource.currency} {resource.price:,.2f}"
-        else:
-            item["price_label"] = "Free"
 
     elif resource_type == "track":
         published_exams = [
             exam for exam in resource.exams.all()
             if exam.is_published and exam.organization_id is None
         ]
-        item["domain_slug"] = (
-            _domain_for_track(resource).slug
-            if _domain_for_track(resource) else ""
-        )
+        domain = _domain_for_track(resource)
+        item["domain_slug"] = domain.slug if domain else ""
         item["exam_count"] = len(published_exams)
         item["question_count"] = sum(exam.question_count for exam in published_exams)
-        is_free = not _has_active_plans(resource) and resource.pricing_type == resource.PRICING_FREE
+        is_free = not _active_plans(resource) and resource.pricing_type == resource.PRICING_FREE
         item["pricing_label"] = "Free" if is_free else "Premium"
         item["description_label"] = "Structured certification preparation"
         if is_free:
@@ -179,6 +180,9 @@ def _resource_item(resource_type, resource):
             item["price_label"] = f"{resource.currency} {resource.lifetime_price:,.2f}"
         elif resource.monthly_price is not None:
             item["price_label"] = f"{resource.currency} {resource.monthly_price:,.2f} / month"
+        elif _active_plans(resource):
+            plan = min(_active_plans(resource), key=lambda value: value.price)
+            item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
         else:
             item["price_label"] = "Premium"
         item["metrics_label"] = (
