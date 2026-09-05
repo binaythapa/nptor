@@ -40,7 +40,7 @@
     <p class="menu-label">My Content</p>
     <ul class="menu-list">
       <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
+        <a href="{% if not is_from_course %}{% url 'quiz:learning_hub' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
           <span class="nav-icon"><i class="fa fa-book-open" aria-hidden="true"></i></span><span class="nav-label">My Learning</span><span class="nav-badge link">My Hub</span>
         </a>
       </li>
@@ -51,7 +51,7 @@
     <ul class="menu-list">
       <li>
         <a href="{% if not is_from_course %}{% url 'quiz:exam_list' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-compass" aria-hidden="true"></i></span><span class="nav-label">Explore Exams</span><span class="nav-badge link">Browse</span>
+          <span class="nav-icon"><i class="fa fa-graduation-cap" aria-hidden="true"></i></span><span class="nav-label">Certifications</span><span class="nav-badge link">Prepare</span>
         </a>
       </li>
       <li>
