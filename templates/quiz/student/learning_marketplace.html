@@ -32,6 +32,7 @@
       <form class="domain-search" method="get" role="search">
         <label class="sr-only" for="domain-search-input">Search domains</label>
         <input id="domain-search-input" name="domain_q" value="{{ domain_query }}" placeholder="Search domains..." autocomplete="off">
+        <input type="hidden" name="domain_sort" value="{{ domain_sort }}">
         <input type="hidden" name="q" value="{{ query }}">
         <input type="hidden" name="type" value="{{ resource_type }}">
         <input type="hidden" name="level" value="{{ level }}">
