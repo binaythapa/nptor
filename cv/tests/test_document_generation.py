@@ -1,11 +1,7 @@
-from io import BytesIO
-
-from django.core.files.base import ContentFile
-from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 
-from cv.models import CV, CVTemplate
-from cv.models_version import CVVersion
+from cv.models import CareerProfile, CV, CVTemplate
 from cv.services.cv_builder import create_cv_version
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
@@ -20,16 +16,13 @@ class DocumentGenerationTests(TestCase):
         self.template = CVTemplate.objects.create(
             slug="ats-classic", name="ATS Classic", config={"font_size": 11}
         )
+        self.profile = CareerProfile.objects.create(user=self.user)
         self.cv = CV.objects.create(
             owner=self.user,
-            profile=self.user.career_profile if hasattr(self.user, "career_profile") else None,
+            profile=self.profile,
             template=self.template,
             title="Software Engineer CV",
         )
-        if self.cv.profile_id is None:
-            from cv.models import CareerProfile
-            self.cv.profile = CareerProfile.objects.create(user=self.user)
-            self.cv.save(update_fields=["profile"])
         self.version = create_cv_version(self.cv)
 
     def test_pdf_generation_returns_pdf_artifact(self):
