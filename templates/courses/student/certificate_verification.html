@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f172a">
+    <title>Certificate Verification · NPTOR</title>
+    <link rel="stylesheet" href="{% static 'css/pages/certificate-verification.css' %}">
+</head>
+<body class="certificate-verification-page">
+    <main class="certificate-shell" aria-labelledby="verification-title">
+        <header class="certificate-hero">
+            <a class="certificate-brand" href="/" aria-label="NPTOR home">
+                <img src="{% static 'images/logo.png' %}" alt="NPTOR">
+            </a>
+            <span class="verified-seal" aria-hidden="true">✓</span>
+            <span class="certificate-status">Verified Certificate</span>
+            <p class="certificate-issued-by">Officially issued by NPTOR</p>
+            <h1 id="verification-title">Certificate Verification</h1>
+            <p class="certificate-subtitle">This certificate has been verified through the NPTOR certificate verification system.</p>
+        </header>
+
+        <section class="certificate-details" aria-label="Certificate details">
+            <div class="certificate-detail-row">
+                <span>Student</span>
+                <strong>{{ certificate.user.get_full_name|default:certificate.user.username }}</strong>
+            </div>
+            <div class="certificate-detail-row">
+                <span>Course</span>
+                <strong>{{ certificate.course.title }}</strong>
+            </div>
+            <div class="certificate-detail-row">
+                <span>Certificate ID</span>
+                <strong class="certificate-id">{{ certificate.certificate_id }}</strong>
+            </div>
+            <div class="certificate-detail-row">
+                <span>Issued on</span>
+                <strong>{{ certificate.issued_at|date:"d F Y" }}</strong>
+            </div>
+        </section>
+
+        <section class="certificate-completion" aria-labelledby="completion-title">
+            <div class="section-heading">
+                <div>
+                    <span>COURSE COMPLETION</span>
+                    <h2 id="completion-title">Completed curriculum</h2>
+                </div>
+                <strong class="completion-count">{{ sections|length }} sections</strong>
+            </div>
+
+            <div class="completion-list">
+                {% for section in sections %}
+                    <div class="completion-row">
+                        <span class="completion-check" aria-hidden="true">✓</span>
+                        <span>Section {{ forloop.counter }}: {{ section.title }}</span>
+                    </div>
+                {% empty %}
+                    <div class="completion-empty">Course completion details are available for this verified certificate.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="verification-note" role="status">
+            <span aria-hidden="true">✓</span>
+            <span>This certificate is authentic and was issued by NPTOR for successful course completion.</span>
+        </div>
+
+        <section class="certificate-actions" aria-label="Certificate actions">
+            <a href="{% url 'courses:certificate_download' certificate.certificate_id %}" class="action-button action-primary">
+                <span aria-hidden="true">▣</span> Download Certificate
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}" class="action-button action-secondary" target="_blank" rel="noopener noreferrer">
+                <span aria-hidden="true">in</span> Share on LinkedIn
+            </a>
+            <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" class="action-button action-whatsapp" target="_blank" rel="noopener noreferrer">
+                <span aria-hidden="true">●</span> Share on WhatsApp
+            </a>
+        </section>
+
+        <footer class="certificate-footer">
+            <span>Certificate ID: {{ certificate.certificate_id }}</span>
+            <span>NPTOR · Certificate Verification</span>
+        </footer>
+    </main>
+</body>
+</html>
