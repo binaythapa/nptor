@@ -41,6 +41,10 @@ class CertificateVerificationTemplateContractTests(SimpleTestCase):
             reverse("courses:certificate_verify", args=["CERT-TEST"]),
             "/courses/certificate/CERT-TEST/",
         )
+        self.assertEqual(
+            reverse("courses:certificate_download", args=["CERT-TEST"]),
+            "/courses/certificate/CERT-TEST/download/",
+        )
 
     def test_verification_has_status_metadata_and_actions(self):
         for hook in (
@@ -57,3 +61,12 @@ class CertificateVerificationTemplateContractTests(SimpleTestCase):
             "certificate_id",
         ):
             self.assertIn(hook, self.template)
+
+    def test_verification_view_is_public_and_certificate_scoped(self):
+        source = (
+            Path(__file__).resolve().parent / "views" / "certificate.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("def certificate_verify(request, certificate_id):", source)
+        self.assertIn("get_object_or_404(", source)
+        self.assertIn("certificate_id=certificate_id", source)
+        self.assertIn("def certificate_download(request, certificate_id):", source)
