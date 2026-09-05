@@ -10,7 +10,7 @@ from django.utils import timezone
 from courses.models import Course, LessonProgress
 from courses.models.subscription import CourseSubscription
 from organizations.models.access import ResourceAccess
-from quiz.models import Exam, ExamTrack, LearningShortlist, UserExam
+from quiz.models import Exam, ExamTrack, LearningShortlist, TrackExam, UserExam
 from quiz.services.learning_catalog import _public_courses, _public_exams, _public_tracks
 
 
@@ -133,13 +133,13 @@ def student_dashboard(request):
     tracks = ExamTrack.objects.filter(id__in=list(track_access), is_active=True).order_by("title")
     track_exams = defaultdict(list)
     if tracks:
-        for exam in (
-            Exam.objects
-            .filter(track_id__in=list(track_access), is_published=True)
-            .select_related("track")
-            .order_by("track_id", "level", "id")
+        for membership in (
+            TrackExam.objects
+            .filter(track_id__in=list(track_access), exam__is_published=True)
+            .select_related("track", "exam")
+            .order_by("track_id", "exam__level", "exam_id")
         ):
-            track_exams[exam.track_id].append(exam)
+            track_exams[membership.track_id].append(membership.exam)
 
     attempts_by_exam = defaultdict(list)
     for attempt in submitted_attempts:
@@ -159,7 +159,7 @@ def student_dashboard(request):
             "last_activity": max((attempt.submitted_at for attempt in track_attempts if attempt.submitted_at), default=track.created_at),
         })
 
-    accessed_exams = Exam.objects.filter(id__in=list(exam_access), is_published=True).select_related("track").order_by("title")
+    accessed_exams = Exam.objects.filter(id__in=list(exam_access), is_published=True).select_related("organization", "primary_category").order_by("title")
     exams_data = []
     for exam in accessed_exams:
         attempts = attempts_by_exam.get(exam.id, [])
