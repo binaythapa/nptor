@@ -92,7 +92,7 @@ class TrackLockingTests(TestCase):
         self.assertFalse(progress["items"][1]["is_unlocked"])
         self.assertEqual(
             progress["items"][1]["lock_reason"],
-            "Pass the previous exam to unlock this exam.",
+            "Complete the previous exam with a passing score.",
         )
 
         allowed, reason = can_access_exam(self.user, self.second)
