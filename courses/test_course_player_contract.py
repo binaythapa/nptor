@@ -56,3 +56,15 @@ class CoursePlayerTemplateContractTests(SimpleTestCase):
             'class="certificate-card"',
         ):
             self.assertIn(hook, self.template)
+
+    def test_final_polish_hooks_keep_compact_assessment_and_navigation_actions(self):
+        for hook in (
+            'class="lesson-surface lesson-surface-assessment"',
+            'class="assessment-actions"',
+            'class="certificate-card-main"',
+            'class="certificate-actions"',
+            'class="certificate-verify-btn"',
+            'id="lessonNextLabel"',
+        ):
+            self.assertIn(hook, self.template)
+        self.assertIn("Retake Assessment", self.template)
