@@ -15,16 +15,6 @@ from cv.models_version import CVVersion
 from cv.services.profile import account_contact_defaults, get_or_create_career_profile
 
 
-SECTION_QUERYSETS = {
-    "experiences": ("careerexperience_records", CareerExperience),
-    "educations": ("careereducation_records", CareerEducation),
-    "projects": ("careerproject_records", CareerProject),
-    "skills": ("careerskill_records", CareerSkill),
-    "achievements": ("careerachievement_records", CareerAchievement),
-    "certifications": ("careercertification_records", CareerCertification),
-}
-
-
 def _json_value(value):
     return value.isoformat() if hasattr(value, "isoformat") and value is not None else value
 
