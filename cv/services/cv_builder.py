@@ -15,6 +15,16 @@ from cv.models_version import CVVersion
 from cv.services.profile import account_contact_defaults, get_or_create_career_profile
 
 
+SECTION_QUERYSETS = {
+    "experiences": ("careerexperience_records", CareerExperience),
+    "educations": ("careereducation_records", CareerEducation),
+    "projects": ("careerproject_records", CareerProject),
+    "skills": ("careerskill_records", CareerSkill),
+    "achievements": ("careerachievement_records", CareerAchievement),
+    "certifications": ("careercertification_records", CareerCertification),
+}
+
+
 def _json_value(value):
     return value.isoformat() if hasattr(value, "isoformat") and value is not None else value
 
@@ -24,12 +34,11 @@ def _serialize(instance, fields):
 
 
 def _selected_records(cv, section, queryset):
-    selected = cv.selected_sections.get(section)
-    records = list(queryset)
-    if not selected:
-        return records
+    if section not in (cv.selected_sections or {}):
+        return list(queryset)
+    selected = cv.selected_sections.get(section) or []
     ids = {int(value) for value in selected}
-    return [item for item in records if item.id in ids]
+    return [item for item in queryset if item.id in ids]
 
 
 def create_cv(user, title, template):
