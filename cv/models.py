@@ -102,9 +102,9 @@ class CareerCertification(CareerProfileChild):
 
 
 # Re-export split CV domain models so existing cv.models imports remain compatible.
-# Keep these imports below CareerProfile because the split modules reference it.
 from cv.models_cv import CV  # noqa: E402,F401
 from cv.models_template import CVTemplate  # noqa: E402,F401
 from cv.models_version import CVVersion  # noqa: E402,F401
 from cv.models_document import DocumentArtifact  # noqa: E402,F401
 from cv.models_import import CVImport, ImportedField  # noqa: E402,F401
+from cv.models_ai import AIConversation, AIMessage, AIExtraction, ATSAnalysis  # noqa: E402,F401
