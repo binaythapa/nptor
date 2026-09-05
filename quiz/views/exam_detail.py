@@ -61,7 +61,7 @@ def exam_detail(request, exam_id):
     elif latest_attempt and latest_attempt.passed:
         action = "review"
         action_label = "Review Result"
-    elif latest_attempt:
+    elif latest_attempt and has_access:
         action = "retry"
         action_label = "Retry Exam"
     elif has_access:
