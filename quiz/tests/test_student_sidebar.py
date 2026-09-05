@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
 from django.template.loader import render_to_string
-from django.test import RequestFactory
+from django.test import RequestFactory, TestCase
 
 
 class StudentSidebarTests(TestCase):
@@ -24,5 +23,5 @@ class StudentSidebarTests(TestCase):
 
         self.assertIn("My Learning", html)
         self.assertIn("Government Exams", html)
-        self.assertIn("MY CONTENT", html)
+        self.assertIn("My Content", html)
         self.assertNotIn('<span class="nav-label">Learning</span>', html)
