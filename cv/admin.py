@@ -1,18 +1,9 @@
 from django.contrib import admin
 
 from cv.models import (
-    CareerAchievement,
-    CareerCertification,
-    CareerEducation,
-    CareerExperience,
-    CareerProfile,
-    CareerProject,
-    CareerSkill,
-    CV,
-    CVImport,
-    CVTemplate,
-    CVVersion,
-    ImportedField,
+    CareerAchievement, CareerCertification, CareerEducation, CareerExperience,
+    CareerProfile, CareerProject, CareerSkill, CV, CVImport, CVTemplate, CVVersion,
+    DocumentArtifact, ImportedField,
 )
 
 
@@ -93,3 +84,11 @@ class ImportedFieldAdmin(admin.ModelAdmin):
     list_display = ("field_name", "section", "cv_import", "confirmed", "confirmed_by")
     list_filter = ("section", "confirmed")
     search_fields = ("field_name", "value", "cv_import__owner__username")
+
+
+@admin.register(DocumentArtifact)
+class DocumentArtifactAdmin(admin.ModelAdmin):
+    list_display = ("cv_version", "artifact_type", "template_slug", "created_at")
+    list_filter = ("artifact_type", "template_slug")
+    search_fields = ("cv_version__cv__title", "template_slug")
+    readonly_fields = ("cv_version", "artifact_type", "file", "mime_type", "template_slug", "template_config", "created_at")
