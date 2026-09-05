@@ -2,8 +2,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from cv.forms import CareerProfileForm, CVForm
+from cv.forms_import import CVImportForm
 from cv.models import CV, CVTemplate
+from cv.models_import import ImportedField
 from cv.services.cv_builder import build_cv_payload, create_cv, duplicate_cv
+from cv.services.importers.service import confirm_import_field, import_cv_source
 from cv.services.profile import account_contact_defaults, get_or_create_career_profile
 
 
@@ -12,8 +15,7 @@ def dashboard(request):
     profile = get_or_create_career_profile(request.user)
     cvs = CV.objects.filter(owner=request.user).select_related("template")
     return render(request, "cv/dashboard.html", {
-        "profile": profile,
-        "cvs": cvs,
+        "profile": profile, "cvs": cvs,
         "contact": account_contact_defaults(request.user),
     })
 
@@ -29,9 +31,7 @@ def profile(request):
     else:
         form = CareerProfileForm(instance=career_profile)
     return render(request, "cv/profile.html", {
-        "form": form,
-        "contact": account_contact_defaults(request.user),
-        "profile": career_profile,
+        "form": form, "contact": account_contact_defaults(request.user), "profile": career_profile,
     })
 
 
@@ -91,3 +91,33 @@ def cv_versions(request, pk):
     cv = get_object_or_404(CV, pk=pk, owner=request.user)
     versions = cv.versions.order_by("-version_number")
     return render(request, "cv/versions.html", {"cv": cv, "versions": versions})
+
+
+@login_required
+def cv_import(request):
+    if request.method == "POST":
+        form = CVImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                imported = import_cv_source(request.user, form.cleaned_data["source_file"])
+            except ValueError as exc:
+                form.add_error("source_file", str(exc))
+            else:
+                return redirect("cv:cv_import_review", pk=imported.pk)
+    else:
+        form = CVImportForm()
+    return render(request, "cv/import.html", {"form": form})
+
+
+@login_required
+def cv_import_review(request, pk):
+    imported = get_object_or_404(
+        request.user.cv_imports.prefetch_related("fields"), pk=pk
+    )
+    if request.method == "POST":
+        for field in imported.fields.all():
+            value = request.POST.get(f"field_{field.pk}")
+            if value is not None:
+                confirm_import_field(field.pk, request.user, value)
+        return redirect("cv:cv_import_review", pk=pk)
+    return render(request, "cv/import_review.html", {"imported": imported})
