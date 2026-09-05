@@ -3,6 +3,7 @@ from io import BytesIO
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
+from cv.models_import import ImportedField
 from cv.services.importers.docx import extract_text_from_docx
 from cv.services.importers.parser import parse_career_facts
 from cv.services.importers.pdf import extract_text_from_pdf
@@ -54,8 +55,7 @@ class CVImportTests(TestCase):
             import_cv_source(self.user, uploaded)
 
     def test_import_stores_unconfirmed_fields_and_owner(self):
-        uploaded = self._pdf_upload("John Doe", "john@example.com")
-        imported = import_cv_source(self.user, uploaded)
+        imported = import_cv_source(self.user, self._pdf_upload("John Doe", "john@example.com"))
 
         self.assertEqual(imported.owner_id, self.user.id)
         self.assertEqual(imported.status, imported.STATUS_REVIEW)
@@ -78,7 +78,7 @@ class CVImportTests(TestCase):
         field = imported.fields.get(field_name="full_name")
         other_user = get_user_model().objects.create_user(username="other-cv-user", password="password")
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(ImportedField.DoesNotExist):
             confirm_import_field(field.pk, other_user, "Changed")
 
         field.refresh_from_db()
