@@ -17,30 +17,17 @@ def ads_txt(request):
 
 
 urlpatterns = [
-    path(
-            "payments/",
-            include("payments.urls"),
-        ),
-
-    path(
-            "subscriptions/",
-            include("subscriptions.urls"),
-        ),
-
-   
+    path("payments/", include("payments.urls")),
+    path("subscriptions/", include("subscriptions.urls")),
     path("ads.txt", ads_txt),
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health-check"),
     path("ckeditor/", include("ckeditor_uploader.urls")),
-
-    # ==============================
-    # APPS
-    # ==============================
     path("accounts/", include("accounts.urls")),
     path("quiz/", include("quiz.urls")),
     path("courses/", include("courses.urls")),
-    path("", include("pages.urls")),   # 👈 homepage lives here
-    #path("org/", include("organizations.urls")), 
+    path("cv/", include("cv.urls")),
+    path("", include("pages.urls")),
     path("org/<slug:slug>/", include("organizations.urls")),
     path("api/", include("quiz.api_urls")),
 ]
