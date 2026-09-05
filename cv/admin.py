@@ -1,10 +1,10 @@
 from django.contrib import admin
 
 from cv.models import (
-    ATSAnalysis, AIConversation, AIExtraction, AIMessage,
-    CareerAchievement, CareerCertification, CareerEducation, CareerExperience,
-    CareerProfile, CareerProject, CareerSkill, CV, CVImport, CVTemplate, CVVersion,
-    DocumentArtifact, ImportedField,
+    ATSAnalysis, AIConversation, AIExtraction, AIMessage, CareerAchievement,
+    CareerCertification, CareerEducation, CareerExperience, CareerProfile,
+    CareerProject, CareerSkill, CV, CVImport, CVTemplate, CVVersion,
+    DeliveryRecord, DocumentArtifact, ImportedField,
 )
 
 
@@ -124,3 +124,11 @@ class ATSAnalysisAdmin(admin.ModelAdmin):
     list_filter = ("provider", "model")
     search_fields = ("owner__username", "owner__email", "cv_version__cv__title")
     readonly_fields = ("owner", "cv_version", "conversation", "score", "result", "provider", "model", "created_at")
+
+
+@admin.register(DeliveryRecord)
+class DeliveryRecordAdmin(admin.ModelAdmin):
+    list_display = ("owner", "channel", "document_format", "status", "provider", "created_at", "sent_at")
+    list_filter = ("channel", "status", "document_format", "provider")
+    search_fields = ("owner__username", "owner__email", "recipient")
+    readonly_fields = ("owner", "artifact", "channel", "document_format", "recipient", "status", "error_message", "provider", "metadata", "created_at", "sent_at")
