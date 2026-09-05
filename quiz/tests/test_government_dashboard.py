@@ -48,9 +48,9 @@ class GovernmentDashboardViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Section Officer Recruitment")
-        self.assertContains(response, "Government Exam Dashboard")
-        self.assertContains(response, "Courses")
-        self.assertContains(response, "Mock Exams")
+        self.assertContains(response, "GOVERNMENT EXAM DASHBOARD")
+        self.assertContains(response, "COURSES")
+        self.assertContains(response, "MOCK EXAMS")
 
     def test_dashboard_rejects_inactive_program(self):
         self.program.is_active = False
