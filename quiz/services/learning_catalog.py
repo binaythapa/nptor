@@ -182,17 +182,6 @@ def _add_user_state(user, items):
 
 
 def _build_domain_explorer(domains, domain_query="", domain_sort="az", domain_page=1):
-    needle = (domain_query or "").strip().lower()
-    if needle:
-        domains = [item for item in domains if needle in item["domain"].name.lower()]
-
-    if domain_sort not in VALID_DOMAIN_SORTS:
-        domain_sort = "az"
-    if domain_sort == "za":
-        domains = sorted(domains, key=lambda item: item["domain"].name.lower(), reverse=True)
-    else:
-        domains = sorted(domains, key=lambda item: item["domain"].name.lower())
-
     popular_domains = sorted(
         domains,
         key=lambda item: (
@@ -200,6 +189,18 @@ def _build_domain_explorer(domains, domain_query="", domain_sort="az", domain_pa
             item["domain"].name.lower(),
         ),
     )[:POPULAR_DOMAIN_COUNT]
+
+    needle = (domain_query or "").strip().lower()
+    if needle:
+        domains = [item for item in domains if needle in item["domain"].name.lower()]
+
+    if domain_sort not in VALID_DOMAIN_SORTS:
+        domain_sort = "az"
+    domains = sorted(
+        domains,
+        key=lambda item: item["domain"].name.lower(),
+        reverse=domain_sort == "za",
+    )
 
     paginator = Paginator(domains, DOMAIN_PER_PAGE)
     try:
