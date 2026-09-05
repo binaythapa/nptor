@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from quiz.models import Exam, UserExam
 
@@ -23,7 +24,7 @@ class LearningActivityClearHistoryTests(TestCase):
             user=self.user,
             exam=self.exam,
             status=UserExam.STATUS_SUBMITTED,
-            submitted_at="2026-09-05T10:00:00Z",
+            submitted_at=timezone.now(),
             question_order=[],
             score=80,
             passed=True,
@@ -38,6 +39,23 @@ class LearningActivityClearHistoryTests(TestCase):
 
         self.assertRedirects(response, reverse("quiz:student_dashboard"))
         self.assertFalse(UserExam.objects.filter(pk=self.attempt.pk).exists())
+
+    def test_clear_learning_history_preserves_unfinished_exam(self):
+        active_attempt = UserExam.objects.create(
+            user=self.user,
+            exam=self.exam,
+            status=UserExam.STATUS_STARTED,
+            question_order=[],
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("quiz:clear_learning_history")
+        )
+
+        self.assertRedirects(response, reverse("quiz:student_dashboard"))
+        self.assertFalse(UserExam.objects.filter(pk=self.attempt.pk).exists())
+        self.assertTrue(UserExam.objects.filter(pk=active_attempt.pk).exists())
 
     def test_clear_learning_history_requires_post(self):
         self.client.force_login(self.user)
