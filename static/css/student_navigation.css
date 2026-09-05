@@ -1,0 +1,36 @@
+/* =========================================================
+   STUDENT NAVIGATION POLISH
+   Keeps labels readable and badges aligned on desktop.
+   ========================================================= */
+
+@media (min-width: 981px) {
+    .container.main-area {
+        grid-template-columns: 300px minmax(0, 1fr);
+    }
+
+    .site-sidebar {
+        width: 300px;
+    }
+
+    .student-navigation .nav-label {
+        overflow: visible;
+        text-overflow: clip;
+    }
+}
+
+.student-navigation .menu-list a {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--nptor-space-2);
+}
+
+.student-navigation .nav-icon,
+.student-navigation .nav-label,
+.student-navigation .nav-badge {
+    min-width: 0;
+}
+
+.student-navigation .nav-badge {
+    white-space: nowrap;
+}
