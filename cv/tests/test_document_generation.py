@@ -22,6 +22,10 @@ class DocumentGenerationTests(TestCase):
                 "heading_size": 13,
                 "margin": 54,
                 "accent_color": "#1f2937",
+                "layout": "single_column",
+                "header_style": "left",
+                "section_style": "uppercase_rule",
+                "density": "comfortable",
             },
         )
         self.profile = CareerProfile.objects.create(
@@ -67,6 +71,10 @@ class DocumentGenerationTests(TestCase):
         self.assertEqual(config["heading_size"], 13)
         self.assertEqual(config["margin"], 54)
         self.assertEqual(config["accent_color"], "#1f2937")
+        self.assertEqual(config["layout"], "single_column")
+        self.assertEqual(config["header_style"], "left")
+        self.assertEqual(config["section_style"], "uppercase_rule")
+        self.assertEqual(config["density"], "comfortable")
 
     def test_render_config_rejects_unsafe_style_values(self):
         template = {
@@ -76,6 +84,10 @@ class DocumentGenerationTests(TestCase):
                 "heading_size": 1,
                 "margin": 500,
                 "accent_color": "not-a-color",
+                "layout": "javascript",
+                "header_style": "script",
+                "section_style": "unknown",
+                "density": "huge",
             }
         }
         config = get_render_config(template)
@@ -84,3 +96,23 @@ class DocumentGenerationTests(TestCase):
         self.assertEqual(config["heading_size"], 12)
         self.assertEqual(config["margin"], 48)
         self.assertEqual(config["accent_color"], "#111827")
+        self.assertEqual(config["layout"], "single_column")
+        self.assertEqual(config["header_style"], "left")
+        self.assertEqual(config["section_style"], "uppercase_rule")
+        self.assertEqual(config["density"], "comfortable")
+
+    def test_template_styles_are_normalized_for_renderers(self):
+        config = get_render_config(
+            {
+                "config": {
+                    "layout": "sidebar",
+                    "header_style": "centered",
+                    "section_style": "minimal",
+                    "density": "compact",
+                }
+            }
+        )
+        self.assertEqual(config["layout"], "sidebar")
+        self.assertEqual(config["header_style"], "centered")
+        self.assertEqual(config["section_style"], "minimal")
+        self.assertEqual(config["density"], "compact")
