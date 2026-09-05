@@ -1,22 +1,23 @@
-from quiz.models import UserExam
+from quiz.models import TrackExam, UserExam
 
 
 def _published_track_exams(track):
     return list(
-        track.exams.filter(
-            is_published=True,
-            organization__isnull=True,
+        TrackExam.objects.filter(
+            track=track,
+            exam__is_published=True,
+            exam__organization__isnull=True,
         )
-        .prefetch_related("prerequisite_exams")
-        .order_by("created_at", "id")
+        .select_related("exam")
+        .prefetch_related("prerequisites__exam")
+        .order_by("position", "id")
     )
 
 
 def _passed_exam_ids(user, exams):
-    exam_ids = [exam.id for exam in exams]
+    exam_ids = [item.exam_id for item in exams]
     if not exam_ids:
         return set()
-
     return set(
         UserExam.objects.filter(
             user=user,
@@ -29,81 +30,43 @@ def _passed_exam_ids(user, exams):
     )
 
 
-def _passed_prerequisite_ids(user, exam):
-    prerequisite_ids = list(
-        exam.prerequisite_exams.values_list("id", flat=True)
-    )
-    if not prerequisite_ids:
-        return set()
+def track_exam_lock(user, exam, track=None, ordered_exams=None, passed_exam_ids=None):
+    """Return (locked, reason) using only explicit track prerequisites."""
+    track_exams = ordered_exams
+    if track_exams is None:
+        track = track or next(iter(exam.track_exams.all()), None).track if exam.track_exams.exists() else None
+        if track is None:
+            return False, None
+        track_exams = _published_track_exams(track)
 
-    return _passed_exam_ids(
-        user,
-        list(exam.prerequisite_exams.all()),
-    )
-
-
-def track_exam_lock(user, exam, ordered_exams=None, passed_exam_ids=None):
-    """Return (locked, reason) for an exam's track progression policy."""
-    if not exam.track_id:
+    passed_ids = passed_exam_ids if passed_exam_ids is not None else _passed_exam_ids(user, track_exams)
+    current = next((item for item in track_exams if item.exam_id == exam.id), None)
+    if current is None:
         return False, None
 
-    exams = ordered_exams or _published_track_exams(exam.track)
-    passed_ids = (
-        passed_exam_ids
-        if passed_exam_ids is not None
-        else _passed_exam_ids(user, exams)
-    )
-
-    try:
-        index = next(
-            item_index
-            for item_index, item in enumerate(exams)
-            if item.id == exam.id
-        )
-    except StopIteration:
-        return False, None
-
-    if index > 0:
-        previous = exams[index - 1]
-        if previous.id not in passed_ids:
-            return True, "Previous track exam required"
-
-    prerequisite_ids = set(
-        exam.prerequisite_exams.values_list("id", flat=True)
-    )
-    if prerequisite_ids:
-        passed_prerequisites = _passed_prerequisite_ids(user, exam)
-        if not prerequisite_ids.issubset(passed_prerequisites):
-            return True, "Prerequisite exam required"
-
+    prerequisite_ids = set(current.prerequisites.values_list("exam_id", flat=True))
+    if prerequisite_ids and not prerequisite_ids.issubset(passed_ids):
+        return True, "Prerequisite exam required"
     return False, None
 
 
 def build_track_progress(user, track):
     """Build presentation-ready progression state for a student track."""
-    exams = _published_track_exams(track)
-    passed_ids = _passed_exam_ids(user, exams)
+    track_exams = _published_track_exams(track)
+    passed_ids = _passed_exam_ids(user, track_exams)
     items = []
 
-    for index, exam in enumerate(exams):
+    for index, track_exam in enumerate(track_exams):
+        exam = track_exam.exam
+        prerequisite_ids = set(track_exam.prerequisites.values_list("exam_id", flat=True))
         is_completed = exam.id in passed_ids
-        is_unlocked = index == 0 or exams[index - 1].id in passed_ids
-        lock_reason = None
-
-        prerequisite_ids = set(
-            exam.prerequisite_exams.values_list("id", flat=True)
-        )
-        if is_unlocked and prerequisite_ids:
-            passed_prerequisites = _passed_prerequisite_ids(user, exam)
-            if not prerequisite_ids.issubset(passed_prerequisites):
-                is_unlocked = False
-                lock_reason = "Complete the prerequisite exam(s) first."
-        elif not is_unlocked:
-            lock_reason = "Complete the previous exam with a passing score."
+        is_unlocked = prerequisite_ids.issubset(passed_ids)
+        lock_reason = None if is_unlocked else "Complete the prerequisite exam(s) first."
 
         items.append(
             {
                 "exam": exam,
+                "track_exam": track_exam,
                 "index": index + 1,
                 "is_completed": is_completed,
                 "is_unlocked": is_unlocked,
@@ -114,7 +77,7 @@ def build_track_progress(user, track):
             }
         )
 
-    total_count = len(exams)
+    total_count = len(track_exams)
     completed_count = len(passed_ids)
     percent = int((completed_count / total_count) * 100) if total_count else 0
 
