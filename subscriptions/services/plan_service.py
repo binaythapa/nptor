@@ -29,19 +29,3 @@ def get_default_plan():
         .order_by("price", "id")
         .first()
     )
-
-
-def get_plan_for_exam(exam, plan_id=None):
-    if plan_id:
-        return get_object_or_404(
-            SubscriptionPlan,
-            id=plan_id,
-            is_active=True,
-        )
-
-    if exam.track_id:
-        plan = get_plan_for_track(exam.track)
-        if plan:
-            return plan
-
-    return get_default_plan()
