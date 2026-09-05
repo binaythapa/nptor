@@ -26,6 +26,8 @@ class CVForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["template"].queryset = CVTemplate.objects.filter(is_active=True)
         self.fields["template"].required = False
+        self.fields["status"].required = False
         if not self.instance.pk:
             self.fields["template"].initial = CVTemplate.objects.filter(is_active=True).first()
+            self.fields["status"].initial = CV.STATUS_DRAFT
         self.owner = owner
