@@ -15,6 +15,7 @@ from courses.views.student_library import (
     completed_courses,
 )
 from courses.views.student_enrollment import enroll_free_course
+from courses.views.certificate import certificate_verify
 
 from courses.views.instructor_views import update_order
 from courses.permissions import (
@@ -43,6 +44,13 @@ app_name = "courses"
 
 urlpatterns = [
     path("", student_views.course_list, name="course_list"),
+
+    # Public certificate verification
+    path(
+        "certificate/<str:certificate_id>/",
+        certificate_verify,
+        name="certificate_verify",
+    ),
 
     # Student learning library
     path("my-courses/", my_courses, name="my_courses"),
