@@ -6,19 +6,12 @@ from cv.models import CareerExperience
 from cv.models_cv import CV
 from cv.models_template import CVTemplate
 from cv.models_version import CVVersion
-from cv.services.cv_builder import (
-    build_cv_payload,
-    create_cv,
-    create_cv_version,
-    duplicate_cv,
-)
+from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
 
 
 class CVBuilderTests(TestCase):
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="cv-builder-user", email="cv-builder@example.com"
-        )
+        self.user = get_user_model().objects.create_user(username="cv-builder-user", email="cv-builder@example.com")
         self.template = CVTemplate.objects.create(slug="test-template", name="Test Template")
 
     def test_create_cv_requires_no_course_or_exam(self):
@@ -28,8 +21,7 @@ class CVBuilderTests(TestCase):
 
     def test_builder_payload_uses_selected_profile_records(self):
         cv = create_cv(self.user, "Data Engineer CV", self.template)
-        profile = cv.profile
-        experience = CareerExperience.objects.create(profile=profile, job_title="Data Engineer", employer="Example Ltd")
+        experience = CareerExperience.objects.create(profile=cv.profile, job_title="Data Engineer", employer="Example Ltd")
         cv.selected_sections = {"experiences": [experience.id]}
         cv.save(update_fields=["selected_sections", "updated_at"])
         payload = build_cv_payload(cv)
@@ -95,7 +87,11 @@ class CVBuilderTests(TestCase):
                 "linkedin_url": "https://linkedin.com/in/example",
                 "portfolio_url": "https://example.com",
                 "experiences": [str(experience.pk)],
-                "educations": [], "skills": [], "certifications": [], "projects": [], "achievements": [],
+                "educations": [],
+                "skills": [],
+                "certifications": [],
+                "projects": [],
+                "achievements": [],
             },
         )
         self.assertRedirects(response, reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
