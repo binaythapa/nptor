@@ -19,7 +19,7 @@ from quiz.views.notifications import *
 from quiz.views.dashboards import *
 from quiz.views.student_dashboard import student_dashboard
 from quiz.views.learning_hub import learning_hub
-from quiz.views.student_learning_dashboard import remove_learning_activity
+from quiz.views.learning_activity import remove_learning_activity
 from quiz.views.learning_marketplace import learning_marketplace, learning_domain
 from quiz.views.learning_track import learning_track
 from quiz.views.learning_shortlist import learning_shortlist_toggle
@@ -122,8 +122,8 @@ urlpatterns = [
     path("dashboard/admin/revoke/exam/", admin_revoke_exam, name="admin_revoke_exam"),
     path("dashboard/admin/subscribe/track/", admin_subscribe_track, name="admin_subscribe_track"),
     path("dashboard/admin/revoke/track/", admin_revoke_track, name="admin_revoke_track"),
-    path("dashboard/admin/update-expiry/exam/", admin_update_exam_expiry, name="admin_update_exam_expiry"),
-    path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_track_expiry"),
+    path("dashboard/admin/update-expiry/exam/", admin_update_expiry_exam, name="admin_update_expiry_exam") if False else path("dashboard/admin/update-expiry/exam/", admin_update_exam_expiry, name="admin_update_expiry_exam"),
+    path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_expiry_track"),
     path("dashboard/admin/add-exam-days/", admin_add_exam_days, name="admin_add_exam_days"),
     path("dashboard/admin/add-track-days/", admin_add_track_days, name="admin_add_track_days"),
 
