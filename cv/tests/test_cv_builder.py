@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
 from cv.models import CareerExperience
 from cv.models_cv import CV
@@ -75,3 +76,62 @@ class CVBuilderTests(TestCase):
 
         self.assertEqual(first.version_number, 1)
         self.assertEqual(second.version_number, 2)
+
+    def test_builder_renders_profile_sections_and_actions(self):
+        cv = create_cv(self.user, "Builder CV", self.template)
+        self.user.career_profile.professional_title = "Data Engineer"
+        self.user.career_profile.summary = "Experienced data engineer."
+        self.user.career_profile.save()
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Professional Summary")
+        self.assertContains(response, "Work Experience")
+        self.assertContains(response, "Education")
+        self.assertContains(response, "Skills")
+        self.assertContains(response, "Certifications")
+        self.assertContains(response, "Projects")
+        self.assertContains(response, "Save CV")
+        self.assertContains(response, "Preview")
+
+    def test_builder_saves_selection_and_overrides(self):
+        cv = create_cv(self.user, "Builder CV", self.template)
+        experience = CareerExperience.objects.create(
+            profile=cv.profile,
+            job_title="Data Engineer",
+            employer="Example Ltd",
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("cv:cv_builder", kwargs={"pk": cv.pk}),
+            {
+                "title": "Tailored Data CV",
+                "professional_title": "Senior Data Engineer",
+                "summary": "Cloud data engineering leader.",
+                "linkedin_url": "https://linkedin.com/in/example",
+                "portfolio_url": "https://example.com",
+                "experiences": [str(experience.pk)],
+            },
+        )
+
+        self.assertRedirects(response, reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
+        cv.refresh_from_db()
+        self.assertEqual(cv.title, "Tailored Data CV")
+        self.assertEqual(cv.overrides["professional_title"], "Senior Data Engineer")
+        self.assertEqual(cv.overrides["summary"], "Cloud data engineering leader.")
+        self.assertEqual(cv.selected_sections["experiences"], [experience.pk])
+
+    def test_builder_rejects_another_users_cv(self):
+        other = get_user_model().objects.create_user(
+            username="other-builder",
+            email="other-builder@example.com",
+        )
+        other_cv = create_cv(other, "Other CV", self.template)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": other_cv.pk}))
+
+        self.assertEqual(response.status_code, 404)
