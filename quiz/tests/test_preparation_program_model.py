@@ -1,7 +1,8 @@
+from django.db import IntegrityError
 from django.test import TestCase
 
 from courses.models import Course
-from quiz.models import Category, ContentVertical, Country, Exam, PreparationProgram
+from quiz.models import ContentVertical, Country, Exam, PreparationProgram
 
 
 class PreparationProgramModelTests(TestCase):
@@ -50,7 +51,7 @@ class PreparationProgramModelTests(TestCase):
             slug="mbbs-entrance-test",
         )
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             PreparationProgram.objects.create(
                 content_vertical=self.vertical,
                 name="Duplicate MBBS Preparation",

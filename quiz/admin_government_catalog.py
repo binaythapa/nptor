@@ -8,6 +8,7 @@ from .models import (
     GovernmentExamStage,
     GovernmentExamVersion,
     GovernmentJob,
+    PreparationProgram,
 )
 
 
@@ -49,6 +50,22 @@ class GovernmentExamProgramAdmin(admin.ModelAdmin):
     list_filter = ("country", "government_body", "content_vertical", "is_active")
     search_fields = ("name", "code", "slug")
     filter_horizontal = ("jobs", "courses")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(PreparationProgram)
+class PreparationProgramAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "content_vertical",
+        "country",
+        "code",
+        "is_active",
+        "is_published",
+    )
+    list_filter = ("content_vertical", "country", "is_active", "is_published")
+    search_fields = ("name", "code", "slug", "description")
+    filter_horizontal = ("courses", "exams")
     prepopulated_fields = {"slug": ("name",)}
 
 
