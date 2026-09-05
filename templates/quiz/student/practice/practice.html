@@ -165,8 +165,8 @@
 <script>
 window.PRACTICE_CONFIG = {
     answerUrl: "{% url 'quiz:practice_answer_ajax' %}",
-    nextUrl: "{% url 'quiz:practice_next_ajax' %}",
-    skipUrl: "{% url 'quiz:practice_skip_ajax' %}",
+    nextUrl: "{% url 'quiz:practice_next_ajax' %}{% if request.GET.course and request.GET.lesson %}?course={{ request.GET.course|urlencode }}&amp;lesson={{ request.GET.lesson|urlencode }}{% endif %}",
+    skipUrl: "{% url 'quiz:practice_skip_ajax' %}{% if request.GET.course and request.GET.lesson %}?course={{ request.GET.course|urlencode }}&amp;lesson={{ request.GET.lesson|urlencode }}{% endif %}",
     feedbackUrl: "{% url 'quiz:practice_feedback_ajax' %}"
 };
 </script>
