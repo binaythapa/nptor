@@ -13,9 +13,7 @@ class CVViewTests(TestCase):
         self.other_user = get_user_model().objects.create_user(
             username="cv-other-user", email="other@example.com", password="password"
         )
-        self.template = CVTemplate.objects.create(
-            slug="ats-classic", name="ATS Classic", config={"style": "classic"}
-        )
+        self.template = CVTemplate.objects.create(slug="ats-classic", name="ATS Classic", config={"style": "classic"})
 
     def test_anonymous_user_is_redirected(self):
         response = self.client.get(reverse("cv:dashboard"))
@@ -46,19 +44,20 @@ class CVViewTests(TestCase):
         response = self.client.get(reverse("cv:cv_edit", args=[cv.pk]))
         self.assertEqual(response.status_code, 404)
 
-    def test_dashboard_lists_only_owned_cvs(self):
-        CV.objects.create(
+    def test_edit_owned_cv_redirects_to_builder(self):
+        self.client.force_login(self.user)
+        cv = CV.objects.create(
             owner=self.user,
             profile=CareerProfile.objects.create(user=self.user),
             template=self.template,
             title="My CV",
         )
-        CV.objects.create(
-            owner=self.other_user,
-            profile=CareerProfile.objects.create(user=self.other_user),
-            template=self.template,
-            title="Other CV",
-        )
+        response = self.client.get(reverse("cv:cv_edit", args=[cv.pk]))
+        self.assertRedirects(response, reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
+
+    def test_dashboard_lists_only_owned_cvs(self):
+        CV.objects.create(owner=self.user, profile=CareerProfile.objects.create(user=self.user), template=self.template, title="My CV")
+        CV.objects.create(owner=self.other_user, profile=CareerProfile.objects.create(user=self.other_user), template=self.template, title="Other CV")
         self.client.force_login(self.user)
         response = self.client.get(reverse("cv:dashboard"))
         self.assertContains(response, "My CV")

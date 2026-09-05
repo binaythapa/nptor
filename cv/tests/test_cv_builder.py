@@ -6,24 +6,13 @@ from cv.models import CareerExperience
 from cv.models_cv import CV
 from cv.models_template import CVTemplate
 from cv.models_version import CVVersion
-from cv.services.cv_builder import (
-    build_cv_payload,
-    create_cv,
-    create_cv_version,
-    duplicate_cv,
-)
+from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
 
 
 class CVBuilderTests(TestCase):
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="cv-builder-user",
-            email="cv-builder@example.com",
-        )
-        self.template = CVTemplate.objects.create(
-            slug="test-template",
-            name="Test Template",
-        )
+        self.user = get_user_model().objects.create_user(username="cv-builder-user", email="cv-builder@example.com")
+        self.template = CVTemplate.objects.create(slug="test-template", name="Test Template")
 
     def test_create_cv_requires_no_course_or_exam(self):
         cv = create_cv(self.user, "Software Engineer CV", self.template)
@@ -32,38 +21,23 @@ class CVBuilderTests(TestCase):
 
     def test_builder_payload_uses_selected_profile_records(self):
         cv = create_cv(self.user, "Data Engineer CV", self.template)
-        profile = cv.profile
-        experience = CareerExperience.objects.create(
-            profile=profile,
-            job_title="Data Engineer",
-            employer="Example Ltd",
-        )
+        experience = CareerExperience.objects.create(profile=cv.profile, job_title="Data Engineer", employer="Example Ltd")
         cv.selected_sections = {"experiences": [experience.id]}
         cv.save(update_fields=["selected_sections", "updated_at"])
-
         payload = build_cv_payload(cv)
-
         self.assertEqual(payload["contact"]["email"], self.user.email)
         self.assertEqual(payload["experiences"][0]["job_title"], "Data Engineer")
 
     def test_empty_section_selection_excludes_all_records(self):
         cv = create_cv(self.user, "Data Engineer CV", self.template)
-        CareerExperience.objects.create(
-            profile=cv.profile,
-            job_title="Data Engineer",
-            employer="Example Ltd",
-        )
+        CareerExperience.objects.create(profile=cv.profile, job_title="Data Engineer", employer="Example Ltd")
         cv.selected_sections = {"experiences": []}
         cv.save(update_fields=["selected_sections", "updated_at"])
-
-        payload = build_cv_payload(cv)
-
-        self.assertEqual(payload["experiences"], [])
+        self.assertEqual(build_cv_payload(cv)["experiences"], [])
 
     def test_duplicate_cv_is_independent(self):
         original = create_cv(self.user, "Original", self.template)
         copy = duplicate_cv(original, "Tailored Version")
-
         self.assertNotEqual(original.pk, copy.pk)
         self.assertEqual(copy.owner_id, self.user.id)
         self.assertEqual(copy.title, "Tailored Version")
@@ -74,20 +48,16 @@ class CVBuilderTests(TestCase):
         cv = create_cv(self.user, "Versioned CV", self.template)
         version = create_cv_version(cv)
         original_title = version.snapshot["title"]
-
         cv.title = "Changed Later"
         cv.save(update_fields=["title", "updated_at"])
-
         version.refresh_from_db()
         self.assertEqual(version.snapshot["title"], original_title)
         self.assertIsInstance(version, CVVersion)
 
     def test_versions_increment(self):
         cv = create_cv(self.user, "Versioned CV", self.template)
-
         first = create_cv_version(cv)
         second = create_cv_version(cv)
-
         self.assertEqual(first.version_number, 1)
         self.assertEqual(second.version_number, 2)
 
@@ -96,34 +66,22 @@ class CVBuilderTests(TestCase):
         self.user.career_profile.professional_title = "Data Engineer"
         self.user.career_profile.summary = "Experienced data engineer."
         self.user.career_profile.save()
-
         self.client.force_login(self.user)
         response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
-
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Professional Summary")
-        self.assertContains(response, "Work Experience")
-        self.assertContains(response, "Education")
-        self.assertContains(response, "Skills")
-        self.assertContains(response, "Certifications")
-        self.assertContains(response, "Projects")
-        self.assertContains(response, "Achievements")
-        self.assertContains(response, "Save CV")
-        self.assertContains(response, "Preview")
+        for text in ("Professional Summary", "Work Experience", "Education", "Skills", "Certifications", "Projects", "Achievements", "Save CV", "Preview"):
+            self.assertContains(response, text)
 
     def test_builder_saves_selection_and_overrides(self):
         cv = create_cv(self.user, "Builder CV", self.template)
-        experience = CareerExperience.objects.create(
-            profile=cv.profile,
-            job_title="Data Engineer",
-            employer="Example Ltd",
-        )
+        experience = CareerExperience.objects.create(profile=cv.profile, job_title="Data Engineer", employer="Example Ltd")
         self.client.force_login(self.user)
-
         response = self.client.post(
             reverse("cv:cv_builder", kwargs={"pk": cv.pk}),
             {
                 "title": "Tailored Data CV",
+                "template": self.template.pk,
+                "status": CV.STATUS_DRAFT,
                 "professional_title": "Senior Data Engineer",
                 "summary": "Cloud data engineering leader.",
                 "linkedin_url": "https://linkedin.com/in/example",
@@ -136,7 +94,6 @@ class CVBuilderTests(TestCase):
                 "achievements": [],
             },
         )
-
         self.assertRedirects(response, reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
         cv.refresh_from_db()
         self.assertEqual(cv.title, "Tailored Data CV")
@@ -146,13 +103,8 @@ class CVBuilderTests(TestCase):
         self.assertEqual(cv.selected_sections["educations"], [])
 
     def test_builder_rejects_another_users_cv(self):
-        other = get_user_model().objects.create_user(
-            username="other-builder",
-            email="other-builder@example.com",
-        )
+        other = get_user_model().objects.create_user(username="other-builder", email="other-builder@example.com")
         other_cv = create_cv(other, "Other CV", self.template)
         self.client.force_login(self.user)
-
         response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": other_cv.pk}))
-
         self.assertEqual(response.status_code, 404)
