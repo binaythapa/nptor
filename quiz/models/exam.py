@@ -3,19 +3,11 @@ from django.db import models
 
 
 class Exam(models.Model):
-    """
-    Represents an individual exam within an ExamTrack.
+    """Represents a reusable exam definition.
 
-    An exam supports:
-
-    - One primary category
-    - Multiple categories
-    - Category-based question allocation
-    - Fixed-count or percentage blueprints
-    - Free or paid access
-    - Prerequisite exams
-    - Practice/mock/certification behavior
-    - Publishing controls
+    Track-specific sequencing and prerequisites live on ``TrackExam``. Pricing
+    is represented by subscription plans rather than being stored on the exam
+    itself, so one exam can be reused by multiple tracks and products.
     """
 
     # =========================================================
@@ -34,12 +26,15 @@ class Exam(models.Model):
         related_name="exams",
     )
 
-    track = models.ForeignKey(
-        "ExamTrack",
-        on_delete=models.SET_NULL,
-        null=True,
+    # =========================================================
+    # ACCESS / PRICING PLANS
+    # =========================================================
+
+    subscription_plans = models.ManyToManyField(
+        "subscriptions.SubscriptionPlan",
         blank=True,
         related_name="exams",
+        help_text="Optional plans that grant direct access to this exam.",
     )
 
     # =========================================================
@@ -53,8 +48,7 @@ class Exam(models.Model):
         blank=True,
         related_name="primary_exams",
         help_text=(
-            "Primary category used for the exam's main "
-            "classification."
+            "Primary category used for the exam's main classification."
         ),
     )
 
@@ -66,9 +60,7 @@ class Exam(models.Model):
         "Category",
         blank=True,
         related_name="exams",
-        help_text=(
-            "All categories covered by this exam."
-        ),
+        help_text="All categories covered by this exam.",
     )
 
     # =========================================================
@@ -77,68 +69,22 @@ class Exam(models.Model):
 
     question_count = models.PositiveIntegerField(
         default=10,
-        help_text=(
-            "Total number of questions in the exam."
-        ),
+        help_text="Total number of questions in the exam.",
     )
 
     duration_seconds = models.PositiveIntegerField(
-        help_text=(
-            "Maximum exam duration in seconds."
-        ),
+        help_text="Maximum exam duration in seconds.",
     )
 
     level = models.PositiveIntegerField(
         default=1,
         db_index=True,
-        help_text=(
-            "Difficulty/level of this exam."
-        ),
+        help_text="Difficulty/level of this exam.",
     )
 
     passing_score = models.FloatField(
         default=50.0,
-        help_text=(
-            "Minimum percentage required to pass."
-        ),
-    )
-
-    # =========================================================
-    # PREREQUISITES
-    # =========================================================
-
-    prerequisite_exams = models.ManyToManyField(
-        "self",
-        symmetrical=False,
-        blank=True,
-        related_name="unlocked_exams",
-    )
-
-    # =========================================================
-    # FREE / PAID
-    # =========================================================
-
-    is_free = models.BooleanField(
-        default=True,
-        help_text=(
-            "If enabled, this exam can be accessed without "
-            "a paid subscription."
-        ),
-    )
-
-    price = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=(
-            "Price of the exam when it is not free."
-        ),
-    )
-
-    currency = models.CharField(
-        max_length=10,
-        default="INR",
+        help_text="Minimum percentage required to pass.",
     )
 
     # =========================================================
@@ -157,8 +103,7 @@ class Exam(models.Model):
     max_mock_attempts = models.PositiveIntegerField(
         default=3,
         help_text=(
-            "Maximum number of mock attempts allowed. "
-            "Use 0 to disable mock attempts."
+            "Maximum number of mock attempts allowed. Use 0 to disable mock attempts."
         ),
     )
 
@@ -168,10 +113,7 @@ class Exam(models.Model):
 
     allow_review = models.BooleanField(
         default=True,
-        help_text=(
-            "If enabled, students can review answers "
-            "before final submission."
-        ),
+        help_text="If enabled, students can review answers before final submission.",
     )
 
     # =========================================================
@@ -205,13 +147,6 @@ class Exam(models.Model):
             ),
             models.Index(
                 fields=[
-                    "track",
-                    "is_published",
-                ],
-                name="exam_track_pub_idx",
-            ),
-            models.Index(
-                fields=[
                     "primary_category",
                     "is_published",
                 ],
@@ -228,137 +163,64 @@ class Exam(models.Model):
 
         errors = {}
 
-        # -----------------------------------------------------
-        # Question count
-        # -----------------------------------------------------
-
         if self.question_count <= 0:
-            errors["question_count"] = (
-                "Question count must be greater than zero."
-            )
-
-        # -----------------------------------------------------
-        # Duration
-        # -----------------------------------------------------
+            errors["question_count"] = "Question count must be greater than zero."
 
         if self.duration_seconds <= 0:
-            errors["duration_seconds"] = (
-                "Exam duration must be greater than zero."
-            )
-
-        # -----------------------------------------------------
-        # Passing score
-        # -----------------------------------------------------
+            errors["duration_seconds"] = "Exam duration must be greater than zero."
 
         if not 0 <= self.passing_score <= 100:
-            errors["passing_score"] = (
-                "Passing score must be between 0 and 100."
-            )
-
-        # -----------------------------------------------------
-        # Level
-        # -----------------------------------------------------
+            errors["passing_score"] = "Passing score must be between 0 and 100."
 
         if self.level <= 0:
-            errors["level"] = (
-                "Exam level must be greater than zero."
-            )
-
-        # -----------------------------------------------------
-        # Mock attempts
-        # -----------------------------------------------------
+            errors["level"] = "Exam level must be greater than zero."
 
         if self.max_mock_attempts < 0:
-            errors["max_mock_attempts"] = (
-                "Mock attempts cannot be negative."
-            )
-
-        # -----------------------------------------------------
-        # Paid exam
-        # -----------------------------------------------------
-
-        if not self.is_free:
-
-            if self.price is None:
-                errors["price"] = (
-                    "Price is required for a paid exam."
-                )
-
-            elif self.price <= 0:
-                errors["price"] = (
-                    "Price must be greater than zero."
-                )
-
-        # -----------------------------------------------------
-        # Free exam
-        # -----------------------------------------------------
-
-        if self.is_free and self.price is not None:
-            if self.price < 0:
-                errors["price"] = (
-                    "Price cannot be negative."
-                )
-
-        # -----------------------------------------------------
-        # Track organization consistency
-        # -----------------------------------------------------
-
-        if (
-            self.organization_id
-            and self.track_id
-            and self.track.organization_id
-            and self.track.organization_id
-            != self.organization_id
-        ):
-            errors["track"] = (
-                "Exam and track must belong to the "
-                "same organization."
-            )
-
-        # -----------------------------------------------------
-        # Primary category organization consistency
-        # -----------------------------------------------------
+            errors["max_mock_attempts"] = "Mock attempts cannot be negative."
 
         if (
             self.organization_id
             and self.primary_category_id
             and self.primary_category.organization_id
-            and self.primary_category.organization_id
-            != self.organization_id
+            and self.primary_category.organization_id != self.organization_id
         ):
             errors["primary_category"] = (
-                "Primary category must belong to the "
-                "same organization as the exam."
+                "Primary category must belong to the same organization as the exam."
             )
-
-        # -----------------------------------------------------
-        # Primary category cannot be inactive
-        # -----------------------------------------------------
 
         if (
             self.primary_category_id
             and not self.primary_category.is_active
         ):
             errors["primary_category"] = (
-                "An inactive category cannot be the "
-                "primary category of an exam."
+                "An inactive category cannot be the primary category of an exam."
             )
 
         if errors:
             raise ValidationError(errors)
 
     # =========================================================
+    # ACCESS HELPERS
+    # =========================================================
+
+    def active_subscription_plans(self):
+        prefetched = getattr(self, "_prefetched_objects_cache", {}).get(
+            "subscription_plans"
+        )
+        if prefetched is not None:
+            return [plan for plan in prefetched if plan.is_active]
+        return list(self.subscription_plans.filter(is_active=True))
+
+    @property
+    def is_free(self):
+        """Compatibility helper; pricing itself is stored on subscription plans."""
+        return not any(plan.price > 0 for plan in self.active_subscription_plans())
+
+    # =========================================================
     # CATEGORY HELPERS
     # =========================================================
 
     def get_all_categories(self):
-        """
-        Return all categories associated with the exam.
-
-        The primary category is automatically included even
-        if it has not yet been added to the M2M relationship.
-        """
-
         category_ids = set(
             self.categories.values_list(
                 "id",
@@ -367,9 +229,7 @@ class Exam(models.Model):
         )
 
         if self.primary_category_id:
-            category_ids.add(
-                self.primary_category_id
-            )
+            category_ids.add(self.primary_category_id)
 
         if not category_ids:
             return self.categories.none()
@@ -379,60 +239,32 @@ class Exam(models.Model):
         )
 
     def has_category(self, category):
-        """
-        Check whether the exam belongs to a category.
-        """
-
         if not category:
             return False
 
-        if (
-            self.primary_category_id
-            == category.id
-        ):
+        if self.primary_category_id == category.id:
             return True
 
-        return self.categories.filter(
-            id=category.id,
-        ).exists()
+        return self.categories.filter(id=category.id).exists()
 
     # =========================================================
     # BLUEPRINT HELPERS
     # =========================================================
 
     def has_blueprint(self):
-        """
-        Return True when the exam has at least one
-        category allocation.
-        """
-
         return self.allocations.exists()
 
     def get_allocations(self):
-        """
-        Return allocations ordered by creation/order.
-        """
-
-        return self.allocations.select_related(
-            "category",
-        ).all()
+        return self.allocations.select_related("category").all()
 
     # =========================================================
     # EXAM MODE
     # =========================================================
 
     def is_practice_mode(self):
-        """
-        Exam allows answer review.
-        """
-
         return self.allow_review is True
 
     def is_certification_mode(self):
-        """
-        Exam does not allow answer review.
-        """
-
         return self.allow_review is False
 
     # =========================================================
