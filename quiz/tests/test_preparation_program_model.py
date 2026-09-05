@@ -70,3 +70,11 @@ class PreparationProgramModelTests(TestCase):
         self.assertIsNone(program.country)
         self.assertTrue(program.is_active)
         self.assertFalse(program.is_published)
+
+    def test_database_index_names_are_mysql_compatible(self):
+        index_names = {
+            index.name
+            for index in PreparationProgram._meta.indexes
+        }
+        self.assertTrue(index_names)
+        self.assertTrue(all(len(name) <= 30 for name in index_names))
