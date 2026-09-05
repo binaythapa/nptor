@@ -88,4 +88,4 @@ class LearningCatalogServiceTests(TestCase):
         self.assertEqual(all_domains["domain_page_obj"].paginator.count, 32)
         self.assertEqual(all_domains["domain_page_obj"].paginator.per_page, 24)
         self.assertEqual(all_domains["domain_page_obj"].number, 2)
-        self.assertEqual([item["domain"].name for item in all_domains["domain_page_obj"].object_list], ["AWS", "Snowflake", "Domain 29", "Domain 28", "Domain 27", "Domain 26", "Domain 25", "Domain 24"])
+        self.assertEqual([item["domain"].name for item in all_domains["domain_page_obj"].object_list], ["Domain 06", "Domain 05", "Domain 04", "Domain 03", "Domain 02", "Domain 01", "Domain 00", "AWS"])
