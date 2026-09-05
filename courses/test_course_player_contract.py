@@ -47,3 +47,12 @@ class CoursePlayerTemplateContractTests(SimpleTestCase):
         self.assertIn("is_preview", self.template)
         self.assertIn("preview=1", self.template)
         self.assertIn("preview-notice", self.template)
+
+    def test_lesson_polish_hooks_keep_assessment_and_completion_hierarchy(self):
+        for hook in (
+            'class="lesson-meta"',
+            'class="assessment-card"',
+            'class="completion-stat"',
+            'class="certificate-card"',
+        ):
+            self.assertIn(hook, self.template)
