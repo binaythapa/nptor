@@ -1,5 +1,32 @@
 /* Final course-player visual polish layered on top of the shared LMS system. */
 
+.course-player-page {
+    overflow-x: hidden;
+}
+
+.course-player-page .course-player-layout,
+.course-player-page .course-content,
+.course-player-page .lesson-heading,
+.course-player-page .lesson-surface,
+.course-player-page .lesson-navigation {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.course-player-page .lesson-heading > div,
+.course-player-page .lesson-surface > *,
+.course-player-page .certificate-card > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.course-player-page .completion-pill,
+.course-player-page .preview-pill {
+    flex: 0 1 auto;
+    max-width: 100%;
+}
+
 .course-player-page .lesson-meta {
     display: flex;
     align-items: center;
@@ -137,6 +164,7 @@
 .course-player-page .certificate-actions .btn-primary,
 .course-player-page .certificate-actions .btn-secondary {
     white-space: nowrap;
+    max-width: 100%;
 }
 
 .course-player-page .certificate-verify-btn {
@@ -159,6 +187,8 @@
 .course-player-page .lesson-nav-next,
 .course-player-page .course-complete {
     min-width: 180px;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .course-player-page .lesson-nav-prev {
@@ -185,6 +215,7 @@
     color: var(--lms-muted);
     font-size: 12px;
     font-weight: 600;
+    max-width: 100%;
 }
 
 .course-player-page .course-curriculum {
