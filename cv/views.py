@@ -58,58 +58,37 @@ def cv_create(request):
 
 @login_required
 def cv_edit(request, pk):
-    return redirect("cv:cv_builder", pk=pk)
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    return redirect("cv:cv_builder", pk=cv.pk)
 
 
 @login_required
 def cv_builder(request, pk):
     cv = get_object_or_404(CV.objects.select_related("profile", "template"), pk=pk, owner=request.user)
     profile = cv.profile
-
     if request.method == "POST":
         form = CVBuilderForm(request.POST, instance=cv)
         if form.is_valid():
             cv.title = form.cleaned_data["title"]
             cv.template = form.cleaned_data["template"]
             cv.status = form.cleaned_data["status"]
-            cv.overrides = {
-                "professional_title": form.cleaned_data["professional_title"],
-                "summary": form.cleaned_data["summary"],
-                "linkedin_url": form.cleaned_data["linkedin_url"],
-                "portfolio_url": form.cleaned_data["portfolio_url"],
-            }
+            cv.overrides = {"professional_title": form.cleaned_data["professional_title"], "summary": form.cleaned_data["summary"], "linkedin_url": form.cleaned_data["linkedin_url"], "portfolio_url": form.cleaned_data["portfolio_url"]}
             selected_sections = {}
             for key, _label, related_name in BUILDER_SECTIONS:
                 valid_ids = set(getattr(profile, related_name).values_list("id", flat=True))
-                selected_sections[key] = [
-                    int(value)
-                    for value in request.POST.getlist(key)
-                    if value.isdigit() and int(value) in valid_ids
-                ]
+                selected_sections[key] = [int(value) for value in request.POST.getlist(key) if value.isdigit() and int(value) in valid_ids]
             cv.selected_sections = selected_sections
             cv.save(update_fields=["title", "template", "status", "overrides", "selected_sections", "updated_at"])
             return redirect("cv:cv_builder", pk=cv.pk)
     else:
         form = CVBuilderForm(instance=cv)
-
     sections = []
     for key, label, related_name in BUILDER_SECTIONS:
         records = list(getattr(profile, related_name).all())
         selected = cv.selected_sections.get(key) if cv.selected_sections else None
         selected_ids = {int(value) for value in selected} if selected is not None else {record.id for record in records}
         sections.append({"key": key, "label": label, "records": records, "selected_ids": selected_ids})
-
-    return render(
-        request,
-        "cv/builder.html",
-        {
-            "cv": cv,
-            "form": form,
-            "contact": account_contact_defaults(request.user),
-            "sections": sections,
-            "payload": build_cv_payload(cv),
-        },
-    )
+    return render(request, "cv/builder.html", {"cv": cv, "form": form, "contact": account_contact_defaults(request.user), "sections": sections, "payload": build_cv_payload(cv)})
 
 
 @login_required
