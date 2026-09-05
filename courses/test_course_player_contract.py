@@ -68,3 +68,15 @@ class CoursePlayerTemplateContractTests(SimpleTestCase):
         ):
             self.assertIn(hook, self.template)
         self.assertIn("Retake Assessment", self.template)
+
+    def test_horizontal_overflow_constraints_are_defined(self):
+        stylesheet = (
+            Path(__file__).resolve().parent.parent
+            / "static"
+            / "css"
+            / "pages"
+            / "course-player-polish.css"
+        ).read_text(encoding="utf-8")
+        self.assertIn("min-width: 0;", stylesheet)
+        self.assertIn("overflow-x: hidden;", stylesheet)
+        self.assertIn("max-width: 100%;", stylesheet)
