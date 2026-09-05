@@ -22,8 +22,8 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    margin: 0 0 22px;
-    padding: 14px 16px;
+    margin: 0 0 18px;
+    padding: 12px 14px;
     border: 1px solid #dbeafe;
     border-radius: 10px;
     background: #f8fbff;
@@ -58,9 +58,27 @@
     font-size: 12px;
 }
 
+.course-player-page .lesson-surface-assessment {
+    padding: 24px;
+}
+
+.course-player-page .lesson-surface-assessment .lesson-content:empty {
+    display: none;
+}
+
+.course-player-page .lesson-surface-assessment .assessment-actions {
+    display: flex;
+    align-items: center;
+    margin-top: 18px;
+}
+
+.course-player-page .lesson-surface-assessment .assessment-actions .btn-primary {
+    min-width: 190px;
+}
+
 .course-player-page .completion-stat {
-    min-width: 76px;
-    padding: 7px 12px;
+    min-width: 84px;
+    padding: 7px 14px;
     border-left: 1px solid #bfdbfe;
     text-align: center;
 }
@@ -87,6 +105,9 @@
 
 .course-player-page .certificate-card {
     align-items: center;
+    border-color: #bfdbfe;
+    background: linear-gradient(135deg, #eff6ff 0%, #f8fbff 100%);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, .07);
 }
 
 .course-player-page .certificate-card-main {
@@ -94,6 +115,14 @@
     align-items: center;
     gap: 12px;
     min-width: 0;
+}
+
+.course-player-page .certificate-card-main > div {
+    min-width: 0;
+}
+
+.course-player-page .certificate-card-main strong {
+    color: var(--lms-navy);
 }
 
 .course-player-page .certificate-actions {
@@ -122,6 +151,64 @@
     background: #eff6ff;
 }
 
+.course-player-page .lesson-navigation {
+    align-items: stretch;
+}
+
+.course-player-page .lesson-nav-prev,
+.course-player-page .lesson-nav-next,
+.course-player-page .course-complete {
+    min-width: 180px;
+}
+
+.course-player-page .lesson-nav-prev {
+    transition: border-color .16s ease, background-color .16s ease, transform .16s ease;
+}
+
+.course-player-page .lesson-nav-prev:hover {
+    border-color: #bfdbfe;
+    background: #f8fbff;
+    transform: translateY(-1px);
+}
+
+.course-player-page .lesson-nav-next {
+    transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.course-player-page .lesson-nav-next:hover {
+    transform: translateY(-1px);
+}
+
+.course-player-page .lesson-continue-hint {
+    align-self: center;
+    margin-left: auto;
+    color: var(--lms-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.course-player-page .course-curriculum {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.course-player-page .course-curriculum::-webkit-scrollbar {
+    width: 7px;
+}
+
+.course-player-page .course-curriculum::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.course-player-page .course-curriculum::-webkit-scrollbar-thumb {
+    border-radius: 99px;
+    background: #cbd5e1;
+}
+
+.course-player-page .course-curriculum::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
 .course-player-page .celebration-actions {
     display: flex;
     justify-content: center;
@@ -141,11 +228,26 @@
         margin-left: 0;
         justify-content: flex-start;
     }
+
+    .course-player-page .lesson-nav-prev,
+    .course-player-page .lesson-nav-next,
+    .course-player-page .course-complete {
+        min-width: 150px;
+    }
 }
 
 @media (max-width: 768px) {
     .course-player-page .assessment-card {
         align-items: flex-start;
+    }
+
+    .course-player-page .lesson-surface-assessment {
+        padding: 16px;
+    }
+
+    .course-player-page .lesson-surface-assessment .assessment-actions .btn-primary {
+        width: 100%;
+        min-width: 0;
     }
 
     .course-player-page .completion-stat {
@@ -167,6 +269,18 @@
         text-align: center;
     }
 
+    .course-player-page .lesson-nav-prev,
+    .course-player-page .lesson-nav-next,
+    .course-player-page .course-complete {
+        min-width: 0;
+    }
+
+    .course-player-page .lesson-continue-hint {
+        width: 100%;
+        margin: 0;
+        text-align: center;
+    }
+
     .course-player-page .celebration-actions {
         flex-direction: column;
     }
@@ -180,7 +294,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     .course-player-page .assessment-card,
-    .course-player-page .completion-stat {
+    .course-player-page .completion-stat,
+    .course-player-page .lesson-nav-prev,
+    .course-player-page .lesson-nav-next {
         transition: none;
     }
 }
