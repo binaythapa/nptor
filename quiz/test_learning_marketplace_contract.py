@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from django.test import SimpleTestCase
 
 from quiz.services.learning_catalog import _resource_item
+from quiz.models.exam_track import ExamTrack
 
 
 class LearningMarketplaceContractTests(SimpleTestCase):
@@ -43,7 +44,8 @@ class LearningMarketplaceContractTests(SimpleTestCase):
         )
         track = SimpleNamespace(
             exams=SimpleNamespace(all=lambda: []),
-            is_free=lambda: True,
+            pricing_type=ExamTrack.PRICING_FREE,
+            subscription_plans=SimpleNamespace(all=lambda: []),
             lifetime_price=None,
             monthly_price=None,
             currency="INR",
