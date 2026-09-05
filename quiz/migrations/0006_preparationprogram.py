@@ -63,9 +63,9 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ["name"],
                 "indexes": [
-                    models.Index(fields=["content_vertical", "is_active"], name="prep_program_vertical_active_idx"),
-                    models.Index(fields=["country", "is_active"], name="prep_program_country_active_idx"),
-                    models.Index(fields=["is_published", "is_active"], name="prep_program_published_active_idx"),
+                    models.Index(fields=["content_vertical", "is_active"], name="prep_prog_vert_act_idx"),
+                    models.Index(fields=["country", "is_active"], name="prep_prog_country_idx"),
+                    models.Index(fields=["is_published", "is_active"], name="prep_prog_pub_act_idx"),
                 ],
                 "constraints": [
                     models.UniqueConstraint(
