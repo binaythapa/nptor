@@ -5,11 +5,7 @@ from django.db import models
 class CareerProfile(models.Model):
     """Reusable master career profile owned by one NPTOR account."""
 
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="career_profile",
-    )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="career_profile")
     professional_title = models.CharField(max_length=255, blank=True)
     summary = models.TextField(blank=True)
     linkedin_url = models.URLField(blank=True)
@@ -26,13 +22,7 @@ class CareerProfile(models.Model):
 
 
 class CareerProfileChild(models.Model):
-    """Shared metadata for structured career records."""
-
-    profile = models.ForeignKey(
-        CareerProfile,
-        on_delete=models.CASCADE,
-        related_name="%(class)s_records",
-    )
+    profile = models.ForeignKey(CareerProfile, on_delete=models.CASCADE, related_name="%(class)s_records")
     sort_order = models.PositiveIntegerField(default=0)
     is_confirmed = models.BooleanField(default=True)
     source = models.CharField(max_length=40, default="user", blank=True)
@@ -53,8 +43,7 @@ class CareerExperience(CareerProfileChild):
     is_current = models.BooleanField(default=False)
     description = models.TextField(blank=True)
 
-    def __str__(self):
-        return f"{self.job_title} - {self.employer}"
+    def __str__(self): return f"{self.job_title} - {self.employer}"
 
 
 class CareerEducation(CareerProfileChild):
@@ -66,8 +55,7 @@ class CareerEducation(CareerProfileChild):
     end_date = models.DateField(null=True, blank=True)
     description = models.TextField(blank=True)
 
-    def __str__(self):
-        return f"{self.qualification} - {self.institution}"
+    def __str__(self): return f"{self.qualification} - {self.institution}"
 
 
 class CareerProject(CareerProfileChild):
@@ -77,8 +65,7 @@ class CareerProject(CareerProfileChild):
     description = models.TextField(blank=True)
     technologies = models.CharField(max_length=1000, blank=True)
 
-    def __str__(self):
-        return self.name
+    def __str__(self): return self.name
 
 
 class CareerSkill(CareerProfileChild):
@@ -86,8 +73,7 @@ class CareerSkill(CareerProfileChild):
     category = models.CharField(max_length=100, blank=True)
     proficiency = models.CharField(max_length=100, blank=True)
 
-    def __str__(self):
-        return self.name
+    def __str__(self): return self.name
 
 
 class CareerAchievement(CareerProfileChild):
@@ -95,8 +81,7 @@ class CareerAchievement(CareerProfileChild):
     description = models.TextField(blank=True)
     achieved_on = models.DateField(null=True, blank=True)
 
-    def __str__(self):
-        return self.title
+    def __str__(self): return self.title
 
 
 class CareerCertification(CareerProfileChild):
@@ -107,13 +92,10 @@ class CareerCertification(CareerProfileChild):
     issued_on = models.DateField(null=True, blank=True)
     expires_on = models.DateField(null=True, blank=True)
 
-    def __str__(self):
-        return self.name
+    def __str__(self): return self.name
 
 
-# Keep the feature split into focused model modules while ensuring Django
-# imports/registers those models when it loads the cv application.
 from cv.models_cv import CV  # noqa: E402,F401
-from cv.models_import import CVImport, ImportedField  # noqa: E402,F401
 from cv.models_template import CVTemplate  # noqa: E402,F401
 from cv.models_version import CVVersion  # noqa: E402,F401
+from cv.models_document import DocumentArtifact  # noqa: E402,F401

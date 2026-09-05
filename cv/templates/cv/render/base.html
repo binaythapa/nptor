@@ -1,0 +1,11 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>{{ cv.title }}</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;line-height:1.4}h1{margin-bottom:4px}h2{font-size:14px;margin-top:24px;border-bottom:1px solid #ccc;padding-bottom:4px}h3{margin-bottom:2px}</style></head><body>
+<h1>{{ payload.contact.first_name }} {{ payload.contact.last_name }}</h1><p><strong>{{ payload.professional_title }}</strong></p><p>{{ payload.contact.email }}{% if payload.contact.phone %} · {{ payload.contact.phone }}{% endif %}{% if payload.contact.location %} · {{ payload.contact.location }}{% endif %}</p>
+{% if payload.summary %}<h2>Professional Summary</h2><p>{{ payload.summary }}</p>{% endif %}
+{% if payload.experiences %}<h2>Experience</h2>{% for item in payload.experiences %}<h3>{{ item.job_title }} — {{ item.employer }}</h3><p>{{ item.description }}</p>{% endfor %}{% endif %}
+{% if payload.educations %}<h2>Education</h2>{% for item in payload.educations %}<h3>{{ item.qualification }} — {{ item.institution }}</h3><p>{{ item.field_of_study }}</p>{% endfor %}{% endif %}
+{% if payload.skills %}<h2>Skills</h2><p>{% for item in payload.skills %}{{ item.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+{% if payload.projects %}<h2>Projects</h2>{% for item in payload.projects %}<h3>{{ item.name }}{% if item.role %} — {{ item.role }}{% endif %}</h3><p>{{ item.description }}</p>{% endfor %}{% endif %}
+{% if payload.certifications %}<h2>Certifications</h2>{% for item in payload.certifications %}<p><strong>{{ item.name }}</strong> — {{ item.issuer }}</p>{% endfor %}{% endif %}
+{% if payload.achievements %}<h2>Achievements</h2>{% for item in payload.achievements %}<p><strong>{{ item.title }}</strong> — {{ item.description }}</p>{% endfor %}{% endif %}
+</body></html>
