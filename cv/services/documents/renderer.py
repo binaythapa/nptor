@@ -9,9 +9,17 @@ DEFAULT_RENDER_CONFIG = {
     "margin": 48,
     "accent_color": "#111827",
     "section_gap": 8,
+    "layout": "single_column",
+    "header_style": "left",
+    "section_style": "uppercase_rule",
+    "density": "comfortable",
 }
 
 ALLOWED_FONTS = {"Helvetica", "Helvetica-Bold", "Times-Roman", "Times-Bold", "Courier"}
+ALLOWED_LAYOUTS = {"single_column", "sidebar"}
+ALLOWED_HEADER_STYLES = {"left", "centered", "compact"}
+ALLOWED_SECTION_STYLES = {"uppercase_rule", "title_case", "minimal"}
+ALLOWED_DENSITIES = {"comfortable", "compact"}
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
@@ -41,6 +49,17 @@ def get_render_config(template_snapshot):
         config["section_gap"] = int(raw["section_gap"])
     if isinstance(raw.get("accent_color"), str) and HEX_COLOR_RE.fullmatch(raw["accent_color"]):
         config["accent_color"] = raw["accent_color"].lower()
+    if raw.get("layout") in ALLOWED_LAYOUTS:
+        config["layout"] = raw["layout"]
+    if raw.get("header_style") in ALLOWED_HEADER_STYLES:
+        config["header_style"] = raw["header_style"]
+    if raw.get("section_style") in ALLOWED_SECTION_STYLES:
+        config["section_style"] = raw["section_style"]
+    if raw.get("density") in ALLOWED_DENSITIES:
+        config["density"] = raw["density"]
+
+    if config["density"] == "compact":
+        config["section_gap"] = min(config["section_gap"], 5)
 
     return config
 
