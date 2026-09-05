@@ -86,7 +86,7 @@
 
             <section aria-labelledby="description-heading">
                 <span class="course-section-label">ABOUT THIS COURSE</span>
-                <h2 id="description-heading">What you'll learn</h2>
+                <h2 id="description-heading">Course description</h2>
                 <div class="course-description">{{ course.description }}</div>
             </section>
 
@@ -102,8 +102,8 @@
                             </div>
                             <ul class="course-curriculum-lessons">
                                 {% for lesson in section.lessons.all %}
-                                    <li{% if not is_preview and lesson.id in completed_lesson_ids %} class="completed"{% endif %}>
-                                        <span class="course-curriculum-icon" aria-hidden="true">{% if not is_preview and lesson.id in completed_lesson_ids %}✓{% else %}{{ forloop.counter|stringformat:"02d" }}{% endif %}</span>
+                                    <li>
+                                        <span class="course-curriculum-icon" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</span>
                                         <span>{{ lesson.title }}</span>
                                     </li>
                                 {% endfor %}
@@ -139,7 +139,7 @@
                     {% if progress == 100 %}
                         <a href="{% url 'courses:course_learn' course.slug %}" class="btn btn-primary">↻ Review Course</a>
                     {% elif progress > 0 %}
-                        <a href="{% url 'courses:course_learn' course.slug %}" class="btn btn-primary">▶ Resume Learning</a>
+                        <a href="{% url 'courses:course_learn' course.slug %}" class="btn btn-primary">▶ Continue Learning</a>
                     {% else %}
                         <a href="{% url 'courses:course_learn' course.slug %}" class="btn btn-primary">▶ Start Learning</a>
                     {% endif %}
