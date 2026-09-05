@@ -48,7 +48,7 @@ class GovernmentExamProgramAdmin(admin.ModelAdmin):
     list_display = ("name", "government_body", "country", "code", "is_active")
     list_filter = ("country", "government_body", "content_vertical", "is_active")
     search_fields = ("name", "code", "slug")
-    filter_horizontal = ("jobs",)
+    filter_horizontal = ("jobs", "courses")
     prepopulated_fields = {"slug": ("name",)}
 
 
