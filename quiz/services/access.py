@@ -68,6 +68,12 @@ def can_access_exam(user, exam, organization=None):
     if not exam.is_published:
         return False, "Exam is not published"
 
+    # Free exams are public learning resources for authenticated students.
+    # They must not require a ResourceAccess/subscription record merely because
+    # they are also listed inside a dynamically-priced track.
+    if exam.is_free:
+        return True, None
+
     # A direct exam entitlement always grants direct exam access. The exam's
     # track-specific prerequisites are intentionally not applied here because
     # they belong to the track relationship, not to the reusable exam.
