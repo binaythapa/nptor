@@ -36,7 +36,7 @@
       <span>Structured path</span><strong>{{ total_count }} exams</strong><p>Complete each stage in order to unlock the next assessment.</p>
     </div>
     <div class="track-overview-card">
-      <span>Passing gates</span><strong>Score-based</strong><p>A passing result unlocks the next exam in the sequence.</p>
+      <span>Passing gates</span><strong>Score-based</strong><p>Pass the previous exam to unlock the next stage. Your exam's passing score is the gate.</p>
     </div>
     <div class="track-overview-card">
       <span>Access</span><strong>{% if has_access %}Included{% elif is_free %}Free{% else %}Premium{% endif %}</strong><p>{% if has_access %}Your track entitlement is active.{% elif is_free %}Start the track without purchasing access.{% else %}Unlock the track to access premium exams.{% endif %}</p>
@@ -45,7 +45,7 @@
 
   <section class="track-section" aria-labelledby="track-exams-title">
     <div class="track-section-head">
-      <div><span class="track-section-label">YOUR CERTIFICATION PATH</span><h2 id="track-exams-title">Exams in this track</h2><p>Work through the assessments in sequence. Passing an exam unlocks the next stage.</p></div>
+      <div><span class="track-section-label">YOUR CERTIFICATION PATH</span><h2 id="track-exams-title">Exams in this track</h2><p>Work through the assessments in sequence. Pass the previous exam to unlock the next one. Prerequisite exam rules also apply.</p></div>
     </div>
 
     <div class="track-exam-list" aria-label="Exams in this track">
