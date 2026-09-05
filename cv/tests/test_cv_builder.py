@@ -30,13 +30,15 @@ class CVBuilderTests(TestCase):
         self.assertEqual(cv.title, "Software Engineer CV")
 
     def test_builder_payload_uses_selected_profile_records(self):
-        profile = self.user.career_profile
-        CareerExperience.objects.create(
+        cv = create_cv(self.user, "Data Engineer CV", self.template)
+        profile = cv.profile
+        experience = CareerExperience.objects.create(
             profile=profile,
             job_title="Data Engineer",
             employer="Example Ltd",
         )
-        cv = create_cv(self.user, "Data Engineer CV", self.template)
+        cv.selected_sections = {"experiences": [experience.id]}
+        cv.save(update_fields=["selected_sections", "updated_at"])
 
         payload = build_cv_payload(cv)
 
