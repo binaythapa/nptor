@@ -9,8 +9,10 @@ from cv.models import (
     CareerProject,
     CareerSkill,
     CV,
+    CVImport,
     CVTemplate,
     CVVersion,
+    ImportedField,
 )
 
 
@@ -76,3 +78,18 @@ class CVVersionAdmin(admin.ModelAdmin):
     list_display = ("cv", "version_number", "created_at")
     search_fields = ("cv__title", "cv__owner__username", "cv__owner__email")
     readonly_fields = ("cv", "version_number", "snapshot", "created_at")
+
+
+@admin.register(CVImport)
+class CVImportAdmin(admin.ModelAdmin):
+    list_display = ("original_filename", "owner", "source_type", "status", "created_at")
+    list_filter = ("source_type", "status")
+    search_fields = ("original_filename", "owner__username", "owner__email")
+    readonly_fields = ("owner", "profile", "source_file", "original_filename", "source_type", "extracted_text", "parsed_data", "created_at", "updated_at")
+
+
+@admin.register(ImportedField)
+class ImportedFieldAdmin(admin.ModelAdmin):
+    list_display = ("field_name", "section", "cv_import", "confirmed", "confirmed_by")
+    list_filter = ("section", "confirmed")
+    search_fields = ("field_name", "value", "cv_import__owner__username")
