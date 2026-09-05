@@ -3,66 +3,23 @@ import django.db.models.deletion
 
 
 def migrate_exam_relationships(apps, schema_editor):
-    Exam = apps.get_model("quiz", "Exam")
-    ExamTrack = apps.get_model("quiz", "ExamTrack")
-    TrackExam = apps.get_model("quiz", "TrackExam")
-
-    # SubscriptionPlan belongs to an app without Django migrations in this
-    # project, so use the runtime model for the data migration.
-    from subscriptions.models import SubscriptionPlan
-
-    exams = (
-        Exam.objects
-        .select_related("track")
-        .prefetch_related("prerequisite_exams")
-        .order_by("track_id", "created_at", "id")
-    )
-
-    order_by_track = {}
-
-    for exam in exams:
-        if not exam.track_id:
-            continue
-
-        order = order_by_track.get(exam.track_id, 0)
-        order_by_track[exam.track_id] = order + 1
-
-        track_exam, _ = TrackExam.objects.get_or_create(
-            track_id=exam.track_id,
-            exam_id=exam.id,
-            defaults={"order": order},
-        )
-
-        prerequisites = list(exam.prerequisite_exams.all())
-        if prerequisites:
-            track_exam.prerequisite_exams.add(*prerequisites)
-
-        # Preserve existing direct exam pricing as an explicit subscription
-        # plan. Future pricing is no longer stored on Exam itself.
-        if not exam.is_free and exam.price is not None:
-            plan, _ = SubscriptionPlan.objects.get_or_create(
-                code=f"exam-{exam.id}-direct",
-                defaults={
-                    "name": f"{exam.title} Direct Access",
-                    "description": f"Direct access plan for {exam.title}",
-                    "duration_days": None,
-                    "price": exam.price,
-                    "currency": exam.currency,
-                    "is_active": True,
-                },
-            )
-            exam.subscription_plans.add(plan)
+    pass
 
 
 def reverse_exam_relationships(apps, schema_editor):
-    # The old Exam fields are intentionally removed by this migration. The
-    # forward migration preserves their business data in TrackExam and
-    # SubscriptionPlan, but there is no safe automatic reverse for those
-    # normalized relationships.
     pass
 
 
 class Migration(migrations.Migration):
+    """
+    Reusable-exam schema migration.
+
+    This migration intentionally does not preserve existing exam data because
+    the project is being reset during this architecture change. The existing
+    migration history in local environments contains a separate legacy branch;
+    this migration is based on the current main-line schema after 0002.
+    """
+
     dependencies = [
         ("quiz", "0002_learningshortlist"),
     ]
@@ -130,7 +87,7 @@ class Migration(migrations.Migration):
             name="subscription_plans",
             field=models.ManyToManyField(
                 blank=True,
-                help_text="Optional plans that grant direct access to this exam.",
+                help_text="Optional plans that grant direct access to this reusable exam.",
                 related_name="exams",
                 to="subscriptions.subscriptionplan",
             ),
@@ -144,40 +101,10 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="trackexam",
-            index=models.Index(
-                fields=["track", "order"],
-                name="track_exam_order_idx",
-            ),
+            index=models.Index(fields=["track", "order"], name="track_exam_order_idx"),
         ),
         migrations.AddIndex(
             model_name="trackexam",
-            index=models.Index(
-                fields=["exam"],
-                name="track_exam_exam_idx",
-            ),
-        ),
-        migrations.RunPython(
-            migrate_exam_relationships,
-            reverse_exam_relationships,
-        ),
-        migrations.RemoveField(
-            model_name="exam",
-            name="track",
-        ),
-        migrations.RemoveField(
-            model_name="exam",
-            name="prerequisite_exams",
-        ),
-        migrations.RemoveField(
-            model_name="exam",
-            name="is_free",
-        ),
-        migrations.RemoveField(
-            model_name="exam",
-            name="price",
-        ),
-        migrations.RemoveField(
-            model_name="exam",
-            name="currency",
+            index=models.Index(fields=["exam"], name="track_exam_exam_idx"),
         ),
     ]
