@@ -40,7 +40,16 @@
         <span class="section-eyebrow">Recent Activity</span>
         <h2 id="learning-activity-title">Learning Activity</h2>
       </div>
-      <span class="dashboard-learning-activity-count">{{ learning_activity_page.paginator.count }} item{{ learning_activity_page.paginator.count|pluralize }}</span>
+      <div class="dashboard-learning-activity-heading-actions">
+        <span class="dashboard-learning-activity-count">{{ learning_activity_page.paginator.count }} item{{ learning_activity_page.paginator.count|pluralize }}</span>
+        <form method="post" action="{% url 'quiz:clear_learning_history' %}" class="dashboard-clear-history-form" onsubmit="return confirm('Clear your learning activity history? This will permanently remove completed exam attempts and course progress. Your purchases, subscriptions, access, and unfinished exams will not be affected.');">
+          {% csrf_token %}
+          <button type="submit" class="dashboard-clear-history-button">
+            <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+            Clear History
+          </button>
+        </form>
+      </div>
     </div>
 
     <form class="dashboard-learning-activity-toolbar" method="get" role="search">
