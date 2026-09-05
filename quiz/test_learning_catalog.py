@@ -67,3 +67,25 @@ class LearningCatalogServiceTests(TestCase):
 
         self.assertEqual([item["resource"].title for item in free_catalog["resources"]], ["Free AWS Practice"])
         self.assertEqual([item["resource"].title for item in premium_catalog["resources"]], ["Premium AWS Practice"])
+
+    def test_domain_explorer_search_sort_and_pagination_scale_for_large_catalogs(self):
+        for index in range(30):
+            domain = Domain.objects.create(name=f"Domain {index:02d}", slug=f"domain-{index:02d}", is_active=True)
+            category = Category.objects.create(name=f"Domain {index:02d} Core", slug=f"domain-{index:02d}-core", domain=domain, is_active=True)
+            Exam.objects.create(title=f"Domain {index:02d} Exam", primary_category=category, question_count=10, duration_seconds=1800, is_published=True, is_free=True)
+
+        domain_zero = Domain.objects.get(slug="domain-00")
+        domain_zero_category = Category.objects.get(domain=domain_zero)
+        Exam.objects.create(title="Domain 00 Exam Extra", primary_category=domain_zero_category, question_count=10, duration_seconds=1800, is_published=True, is_free=True)
+
+        catalog = build_learning_catalog(user=self.user, domain_query="Domain 29", domain_sort="az", domain_page=1)
+
+        self.assertEqual(catalog["domain_page_obj"].paginator.count, 1)
+        self.assertEqual([item["domain"].name for item in catalog["domain_page_obj"].object_list], ["Domain 29"])
+        self.assertEqual([item["domain"].name for item in catalog["popular_domains"]][:3], ["Domain 00", "AWS", "Domain 01"])
+
+        all_domains = build_learning_catalog(user=self.user, domain_sort="za", domain_page=2)
+        self.assertEqual(all_domains["domain_page_obj"].paginator.count, 32)
+        self.assertEqual(all_domains["domain_page_obj"].paginator.per_page, 24)
+        self.assertEqual(all_domains["domain_page_obj"].number, 2)
+        self.assertEqual([item["domain"].name for item in all_domains["domain_page_obj"].object_list], ["Domain 06", "Domain 05", "Domain 04", "Domain 03", "Domain 02", "Domain 01", "Domain 00", "AWS"])
