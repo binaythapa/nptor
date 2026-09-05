@@ -46,6 +46,20 @@ class CVBuilderTests(TestCase):
         self.assertEqual(payload["contact"]["email"], self.user.email)
         self.assertEqual(payload["experiences"][0]["job_title"], "Data Engineer")
 
+    def test_empty_section_selection_excludes_all_records(self):
+        cv = create_cv(self.user, "Data Engineer CV", self.template)
+        CareerExperience.objects.create(
+            profile=cv.profile,
+            job_title="Data Engineer",
+            employer="Example Ltd",
+        )
+        cv.selected_sections = {"experiences": []}
+        cv.save(update_fields=["selected_sections", "updated_at"])
+
+        payload = build_cv_payload(cv)
+
+        self.assertEqual(payload["experiences"], [])
+
     def test_duplicate_cv_is_independent(self):
         original = create_cv(self.user, "Original", self.template)
         copy = duplicate_cv(original, "Tailored Version")
@@ -93,6 +107,7 @@ class CVBuilderTests(TestCase):
         self.assertContains(response, "Skills")
         self.assertContains(response, "Certifications")
         self.assertContains(response, "Projects")
+        self.assertContains(response, "Achievements")
         self.assertContains(response, "Save CV")
         self.assertContains(response, "Preview")
 
@@ -114,6 +129,11 @@ class CVBuilderTests(TestCase):
                 "linkedin_url": "https://linkedin.com/in/example",
                 "portfolio_url": "https://example.com",
                 "experiences": [str(experience.pk)],
+                "educations": [],
+                "skills": [],
+                "certifications": [],
+                "projects": [],
+                "achievements": [],
             },
         )
 
@@ -123,6 +143,7 @@ class CVBuilderTests(TestCase):
         self.assertEqual(cv.overrides["professional_title"], "Senior Data Engineer")
         self.assertEqual(cv.overrides["summary"], "Cloud data engineering leader.")
         self.assertEqual(cv.selected_sections["experiences"], [experience.pk])
+        self.assertEqual(cv.selected_sections["educations"], [])
 
     def test_builder_rejects_another_users_cv(self):
         other = get_user_model().objects.create_user(
