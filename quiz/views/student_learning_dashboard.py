@@ -1,11 +1,14 @@
 from collections import defaultdict
 from datetime import datetime
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count, Max
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from courses.models import Course, LessonProgress
 from courses.models.subscription import CourseSubscription
@@ -48,6 +51,31 @@ def _shortlist_items(user):
             continue
         items.append({"item": row, "resource": resource, "type": row.resource_type})
     return items
+
+
+@login_required
+@require_POST
+def clear_learning_history(request):
+    """Permanently clear the student's completed learning activity history.
+
+    Access/subscription records are deliberately preserved. An unfinished exam
+    attempt is also preserved so that clearing history cannot interrupt an exam
+    currently in progress.
+    """
+    user = request.user
+
+    with transaction.atomic():
+        LessonProgress.objects.filter(user=user).delete()
+        UserExam.objects.filter(
+            user=user,
+            submitted_at__isnull=False,
+        ).delete()
+
+    messages.success(
+        request,
+        "Your learning activity history has been cleared.",
+    )
+    return redirect("quiz:student_dashboard")
 
 
 @login_required
