@@ -1,0 +1,99 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}Student Dashboard | {{ site_name|default:"Nepal Mentor" }}{% endblock %}
+{% block meta_description %}Your NPTOR learning overview, exam performance, active attempts, and recent results.{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/pages/student_dashboard_overview.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="student-overview">
+  <section class="student-overview-hero">
+    <div>
+      <span class="student-overview-eyebrow">Student Dashboard</span>
+      <h1>Welcome back, {{ request.user.get_full_name|default:request.user.username }}.</h1>
+      <p>See your learning progress, exam performance, and what to do next.</p>
+    </div>
+    <a href="{% url 'quiz:learning_hub' %}" class="student-overview-primary">
+      <i class="fa-solid fa-book-open" aria-hidden="true"></i> Open My Learning
+    </a>
+  </section>
+
+  {% if active_attempt %}
+  <section class="student-overview-active">
+    <div class="student-overview-active-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></div>
+    <div>
+      <span>EXAM IN PROGRESS</span>
+      <h2>{{ active_attempt.exam.title }}</h2>
+      <p>You have an unfinished attempt ready to resume.</p>
+    </div>
+    <a href="{% url 'quiz:exam_take' active_attempt.id %}">Resume Exam <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+  </section>
+  {% endif %}
+
+  <section class="student-overview-kpis" aria-label="Learning summary">
+    <article class="student-overview-kpi">
+      <span>COURSE ACCESS</span>
+      <strong>{{ learning_courses }}</strong>
+      <small>Active courses</small>
+    </article>
+    <article class="student-overview-kpi">
+      <span>EXAM ATTEMPTS</span>
+      <strong>{{ total_attempts }}</strong>
+      <small>Completed attempts</small>
+    </article>
+    <article class="student-overview-kpi">
+      <span>PASSED</span>
+      <strong>{{ passed_attempts }}</strong>
+      <small>Successful attempts</small>
+    </article>
+    <article class="student-overview-kpi">
+      <span>AVERAGE SCORE</span>
+      <strong>{{ average_score }}%</strong>
+      <small>Across completed attempts</small>
+    </article>
+  </section>
+
+  <section class="student-overview-section">
+    <div class="student-overview-section-heading">
+      <div>
+        <span>RECENT PERFORMANCE</span>
+        <h2>Recent Exam Results</h2>
+      </div>
+      <a href="{% url 'quiz:learning_hub' %}">View My Learning <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+
+    {% if recent_results %}
+    <div class="student-overview-results">
+      {% for item in recent_results %}
+      <article class="student-overview-result">
+        <div class="student-overview-result-icon"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div>
+        <div class="student-overview-result-main">
+          <h3>{{ item.attempt.exam.title }}</h3>
+          <span>{{ item.attempt.submitted_at|date:"M j, Y · g:i A" }}</span>
+        </div>
+        <strong class="{% if item.attempt.passed %}is-pass{% else %}is-fail{% endif %}">{{ item.attempt.score }}%</strong>
+        <span class="student-overview-result-status {% if item.attempt.passed %}is-pass{% else %}is-fail{% endif %}">{{ item.status }}</span>
+        <a href="{% url 'quiz:exam_result' item.attempt.id %}" aria-label="View result for {{ item.attempt.exam.title }}">View <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="student-overview-empty">
+      <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+      <h3>Your exam performance will appear here</h3>
+      <p>Start a certification exam or practice test to build your performance history.</p>
+      <a href="{% url 'quiz:exam_list' %}">Explore Certifications</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="student-overview-actions">
+    <a href="{% url 'quiz:practice' %}"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span><strong>Practice</strong><small>Improve your skills</small></span></a>
+    <a href="{% url 'quiz:exam_list' %}"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i><span><strong>Certifications</strong><small>Prepare for certification exams</small></span></a>
+    <a href="{% url 'quiz:government_catalog' %}"><i class="fa-solid fa-landmark" aria-hidden="true"></i><span><strong>Government Exams</strong><small>Explore government exam preparation</small></span></a>
+  </section>
+</div>
+{% endblock %}
