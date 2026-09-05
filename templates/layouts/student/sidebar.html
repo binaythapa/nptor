@@ -2,101 +2,41 @@
   <nav class="menu student-navigation">
     <p class="menu-label">General</p>
     <ul class="menu-list">
-      <li>
-        {% if user.is_authenticated %}
-          <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-            <span class="nav-icon"><i class="fa fa-home" aria-hidden="true"></i></span><span class="nav-label">Dashboard</span>
-          </a>
-        {% else %}
-          <a href="{% if not is_from_course %}{% url 'pages:home' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-            <span class="nav-icon"><i class="fa fa-home" aria-hidden="true"></i></span><span class="nav-label">Home</span>
-          </a>
-        {% endif %}
-      </li>
+      <li><a href="{% url 'quiz:dashboard' %}"><span class="nav-icon"><i class="fa fa-home" aria-hidden="true"></i></span><span class="nav-label">Dashboard</span></a></li>
     </ul>
 
     <p class="menu-label">Learning</p>
     <ul class="menu-list">
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:practice' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-pen-to-square" aria-hidden="true"></i></span><span class="nav-label">Practice</span><span class="nav-badge success">Start</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:practice_express' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-bolt" aria-hidden="true"></i></span><span class="nav-label">Express</span><span class="nav-badge warning">Test</span>
-        </a>
-      </li>
-      {% if user.is_authenticated %}
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:study_plan_dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-calendar-check" aria-hidden="true"></i></span><span class="nav-label">Study Plan</span><span class="nav-badge primary">Structured</span>
-        </a>
-      </li>
-      {% endif %}
+      <li><a href="{% url 'quiz:practice' %}"><span class="nav-icon"><i class="fa fa-pen-to-square" aria-hidden="true"></i></span><span class="nav-label">Practice</span></a></li>
+      <li><a href="{% url 'quiz:practice_express' %}"><span class="nav-icon"><i class="fa fa-bolt" aria-hidden="true"></i></span><span class="nav-label">Express</span></a></li>
+      {% if user.is_authenticated %}<li><a href="{% url 'quiz:study_plan_dashboard' %}"><span class="nav-icon"><i class="fa fa-calendar-check" aria-hidden="true"></i></span><span class="nav-label">Study Plan</span></a></li>{% endif %}
     </ul>
 
     {% if user.is_authenticated %}
     <p class="menu-label">My Content</p>
-    <ul class="menu-list">
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:learning_hub' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-book-open" aria-hidden="true"></i></span><span class="nav-label">My Learning</span><span class="nav-badge link">My Hub</span>
-        </a>
-      </li>
-    </ul>
+    <ul class="menu-list"><li><a href="{% url 'quiz:learning_hub' %}"><span class="nav-icon"><i class="fa fa-book-open" aria-hidden="true"></i></span><span class="nav-label">My Learning</span></a></li></ul>
     {% endif %}
 
     <p class="menu-label">Explore</p>
     <ul class="menu-list">
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:certifications' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-graduation-cap" aria-hidden="true"></i></span><span class="nav-label">Certifications</span><span class="nav-badge link">Prepare</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:government_catalog' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-landmark" aria-hidden="true"></i></span><span class="nav-label">Government Exams</span><span class="nav-badge info">Explore</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:academic_entrance' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-book-open-reader" aria-hidden="true"></i></span><span class="nav-label">Academic &amp; Entrance</span><span class="nav-badge info">Explore</span>
-        </a>
-      </li>
+      <li><a href="{% url 'quiz:certifications' %}"><span class="nav-icon"><i class="fa fa-graduation-cap" aria-hidden="true"></i></span><span class="nav-label">Certifications</span></a></li>
+      <li><a href="{% url 'quiz:government_catalog' %}"><span class="nav-icon"><i class="fa fa-landmark" aria-hidden="true"></i></span><span class="nav-label">Government Exams</span></a></li>
+      <li><a href="{% url 'quiz:academic_entrance' %}"><span class="nav-icon"><i class="fa fa-book-open-reader" aria-hidden="true"></i></span><span class="nav-label">Academic &amp; Entrance</span></a></li>
     </ul>
 
     {% if user.is_authenticated %}
-    <p class="menu-label">Account</p>
+    <p class="menu-label">Career</p>
     <ul class="menu-list">
-      <li>
-        <a href="{% if not is_from_course %}{% url 'quiz:profile' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-user" aria-hidden="true"></i></span><span class="nav-label">Profile</span>
-        </a>
-      </li>
+      <li><a href="{% url 'cv:dashboard' %}"><span class="nav-icon"><i class="fa fa-file-lines" aria-hidden="true"></i></span><span class="nav-label">CV Builder</span><span class="nav-badge primary">Create</span></a></li>
     </ul>
     {% endif %}
+
+    {% if user.is_authenticated %}<p class="menu-label">Account</p><ul class="menu-list"><li><a href="{% url 'quiz:profile' %}"><span class="nav-icon"><i class="fa fa-user" aria-hidden="true"></i></span><span class="nav-label">Profile</span></a></li></ul>{% endif %}
 
     {% if user.is_authenticated and request.active_org and request.org_role == "org_admin" %}
-    <p class="menu-label">Organization</p>
-    <ul class="menu-list">
-      <li>
-        <a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-building" aria-hidden="true"></i></span><span class="nav-label">Org Dashboard</span>
-        </a>
-      </li>
-    </ul>
+    <p class="menu-label">Organization</p><ul class="menu-list"><li><a href="{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}"><span class="nav-icon"><i class="fa fa-building" aria-hidden="true"></i></span><span class="nav-label">Org Dashboard</span></a></li></ul>
     {% endif %}
 
-    {% if user.is_authenticated %}
-    <p class="menu-label">Instructor</p>
-    <ul class="menu-list">
-      <li>
-        <a href="{% if not is_from_course %}{% url 'courses:instructor_dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-chalkboard-teacher" aria-hidden="true"></i></span><span class="nav-label">Course Dashboard</span><span class="nav-badge info">Manage</span>
-        </a>
-      </li>
-    </ul>
-    {% endif %}
+    {% if user.is_authenticated %}<p class="menu-label">Instructor</p><ul class="menu-list"><li><a href="{% url 'courses:instructor_dashboard' %}"><span class="nav-icon"><i class="fa fa-chalkboard-teacher" aria-hidden="true"></i></span><span class="nav-label">Course Dashboard</span></a></li></ul>{% endif %}
   </nav>
 </aside>
