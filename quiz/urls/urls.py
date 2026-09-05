@@ -37,6 +37,7 @@ from quiz.views.government_catalog import (
     government_body,
     government_program,
 )
+from quiz.views.government_dashboard import government_program_dashboard
 
 # ============================================================
 # PRACTICE
@@ -74,6 +75,7 @@ urlpatterns = [
     path("government-exams/<slug:country_slug>/", government_country, name="government_country"),
     path("government-exams/<slug:country_slug>/<slug:body_slug>/", government_body, name="government_body"),
     path("government-exams/<slug:country_slug>/<slug:body_slug>/<slug:program_slug>/", government_program, name="government_program"),
+    path("government-exams/<slug:country_slug>/<slug:body_slug>/<slug:program_slug>/dashboard/", government_program_dashboard, name="government_program_dashboard"),
 
     path("dashboard/", dashboard_dispatch, name="dashboard"),
     path("dashboard/admin/", admin_dashboard, name="admin_dashboard"),
