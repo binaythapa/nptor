@@ -1,0 +1,21 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+<section class="section"><div class="container">
+  <h1 class="title">Review Imported CV</h1>
+  <p class="subtitle is-6">Check every extracted field before confirming it.</p>
+  <div class="box">
+    <p class="mb-4"><strong>Source:</strong> {{ imported.original_filename }} · <strong>Status:</strong> {{ imported.get_status_display }}</p>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in imported.fields.all %}
+        <div class="field">
+          <label class="label">{{ field.section|title }} — {{ field.field_name }}</label>
+          <div class="control"><input class="input" name="field_{{ field.pk }}" value="{{ field.value }}"></div>
+          {% if field.confirmed %}<p class="help">Confirmed</p>{% else %}<p class="help">Needs confirmation</p>{% endif %}
+        </div>
+      {% empty %}<p>No structured fields were extracted.</p>{% endfor %}
+      <div class="buttons mt-5"><button class="button is-primary" type="submit">Confirm Reviewed Fields</button><a class="button" href="{% url 'cv:dashboard' %}">Back to CV Builder</a></div>
+    </form>
+  </div>
+</div></section>
+{% endblock %}
