@@ -46,3 +46,16 @@ class CVTemplateTests(TestCase):
         call_command("seed_cv_templates")
 
         self.assertEqual(CVTemplate.objects.count(), 8)
+
+    def test_seeded_templates_have_distinct_rendering_styles(self):
+        call_command("seed_cv_templates")
+        configs = dict(CVTemplate.objects.values_list("slug", "config"))
+
+        self.assertEqual(configs["ats-classic"]["layout"], "single_column")
+        self.assertEqual(configs["modern-professional"]["layout"], "sidebar")
+        self.assertEqual(configs["executive"]["header_style"], "centered")
+        self.assertEqual(configs["technical"]["section_style"], "minimal")
+        self.assertEqual(configs["fresher"]["density"], "comfortable")
+        self.assertEqual(configs["academic"]["font_name"], "Times-Roman")
+        self.assertEqual(configs["government"]["section_style"], "title_case")
+        self.assertEqual(configs["minimal"]["density"], "compact")
