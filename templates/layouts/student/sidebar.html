@@ -33,13 +33,19 @@
           <span class="nav-icon"><i class="fa fa-calendar-check" aria-hidden="true"></i></span><span class="nav-label">Study Plan</span><span class="nav-badge primary">Structured</span>
         </a>
       </li>
+      {% endif %}
+    </ul>
+
+    {% if user.is_authenticated %}
+    <p class="menu-label">My Content</p>
+    <ul class="menu-list">
       <li>
         <a href="{% if not is_from_course %}{% url 'quiz:dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
           <span class="nav-icon"><i class="fa fa-book-open" aria-hidden="true"></i></span><span class="nav-label">My Learning</span><span class="nav-badge link">My Hub</span>
         </a>
       </li>
-      {% endif %}
     </ul>
+    {% endif %}
 
     <p class="menu-label">Explore</p>
     <ul class="menu-list">
