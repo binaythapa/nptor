@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from cv.models import (
+    ATSAnalysis, AIConversation, AIExtraction, AIMessage,
     CareerAchievement, CareerCertification, CareerEducation, CareerExperience,
     CareerProfile, CareerProject, CareerSkill, CV, CVImport, CVTemplate, CVVersion,
     DocumentArtifact, ImportedField,
@@ -92,3 +93,34 @@ class DocumentArtifactAdmin(admin.ModelAdmin):
     list_filter = ("artifact_type", "template_slug")
     search_fields = ("cv_version__cv__title", "template_slug")
     readonly_fields = ("cv_version", "artifact_type", "file", "mime_type", "template_slug", "template_config", "created_at")
+
+
+@admin.register(AIConversation)
+class AIConversationAdmin(admin.ModelAdmin):
+    list_display = ("owner", "purpose", "provider", "model", "updated_at")
+    list_filter = ("purpose", "provider")
+    search_fields = ("owner__username", "owner__email")
+    readonly_fields = ("owner", "cv", "created_at", "updated_at")
+
+
+@admin.register(AIMessage)
+class AIMessageAdmin(admin.ModelAdmin):
+    list_display = ("conversation", "role", "provider_response_id", "created_at")
+    list_filter = ("role",)
+    search_fields = ("conversation__owner__username", "content")
+    readonly_fields = ("conversation", "role", "content", "provider_response_id", "metadata", "created_at")
+
+
+@admin.register(AIExtraction)
+class AIExtractionAdmin(admin.ModelAdmin):
+    list_display = ("section", "field_name", "conversation", "confirmed", "confirmed_by")
+    list_filter = ("section", "confirmed")
+    search_fields = ("field_name", "conversation__owner__username")
+
+
+@admin.register(ATSAnalysis)
+class ATSAnalysisAdmin(admin.ModelAdmin):
+    list_display = ("owner", "cv_version", "score", "provider", "model", "created_at")
+    list_filter = ("provider", "model")
+    search_fields = ("owner__username", "owner__email", "cv_version__cv__title")
+    readonly_fields = ("owner", "cv_version", "conversation", "score", "result", "provider", "model", "created_at")
