@@ -31,7 +31,7 @@ class CareerProfileChild(models.Model):
     profile = models.ForeignKey(
         CareerProfile,
         on_delete=models.CASCADE,
-        related_name="%(class)ss",
+        related_name="%(class)s_records",
     )
     sort_order = models.PositiveIntegerField(default=0)
     is_confirmed = models.BooleanField(default=True)
