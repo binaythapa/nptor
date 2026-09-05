@@ -63,7 +63,7 @@
           </div>
           <div class="track-exam-action">
             {% if item.is_completed %}
-              <a class="track-secondary-action" href="{% url 'quiz:exam_preview' item.exam.id %}">Review →</a>
+              <span class="track-secondary-action disabled" aria-disabled="true">Completed</span>
             {% elif item.is_unlocked and has_access %}
               <a class="track-secondary-action primary" href="{% url 'quiz:exam_start' item.exam.id %}">Start Exam →</a>
             {% elif item.is_unlocked and item.exam.is_free %}
