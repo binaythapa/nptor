@@ -111,3 +111,7 @@ from .leaderboard import (
 from .learning_shortlist import (
     LearningShortlist,
 )
+
+from .learning_activity_dismissal import (
+    LearningActivityDismissal,
+)
