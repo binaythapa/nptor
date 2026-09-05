@@ -36,6 +36,30 @@
         if (toggle) toggle.setAttribute("aria-expanded", String(expanded));
     }
 
+    function redirectCoursePracticeCompletion() {
+        const params = new URLSearchParams(window.location.search);
+        const course = params.get("course");
+        const lesson = params.get("lesson");
+
+        if (!course || !lesson) return false;
+
+        const completionCard = document.querySelector(
+            "#practiceContainer .practice-completed-card"
+        );
+
+        if (!completionCard) return false;
+
+        const target =
+            "/courses/" +
+            encodeURIComponent(course) +
+            "/learn/" +
+            encodeURIComponent(lesson) +
+            "/";
+
+        window.location.assign(target);
+        return true;
+    }
+
     const container = document.getElementById("practiceContainer");
     let previousQuestionId = container?.querySelector("#practiceForm")?.dataset.qid || null;
 
@@ -66,10 +90,16 @@
             if (currentQuestionId) {
                 previousQuestionId = currentQuestionId;
             }
+
+            redirectCoursePracticeCompletion();
         });
 
         observer.observe(container, { childList: true, subtree: true });
     }
+
+    /* Also handle a completion page rendered directly by Django rather than
+       inserted through the AJAX question container. */
+    redirectCoursePracticeCompletion();
 
     syncFilter();
 
