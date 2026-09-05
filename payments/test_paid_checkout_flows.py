@@ -28,6 +28,14 @@ class PaidCheckoutFlowTests(TestCase):
             currency="INR",
             is_active=True,
         )
+        self.exam_plan = SubscriptionPlan.objects.create(
+            name="Paid Checkout Exam Plan",
+            code="PAID_CHECKOUT_EXAM_PLAN",
+            duration_days=30,
+            price=Decimal("299.00"),
+            currency="INR",
+            is_active=True,
+        )
         self.course = Course.objects.create(
             title="Paid Checkout Course",
             description="Paid checkout regression course",
@@ -52,11 +60,9 @@ class PaidCheckoutFlowTests(TestCase):
             duration_seconds=3600,
             question_count=20,
             passing_score=70,
-            is_free=False,
-            price=Decimal("299.00"),
-            currency="INR",
             is_published=True,
         )
+        self.exam.subscription_plans.add(self.exam_plan)
         self.client.force_login(self.user)
 
     def test_paid_course_checkout_passes_plan_price_to_payment(self):
@@ -87,11 +93,11 @@ class PaidCheckoutFlowTests(TestCase):
         self.assertEqual(kwargs["amount"], Decimal("799.00"))
         self.assertEqual(kwargs["currency"], "INR")
 
-    def test_paid_exam_checkout_passes_exam_price_to_payment(self):
+    def test_paid_exam_checkout_uses_explicit_exam_plan(self):
         with patch("payments.views.checkout._start_payment") as start_payment:
             start_payment.return_value = object()
             response = self.client.get(
-                reverse("quiz:exam_checkout", kwargs={"exam_id": self.exam.id})
+                reverse("payments:exam_checkout", kwargs={"exam_id": self.exam.id})
             )
 
         self.assertIs(response, start_payment.return_value)
