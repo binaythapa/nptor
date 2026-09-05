@@ -12,8 +12,11 @@ def exam_detail(request, exam_id):
         Exam.objects.select_related(
             "primary_category",
             "primary_category__domain",
-            "track",
-        ).prefetch_related("prerequisite_exams"),
+        ).prefetch_related(
+            "subscription_plans",
+            "track_memberships__track",
+            "track_memberships__prerequisite_exams",
+        ),
         pk=exam_id,
         is_published=True,
         organization__isnull=True,
@@ -39,18 +42,23 @@ def exam_detail(request, exam_id):
     )
 
     has_access, access_reason = can_access_exam(request.user, exam)
-    track_progress = None
-    track_item = None
-    if exam.track:
-        track_progress = build_track_progress(request.user, exam.track)
-        track_item = next(
-            (item for item in track_progress["items"] if item["exam"].id == exam.id),
+
+    track_contexts = []
+    for membership in exam.track_memberships.all():
+        if not membership.track.is_active or membership.track.organization_id is not None:
+            continue
+        progress = build_track_progress(request.user, membership.track)
+        item = next(
+            (entry for entry in progress["items"] if entry["exam"].id == exam.id),
             None,
         )
-
-    if track_item and not track_item["is_unlocked"]:
-        has_access = False
-        access_reason = track_item["lock_reason"] or "Exam progression requirement"
+        track_contexts.append(
+            {
+                "track": membership.track,
+                "progress": progress,
+                "item": item,
+            }
+        )
 
     if active_attempt and not active_attempt.is_active():
         active_attempt = None
@@ -67,14 +75,12 @@ def exam_detail(request, exam_id):
     elif has_access:
         action = "start"
         action_label = "Start Exam"
-    elif exam.is_free:
+    elif exam.is_free and not track_contexts:
         action = "locked"
         action_label = "Locked"
     else:
         action = "preview"
         action_label = "Preview Exam"
-
-    prerequisite_count = exam.prerequisite_exams.count()
 
     return render(
         request,
@@ -85,9 +91,7 @@ def exam_detail(request, exam_id):
             "latest_attempt": latest_attempt,
             "has_access": has_access,
             "access_reason": access_reason,
-            "track_progress": track_progress,
-            "track_item": track_item,
-            "prerequisite_count": prerequisite_count,
+            "track_contexts": track_contexts,
             "action": action,
             "action_label": action_label,
             "duration_minutes": (exam.duration_seconds or 0) // 60,
