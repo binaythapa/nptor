@@ -1,0 +1,26 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title">Master Career Profile</h1>
+    <p class="subtitle is-6">Keep your career information here and reuse it across multiple CVs.</p>
+    <div class="box">
+      <div class="notification is-light">
+        <strong>Account information</strong><br>
+        {{ contact.first_name }} {{ contact.last_name }} · {{ contact.email }}
+        {% if contact.phone %} · {{ contact.phone }}{% endif %}
+        {% if contact.location %} · {{ contact.location }}{% endif %}
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="buttons mt-4">
+          <button class="button is-primary" type="submit">Save Profile</button>
+          <a class="button" href="{% url 'cv:dashboard' %}">Back to CVs</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
