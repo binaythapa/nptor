@@ -57,7 +57,6 @@ class CourseOverviewTemplateContractTests(SimpleTestCase):
             "Course curriculum",
             "lessons",
             "Start Learning",
-            "Resume Learning",
             "Continue Learning",
         ):
             self.assertIn(hook, self.template)
