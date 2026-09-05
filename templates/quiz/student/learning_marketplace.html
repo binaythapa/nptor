@@ -8,19 +8,29 @@
   <section class="marketplace-hero">
     <span class="marketplace-kicker">LEARNING MARKETPLACE</span>
     <h1 id="marketplace-title">Learn, Practice, Certify</h1>
-    <p>Choose a domain and find the right course, exam track, or practice exam.</p>
+    <p>Choose a course to learn, a track to prepare, or an exam to test yourself.</p>
     <form class="marketplace-search" method="get" role="search">
       <label class="sr-only" for="marketplace-search-input">Search courses, exams and tracks</label>
-      <input id="marketplace-search-input" name="q" value="{{ query }}" placeholder="Search Snowflake, AWS, certification, course..." autocomplete="off">
+      <input id="marketplace-search-input" name="q" value="{{ query }}" placeholder="Search AWS, Snowflake, certification, course..." autocomplete="off">
       <input type="hidden" name="type" value="{{ resource_type }}">
       <button type="submit">Search</button>
     </form>
   </section>
 
   <section class="marketplace-section" aria-labelledby="domain-title">
-    <div class="marketplace-section-head"><div><h2 id="domain-title">Explore by domain</h2><p>Start with the technology or certification you want to learn.</p></div></div>
+    <div class="marketplace-section-head">
+      <div><h2 id="domain-title">Explore by domain</h2><p>Start with the technology or certification you want to learn.</p></div>
+    </div>
     <div class="domain-grid">
-      {% for item in domains %}<a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}"><strong>{{ item.domain.name }}</strong><span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }} · {{ item.exam_count }} exam{{ item.exam_count|pluralize }}</span><span class="domain-card-arrow" aria-hidden="true">→</span></a>{% empty %}<div class="marketplace-empty">No learning domains are available yet.</div>{% endfor %}
+      {% for item in domains %}
+        <a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}">
+          <strong>{{ item.domain.name }}</strong>
+          <span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }} · {{ item.exam_count }} exam{{ item.exam_count|pluralize }}</span>
+          <span class="domain-card-arrow" aria-hidden="true">→</span>
+        </a>
+      {% empty %}
+        <div class="marketplace-empty">No learning domains are available yet.</div>
+      {% endfor %}
     </div>
   </section>
 
@@ -35,36 +45,88 @@
       </form>
     </div>
 
+    <div class="marketplace-state-legend" aria-label="Resource access states">
+      <span class="resource-access-badge free">Free</span>
+      <span class="resource-access-badge premium">Premium</span>
+      <span class="resource-access-badge purchased">Purchased</span>
+      <span class="resource-access-badge locked">Locked</span>
+    </div>
+
     <div class="resource-grid">
       {% for item in resources %}
-        <article class="resource-card" data-shortlist-card>
+        <article class="resource-card resource-card-{{ item.type }}" data-shortlist-card>
           <div class="resource-card-topline">
             <div class="resource-icon resource-icon-{{ item.type }}" aria-hidden="true">{% if item.type == 'course' %}C{% elif item.type == 'track' %}T{% else %}E{% endif %}</div>
+            <span class="resource-type">{{ item.type|title }}</span>
             <form method="post" action="{% url 'quiz:learning_shortlist_toggle' item.type item.resource.id %}" data-shortlist-form>
               {% csrf_token %}
-              <button class="shortlist-button{% if item.is_shortlisted %} is-shortlisted{% endif %}" type="submit" aria-pressed="{% if item.is_shortlisted %}true{% else %}false{% endif %}" title="{% if item.is_shortlisted %}Remove from shortlist{% else %}Add to shortlist{% endif %}">
+              <button class="shortlist-button{% if item.is_shortlisted %} is-shortlisted{% endif %}" type="submit" aria-pressed="{% if item.is_shortlisted %}true{% else %}false{% endif %}" title="{% if item.is_shortlisted %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
                 <span aria-hidden="true">{% if item.is_shortlisted %}★{% else %}☆{% endif %}</span>
-                <span class="sr-only">{% if item.is_shortlisted %}Remove from shortlist{% else %}Add to shortlist{% endif %}</span>
+                <span class="sr-only">{% if item.is_shortlisted %}Remove from wishlist{% else %}Add to wishlist{% endif %}</span>
               </button>
             </form>
           </div>
-          <div class="resource-body"><span class="resource-type">{{ item.type|title }}</span><h3>{{ item.resource.title }}</h3>
-            {% if item.type == 'course' %}<p>{{ item.resource.category.name|default:'General learning' }} · {{ item.resource.level|title }}</p>
-            {% elif item.type == 'track' %}<p>Structured exam preparation</p>
-            {% else %}<p>{{ item.resource.question_count }} questions · {{ item.duration_minutes }} min</p>{% endif %}
+
+          <div class="resource-body">
+            <h3 class="resource-title">{{ item.resource.title }}</h3>
+            <p class="resource-description">{{ item.description_label }}</p>
+
+            {% if item.type == 'course' %}
+              <div class="resource-metrics"><span>{{ item.resource.level|title }}</span><span>{{ item.resource.category.name|default:'General learning' }}</span></div>
+            {% elif item.type == 'track' %}
+              <div class="resource-metrics"><span>{{ item.exam_count }} exams included</span><span>{{ item.question_count }} questions</span></div>
+            {% else %}
+              <div class="resource-metrics"><span>{{ item.metrics_label }}</span></div>
+            {% endif %}
+
+            <div class="resource-purchase-row">
+              <span class="resource-pricing">{{ item.price_label|default:item.pricing_label }}</span>
+              <span class="resource-access-badge {% if item.has_access %}purchased{% elif item.pricing_label == 'Premium' %}premium{% else %}free{% endif %}">{{ item.access_label }}</span>
+            </div>
+
             <div class="resource-footer">
-              {% if item.has_access %}<span class="resource-status owned">You have access</span><a class="resource-action primary" href="{% if item.type == 'course' %}{% url 'courses:course_learn' item.resource.slug %}{% else %}{% url 'quiz:exam_start' item.resource.id %}{% endif %}">{% if item.type == 'course' %}Continue →{% else %}Start →{% endif %}</a>
-              {% elif item.type == 'course' %}<span class="resource-status">Free preview: first 3 lessons</span><a class="resource-action primary" href="{% url 'courses:course_preview' item.resource.slug %}">Preview →</a>
-              {% elif item.type == 'track' %}<span class="resource-status">Explore track</span><a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">Explore →</a>
-              {% elif item.resource.is_free %}<span class="resource-status">Free exam</span><a class="resource-action primary" href="{% url 'quiz:exam_start' item.resource.id %}">Start →</a>
-              {% else %}<span class="resource-status">Preview available</span><a class="resource-action primary" href="{% url 'quiz:exam_preview' item.resource.id %}">Preview →</a>{% endif %}
+              {% if item.has_access %}
+                <span class="resource-status owned">You have access</span>
+                {% if item.type == 'course' %}
+                  <a class="resource-action primary" href="{% url 'courses:course_learn' item.resource.slug %}">Continue →</a>
+                {% elif item.type == 'track' %}
+                  <a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">Continue Track →</a>
+                {% else %}
+                  <a class="resource-action primary" href="{% url 'quiz:exam_start' item.resource.id %}">Start →</a>
+                {% endif %}
+              {% elif item.type == 'course' and item.pricing_label == 'Free' %}
+                <span class="resource-status">Free course</span>
+                <form method="post" action="{% url 'courses:enroll_free_course' item.resource.slug %}">
+                  {% csrf_token %}<button class="resource-action primary" type="submit">Enroll Free →</button>
+                </form>
+              {% elif item.type == 'course' %}
+                <span class="resource-status">Premium course</span>
+                <a class="resource-action primary" href="{% url 'courses:subscribe_course' item.resource.id %}">Get Course →</a>
+              {% elif item.type == 'track' %}
+                <span class="resource-status">{{ item.exam_count }} exams in one path</span>
+                <a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">{% if item.pricing_label == 'Premium' %}View Track →{% else %}Explore Track →{% endif %}</a>
+              {% elif item.resource.is_free %}
+                <span class="resource-status">Free exam</span>
+                <a class="resource-action primary" href="{% url 'quiz:exam_start' item.resource.id %}">Start Exam →</a>
+              {% else %}
+                <span class="resource-status">Preview available</span>
+                <a class="resource-action" href="{% url 'quiz:exam_preview' item.resource.id %}">View Exam →</a>
+              {% endif %}
             </div>
           </div>
         </article>
-      {% empty %}<div class="marketplace-empty">No resources match your search or filters.</div>{% endfor %}
+      {% empty %}
+        <div class="marketplace-empty">No resources match your search or filters.</div>
+      {% endfor %}
     </div>
 
-    {% if page_obj.has_other_pages %}<nav class="marketplace-pagination" aria-label="Catalogue pages">{% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}</nav>{% endif %}
+    {% if page_obj.has_other_pages %}
+      <nav class="marketplace-pagination" aria-label="Catalogue pages">
+        {% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
+      </nav>
+    {% endif %}
   </section>
 </main>
 <script src="{% static 'js/pages/learning_shortlist.js' %}"></script>
