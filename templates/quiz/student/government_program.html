@@ -1,0 +1,19 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/government_catalog.css' %}">
+<main class="gov-catalog">
+  <nav class="gov-breadcrumb"><a href="{% url 'quiz:government_catalog' %}">Government Exams</a><span>›</span><a href="{% url 'quiz:government_country' country.slug %}">{{ country.name }}</a><span>›</span><a href="{% url 'quiz:government_body' country.slug body.slug %}">{{ body.name }}</a><span>›</span><strong>{{ program.name }}</strong></nav>
+  <header class="gov-hero compact"><span class="gov-kicker">EXAM PROGRAM</span><h1>{{ program.name }}</h1><p>{{ program.description|default:'Structured preparation using reusable NPTOR courses, practice and exams.' }}</p><div class="gov-meta"><span>{{ country.name }}</span><span>{{ body.name }}</span>{% if program.official_website %}<a href="{{ program.official_website }}" target="_blank" rel="noopener">Official source ↗</a>{% endif %}</div></header>
+
+  <section class="gov-section"><div class="gov-section-head"><div><h2>Target jobs</h2><p>Posts covered by this program.</p></div></div><div class="gov-chip-list">{% for job in jobs %}<span class="gov-chip">{{ job.name }}</span>{% empty %}<div class="gov-empty">Job mapping has not been added yet.</div>{% endfor %}</div></section>
+
+  <section class="gov-section"><div class="gov-section-head"><div><h2>Current exam versions</h2><p>Versioned syllabus and recruitment structure.</p></div></div><div class="gov-version-list">{% for version in versions %}<article class="gov-version"><div><strong>{{ version.version }}</strong><span>{{ version.status|title }}</span></div>{% if version.effective_from %}<small>Effective from {{ version.effective_from }}</small>{% endif %}{% if version.official_syllabus_url %}<a href="{{ version.official_syllabus_url }}" target="_blank" rel="noopener">Syllabus ↗</a>{% endif %}{% if version.official_notification_url %}<a href="{{ version.official_notification_url }}" target="_blank" rel="noopener">Notification ↗</a>{% endif %}</article>{% empty %}<div class="gov-empty">No active exam version has been cataloged yet.</div>{% endfor %}</div></section>
+
+  <section class="gov-section"><div class="gov-section-head"><div><h2>Exam stages</h2><p>Practice and assessment stages available through NPTOR.</p></div></div><div class="gov-stage-list">{% for stage in stages %}<article class="gov-stage"><span>{{ stage.order }}</span><div><h3>{{ stage.name }}</h3><p>{{ stage.description|default:'Assessment stage' }}</p></div><a href="{% url 'quiz:exam_detail' stage.exam.id %}">View exam →</a></article>{% empty %}<div class="gov-empty">No active stages have been mapped yet.</div>{% endfor %}</div></section>
+
+  <section class="gov-section"><div class="gov-section-head"><div><h2>Preparation courses</h2><p>Published NPTOR courses connected directly to this government program.</p></div></div><div class="gov-resource-grid">{% for course in courses %}<a class="gov-resource-card" href="{% url 'courses:course_detail' course.slug %}"><span>COURSE</span><h3>{{ course.title }}</h3><p>{{ course.description|truncatewords:24 }}</p><strong>Open course →</strong></a>{% empty %}<div class="gov-empty">No published public courses are mapped to this program yet.</div>{% endfor %}</div></section>
+
+  <section class="gov-section"><div class="gov-section-head"><div><h2>Practice & mock exams</h2><p>Use the existing NPTOR exam engine for mapped assessment resources.</p></div></div><div class="gov-resource-grid">{% for exam in exams %}<a class="gov-resource-card" href="{% url 'quiz:exam_detail' exam.id %}"><span>EXAM</span><h3>{{ exam.title }}</h3><p>{{ exam.question_count }} questions · {{ exam.passing_score }}% passing score</p><strong>View exam →</strong></a>{% empty %}<div class="gov-empty">No published exams are mapped to this program yet.</div>{% endfor %}</div></section>
+</main>
+{% endblock %}
