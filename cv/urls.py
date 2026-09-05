@@ -13,6 +13,8 @@ urlpatterns = [
     path("templates/", views.cv_templates, name="cv_templates"),
     path("<int:pk>/preview/", views.cv_preview, name="cv_preview"),
     path("<int:pk>/versions/", views.cv_versions, name="cv_versions"),
+    path("<int:pk>/export/pdf/", views.cv_export_pdf, name="cv_export_pdf"),
+    path("<int:pk>/export/docx/", views.cv_export_docx, name="cv_export_docx"),
     path("import/", views.cv_import, name="cv_import"),
     path("import/<int:pk>/review/", views.cv_import_review, name="cv_import_review"),
 ]
