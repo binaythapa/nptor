@@ -15,7 +15,7 @@ class DomainHubContractTests(SimpleTestCase):
         for hook in (
             'class="domain-hero"', 'class="domain-stats"', 'class="domain-tabs"',
             'class="domain-filter-bar"', 'name="pricing"', 'name="access"',
-            'class="resource-grid"', 'class="marketplace-empty"',
+            'class="resource-list"', 'class="marketplace-empty"',
         ):
             self.assertIn(hook, self.template)
 
