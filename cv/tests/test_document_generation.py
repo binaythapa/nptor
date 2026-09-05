@@ -116,3 +116,9 @@ class DocumentGenerationTests(TestCase):
         self.assertEqual(config["header_style"], "centered")
         self.assertEqual(config["section_style"], "minimal")
         self.assertEqual(config["density"], "compact")
+
+    def test_generated_artifact_preserves_template_style_configuration(self):
+        artifact = generate_pdf(self.version)
+        self.assertEqual(artifact.template_slug, "ats-classic")
+        self.assertEqual(artifact.template_config["layout"], "single_column")
+        self.assertEqual(artifact.template_config["section_style"], "uppercase_rule")
