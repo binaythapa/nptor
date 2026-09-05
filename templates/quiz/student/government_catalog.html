@@ -1,0 +1,23 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/government_catalog.css' %}">
+<main class="gov-catalog">
+  <nav class="gov-breadcrumb"><a href="{% url 'quiz:learning_marketplace' %}">Learning</a><span>›</span><strong>Government Exams</strong></nav>
+  <header class="gov-hero">
+    <span class="gov-kicker">GOVERNMENT EXAMS</span>
+    <h1>Prepare for government and competitive exams</h1>
+    <p>Choose a country, recruiting authority, job or exam program and follow a structured preparation path.</p>
+  </header>
+  <section class="gov-section">
+    <div class="gov-section-head"><div><h2>Countries</h2><p>Start with the country whose government exams you want to prepare for.</p></div><span>{{ countries|length }} available</span></div>
+    <div class="gov-grid">
+      {% for country in countries %}
+      <a class="gov-card" href="{% url 'quiz:government_country' country.slug %}">
+        <span class="gov-card-icon">{{ country.code }}</span><div><h3>{{ country.name }}</h3><p>Explore recruiting bodies and exam programs</p></div><span class="gov-arrow">→</span>
+      </a>
+      {% empty %}<div class="gov-empty">Government exam catalog is being prepared.</div>{% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}
