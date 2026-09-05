@@ -70,3 +70,21 @@ class CertificateVerificationTemplateContractTests(SimpleTestCase):
         self.assertIn("get_object_or_404(", source)
         self.assertIn("certificate_id=certificate_id", source)
         self.assertIn("def certificate_download(request, certificate_id):", source)
+
+
+class CoursePlayerCertificateLinkContractTests(SimpleTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.template = (
+            Path(__file__).resolve().parent.parent
+            / "templates"
+            / "courses"
+            / "student"
+            / "course_player.html"
+        ).read_text(encoding="utf-8")
+
+    def test_completed_course_card_exposes_public_verification_link(self):
+        self.assertIn("certificate.certificate_id", self.template)
+        self.assertIn("courses:certificate_verify", self.template)
+        self.assertIn("View & Verify Certificate", self.template)
