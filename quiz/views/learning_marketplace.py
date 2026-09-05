@@ -12,6 +12,9 @@ def learning_marketplace(request):
     level = request.GET.get("level", "").strip()
     access = request.GET.get("access", "").strip().lower()
     pricing = request.GET.get("pricing", "").strip().lower()
+    domain_query = request.GET.get("domain_q", "").strip()
+    domain_sort = request.GET.get("domain_sort", "az").strip().lower()
+    domain_page = request.GET.get("domain_page", 1)
 
     catalog = build_learning_catalog(
         user=request.user,
@@ -21,6 +24,9 @@ def learning_marketplace(request):
         access=access,
         pricing=pricing,
         page=request.GET.get("page", 1),
+        domain_query=domain_query,
+        domain_sort=domain_sort,
+        domain_page=domain_page,
     )
 
     return render(request, "quiz/student/learning_marketplace.html", catalog)
