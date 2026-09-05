@@ -1,0 +1,11 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/government_catalog.css' %}">
+<main class="gov-catalog">
+  <nav class="gov-breadcrumb"><a href="{% url 'quiz:government_catalog' %}">Government Exams</a><span>›</span><a href="{% url 'quiz:government_country' country.slug %}">{{ country.name }}</a><span>›</span><strong>{{ body.name }}</strong></nav>
+  <header class="gov-hero compact"><span class="gov-kicker">RECRUITING AUTHORITY</span><h1>{{ body.name }}</h1>{% if body.official_website %}<p><a href="{{ body.official_website }}" target="_blank" rel="noopener">Official website ↗</a></p>{% endif %}</header>
+  <section class="gov-section"><div class="gov-section-head"><div><h2>Jobs / posts</h2><p>Recruitment targets connected to this authority.</p></div></div><div class="gov-chip-list">{% for job in jobs %}<span class="gov-chip">{{ job.name }}</span>{% empty %}<div class="gov-empty">No active jobs have been cataloged yet.</div>{% endfor %}</div></section>
+  <section class="gov-section"><div class="gov-section-head"><div><h2>Exam programs</h2><p>Choose a program to see versions, stages, courses and practice exams.</p></div></div><div class="gov-list">{% for program in programs %}<a class="gov-program-row" href="{% url 'quiz:government_program' country.slug body.slug program.slug %}"><div><span>{{ program.code }}</span><h3>{{ program.name }}</h3><p>{{ program.description|default:'Structured NPTOR preparation path.' }}</p></div><strong>Open →</strong></a>{% empty %}<div class="gov-empty">No active programs are available.</div>{% endfor %}</div></section>
+</main>
+{% endblock %}
