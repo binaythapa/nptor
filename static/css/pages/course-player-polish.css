@@ -1,0 +1,111 @@
+/* Final course-player visual polish layered on top of the shared LMS system. */
+
+.course-player-page .lesson-meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 8px;
+    color: var(--lms-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.course-player-page .lesson-meta::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lms-primary);
+}
+
+.course-player-page .assessment-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 22px;
+    padding: 14px 16px;
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    background: #f8fbff;
+}
+
+.course-player-page .assessment-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #dbeafe;
+    color: var(--lms-primary-dark);
+    font-weight: 800;
+}
+
+.course-player-page .assessment-card strong,
+.course-player-page .assessment-card span {
+    display: block;
+}
+
+.course-player-page .assessment-card strong {
+    color: var(--lms-navy);
+    font-size: 14px;
+}
+
+.course-player-page .assessment-card span {
+    margin-top: 3px;
+    color: var(--lms-muted);
+    font-size: 12px;
+}
+
+.course-player-page .completion-stat {
+    min-width: 76px;
+    padding: 7px 12px;
+    border-left: 1px solid #bfdbfe;
+    text-align: center;
+}
+
+.course-player-page .completion-stat strong,
+.course-player-page .completion-stat span {
+    display: block;
+}
+
+.course-player-page .completion-stat strong {
+    color: var(--lms-primary-dark);
+    font-size: 18px;
+    line-height: 1.1;
+}
+
+.course-player-page .completion-stat span {
+    margin-top: 3px;
+    color: var(--lms-muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.course-player-page .certificate-card {
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .course-player-page .assessment-card {
+        align-items: flex-start;
+    }
+
+    .course-player-page .completion-stat {
+        width: 100%;
+        border-top: 1px solid #bfdbfe;
+        border-left: 0;
+        padding: 10px 0 0;
+        text-align: left;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .course-player-page .assessment-card,
+    .course-player-page .completion-stat {
+        transition: none;
+    }
+}
