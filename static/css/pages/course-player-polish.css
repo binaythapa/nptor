@@ -89,6 +89,60 @@
     align-items: center;
 }
 
+.course-player-page .certificate-card-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.course-player-page .certificate-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.course-player-page .certificate-actions .btn-primary,
+.course-player-page .certificate-actions .btn-secondary {
+    white-space: nowrap;
+}
+
+.course-player-page .certificate-verify-btn {
+    border-color: #bfdbfe;
+    background: #ffffff;
+    color: var(--lms-primary-dark);
+}
+
+.course-player-page .certificate-verify-btn:hover,
+.course-player-page .certificate-verify-btn:focus-visible {
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+.course-player-page .celebration-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 18px 0 12px;
+}
+
+@media (max-width: 900px) {
+    .course-player-page .certificate-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .course-player-page .certificate-actions {
+        width: 100%;
+        margin-left: 0;
+        justify-content: flex-start;
+    }
+}
+
 @media (max-width: 768px) {
     .course-player-page .assessment-card {
         align-items: flex-start;
@@ -100,6 +154,27 @@
         border-left: 0;
         padding: 10px 0 0;
         text-align: left;
+    }
+
+    .course-player-page .certificate-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .course-player-page .certificate-actions .btn-primary,
+    .course-player-page .certificate-actions .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+
+    .course-player-page .celebration-actions {
+        flex-direction: column;
+    }
+
+    .course-player-page .celebration-actions .btn-primary,
+    .course-player-page .celebration-actions .btn-secondary {
+        width: 100%;
+        text-align: center;
     }
 }
 
