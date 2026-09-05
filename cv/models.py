@@ -53,6 +53,9 @@ class CareerExperience(CareerProfileChild):
     is_current = models.BooleanField(default=False)
     description = models.TextField(blank=True)
 
+    class Meta:
+        default_related_name = "career_experience_records"
+
     def __str__(self):
         return f"{self.job_title} - {self.employer}"
 
@@ -66,6 +69,9 @@ class CareerEducation(CareerProfileChild):
     end_date = models.DateField(null=True, blank=True)
     description = models.TextField(blank=True)
 
+    class Meta:
+        default_related_name = "career_education_records"
+
     def __str__(self):
         return f"{self.qualification} - {self.institution}"
 
@@ -77,6 +83,9 @@ class CareerProject(CareerProfileChild):
     description = models.TextField(blank=True)
     technologies = models.CharField(max_length=1000, blank=True)
 
+    class Meta:
+        default_related_name = "career_project_records"
+
     def __str__(self):
         return self.name
 
@@ -86,6 +95,9 @@ class CareerSkill(CareerProfileChild):
     category = models.CharField(max_length=100, blank=True)
     proficiency = models.CharField(max_length=100, blank=True)
 
+    class Meta:
+        default_related_name = "career_skill_records"
+
     def __str__(self):
         return self.name
 
@@ -94,6 +106,9 @@ class CareerAchievement(CareerProfileChild):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     achieved_on = models.DateField(null=True, blank=True)
+
+    class Meta:
+        default_related_name = "career_achievement_records"
 
     def __str__(self):
         return self.title
@@ -106,6 +121,9 @@ class CareerCertification(CareerProfileChild):
     credential_url = models.URLField(blank=True)
     issued_on = models.DateField(null=True, blank=True)
     expires_on = models.DateField(null=True, blank=True)
+
+    class Meta:
+        default_related_name = "career_certification_records"
 
     def __str__(self):
         return self.name
