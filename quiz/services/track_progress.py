@@ -29,6 +29,19 @@ def _passed_exam_ids(user, exams):
     )
 
 
+def _passed_prerequisite_ids(user, exam):
+    prerequisite_ids = list(
+        exam.prerequisite_exams.values_list("id", flat=True)
+    )
+    if not prerequisite_ids:
+        return set()
+
+    return _passed_exam_ids(
+        user,
+        list(exam.prerequisite_exams.all()),
+    )
+
+
 def track_exam_lock(user, exam, ordered_exams=None, passed_exam_ids=None):
     """Return (locked, reason) for an exam's track progression policy."""
     if not exam.track_id:
@@ -58,8 +71,10 @@ def track_exam_lock(user, exam, ordered_exams=None, passed_exam_ids=None):
     prerequisite_ids = set(
         exam.prerequisite_exams.values_list("id", flat=True)
     )
-    if prerequisite_ids and not prerequisite_ids.issubset(passed_ids):
-        return True, "Prerequisite exam required"
+    if prerequisite_ids:
+        passed_prerequisites = _passed_prerequisite_ids(user, exam)
+        if not prerequisite_ids.issubset(passed_prerequisites):
+            return True, "Prerequisite exam required"
 
     return False, None
 
@@ -78,9 +93,11 @@ def build_track_progress(user, track):
         prerequisite_ids = set(
             exam.prerequisite_exams.values_list("id", flat=True)
         )
-        if is_unlocked and prerequisite_ids and not prerequisite_ids.issubset(passed_ids):
-            is_unlocked = False
-            lock_reason = "Complete the prerequisite exam(s) first."
+        if is_unlocked and prerequisite_ids:
+            passed_prerequisites = _passed_prerequisite_ids(user, exam)
+            if not prerequisite_ids.issubset(passed_prerequisites):
+                is_unlocked = False
+                lock_reason = "Complete the prerequisite exam(s) first."
         elif not is_unlocked:
             lock_reason = "Complete the previous exam with a passing score."
 
