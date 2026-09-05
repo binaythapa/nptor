@@ -104,7 +104,7 @@
             {% if is_preview %}<span class="preview-pill">Preview</span>{% endif %}
         </div>
 
-        <article class="lesson-surface">
+        <article class="lesson-surface{% if lesson.lesson_type == lesson.TYPE_QUIZ %} lesson-surface-assessment{% endif %}">
             {% if lesson.lesson_type == lesson.TYPE_VIDEO %}
                 <div class="lesson-video">
                     <iframe id="courseVideoPlayer" src="{{ video_embed_url }}?enablejsapi=1&origin={{ request.scheme }}://{{ request.get_host }}" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" data-progress-url="{% url 'courses:track_video_progress' %}" data-lesson-id="{{ lesson.id }}" title="{{ lesson.title }} video"></iframe>
@@ -137,7 +137,9 @@
                 {% if is_preview %}
                     <div class="preview-notice"><strong>Quiz Preview</strong><span>This lesson is linked to: <strong>{{ lesson.exam.title }}</strong></span><span>Quiz attempts are disabled in developer preview mode.</span></div>
                 {% else %}
-                    <a href="{% url 'quiz:exam_start' lesson.exam.id %}?course={{ course.slug }}&lesson={{ lesson.id }}" class="btn-primary">{% if lesson_progress.completed %}↻ Re-attempt Quiz{% else %}Start Quiz →{% endif %}</a>
+                    <div class="assessment-actions">
+                        <a href="{% url 'quiz:exam_start' lesson.exam.id %}?course={{ course.slug }}&lesson={{ lesson.id }}" class="btn-primary">{% if lesson_progress.completed %}↻ Retake Assessment{% else %}Start Assessment →{% endif %}</a>
+                    </div>
                 {% endif %}
             {% elif lesson.lesson_type == lesson.TYPE_PRACTICE %}
                 <div class="lesson-content description">{{ lesson.article_content|safe }}</div>
