@@ -1,0 +1,123 @@
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/exam_detail.css' %}">
+
+<main class="exam-detail" aria-labelledby="exam-detail-title">
+  <section class="exam-detail-hero" data-section="exam-detail-hero">
+    <div class="exam-detail-breadcrumb">
+      <a href="{% url 'quiz:learning_marketplace' %}">Learning</a>
+      <span aria-hidden="true">/</span>
+      {% if exam.primary_category and exam.primary_category.domain %}
+        <a href="{% url 'quiz:learning_domain' exam.primary_category.domain.slug %}">{{ exam.primary_category.domain.name }}</a>
+        <span aria-hidden="true">/</span>
+      {% endif %}
+      <span>Exam</span>
+    </div>
+
+    <div class="exam-detail-hero-grid">
+      <div>
+        <div class="exam-detail-eyebrow">
+          <span class="exam-detail-type">CERTIFICATION EXAM</span>
+          <span class="exam-detail-badge {% if exam.is_free %}free{% else %}premium{% endif %}">{% if exam.is_free %}FREE{% else %}PREMIUM{% endif %}</span>
+          {% if has_access %}<span class="exam-detail-badge owned">YOUR ACCESS</span>{% endif %}
+        </div>
+        <h1 id="exam-detail-title">{{ exam.title }}</h1>
+        <p class="exam-detail-intro">Structured certification preparation with a timed assessment, clear scoring requirements, and focused review.</p>
+
+        <div class="exam-detail-metrics" data-section="exam-detail-metrics" aria-label="Exam information">
+          <div><strong>{{ exam.question_count }}</strong><span>Questions</span></div>
+          <div><strong>{{ duration_minutes }} min</strong><span>Duration</span></div>
+          <div><strong>{{ exam.passing_score|floatformat:0 }}%</strong><span>Passing score</span></div>
+          <div><strong>Level {{ exam.level }}</strong><span>Difficulty</span></div>
+        </div>
+      </div>
+
+      <aside class="exam-detail-access" data-section="exam-detail-access" aria-label="Exam access">
+        <div class="exam-detail-price">{% if exam.is_free %}Free{% elif exam.price %}{{ exam.currency }} {{ exam.price|floatformat:0 }}{% else %}Premium{% endif %}</div>
+        {% if has_access %}
+          <p class="exam-detail-access-state success">You have access to this exam.</p>
+        {% elif access_reason %}
+          <p class="exam-detail-access-state">{{ access_reason }}</p>
+        {% endif %}
+
+        {% if action == 'continue' %}
+          <a class="exam-detail-action primary" data-section="exam-detail-action" href="{% url 'quiz:exam_take' active_attempt.id %}">Continue Exam</a>
+        {% elif action == 'start' %}
+          <a class="exam-detail-action primary" data-section="exam-detail-action" href="{% url 'quiz:exam_start' exam.id %}">Start Exam</a>
+        {% elif action == 'review' %}
+          <a class="exam-detail-action primary" data-section="exam-detail-action" href="{% url 'quiz:exam_result' latest_attempt.id %}">Review Result</a>
+        {% elif action == 'retry' %}
+          <a class="exam-detail-action primary" data-section="exam-detail-action" href="{% url 'quiz:exam_start' exam.id %}">Retry Exam</a>
+        {% elif action == 'preview' %}
+          <a class="exam-detail-action" data-section="exam-detail-action" href="{% url 'quiz:exam_preview' exam.id %}">Preview Exam</a>
+        {% else %}
+          <span class="exam-detail-action disabled" data-section="exam-detail-action">Locked</span>
+        {% endif %}
+      </aside>
+    </div>
+  </section>
+
+  <div class="exam-detail-layout">
+    <div class="exam-detail-main">
+      <section class="exam-detail-card" data-section="exam-detail-rules" aria-labelledby="rules-title">
+        <div class="exam-detail-card-heading">
+          <div><span class="exam-detail-section-kicker">BEFORE YOU START</span><h2 id="rules-title">Exam rules</h2></div>
+        </div>
+        <div class="exam-rule-grid">
+          <div><strong>Passing score</strong><span>You need {{ exam.passing_score|floatformat:0 }}% or higher to pass.</span></div>
+          <div><strong>Timed attempt</strong><span>You have {{ duration_minutes }} minutes to complete {{ exam.question_count }} questions.</span></div>
+          <div><strong>Review</strong><span>{% if exam.allow_review %}Answer review is available before submission.{% else %}This is a certification-style exam with review disabled.{% endif %}</span></div>
+          <div><strong>Attempts</strong><span data-section="exam-detail-attempts">{% if latest_attempt %}Latest result: {{ latest_attempt.score|floatformat:0 }}%.{% else %}No attempts yet.{% endif %}</span></div>
+        </div>
+      </section>
+
+      {% if exam.track %}
+      <section class="exam-detail-card" data-section="exam-detail-track" aria-labelledby="track-title">
+        <div class="exam-detail-card-heading">
+          <div><span class="exam-detail-section-kicker">CERTIFICATION PATH</span><h2 id="track-title">{{ exam.track.title }}</h2></div>
+          <a href="{% url 'quiz:learning_track' exam.track.slug %}">View track</a>
+        </div>
+        {% if track_progress %}
+          <div class="exam-track-progress"><span>{{ track_progress.completed_count }} of {{ track_progress.total_count }} exams completed</span><strong>{{ track_progress.percent }}%</strong></div>
+          <div class="exam-track-bar" role="progressbar" aria-valuenow="{{ track_progress.percent }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ track_progress.percent }}%"></span></div>
+        {% endif %}
+        {% if track_item and not track_item.is_unlocked %}
+          <div class="exam-lock-callout">{{ track_item.lock_reason }}</div>
+        {% else %}
+          <p>This exam is part of the certification sequence. Complete it to progress to the next track exam.</p>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      <section class="exam-detail-card" aria-labelledby="prerequisites-title">
+        <div class="exam-detail-card-heading"><div><span class="exam-detail-section-kicker">ELIGIBILITY</span><h2 id="prerequisites-title">Prerequisites</h2></div></div>
+        {% if prerequisite_count %}
+          <p>This exam has {{ prerequisite_count }} prerequisite exam{{ prerequisite_count|pluralize }}. Each prerequisite must be passed before this exam can be started.</p>
+        {% else %}
+          <p>No separate prerequisite exams are configured for this assessment.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="exam-detail-sidebar">
+      <section class="exam-detail-summary" aria-labelledby="summary-title">
+        <h2 id="summary-title">At a glance</h2>
+        <dl>
+          <div><dt>Questions</dt><dd>{{ exam.question_count }}</dd></div>
+          <div><dt>Duration</dt><dd>{{ duration_minutes }} min</dd></div>
+          <div><dt>Passing score</dt><dd>{{ exam.passing_score|floatformat:0 }}%</dd></div>
+          <div><dt>Level</dt><dd>{{ exam.level }}</dd></div>
+          <div><dt>Review</dt><dd>{% if exam.allow_review %}Allowed{% else %}Disabled{% endif %}</dd></div>
+        </dl>
+      </section>
+
+      <section class="exam-detail-help">
+        <strong>Ready to test your knowledge?</strong>
+        <p>Start when you have enough uninterrupted time to complete the timed assessment.</p>
+      </section>
+    </aside>
+  </div>
+</main>
+{% endblock %}
