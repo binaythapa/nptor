@@ -57,3 +57,13 @@ class LearningCatalogServiceTests(TestCase):
         self.assertEqual(len(catalog["resources"]), 5)
         self.assertEqual(catalog["page_obj"].number, 2)
         self.assertTrue(all(item["type"] == "exam" for item in catalog["resources"]))
+
+    def test_pricing_filter_separates_free_and_premium_resources(self):
+        Exam.objects.create(title="Free AWS Practice", primary_category=self.aws_category, question_count=10, duration_seconds=1800, is_published=True, is_free=True)
+        Exam.objects.create(title="Premium AWS Practice", primary_category=self.aws_category, question_count=20, duration_seconds=3600, is_published=True, is_free=False, price=499, currency="INR")
+
+        free_catalog = build_learning_catalog(user=self.user, resource_type="exams", pricing="free")
+        premium_catalog = build_learning_catalog(user=self.user, resource_type="exams", pricing="premium")
+
+        self.assertEqual([item["resource"].title for item in free_catalog["resources"]], ["Free AWS Practice"])
+        self.assertEqual([item["resource"].title for item in premium_catalog["resources"]], ["Premium AWS Practice"])
