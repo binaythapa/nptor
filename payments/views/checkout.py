@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -13,6 +11,7 @@ from payments.services import OrderService, PaymentService
 from subscriptions.services import AccessService
 from subscriptions.services.plan_service import (
     get_plan_for_course,
+    get_plan_for_exam,
     get_plan_for_track,
 )
 
@@ -84,10 +83,7 @@ def course_checkout(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
 
     if not course.is_publicly_available():
-        messages.error(
-            request,
-            "This course is not currently available for purchase.",
-        )
+        messages.error(request, "This course is not currently available for purchase.")
         return redirect("quiz:exam_list")
 
     if AccessService.has_access(
@@ -157,23 +153,26 @@ def exam_checkout(request, exam_id):
         resource_type=AccessService.RESOURCE_EXAM,
         resource=exam,
     ):
-        messages.info(request, "You already have access to this exam.")
+        messages.info(request, "You already have direct access to this exam.")
         return redirect("quiz:exam_start", exam_id=exam.id)
 
-    if exam.is_free:
+    plan = get_plan_for_exam(exam)
+    if not plan:
+        messages.error(
+            request,
+            "This exam has no direct purchase plan. Access it through an eligible track.",
+        )
+        return redirect("quiz:exam_detail", exam_id=exam.id)
+
+    if plan.price == 0:
         messages.info(request, "This exam is free.")
-        return redirect("quiz:exam_start", exam_id=exam.id)
-
-    amount = Decimal(str(exam.price or 0))
-    if amount == Decimal("0"):
-        messages.info(request, "This exam does not require payment.")
         return redirect("quiz:exam_start", exam_id=exam.id)
 
     return _start_payment(
         request=request,
         resource_type=PaymentOrder.RESOURCE_EXAM,
         resource=exam,
-        amount=amount,
-        currency=getattr(exam, "currency", None) or "INR",
+        amount=plan.price,
+        currency=plan.currency,
         return_to=request.GET.get("next"),
     )
