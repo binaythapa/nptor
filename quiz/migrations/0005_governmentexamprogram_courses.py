@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("courses", "0002_initial"),
-        ("quiz", "0003_government_exam_catalog"),
+        ("quiz", "0004_align_current_models"),
     ]
 
     operations = [
