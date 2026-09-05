@@ -94,6 +94,9 @@
             <div>
                 <span class="lesson-kicker">CURRENT LESSON</span>
                 <h1>{{ lesson.title }}</h1>
+                <div class="lesson-meta" aria-label="Lesson type">
+                    {% if lesson.lesson_type == lesson.TYPE_VIDEO %}Video lesson{% elif lesson.lesson_type == lesson.TYPE_QUIZ %}Assessment{% elif lesson.lesson_type == lesson.TYPE_PRACTICE %}Practice session{% else %}Learning lesson{% endif %}
+                </div>
             </div>
             {% if not is_preview and lesson_progress.completed %}<span class="completion-pill">✓ Completed</span>{% endif %}
             {% if is_preview %}<span class="preview-pill">Preview</span>{% endif %}
@@ -121,6 +124,13 @@
                     <p class="lesson-status-message completed-message">✓ Lesson completed</p>
                 {% endif %}
             {% elif lesson.lesson_type == lesson.TYPE_QUIZ %}
+                <div class="assessment-card" aria-label="Assessment details">
+                    <div class="assessment-icon">✓</div>
+                    <div>
+                        <strong>Final Assessment</strong>
+                        <span>Test your knowledge from this course module.</span>
+                    </div>
+                </div>
                 <div class="lesson-content description">{{ lesson.article_content|safe }}</div>
                 {% if is_preview %}
                     <div class="preview-notice"><strong>Quiz Preview</strong><span>This lesson is linked to: <strong>{{ lesson.exam.title }}</strong></span><span>Quiz attempts are disabled in developer preview mode.</span></div>
@@ -144,6 +154,7 @@
         {% if not is_preview and certificate %}
         <div class="certificate-card">
             <div><span class="certificate-icon">★</span><div><strong>Course completed</strong><span>Your certificate is ready.</span></div></div>
+            <div class="completion-stat"><strong>{{ progress }}%</strong><span>Complete</span></div>
             <a href="{% url 'courses:course_certificate_pdf' course.slug %}" class="btn-primary">Download Certificate</a>
         </div>
         {% endif %}
