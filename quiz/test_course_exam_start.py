@@ -1,3 +1,4 @@
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -5,7 +6,6 @@ from django.test import SimpleTestCase
 
 from quiz.views.course_exam_start import _course_access_allows_quiz
 from quiz.views.exam_submission import _course_quiz_return_redirect
-from quiz.views.practice import _course_practice_return_redirect
 
 
 class CourseExamAccessTests(SimpleTestCase):
@@ -66,26 +66,16 @@ class CourseExamReturnRedirectTests(SimpleTestCase):
         self.assertIsNone(_course_quiz_return_redirect(request))
 
 
-class CoursePracticeReturnRedirectTests(SimpleTestCase):
-    def test_course_practice_returns_to_course_lesson(self):
-        request = SimpleNamespace(
-            session={
-                "course_practice_context": {
-                    "course_slug": "demo-aws-cloud-course",
-                    "lesson_id": 7,
-                }
-            }
+class CoursePracticeAjaxContextTests(SimpleTestCase):
+    def test_practice_ajax_urls_forward_course_context(self):
+        template_path = Path(__file__).resolve().parents[1] / "templates/quiz/student/practice/practice.html"
+        template = template_path.read_text(encoding="utf-8")
+
+        self.assertIn(
+            'nextUrl: "{% url \'quiz:practice_next_ajax\' %}?course={{ request.GET.course }}&amp;lesson={{ request.GET.lesson }}"',
+            template,
         )
-
-        response = _course_practice_return_redirect(request)
-
-        self.assertIsNotNone(response)
-        self.assertEqual(
-            response.url,
-            "/courses/demo-aws-cloud-course/learn/7/",
+        self.assertIn(
+            'skipUrl: "{% url \'quiz:practice_skip_ajax\' %}?course={{ request.GET.course }}&amp;lesson={{ request.GET.lesson }}"',
+            template,
         )
-
-    def test_standalone_practice_has_no_course_return_redirect(self):
-        request = SimpleNamespace(session={})
-
-        self.assertIsNone(_course_practice_return_redirect(request))
