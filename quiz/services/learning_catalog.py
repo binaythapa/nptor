@@ -2,7 +2,7 @@ from django.core.paginator import Paginator
 from django.db.models import Prefetch
 
 from courses.models import Course
-from quiz.models import Category, Domain, Exam, ExamTrack, LearningShortlist
+from quiz.models import Category, ContentVertical, Domain, Exam, ExamTrack, LearningShortlist
 from subscriptions.models.plan import SubscriptionPlan
 from subscriptions.services import AccessService
 
@@ -11,10 +11,13 @@ DEFAULT_PER_PAGE = 12
 MAX_PER_PAGE = 48
 DOMAIN_PER_PAGE = 24
 POPULAR_DOMAIN_COUNT = 8
-VALID_RESOURCE_TYPES = {"all", "courses", "tracks", "exams"}
+VALID_RESOURCE_TYPES = {"all", "courses", "tracks"}
 VALID_ACCESS_FILTERS = {"", "owned", "available"}
 VALID_PRICING_FILTERS = {"", "free", "premium"}
 VALID_DOMAIN_SORTS = {"az", "za"}
+VALID_CATALOG_VERTICALS = {
+    value for value, _ in ContentVertical.TYPE_CHOICES
+}
 
 
 def _public_courses():
@@ -81,6 +84,12 @@ def _domain_for_track(track):
     return sorted(domains, key=lambda domain: domain.name.lower())[0]
 
 
+def _matches_vertical(domain, catalog_vertical):
+    if not catalog_vertical:
+        return True
+    return bool(domain and domain.content_vertical_id and domain.content_vertical.vertical_type == catalog_vertical)
+
+
 def _domain_summary(domain, courses, exams, tracks):
     course_ids = [course.id for course in courses if course.category and course.category.domain_id == domain.id]
     exam_ids = [exam.id for exam in exams if exam.primary_category and exam.primary_category.domain_id == domain.id]
@@ -141,15 +150,6 @@ def _resource_item(resource_type, resource):
         if plans:
             plan = min(plans, key=lambda value: value.price)
             item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
-    elif resource_type == "exam":
-        plans = _active_plans(resource)
-        item["duration_minutes"] = (resource.duration_seconds or 0) // 60
-        item["pricing_label"] = "Premium" if any(plan.price > 0 for plan in plans) else "Free"
-        item["description_label"] = "Timed practice and assessment"
-        item["metrics_label"] = f"{resource.question_count} questions · {item['duration_minutes']} min · Pass {resource.passing_score:g}%"
-        if plans:
-            plan = min(plans, key=lambda value: value.price)
-            item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
     elif resource_type == "track":
         published_exams = [
             exam for exam in _track_exams(resource)
@@ -198,7 +198,7 @@ def _build_domain_explorer(domains, domain_query="", domain_sort="az", domain_pa
     popular_domains = sorted(
         domains,
         key=lambda item: (
-            -(item["course_count"] + item["track_count"] + item["exam_count"]),
+            -(item["course_count"] + item["track_count"]),
             item["domain"].name.lower(),
         ),
     )[:POPULAR_DOMAIN_COUNT]
@@ -224,17 +224,45 @@ def _build_domain_explorer(domains, domain_query="", domain_sort="az", domain_pa
     return popular_domains, paginator.get_page(page_number), domain_sort
 
 
-def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, pricing="", page=1, per_page=DEFAULT_PER_PAGE, domain_query="", domain_sort="az", domain_page=1):
+def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, pricing="", page=1, per_page=DEFAULT_PER_PAGE, domain_query="", domain_sort="az", domain_page=1, catalog_vertical=None):
+    if catalog_vertical not in VALID_CATALOG_VERTICALS:
+        catalog_vertical = None
+
     courses = list(_public_courses().order_by("title"))
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
 
-    active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).order_by("name"))
+    courses = [
+        item for item in courses
+        if _matches_vertical(getattr(item.category, "domain", None), catalog_vertical)
+    ]
+    exams = [
+        item for item in exams
+        if _matches_vertical(getattr(item.primary_category, "domain", None), catalog_vertical)
+    ]
+    tracks = [
+        item for item in tracks
+        if _matches_vertical(_domain_for_track(item), catalog_vertical)
+    ]
+
+    active_domains = list(
+        Domain.objects.filter(
+            is_active=True,
+            organization__isnull=True,
+        ).select_related("content_vertical").order_by("name")
+    )
+    active_domains = [
+        item for item in active_domains
+        if _matches_vertical(item, catalog_vertical)
+    ]
     domains = [_domain_summary(item, courses, exams, tracks) for item in active_domains]
-    domains = [item for item in domains if item["course_count"] or item["exam_count"] or item["track_count"]]
+    domains = [item for item in domains if item["course_count"] or item["track_count"]]
     popular_domains, domain_page_obj, domain_sort = _build_domain_explorer(domains, domain_query, domain_sort, domain_page)
 
     selected_domain = domain
+    if selected_domain is not None and catalog_vertical and not _matches_vertical(selected_domain, catalog_vertical):
+        selected_domain = None
+
     if selected_domain is not None:
         courses = [item for item in courses if item.category and item.category.domain_id == selected_domain.id]
         exams = [item for item in exams if item.primary_category and item.primary_category.domain_id == selected_domain.id]
@@ -254,10 +282,8 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
 
     needle = query.lower()
     courses = [item for item in courses if _matches_query(item, "course", needle)]
-    exams = [item for item in exams if _matches_query(item, "exam", needle)]
     tracks = [item for item in tracks if _matches_query(item, "track", needle)]
     courses = [item for item in courses if _matches_level(item, "course", level)]
-    exams = [item for item in exams if _matches_level(item, "exam", level)]
     tracks = [
         item for item in tracks
         if not level or any(_matches_level(exam, "exam", level) for exam in _track_exams(item))
@@ -268,8 +294,6 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         resources.extend(_resource_item("course", item) for item in courses)
     if resource_type in {"all", "tracks"}:
         resources.extend(_resource_item("track", item) for item in tracks)
-    if resource_type in {"all", "exams"}:
-        resources.extend(_resource_item("exam", item) for item in exams)
 
     if pricing:
         resources = [item for item in resources if item["pricing_label"].lower() == pricing]
@@ -308,6 +332,10 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         if selected_domain else Category.objects.none()
     )
 
+    vertical_label = None
+    if catalog_vertical:
+        vertical_label = dict(ContentVertical.TYPE_CHOICES).get(catalog_vertical)
+
     return {
         "domains": domain_page_obj.object_list,
         "popular_domains": popular_domains,
@@ -324,4 +352,6 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         "level": level,
         "access": access,
         "pricing": pricing,
+        "catalog_vertical": catalog_vertical,
+        "catalog_vertical_label": vertical_label,
     }
