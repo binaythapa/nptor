@@ -15,16 +15,6 @@ from cv.models_version import CVVersion
 from cv.services.profile import account_contact_defaults, get_or_create_career_profile
 
 
-SECTION_MODELS = {
-    "experiences": CareerExperience,
-    "educations": CareerEducation,
-    "projects": CareerProject,
-    "skills": CareerSkill,
-    "achievements": CareerAchievement,
-    "certifications": CareerCertification,
-}
-
-
 def _json_value(value):
     return value.isoformat() if hasattr(value, "isoformat") and value is not None else value
 
@@ -35,10 +25,11 @@ def _serialize(instance, fields):
 
 def _selected_records(cv, section, queryset):
     selected = cv.selected_sections.get(section)
+    records = list(queryset)
     if not selected:
-        return list(queryset)
+        return records
     ids = {int(value) for value in selected}
-    return [item for item in queryset if item.id in ids]
+    return [item for item in records if item.id in ids]
 
 
 def create_cv(user, title, template):
@@ -75,27 +66,27 @@ def build_cv_payload(cv):
 
     payload["experiences"] = [
         _serialize(item, ["id", "job_title", "employer", "location", "start_date", "end_date", "is_current", "description"])
-        for item in _selected_records(cv, "experiences", profile.experiences.all())
+        for item in _selected_records(cv, "experiences", profile.careerexperience_records.all())
     ]
     payload["educations"] = [
         _serialize(item, ["id", "institution", "qualification", "field_of_study", "location", "start_date", "end_date", "description"])
-        for item in _selected_records(cv, "educations", profile.educations.all())
+        for item in _selected_records(cv, "educations", profile.careereducation_records.all())
     ]
     payload["projects"] = [
         _serialize(item, ["id", "name", "role", "url", "description", "technologies"])
-        for item in _selected_records(cv, "projects", profile.projects.all())
+        for item in _selected_records(cv, "projects", profile.careerproject_records.all())
     ]
     payload["skills"] = [
         _serialize(item, ["id", "name", "category", "proficiency"])
-        for item in _selected_records(cv, "skills", profile.skills.all())
+        for item in _selected_records(cv, "skills", profile.careerskill_records.all())
     ]
     payload["achievements"] = [
         _serialize(item, ["id", "title", "description", "achieved_on"])
-        for item in _selected_records(cv, "achievements", profile.achievements.all())
+        for item in _selected_records(cv, "achievements", profile.careerachievement_records.all())
     ]
     payload["certifications"] = [
         _serialize(item, ["id", "name", "issuer", "credential_id", "credential_url", "issued_on", "expires_on"])
-        for item in _selected_records(cv, "certifications", profile.certifications.all())
+        for item in _selected_records(cv, "certifications", profile.careercertification_records.all())
     ]
 
     return payload
