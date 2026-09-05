@@ -15,6 +15,15 @@ class Domain(models.Model):
         help_text="Organization that owns this domain",
     )
 
+    content_vertical = models.ForeignKey(
+        "quiz.ContentVertical",
+        on_delete=models.SET_NULL,
+        related_name="domains",
+        null=True,
+        blank=True,
+        help_text="Top-level catalog vertical for this platform domain.",
+    )
+
     name = models.CharField(max_length=50)
 
     slug = models.SlugField(
