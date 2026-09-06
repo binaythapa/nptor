@@ -50,3 +50,14 @@ class CVLayoutTests(TestCase):
         self.assertContains(response, cv.title)
         self.assertContains(response, f'href="{reverse("quiz:dashboard")}"')
         self.assertContains(response, f'href="{reverse("cv:cv_preview", kwargs={"pk": cv.pk})}"')
+
+    def test_cv_preview_is_standalone_without_website_header_or_workspace_nav(self):
+        cv = create_cv(self.user, "Preview Layout Test CV", self.template)
+
+        response = self.client.get(reverse("cv:cv_preview", kwargs={"pk": cv.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Resume Preview")
+        self.assertNotContains(response, "cv-workspace-nav")
+        self.assertNotContains(response, "Logout")
+        self.assertNotContains(response, 'class="app-layout"')
