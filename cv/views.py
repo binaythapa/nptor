@@ -1,8 +1,8 @@
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse
+from django.http import FileResponse, Http404, HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 
-from cv.forms import CareerProfileForm, CVBuilderForm, CVForm
+from cv.forms import CAREER_RECORD_FORMS, CareerProfileForm, CVBuilderForm, CVForm
 from cv.forms_import import CVImportForm
 from cv.models import CV, CVTemplate
 from cv.models_ai import AIConversation, AIExtraction, AISuggestion, ATSAnalysis
@@ -26,6 +26,17 @@ BUILDER_SECTIONS = (
 )
 
 
+def _career_record_config(section):
+    try:
+        return CAREER_RECORD_FORMS[section]
+    except KeyError:
+        raise Http404("Unknown career profile section.")
+
+
+def _career_record_queryset(model, user):
+    return model.objects.filter(profile__user=user)
+
+
 @login_required
 def dashboard(request):
     profile = get_or_create_career_profile(request.user)
@@ -40,7 +51,52 @@ def profile(request):
         form = CareerProfileForm(request.POST, instance=career_profile)
         if form.is_valid(): form.save(); return redirect("cv:profile")
     else: form = CareerProfileForm(instance=career_profile)
-    return render(request, "cv/profile.html", {"form": form, "contact": account_contact_defaults(request.user), "profile": career_profile})
+    sections = []
+    for section, (_model, _form_class, label) in CAREER_RECORD_FORMS.items():
+        records = _model.objects.filter(profile=career_profile)
+        sections.append({"key": section, "label": label, "records": records, "count": records.count()})
+    return render(request, "cv/profile.html", {"form": form, "contact": account_contact_defaults(request.user), "profile": career_profile, "sections": sections})
+
+
+@login_required
+def profile_record_add(request, section):
+    model, form_class, label = _career_record_config(section)
+    if request.method == "POST":
+        form = form_class(request.POST)
+        if form.is_valid():
+            record = form.save(commit=False)
+            record.profile = get_or_create_career_profile(request.user)
+            record.source = "user"
+            record.is_confirmed = True
+            record.save()
+            return redirect("cv:profile")
+    else:
+        form = form_class()
+    return render(request, "cv/career_record_form.html", {"form": form, "heading": f"Add {label}", "section": section})
+
+
+@login_required
+def profile_record_edit(request, section, pk):
+    model, form_class, label = _career_record_config(section)
+    record = get_object_or_404(_career_record_queryset(model, request.user), pk=pk)
+    if request.method == "POST":
+        form = form_class(request.POST, instance=record)
+        if form.is_valid():
+            form.save()
+            return redirect("cv:profile")
+    else:
+        form = form_class(instance=record)
+    return render(request, "cv/career_record_form.html", {"form": form, "heading": f"Edit {label}", "section": section, "record": record})
+
+
+@login_required
+def profile_record_delete(request, section, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    model, _form_class, _label = _career_record_config(section)
+    record = get_object_or_404(_career_record_queryset(model, request.user), pk=pk)
+    record.delete()
+    return redirect("cv:profile")
 
 
 @login_required
