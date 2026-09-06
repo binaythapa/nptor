@@ -47,3 +47,33 @@ class CVCreateFormTests(TestCase):
         self.assertContains(response, "cv-template-page-header")
         self.assertContains(response, "cv-template-page-heading")
         self.assertNotContains(response, "cv-paper__line")
+
+    def test_template_gallery_exposes_discovery_metadata_and_filters(self):
+        user = get_user_model().objects.create_user(
+            username="cv-gallery-user",
+            password="test-password",
+        )
+        self.client.force_login(user)
+        CVTemplate.objects.create(
+            slug="modern-professional",
+            name="Modern Professional",
+            description="Contemporary two-column layout.",
+            config={
+                "accent_color": "#2563eb",
+                "layout": "sidebar",
+                "header_style": "left",
+                "section_style": "uppercase_rule",
+                "density": "comfortable",
+            },
+            is_active=True,
+        )
+
+        response = self.client.get("/cv/templates/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "cv-template-search")
+        self.assertContains(response, "cv-template-filters")
+        self.assertContains(response, "data-template-category=\"Modern\"")
+        self.assertContains(response, "ATS-friendly")
+        self.assertContains(response, "Best for")
+        self.assertContains(response, "data-template-ats=\"true\"")
