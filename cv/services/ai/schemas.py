@@ -3,7 +3,7 @@ CAREER_FACT_SCHEMA = {
     "properties": {
         "section": {"type": "string"},
         "field_name": {"type": "string"},
-        "proposed_value": {},
+        "proposed_value": {"type": "string"},
         "confirmed": {"type": "boolean"},
         "evidence": {"type": "string"},
     },

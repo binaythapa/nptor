@@ -22,14 +22,30 @@ class OpenAIProvider(AIProvider):
         if system_prompt:
             payload["instructions"] = system_prompt
         if schema:
-            payload["text"] = {"format": {"type": "json_schema", "name": "cv_ai_result", "strict": True, "schema": schema}}
+            payload["text"] = {
+                "format": {
+                    "type": "json_schema",
+                    "name": "cv_ai_result",
+                    "strict": True,
+                    "schema": schema,
+                }
+            }
         response = requests.post(
             self.endpoint,
             headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
             json=payload,
             timeout=self.timeout,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            detail = response.text.strip()
+            if detail:
+                raise requests.HTTPError(
+                    f"OpenAI Responses API returned HTTP {response.status_code}: {detail}",
+                    response=response,
+                ) from exc
+            raise
         return response.json()
 
     @staticmethod
