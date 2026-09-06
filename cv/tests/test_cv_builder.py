@@ -35,6 +35,17 @@ class CVBuilderTests(TestCase):
         cv.save(update_fields=["selected_sections", "updated_at"])
         self.assertEqual(build_cv_payload(cv)["experiences"], [])
 
+    def test_selected_record_order_is_preserved_in_payload(self):
+        cv = create_cv(self.user, "Ordered CV", self.template)
+        first = CareerExperience.objects.create(profile=cv.profile, job_title="First Role", employer="First Co")
+        second = CareerExperience.objects.create(profile=cv.profile, job_title="Second Role", employer="Second Co")
+        cv.selected_sections = {"experiences": [second.pk, first.pk]}
+        cv.save(update_fields=["selected_sections", "updated_at"])
+
+        payload = build_cv_payload(cv)
+
+        self.assertEqual([item["id"] for item in payload["experiences"]], [second.pk, first.pk])
+
     def test_duplicate_cv_is_independent(self):
         original = create_cv(self.user, "Original", self.template)
         copy = duplicate_cv(original, "Tailored Version")
