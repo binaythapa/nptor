@@ -16,10 +16,17 @@ class AIProvider:
 
 
 def get_ai_provider():
-    provider_name = os.environ.get("CV_AI_PROVIDER", "openai").strip().lower()
+    # Safe default: never accidentally incur API charges in an unconfigured environment.
+    provider_name = os.environ.get("CV_AI_PROVIDER", "none").strip().lower()
     if provider_name == "openai":
         from cv.services.ai.openai_provider import OpenAIProvider
         return OpenAIProvider()
+    if provider_name == "gemini":
+        from cv.services.ai.gemini_provider import GeminiProvider
+        return GeminiProvider()
+    if provider_name == "ollama":
+        from cv.services.ai.ollama_provider import OllamaProvider
+        return OllamaProvider()
     if provider_name in {"", "none", "disabled"}:
         return _UnavailableProvider()
     raise AIProviderNotConfigured(f"Unsupported CV AI provider: {provider_name}")
