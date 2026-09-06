@@ -24,7 +24,8 @@ class FakeProvider:
         return "A concise professional summary."
 
     def generate_structured(self, prompt, schema, *, system_prompt="", model=None):
-        if "reply" in schema["properties"]:
+        properties = schema["properties"]
+        if "reply" in properties:
             return {
                 "reply": "Tell me about a project you are proud of.",
                 "facts": [{
@@ -36,9 +37,33 @@ class FakeProvider:
                 }],
                 "next_question": "What did you build?",
             }
-        if "score" in schema["properties"] and "strengths" in schema["properties"]:
+        if "keyword_match" in properties:
+            return {
+                "score": 76,
+                "summary": "Good baseline match.",
+                "keyword_match": ["Python"],
+                "missing_keywords": ["Kubernetes"],
+                "strengths": ["Python experience"],
+                "gaps": ["Kubernetes"],
+                "risks": [],
+                "recommendations": ["Highlight relevant projects"],
+            }
+        if "score" in properties and "strengths" in properties:
             return {"score": 84, "strengths": ["clear structure"], "gaps": ["metrics"], "suggestions": ["add measurable outcomes"]}
-        return {"match_score": 76, "matching_skills": ["Python"], "missing_skills": ["Kubernetes"], "recommendations": ["Highlight relevant projects"]}
+        if "match_score" in properties:
+            return {"match_score": 76, "matching_skills": ["Python"], "missing_skills": ["Kubernetes"], "recommendations": ["Highlight relevant projects"]}
+        return {
+            "summary": "Improve relevance.",
+            "suggestions": [{
+                "section": "summary",
+                "field_name": "summary",
+                "kind": "improvement",
+                "title": "Strengthen the summary",
+                "reason": "Make the summary more targeted.",
+                "current_value": "Engineer",
+                "proposed_value": "Software Engineer focused on Python.",
+            }],
+        }
 
 
 class AIServicesTests(TestCase):
