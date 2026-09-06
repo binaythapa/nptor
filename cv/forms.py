@@ -11,34 +11,43 @@ from cv.models import (
     CV,
     CVTemplate,
 )
+from cv.widgets import RichTextWidget
 
 
 class CareerProfileForm(forms.ModelForm):
     class Meta:
         model = CareerProfile
         fields = ("professional_title", "summary", "linkedin_url", "portfolio_url")
-        widgets = {"summary": forms.Textarea(attrs={"rows": 6})}
+        widgets = {"summary": RichTextWidget(attrs={"rows": 7})}
 
 
 class CareerExperienceForm(forms.ModelForm):
     class Meta:
         model = CareerExperience
         fields = ("job_title", "employer", "location", "start_date", "end_date", "is_current", "description")
-        widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+            "description": RichTextWidget(attrs={"rows": 8}),
+        }
 
 
 class CareerEducationForm(forms.ModelForm):
     class Meta:
         model = CareerEducation
         fields = ("institution", "qualification", "field_of_study", "location", "start_date", "end_date", "description")
-        widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+            "description": RichTextWidget(attrs={"rows": 7}),
+        }
 
 
 class CareerProjectForm(forms.ModelForm):
     class Meta:
         model = CareerProject
         fields = ("name", "role", "url", "description", "technologies")
-        widgets = {"description": forms.Textarea(attrs={"rows": 5})}
+        widgets = {"description": RichTextWidget(attrs={"rows": 8})}
 
 
 class CareerSkillForm(forms.ModelForm):
@@ -51,14 +60,20 @@ class CareerAchievementForm(forms.ModelForm):
     class Meta:
         model = CareerAchievement
         fields = ("title", "description", "achieved_on")
-        widgets = {"achieved_on": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
+        widgets = {
+            "achieved_on": forms.DateInput(attrs={"type": "date"}),
+            "description": RichTextWidget(attrs={"rows": 7}),
+        }
 
 
 class CareerCertificationForm(forms.ModelForm):
     class Meta:
         model = CareerCertification
         fields = ("name", "issuer", "credential_id", "credential_url", "issued_on", "expires_on")
-        widgets = {"issued_on": forms.DateInput(attrs={"type": "date"}), "expires_on": forms.DateInput(attrs={"type": "date"})}
+        widgets = {
+            "issued_on": forms.DateInput(attrs={"type": "date"}),
+            "expires_on": forms.DateInput(attrs={"type": "date"}),
+        }
 
 
 CAREER_RECORD_FORMS = {
@@ -101,7 +116,7 @@ class CVBuilderForm(forms.Form):
     template = forms.ModelChoiceField(queryset=CVTemplate.objects.none())
     status = forms.ChoiceField(choices=CV.STATUS_CHOICES)
     professional_title = forms.CharField(max_length=255, required=False)
-    summary = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 5}))
+    summary = forms.CharField(required=False, widget=RichTextWidget(attrs={"rows": 7}))
     linkedin_url = forms.URLField(required=False)
     portfolio_url = forms.URLField(required=False)
 
