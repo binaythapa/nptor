@@ -17,9 +17,35 @@
         </div>
 
         <div class="box">
-            <h2 class="title is-5">Your CV workspace</h2>
-            <p>Once your profile is ready, create a CV and use AI review, ATS analysis, and job-specific tailoring.</p>
-            <a class="button is-light mt-3" href="{% url 'cv:cv_create' %}">Create CV</a>
+            <div class="level mb-4">
+                <div class="level-left">
+                    <div>
+                        <h2 class="title is-5 mb-1">Your CV workspace</h2>
+                        <p class="mb-0">Create, review, and tailor your CVs from the master career profile.</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <a class="button is-primary" href="{% url 'cv:cv_create' %}">Create CV</a>
+                </div>
+            </div>
+
+            {% if cvs %}
+                <div class="content">
+                    <ul>
+                        {% for cv in cvs %}
+                            <li>
+                                <a href="{% url 'cv:cv_builder' pk=cv.pk %}">{{ cv.title }}</a>
+                                {% if cv.template %}<span class="tag is-light ml-2">{{ cv.template.name }}</span>{% endif %}
+                                <span class="tag is-light ml-2">{{ cv.get_status_display }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <div class="notification is-light">
+                    You have not created a CV yet. Start with your master career profile, then create your first CV.
+                </div>
+            {% endif %}
         </div>
     </div>
 </section>
