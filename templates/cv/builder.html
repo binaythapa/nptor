@@ -145,7 +145,33 @@
         </main>
 
         <aside class="cv-preview-column">
-          <div class="box cv-preview-card"><div class="cv-card-heading"><div><p class="eyebrow">Live preview</p><h2 class="title is-5 mb-0">Your resume</h2></div><a class="button is-small is-light" href="{% url 'cv:cv_preview' cv.pk %}" target="_blank">Open</a></div><iframe id="cv-preview-frame" title="Live resume preview" src="{% url 'cv:cv_preview' cv.pk %}?embed=1"></iframe></div>
+          <div class="box cv-preview-card">
+            <div class="cv-card-heading">
+              <div><p class="eyebrow">Live preview</p><h2 class="title is-5 mb-0">Your resume</h2></div>
+              <a class="button is-small is-light" href="{% url 'cv:cv_preview' cv.pk %}" target="_blank">Open</a>
+            </div>
+            <div class="cv-template-switcher" data-template-switcher>
+              <div class="cv-template-switcher-heading">
+                <div>
+                  <p class="eyebrow">Template</p>
+                  <strong id="cv-template-current-name">{{ cv.template.name }}</strong>
+                  <span id="cv-template-position" class="cv-template-position"></span>
+                </div>
+                <button type="button" class="button is-small is-light" id="cv-template-compare">Compare templates</button>
+              </div>
+              <div class="cv-template-switcher-controls">
+                <button type="button" class="button is-small" id="cv-template-prev" aria-label="Previous template">←</button>
+                <select id="cv-template-switch" class="select is-small" aria-label="Choose resume template">
+                  {% for template_option in form.template.field.queryset %}
+                    <option value="{{ template_option.pk }}"{% if template_option.pk == cv.template_id %} selected{% endif %}>{{ template_option.name }}</option>
+                  {% endfor %}
+                </select>
+                <button type="button" class="button is-small" id="cv-template-next" aria-label="Next template">→</button>
+              </div>
+              <p class="help mb-0">Switching templates keeps all your resume content unchanged.</p>
+            </div>
+            <iframe id="cv-preview-frame" title="Live resume preview" src="{% url 'cv:cv_preview' cv.pk %}?embed=1"></iframe>
+          </div>
           <div class="box quick-actions"><p class="eyebrow">Next steps</p><a href="{% url 'cv:career_interview' %}" class="quick-action"><strong>Career interview</strong><span>Fill gaps in your master profile with AI.</span></a><a href="{% url 'cv:cv_import' %}" class="quick-action"><strong>Import a resume</strong><span>Bring an existing resume into your workflow.</span></a><a href="{% url 'cv:cv_ai_review' cv.pk %}" class="quick-action"><strong>Review with AI</strong><span>Get actionable content and structure feedback.</span></a></div>
         </aside>
       </div>
