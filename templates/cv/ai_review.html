@@ -1,0 +1,85 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width: 1100px;">
+    <div class="level mb-5">
+      <div>
+        <p class="is-size-7 has-text-grey mb-1">AI CV Writer & Reviewer</p>
+        <h1 class="title mb-1">Review {{ cv.title }}</h1>
+        <p class="subtitle is-6 mb-0">Get targeted suggestions without changing your master Career Profile.</p>
+      </div>
+      <div class="buttons">
+        <a class="button" href="{% url 'cv:cv_builder' cv.pk %}">Back to Builder</a>
+        <a class="button is-light" href="{% url 'cv:cv_preview' cv.pk %}">Preview</a>
+      </div>
+    </div>
+
+    {% if error_message %}
+      <div class="notification is-danger is-light">
+        <strong>AI review could not run.</strong><br>{{ error_message }}
+        <p class="is-size-7 mt-2">Configure OPENAI_API_KEY on the server, then run the review again.</p>
+      </div>
+    {% endif %}
+
+    <div class="box">
+      <div class="level">
+        <div>
+          <h2 class="title is-5 mb-1">AI review</h2>
+          <p class="is-size-7 has-text-grey">The AI receives only this CV's rendered profile payload.</p>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <button class="button is-primary" type="submit">Run AI Review</button>
+        </form>
+      </div>
+    </div>
+
+    {% if conversation %}
+      {% if conversation.metadata.review_summary %}
+        <div class="notification is-light">
+          <p class="has-text-weight-semibold mb-1">Review summary</p>
+          <p>{{ conversation.metadata.review_summary }}</p>
+        </div>
+      {% endif %}
+
+      {% for suggestion in conversation.suggestions.all %}
+        <div class="box">
+          <div class="level mb-3">
+            <div>
+              <h3 class="title is-6 mb-1">{{ suggestion.title }}</h3>
+              <p class="is-size-7 has-text-grey">{{ suggestion.section }} · {{ suggestion.field_name }}</p>
+            </div>
+            <span class="tag {% if suggestion.status == 'accepted' %}is-success{% elif suggestion.status == 'rejected' %}is-light{% else %}is-warning{% endif %}">{{ suggestion.get_status_display }}</span>
+          </div>
+          {% if suggestion.reason %}<p class="mb-3"><strong>Why:</strong> {{ suggestion.reason }}</p>{% endif %}
+          <div class="columns">
+            <div class="column">
+              <p class="is-size-7 has-text-grey mb-1">Current</p>
+              <div class="notification is-light">{{ suggestion.current_value }}</div>
+            </div>
+            <div class="column">
+              <p class="is-size-7 has-text-grey mb-1">Suggested</p>
+              <div class="notification is-info is-light">{{ suggestion.proposed_value }}</div>
+            </div>
+          </div>
+          {% if suggestion.status == 'pending' %}
+            <div class="buttons">
+              <form method="post" action="{% url 'cv:cv_ai_suggestion_accept' suggestion.pk %}">
+                {% csrf_token %}<button class="button is-success is-light" type="submit">Accept</button>
+              </form>
+              <form method="post" action="{% url 'cv:cv_ai_suggestion_reject' suggestion.pk %}">
+                {% csrf_token %}<button class="button is-light" type="submit">Reject</button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div class="notification is-light">No improvement suggestions were returned for this CV.</div>
+      {% endfor %}
+    {% else %}
+      <div class="notification is-light">Run an AI review to receive suggestions for this CV.</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
