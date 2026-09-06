@@ -114,6 +114,20 @@ class CVBuilderTests(TestCase):
         for text in ("Professional summary", "Work experience", "Education", "Skills", "Certifications", "Projects", "Achievements", "Save resume", "Open full preview"):
             self.assertContains(response, text)
 
+    def test_builder_exposes_live_template_switcher(self):
+        second_template = CVTemplate.objects.create(slug="second-template", name="Second Template")
+        cv = create_cv(self.user, "Builder CV", self.template)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "cv-template-switcher")
+        self.assertContains(response, "cv-template-switch")
+        self.assertContains(response, f'value="{self.template.pk}" selected')
+        self.assertContains(response, f'value="{second_template.pk}"')
+        self.assertContains(response, "Compare templates")
+
     def test_builder_saves_selection_and_overrides(self):
         cv = create_cv(self.user, "Builder CV", self.template)
         experience = CareerExperience.objects.create(profile=cv.profile, job_title="Data Engineer", employer="Example Ltd")
