@@ -182,6 +182,7 @@ class CVBuilderTests(TestCase):
         response = self.client.get(reverse("cv:cv_preview", kwargs={"pk": cv.pk}))
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
         self.assertContains(response, "Preview CV")
         self.assertContains(response, "Professional Summary")
         self.assertContains(response, "data-template-layout=\"sidebar\"")
