@@ -14,7 +14,7 @@ from cv.models import (
     CareerSkill,
 )
 from cv.models_ai import AIConversation, AIMessage, AISuggestion, ATSAnalysis
-from cv.services.ai.provider import get_ai_provider
+from cv.services.ai.provider import AIProviderRateLimited, get_ai_provider
 from cv.services.ai.schemas import (
     ATS_ANALYSIS_SCHEMA,
     CV_REVIEW_CONVERSATION_SCHEMA,
@@ -50,6 +50,8 @@ def _review_payload(payload):
 def _generate_structured(provider, prompt, schema, *, system_prompt):
     try:
         result = provider.generate_structured(prompt, schema, system_prompt=system_prompt)
+    except AIProviderRateLimited as exc:
+        raise AIProviderError(str(exc)) from exc
     except requests.RequestException as exc:
         raise AIProviderError(f"AI provider request failed: {exc}") from exc
     except (TypeError, ValueError, KeyError) as exc:
