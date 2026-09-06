@@ -1,10 +1,19 @@
 import json
 from copy import deepcopy
+from urllib.parse import quote
 
 import requests
 from django.db import transaction
 from django.utils import timezone
 
+from cv.models import (
+    CareerAchievement,
+    CareerCertification,
+    CareerEducation,
+    CareerExperience,
+    CareerProject,
+    CareerSkill,
+)
 from cv.models_ai import AIConversation, AIMessage, AISuggestion, ATSAnalysis
 from cv.services.ai.provider import get_ai_provider
 from cv.services.ai.schemas import (
@@ -60,16 +69,8 @@ def _create_conversation(cv, purpose, provider, payload, result, metadata=None):
         model=getattr(provider, "model", ""),
         metadata=metadata or {},
     )
-    AIMessage.objects.create(
-        conversation=conversation,
-        role=AIMessage.ROLE_USER,
-        content=json.dumps(payload, ensure_ascii=False),
-    )
-    AIMessage.objects.create(
-        conversation=conversation,
-        role=AIMessage.ROLE_ASSISTANT,
-        content=json.dumps(result, ensure_ascii=False),
-    )
+    AIMessage.objects.create(conversation=conversation, role=AIMessage.ROLE_USER, content=json.dumps(payload, ensure_ascii=False))
+    AIMessage.objects.create(conversation=conversation, role=AIMessage.ROLE_ASSISTANT, content=json.dumps(result, ensure_ascii=False))
     return conversation
 
 
@@ -107,14 +108,7 @@ def review_cv(cv, provider=None):
             "Proposed wording must not introduce unsupported facts."
         ),
     )
-    conversation = _create_conversation(
-        cv,
-        AIConversation.PURPOSE_REVIEW,
-        provider,
-        payload,
-        result,
-        {"review_summary": result.get("summary", "")},
-    )
+    conversation = _create_conversation(cv, AIConversation.PURPOSE_REVIEW, provider, payload, result, {"review_summary": result.get("summary", "")})
     _create_suggestions(conversation, result)
     return conversation
 
@@ -145,26 +139,9 @@ def analyze_ats(cv, job_description, provider=None):
         score = max(0, min(100, int(result.get("score", 0))))
     except (TypeError, ValueError) as exc:
         raise AIProviderError("AI provider returned an invalid ATS score.") from exc
-
     version = create_cv_version(cv)
-    conversation = _create_conversation(
-        cv,
-        AIConversation.PURPOSE_JOB_MATCH,
-        provider,
-        {"cv": payload, "job_description": job_description},
-        result,
-        {"job_description": job_description, "analysis": "ats", "summary": result.get("summary", "")},
-    )
-    return ATSAnalysis.objects.create(
-        owner=cv.owner,
-        cv_version=version,
-        conversation=conversation,
-        job_description=job_description,
-        score=score,
-        result=result,
-        provider=getattr(provider, "name", provider.__class__.__name__),
-        model=getattr(provider, "model", ""),
-    )
+    conversation = _create_conversation(cv, AIConversation.PURPOSE_JOB_MATCH, provider, {"cv": payload, "job_description": job_description}, result, {"job_description": job_description, "analysis": "ats", "summary": result.get("summary", "")})
+    return ATSAnalysis.objects.create(owner=cv.owner, cv_version=version, conversation=conversation, job_description=job_description, score=score, result=result, provider=getattr(provider, "name", provider.__class__.__name__), model=getattr(provider, "model", ""))
 
 
 @transaction.atomic
@@ -188,14 +165,7 @@ def tailor_cv(cv, job_description, provider=None):
             "Prioritize summary and professional title changes that improve relevance without adding unsupported facts."
         ),
     )
-    conversation = _create_conversation(
-        cv,
-        AIConversation.PURPOSE_JOB_MATCH,
-        provider,
-        {"cv": payload, "job_description": job_description},
-        result,
-        {"job_description": job_description, "analysis": "tailoring", "summary": result.get("summary", "")},
-    )
+    conversation = _create_conversation(cv, AIConversation.PURPOSE_JOB_MATCH, provider, {"cv": payload, "job_description": job_description}, result, {"job_description": job_description, "analysis": "tailoring", "summary": result.get("summary", "")})
     _create_suggestions(conversation, result)
     return conversation
 
@@ -207,6 +177,49 @@ SAFE_OVERRIDE_SECTIONS = {
     "professional_title": {"professional_title"},
 }
 
+RECORD_SUGGESTION_FIELDS = {
+    "experiences": (CareerExperience, {"job_title", "employer", "location", "description"}),
+    "educations": (CareerEducation, {"institution", "qualification", "field_of_study", "location", "description"}),
+    "projects": (CareerProject, {"name", "role", "url", "description", "technologies"}),
+    "skills": (CareerSkill, {"name", "category", "proficiency"}),
+    "achievements": (CareerAchievement, {"title", "description"}),
+    "certifications": (CareerCertification, {"name", "issuer", "credential_id", "credential_url"}),
+}
+
+
+def _apply_record_suggestion(suggestion, user):
+    config = RECORD_SUGGESTION_FIELDS.get(suggestion.section)
+    if config is None:
+        raise ValueError("This suggestion cannot be applied automatically")
+
+    model, allowed_fields = config
+    if suggestion.field_name not in allowed_fields:
+        raise ValueError("This suggestion field cannot be applied automatically")
+
+    profile = suggestion.conversation.cv.profile
+    if profile.user_id != user.id:
+        raise ValueError("Suggestion does not belong to this user")
+
+    current_value = suggestion.current_value
+    proposed_value = suggestion.proposed_value
+    if not isinstance(current_value, str) or not isinstance(proposed_value, str):
+        raise ValueError("This suggestion has an unsupported value format")
+    current_value = current_value.strip()
+    proposed_value = proposed_value.strip()
+    if not current_value or not proposed_value:
+        raise ValueError("This suggestion must contain both current and proposed text")
+
+    matches = model.objects.filter(profile=profile, **{suggestion.field_name: current_value})
+    count = matches.count()
+    if count == 0:
+        raise ValueError("The original profile value could not be found. Refresh the AI review and try again.")
+    if count > 1:
+        raise ValueError("More than one profile record has this value. This suggestion needs manual review.")
+
+    record = matches.first()
+    setattr(record, suggestion.field_name, proposed_value)
+    record.save(update_fields=[suggestion.field_name, "updated_at"])
+
 
 @transaction.atomic
 def accept_suggestion(suggestion, user):
@@ -217,14 +230,17 @@ def accept_suggestion(suggestion, user):
         return suggestion
 
     allowed_fields = SAFE_OVERRIDE_SECTIONS.get(suggestion.section, set())
-    if suggestion.field_name not in SAFE_OVERRIDE_FIELDS or suggestion.field_name not in allowed_fields:
+    if suggestion.field_name in SAFE_OVERRIDE_FIELDS and suggestion.field_name in allowed_fields:
+        cv = conversation.cv
+        overrides = deepcopy(cv.overrides or {})
+        overrides[suggestion.field_name] = suggestion.proposed_value
+        cv.overrides = overrides
+        cv.save(update_fields=["overrides", "updated_at"])
+    elif suggestion.section in RECORD_SUGGESTION_FIELDS:
+        _apply_record_suggestion(suggestion, user)
+    else:
         raise ValueError("This suggestion cannot be applied automatically")
 
-    cv = conversation.cv
-    overrides = deepcopy(cv.overrides or {})
-    overrides[suggestion.field_name] = suggestion.proposed_value
-    cv.overrides = overrides
-    cv.save(update_fields=["overrides", "updated_at"])
     suggestion.status = AISuggestion.STATUS_ACCEPTED
     suggestion.accepted = True
     suggestion.acted_at = timezone.now()

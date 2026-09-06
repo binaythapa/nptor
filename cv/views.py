@@ -1,9 +1,11 @@
 import json
+from urllib.parse import quote
 
 import requests
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from cv.forms import CAREER_RECORD_FORMS, CareerProfileForm, CVBuilderForm, CVForm
@@ -123,16 +125,11 @@ def career_interview(request, conversation_id=None):
         conversation = AIConversation.objects.create(owner=request.user, purpose=AIConversation.PURPOSE_INTERVIEW)
     else:
         conversation = get_object_or_404(AIConversation, pk=conversation_id, owner=request.user, purpose=AIConversation.PURPOSE_INTERVIEW)
-
     error_message = None
     if request.method == "POST":
-        try:
-            interview_turn(conversation, request.POST.get("message", ""))
-        except (AIProviderNotConfigured, AIProviderError, ValueError) as exc:
-            error_message = str(exc)
-        else:
-            return redirect("cv:career_interview_conversation", conversation_id=conversation.pk)
-
+        try: interview_turn(conversation, request.POST.get("message", ""))
+        except (AIProviderNotConfigured, AIProviderError, ValueError) as exc: error_message = str(exc)
+        else: return redirect("cv:career_interview_conversation", conversation_id=conversation.pk)
     return render(request, "cv/career_interview.html", {"conversation": conversation, "messages": conversation.messages.all(), "extractions": conversation.extractions.all(), "error_message": error_message})
 
 
@@ -140,8 +137,7 @@ def career_interview(request, conversation_id=None):
 def career_interview_confirm(request, pk):
     extraction = get_object_or_404(AIExtraction, pk=pk, conversation__owner=request.user, conversation__purpose=AIConversation.PURPOSE_INTERVIEW)
     if request.method == "POST":
-        try:
-            confirm_interview_extraction(extraction.pk, request.user, request.POST.get("value", ""))
+        try: confirm_interview_extraction(extraction.pk, request.user, request.POST.get("value", ""))
         except ValueError as exc:
             return render(request, "cv/career_interview.html", {"conversation": extraction.conversation, "messages": extraction.conversation.messages.all(), "extractions": extraction.conversation.extractions.all(), "error_message": str(exc)})
     return redirect("cv:career_interview_conversation", conversation_id=extraction.conversation_id)
@@ -165,8 +161,7 @@ def cv_create(request):
         template_slug = request.GET.get("template")
         if template_slug:
             selected_template = CVTemplate.objects.filter(slug=template_slug, is_active=True).first()
-            if selected_template:
-                form.initial["template"] = selected_template
+            if selected_template: form.initial["template"] = selected_template
     return render(request, "cv/cv_form.html", {"form": form, "heading": "Create your resume"})
 
 
@@ -186,13 +181,7 @@ def cv_builder(request, pk):
             cv.title = form.cleaned_data["title"]
             cv.template = form.cleaned_data["template"]
             cv.status = form.cleaned_data["status"]
-            cv.overrides = {
-                "professional_title": form.cleaned_data["professional_title"],
-                "summary": form.cleaned_data["summary"],
-                "linkedin_url": form.cleaned_data["linkedin_url"],
-                "portfolio_url": form.cleaned_data["portfolio_url"],
-                "target_job": (cv.overrides or {}).get("target_job", {}),
-            }
+            cv.overrides = {"professional_title": form.cleaned_data["professional_title"], "summary": form.cleaned_data["summary"], "linkedin_url": form.cleaned_data["linkedin_url"], "portfolio_url": form.cleaned_data["portfolio_url"], "target_job": (cv.overrides or {}).get("target_job", {})}
             selected_sections = {}
             for key, _label, related_name in BUILDER_SECTIONS:
                 valid_ids = set(getattr(profile, related_name).values_list("id", flat=True))
@@ -209,51 +198,33 @@ def cv_builder(request, pk):
         selected_ids = {int(value) for value in selected} if selected is not None else {record.id for record in records}
         sections.append({"key": key, "label": label, "records": records, "selected_ids": selected_ids})
     payload = build_cv_payload(cv)
-    return render(request, "cv/builder.html", {
-        "cv": cv,
-        "form": form,
-        "contact": account_contact_defaults(request.user),
-        "sections": sections,
-        "payload": payload,
-        "target_job": payload.get("target_job", {}),
-    })
+    return render(request, "cv/builder.html", {"cv": cv, "form": form, "contact": account_contact_defaults(request.user), "sections": sections, "payload": payload, "target_job": payload.get("target_job", {})})
 
 
 @login_required
 def cv_builder_autosave(request, pk):
-    if request.method != "POST":
-        return HttpResponseNotAllowed(["POST"])
+    if request.method != "POST": return HttpResponseNotAllowed(["POST"])
     cv = get_object_or_404(CV, pk=pk, owner=request.user)
-    try:
-        save_builder_state(cv, _json_request(request))
-    except ValueError as exc:
-        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+    try: save_builder_state(cv, _json_request(request))
+    except ValueError as exc: return JsonResponse({"ok": False, "error": str(exc)}, status=400)
     return JsonResponse({"ok": True, "updated_at": cv.updated_at.isoformat()})
 
 
 @login_required
 def cv_builder_ai(request, pk):
-    if request.method != "POST":
-        return HttpResponseNotAllowed(["POST"])
+    if request.method != "POST": return HttpResponseNotAllowed(["POST"])
     cv = get_object_or_404(CV.objects.select_related("profile", "template"), pk=pk, owner=request.user)
     try:
         data = _json_request(request)
         action = str(data.get("action", "")).strip().lower()
         payload, target_job = builder_ai_context(cv)
-        if action == "summary":
-            suggestion = suggest_summary(payload)
+        if action == "summary": suggestion = suggest_summary(payload)
         elif action == "bullet":
             text = str(data.get("text", "")).strip()
-            if not text:
-                raise ValueError("Enter an experience bullet or description first.")
-            suggestion = rewrite_bullet(text, {
-                "target_job": target_job,
-                "section": data.get("section", "experience"),
-            })
-        elif action == "skills":
-            suggestion = suggest_skills(payload, target_job.get("title", ""))
-        else:
-            raise ValueError("Unsupported AI builder action.")
+            if not text: raise ValueError("Enter an experience bullet or description first.")
+            suggestion = rewrite_bullet(text, {"target_job": target_job, "section": data.get("section", "experience")})
+        elif action == "skills": suggestion = suggest_skills(payload, target_job.get("title", ""))
+        else: raise ValueError("Unsupported AI builder action.")
     except (AIProviderNotConfigured, AIProviderError, ValueError, requests.RequestException, TypeError) as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=400)
     return JsonResponse({"ok": True, "suggestion": suggestion})
@@ -261,8 +232,7 @@ def cv_builder_ai(request, pk):
 
 @login_required
 def cv_builder_ats(request, pk):
-    if request.method != "POST":
-        return HttpResponseNotAllowed(["POST"])
+    if request.method != "POST": return HttpResponseNotAllowed(["POST"])
     cv = get_object_or_404(CV, pk=pk, owner=request.user)
     try:
         data = _json_request(request)
@@ -271,14 +241,7 @@ def cv_builder_ats(request, pk):
         analysis = analyze_ats(cv, job_description)
     except (AIProviderNotConfigured, AIProviderError, ValueError, requests.RequestException, TypeError) as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=400)
-    return JsonResponse({
-        "ok": True,
-        "analysis": {
-            "score": analysis.score,
-            "job_description": analysis.job_description,
-            "result": analysis.result,
-        },
-    })
+    return JsonResponse({"ok": True, "analysis": {"score": analysis.score, "job_description": analysis.job_description, "result": analysis.result}})
 
 
 @login_required
@@ -312,7 +275,7 @@ def cv_versions(request, pk):
 @login_required
 def cv_ai_review(request, pk):
     cv = get_object_or_404(CV, pk=pk, owner=request.user)
-    error_message = None
+    error_message = request.GET.get("ai_error")
     if request.method == "POST":
         try: review_cv(cv)
         except (AIProviderNotConfigured, AIProviderError) as exc: error_message = str(exc)
@@ -338,7 +301,7 @@ def cv_ats_analysis(request, pk):
 @login_required
 def cv_ai_tailor(request, pk):
     cv = get_object_or_404(CV, pk=pk, owner=request.user)
-    error_message = None
+    error_message = request.GET.get("ai_error")
     job_description = ""
     if request.method == "POST":
         job_description = request.POST.get("job_description", "")
@@ -352,18 +315,21 @@ def cv_ai_tailor(request, pk):
 @login_required
 def cv_ai_suggestion_accept(request, pk):
     suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
-    if request.method == "POST":
-        try: accept_suggestion(suggestion, request.user)
-        except ValueError: pass
     target = "cv:cv_ai_tailor" if suggestion.conversation.metadata.get("analysis") == "tailoring" else "cv:cv_ai_review"
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    try:
+        accept_suggestion(suggestion, request.user)
+    except ValueError as exc:
+        target_url = reverse(target, kwargs={"pk": suggestion.conversation.cv_id})
+        return redirect(f"{target_url}?ai_error={quote(str(exc))}")
     return redirect(target, pk=suggestion.conversation.cv_id)
 
 
 @login_required
 def cv_ai_suggestion_reject(request, pk):
     suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
-    if request.method != "POST":
-        return HttpResponseNotAllowed(["POST"])
+    if request.method != "POST": return HttpResponseNotAllowed(["POST"])
     reject_suggestion(suggestion, request.user)
     target = "cv:cv_ai_tailor" if suggestion.conversation.metadata.get("analysis") == "tailoring" else "cv:cv_ai_review"
     return redirect(target, pk=suggestion.conversation.cv_id)
@@ -388,12 +354,9 @@ def cv_import_review(request, pk):
         values = {}
         for field in imported.fields.all():
             value = request.POST.get(f"field_{field.pk}")
-            if value is not None:
-                values[field.pk] = value
-        try:
-            confirm_import(imported.pk, request.user, values)
-        except ValueError as exc:
-            return render(request, "cv/import_review.html", {"imported": imported, "error_message": str(exc)})
+            if value is not None: values[field.pk] = value
+        try: confirm_import(imported.pk, request.user, values)
+        except ValueError as exc: return render(request, "cv/import_review.html", {"imported": imported, "error_message": str(exc)})
         return redirect("cv:dashboard")
     return render(request, "cv/import_review.html", {"imported": imported})
 

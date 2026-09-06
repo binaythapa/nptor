@@ -1,0 +1,31 @@
+/* CV workspace removes the learning-platform sidebar and gives resume pages the full content width. */
+body.cv-route #site-sidebar {
+    display: none;
+}
+
+body.cv-route #sidebar-toggle {
+    display: none;
+}
+
+body.cv-route .main-area {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    max-width: 1440px;
+}
+
+body.cv-route .site-content {
+    min-width: 0;
+    width: 100%;
+}
+
+body.cv-route .main-area > .site-content > .section {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+@media screen and (max-width: 768px) {
+    body.cv-route .main-area {
+        padding-top: 1rem;
+        padding-bottom: 1.5rem;
+    }
+}

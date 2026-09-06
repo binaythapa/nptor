@@ -26,11 +26,12 @@
   <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
   <link rel="stylesheet" href="{% static 'css/exam_timer.css' %}">
   <link rel="stylesheet" href="{% static 'css/student_navigation.css' %}">
+  <link rel="stylesheet" href="{% static 'css/cv_workspace.css' %}">
   {% block page_css %}{% endblock %}
   {% block head_extra %}{% endblock %}
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5294449232420430" crossorigin="anonymous"></script>
 </head>
-<body>
+<body class="{% if request.resolver_match.namespace == 'cv' %}cv-route{% endif %}">
 <a class="nptor-skip-link" href="#main-content">Skip to main content</a>
 <div id="app" class="app-layout">
   {% include "layouts/student/header.html" %}
