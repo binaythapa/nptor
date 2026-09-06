@@ -62,6 +62,7 @@ def build_cv_payload(cv):
         "summary": overrides.get("summary", profile.summary),
         "linkedin_url": overrides.get("linkedin_url", profile.linkedin_url),
         "portfolio_url": overrides.get("portfolio_url", profile.portfolio_url),
+        "target_job": deepcopy(overrides.get("target_job", {})),
     }
 
     payload["experiences"] = [
