@@ -14,12 +14,15 @@
     <button type="button" class="cv-template-preview-action" data-preview-button aria-label="Preview {{ template.name }}">Preview</button>
 
     <div
-      class="cv-mini-paper cv-mini-paper--{{ config.layout }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}"
+      class="cv-mini-paper cv-mini-paper--{{ config.layout }} design-{{ config.design_style }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}"
       style="--preview-accent: {{ config.accent_color }};"
     >
       <header class="cv-mini-header">
-        <div class="cv-mini-name">Alex Morgan</div>
-        <div class="cv-mini-title">Product Designer</div>
+        {% if config.design_style == 'modern_header' %}<div class="cv-mini-initials">AM</div>{% endif %}
+        <div class="cv-mini-header-main">
+          <div class="cv-mini-name">Alex Morgan</div>
+          <div class="cv-mini-title">Product Designer</div>
+        </div>
         <div class="cv-mini-contact">alex.morgan@example.com · New York, NY</div>
       </header>
 
