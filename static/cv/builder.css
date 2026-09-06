@@ -50,6 +50,16 @@
 .cv-builder-page .buttons { gap: .3rem; }
 .cv-builder-page .cv-settings-card { padding: .65rem .75rem; }
 
+.cv-template-switcher { margin: 0 0 .65rem; padding: .65rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fafbfc; }
+.cv-template-switcher-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .45rem; }
+.cv-template-switcher-heading strong { display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; white-space: nowrap; font-size: .72rem; color: #1f2937; }
+.cv-template-position { color: #9ca3af; font-size: .62rem; margin-left: .15rem; }
+.cv-template-switcher-controls { display: grid; grid-template-columns: 34px minmax(0,1fr) 34px; gap: .35rem; align-items: center; }
+#cv-template-switch { width: 100%; min-width: 0; height: 30px; border: 1px solid #d7dde6; border-radius: 6px; background: #fff; color: #1f2937; font-size: .68rem; padding: 0 .45rem; }
+.cv-template-switcher .help { margin-top: .4rem; color: #7a8290; font-size: .58rem; line-height: 1.35; }
+#cv-template-prev, #cv-template-next { width: 34px; padding: 0; }
+#cv-template-compare { font-size: .62rem; }
+
 /* The CV builder is a focused workspace. Hide the global student navigation
    only when this page is present, while preserving it everywhere else. */
 @supports selector(.main-area:has(.cv-builder-page)) {
@@ -82,6 +92,8 @@
   .cv-section-nav .menu { display: flex; gap: .25rem; overflow-x: auto; }
   .cv-nav-item { width: auto; flex: 0 0 auto; }
   .cv-preview-column { margin-top: .75rem; }
+  .cv-template-switcher-heading { align-items: flex-start; }
+  .cv-template-switcher-heading strong { max-width: 150px; }
   #cv-preview-frame { height: 620px; }
   .cv-settings-card { position: static; }
 }
