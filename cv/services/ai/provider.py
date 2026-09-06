@@ -5,6 +5,15 @@ class AIProviderNotConfigured(RuntimeError):
     """Raised when an optional AI provider has not been configured."""
 
 
+class AIProviderRateLimited(RuntimeError):
+    """Raised when an AI provider refuses a request because of rate limits/quota."""
+
+    def __init__(self, message, *, provider, retry_after_seconds=None):
+        super().__init__(message)
+        self.provider = provider
+        self.retry_after_seconds = retry_after_seconds
+
+
 class AIProvider:
     name = "base"
 
