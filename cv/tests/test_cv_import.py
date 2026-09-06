@@ -4,6 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
+from cv.models import CareerEducation, CareerExperience, CareerProject, CareerSkill
 from cv.models_import import ImportedField
 from cv.services.importers.docx import extract_text_from_docx
 from cv.services.importers.parser import parse_career_facts
@@ -35,6 +36,61 @@ class CVImportTests(TestCase):
         self.assertNotEqual(result["professional_title"], "Gyanendra Thapa is a Software Engineer, specializing in Business Intelligence (BI).")
         summary_field = next(field for field in result["fields"] if field["section"] == "summary")
         self.assertEqual(summary_field["field_name"], "text")
+
+    def test_inline_resume_sections_are_split_instead_of_becoming_one_summary(self):
+        result = parse_career_facts(
+            "Gyanendra Thapa | Software Engineer | gyanendra@example.com "
+            "Professional Summary: Software engineer with BI and ETL experience. "
+            "Work Experience: Software Engineer | Accenture | Built ETL pipelines. "
+            "Education: B.Tech | Computer Science | ABC University. "
+            "Technical Skills: Python, SQL, Snowflake, Power BI. "
+            "Projects: Retail Analytics Platform | Built a reporting platform."
+        )
+
+        sections = [field["section"] for field in result["fields"]]
+        self.assertIn("summary", sections)
+        self.assertIn("experience", sections)
+        self.assertIn("education", sections)
+        self.assertIn("skills", sections)
+        self.assertIn("projects", sections)
+        summary = next(field["value"] for field in result["fields"] if field["section"] == "summary")
+        self.assertNotIn("Accenture", summary)
+        self.assertNotIn("ABC University", summary)
+        self.assertNotIn("Snowflake", summary)
+
+    def test_docx_heading_styles_are_preserved_for_import_parsing(self):
+        from docx import Document
+
+        stream = BytesIO()
+        document = Document()
+        document.add_paragraph("John Doe")
+        document.add_paragraph("Software Engineer")
+        document.add_paragraph("Professional Summary", style="Heading 1")
+        document.add_paragraph("Engineer with ETL experience.")
+        document.add_paragraph("Work Experience", style="Heading 1")
+        document.add_paragraph("Software Engineer | Accenture")
+        document.add_paragraph("Education", style="Heading 1")
+        document.add_paragraph("B.Tech | ABC University")
+        document.add_paragraph("Technical Skills", style="Heading 1")
+        document.add_paragraph("Python, SQL, Snowflake")
+        document.save(stream)
+        stream.seek(0)
+
+        uploaded = SimpleUploadedFile(
+            "resume.docx",
+            stream.read(),
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+        text = extract_text_from_docx(uploaded)
+        result = parse_career_facts(text)
+
+        self.assertIn("Professional Summary", text)
+        self.assertIn("Work Experience", text)
+        self.assertIn("Education", text)
+        self.assertIn("Technical Skills", text)
+        self.assertTrue(any(field["section"] == "experience" for field in result["fields"]))
+        self.assertTrue(any(field["section"] == "education" for field in result["fields"]))
+        self.assertTrue(any(field["section"] == "skills" for field in result["fields"]))
 
     def test_import_review_uses_section_cards_and_textarea_for_text_fields(self):
         imported = import_cv_source(self.user, self._pdf_upload("John Doe", "john@example.com"))
@@ -101,6 +157,42 @@ class CVImportTests(TestCase):
         self.assertTrue(profile.careerskill_records.filter(name=skill.value).exists())
         self.assertEqual(imported.status, imported.STATUS_CONFIRMED)
         self.assertFalse(imported.fields.filter(confirmed=False).exists())
+
+    def test_confirm_import_creates_experience_education_and_project_records(self):
+        imported = import_cv_source(self.user, self._pdf_upload("John Doe", "john@example.com"))
+        fields = [
+            ImportedField.objects.create(
+                cv_import=imported,
+                section="experience",
+                field_name="text",
+                value="Software Engineer | Accenture\nBuilt ETL pipelines and BI reports.",
+            ),
+            ImportedField.objects.create(
+                cv_import=imported,
+                section="education",
+                field_name="text",
+                value="B.Tech | Computer Science | ABC University",
+            ),
+            ImportedField.objects.create(
+                cv_import=imported,
+                section="projects",
+                field_name="text",
+                value="Retail Analytics Platform\nBuilt a reporting platform using Snowflake and Power BI.",
+            ),
+        ]
+
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("cv:cv_import_review", args=[imported.pk]),
+            {f"field_{field.pk}": field.value for field in imported.fields.all()},
+        )
+
+        self.assertRedirects(response, reverse("cv:dashboard"))
+        profile = imported.profile
+        self.assertTrue(profile.careerexperience_records.filter(job_title="Software Engineer", employer="Accenture").exists())
+        self.assertTrue(profile.careereducation_records.filter(qualification="B.Tech", institution="ABC University").exists())
+        self.assertTrue(profile.careerproject_records.filter(name="Retail Analytics Platform").exists())
+        self.assertEqual(len(fields), 3)
 
     def test_pdf_adapter_extracts_text(self):
         from reportlab.pdfgen import canvas
