@@ -95,114 +95,126 @@ def _parts(value):
     return [part.strip() for part in str(value).split("|") if part.strip()]
 
 
-def _create_experience(profile, value):
+def _entry_blocks(value):
+    """Split common pipe-delimited CV entries while retaining following description lines."""
     lines = _lines(value)
     if not lines:
-        return
-    parts = _parts(lines[0])
-    if len(parts) >= 2:
-        job_title, employer = parts[0], parts[1]
-        description = " | ".join(parts[2:])
-        if len(lines) > 1:
-            description = "\n".join(filter(None, [description, *lines[1:]]))
-    else:
-        job_title = lines[0]
-        employer = lines[1] if len(lines) > 1 else "Imported employer"
-        description = "\n".join(lines[2:])
-    CareerExperience.objects.create(
-        profile=profile,
-        job_title=job_title[:255],
-        employer=employer[:255],
-        description=description,
-        source="import",
-        is_confirmed=True,
-    )
+        return []
+    blocks = []
+    current = []
+    for line in lines:
+        if current and len(_parts(line)) >= 2:
+            blocks.append(current)
+            current = []
+        current.append(line)
+    if current:
+        blocks.append(current)
+    return blocks
+
+
+def _create_experience(profile, value):
+    for lines in _entry_blocks(value):
+        parts = _parts(lines[0])
+        if len(parts) >= 2:
+            job_title, employer = parts[0], parts[1]
+            description = " | ".join(parts[2:])
+            if len(lines) > 1:
+                description = "\n".join(filter(None, [description, *lines[1:]]))
+        else:
+            job_title = lines[0]
+            employer = lines[1] if len(lines) > 1 else "Imported employer"
+            description = "\n".join(lines[2:])
+        CareerExperience.objects.create(
+            profile=profile,
+            job_title=job_title[:255],
+            employer=employer[:255],
+            description=description,
+            source="import",
+            is_confirmed=True,
+        )
 
 
 def _create_education(profile, value):
-    lines = _lines(value)
-    if not lines:
-        return
-    parts = _parts(lines[0])
     institution_markers = ("university", "college", "institute", "school", "academy")
-    institution_index = next(
-        (index for index, part in enumerate(parts) if any(marker in part.lower() for marker in institution_markers)),
-        None,
-    )
-    if institution_index is not None:
-        institution = parts[institution_index]
-        qualification = parts[0] if institution_index else (parts[1] if len(parts) > 1 else parts[0])
-        field_of_study = " | ".join(parts[1:institution_index]) if institution_index > 1 else ""
-    elif len(parts) >= 2:
-        qualification, institution = parts[0], parts[-1]
-        field_of_study = " | ".join(parts[1:-1])
-    else:
-        qualification = lines[0]
-        institution = lines[1] if len(lines) > 1 else "Imported institution"
-        field_of_study = ""
-    description = "\n".join(lines[1:]) if len(lines) > 1 and institution_index is None else ""
-    CareerEducation.objects.create(
-        profile=profile,
-        institution=institution[:255],
-        qualification=qualification[:255],
-        field_of_study=field_of_study[:255],
-        description=description,
-        source="import",
-        is_confirmed=True,
-    )
+    for lines in _entry_blocks(value):
+        parts = _parts(lines[0])
+        if not parts:
+            continue
+        institution_index = next(
+            (index for index, part in enumerate(parts) if any(marker in part.lower() for marker in institution_markers)),
+            None,
+        )
+        if institution_index is not None:
+            institution = parts[institution_index]
+            qualification = parts[0] if institution_index else (parts[1] if len(parts) > 1 else parts[0])
+            field_of_study = " | ".join(parts[1:institution_index]) if institution_index > 1 else ""
+        elif len(parts) >= 2:
+            qualification, institution = parts[0], parts[-1]
+            field_of_study = " | ".join(parts[1:-1])
+        else:
+            qualification = lines[0]
+            institution = lines[1] if len(lines) > 1 else "Imported institution"
+            field_of_study = ""
+        description = "\n".join(lines[1:]) if len(lines) > 1 and institution_index is None else ""
+        CareerEducation.objects.create(
+            profile=profile,
+            institution=institution[:255],
+            qualification=qualification[:255],
+            field_of_study=field_of_study[:255],
+            description=description,
+            source="import",
+            is_confirmed=True,
+        )
 
 
 def _create_project(profile, value):
-    lines = _lines(value)
-    if not lines:
-        return
-    parts = _parts(lines[0])
-    name = parts[0]
-    description = " | ".join(parts[1:])
-    if len(lines) > 1:
-        description = "\n".join(filter(None, [description, *lines[1:]]))
-    CareerProject.objects.create(
-        profile=profile,
-        name=name[:255],
-        description=description,
-        technologies="",
-        source="import",
-        is_confirmed=True,
-    )
+    for lines in _entry_blocks(value):
+        parts = _parts(lines[0])
+        if not parts:
+            continue
+        name = parts[0]
+        description = " | ".join(parts[1:])
+        if len(lines) > 1:
+            description = "\n".join(filter(None, [description, *lines[1:]]))
+        CareerProject.objects.create(
+            profile=profile,
+            name=name[:255],
+            description=description,
+            technologies="",
+            source="import",
+            is_confirmed=True,
+        )
 
 
 def _create_certification(profile, value):
-    lines = _lines(value)
-    if not lines:
-        return
-    parts = _parts(lines[0])
-    name = parts[0]
-    issuer = parts[1] if len(parts) > 1 else ""
-    CareerCertification.objects.create(
-        profile=profile,
-        name=name[:255],
-        issuer=issuer[:255],
-        source="import",
-        is_confirmed=True,
-    )
+    for lines in _entry_blocks(value):
+        parts = _parts(lines[0])
+        if not parts:
+            continue
+        CareerCertification.objects.create(
+            profile=profile,
+            name=parts[0][:255],
+            issuer=(parts[1] if len(parts) > 1 else "")[:255],
+            source="import",
+            is_confirmed=True,
+        )
 
 
 def _create_achievement(profile, value):
-    lines = _lines(value)
-    if not lines:
-        return
-    parts = _parts(lines[0])
-    title = parts[0]
-    description = " | ".join(parts[1:])
-    if len(lines) > 1:
-        description = "\n".join(filter(None, [description, *lines[1:]]))
-    CareerAchievement.objects.create(
-        profile=profile,
-        title=title[:255],
-        description=description,
-        source="import",
-        is_confirmed=True,
-    )
+    for lines in _entry_blocks(value):
+        parts = _parts(lines[0])
+        if not parts:
+            continue
+        description = " | ".join(parts[1:])
+        if len(lines) > 1:
+            description = "\n".join(filter(None, [description, *lines[1:]]))
+        CareerAchievement.objects.create(
+            profile=profile,
+            title=parts[0][:255],
+            description=description,
+            source="import",
+            is_confirmed=True,
+        )
 
 
 def _apply_imported_fields(imported, user):
@@ -262,6 +274,9 @@ def confirm_import(imported_id, user, values):
     ).first()
     if imported is None:
         raise CVImport.DoesNotExist
+
+    if imported.status == CVImport.STATUS_CONFIRMED:
+        return imported
 
     fields = list(imported.fields.all())
     for field in fields:
