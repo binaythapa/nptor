@@ -28,9 +28,10 @@ class CVImportTests(TestCase):
             "Accenture | Business Intelligence"
         )
 
-        self.assertNotIn("full_name", result)
-        self.assertNotIn("professional_title", result)
-        self.assertEqual(result["fields"][0]["field_name"], "text")
+        self.assertEqual(result["full_name"], "Gyanendra Thapa")
+        self.assertEqual(result["professional_title"], "Software Engineer")
+        self.assertNotEqual(result["full_name"], "Summary")
+        self.assertNotEqual(result["professional_title"], "Gyanendra Thapa is a Software Engineer, specializing in Business Intelligence (BI).")
         self.assertEqual(result["fields"][0]["section"], "summary")
 
     def test_pdf_adapter_extracts_text(self):
