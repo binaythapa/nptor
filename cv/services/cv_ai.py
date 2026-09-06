@@ -161,8 +161,8 @@ def analyze_ats(cv, job_description, provider=None):
         raise AIProviderError("AI provider returned an invalid ATS payload.")
     try:
         score = max(0, min(100, int(result.get("score", 0))))
-    except (TypeError, ValueError):
-        raise AIProviderError("AI provider returned an invalid ATS score.")
+    except (TypeError, ValueError) as exc:
+        raise AIProviderError("AI provider returned an invalid ATS score.") from exc
     version = create_cv_version(cv)
     conversation = _create_conversation(
         cv,
@@ -170,7 +170,7 @@ def analyze_ats(cv, job_description, provider=None):
         provider,
         {"cv": payload, "job_description": job_description},
         result,
-        {"job_description": job_description, "analysis": "ats"},
+        {"job_description": job_description, "analysis": "ats", "summary": result.get("summary", "")},
     )
     return ATSAnalysis.objects.create(
         owner=cv.owner,
@@ -202,7 +202,7 @@ def tailor_cv(cv, job_description, provider=None):
         provider,
         {"cv": payload, "job_description": job_description},
         result,
-        {"job_description": job_description, "analysis": "tailoring"},
+        {"job_description": job_description, "analysis": "tailoring", "summary": result.get("summary", "")},
     )
     _create_suggestions(conversation, result)
     return conversation
