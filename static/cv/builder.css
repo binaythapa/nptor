@@ -34,6 +34,24 @@
 .cv-settings-card { position: sticky; bottom: 1rem; z-index: 2; }
 .gap-2 { gap: .5rem; }
 
+/* The CV builder is a focused workspace. Hide the global student navigation
+   only when this page is present, while preserving it everywhere else. */
+@supports selector(.main-area:has(.cv-builder-page)) {
+  .main-area:has(.cv-builder-page) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .main-area:has(.cv-builder-page) > .site-sidebar {
+    display: none;
+  }
+
+  .main-area:has(.cv-builder-page) > .site-content {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 @media (max-width: 1200px) {
   .cv-workspace-grid { grid-template-columns: 180px minmax(0, 1fr); }
   .cv-preview-column { grid-column: 1 / -1; position: static; }
