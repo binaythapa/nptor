@@ -20,6 +20,7 @@ urlpatterns = [
     path("<int:pk>/builder/ats/", views.cv_builder_ats, name="cv_builder_ats"),
     path("<int:pk>/edit/", views.cv_edit, name="cv_edit"),
     path("<int:pk>/duplicate/", views.cv_duplicate, name="cv_duplicate"),
+    path("<int:pk>/delete/", views.cv_delete, name="cv_delete"),
     path("templates/", views.cv_templates, name="cv_templates"),
     path("<int:pk>/preview/", views.cv_preview, name="cv_preview"),
     path("<int:pk>/versions/", views.cv_versions, name="cv_versions"),
