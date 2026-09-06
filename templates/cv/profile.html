@@ -4,7 +4,32 @@
 <section class="section">
   <div class="container">
     <h1 class="title">Master Career Profile</h1>
-    <p class="subtitle is-6">Keep your career information here and reuse it across multiple CVs.</p>
+    <p class="subtitle is-6">Build one trusted career profile and reuse it across every CV, ATS analysis, and job application.</p>
+
+    <div class="columns">
+      <div class="column">
+        <div class="box">
+          <h2 class="title is-5">🤖 AI Career Interview</h2>
+          <p class="mb-4">Tell NPTOR about your career naturally. AI asks focused follow-up questions and proposes facts for your approval.</p>
+          <a class="button is-primary" href="{% url 'cv:career_interview' %}">Start AI Interview</a>
+        </div>
+      </div>
+      <div class="column">
+        <div class="box">
+          <h2 class="title is-5">📄 Existing CV</h2>
+          <p class="mb-4">Already have a CV? Upload PDF or DOCX and review the extracted career facts before accepting them.</p>
+          <a class="button is-link" href="{% url 'cv:cv_import' %}">Upload Existing CV</a>
+        </div>
+      </div>
+      <div class="column">
+        <div class="box">
+          <h2 class="title is-5">✍️ Manual</h2>
+          <p class="mb-4">Prefer to enter your information yourself? Edit your professional title, summary, and links below.</p>
+          <span class="tag is-light">Manual editor below</span>
+        </div>
+      </div>
+    </div>
+
     <div class="box">
       <div class="notification is-light">
         <strong>Account information</strong><br>
@@ -12,6 +37,7 @@
         {% if contact.phone %} · {{ contact.phone }}{% endif %}
         {% if contact.location %} · {{ contact.location }}{% endif %}
       </div>
+      <h2 class="title is-5">Manual profile editor</h2>
       <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
