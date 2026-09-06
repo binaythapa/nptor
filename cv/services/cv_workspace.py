@@ -37,6 +37,31 @@ def normalize_selected_sections(value, profile):
     return normalized
 
 
+def normalize_experience_bullets(value, profile):
+    if not isinstance(value, dict):
+        return None
+    valid_ids = set(profile.careerexperience_records.values_list("id", flat=True))
+    return {
+        str(record_id): str(text).strip()[:5000]
+        for record_id, text in value.items()
+        if str(record_id).isdigit() and int(record_id) in valid_ids and str(text).strip()
+    }
+
+
+def normalize_cv_skills(value):
+    if not isinstance(value, list):
+        return None
+    result = []
+    seen = set()
+    for item in value:
+        skill = str(item).strip()[:100]
+        key = skill.lower()
+        if skill and key not in seen:
+            result.append(skill)
+            seen.add(key)
+    return result[:30]
+
+
 def save_builder_state(cv, data):
     if not isinstance(data, dict):
         raise ValueError("Builder state must be an object.")
@@ -67,6 +92,16 @@ def save_builder_state(cv, data):
 
     if "target_job" in data:
         overrides["target_job"] = normalize_target_job(data.get("target_job"))
+
+    if "experience_bullets" in data:
+        normalized = normalize_experience_bullets(data.get("experience_bullets"), cv.profile)
+        if normalized is not None:
+            overrides["experience_bullets"] = normalized
+
+    if "cv_skills" in data:
+        normalized = normalize_cv_skills(data.get("cv_skills"))
+        if normalized is not None:
+            overrides["cv_skills"] = normalized
 
     selected_sections = normalize_selected_sections(data.get("selected_sections"), cv.profile)
     if selected_sections is not None:
