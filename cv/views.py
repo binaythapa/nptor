@@ -8,7 +8,7 @@ from cv.models import CV, CVTemplate
 from cv.models_ai import AIConversation, AIExtraction, AISuggestion, ATSAnalysis
 from cv.services.ai.career_interviewer import confirm_interview_extraction, interview_turn
 from cv.services.ai.provider import AIProviderNotConfigured
-from cv.services.cv_ai import accept_suggestion, analyze_ats, reject_suggestion, review_cv, tailor_cv
+from cv.services.cv_ai import AIProviderError, accept_suggestion, analyze_ats, reject_suggestion, review_cv, tailor_cv
 from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
@@ -55,21 +55,12 @@ def career_interview(request, conversation_id=None):
     if request.method == "POST":
         try:
             interview_turn(conversation, request.POST.get("message", ""))
-        except (AIProviderNotConfigured, ValueError) as exc:
+        except (AIProviderNotConfigured, AIProviderError, ValueError) as exc:
             error_message = str(exc)
         else:
             return redirect("cv:career_interview", conversation_id=conversation.pk)
 
-    return render(
-        request,
-        "cv/career_interview.html",
-        {
-            "conversation": conversation,
-            "messages": conversation.messages.all(),
-            "extractions": conversation.extractions.all(),
-            "error_message": error_message,
-        },
-    )
+    return render(request, "cv/career_interview.html", {"conversation": conversation, "messages": conversation.messages.all(), "extractions": conversation.extractions.all(), "error_message": error_message})
 
 
 @login_required
@@ -164,7 +155,7 @@ def cv_ai_review(request, pk):
     error_message = None
     if request.method == "POST":
         try: review_cv(cv)
-        except AIProviderNotConfigured as exc: error_message = str(exc)
+        except (AIProviderNotConfigured, AIProviderError) as exc: error_message = str(exc)
         else: return redirect("cv:cv_ai_review", pk=cv.pk)
     conversation = cv.ai_conversations.filter(purpose=AIConversation.PURPOSE_REVIEW).prefetch_related("suggestions").first()
     return render(request, "cv/ai_review.html", {"cv": cv, "conversation": conversation, "error_message": error_message})
@@ -178,7 +169,7 @@ def cv_ats_analysis(request, pk):
     if request.method == "POST":
         job_description = request.POST.get("job_description", "")
         try: analyze_ats(cv, job_description)
-        except (AIProviderNotConfigured, ValueError) as exc: error_message = str(exc)
+        except (AIProviderNotConfigured, AIProviderError, ValueError) as exc: error_message = str(exc)
         else: return redirect("cv:cv_ats_analysis", pk=cv.pk)
     analysis = ATSAnalysis.objects.filter(owner=request.user, cv_version__cv=cv).select_related("cv_version").first()
     return render(request, "cv/ats_analysis.html", {"cv": cv, "analysis": analysis, "job_description": job_description or (analysis.job_description if analysis else ""), "error_message": error_message})
@@ -192,7 +183,7 @@ def cv_ai_tailor(request, pk):
     if request.method == "POST":
         job_description = request.POST.get("job_description", "")
         try: tailor_cv(cv, job_description)
-        except (AIProviderNotConfigured, ValueError) as exc: error_message = str(exc)
+        except (AIProviderNotConfigured, AIProviderError, ValueError) as exc: error_message = str(exc)
         else: return redirect("cv:cv_ai_tailor", pk=cv.pk)
     conversation = cv.ai_conversations.filter(purpose=AIConversation.PURPOSE_JOB_MATCH, metadata__analysis="tailoring").prefetch_related("suggestions").first()
     return render(request, "cv/ai_tailor.html", {"cv": cv, "conversation": conversation, "job_description": job_description or (conversation.metadata.get("job_description", "") if conversation else ""), "error_message": error_message})
