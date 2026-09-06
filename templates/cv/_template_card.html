@@ -1,0 +1,101 @@
+<article
+  class="cv-template-card"
+  data-template-card
+  data-template-category="{{ filter_key }}"
+  data-template-ats="{{ ats }}"
+  data-template-name="{{ template.name|escape }}"
+  data-template-search="{{ template.name }} {{ template.description }} {{ category }} {{ best_for }}"
+>
+  <div class="cv-template-preview">
+    <div class="cv-template-badges">
+      {% if featured %}<span class="cv-badge cv-badge-primary">{{ featured }}</span>{% endif %}
+      {% if ats == 'true' %}<span class="cv-badge cv-badge-success">ATS-friendly</span>{% endif %}
+    </div>
+    <button type="button" class="cv-template-preview-action" data-preview-button aria-label="Preview {{ template.name }}">Preview</button>
+
+    <div
+      class="cv-mini-paper cv-mini-paper--{{ config.layout }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}"
+      style="--preview-accent: {{ config.accent_color }};"
+    >
+      <header class="cv-mini-header">
+        <div class="cv-mini-name">Alex Morgan</div>
+        <div class="cv-mini-title">Product Designer</div>
+        <div class="cv-mini-contact">alex.morgan@example.com · New York, NY</div>
+      </header>
+
+      <div class="cv-mini-body {% if config.layout == 'sidebar' %}sidebar{% endif %}">
+        <main>
+          <section class="cv-mini-section">
+            <h3 class="cv-mini-section-heading {{ config.section_style }}">Professional Summary</h3>
+            <div class="cv-mini-entry-description">Product designer focused on simple, accessible experiences and measurable product outcomes.</div>
+          </section>
+
+          <section class="cv-mini-section">
+            <h3 class="cv-mini-section-heading {{ config.section_style }}">Experience</h3>
+            <div class="cv-mini-entry">
+              <div class="cv-mini-entry-title">Senior Product Designer</div>
+              <div class="cv-mini-entry-meta">Northstar Labs · 2023–Present</div>
+              <div class="cv-mini-entry-description">Led design systems and shipped customer-facing workflows across web and mobile products.</div>
+            </div>
+            <div class="cv-mini-entry">
+              <div class="cv-mini-entry-title">Product Designer</div>
+              <div class="cv-mini-entry-meta">Brightline · 2020–2023</div>
+            </div>
+          </section>
+
+          {% if config.layout != 'sidebar' %}
+            <section class="cv-mini-section">
+              <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
+              <div class="cv-mini-skills">
+                <span class="cv-mini-skill">Figma</span>
+                <span class="cv-mini-skill">UX Research</span>
+                <span class="cv-mini-skill">Design Systems</span>
+                <span class="cv-mini-skill">Prototyping</span>
+              </div>
+            </section>
+          {% endif %}
+        </main>
+
+        {% if config.layout == 'sidebar' %}
+          <aside class="cv-mini-sidebar">
+            <section class="cv-mini-section">
+              <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
+              <div class="cv-mini-skills">
+                <span class="cv-mini-skill">Figma</span>
+                <span class="cv-mini-skill">Research</span>
+                <span class="cv-mini-skill">Systems</span>
+              </div>
+            </section>
+            <section class="cv-mini-section">
+              <h3 class="cv-mini-section-heading {{ config.section_style }}">Education</h3>
+              <div class="cv-mini-entry">
+                <div class="cv-mini-entry-title">B.A. Design</div>
+                <div class="cv-mini-entry-meta">State University</div>
+              </div>
+            </section>
+            <section class="cv-mini-section">
+              <h3 class="cv-mini-section-heading {{ config.section_style }}">Certifications</h3>
+              <div class="cv-mini-entry">
+                <div class="cv-mini-entry-title">UX Certificate</div>
+              </div>
+            </section>
+          </aside>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="cv-template-body">
+    <div class="cv-template-meta">
+      <div class="cv-template-title-row">
+        <h2 class="title is-5 cv-template-name">{{ template.name }}</h2>
+        <span class="cv-badge">{{ category }}</span>
+      </div>
+      <p class="is-size-7 cv-template-description">{{ template.description }}</p>
+      <p class="cv-template-bestfor"><strong>Best for:</strong> {{ best_for }}</p>
+    </div>
+    <div class="cv-template-actions">
+      <a class="button is-primary is-small" href="{% url 'cv:cv_create' %}?template={{ template.slug|urlencode }}">Use this template</a>
+    </div>
+  </div>
+</article>
