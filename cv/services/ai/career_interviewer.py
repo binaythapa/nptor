@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from cv.models import AIExtraction, AIMessage
+from cv.models import AIConversation, AIExtraction, AIMessage
 from cv.services.ai.provider import get_ai_provider
 from cv.services.ai.schemas import INTERVIEW_SCHEMA
 
@@ -65,7 +65,7 @@ def confirm_interview_extraction(extraction_id, user, value):
     extraction = AIExtraction.objects.select_related("conversation").filter(
         pk=extraction_id,
         conversation__owner=user,
-        conversation__purpose=extraction_conversation_purpose(),
+        conversation__purpose=AIConversation.PURPOSE_INTERVIEW,
     ).first()
     if extraction is None:
         raise AIExtraction.DoesNotExist
@@ -78,9 +78,3 @@ def confirm_interview_extraction(extraction_id, user, value):
     extraction.confirmed_at = timezone.now()
     extraction.save(update_fields=["proposed_value", "confirmed", "confirmed_by", "confirmed_at"])
     return extraction
-
-
-def extraction_conversation_purpose():
-    from cv.models import AIConversation
-
-    return AIConversation.PURPOSE_INTERVIEW
