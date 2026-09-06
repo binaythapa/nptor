@@ -51,9 +51,9 @@ class CVAIWriterTests(TestCase):
 
     def test_review_creates_conversation_and_pending_suggestion_without_overwriting_profile(self):
         set_provider_for_tests(FakeProvider())
-        result = review_cv(self.cv)
-        self.assertEqual(result.conversation.purpose, AIConversation.PURPOSE_REVIEW)
-        suggestion = result.conversation.suggestions.get()
+        conversation = review_cv(self.cv)
+        self.assertEqual(conversation.purpose, AIConversation.PURPOSE_REVIEW)
+        suggestion = conversation.suggestions.get()
         self.assertFalse(suggestion.accepted)
         self.assertEqual(suggestion.status, AISuggestion.STATUS_PENDING)
         self.cv.profile.refresh_from_db()
@@ -81,8 +81,8 @@ class CVAIWriterTests(TestCase):
 
     def test_accept_suggestion_updates_cv_override_not_master_profile(self):
         set_provider_for_tests(FakeProvider())
-        result = review_cv(self.cv)
-        suggestion = result.conversation.suggestions.get()
+        conversation = review_cv(self.cv)
+        suggestion = conversation.suggestions.get()
         self.client.force_login(self.user)
         response = self.client.post(reverse("cv:cv_ai_suggestion_accept", kwargs={"pk": suggestion.pk}))
         self.assertRedirects(response, reverse("cv:cv_ai_review", kwargs={"pk": self.cv.pk}))
@@ -96,8 +96,8 @@ class CVAIWriterTests(TestCase):
 
     def test_reject_suggestion_does_not_change_cv(self):
         set_provider_for_tests(FakeProvider())
-        result = review_cv(self.cv)
-        suggestion = result.conversation.suggestions.get()
+        conversation = review_cv(self.cv)
+        suggestion = conversation.suggestions.get()
         self.client.force_login(self.user)
         self.client.post(reverse("cv:cv_ai_suggestion_reject", kwargs={"pk": suggestion.pk}))
         suggestion.refresh_from_db()
