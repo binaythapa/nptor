@@ -2,6 +2,7 @@ from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.urls import reverse
 
 from cv.models_import import ImportedField
 from cv.services.importers.docx import extract_text_from_docx
@@ -33,6 +34,28 @@ class CVImportTests(TestCase):
         self.assertNotEqual(result["full_name"], "Summary")
         self.assertNotEqual(result["professional_title"], "Gyanendra Thapa is a Software Engineer, specializing in Business Intelligence (BI).")
         self.assertEqual(result["fields"][0]["section"], "summary")
+
+    def test_import_review_uses_section_cards_and_textarea_for_text_fields(self):
+        imported = import_cv_source(self.user, self._pdf_upload("John Doe", "john@example.com"))
+        summary = ImportedField.objects.create(
+            cv_import=imported,
+            section="summary",
+            field_name="text",
+            value="John Doe is a Software Engineer with experience in ETL and Business Intelligence.",
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("cv:cv_import_review", args=[imported.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Review your imported CV")
+        self.assertContains(response, "Contact")
+        self.assertContains(response, "Summary")
+        self.assertContains(response, "Full Name")
+        self.assertContains(response, "<textarea", html=False)
+        self.assertContains(response, f'name="field_{summary.pk}"', html=False)
+        self.assertContains(response, "Please verify")
+        self.assertContains(response, "Confirm &amp; Add to CV", html=False)
 
     def test_pdf_adapter_extracts_text(self):
         from reportlab.pdfgen import canvas
