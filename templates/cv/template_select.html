@@ -3,6 +3,12 @@
 {% block content %}
 <style>
   .cv-template-gallery { max-width: 1180px; margin: 0 auto; }
+  .cv-template-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+  .cv-template-page-heading { min-width: 0; }
+  .cv-template-page-heading > p:first-child { margin: 0 0 8px !important; line-height: 1.2; }
+  .cv-template-page-heading .title { margin: 0 !important; line-height: 1.15 !important; }
+  .cv-template-page-heading .subtitle { margin: 8px 0 0 !important; line-height: 1.45 !important; }
+  .cv-template-page-actions { flex: 0 0 auto; padding-top: 28px; }
   .cv-template-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
   .cv-template-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(15, 23, 42, .1); }
   .cv-template-preview { min-height: 280px; padding: 18px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; overflow: hidden; }
@@ -62,20 +68,22 @@
   .cv-template-actions { margin-top: auto; display: flex; gap: 8px; }
   .cv-template-actions .button { flex: 1; }
   @media (prefers-reduced-motion: no-preference) { .cv-template-card { transition: transform .18s ease, box-shadow .18s ease; } }
-  @media (max-width: 768px) { .cv-template-preview { min-height: 265px; } }
+  @media (max-width: 768px) {
+    .cv-template-page-header { flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .cv-template-page-actions { padding-top: 0; }
+    .cv-template-preview { min-height: 265px; }
+  }
 </style>
 
 <section class="section">
   <div class="container cv-template-gallery">
-    <div class="level mb-5">
-      <div class="level-left">
-        <div>
-          <p class="is-size-7 has-text-weight-semibold has-text-grey">CV BUILDER</p>
-          <h1 class="title mb-2">Choose your CV template</h1>
-          <p class="subtitle is-6 has-text-grey">Pick a visual style. Your career profile and content stay unchanged.</p>
-        </div>
+    <div class="cv-template-page-header">
+      <div class="cv-template-page-heading">
+        <p class="is-size-7 has-text-weight-semibold has-text-grey">CV BUILDER</p>
+        <h1 class="title">Choose your CV template</h1>
+        <p class="subtitle is-6 has-text-grey">Pick a visual style. Your career profile and content stay unchanged.</p>
       </div>
-      <div class="level-right">
+      <div class="cv-template-page-actions">
         <a class="button is-light" href="{% url 'cv:dashboard' %}">Back to CVs</a>
       </div>
     </div>
