@@ -30,11 +30,13 @@ class AIProviderTests(SimpleTestCase):
 
     @patch("cv.services.ai.openai_provider.requests.post")
     def test_openai_provider_surfaces_responses_api_error_body(self, post):
+        from cv.services.ai.openai_provider import OpenAIProvider
+
         response = requests.Response()
         response.status_code = 400
         response._content = b'{"error":{"message":"Invalid schema"}}'
         post.return_value = response
 
-        provider = get_ai_provider(api_key="test-key")
+        provider = OpenAIProvider(api_key="test-key")
         with self.assertRaisesRegex(requests.HTTPError, "Invalid schema"):
             provider.generate_structured("hello", {"type": "object"})
