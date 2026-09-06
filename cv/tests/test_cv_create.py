@@ -116,3 +116,7 @@ class CVCreateFormTests(TestCase):
         self.assertContains(response, "data-template-design=\"modern_header\"")
         self.assertContains(response, "data-template-design=\"split_label\"")
         self.assertContains(response, "data-template-design=\"elegant\"")
+        self.assertContains(response, "cv-mini-photo-placeholder")
+        self.assertContains(response, "cv-mini-sidebar--left")
+        self.assertContains(response, "cv-mini-sidebar-pattern")
+        self.assertContains(response, "cv-mini-contact-list")
