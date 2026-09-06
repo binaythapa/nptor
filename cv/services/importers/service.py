@@ -10,6 +10,7 @@ from cv.services.importers.pdf import extract_text_from_pdf
 
 MAX_IMPORT_BYTES = 10 * 1024 * 1024
 ADAPTERS = {"pdf": extract_text_from_pdf, "docx": extract_text_from_docx}
+IMPORT_READ_ERROR = "Could not read the uploaded CV. Please make sure it is a valid PDF or DOCX file."
 
 
 def _source_type(uploaded_file):
@@ -33,7 +34,10 @@ def _source_type(uploaded_file):
 def import_cv_source(user, uploaded_file):
     source_type = _source_type(uploaded_file)
     profile, _ = CareerProfile.objects.get_or_create(user=user)
-    text = ADAPTERS[source_type](uploaded_file)
+    try:
+        text = ADAPTERS[source_type](uploaded_file)
+    except Exception as exc:
+        raise ValueError(IMPORT_READ_ERROR) from exc
     parsed = parse_career_facts(text)
     if not text.strip():
         raise ValueError("The uploaded CV contains no extractable text.")
