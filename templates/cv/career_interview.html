@@ -1,0 +1,71 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="level mb-4">
+      <div>
+        <h1 class="title mb-1">AI Career Interview</h1>
+        <p class="subtitle is-6">Share your experience naturally. AI will ask follow-up questions and propose facts for you to confirm.</p>
+      </div>
+      <a class="button" href="{% url 'cv:profile' %}">Back to Profile</a>
+    </div>
+
+    {% if error_message %}
+      <div class="notification is-danger">{{ error_message }}</div>
+    {% endif %}
+
+    <div class="columns">
+      <div class="column is-two-thirds">
+        <div class="box">
+          {% for message in messages %}
+            <article class="message {% if message.role == 'assistant' %}is-link{% else %}is-light{% endif %}">
+              <div class="message-header"><span>{% if message.role == 'assistant' %}NPTOR AI{% else %}You{% endif %}</span></div>
+              <div class="message-body">{{ message.content|linebreaks }}</div>
+            </article>
+          {% empty %}
+            <div class="notification is-light">Start by telling me about your current or most recent role.</div>
+          {% endfor %}
+
+          <form method="post" class="mt-5">
+            {% csrf_token %}
+            <div class="field">
+              <label class="label" for="message">Your answer</label>
+              <div class="control">
+                <textarea class="textarea" id="message" name="message" rows="4" required placeholder="For example: I am a Business Architecture Senior Analyst at Accenture..."></textarea>
+              </div>
+            </div>
+            <button class="button is-primary" type="submit">Continue Interview</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="column">
+        <div class="box">
+          <h2 class="title is-5">Facts to review</h2>
+          <p class="is-size-7 mb-4">Nothing here becomes trusted profile data until you explicitly confirm it.</p>
+          {% for extraction in extractions %}
+            <div class="box mb-3">
+              <p class="has-text-weight-semibold">{{ extraction.section }} · {{ extraction.field_name }}</p>
+              <p class="mb-3">{{ extraction.proposed_value }}</p>
+              {% if extraction.confirmed %}
+                <span class="tag is-success">Confirmed</span>
+              {% else %}
+                <form method="post" action="{% url 'cv:career_interview_confirm' pk=extraction.pk %}">
+                  {% csrf_token %}
+                  <div class="field">
+                    <input class="input" name="value" value="{{ extraction.proposed_value }}" required>
+                  </div>
+                  <button class="button is-small is-success" type="submit">Confirm</button>
+                </form>
+              {% endif %}
+            </div>
+          {% empty %}
+            <p class="has-text-grey">Your confirmed or pending facts will appear here.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
