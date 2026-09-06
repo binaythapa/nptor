@@ -27,8 +27,9 @@ def _selected_records(cv, section, queryset):
     if section not in (cv.selected_sections or {}):
         return list(queryset)
     selected = cv.selected_sections.get(section) or []
-    ids = {int(value) for value in selected}
-    return [item for item in queryset if item.id in ids]
+    selected_ids = [int(value) for value in selected]
+    records_by_id = {item.id: item for item in queryset}
+    return [records_by_id[record_id] for record_id in selected_ids if record_id in records_by_id]
 
 
 def create_cv(user, title, template):
