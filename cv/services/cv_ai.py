@@ -1,86 +1,22 @@
 import json
-import os
 from copy import deepcopy
-from urllib import error, request
 
+import requests
 from django.db import transaction
 from django.utils import timezone
 
 from cv.models_ai import AIConversation, AIMessage, AISuggestion, ATSAnalysis
+from cv.services.ai.provider import get_ai_provider
+from cv.services.ai.schemas import (
+    ATS_ANALYSIS_SCHEMA,
+    CV_REVIEW_CONVERSATION_SCHEMA,
+    CV_TAILOR_SCHEMA,
+)
 from cv.services.cv_builder import build_cv_payload, create_cv_version
 
 
 class AIProviderError(Exception):
     """Raised when the configured AI provider cannot complete a request."""
-
-
-class OpenAIProvider:
-    name = "openai"
-
-    def __init__(self, api_key=None, model=None, base_url=None):
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
-        self.model = model or os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-        self.base_url = (base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")).rstrip("/")
-        if not self.api_key:
-            raise AIProviderError("OPENAI_API_KEY is not configured.")
-
-    def _request_json(self, system, user_content):
-        body = json.dumps({
-            "model": self.model,
-            "temperature": 0.2,
-            "response_format": {"type": "json_object"},
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": json.dumps(user_content, ensure_ascii=False)},
-            ],
-        }).encode("utf-8")
-        req = request.Request(
-            f"{self.base_url}/chat/completions",
-            data=body,
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
-            method="POST",
-        )
-        try:
-            with request.urlopen(req, timeout=45) as response:
-                data = json.loads(response.read().decode("utf-8"))
-        except (error.URLError, error.HTTPError, TimeoutError, ValueError) as exc:
-            raise AIProviderError(f"AI provider request failed: {exc}") from exc
-        try:
-            content = data["choices"][0]["message"]["content"]
-            return json.loads(content)
-        except (KeyError, IndexError, TypeError, ValueError) as exc:
-            raise AIProviderError("AI provider returned an invalid JSON response.") from exc
-
-    def review(self, payload):
-        system = (
-            "You are a professional CV reviewer. Review only the supplied CV data. "
-            "Never invent employers, dates, qualifications, metrics, skills, or achievements. "
-            "Return strict JSON with keys summary and suggestions. Each suggestion must contain "
-            "section, field_name, kind, title, reason, current_value, proposed_value. "
-            "Only suggest changes that can be represented as a string or simple JSON value."
-        )
-        return self._request_json(system, payload)
-
-    def analyze_ats(self, payload, job_description):
-        system = (
-            "You are an ATS and recruitment analyst. Compare only the supplied CV data against "
-            "the supplied job description. Never invent qualifications, employers, dates, metrics, "
-            "skills, or experience. Return strict JSON with keys score, summary, keyword_match, "
-            "missing_keywords, strengths, gaps, risks, recommendations. Score must be an integer 0-100. "
-            "Missing keywords must be genuinely absent from the supplied CV, and recommendations must "
-            "say to add something only if it is truthful."
-        )
-        return self._request_json(system, {"cv": payload, "job_description": job_description})
-
-    def tailor_cv(self, payload, job_description):
-        system = (
-            "You are a careful CV tailoring specialist. Tailor the supplied CV only to the supplied job description. "
-            "Never invent employers, dates, qualifications, metrics, skills, technologies, or achievements. "
-            "Return strict JSON with keys summary and suggestions. Each suggestion must contain section, field_name, "
-            "kind, title, reason, current_value, proposed_value. Only propose wording that is supported by the supplied CV. "
-            "Prioritize summary and professional_title changes that improve relevance without adding unsupported facts."
-        )
-        return self._request_json(system, {"cv": payload, "job_description": job_description})
 
 
 _provider_override = None
@@ -92,7 +28,7 @@ def set_provider_for_tests(provider):
 
 
 def get_provider():
-    return _provider_override or OpenAIProvider()
+    return _provider_override or get_ai_provider()
 
 
 def _review_payload(payload):
@@ -101,6 +37,18 @@ def _review_payload(payload):
     safe.pop("status", None)
     safe.pop("title", None)
     return safe
+
+
+def _generate_structured(provider, prompt, schema, *, system_prompt):
+    try:
+        result = provider.generate_structured(prompt, schema, system_prompt=system_prompt)
+    except requests.RequestException as exc:
+        raise AIProviderError(f"AI provider request failed: {exc}") from exc
+    except (TypeError, ValueError, KeyError) as exc:
+        raise AIProviderError(f"AI provider returned an invalid response: {exc}") from exc
+    if not isinstance(result, dict):
+        raise AIProviderError("AI provider returned an invalid structured response.")
+    return result
 
 
 def _create_conversation(cv, purpose, provider, payload, result, metadata=None):
@@ -112,8 +60,16 @@ def _create_conversation(cv, purpose, provider, payload, result, metadata=None):
         model=getattr(provider, "model", ""),
         metadata=metadata or {},
     )
-    AIMessage.objects.create(conversation=conversation, role=AIMessage.ROLE_USER, content=json.dumps(payload, ensure_ascii=False))
-    AIMessage.objects.create(conversation=conversation, role=AIMessage.ROLE_ASSISTANT, content=json.dumps(result, ensure_ascii=False))
+    AIMessage.objects.create(
+        conversation=conversation,
+        role=AIMessage.ROLE_USER,
+        content=json.dumps(payload, ensure_ascii=False),
+    )
+    AIMessage.objects.create(
+        conversation=conversation,
+        role=AIMessage.ROLE_ASSISTANT,
+        content=json.dumps(result, ensure_ascii=False),
+    )
     return conversation
 
 
@@ -139,10 +95,26 @@ def review_cv(cv, provider=None):
         raise ValueError("CV profile must belong to the CV owner")
     provider = provider or get_provider()
     payload = _review_payload(build_cv_payload(cv))
-    result = provider.review(payload)
-    if not isinstance(result, dict):
-        raise AIProviderError("AI provider returned an invalid review payload.")
-    conversation = _create_conversation(cv, AIConversation.PURPOSE_REVIEW, provider, payload, result, {"review_summary": result.get("summary", "")})
+    result = _generate_structured(
+        provider,
+        "Review this CV for ATS readiness, clarity, relevance, and professional impact.\n"
+        f"CV DATA:\n{json.dumps(payload, ensure_ascii=False)}",
+        CV_REVIEW_CONVERSATION_SCHEMA,
+        system_prompt=(
+            "You are a professional CV reviewer. Review only the supplied CV data. "
+            "Never invent employers, dates, qualifications, metrics, skills, or achievements. "
+            "Return actionable suggestions only when they are supported by the supplied CV. "
+            "Proposed wording must not introduce unsupported facts."
+        ),
+    )
+    conversation = _create_conversation(
+        cv,
+        AIConversation.PURPOSE_REVIEW,
+        provider,
+        payload,
+        result,
+        {"review_summary": result.get("summary", "")},
+    )
     _create_suggestions(conversation, result)
     return conversation
 
@@ -156,13 +128,24 @@ def analyze_ats(cv, job_description, provider=None):
         raise ValueError("Job description is required")
     provider = provider or get_provider()
     payload = _review_payload(build_cv_payload(cv))
-    result = provider.analyze_ats(payload, job_description)
-    if not isinstance(result, dict):
-        raise AIProviderError("AI provider returned an invalid ATS payload.")
+    result = _generate_structured(
+        provider,
+        "Compare this CV with the supplied job description.\n"
+        f"CV DATA:\n{json.dumps(payload, ensure_ascii=False)}\n\n"
+        f"JOB DESCRIPTION:\n{job_description}",
+        ATS_ANALYSIS_SCHEMA,
+        system_prompt=(
+            "You are an ATS and recruitment analyst. Compare only the supplied CV data against "
+            "the supplied job description. Never invent qualifications, employers, dates, metrics, "
+            "skills, or experience. Missing keywords must genuinely be absent from the supplied CV. "
+            "Recommendations must say to add something only if it is truthful."
+        ),
+    )
     try:
         score = max(0, min(100, int(result.get("score", 0))))
     except (TypeError, ValueError) as exc:
         raise AIProviderError("AI provider returned an invalid ATS score.") from exc
+
     version = create_cv_version(cv)
     conversation = _create_conversation(
         cv,
@@ -193,9 +176,18 @@ def tailor_cv(cv, job_description, provider=None):
         raise ValueError("Job description is required")
     provider = provider or get_provider()
     payload = _review_payload(build_cv_payload(cv))
-    result = provider.tailor_cv(payload, job_description)
-    if not isinstance(result, dict):
-        raise AIProviderError("AI provider returned an invalid tailoring payload.")
+    result = _generate_structured(
+        provider,
+        "Tailor this CV for the supplied job description without inventing facts.\n"
+        f"CV DATA:\n{json.dumps(payload, ensure_ascii=False)}\n\n"
+        f"JOB DESCRIPTION:\n{job_description}",
+        CV_TAILOR_SCHEMA,
+        system_prompt=(
+            "You are a careful CV tailoring specialist. Tailor only the wording supported by the supplied CV. "
+            "Never invent employers, dates, qualifications, metrics, skills, technologies, or achievements. "
+            "Prioritize summary and professional title changes that improve relevance without adding unsupported facts."
+        ),
+    )
     conversation = _create_conversation(
         cv,
         AIConversation.PURPOSE_JOB_MATCH,
