@@ -7,6 +7,12 @@ from cv.services.ai.career_interviewer import interview_turn
 from cv.services.ai.cv_reviewer import review_cv
 from cv.services.ai.cv_writer import rewrite_bullet, suggest_summary
 from cv.services.ai.job_matcher import match_job
+from cv.services.cv_ai import (
+    analyze_ats as legacy_analyze_ats,
+    review_cv as legacy_review_cv,
+    set_provider_for_tests,
+    tailor_cv as legacy_tailor_cv,
+)
 from cv.services.cv_builder import create_cv_version
 
 
@@ -43,6 +49,10 @@ class AIServicesTests(TestCase):
         self.cv = CV.objects.create(owner=self.user, profile=self.profile, template=self.template, title="My CV")
         self.version = create_cv_version(self.cv)
         self.provider = FakeProvider()
+        set_provider_for_tests(self.provider)
+
+    def tearDown(self):
+        set_provider_for_tests(None)
 
     def test_writer_returns_unconfirmed_suggestion(self):
         result = suggest_summary({"professional_title": "Engineer"}, provider=self.provider)
@@ -68,3 +78,20 @@ class AIServicesTests(TestCase):
         result = match_job({"skills": ["Python"]}, "Need Python and Kubernetes", provider=self.provider)
         self.assertEqual(result["match_score"], 76)
         self.assertFalse(result["confirmed"])
+
+    def test_legacy_review_uses_shared_provider_factory(self):
+        conversation = legacy_review_cv(self.cv)
+        self.assertEqual(conversation.provider, "fake")
+        self.assertEqual(conversation.model, "test-model")
+        self.assertEqual(conversation.suggestions.count(), 1)
+
+    def test_legacy_ats_uses_shared_provider_factory(self):
+        analysis = legacy_analyze_ats(self.cv, "Need Python and Kubernetes")
+        self.assertEqual(analysis.provider, "fake")
+        self.assertEqual(analysis.score, 76)
+
+    def test_legacy_tailoring_uses_shared_provider_factory(self):
+        conversation = legacy_tailor_cv(self.cv, "Need Python and Kubernetes")
+        self.assertEqual(conversation.provider, "fake")
+        self.assertEqual(conversation.metadata["analysis"], "tailoring")
+        self.assertEqual(conversation.suggestions.count(), 1)
