@@ -2,22 +2,23 @@
 
 {% block content %}
 <style>
-  .cv-preview-shell { --cv-accent: {{ config.accent_color }}; }
+  .cv-preview-shell { --cv-accent: {{ config.accent_color }}; --cv-font-size: {{ config.font_size }}px; --cv-heading-size: {{ config.heading_size }}px; --cv-margin: {{ config.margin }}px; --cv-section-gap: {{ config.section_gap }}px; --cv-font: "{{ config.font_name }}", sans-serif; }
   .cv-preview-toolbar { margin-bottom: 1.5rem; }
-  .cv-paper { max-width: 900px; margin: 0 auto; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 12px 30px rgba(15, 23, 42, .08); }
-  .cv-header { padding: 3rem 3rem 1.75rem; border-bottom: 2px solid var(--cv-accent); }
+  .cv-paper { max-width: 900px; margin: 0 auto; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 12px 30px rgba(15, 23, 42, .08); font-family: var(--cv-font); font-size: var(--cv-font-size); }
+  .cv-header { padding: var(--cv-margin) var(--cv-margin) 1.75rem; border-bottom: 2px solid var(--cv-accent); }
   .cv-header.centered { text-align: center; }
-  .cv-header.compact { padding-top: 2rem; padding-bottom: 1rem; border-bottom: 0; }
+  .cv-header.compact { padding-top: calc(var(--cv-margin) * .65); padding-bottom: 1rem; border-bottom: 0; }
   .cv-name { margin: 0; color: var(--cv-accent); font-size: 2.2rem; line-height: 1.1; font-weight: 700; }
   .cv-title { margin: .45rem 0; color: var(--cv-accent); font-size: 1.05rem; font-weight: 600; }
   .cv-contact { color: #4b5563; font-size: .82rem; line-height: 1.6; overflow-wrap: anywhere; }
-  .cv-body { padding: 2rem 3rem 3rem; }
+  .cv-body { padding: 2rem var(--cv-margin) 3rem; }
   .cv-body.sidebar { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 2rem; }
-  .cv-sidebar { order: 2; background: var(--cv-accent); color: #fff; padding: 1.5rem; margin: -2rem -3rem -3rem 0; }
+  .cv-sidebar { order: 2; background: var(--cv-accent); color: #fff; padding: 1.5rem; margin: -2rem calc(var(--cv-margin) * -1) -3rem 0; }
   .cv-sidebar .cv-section-heading { color: #fff; border-color: rgba(255,255,255,.45); }
-  .cv-section { margin-bottom: {{ config.section_gap }}px; break-inside: avoid; }
-  .cv-section-heading { color: var(--cv-accent); font-size: {{ config.heading_size }}px; margin: 0 0 .8rem; font-weight: 700; }
+  .cv-section { margin-bottom: var(--cv-section-gap); break-inside: avoid; }
+  .cv-section-heading { color: var(--cv-accent); font-size: var(--cv-heading-size); margin: 0 0 .8rem; font-weight: 700; }
   .cv-section-heading.uppercase_rule { text-transform: uppercase; letter-spacing: .08em; border-bottom: 1px solid var(--cv-accent); padding-bottom: .3rem; }
+  .cv-section-heading.title_case { text-transform: none; letter-spacing: .02em; border-left: 3px solid var(--cv-accent); padding-left: .55rem; }
   .cv-section-heading.minimal { font-weight: 600; }
   .cv-entry { margin-bottom: 1rem; break-inside: avoid; }
   .cv-entry-title { font-weight: 700; color: #111827; }
@@ -40,7 +41,7 @@
   }
 </style>
 
-<section class="section cv-preview-shell" data-template-layout="{{ config.layout }}" data-template-slug="{{ payload.template.slug }}">
+<section class="section cv-preview-shell" data-template-layout="{{ config.layout }}" data-template-slug="{{ payload.template.slug }}" data-template-font="{{ config.font_name }}">
   <div class="container">
     <div class="level cv-preview-toolbar">
       <div>

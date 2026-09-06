@@ -1,23 +1,91 @@
 {% extends "layouts/student/base.html" %}
 
 {% block content %}
+<style>
+  .cv-template-gallery { max-width: 1180px; margin: 0 auto; }
+  .cv-template-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
+  .cv-template-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(15, 23, 42, .1); }
+  .cv-template-preview { min-height: 190px; padding: 16px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; }
+  .cv-paper { position: relative; width: 100%; max-width: 210px; min-height: 155px; margin: 0 auto; padding: 13px; background: #fff; border: 1px solid #dbe1e8; border-radius: 3px; box-shadow: 0 4px 10px rgba(15, 23, 42, .08); color: #475569; font-size: 5px; }
+  .cv-paper__header { border-bottom: 2px solid var(--template-accent); padding-bottom: 7px; margin-bottom: 8px; }
+  .cv-paper__name { width: 62%; height: 7px; margin-bottom: 4px; border-radius: 2px; background: #111827; }
+  .cv-paper__title { width: 42%; height: 4px; border-radius: 2px; background: var(--template-accent); }
+  .cv-paper__section { margin-bottom: 7px; }
+  .cv-paper__heading { width: 28%; height: 4px; margin-bottom: 4px; border-radius: 2px; background: var(--template-accent); }
+  .cv-paper__line { height: 3px; margin-bottom: 3px; border-radius: 2px; background: #dbe3ec; }
+  .cv-paper__line--wide { width: 92%; }
+  .cv-paper__line--medium { width: 72%; }
+  .cv-paper__line--short { width: 48%; }
+  .cv-paper--sidebar { padding-left: 48px; }
+  .cv-paper--sidebar::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 36px; background: color-mix(in srgb, var(--template-accent) 12%, white); border-right: 1px solid color-mix(in srgb, var(--template-accent) 24%, white); }
+  .cv-paper--centered .cv-paper__header { text-align: center; }
+  .cv-paper--centered .cv-paper__name, .cv-paper--centered .cv-paper__title { margin-left: auto; margin-right: auto; }
+  .cv-paper--compact { min-height: 145px; padding: 10px; }
+  .cv-paper--minimal .cv-paper__header { border-bottom: 0; padding-bottom: 4px; }
+  .cv-template-body { display: flex; flex: 1; flex-direction: column; padding: 18px; }
+  .cv-template-meta { margin-bottom: 14px; }
+  .cv-template-name { margin-bottom: 5px !important; }
+  .cv-template-description { min-height: 42px; color: #64748b; }
+  .cv-template-actions { margin-top: auto; display: flex; gap: 8px; }
+  .cv-template-actions .button { flex: 1; }
+  @media (prefers-reduced-motion: no-preference) { .cv-template-card { transition: transform .18s ease, box-shadow .18s ease; } }
+</style>
+
 <section class="section">
-  <div class="container">
-    <h1 class="title">CV Templates</h1>
-    <div class="columns is-multiline">
-      {% for template in templates %}
-        <div class="column is-one-quarter">
-          <div class="box" style="height:100%">
-            <h2 class="title is-5">{{ template.name }}</h2>
-            <p class="is-size-7 mb-4">{{ template.description }}</p>
-            <span class="tag is-light">{{ template.slug }}</span>
-          </div>
+  <div class="container cv-template-gallery">
+    <div class="level mb-5">
+      <div class="level-left">
+        <div>
+          <p class="is-size-7 has-text-weight-semibold has-text-grey">CV BUILDER</p>
+          <h1 class="title mb-2">Choose your CV template</h1>
+          <p class="subtitle is-6 has-text-grey">Pick a visual style. Your career profile and content stay unchanged.</p>
         </div>
+      </div>
+      <div class="level-right">
+        <a class="button is-light" href="{% url 'cv:dashboard' %}">Back to CVs</a>
+      </div>
+    </div>
+
+    <div class="columns is-multiline">
+      {% for item in templates %}
+        {% with template=item.template config=item.config %}
+        <div class="column is-one-quarter-desktop is-one-third-tablet">
+          <article class="cv-template-card">
+            <div class="cv-template-preview">
+              <div class="cv-paper cv-paper--{{ config.layout }} cv-paper--{{ config.header_style }} cv-paper--{{ config.section_style }} cv-paper--{{ config.density }}" style="--template-accent: {{ config.accent_color }};">
+                <div class="cv-paper__header">
+                  <div class="cv-paper__name"></div>
+                  <div class="cv-paper__title"></div>
+                </div>
+                <div class="cv-paper__section">
+                  <div class="cv-paper__heading"></div>
+                  <div class="cv-paper__line cv-paper__line--wide"></div>
+                  <div class="cv-paper__line cv-paper__line--medium"></div>
+                </div>
+                <div class="cv-paper__section">
+                  <div class="cv-paper__heading"></div>
+                  <div class="cv-paper__line cv-paper__line--wide"></div>
+                  <div class="cv-paper__line cv-paper__line--short"></div>
+                  <div class="cv-paper__line cv-paper__line--medium"></div>
+                </div>
+              </div>
+            </div>
+            <div class="cv-template-body">
+              <div class="cv-template-meta">
+                <h2 class="title is-5 cv-template-name">{{ template.name }}</h2>
+                <p class="is-size-7 cv-template-description">{{ template.description }}</p>
+              </div>
+              <div class="cv-template-actions">
+                <a class="button is-primary is-small" href="{% url 'cv:cv_create' %}?template={{ template.slug|urlencode }}">Use this template</a>
+              </div>
+            </div>
+          </article>
+        </div>
+        {% endwith %}
       {% empty %}
         <div class="column"><p>No active templates are available yet.</p></div>
       {% endfor %}
     </div>
-    <a class="button" href="{% url 'cv:dashboard' %}">Back to CVs</a>
   </div>
 </section>
 {% endblock %}

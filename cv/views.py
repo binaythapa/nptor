@@ -12,7 +12,7 @@ from cv.services.cv_ai import AIProviderError, accept_suggestion, analyze_ats, r
 from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
-from cv.services.documents.renderer import build_cv_render_context
+from cv.services.documents.renderer import build_cv_render_context, get_render_config, get_template_snapshot
 from cv.services.importers.service import confirm_import_field, import_cv_source
 from cv.services.profile import account_contact_defaults, get_or_create_career_profile
 
@@ -144,7 +144,13 @@ def cv_create(request):
                 cv.overrides = form.cleaned_data.get("overrides") or {}
                 cv.save(update_fields=["status", "overrides", "updated_at"])
                 return redirect("cv:cv_builder", pk=cv.pk)
-    else: form = CVForm(owner=request.user, initial={"status": CV.STATUS_DRAFT})
+    else:
+        form = CVForm(owner=request.user, initial={"status": CV.STATUS_DRAFT})
+        template_slug = request.GET.get("template")
+        if template_slug:
+            selected_template = CVTemplate.objects.filter(slug=template_slug, is_active=True).first()
+            if selected_template:
+                form.initial["template"] = selected_template
     return render(request, "cv/cv_form.html", {"form": form, "heading": "Create CV"})
 
 
@@ -191,7 +197,11 @@ def cv_duplicate(request, pk):
 
 @login_required
 def cv_templates(request):
-    return render(request, "cv/template_select.html", {"templates": CVTemplate.objects.filter(is_active=True).order_by("name")})
+    templates = []
+    for template in CVTemplate.objects.filter(is_active=True).order_by("name"):
+        snapshot = get_template_snapshot(template)
+        templates.append({"template": template, "config": get_render_config(snapshot)})
+    return render(request, "cv/template_select.html", {"templates": templates})
 
 
 @login_required

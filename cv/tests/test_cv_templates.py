@@ -1,5 +1,7 @@
+from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
+from django.urls import reverse
 
 from cv.models_template import CVTemplate
 
@@ -59,3 +61,25 @@ class CVTemplateTests(TestCase):
         self.assertEqual(configs["academic"]["font_name"], "Times-Roman")
         self.assertEqual(configs["government"]["section_style"], "title_case")
         self.assertEqual(configs["minimal"]["density"], "compact")
+
+    def test_template_gallery_exposes_a_use_link_for_each_active_template(self):
+        user = get_user_model().objects.create_user(username="template-gallery", password="password")
+        call_command("seed_cv_templates")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("cv:cv_templates"))
+
+        self.assertEqual(response.status_code, 200)
+        for slug in EXPECTED_TEMPLATES:
+            self.assertContains(response, f"?template={slug}")
+
+    def test_create_page_honors_template_selected_from_gallery(self):
+        user = get_user_model().objects.create_user(username="template-create", password="password")
+        call_command("seed_cv_templates")
+        selected = CVTemplate.objects.get(slug="technical")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("cv:cv_create") + "?template=technical")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["form"].initial["template"], selected)
