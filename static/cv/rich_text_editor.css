@@ -1,0 +1,15 @@
+.cv-rich-text { border: 1px solid #d9e2ec; border-radius: 10px; background: #fff; overflow: hidden; }
+.cv-rich-text__toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; border-bottom: 1px solid #e6edf3; background: #f8fafc; }
+.cv-rich-text__button { min-width: 34px; height: 32px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #334155; font: inherit; cursor: pointer; }
+.cv-rich-text__button:hover, .cv-rich-text__button:focus-visible { border-color: #cbd5e1; background: #fff; outline: none; }
+.cv-rich-text__button.is-active { background: #e2e8f0; border-color: #cbd5e1; }
+.cv-rich-text__divider { width: 1px; margin: 3px 4px; background: #dbe3ea; }
+.cv-rich-text__editor { min-height: 170px; padding: 12px 14px; outline: none; line-height: 1.55; }
+.cv-rich-text__editor:focus { box-shadow: inset 0 0 0 2px rgba(14, 165, 233, .12); }
+.cv-rich-text__editor p { margin: 0 0 .65em; }
+.cv-rich-text__editor p:last-child { margin-bottom: 0; }
+.cv-rich-text__editor ul, .cv-rich-text__editor ol { margin: .35em 0 .75em; padding-left: 1.7rem; }
+.cv-rich-text__editor li { margin: .2em 0; }
+.cv-rich-text__input { display: none !important; }
+.cv-rich-text__hint { padding: 6px 14px 9px; color: #64748b; font-size: .78rem; border-top: 1px solid #f1f5f9; }
+@media (max-width: 640px) { .cv-rich-text__toolbar { gap: 2px; } .cv-rich-text__button { min-width: 32px; } }
