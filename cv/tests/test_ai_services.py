@@ -5,7 +5,7 @@ from cv.models import ATSAnalysis, AIConversation, CareerProfile, CVTemplate
 from cv.models_cv import CV
 from cv.services.ai.career_interviewer import interview_turn
 from cv.services.ai.cv_reviewer import review_cv
-from cv.services.ai.cv_writer import rewrite_bullet, suggest_summary
+from cv.services.ai.cv_writer import rewrite_bullet, suggest_skills, suggest_summary
 from cv.services.ai.job_matcher import match_job
 from cv.services.cv_ai import (
     analyze_ats as legacy_analyze_ats,
@@ -86,6 +86,11 @@ class AIServicesTests(TestCase):
     def test_rewrite_returns_unconfirmed_suggestion(self):
         result = rewrite_bullet("Built reports", {"role": "Engineer"}, provider=self.provider)
         self.assertFalse(result["confirmed"])
+
+    def test_skill_suggestion_returns_unconfirmed_suggestion(self):
+        result = suggest_skills({"skills": [{"name": "Python"}]}, "Data Engineer", provider=self.provider)
+        self.assertFalse(result["confirmed"])
+        self.assertIn("skills", result)
 
     def test_reviewer_creates_analysis_for_version_owner(self):
         analysis = review_cv(self.version, provider=self.provider)
