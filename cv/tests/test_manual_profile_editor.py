@@ -4,6 +4,14 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from cv.forms import (
+    CareerAchievementForm,
+    CareerCertificationForm,
+    CareerEducationForm,
+    CareerExperienceForm,
+    CareerProjectForm,
+    CareerSkillForm,
+)
 from cv.models import (
     CareerAchievement,
     CareerCertification,
@@ -37,6 +45,21 @@ class ManualProfileEditorTests(TestCase):
         self.assertEqual(response.status_code, 200)
         for value in ("Engineer", "BSc", "Project X", "Python", "Award", "SnowPro"):
             self.assertContains(response, value)
+
+    def test_manual_forms_do_not_expose_internal_profile_fields(self):
+        forms = (
+            CareerExperienceForm(),
+            CareerEducationForm(),
+            CareerProjectForm(),
+            CareerSkillForm(),
+            CareerAchievementForm(),
+            CareerCertificationForm(),
+        )
+        for form in forms:
+            self.assertNotIn("sort_order", form.fields)
+            self.assertNotIn("source", form.fields)
+            self.assertNotIn("is_confirmed", form.fields)
+            self.assertNotIn("profile", form.fields)
 
     def test_add_record_supports_every_manual_section(self):
         payloads = {
