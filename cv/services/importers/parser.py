@@ -1,6 +1,10 @@
 import re
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
+IDENTITY_SENTENCE_RE = re.compile(
+    r"^(?P<name>[A-Za-z][A-Za-z .'-]{1,79})\s+is\s+(?:an?|the)\s+(?P<title>[^,.;]{2,80})",
+    re.IGNORECASE,
+)
 SECTION_NAMES = {
     "summary": "summary",
     "professional summary": "summary",
@@ -43,19 +47,28 @@ def parse_career_facts(text):
         and first_line_normalized not in SECTION_NAMES
     )
 
+    identity_sentence = None
+    if not has_identity_line:
+        for line in lines:
+            match = IDENTITY_SENTENCE_RE.match(line)
+            if match:
+                identity_sentence = match
+                break
+
     if has_identity_line:
         _add_field(fields, "contact", "full_name", first_line)
+    elif identity_sentence:
+        _add_field(fields, "contact", "full_name", identity_sentence.group("name"))
 
     if email_match:
         _add_field(fields, "contact", "email", email_match.group(0))
 
-    # Only infer a professional title when the document starts with an identity
-    # line. This prevents section headings such as "Summary" from shifting the
-    # following summary text into the contact fields.
     if has_identity_line:
         title_candidates = [line for line in lines[1:4] if not EMAIL_RE.search(line)]
         if title_candidates and title_candidates[0].rstrip(":").strip().lower() not in SECTION_NAMES:
             _add_field(fields, "contact", "professional_title", title_candidates[0])
+    elif identity_sentence:
+        _add_field(fields, "contact", "professional_title", identity_sentence.group("title"))
 
     for index, line in enumerate(lines):
         normalized = line.rstrip(":").strip().lower()
@@ -76,6 +89,6 @@ def parse_career_facts(text):
 
     result = {"fields": fields}
     for field in fields:
-        if field["field_name"] in {"full_name", "email"}:
+        if field["field_name"] in {"full_name", "email", "professional_title"}:
             result[field["field_name"]] = field["value"]
     return result
