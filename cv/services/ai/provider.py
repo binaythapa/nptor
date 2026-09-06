@@ -5,7 +5,7 @@ class AIProviderNotConfigured(RuntimeError):
     """Raised when an optional AI provider has not been configured."""
 
 
-class AIProviderRateLimited(RuntimeError):
+class AIProviderRateLimited(AIProviderNotConfigured):
     """Raised when an AI provider refuses a request because of rate limits/quota."""
 
     def __init__(self, message, *, provider, retry_after_seconds=None):
