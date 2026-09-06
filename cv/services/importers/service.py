@@ -2,7 +2,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
 
-from cv.models import CareerProfile
+from cv.models import CareerProfile, CareerSkill
 from cv.models_import import CVImport, ImportedField
 from cv.services.importers.docx import extract_text_from_docx
 from cv.services.importers.parser import parse_career_facts
@@ -76,7 +76,63 @@ def confirm_import_field(import_field_id, user, value):
     field.confirmed_by = user
     field.confirmed_at = timezone.now()
     field.save(update_fields=["value", "confirmed", "confirmed_by", "confirmed_at", "updated_at"])
-    if not field.cv_import.fields.filter(confirmed=False).exists():
-        field.cv_import.status = CVImport.STATUS_CONFIRMED
-        field.cv_import.save(update_fields=["status", "updated_at"])
     return field
+
+
+def _apply_imported_fields(imported, user):
+    profile = imported.profile
+    contact_name = None
+    contact_email = None
+
+    for field in imported.fields.all():
+        value = field.value.strip()
+        if not value:
+            continue
+        if field.section == "contact" and field.field_name == "full_name":
+            contact_name = value
+        elif field.section == "contact" and field.field_name == "email":
+            contact_email = value
+        elif field.section == "contact" and field.field_name == "professional_title":
+            profile.professional_title = value
+        elif field.section == "summary" and field.field_name == "text":
+            profile.summary = value
+        elif field.section == "skills" and field.field_name == "name":
+            CareerSkill.objects.get_or_create(profile=profile, name=value)
+
+    profile.save(update_fields=["professional_title", "summary", "updated_at"])
+
+    user_update_fields = []
+    if contact_name:
+        parts = contact_name.split()
+        user.first_name = parts[0]
+        user.last_name = " ".join(parts[1:])
+        user_update_fields.extend(["first_name", "last_name"])
+    if contact_email:
+        user.email = contact_email
+        user_update_fields.append("email")
+    if user_update_fields:
+        user.save(update_fields=list(dict.fromkeys(user_update_fields)))
+
+
+@transaction.atomic
+def confirm_import(imported_id, user, values):
+    imported = CVImport.objects.select_related("profile").prefetch_related("fields").filter(
+        pk=imported_id,
+        owner=user,
+    ).first()
+    if imported is None:
+        raise CVImport.DoesNotExist
+
+    fields = list(imported.fields.all())
+    for field in fields:
+        if field.pk in values:
+            confirm_import_field(field.pk, user, values[field.pk])
+
+    imported.refresh_from_db()
+    if imported.fields.filter(confirmed=False).exists():
+        raise ValueError("Please review and confirm every imported field before adding it to your CV.")
+
+    _apply_imported_fields(imported, user)
+    imported.status = CVImport.STATUS_CONFIRMED
+    imported.save(update_fields=["status", "updated_at"])
+    return imported
