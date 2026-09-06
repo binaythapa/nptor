@@ -1,0 +1,16 @@
+/* =========================================================
+   CV AI REVIEW PAGE
+   ========================================================= */
+
+/*
+   Bulma intentionally pulls a .subtitle upward when it follows
+   a .title. The AI review page uses a title and subtitle as two
+   separate heading lines, so keep them in normal vertical flow.
+*/
+.cv-ai-review-heading .cv-ai-review-title {
+    margin-bottom: 0.5rem !important;
+}
+
+.cv-ai-review-heading .cv-ai-review-subtitle {
+    margin-top: 0 !important;
+}
