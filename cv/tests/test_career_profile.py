@@ -81,7 +81,7 @@ class CareerProfileInterviewTests(TestCase):
             reverse("cv:career_interview_confirm", kwargs={"pk": extraction.pk}),
             {"value": "Senior Data Engineer"},
         )
-        self.assertRedirects(response, reverse("cv:career_interview", kwargs={"conversation_id": self.conversation.pk}))
+        self.assertRedirects(response, reverse("cv:career_interview_conversation", kwargs={"conversation_id": self.conversation.pk}))
         extraction.refresh_from_db()
         self.assertTrue(extraction.confirmed)
         self.assertEqual(extraction.proposed_value, "Senior Data Engineer")
