@@ -2,7 +2,15 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
 
-from cv.models import CareerProfile, CareerSkill
+from cv.models import (
+    CareerAchievement,
+    CareerCertification,
+    CareerEducation,
+    CareerExperience,
+    CareerProject,
+    CareerProfile,
+    CareerSkill,
+)
 from cv.models_import import CVImport, ImportedField
 from cv.services.importers.docx import extract_text_from_docx
 from cv.services.importers.parser import parse_career_facts
@@ -79,6 +87,124 @@ def confirm_import_field(import_field_id, user, value):
     return field
 
 
+def _lines(value):
+    return [line.strip(" \t•-*\u2022") for line in str(value).splitlines() if line.strip(" \t•-*\u2022")]
+
+
+def _parts(value):
+    return [part.strip() for part in str(value).split("|") if part.strip()]
+
+
+def _create_experience(profile, value):
+    lines = _lines(value)
+    if not lines:
+        return
+    parts = _parts(lines[0])
+    if len(parts) >= 2:
+        job_title, employer = parts[0], parts[1]
+        description = " | ".join(parts[2:])
+        if len(lines) > 1:
+            description = "\n".join(filter(None, [description, *lines[1:]]))
+    else:
+        job_title = lines[0]
+        employer = lines[1] if len(lines) > 1 else "Imported employer"
+        description = "\n".join(lines[2:])
+    CareerExperience.objects.create(
+        profile=profile,
+        job_title=job_title[:255],
+        employer=employer[:255],
+        description=description,
+        source="import",
+        is_confirmed=True,
+    )
+
+
+def _create_education(profile, value):
+    lines = _lines(value)
+    if not lines:
+        return
+    parts = _parts(lines[0])
+    institution_markers = ("university", "college", "institute", "school", "academy")
+    institution_index = next(
+        (index for index, part in enumerate(parts) if any(marker in part.lower() for marker in institution_markers)),
+        None,
+    )
+    if institution_index is not None:
+        institution = parts[institution_index]
+        qualification = parts[0] if institution_index else (parts[1] if len(parts) > 1 else parts[0])
+        field_of_study = " | ".join(parts[1:institution_index]) if institution_index > 1 else ""
+    elif len(parts) >= 2:
+        qualification, institution = parts[0], parts[-1]
+        field_of_study = " | ".join(parts[1:-1])
+    else:
+        qualification = lines[0]
+        institution = lines[1] if len(lines) > 1 else "Imported institution"
+        field_of_study = ""
+    description = "\n".join(lines[1:]) if len(lines) > 1 and institution_index is None else ""
+    CareerEducation.objects.create(
+        profile=profile,
+        institution=institution[:255],
+        qualification=qualification[:255],
+        field_of_study=field_of_study[:255],
+        description=description,
+        source="import",
+        is_confirmed=True,
+    )
+
+
+def _create_project(profile, value):
+    lines = _lines(value)
+    if not lines:
+        return
+    parts = _parts(lines[0])
+    name = parts[0]
+    description = " | ".join(parts[1:])
+    if len(lines) > 1:
+        description = "\n".join(filter(None, [description, *lines[1:]]))
+    CareerProject.objects.create(
+        profile=profile,
+        name=name[:255],
+        description=description,
+        technologies="",
+        source="import",
+        is_confirmed=True,
+    )
+
+
+def _create_certification(profile, value):
+    lines = _lines(value)
+    if not lines:
+        return
+    parts = _parts(lines[0])
+    name = parts[0]
+    issuer = parts[1] if len(parts) > 1 else ""
+    CareerCertification.objects.create(
+        profile=profile,
+        name=name[:255],
+        issuer=issuer[:255],
+        source="import",
+        is_confirmed=True,
+    )
+
+
+def _create_achievement(profile, value):
+    lines = _lines(value)
+    if not lines:
+        return
+    parts = _parts(lines[0])
+    title = parts[0]
+    description = " | ".join(parts[1:])
+    if len(lines) > 1:
+        description = "\n".join(filter(None, [description, *lines[1:]]))
+    CareerAchievement.objects.create(
+        profile=profile,
+        title=title[:255],
+        description=description,
+        source="import",
+        is_confirmed=True,
+    )
+
+
 def _apply_imported_fields(imported, user):
     profile = imported.profile
     contact_name = None
@@ -97,7 +223,21 @@ def _apply_imported_fields(imported, user):
         elif field.section == "summary" and field.field_name == "text":
             profile.summary = value
         elif field.section == "skills" and field.field_name == "name":
-            CareerSkill.objects.get_or_create(profile=profile, name=value)
+            CareerSkill.objects.get_or_create(
+                profile=profile,
+                name=value,
+                defaults={"source": "import", "is_confirmed": True},
+            )
+        elif field.section == "experience" and field.field_name == "text":
+            _create_experience(profile, value)
+        elif field.section == "education" and field.field_name == "text":
+            _create_education(profile, value)
+        elif field.section == "projects" and field.field_name == "text":
+            _create_project(profile, value)
+        elif field.section == "certifications" and field.field_name == "text":
+            _create_certification(profile, value)
+        elif field.section == "achievements" and field.field_name == "text":
+            _create_achievement(profile, value)
 
     profile.save(update_fields=["professional_title", "summary", "updated_at"])
 
