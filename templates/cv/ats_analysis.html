@@ -1,0 +1,56 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width: 1100px;">
+    <div class="level mb-5">
+      <div>
+        <p class="is-size-7 has-text-grey mb-1">ATS Analysis</p>
+        <h1 class="title mb-1">Analyze {{ cv.title }}</h1>
+        <p class="subtitle is-6 mb-0">Compare this CV with a target job description before applying.</p>
+      </div>
+      <div class="buttons">
+        <a class="button" href="{% url 'cv:cv_builder' cv.pk %}">Back to Builder</a>
+        <a class="button is-light" href="{% url 'cv:cv_ai_tailor' cv.pk %}">Tailor for Job</a>
+      </div>
+    </div>
+
+    {% if error_message %}<div class="notification is-danger is-light"><strong>ATS analysis could not run.</strong><br>{{ error_message }}</div>{% endif %}
+
+    <div class="box">
+      <form method="post">
+        {% csrf_token %}
+        <div class="field">
+          <label class="label">Job description</label>
+          <div class="control"><textarea class="textarea" name="job_description" rows="10" required placeholder="Paste the complete job description here...">{{ job_description }}</textarea></div>
+        </div>
+        <button class="button is-primary" type="submit">Run ATS Analysis</button>
+      </form>
+    </div>
+
+    {% if analysis %}
+      <div class="columns">
+        <div class="column is-one-quarter"><div class="box has-text-centered"><p class="is-size-7 has-text-grey">ATS Score</p><p class="title is-1 mb-0">{{ analysis.score }}<span class="is-size-5">/100</span></p></div></div>
+        <div class="column"><div class="notification is-light"><p class="has-text-weight-semibold mb-1">Summary</p><p>{{ analysis.result.summary }}</p></div></div>
+      </div>
+
+      <div class="columns">
+        <div class="column"><div class="box"><h2 class="title is-6">Matched keywords</h2>{% for item in analysis.result.keyword_match %}<span class="tag is-success is-light mr-1 mb-1">{{ item }}</span>{% empty %}<p>No matched keywords returned.</p>{% endfor %}</div></div>
+        <div class="column"><div class="box"><h2 class="title is-6">Missing keywords</h2>{% for item in analysis.result.missing_keywords %}<span class="tag is-warning is-light mr-1 mb-1">{{ item }}</span>{% empty %}<p>No missing keywords returned.</p>{% endfor %}</div></div>
+      </div>
+
+      <div class="columns">
+        <div class="column"><div class="box"><h2 class="title is-6">Strengths</h2><ul>{% for item in analysis.result.strengths %}<li>{{ item }}</li>{% empty %}<li>No strengths returned.</li>{% endfor %}</ul></div></div>
+        <div class="column"><div class="box"><h2 class="title is-6">Gaps</h2><ul>{% for item in analysis.result.gaps %}<li>{{ item }}</li>{% empty %}<li>No gaps returned.</li>{% endfor %}</ul></div></div>
+      </div>
+
+      <div class="columns">
+        <div class="column"><div class="box"><h2 class="title is-6">ATS risks</h2><ul>{% for item in analysis.result.risks %}<li>{{ item }}</li>{% empty %}<li>No risks returned.</li>{% endfor %}</ul></div></div>
+        <div class="column"><div class="box"><h2 class="title is-6">Recommendations</h2><ul>{% for item in analysis.result.recommendations %}<li>{{ item }}</li>{% empty %}<li>No recommendations returned.</li>{% endfor %}</ul></div></div>
+      </div>
+    {% else %}
+      <div class="notification is-light">Paste a job description above to generate an ATS score and actionable comparison.</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
