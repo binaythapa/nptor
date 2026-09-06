@@ -18,6 +18,7 @@ class CVLayoutTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "cv-route")
+        self.assertContains(response, "cv-compact-ui")
         self.assertNotContains(response, 'id="site-sidebar"')
 
     def test_cv_dashboard_has_workspace_navigation_and_home_link(self):
@@ -38,6 +39,7 @@ class CVLayoutTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "cv-route")
+        self.assertContains(response, "cv-compact-ui")
         self.assertNotContains(response, 'id="site-sidebar"')
 
     def test_cv_builder_has_cv_navigation(self):
