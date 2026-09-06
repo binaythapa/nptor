@@ -23,41 +23,41 @@ class CareerProfileForm(forms.ModelForm):
 class CareerExperienceForm(forms.ModelForm):
     class Meta:
         model = CareerExperience
-        fields = ("job_title", "employer", "location", "start_date", "end_date", "is_current", "description", "sort_order")
+        fields = ("job_title", "employer", "location", "start_date", "end_date", "is_current", "description")
         widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
 
 
 class CareerEducationForm(forms.ModelForm):
     class Meta:
         model = CareerEducation
-        fields = ("institution", "qualification", "field_of_study", "location", "start_date", "end_date", "description", "sort_order")
+        fields = ("institution", "qualification", "field_of_study", "location", "start_date", "end_date", "description")
         widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
 
 
 class CareerProjectForm(forms.ModelForm):
     class Meta:
         model = CareerProject
-        fields = ("name", "role", "url", "description", "technologies", "sort_order")
+        fields = ("name", "role", "url", "description", "technologies")
         widgets = {"description": forms.Textarea(attrs={"rows": 5})}
 
 
 class CareerSkillForm(forms.ModelForm):
     class Meta:
         model = CareerSkill
-        fields = ("name", "category", "proficiency", "sort_order")
+        fields = ("name", "category", "proficiency")
 
 
 class CareerAchievementForm(forms.ModelForm):
     class Meta:
         model = CareerAchievement
-        fields = ("title", "description", "achieved_on", "sort_order")
+        fields = ("title", "description", "achieved_on")
         widgets = {"achieved_on": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
 
 
 class CareerCertificationForm(forms.ModelForm):
     class Meta:
         model = CareerCertification
-        fields = ("name", "issuer", "credential_id", "credential_url", "issued_on", "expires_on", "sort_order")
+        fields = ("name", "issuer", "credential_id", "credential_url", "issued_on", "expires_on")
         widgets = {"issued_on": forms.DateInput(attrs={"type": "date"}), "expires_on": forms.DateInput(attrs={"type": "date"})}
 
 
