@@ -35,6 +35,30 @@
     .cv-skill { border: 1px solid #d1d5db; border-radius: 999px; padding: .2rem .6rem; font-size: .8rem; }
     .cv-sidebar .cv-skill { border-color: rgba(255,255,255,.5); }
     .cv-links a { color: inherit; }
+
+    /* The builder iframe is a compact glance at the resume, not a second preview page. */
+    body.embedded-preview { background: #fff; overflow-x: hidden; }
+    body.embedded-preview .cv-preview-shell { padding: 0; }
+    body.embedded-preview .cv-preview-toolbar { display: none; }
+    body.embedded-preview .cv-paper { max-width: none; width: 100%; border: 0; box-shadow: none; }
+    body.embedded-preview .cv-header { padding: 1rem .95rem .8rem; border-bottom-width: 1px; }
+    body.embedded-preview .cv-header.compact { padding-top: .7rem; padding-bottom: .6rem; }
+    body.embedded-preview .cv-name { font-size: 1.55rem; line-height: 1.08; }
+    body.embedded-preview .cv-title { margin: .2rem 0; font-size: .78rem; line-height: 1.2; }
+    body.embedded-preview .cv-contact { font-size: .64rem; line-height: 1.35; }
+    body.embedded-preview .cv-body { padding: .9rem .95rem 1.25rem; }
+    body.embedded-preview .cv-body.sidebar { grid-template-columns: minmax(0, 1fr) 145px; gap: .85rem; }
+    body.embedded-preview .cv-sidebar { padding: .8rem; margin: -.9rem -.95rem -1.25rem 0; }
+    body.embedded-preview .cv-section { margin-bottom: .8rem; }
+    body.embedded-preview .cv-section-heading { font-size: .78rem; margin-bottom: .35rem; }
+    body.embedded-preview .cv-entry { margin-bottom: .55rem; }
+    body.embedded-preview .cv-entry-title { font-size: .7rem; line-height: 1.25; }
+    body.embedded-preview .cv-entry-meta,
+    body.embedded-preview .cv-entry-description { font-size: .64rem; line-height: 1.35; }
+    body.embedded-preview .cv-entry-description { margin-top: .15rem; }
+    body.embedded-preview .cv-skills { gap: .2rem; }
+    body.embedded-preview .cv-skill { padding: .1rem .35rem; font-size: .58rem; }
+
     @media (max-width: 768px) {
       .cv-preview-shell { padding: .75rem; }
       .cv-paper { border-left: 0; border-right: 0; }
@@ -50,7 +74,7 @@
     }
   </style>
 </head>
-<body>
+<body class="{% if request.GET.embed == '1' %}embedded-preview{% endif %}">
 <section class="cv-preview-shell" data-template-layout="{{ config.layout }}" data-template-slug="{{ payload.template.slug }}" data-template-font="{{ config.font_name }}">
   <div class="cv-preview-toolbar">
     <div class="level">
