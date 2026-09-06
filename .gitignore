@@ -57,12 +57,16 @@ node_modules/
 dist/
 build/
 
-
+# ==================================================
+# Local environment / secrets
+# ==================================================
 .env
+.env.*
+!.env.example
+
 objective_exam/__init__.py
 questions1.pdf
 questions2.pdf
-objective_exam/__init__.py
 objective_exam/__init__.py
 questions3.pdf
 questions4.pdf
