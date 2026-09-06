@@ -12,7 +12,7 @@ class GeminiProvider(AIProvider):
 
     def __init__(self, api_key=None, model=None, timeout=None):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "").strip()
-        self.model = model or os.environ.get("CV_AI_MODEL", "gemini-2.5-flash-lite").strip()
+        self.model = model or os.environ.get("CV_AI_MODEL", "gemini-3.6-flash").strip()
         self.timeout = int(timeout or os.environ.get("CV_AI_TIMEOUT_SECONDS", "60"))
 
     def _request(self, input_text, *, system_prompt="", model=None, schema=None):
