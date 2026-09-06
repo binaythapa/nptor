@@ -23,9 +23,151 @@ body.cv-route .main-area > .site-content > .section {
     padding-right: 0;
 }
 
+.cv-workspace-nav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    width: 100%;
+    background: var(--cv-nav-bg, #ffffff);
+    border-bottom: 1px solid var(--cv-nav-border, #e5e7eb);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.cv-workspace-nav-inner {
+    width: min(1440px, calc(100% - 2rem));
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.cv-workspace-nav-primary,
+.cv-workspace-nav-secondary {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.cv-workspace-nav-primary {
+    min-height: 3.25rem;
+}
+
+.cv-workspace-nav-secondary {
+    min-height: 3rem;
+    border-top: 1px solid var(--cv-nav-border, #eef0f3);
+}
+
+.cv-workspace-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+    min-height: 2.35rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.45rem;
+    color: #4b5563;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.cv-workspace-link:hover {
+    background: #f3f4f6;
+    color: #111827;
+    text-decoration: none;
+}
+
+.cv-workspace-link.is-current,
+.cv-workspace-link.is-active {
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.cv-workspace-link i {
+    width: 1rem;
+    text-align: center;
+}
+
+.cv-workspace-divider {
+    width: 1px;
+    height: 1.5rem;
+    flex: 0 0 1px;
+    margin: 0 0.35rem;
+    background: var(--cv-nav-border, #e5e7eb);
+}
+
+.cv-workspace-resume-name {
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 0 1 auto;
+    color: #111827;
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 0 0.35rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    body.cv-route .cv-workspace-nav {
+        background: #111827;
+        border-bottom-color: #374151;
+    }
+
+    body.cv-route .cv-workspace-nav-secondary {
+        border-top-color: #374151;
+    }
+
+    body.cv-route .cv-workspace-link {
+        color: #d1d5db;
+    }
+
+    body.cv-route .cv-workspace-link:hover {
+        background: #1f2937;
+        color: #ffffff;
+    }
+
+    body.cv-route .cv-workspace-link.is-current,
+    body.cv-route .cv-workspace-link.is-active {
+        background: #312e81;
+        color: #ffffff;
+    }
+
+    body.cv-route .cv-workspace-resume-name {
+        color: #f9fafb;
+    }
+}
+
 @media screen and (max-width: 768px) {
     body.cv-route .main-area {
         padding-top: 1rem;
         padding-bottom: 1.5rem;
+    }
+
+    .cv-workspace-nav-inner {
+        width: 100%;
+    }
+
+    .cv-workspace-nav-primary,
+    .cv-workspace-nav-secondary {
+        padding: 0.35rem 0.75rem;
+    }
+
+    .cv-workspace-link {
+        min-height: 2.15rem;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8125rem;
+    }
+
+    .cv-workspace-link span {
+        display: inline;
+    }
+
+    .cv-workspace-resume-name {
+        max-width: 9rem;
     }
 }
