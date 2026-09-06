@@ -1,1 +1,0 @@
-The CV preview is rendered in a same-origin iframe. The preview view sets X-Frame-Options to SAMEORIGIN so the builder can embed it while preserving clickjacking protection for other views.
