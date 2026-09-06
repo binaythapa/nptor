@@ -1,21 +1,103 @@
 {% extends "layouts/student/base.html" %}
 {% block content %}
-<section class="section"><div class="container">
-  <h1 class="title">Review Imported CV</h1>
-  <p class="subtitle is-6">Check every extracted field before confirming it.</p>
-  <div class="box">
-    <p class="mb-4"><strong>Source:</strong> {{ imported.original_filename }} · <strong>Status:</strong> {{ imported.get_status_display }}</p>
+<style>
+  .cv-import-review { max-width: 980px; margin: 0 auto; }
+  .cv-import-review-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+  .cv-import-review-heading .title { margin-bottom: 8px !important; }
+  .cv-import-review-heading .subtitle { margin: 0 !important; line-height: 1.5; }
+  .cv-import-review-source { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; margin-bottom: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f8fafc; }
+  .cv-import-review-source-text { min-width: 0; overflow-wrap: anywhere; }
+  .cv-import-review-count { flex: 0 0 auto; color: #64748b; font-size: .875rem; }
+  .cv-import-review-sections { display: flex; flex-direction: column; gap: 18px; }
+  .cv-import-review-section { order: 99; padding: 22px; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; box-shadow: 0 6px 20px rgba(15, 23, 42, .05); }
+  .cv-import-review-section.contact { order: 1; }
+  .cv-import-review-section.summary { order: 2; }
+  .cv-import-review-section.experience { order: 3; }
+  .cv-import-review-section.education { order: 4; }
+  .cv-import-review-section.skills { order: 5; }
+  .cv-import-review-section.projects { order: 6; }
+  .cv-import-review-section.certifications { order: 7; }
+  .cv-import-review-section.achievements { order: 8; }
+  .cv-import-review-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid #edf0f3; }
+  .cv-import-review-section-heading h2 { margin: 0; color: #1f2937; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .cv-import-review-field { margin-bottom: 18px; }
+  .cv-import-review-field:last-child { margin-bottom: 0; }
+  .cv-import-review-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+  .cv-import-review-label .label { margin-bottom: 0 !important; }
+  .cv-import-review-status { white-space: nowrap; font-size: .75rem; font-weight: 600; }
+  .cv-import-review-status.confirmed { color: #15803d; }
+  .cv-import-review-status.pending { color: #b45309; }
+  .cv-import-review-input { width: 100%; }
+  .cv-import-review-textarea { min-height: 150px; resize: vertical; line-height: 1.55; }
+  .cv-import-review-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 24px; }
+  .cv-import-review-actions .button { min-height: 44px; }
+  @media (max-width: 768px) {
+    .cv-import-review-header, .cv-import-review-source, .cv-import-review-actions { flex-direction: column; align-items: stretch; }
+    .cv-import-review-source { gap: 8px; }
+    .cv-import-review-section { padding: 18px; }
+  }
+</style>
+
+<section class="section">
+  <div class="container cv-import-review">
+    <div class="cv-import-review-header">
+      <div class="cv-import-review-heading">
+        <h1 class="title">Review your imported CV</h1>
+        <p class="subtitle is-6 has-text-grey">Verify the information we extracted before adding it to your CV.</p>
+      </div>
+    </div>
+
+    <div class="cv-import-review-source">
+      <div class="cv-import-review-source-text">
+        <strong>Source</strong> · {{ imported.original_filename }}
+      </div>
+      <div class="cv-import-review-count">
+        {{ imported.fields.all|length }} field{{ imported.fields.all|length|pluralize }} extracted
+        · <strong>{{ imported.get_status_display }}</strong>
+      </div>
+    </div>
+
     <form method="post">
       {% csrf_token %}
-      {% for field in imported.fields.all %}
-        <div class="field">
-          <label class="label">{{ field.section|title }} — {{ field.field_name }}</label>
-          <div class="control"><input class="input" name="field_{{ field.pk }}" value="{{ field.value }}"></div>
-          {% if field.confirmed %}<p class="help">Confirmed</p>{% else %}<p class="help">Needs confirmation</p>{% endif %}
-        </div>
-      {% empty %}<p>No structured fields were extracted.</p>{% endfor %}
-      <div class="buttons mt-5"><button class="button is-primary" type="submit">Confirm Reviewed Fields</button><a class="button" href="{% url 'cv:dashboard' %}">Back to CV Builder</a></div>
+      <div class="cv-import-review-sections">
+        {% regroup imported.fields.all by section as field_groups %}
+        {% for group in field_groups %}
+          <section class="cv-import-review-section {{ group.grouper }}">
+            <div class="cv-import-review-section-heading">
+              <h2>{{ group.grouper|title }}</h2>
+              <span class="has-text-grey is-size-7">{{ group.list|length }} field{{ group.list|length|pluralize }}</span>
+            </div>
+
+            {% for field in group.list %}
+              <div class="cv-import-review-field">
+                <div class="cv-import-review-label">
+                  <label class="label" for="field_{{ field.pk }}">{{ field.field_name|cut:"_"|title }}</label>
+                  {% if field.confirmed %}
+                    <span class="cv-import-review-status confirmed">✓ Confirmed</span>
+                  {% else %}
+                    <span class="cv-import-review-status pending">⚠ Please verify</span>
+                  {% endif %}
+                </div>
+                <div class="control">
+                  {% if field.field_name == "text" %}
+                    <textarea class="textarea cv-import-review-textarea" id="field_{{ field.pk }}" name="field_{{ field.pk }}">{{ field.value }}</textarea>
+                  {% else %}
+                    <input class="input cv-import-review-input" id="field_{{ field.pk }}" name="field_{{ field.pk }}" value="{{ field.value }}">
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </section>
+        {% empty %}
+          <div class="notification is-light">No structured fields were extracted.</div>
+        {% endfor %}
+      </div>
+
+      <div class="cv-import-review-actions">
+        <a class="button is-light" href="{% url 'cv:dashboard' %}">Back to CV Builder</a>
+        <button class="button is-primary" type="submit">✓ Confirm &amp; Add to CV</button>
+      </div>
     </form>
   </div>
-</div></section>
+</section>
 {% endblock %}
