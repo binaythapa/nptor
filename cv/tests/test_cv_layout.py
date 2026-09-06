@@ -10,6 +10,7 @@ from cv.services.cv_builder import create_cv
 class CVLayoutTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="cv-layout", email="cv-layout@example.com", password="pass")
+        self.other_user = get_user_model().objects.create_user(username="cv-other", email="cv-other@example.com", password="pass")
         self.template = CVTemplate.objects.create(name="Test", slug="layout-test", is_active=True)
         self.client.force_login(self.user)
 
@@ -63,3 +64,27 @@ class CVLayoutTests(TestCase):
         self.assertNotContains(response, "cv-workspace-nav")
         self.assertNotContains(response, "Logout")
         self.assertNotContains(response, 'class="app-layout"')
+
+    def test_cv_dashboard_shows_delete_action_for_owned_cv(self):
+        cv = create_cv(self.user, "Delete Me CV", self.template)
+
+        response = self.client.get(reverse("cv:dashboard"))
+
+        self.assertContains(response, reverse("cv:cv_delete", kwargs={"pk": cv.pk}))
+        self.assertContains(response, "Delete")
+
+    def test_cv_delete_requires_post_and_only_allows_owner(self):
+        cv = create_cv(self.user, "Delete Me CV", self.template)
+        other_cv = create_cv(self.other_user, "Other User CV", self.template)
+
+        get_response = self.client.get(reverse("cv:cv_delete", kwargs={"pk": cv.pk}))
+        self.assertEqual(get_response.status_code, 405)
+        self.assertTrue(CV.objects.filter(pk=cv.pk).exists())
+
+        post_response = self.client.post(reverse("cv:cv_delete", kwargs={"pk": cv.pk}))
+        self.assertRedirects(post_response, reverse("cv:dashboard"))
+        self.assertFalse(CV.objects.filter(pk=cv.pk).exists())
+
+        forbidden_response = self.client.post(reverse("cv:cv_delete", kwargs={"pk": other_cv.pk}))
+        self.assertEqual(forbidden_response.status_code, 404)
+        self.assertTrue(CV.objects.filter(pk=other_cv.pk).exists())
