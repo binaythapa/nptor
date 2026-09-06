@@ -75,6 +75,9 @@ class CVForm(forms.ModelForm):
     class Meta:
         model = CV
         fields = ("title", "template", "status")
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "input", "placeholder": "e.g. Software Engineer Resume"}),
+        }
 
     def __init__(self, *args, **kwargs):
         owner = kwargs.pop("owner", None)
