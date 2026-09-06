@@ -24,7 +24,7 @@
       <div class="column">
         <div class="box">
           <h2 class="title is-5">✍️ Manual</h2>
-          <p class="mb-4">Prefer to enter your information yourself? Edit your professional title, summary, and links below.</p>
+          <p class="mb-4">Edit your profile and manage every reusable career section yourself.</p>
           <a class="button is-light" href="#manual-profile-editor">Edit manually</a>
         </div>
       </div>
@@ -37,7 +37,7 @@
         {% if contact.phone %} · {{ contact.phone }}{% endif %}
         {% if contact.location %} · {{ contact.location }}{% endif %}
       </div>
-      <h2 class="title is-5">Manual profile editor</h2>
+      <h2 class="title is-5">Basic profile</h2>
       <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
@@ -47,6 +47,43 @@
         </div>
       </form>
     </div>
+
+    {% for section in sections %}
+    <div class="box">
+      <div class="level">
+        <div>
+          <h2 class="title is-5 mb-1">{{ section.label }}</h2>
+          <p class="is-size-7 has-text-grey">{{ section.count }} record{{ section.count|pluralize }}</p>
+        </div>
+        <a class="button is-small is-primary" href="{% url 'cv:profile_record_add' section=section.key %}">+ Add</a>
+      </div>
+
+      {% if section.records %}
+        {% for record in section.records %}
+        <div class="box is-shadowless mb-2" style="border: 1px solid #eee;">
+          <div class="level is-mobile">
+            <div>
+              <strong>{{ record }}</strong>
+              {% if record.job_title and record.employer %}<p class="is-size-7">{{ record.job_title }} · {{ record.employer }}</p>{% endif %}
+              {% if record.qualification and record.institution %}<p class="is-size-7">{{ record.qualification }} · {{ record.institution }}</p>{% endif %}
+              {% if record.role %}<p class="is-size-7">{{ record.role }}</p>{% endif %}
+              {% if record.category or record.proficiency %}<p class="is-size-7">{{ record.category }}{% if record.category and record.proficiency %} · {% endif %}{{ record.proficiency }}</p>{% endif %}
+            </div>
+            <div class="buttons are-small">
+              <a class="button" href="{% url 'cv:profile_record_edit' section=section.key pk=record.pk %}">Edit</a>
+              <form method="post" action="{% url 'cv:profile_record_delete' section=section.key pk=record.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button class="button is-danger is-light" type="submit">Delete</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="has-text-grey">No {{ section.label|lower }} added yet.</p>
+      {% endif %}
+    </div>
+    {% endfor %}
   </div>
 </section>
 {% endblock %}

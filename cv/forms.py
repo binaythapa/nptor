@@ -1,18 +1,74 @@
 from django import forms
 
-from cv.models import CareerProfile, CV, CVTemplate
+from cv.models import (
+    CareerAchievement,
+    CareerCertification,
+    CareerEducation,
+    CareerExperience,
+    CareerProfile,
+    CareerProject,
+    CareerSkill,
+    CV,
+    CVTemplate,
+)
 
 
 class CareerProfileForm(forms.ModelForm):
     class Meta:
         model = CareerProfile
-        fields = (
-            "professional_title",
-            "summary",
-            "linkedin_url",
-            "portfolio_url",
-        )
+        fields = ("professional_title", "summary", "linkedin_url", "portfolio_url")
         widgets = {"summary": forms.Textarea(attrs={"rows": 6})}
+
+
+class CareerExperienceForm(forms.ModelForm):
+    class Meta:
+        model = CareerExperience
+        fields = ("job_title", "employer", "location", "start_date", "end_date", "is_current", "description", "sort_order")
+        widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
+
+
+class CareerEducationForm(forms.ModelForm):
+    class Meta:
+        model = CareerEducation
+        fields = ("institution", "qualification", "field_of_study", "location", "start_date", "end_date", "description", "sort_order")
+        widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
+
+
+class CareerProjectForm(forms.ModelForm):
+    class Meta:
+        model = CareerProject
+        fields = ("name", "role", "url", "description", "technologies", "sort_order")
+        widgets = {"description": forms.Textarea(attrs={"rows": 5})}
+
+
+class CareerSkillForm(forms.ModelForm):
+    class Meta:
+        model = CareerSkill
+        fields = ("name", "category", "proficiency", "sort_order")
+
+
+class CareerAchievementForm(forms.ModelForm):
+    class Meta:
+        model = CareerAchievement
+        fields = ("title", "description", "achieved_on", "sort_order")
+        widgets = {"achieved_on": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 5})}
+
+
+class CareerCertificationForm(forms.ModelForm):
+    class Meta:
+        model = CareerCertification
+        fields = ("name", "issuer", "credential_id", "credential_url", "issued_on", "expires_on", "sort_order")
+        widgets = {"issued_on": forms.DateInput(attrs={"type": "date"}), "expires_on": forms.DateInput(attrs={"type": "date"})}
+
+
+CAREER_RECORD_FORMS = {
+    "experience": (CareerExperience, CareerExperienceForm, "Work Experience"),
+    "education": (CareerEducation, CareerEducationForm, "Education"),
+    "project": (CareerProject, CareerProjectForm, "Projects"),
+    "skill": (CareerSkill, CareerSkillForm, "Skills"),
+    "achievement": (CareerAchievement, CareerAchievementForm, "Achievements"),
+    "certification": (CareerCertification, CareerCertificationForm, "Certifications"),
+}
 
 
 class CVForm(forms.ModelForm):
