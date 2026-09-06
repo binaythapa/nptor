@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from cv.forms import CVForm
 from cv.models_template import CVTemplate
+from cv.services.documents.renderer import get_render_config
 
 
 class CVCreateFormTests(TestCase):
@@ -64,3 +65,16 @@ class CVCreateFormTests(TestCase):
         self.assertContains(response, "ATS-friendly")
         self.assertContains(response, "Best for")
         self.assertContains(response, "data-template-ats=\"true\"")
+
+    def test_render_config_selects_reference_inspired_design_styles(self):
+        modern = get_render_config({"config": {"layout": "single_column", "header_style": "left"}})
+        split = get_render_config({"config": {"layout": "sidebar"}})
+        elegant = get_render_config({"config": {"header_style": "centered"}})
+
+        self.assertEqual(modern["design_style"], "modern_header")
+        self.assertEqual(split["design_style"], "split_label")
+        self.assertEqual(elegant["design_style"], "elegant")
+
+    def test_render_config_accepts_explicit_design_style(self):
+        config = get_render_config({"config": {"design_style": "elegant", "layout": "single_column"}})
+        self.assertEqual(config["design_style"], "elegant")
