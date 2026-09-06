@@ -7,6 +7,7 @@
   const preview = document.getElementById('cv-preview-frame');
   const csrf = form.querySelector('[name="csrfmiddlewaretoken"]').value;
   const cvId = root.dataset.cvId;
+  const fields = form.elements;
   let saveTimer = null;
   let activeBulletTarget = null;
 
@@ -52,13 +53,13 @@
       experienceBullets[textarea.dataset.experienceBullet] = textarea.value;
     });
     return {
-      title: document.getElementById('{{ form.title.id_for_label }}').value.trim(),
-      status: document.getElementById('{{ form.status.id_for_label }}').value,
-      template_id: document.getElementById('{{ form.template.id_for_label }}').value,
-      professional_title: document.getElementById('{{ form.professional_title.id_for_label }}').value,
-      summary: document.getElementById('{{ form.summary.id_for_label }}').value,
-      linkedin_url: document.getElementById('{{ form.linkedin_url.id_for_label }}').value,
-      portfolio_url: document.getElementById('{{ form.portfolio_url.id_for_label }}').value,
+      title: fields.title.value.trim(),
+      status: fields.status.value,
+      template_id: fields.template.value,
+      professional_title: fields.professional_title.value,
+      summary: fields.summary.value,
+      linkedin_url: fields.linkedin_url.value,
+      portfolio_url: fields.portfolio_url.value,
       target_job: targetJob,
       experience_bullets: experienceBullets,
       cv_skills: cvSkills(),
@@ -102,7 +103,7 @@
     saveTimer = window.setTimeout(function () { saveNow(true); }, 700);
   }
 
-  function renderSuggestion(container, value, apply, kind) {
+  function renderSuggestion(container, value, apply) {
     container.classList.remove('is-hidden');
     container.innerHTML = '';
     const label = document.createElement('p');
@@ -114,7 +115,7 @@
     const actions = document.createElement('div');
     actions.className = 'ai-suggestion-actions';
     const use = document.createElement('button');
-    use.type = 'button'; use.className = 'button is-small is-primary'; use.textContent = kind === 'skills' ? 'Add selected skills' : 'Apply';
+    use.type = 'button'; use.className = 'button is-small is-primary'; use.textContent = 'Apply';
     use.addEventListener('click', function () { apply(); container.classList.add('is-hidden'); scheduleSave(); });
     const dismiss = document.createElement('button');
     dismiss.type = 'button'; dismiss.className = 'button is-small'; dismiss.textContent = 'Dismiss';
@@ -140,13 +141,13 @@
       const suggestion = data.suggestion || {};
       if (action === 'summary') {
         renderSuggestion(document.getElementById('summary-suggestion'), suggestion.summary || '', function () {
-          document.getElementById('{{ form.summary.id_for_label }}').value = suggestion.summary || '';
-        }, 'summary');
+          fields.summary.value = suggestion.summary || '';
+        });
       } else if (action === 'bullet') {
         renderSuggestion(document.getElementById('bullet-suggestion'), suggestion.bullet || '', function () {
           const textarea = document.querySelector('[data-experience-bullet="' + activeBulletTarget + '"]');
           if (textarea) textarea.value = suggestion.bullet || '';
-        }, 'bullet');
+        });
       } else if (action === 'skills') {
         const container = document.getElementById('skills-suggestion');
         container.classList.remove('is-hidden');
@@ -155,17 +156,19 @@
         (suggestion.skills || []).forEach(function (skill, index) {
           const label = document.createElement('label');
           label.className = 'checkbox mr-4 mb-2 is-inline-block';
-          label.innerHTML = '<input type="checkbox" data-ai-skill="' + index + '" checked> ' + escapeHtml(skill);
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox'; checkbox.dataset.aiSkill = String(index); checkbox.checked = true;
+          label.appendChild(checkbox); label.appendChild(document.createTextNode(' ' + skill));
           label.dataset.skill = skill;
           list.appendChild(label);
         });
-        const actions = document.createElement('div');
-        actions.className = 'ai-suggestion-actions';
+        const actions = document.createElement('div'); actions.className = 'ai-suggestion-actions';
         const use = document.createElement('button'); use.type = 'button'; use.className = 'button is-small is-primary'; use.textContent = 'Add selected skills';
         use.addEventListener('click', function () {
           const selected = Array.from(list.querySelectorAll('input:checked')).map(function (input) { return input.closest('label').dataset.skill; });
           const current = cvSkills();
-          const merged = current.concat(selected.filter(function (skill) { return current.map(function (x) { return x.toLowerCase(); }).indexOf(skill.toLowerCase()) === -1; }));
+          const currentKeys = current.map(function (x) { return x.toLowerCase(); });
+          const merged = current.concat(selected.filter(function (skill) { return currentKeys.indexOf(skill.toLowerCase()) === -1; }));
           document.getElementById('cv-skills-input').value = merged.join(', ');
           container.classList.add('is-hidden');
           scheduleSave();
@@ -183,7 +186,7 @@
   }
 
   function escapeHtml(value) {
-    return String(value).replace(/[&<>'"]/g, function (char) {
+    return String(value).replace(/[&<>\'"]/g, function (char) {
       return ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]);
     });
   }
