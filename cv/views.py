@@ -1,5 +1,8 @@
+import json
+
+import requests
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse, Http404, HttpResponseNotAllowed
+from django.http import FileResponse, Http404, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from cv.forms import CAREER_RECORD_FORMS, CareerProfileForm, CVBuilderForm, CVForm
@@ -7,9 +10,11 @@ from cv.forms_import import CVImportForm
 from cv.models import CV, CVTemplate
 from cv.models_ai import AIConversation, AIExtraction, AISuggestion, ATSAnalysis
 from cv.services.ai.career_interviewer import confirm_interview_extraction, interview_turn
+from cv.services.ai.cv_writer import rewrite_bullet, suggest_skills, suggest_summary
 from cv.services.ai.provider import AIProviderNotConfigured
 from cv.services.cv_ai import AIProviderError, accept_suggestion, analyze_ats, reject_suggestion, review_cv, tailor_cv
 from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
+from cv.services.cv_workspace import builder_ai_context, save_builder_state
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
 from cv.services.documents.renderer import build_cv_render_context, get_render_config, get_template_snapshot
@@ -36,6 +41,16 @@ def _career_record_config(section):
 
 def _career_record_queryset(model, user):
     return model.objects.filter(profile__user=user)
+
+
+def _json_request(request):
+    try:
+        value = json.loads(request.body.decode("utf-8") or "{}")
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("Request body must contain valid JSON.") from exc
+    if not isinstance(value, dict):
+        raise ValueError("Request body must be a JSON object.")
+    return value
 
 
 @login_required
@@ -170,7 +185,13 @@ def cv_builder(request, pk):
             cv.title = form.cleaned_data["title"]
             cv.template = form.cleaned_data["template"]
             cv.status = form.cleaned_data["status"]
-            cv.overrides = {"professional_title": form.cleaned_data["professional_title"], "summary": form.cleaned_data["summary"], "linkedin_url": form.cleaned_data["linkedin_url"], "portfolio_url": form.cleaned_data["portfolio_url"]}
+            cv.overrides = {
+                "professional_title": form.cleaned_data["professional_title"],
+                "summary": form.cleaned_data["summary"],
+                "linkedin_url": form.cleaned_data["linkedin_url"],
+                "portfolio_url": form.cleaned_data["portfolio_url"],
+                "target_job": (cv.overrides or {}).get("target_job", {}),
+            }
             selected_sections = {}
             for key, _label, related_name in BUILDER_SECTIONS:
                 valid_ids = set(getattr(profile, related_name).values_list("id", flat=True))
@@ -186,7 +207,78 @@ def cv_builder(request, pk):
         selected = cv.selected_sections.get(key) if cv.selected_sections else None
         selected_ids = {int(value) for value in selected} if selected is not None else {record.id for record in records}
         sections.append({"key": key, "label": label, "records": records, "selected_ids": selected_ids})
-    return render(request, "cv/builder.html", {"cv": cv, "form": form, "contact": account_contact_defaults(request.user), "sections": sections, "payload": build_cv_payload(cv)})
+    payload = build_cv_payload(cv)
+    return render(request, "cv/builder.html", {
+        "cv": cv,
+        "form": form,
+        "contact": account_contact_defaults(request.user),
+        "sections": sections,
+        "payload": payload,
+        "target_job": payload.get("target_job", {}),
+    })
+
+
+@login_required
+
+def cv_builder_autosave(request, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    try:
+        save_builder_state(cv, _json_request(request))
+    except ValueError as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+    return JsonResponse({"ok": True, "updated_at": cv.updated_at.isoformat()})
+
+
+@login_required
+def cv_builder_ai(request, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    cv = get_object_or_404(CV.objects.select_related("profile", "template"), pk=pk, owner=request.user)
+    try:
+        data = _json_request(request)
+        action = str(data.get("action", "")).strip().lower()
+        payload, target_job = builder_ai_context(cv)
+        if action == "summary":
+            suggestion = suggest_summary(payload)
+        elif action == "bullet":
+            text = str(data.get("text", "")).strip()
+            if not text:
+                raise ValueError("Enter an experience bullet or description first.")
+            suggestion = rewrite_bullet(text, {
+                "target_job": target_job,
+                "section": data.get("section", "experience"),
+            })
+        elif action == "skills":
+            suggestion = suggest_skills(payload, target_job.get("title", ""))
+        else:
+            raise ValueError("Unsupported AI builder action.")
+    except (AIProviderNotConfigured, AIProviderError, ValueError, requests.RequestException, TypeError) as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+    return JsonResponse({"ok": True, "suggestion": suggestion})
+
+
+@login_required
+def cv_builder_ats(request, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    try:
+        data = _json_request(request)
+        target_job = (cv.overrides or {}).get("target_job", {})
+        job_description = str(data.get("job_description") or target_job.get("description") or "").strip()
+        analysis = analyze_ats(cv, job_description)
+    except (AIProviderNotConfigured, AIProviderError, ValueError, requests.RequestException, TypeError) as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+    return JsonResponse({
+        "ok": True,
+        "analysis": {
+            "score": analysis.score,
+            "job_description": analysis.job_description,
+            "result": analysis.result,
+        },
+    })
 
 
 @login_required
