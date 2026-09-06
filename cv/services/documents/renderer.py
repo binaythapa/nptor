@@ -22,6 +22,16 @@ ALLOWED_SECTION_STYLES = {"uppercase_rule", "title_case", "minimal"}
 ALLOWED_DENSITIES = {"comfortable", "compact"}
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
+RENDER_SECTIONS = (
+    ("summary", "Professional Summary", "text", "summary"),
+    ("experiences", "Experience", "items", "experiences"),
+    ("educations", "Education", "items", "educations"),
+    ("skills", "Skills", "items", "skills"),
+    ("projects", "Projects", "items", "projects"),
+    ("certifications", "Certifications", "items", "certifications"),
+    ("achievements", "Achievements", "items", "achievements"),
+)
+
 
 def get_template_snapshot(template):
     """Return a detached template snapshot suitable for versioned rendering."""
@@ -62,6 +72,20 @@ def get_render_config(template_snapshot):
         config["section_gap"] = min(config["section_gap"], 5)
 
     return config
+
+
+def build_cv_render_context(cv):
+    """Build the canonical view-model shared by CV preview and document renderers."""
+    from cv.services.cv_builder import build_cv_payload
+
+    payload = build_cv_payload(cv)
+    config = get_render_config(payload.get("template", {}))
+    sections = []
+    for key, heading, kind, payload_key in RENDER_SECTIONS:
+        value = payload.get(payload_key)
+        if value:
+            sections.append({"key": key, "heading": heading, "kind": kind, "value": value})
+    return {"payload": payload, "config": config, "sections": sections}
 
 
 def render_cv(cv_version):

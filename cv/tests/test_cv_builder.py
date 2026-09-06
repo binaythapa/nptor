@@ -7,6 +7,7 @@ from cv.models_cv import CV
 from cv.models_template import CVTemplate
 from cv.models_version import CVVersion
 from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
+from cv.services.documents.renderer import build_cv_render_context
 
 
 class CVBuilderTests(TestCase):
@@ -148,4 +149,47 @@ class CVBuilderTests(TestCase):
         other_cv = create_cv(other, "Other CV", self.template)
         self.client.force_login(self.user)
         response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": other_cv.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_render_context_is_canonical_and_omits_empty_sections(self):
+        cv = create_cv(self.user, "Preview CV", self.template)
+        cv.profile.professional_title = "Data Engineer"
+        cv.profile.summary = "Builds reliable data platforms."
+        cv.profile.save(update_fields=["professional_title", "summary", "updated_at"])
+        CareerExperience.objects.create(profile=cv.profile, job_title="Data Engineer", employer="Example Ltd")
+
+        context = build_cv_render_context(cv)
+
+        self.assertEqual(context["payload"]["title"], "Preview CV")
+        self.assertEqual(context["config"]["layout"], "single_column")
+        self.assertEqual([section["key"] for section in context["sections"]], ["summary", "experiences"])
+        self.assertEqual(context["sections"][0]["heading"], "Professional Summary")
+        self.assertEqual(context["sections"][1]["heading"], "Experience")
+
+    def test_preview_uses_render_context_and_template_configuration(self):
+        self.template.config = {
+            "layout": "sidebar",
+            "header_style": "centered",
+            "accent_color": "#123456",
+        }
+        self.template.save(update_fields=["config"])
+        cv = create_cv(self.user, "Preview CV", self.template)
+        cv.profile.professional_title = "Data Engineer"
+        cv.profile.summary = "Experienced data engineer."
+        cv.profile.save(update_fields=["professional_title", "summary", "updated_at"])
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cv:cv_preview", kwargs={"pk": cv.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Preview CV")
+        self.assertContains(response, "Professional Summary")
+        self.assertContains(response, "data-template-layout=\"sidebar\"")
+        self.assertContains(response, "#123456")
+
+    def test_preview_rejects_another_users_cv(self):
+        other = get_user_model().objects.create_user(username="other-preview", email="other-preview@example.com")
+        other_cv = create_cv(other, "Other CV", self.template)
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("cv:cv_preview", kwargs={"pk": other_cv.pk}))
         self.assertEqual(response.status_code, 404)

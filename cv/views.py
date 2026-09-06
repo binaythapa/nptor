@@ -12,6 +12,7 @@ from cv.services.cv_ai import AIProviderError, accept_suggestion, analyze_ats, r
 from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
+from cv.services.documents.renderer import build_cv_render_context
 from cv.services.importers.service import confirm_import_field, import_cv_source
 from cv.services.profile import account_contact_defaults, get_or_create_career_profile
 
@@ -195,8 +196,8 @@ def cv_templates(request):
 
 @login_required
 def cv_preview(request, pk):
-    cv = get_object_or_404(CV, pk=pk, owner=request.user)
-    return render(request, "cv/preview.html", {"cv": cv, "payload": build_cv_payload(cv)})
+    cv = get_object_or_404(CV.objects.select_related("profile", "template"), pk=pk, owner=request.user)
+    return render(request, "cv/preview.html", {"cv": cv, **build_cv_render_context(cv)})
 
 
 @login_required
