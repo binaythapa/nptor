@@ -44,4 +44,6 @@ class CVCreateFormTests(TestCase):
         self.assertContains(response, "Experience")
         self.assertContains(response, "Skills")
         self.assertContains(response, "cv-mini-paper--sidebar")
+        self.assertContains(response, "cv-template-page-header")
+        self.assertContains(response, "cv-template-page-heading")
         self.assertNotContains(response, "cv-paper__line")
