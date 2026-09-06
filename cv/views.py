@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from cv.forms import CareerProfileForm, CVBuilderForm, CVForm
 from cv.forms_import import CVImportForm
 from cv.models import CV, CVTemplate
+from cv.models_ai import AIConversation, AISuggestion
+from cv.services.cv_ai import AIProviderError, accept_suggestion, reject_suggestion, review_cv
 from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
@@ -112,6 +114,40 @@ def cv_preview(request, pk):
 def cv_versions(request, pk):
     cv = get_object_or_404(CV, pk=pk, owner=request.user)
     return render(request, "cv/versions.html", {"cv": cv, "versions": cv.versions.order_by("-version_number")})
+
+
+@login_required
+def cv_ai_review(request, pk):
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    error_message = None
+    if request.method == "POST":
+        try:
+            review_cv(cv)
+        except AIProviderError as exc:
+            error_message = str(exc)
+        else:
+            return redirect("cv:cv_ai_review", pk=cv.pk)
+    conversation = cv.ai_conversations.filter(purpose=AIConversation.PURPOSE_REVIEW).prefetch_related("suggestions").first()
+    return render(request, "cv/ai_review.html", {"cv": cv, "conversation": conversation, "error_message": error_message})
+
+
+@login_required
+def cv_ai_suggestion_accept(request, pk):
+    suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
+    if request.method == "POST":
+        try:
+            accept_suggestion(suggestion, request.user)
+        except ValueError:
+            pass
+    return redirect("cv:cv_ai_review", pk=suggestion.conversation.cv_id)
+
+
+@login_required
+def cv_ai_suggestion_reject(request, pk):
+    suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
+    if request.method == "POST":
+        reject_suggestion(suggestion, request.user)
+    return redirect("cv:cv_ai_review", pk=suggestion.conversation.cv_id)
 
 
 @login_required
