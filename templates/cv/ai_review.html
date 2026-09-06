@@ -1,13 +1,17 @@
 {% extends "layouts/student/base.html" %}
 
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/pages/cv_ai_review.css' %}">
+{% endblock page_css %}
+
 {% block content %}
 <section class="section">
   <div class="container" style="max-width: 1100px;">
     <div class="level mb-5">
-      <div>
+      <div class="cv-ai-review-heading">
         <p class="is-size-7 has-text-grey mb-1">AI CV Writer & Reviewer</p>
-        <h1 class="title mb-1">Review {{ cv.title }}</h1>
-        <p class="subtitle is-6 mb-0">Get targeted suggestions without changing your master Career Profile.</p>
+        <h1 class="title mb-1 cv-ai-review-title">Review {{ cv.title }}</h1>
+        <p class="subtitle is-6 mb-0 cv-ai-review-subtitle">Get targeted suggestions without changing your master Career Profile.</p>
       </div>
       <div class="buttons">
         <a class="button" href="{% url 'cv:cv_builder' cv.pk %}">Back to Builder</a>
@@ -82,4 +86,4 @@
     {% endif %}
   </div>
 </section>
-{% endblock %}
+{% endblock content %}
