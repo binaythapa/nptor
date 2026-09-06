@@ -5,23 +5,56 @@
   .cv-template-gallery { max-width: 1180px; margin: 0 auto; }
   .cv-template-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
   .cv-template-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(15, 23, 42, .1); }
-  .cv-template-preview { min-height: 190px; padding: 16px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; }
-  .cv-paper { position: relative; width: 100%; max-width: 210px; min-height: 155px; margin: 0 auto; padding: 13px; background: #fff; border: 1px solid #dbe1e8; border-radius: 3px; box-shadow: 0 4px 10px rgba(15, 23, 42, .08); color: #475569; font-size: 5px; }
-  .cv-paper__header { border-bottom: 2px solid var(--template-accent); padding-bottom: 7px; margin-bottom: 8px; }
-  .cv-paper__name { width: 62%; height: 7px; margin-bottom: 4px; border-radius: 2px; background: #111827; }
-  .cv-paper__title { width: 42%; height: 4px; border-radius: 2px; background: var(--template-accent); }
-  .cv-paper__section { margin-bottom: 7px; }
-  .cv-paper__heading { width: 28%; height: 4px; margin-bottom: 4px; border-radius: 2px; background: var(--template-accent); }
-  .cv-paper__line { height: 3px; margin-bottom: 3px; border-radius: 2px; background: #dbe3ec; }
-  .cv-paper__line--wide { width: 92%; }
-  .cv-paper__line--medium { width: 72%; }
-  .cv-paper__line--short { width: 48%; }
-  .cv-paper--sidebar { padding-left: 48px; }
-  .cv-paper--sidebar::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 36px; background: color-mix(in srgb, var(--template-accent) 12%, white); border-right: 1px solid color-mix(in srgb, var(--template-accent) 24%, white); }
-  .cv-paper--centered .cv-paper__header { text-align: center; }
-  .cv-paper--centered .cv-paper__name, .cv-paper--centered .cv-paper__title { margin-left: auto; margin-right: auto; }
-  .cv-paper--compact { min-height: 145px; padding: 10px; }
-  .cv-paper--minimal .cv-paper__header { border-bottom: 0; padding-bottom: 4px; }
+  .cv-template-preview { min-height: 280px; padding: 18px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; overflow: hidden; }
+  .cv-mini-paper {
+    --preview-accent: #111827;
+    width: 100%;
+    max-width: 230px;
+    height: 245px;
+    margin: 0 auto;
+    padding: 17px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #dbe1e8;
+    border-radius: 3px;
+    box-shadow: 0 5px 14px rgba(15, 23, 42, .1);
+    color: #374151;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 6px;
+    line-height: 1.45;
+  }
+  .cv-mini-paper.compact { padding: 14px; font-size: 5.7px; }
+  .cv-mini-paper.centered .cv-mini-header { text-align: center; }
+  .cv-mini-paper.centered .cv-mini-name,
+  .cv-mini-paper.centered .cv-mini-title { margin-left: auto; margin-right: auto; }
+  .cv-mini-paper.minimal .cv-mini-header { border-bottom: 0; padding-bottom: 5px; }
+  .cv-mini-header { padding-bottom: 9px; margin-bottom: 10px; border-bottom: 1.5px solid var(--preview-accent); }
+  .cv-mini-paper.compact .cv-mini-header { padding-bottom: 6px; margin-bottom: 7px; }
+  .cv-mini-name { width: 75%; margin: 0 0 4px; color: var(--preview-accent); font-size: 16px; line-height: 1.05; font-weight: 700; }
+  .cv-mini-title { width: 55%; margin: 0 0 4px; color: var(--preview-accent); font-size: 7px; font-weight: 700; }
+  .cv-mini-contact { color: #64748b; font-size: 5.5px; white-space: nowrap; }
+  .cv-mini-body { display: block; }
+  .cv-mini-body.sidebar { display: grid; grid-template-columns: minmax(0, 1fr) 58px; gap: 10px; }
+  .cv-mini-sidebar { order: 2; margin: -7px -17px -30px 0; padding: 10px 8px; background: var(--preview-accent); color: #fff; }
+  .cv-mini-paper.compact .cv-mini-sidebar { margin-right: -14px; }
+  .cv-mini-section { margin-bottom: 9px; break-inside: avoid; }
+  .cv-mini-section-heading { margin: 0 0 4px; color: var(--preview-accent); font-size: 7px; line-height: 1.1; font-weight: 700; }
+  .cv-mini-sidebar .cv-mini-section-heading { color: #fff; }
+  .cv-mini-section-heading.uppercase_rule { text-transform: uppercase; letter-spacing: .06em; border-bottom: .7px solid currentColor; padding-bottom: 2px; }
+  .cv-mini-section-heading.title_case { border-left: 1.5px solid var(--preview-accent); padding-left: 3px; }
+  .cv-mini-sidebar .cv-mini-section-heading.title_case { border-color: rgba(255,255,255,.65); }
+  .cv-mini-section-heading.minimal { font-weight: 600; }
+  .cv-mini-entry { margin-bottom: 5px; }
+  .cv-mini-entry-title { color: #111827; font-size: 6.2px; font-weight: 700; }
+  .cv-mini-sidebar .cv-mini-entry-title { color: #fff; }
+  .cv-mini-entry-meta { color: #64748b; font-size: 5.2px; }
+  .cv-mini-sidebar .cv-mini-entry-meta { color: rgba(255,255,255,.78); }
+  .cv-mini-entry-description { margin-top: 2px; color: #475569; font-size: 5.4px; line-height: 1.4; }
+  .cv-mini-sidebar .cv-mini-entry-description { color: rgba(255,255,255,.85); }
+  .cv-mini-skills { display: flex; flex-wrap: wrap; gap: 3px; }
+  .cv-mini-skill { padding: 2px 4px; border: .6px solid #cbd5e1; border-radius: 999px; color: #334155; font-size: 4.8px; }
+  .cv-mini-sidebar .cv-mini-skill { border-color: rgba(255,255,255,.5); color: #fff; }
+  .cv-mini-links { color: #64748b; }
   .cv-template-body { display: flex; flex: 1; flex-direction: column; padding: 18px; }
   .cv-template-meta { margin-bottom: 14px; }
   .cv-template-name { margin-bottom: 5px !important; }
@@ -29,6 +62,7 @@
   .cv-template-actions { margin-top: auto; display: flex; gap: 8px; }
   .cv-template-actions .button { flex: 1; }
   @media (prefers-reduced-motion: no-preference) { .cv-template-card { transition: transform .18s ease, box-shadow .18s ease; } }
+  @media (max-width: 768px) { .cv-template-preview { min-height: 265px; } }
 </style>
 
 <section class="section">
@@ -52,24 +86,78 @@
         <div class="column is-one-quarter-desktop is-one-third-tablet">
           <article class="cv-template-card">
             <div class="cv-template-preview">
-              <div class="cv-paper cv-paper--{{ config.layout }} cv-paper--{{ config.header_style }} cv-paper--{{ config.section_style }} cv-paper--{{ config.density }}" style="--template-accent: {{ config.accent_color }};">
-                <div class="cv-paper__header">
-                  <div class="cv-paper__name"></div>
-                  <div class="cv-paper__title"></div>
-                </div>
-                <div class="cv-paper__section">
-                  <div class="cv-paper__heading"></div>
-                  <div class="cv-paper__line cv-paper__line--wide"></div>
-                  <div class="cv-paper__line cv-paper__line--medium"></div>
-                </div>
-                <div class="cv-paper__section">
-                  <div class="cv-paper__heading"></div>
-                  <div class="cv-paper__line cv-paper__line--wide"></div>
-                  <div class="cv-paper__line cv-paper__line--short"></div>
-                  <div class="cv-paper__line cv-paper__line--medium"></div>
+              <div
+                class="cv-mini-paper cv-mini-paper--{{ config.layout }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}"
+                style="--preview-accent: {{ config.accent_color }};"
+              >
+                <header class="cv-mini-header">
+                  <div class="cv-mini-name">Alex Morgan</div>
+                  <div class="cv-mini-title">Product Designer</div>
+                  <div class="cv-mini-contact">alex.morgan@example.com · New York, NY</div>
+                </header>
+
+                <div class="cv-mini-body {% if config.layout == 'sidebar' %}sidebar{% endif %}">
+                  <main>
+                    <section class="cv-mini-section">
+                      <h3 class="cv-mini-section-heading {{ config.section_style }}">Professional Summary</h3>
+                      <div class="cv-mini-entry-description">Product designer focused on simple, accessible experiences and measurable product outcomes.</div>
+                    </section>
+
+                    <section class="cv-mini-section">
+                      <h3 class="cv-mini-section-heading {{ config.section_style }}">Experience</h3>
+                      <div class="cv-mini-entry">
+                        <div class="cv-mini-entry-title">Senior Product Designer</div>
+                        <div class="cv-mini-entry-meta">Northstar Labs · 2023–Present</div>
+                        <div class="cv-mini-entry-description">Led design systems and shipped customer-facing workflows across web and mobile products.</div>
+                      </div>
+                      <div class="cv-mini-entry">
+                        <div class="cv-mini-entry-title">Product Designer</div>
+                        <div class="cv-mini-entry-meta">Brightline · 2020–2023</div>
+                      </div>
+                    </section>
+
+                    {% if config.layout != 'sidebar' %}
+                      <section class="cv-mini-section">
+                        <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
+                        <div class="cv-mini-skills">
+                          <span class="cv-mini-skill">Figma</span>
+                          <span class="cv-mini-skill">UX Research</span>
+                          <span class="cv-mini-skill">Design Systems</span>
+                          <span class="cv-mini-skill">Prototyping</span>
+                        </div>
+                      </section>
+                    {% endif %}
+                  </main>
+
+                  {% if config.layout == 'sidebar' %}
+                    <aside class="cv-mini-sidebar">
+                      <section class="cv-mini-section">
+                        <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
+                        <div class="cv-mini-skills">
+                          <span class="cv-mini-skill">Figma</span>
+                          <span class="cv-mini-skill">Research</span>
+                          <span class="cv-mini-skill">Systems</span>
+                        </div>
+                      </section>
+                      <section class="cv-mini-section">
+                        <h3 class="cv-mini-section-heading {{ config.section_style }}">Education</h3>
+                        <div class="cv-mini-entry">
+                          <div class="cv-mini-entry-title">B.A. Design</div>
+                          <div class="cv-mini-entry-meta">State University</div>
+                        </div>
+                      </section>
+                      <section class="cv-mini-section">
+                        <h3 class="cv-mini-section-heading {{ config.section_style }}">Certifications</h3>
+                        <div class="cv-mini-entry">
+                          <div class="cv-mini-entry-title">UX Certificate</div>
+                        </div>
+                      </section>
+                    </aside>
+                  {% endif %}
                 </div>
               </div>
             </div>
+
             <div class="cv-template-body">
               <div class="cv-template-meta">
                 <h2 class="title is-5 cv-template-name">{{ template.name }}</h2>
