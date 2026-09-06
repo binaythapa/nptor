@@ -1,0 +1,26 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width: 820px;">
+    <div class="level mb-5">
+      <div>
+        <h1 class="title">{{ heading }}</h1>
+        <p class="subtitle is-6">Keep your reusable master career profile up to date.</p>
+      </div>
+      <a class="button is-light" href="{% url 'cv:profile' %}">Back to Profile</a>
+    </div>
+
+    <div class="box">
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="buttons mt-5">
+          <button class="button is-primary" type="submit">Save</button>
+          <a class="button" href="{% url 'cv:profile' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
