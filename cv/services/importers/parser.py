@@ -34,15 +34,28 @@ def parse_career_facts(text):
     fields = []
     email_match = EMAIL_RE.search(text)
 
-    if lines and not EMAIL_RE.fullmatch(lines[0]) and len(lines[0]) <= 80:
-        _add_field(fields, "contact", "full_name", lines[0])
+    first_line = lines[0] if lines else ""
+    first_line_normalized = first_line.rstrip(":").strip().lower()
+    has_identity_line = (
+        bool(first_line)
+        and not EMAIL_RE.fullmatch(first_line)
+        and len(first_line) <= 80
+        and first_line_normalized not in SECTION_NAMES
+    )
+
+    if has_identity_line:
+        _add_field(fields, "contact", "full_name", first_line)
 
     if email_match:
         _add_field(fields, "contact", "email", email_match.group(0))
 
-    title_candidates = [line for line in lines[1:4] if not EMAIL_RE.search(line)]
-    if title_candidates:
-        _add_field(fields, "contact", "professional_title", title_candidates[0])
+    # Only infer a professional title when the document starts with an identity
+    # line. This prevents section headings such as "Summary" from shifting the
+    # following summary text into the contact fields.
+    if has_identity_line:
+        title_candidates = [line for line in lines[1:4] if not EMAIL_RE.search(line)]
+        if title_candidates and title_candidates[0].rstrip(":").strip().lower() not in SECTION_NAMES:
+            _add_field(fields, "contact", "professional_title", title_candidates[0])
 
     for index, line in enumerate(lines):
         normalized = line.rstrip(":").strip().lower()
