@@ -112,6 +112,159 @@ body.cv-route .main-area > .site-content > .section {
     padding: 0 0.35rem;
 }
 
+/* Compact CV workspace typography and controls.  Keep this scoped to CV routes
+   so the learning/exam UI keeps its existing sizing. */
+body.cv-compact-ui {
+    font-size: 12px;
+}
+
+body.cv-compact-ui .section {
+    padding-top: 1.1rem;
+    padding-bottom: 1.1rem;
+}
+
+body.cv-compact-ui .container {
+    max-width: 1440px;
+}
+
+body.cv-compact-ui .title {
+    line-height: 1.2;
+}
+
+body.cv-compact-ui .title.is-3 {
+    font-size: 1.25rem;
+}
+
+body.cv-compact-ui .title.is-4 {
+    font-size: 1.1rem;
+}
+
+body.cv-compact-ui .title.is-5 {
+    font-size: 0.9rem;
+}
+
+body.cv-compact-ui .subtitle {
+    font-size: 0.72rem;
+    line-height: 1.45;
+}
+
+body.cv-compact-ui .box {
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+body.cv-compact-ui .label {
+    margin-bottom: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+body.cv-compact-ui .help,
+body.cv-compact-ui .is-size-7 {
+    font-size: 0.64rem !important;
+    line-height: 1.4;
+}
+
+body.cv-compact-ui .button,
+body.cv-compact-ui .tag {
+    font-size: 0.68rem;
+}
+
+body.cv-compact-ui .button {
+    min-height: 1.9rem;
+    height: 1.9rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 5px;
+}
+
+body.cv-compact-ui .button.is-small {
+    min-height: 1.7rem;
+    height: 1.7rem;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.63rem;
+}
+
+body.cv-compact-ui .input,
+body.cv-compact-ui .textarea,
+body.cv-compact-ui .select select {
+    min-height: 1.95rem;
+    height: auto;
+    padding: 0.35rem 0.55rem;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+body.cv-compact-ui .textarea {
+    min-height: 5rem;
+}
+
+body.cv-compact-ui .field:not(:last-child) {
+    margin-bottom: 0.7rem;
+}
+
+body.cv-compact-ui .columns {
+    margin-top: -0.25rem;
+    margin-bottom: -0.25rem;
+}
+
+body.cv-compact-ui .column {
+    padding: 0.35rem;
+}
+
+body.cv-compact-ui .notification {
+    padding: 0.65rem 0.8rem;
+    font-size: 0.7rem;
+}
+
+/* Bulma's checkbox component can become visually oversized when combined with
+   site-wide form rules. Keep CV selection controls compact and aligned. */
+body.cv-compact-ui .checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    line-height: 1.2;
+}
+
+body.cv-compact-ui input[type="checkbox"] {
+    appearance: auto;
+    width: 15px !important;
+    height: 15px !important;
+    min-width: 15px !important;
+    min-height: 15px !important;
+    margin: 0;
+    padding: 0;
+    transform: none !important;
+    accent-color: #2563eb;
+    vertical-align: middle;
+}
+
+body.cv-compact-ui .cv-workspace-nav-primary {
+    min-height: 2.55rem;
+}
+
+body.cv-compact-ui .cv-workspace-nav-secondary {
+    min-height: 2.35rem;
+}
+
+body.cv-compact-ui .cv-workspace-link {
+    min-height: 1.9rem;
+    padding: 0.3rem 0.55rem;
+    gap: 0.3rem;
+    border-radius: 4px;
+    font-size: 0.68rem;
+}
+
+body.cv-compact-ui .cv-workspace-link i {
+    width: 0.8rem;
+}
+
+body.cv-compact-ui .cv-workspace-resume-name {
+    font-size: 0.7rem;
+}
+
 @media (prefers-color-scheme: dark) {
     body.cv-route .cv-workspace-nav {
         background: #111827;
