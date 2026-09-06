@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -5,6 +7,7 @@ from django.urls import reverse
 from cv.models_cv import CV
 from cv.models_template import CVTemplate
 from cv.services.cv_builder import create_cv
+from cv.services.cv_ai import AIProviderError
 
 
 class CVAIReviewViewTests(TestCase):
@@ -25,3 +28,16 @@ class CVAIReviewViewTests(TestCase):
         self.assertContains(response, 'class="title mb-1 cv-ai-review-title"')
         self.assertContains(response, 'class="subtitle is-6 mb-0 cv-ai-review-subtitle"')
         self.assertContains(response, 'static/css/pages/cv_ai_review.css')
+
+    @patch("cv.views.review_cv")
+    def test_ai_review_displays_safe_provider_quota_message(self, review_cv):
+        review_cv.side_effect = AIProviderError(
+            "Gemini API quota is currently exhausted. Please try again later or check your Gemini API plan and billing."
+        )
+
+        response = self.client.post(reverse("cv:cv_ai_review", kwargs={"pk": self.cv.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Gemini API quota is currently exhausted.")
+        self.assertNotContains(response, "RESOURCE_EXHAUSTED")
+        self.assertNotContains(response, "generate_content_free_tier_requests")
