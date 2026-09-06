@@ -31,7 +31,6 @@ SECTION_NAMES = {
     "awards": "achievements",
 }
 
-# Longest alternatives must be matched first so "Work Experience" wins over "Experience".
 SECTION_PATTERN = re.compile(
     r"(?<![A-Za-z])(?:"
     + "|".join(re.escape(name) for name in sorted(SECTION_NAMES, key=len, reverse=True))
@@ -86,7 +85,6 @@ def _extract_identity(lines):
     if EMAIL_RE.fullmatch(first):
         return None, None
 
-    # Common CV header: Name | Professional Title | contact details.
     if "|" in first:
         pieces = [piece.strip() for piece in first.split("|") if piece.strip()]
         if pieces:
@@ -121,6 +119,10 @@ def parse_career_facts(text):
 
     if header_title:
         _add_field(fields, "contact", "professional_title", header_title)
+    elif full_name and len(lines) > 1:
+        candidate = lines[1].strip()
+        if candidate and not EMAIL_RE.search(candidate) and _normalize_heading(candidate) not in SECTION_NAMES:
+            _add_field(fields, "contact", "professional_title", candidate)
 
     sections = _split_inline_sections(raw_text)
     has_structured_sections = any(section for section, _value in sections)
@@ -133,8 +135,6 @@ def parse_career_facts(text):
     else:
         for section, value in sections:
             if section is None:
-                # A pre-section identity/summary sentence is useful as summary content,
-                # but never absorb the structured sections into it.
                 pre_lines = [line for line in value.splitlines() if line.strip()]
                 if pre_lines:
                     consumed = set()
@@ -142,6 +142,8 @@ def parse_career_facts(text):
                         consumed.add(pre_lines[0].strip())
                     if header_title and header_title in pre_lines:
                         consumed.add(header_title)
+                    elif full_name and len(pre_lines) > 1 and pre_lines[1].strip() != header_title:
+                        consumed.add(pre_lines[1].strip())
                     remainder = [line for line in pre_lines if line.strip() not in consumed and not EMAIL_RE.search(line)]
                     if remainder:
                         _add_field(fields, "summary", "text", "\n".join(remainder))
