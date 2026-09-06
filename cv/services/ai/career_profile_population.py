@@ -8,6 +8,7 @@ from cv.models import (
     CareerProject,
     CareerSkill,
 )
+from cv.services.profile import get_or_create_career_profile
 
 
 SECTION_CONFIG = {
@@ -99,7 +100,11 @@ def _materialize_section(profile, section, values):
 
     lookup = {field: values[field] for field in identity}
     model = config["model"]
-    record, _created = model.objects.get_or_create(profile=profile, **lookup, defaults={"source": "ai_interview", "is_confirmed": True})
+    record, _created = model.objects.get_or_create(
+        profile=profile,
+        **lookup,
+        defaults={"source": "ai_interview", "is_confirmed": True},
+    )
 
     updates = []
     for field in config["fields"]:
@@ -124,16 +129,11 @@ def _materialize_section(profile, section, values):
 
 
 def apply_confirmed_extraction(extraction):
-    """Materialize one confirmed interview extraction into the owner's profile.
-
-    The complete set of confirmed facts for the same interview conversation is
-    considered, so required identity fields can be confirmed across multiple
-    interview turns before a child record is created.
-    """
+    """Materialize one confirmed interview extraction into the owner's profile."""
     if not extraction.confirmed:
         return None
     conversation = extraction.conversation
-    profile = conversation.owner.career_profile
+    profile = get_or_create_career_profile(conversation.owner)
     section = _normalize_section(extraction.section)
     values = _confirmed_values(conversation, section)
     return _materialize_section(profile, section, values)
