@@ -58,6 +58,82 @@
     }
     .cv-mini-paper.design-split_label .cv-mini-body:not(.sidebar) .cv-mini-section-heading { margin: 0; }
 
+    .cv-mini-paper.design-split_label.cv-mini-paper--reference .cv-mini-header { border-top: 0; }
+    .cv-mini-paper.design-split_label .cv-mini-reference-main { min-width: 0; }
+    .cv-mini-paper.design-split_label .cv-mini-sidebar--left {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 34%;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 17px 10px;
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,.045) 0 2px, transparent 2px 7px),
+        repeating-linear-gradient(-45deg, rgba(255,255,255,.045) 0 2px, transparent 2px 7px),
+        #18394a;
+      color: #fff;
+      overflow: hidden;
+    }
+    .cv-mini-paper.design-split_label .cv-mini-photo-placeholder {
+      width: 58px;
+      height: 58px;
+      margin: 10px auto 12px;
+      border: 2px solid rgba(15,23,42,.65);
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      display: grid;
+      place-items: center;
+      color: rgba(15,23,42,.8);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .cv-mini-paper.design-split_label .cv-mini-photo-placeholder:after {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      margin-top: 34px;
+      border: 2px solid rgba(15,23,42,.65);
+      border-radius: 50%;
+    }
+    .cv-mini-paper.design-split_label .cv-mini-contact-list {
+      margin: 0 0 15px;
+      color: #fff;
+      font-size: 5px;
+      line-height: 1.65;
+      overflow-wrap: anywhere;
+    }
+    .cv-mini-paper.design-split_label .cv-mini-contact-list div { margin-bottom: 3px; }
+    .cv-mini-paper.design-split_label .cv-mini-sidebar-pattern {
+      margin-top: 9px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,.55);
+    }
+    .cv-mini-paper.design-split_label .cv-mini-sidebar--left .cv-mini-section-heading { color: #fff; }
+    .cv-mini-paper.design-split_label .cv-mini-sidebar--left .cv-mini-entry-description { color: rgba(255,255,255,.9); }
+    .cv-mini-paper.design-split_label .cv-mini-main { margin-left: 34%; min-width: 0; }
+    .cv-mini-paper.design-split_label .cv-mini-main .cv-mini-header {
+      margin: -17px 0 10px;
+      padding: 22px 17px 10px;
+      border-bottom: 1px solid var(--preview-accent);
+    }
+    .cv-mini-paper.design-split_label .cv-mini-main .cv-mini-name { font-size: 16px; }
+    .cv-mini-paper.design-split_label .cv-mini-main .cv-mini-section {
+      display: block;
+      border-top: 0;
+      padding-top: 0;
+      margin-bottom: 9px;
+    }
+    .cv-mini-paper.design-split_label .cv-mini-main .cv-mini-section-heading {
+      border-bottom: .7px solid var(--preview-accent);
+      padding-bottom: 2px;
+      margin-bottom: 5px;
+      color: #111827;
+    }
+    .cv-mini-paper.design-split_label .cv-mini-main .cv-mini-entry-meta { color: #334155; }
+
     .cv-mini-paper.design-elegant .cv-mini-header {
       background: var(--preview-accent);
       border-bottom: 0;
@@ -81,6 +157,11 @@
       padding-left: 8px;
     }
     .cv-mini-paper.design-split_label .cv-mini-body.sidebar .cv-mini-sidebar { background: var(--preview-accent); }
+
+    @media (max-width: 560px) {
+      .cv-mini-paper.design-split_label .cv-mini-sidebar--left { width: 35%; padding-left: 7px; padding-right: 7px; }
+      .cv-mini-paper.design-split_label .cv-mini-main { margin-left: 35%; }
+    }
   </style>
 
   <div class="cv-template-preview">
@@ -91,77 +172,121 @@
     <button type="button" class="cv-template-preview-action" data-preview-button aria-label="Preview {{ template.name }}">Preview</button>
 
     <div
-      class="cv-mini-paper cv-mini-paper--{{ config.layout }} design-{{ config.design_style }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}"
+      class="cv-mini-paper cv-mini-paper--{{ config.layout }} cv-mini-paper--{{ config.design_style }} design-{{ config.design_style }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}"
       style="--preview-accent: {{ config.accent_color }};"
     >
-      <header class="cv-mini-header">
-        {% if config.design_style == 'modern_header' %}<div class="cv-mini-initials">AM</div>{% endif %}
-        <div class="cv-mini-header-main">
-          <div class="cv-mini-name">Alex Morgan</div>
-          <div class="cv-mini-title">Product Designer</div>
-        </div>
-        <div class="cv-mini-contact">alex.morgan@example.com · New York, NY</div>
-      </header>
-
-      <div class="cv-mini-body {% if config.layout == 'sidebar' %}sidebar{% endif %}">
-        <main>
-          <section class="cv-mini-section">
-            <h3 class="cv-mini-section-heading {{ config.section_style }}">Professional Summary</h3>
-            <div class="cv-mini-entry-description">Product designer focused on simple, accessible experiences and measurable product outcomes.</div>
+      {% if config.design_style == 'split_label' %}
+        <aside class="cv-mini-sidebar cv-mini-sidebar--left">
+          <div class="cv-mini-photo-placeholder" aria-hidden="true"><span>AM</span></div>
+          <div class="cv-mini-contact-list">
+            <div>⌖ Bengaluru 560058</div>
+            <div>⌕ 8754795806</div>
+            <div>✉ alex.morgan@example.com</div>
+          </div>
+          <section class="cv-mini-section cv-mini-sidebar-pattern">
+            <h3 class="cv-mini-section-heading uppercase_rule">Summary</h3>
+            <div class="cv-mini-entry-description">Results-driven professional with strong technical experience, practical problem solving, and a focus on high-quality delivery.</div>
           </section>
-
           <section class="cv-mini-section">
-            <h3 class="cv-mini-section-heading {{ config.section_style }}">Experience</h3>
+            <h3 class="cv-mini-section-heading uppercase_rule">Languages</h3>
+            <div class="cv-mini-entry-description">English · Hindi · Nepali</div>
+          </section>
+        </aside>
+        <main class="cv-mini-main cv-mini-reference-main">
+          <header class="cv-mini-header">
+            <div class="cv-mini-header-main">
+              <div class="cv-mini-name">Alex Morgan</div>
+              <div class="cv-mini-title">Product Designer</div>
+            </div>
+          </header>
+          <section class="cv-mini-section">
+            <h3 class="cv-mini-section-heading uppercase_rule">Experience</h3>
             <div class="cv-mini-entry">
-              <div class="cv-mini-entry-title">Senior Product Designer</div>
-              <div class="cv-mini-entry-meta">Northstar Labs · 2023–Present</div>
-              <div class="cv-mini-entry-description">Led design systems and shipped customer-facing workflows across web and mobile products.</div>
+              <div class="cv-mini-entry-meta">October 2023 – July 2024</div>
+              <div class="cv-mini-entry-title">Senior Product Designer · Northstar Labs</div>
+              <div class="cv-mini-entry-description">• Led design systems and shipped customer-facing workflows.<br>• Designed and developed accessible product experiences.<br>• Analyzed requirements and delivered practical solutions.</div>
             </div>
             <div class="cv-mini-entry">
-              <div class="cv-mini-entry-title">Product Designer</div>
-              <div class="cv-mini-entry-meta">Brightline · 2020–2023</div>
+              <div class="cv-mini-entry-meta">May 2023 – October 2023</div>
+              <div class="cv-mini-entry-title">Product Designer · Brightline</div>
+              <div class="cv-mini-entry-description">• Created reusable design patterns and automated workflows.<br>• Partnered with stakeholders on development requirements.</div>
             </div>
           </section>
-
-          {% if config.layout != 'sidebar' %}
-            <section class="cv-mini-section">
-              <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
-              <div class="cv-mini-skills">
-                <span class="cv-mini-skill">Figma</span>
-                <span class="cv-mini-skill">UX Research</span>
-                <span class="cv-mini-skill">Design Systems</span>
-                <span class="cv-mini-skill">Prototyping</span>
-              </div>
-            </section>
-          {% endif %}
+          <section class="cv-mini-section">
+            <h3 class="cv-mini-section-heading uppercase_rule">Education</h3>
+            <div class="cv-mini-entry-title">B.A. Design · State University</div>
+          </section>
         </main>
+      {% else %}
+        <header class="cv-mini-header">
+          {% if config.design_style == 'modern_header' %}<div class="cv-mini-initials">AM</div>{% endif %}
+          <div class="cv-mini-header-main">
+            <div class="cv-mini-name">Alex Morgan</div>
+            <div class="cv-mini-title">Product Designer</div>
+          </div>
+          <div class="cv-mini-contact">alex.morgan@example.com · New York, NY</div>
+        </header>
 
-        {% if config.layout == 'sidebar' %}
-          <aside class="cv-mini-sidebar">
+        <div class="cv-mini-body {% if config.layout == 'sidebar' %}sidebar{% endif %}">
+          <main>
             <section class="cv-mini-section">
-              <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
-              <div class="cv-mini-skills">
-                <span class="cv-mini-skill">Figma</span>
-                <span class="cv-mini-skill">Research</span>
-                <span class="cv-mini-skill">Systems</span>
-              </div>
+              <h3 class="cv-mini-section-heading {{ config.section_style }}">Professional Summary</h3>
+              <div class="cv-mini-entry-description">Product designer focused on simple, accessible experiences and measurable product outcomes.</div>
             </section>
+
             <section class="cv-mini-section">
-              <h3 class="cv-mini-section-heading {{ config.section_style }}">Education</h3>
+              <h3 class="cv-mini-section-heading {{ config.section_style }}">Experience</h3>
               <div class="cv-mini-entry">
-                <div class="cv-mini-entry-title">B.A. Design</div>
-                <div class="cv-mini-entry-meta">State University</div>
+                <div class="cv-mini-entry-title">Senior Product Designer</div>
+                <div class="cv-mini-entry-meta">Northstar Labs · 2023–Present</div>
+                <div class="cv-mini-entry-description">Led design systems and shipped customer-facing workflows across web and mobile products.</div>
               </div>
-            </section>
-            <section class="cv-mini-section">
-              <h3 class="cv-mini-section-heading {{ config.section_style }}">Certifications</h3>
               <div class="cv-mini-entry">
-                <div class="cv-mini-entry-title">UX Certificate</div>
+                <div class="cv-mini-entry-title">Product Designer</div>
+                <div class="cv-mini-entry-meta">Brightline · 2020–2023</div>
               </div>
             </section>
-          </aside>
-        {% endif %}
-      </div>
+
+            {% if config.layout != 'sidebar' %}
+              <section class="cv-mini-section">
+                <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
+                <div class="cv-mini-skills">
+                  <span class="cv-mini-skill">Figma</span>
+                  <span class="cv-mini-skill">UX Research</span>
+                  <span class="cv-mini-skill">Design Systems</span>
+                  <span class="cv-mini-skill">Prototyping</span>
+                </div>
+              </section>
+            {% endif %}
+          </main>
+
+          {% if config.layout == 'sidebar' %}
+            <aside class="cv-mini-sidebar">
+              <section class="cv-mini-section">
+                <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
+                <div class="cv-mini-skills">
+                  <span class="cv-mini-skill">Figma</span>
+                  <span class="cv-mini-skill">Research</span>
+                  <span class="cv-mini-skill">Systems</span>
+                </div>
+              </section>
+              <section class="cv-mini-section">
+                <h3 class="cv-mini-section-heading {{ config.section_style }}">Education</h3>
+                <div class="cv-mini-entry">
+                  <div class="cv-mini-entry-title">B.A. Design</div>
+                  <div class="cv-mini-entry-meta">State University</div>
+                </div>
+              </section>
+              <section class="cv-mini-section">
+                <h3 class="cv-mini-section-heading {{ config.section_style }}">Certifications</h3>
+                <div class="cv-mini-entry">
+                  <div class="cv-mini-entry-title">UX Certificate</div>
+                </div>
+              </section>
+            </aside>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
   </div>
 
