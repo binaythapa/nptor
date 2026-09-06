@@ -188,6 +188,22 @@ class CVBuilderTests(TestCase):
         self.assertContains(response, "data-template-layout=\"sidebar\"")
         self.assertContains(response, "#123456")
 
+    def test_embedded_preview_is_compact_and_hides_preview_toolbar(self):
+        cv = create_cv(self.user, "Embedded Preview CV", self.template)
+        cv.profile.professional_title = "Data Engineer"
+        cv.profile.summary = "Experienced data engineer."
+        cv.profile.save(update_fields=["professional_title", "summary", "updated_at"])
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cv:cv_preview", kwargs={"pk": cv.pk}) + "?embed=1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "embedded-preview")
+        self.assertContains(response, "body.embedded-preview .cv-name")
+        self.assertNotContains(response, "Edit CV")
+        self.assertNotContains(response, "Export PDF")
+        self.assertNotContains(response, "Export DOCX")
+
     def test_preview_rejects_another_users_cv(self):
         other = get_user_model().objects.create_user(username="other-preview", email="other-preview@example.com")
         other_cv = create_cv(other, "Other CV", self.template)
