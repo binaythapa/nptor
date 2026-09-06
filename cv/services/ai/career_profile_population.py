@@ -82,7 +82,9 @@ def _parse_date(value):
 
 def _confirmed_values(conversation, section):
     values = {}
-    for extraction in conversation.extractions.filter(section=section, confirmed=True).order_by("created_at", "id"):
+    for extraction in conversation.extractions.filter(confirmed=True).order_by("created_at", "id"):
+        if _normalize_section(extraction.section) != section:
+            continue
         value = _normalize_value(extraction.proposed_value)
         if value != "":
             values[extraction.field_name] = value
