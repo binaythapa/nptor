@@ -11,7 +11,7 @@
     body { min-height: 100vh; }
     .cv-preview-shell { --cv-accent: {{ config.accent_color }}; --cv-font-size: {{ config.font_size }}px; --cv-heading-size: {{ config.heading_size }}px; --cv-margin: {{ config.margin }}px; --cv-section-gap: {{ config.section_gap }}px; --cv-font: "{{ config.font_name }}", sans-serif; padding: 1.5rem; }
     .cv-preview-toolbar { max-width: 900px; margin: 0 auto 1.5rem; }
-    .cv-paper { max-width: 900px; min-height: 1160px; margin: 0 auto; overflow: hidden; background: #fff; border: 1px solid #dbe2ea; box-shadow: 0 18px 45px rgba(15,23,42,.12); font-family: var(--cv-font); font-size: var(--cv-font-size); color: #374151; }
+    .cv-paper { position: relative; max-width: 900px; min-height: 1160px; margin: 0 auto; overflow: hidden; background: #fff; border: 1px solid #dbe2ea; box-shadow: 0 18px 45px rgba(15,23,42,.12); font-family: var(--cv-font); font-size: var(--cv-font-size); color: #374151; }
     .cv-header { position: relative; padding: var(--cv-margin) var(--cv-margin) 1.75rem; background: var(--cv-accent); color: #fff; }
     .cv-header.centered { text-align: center; }
     .cv-header.compact { padding-top: calc(var(--cv-margin) * .65); padding-bottom: 1rem; }
@@ -43,18 +43,36 @@
     .cv-sidebar .cv-skill { border-color: rgba(255,255,255,.5); }
     .cv-links a { color: inherit; }
 
-    /* Reference-inspired split-label design: section labels sit in a stable left rail. */
-    .cv-paper.design-split-label .cv-header { background: #fff; color: #111827; border-top: 30px solid var(--cv-accent); padding-top: 1.6rem; padding-bottom: 1.9rem; }
-    .cv-paper.design-split-label .cv-header .cv-name,
-    .cv-paper.design-split-label .cv-header .cv-title { color: var(--cv-accent); }
+    /* Screenshot-matched split-label reference design. */
+    .cv-paper.design-split-label .cv-header { margin-left: 34%; width: 66%; box-sizing: border-box; background: #fff; color: #111827; border: 0; padding: 40px var(--cv-margin) 28px; }
+    .cv-paper.design-split-label .cv-header .cv-name { color: #2c806e; font-size: 2.55rem; letter-spacing: .01em; }
+    .cv-paper.design-split-label .cv-header .cv-title { color: #2c806e; }
     .cv-paper.design-split-label .cv-header .cv-contact { color: #4b5563; }
-    .cv-paper.design-split-label .cv-initials { display: none; }
-    .cv-paper.design-split-label .cv-body:not(.sidebar) { padding-top: 1rem; }
-    .cv-paper.design-split-label .cv-body:not(.sidebar) .cv-section { display: grid; grid-template-columns: 155px minmax(0,1fr); gap: 24px; border-top: 1px solid #cbd5e1; padding-top: 1rem; }
-    .cv-paper.design-split-label .cv-body:not(.sidebar) .cv-section-heading { margin: 0; padding-top: .05rem; }
-    .cv-paper.design-split-label .cv-body:not(.sidebar) .cv-section > :not(.cv-section-heading) { min-width: 0; }
+    .cv-paper.design-split-label .cv-body.sidebar { display: block; margin-left: 34%; padding: 0 var(--cv-margin) 3rem; }
+    .cv-paper.design-split-label .cv-body.sidebar > main { min-width: 0; }
+    .cv-paper.design-split-label .cv-sidebar { position: absolute; z-index: 2; left: 0; top: 0; bottom: 0; width: 34%; box-sizing: border-box; margin: 0; padding: 34px 24px 26px; background: #2c806e; color: #fff; overflow: hidden; }
+    .cv-paper.design-split-label .cv-sidebar:before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 168px; background: #404040; }
+    .cv-paper.design-split-label .cv-sidebar:after { content: ""; position: absolute; left: 0; right: 0; top: 168px; bottom: 0; opacity: .42; background: repeating-linear-gradient(45deg, transparent 0 12px, rgba(18,64,58,.55) 12px 14px, transparent 14px 23px), repeating-linear-gradient(-45deg, transparent 0 12px, rgba(50,220,238,.38) 12px 14px, transparent 14px 23px); pointer-events: none; }
+    .cv-paper.design-split-label .cv-sidebar > * { position: relative; z-index: 1; }
+    .cv-paper.design-split-label .cv-sidebar .cv-section { margin-bottom: 1.35rem; }
+    .cv-paper.design-split-label .cv-sidebar .cv-section-heading { color: #fff; border-color: rgba(255,255,255,.65); font-size: calc(var(--cv-heading-size) - 1px); }
+    .cv-paper.design-split-label .cv-sidebar .cv-entry-description,
+    .cv-paper.design-split-label .cv-sidebar .cv-entry-meta,
+    .cv-paper.design-split-label .cv-sidebar .cv-entry-title { color: #fff; }
+    .cv-paper.design-split-label .cv-photo-placeholder { width: 132px; height: 132px; margin: 5px auto 24px; border: 5px solid rgba(30,30,30,.72); border-radius: 50%; background: rgba(255,255,255,.04); display: grid; place-items: center; color: rgba(25,25,25,.72); font-size: 24px; font-weight: 800; }
+    .cv-paper.design-split-label .cv-photo-placeholder:after { content: ""; position: absolute; width: 64px; height: 64px; margin-top: 66px; border: 5px solid rgba(30,30,30,.72); border-radius: 50%; }
+    .cv-paper.design-split-label .cv-contact-list { margin: 0 0 25px; color: #fff; font-size: .82rem; line-height: 1.7; overflow-wrap: anywhere; }
+    .cv-paper.design-split-label .cv-contact-list div { margin-bottom: .18rem; }
+    .cv-paper.design-split-label .cv-sidebar .cv-sidebar-pattern { border-top: 1px solid rgba(255,255,255,.65); padding-top: 13px; }
+    .cv-paper.design-split-label .cv-sidebar .cv-skills { display: block; }
+    .cv-paper.design-split-label .cv-sidebar .cv-skill { display: block; border: 0; border-radius: 0; padding: 0; margin-bottom: .18rem; font-size: .8rem; }
+    .cv-paper.design-split-label .cv-main-reference { min-width: 0; }
+    .cv-paper.design-split-label .cv-main-reference .cv-section { margin-bottom: 1.2rem; }
+    .cv-paper.design-split-label .cv-main-reference .cv-section-heading { color: #111827; border-bottom: 1px solid #2c806e; padding-bottom: .32rem; }
+    .cv-paper.design-split-label .cv-main-reference .cv-entry-title,
+    .cv-paper.design-split-label .cv-main-reference .cv-entry-meta,
+    .cv-paper.design-split-label .cv-main-reference .cv-entry-description { color: #111827; }
 
-    /* Reference-inspired elegant design: restrained header and editorial section rail. */
     .cv-paper.design-elegant .cv-header { background: var(--cv-accent); border-bottom: 0; }
     .cv-paper.design-elegant .cv-body:not(.sidebar) { padding-top: 1.4rem; }
     .cv-paper.design-elegant .cv-body:not(.sidebar) .cv-section { display: grid; grid-template-columns: 155px minmax(0,1fr); gap: 24px; }
@@ -62,19 +80,11 @@
     .cv-paper.design-elegant .cv-body:not(.sidebar) .cv-section > :not(.cv-section-heading) { border-left: 1px solid #d5dbe2; padding-left: 24px; min-width: 0; }
     .cv-paper.design-elegant .cv-body:not(.sidebar) .cv-entry { margin-bottom: 1.15rem; }
     .cv-paper.design-elegant .cv-body:not(.sidebar) .cv-section-heading.uppercase_rule { border-bottom: 0; }
-
-    /* Modern header design: strong identity block with clean content below. */
     .cv-paper.design-modern-header .cv-header { background: var(--cv-accent); }
     .cv-paper.design-modern-header .cv-header.modern { min-height: 125px; }
     .cv-paper.design-modern-header .cv-body:not(.sidebar) .cv-section-heading { font-size: calc(var(--cv-heading-size) - 1px); }
     .cv-paper.design-modern-header .cv-body:not(.sidebar) .cv-entry-title { color: #172033; }
 
-    /* Sidebar remains available as a layout variant and gets the same polished header treatment. */
-    .cv-paper.design-split-label .cv-body.sidebar .cv-sidebar { background: var(--cv-accent); }
-
-    .cv-page-marker { display: none; }
-
-    /* The builder iframe is a compact glance at the resume, not a second preview page. */
     body.embedded-preview { background: #fff; overflow-x: hidden; }
     body.embedded-preview .cv-preview-shell { padding: 0; }
     body.embedded-preview .cv-preview-toolbar { display: none; }
@@ -89,7 +99,7 @@
     body.embedded-preview .cv-title { margin: .2rem 0; font-size: .78rem; line-height: 1.2; }
     body.embedded-preview .cv-contact { font-size: .64rem; line-height: 1.35; }
     body.embedded-preview .cv-body { padding: .9rem .95rem 1.25rem; }
-    body.embedded-preview .cv-body.sidebar { grid-template-columns: minmax(0, 1fr) 145px; gap: .85rem; }
+    body.embedded-preview .cv-body.sidebar { grid-template-columns: minmax(0,1fr) 145px; gap: .85rem; }
     body.embedded-preview .cv-sidebar { padding: .8rem; margin: -.9rem -.95rem -1.25rem 0; }
     body.embedded-preview .cv-section { margin-bottom: .8rem; }
     body.embedded-preview .cv-section-heading { font-size: .78rem; margin-bottom: .35rem; }
@@ -100,10 +110,20 @@
     body.embedded-preview .cv-entry-description { margin-top: .15rem; }
     body.embedded-preview .cv-skills { gap: .2rem; }
     body.embedded-preview .cv-skill { padding: .1rem .35rem; font-size: .58rem; }
-    body.embedded-preview .cv-paper.design-split-label .cv-header { border-top-width: 12px; padding-top: .8rem; }
-    body.embedded-preview .cv-paper.design-split-label .cv-body:not(.sidebar) .cv-section,
-    body.embedded-preview .cv-paper.design-elegant .cv-body:not(.sidebar) .cv-section { grid-template-columns: 72px minmax(0,1fr); gap: 9px; }
-    body.embedded-preview .cv-paper.design-elegant .cv-body:not(.sidebar) .cv-section > :not(.cv-section-heading) { padding-left: 9px; }
+    body.embedded-preview .cv-paper.design-split-label .cv-header { margin-left: 34%; width: 66%; border-top: 0; padding: 1rem .8rem .65rem; }
+    body.embedded-preview .cv-paper.design-split-label .cv-header .cv-name { font-size: 1.55rem; }
+    body.embedded-preview .cv-paper.design-split-label .cv-body.sidebar { margin-left: 34%; padding: 0 .8rem 1.25rem; }
+    body.embedded-preview .cv-paper.design-split-label .cv-sidebar { width: 34%; padding: 10px 7px; }
+    body.embedded-preview .cv-paper.design-split-label .cv-sidebar:before { height: 74px; }
+    body.embedded-preview .cv-paper.design-split-label .cv-sidebar:after { top: 74px; }
+    body.embedded-preview .cv-paper.design-split-label .cv-photo-placeholder { width: 55px; height: 55px; border-width: 2px; margin: 2px auto 8px; font-size: 9px; }
+    body.embedded-preview .cv-paper.design-split-label .cv-photo-placeholder:after { width: 25px; height: 25px; margin-top: 27px; border-width: 2px; }
+    body.embedded-preview .cv-paper.design-split-label .cv-contact-list { margin-bottom: 10px; font-size: .46rem; line-height: 1.45; }
+    body.embedded-preview .cv-paper.design-split-label .cv-sidebar .cv-section { margin-bottom: .65rem; }
+    body.embedded-preview .cv-paper.design-split-label .cv-sidebar .cv-section-heading { font-size: .6rem; }
+    body.embedded-preview .cv-paper.design-split-label .cv-sidebar .cv-entry-description,
+    body.embedded-preview .cv-paper.design-split-label .cv-sidebar .cv-skill { font-size: .48rem; line-height: 1.3; }
+    body.embedded-preview .cv-paper.design-split-label .cv-main-reference .cv-section { margin-bottom: .7rem; }
 
     @media (max-width: 768px) {
       .cv-preview-shell { padding: .75rem; }
@@ -113,8 +133,12 @@
       .cv-header.elegant .cv-header-contact { text-align: left; }
       .cv-body.sidebar { display: block; }
       .cv-sidebar { margin: 1.5rem -1.25rem -1.25rem; }
-      .cv-paper.design-split-label .cv-body:not(.sidebar) .cv-section,
-      .cv-paper.design-elegant .cv-body:not(.sidebar) .cv-section { grid-template-columns: 110px minmax(0,1fr); gap: 14px; }
+      .cv-paper.design-split-label .cv-header { margin-left: 0; width: 100%; }
+      .cv-paper.design-split-label .cv-body.sidebar { margin-left: 0; padding-left: 1.25rem; padding-right: 1.25rem; }
+      .cv-paper.design-split-label .cv-sidebar { position: relative; width: auto; left: auto; top: auto; bottom: auto; margin: 0 -1.25rem 1.25rem; min-height: 250px; }
+      .cv-paper.design-split-label .cv-sidebar:before { height: 125px; }
+      .cv-paper.design-split-label .cv-sidebar:after { top: 125px; }
+      .cv-paper.design-split-label .cv-main-reference { margin-left: 0; }
     }
     @media print {
       html, body { background: #fff; }
@@ -161,30 +185,71 @@
 
     {% if config.layout == "sidebar" %}
       <div class="cv-body sidebar">
-        <main>
-          {% for section in sections %}
-            {% if section.key == "summary" or section.key == "experiences" or section.key == "projects" or section.key == "achievements" %}
-              <section class="cv-section">
-                <h3 class="cv-section-heading {{ config.section_style }}">{{ section.heading }}</h3>
-                {% if section.key == "summary" %}<div class="cv-entry-description">{{ section.value }}</div>
-                {% elif section.key == "experiences" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.job_title }}{% if item.employer %} · {{ item.employer }}{% endif %}</div>{% if item.location %}<div class="cv-entry-meta">{{ item.location }}</div>{% endif %}{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}
-                {% elif section.key == "projects" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.name }}{% if item.role %} · {{ item.role }}{% endif %}</div>{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}
-                {% elif section.key == "achievements" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.title }}</div>{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}{% endif %}
-              </section>
-            {% endif %}
-          {% endfor %}
+        <main class="{% if config.design_style == 'split_label' %}cv-main-reference{% endif %}">
+          {% if config.design_style == 'split_label' %}
+            <section class="cv-section">
+              <h3 class="cv-section-heading uppercase_rule">Experience</h3>
+              {% for section in sections %}
+                {% if section.key == "experiences" %}
+                  {% for item in section.value %}
+                    <div class="cv-entry">
+                      {% if item.start_date or item.end_date %}<div class="cv-entry-meta">{% if item.start_date %}{{ item.start_date }}{% endif %}{% if item.start_date and item.end_date %} – {% endif %}{% if item.end_date %}{{ item.end_date }}{% endif %}</div>{% endif %}
+                      <div class="cv-entry-title">{{ item.job_title }}{% if item.employer %} · {{ item.employer }}{% endif %}</div>
+                      {% if item.location %}<div class="cv-entry-meta">{{ item.location }}</div>{% endif %}
+                      {% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+            </section>
+            {% for section in sections %}
+              {% if section.key == "educations" or section.key == "projects" or section.key == "achievements" %}
+                <section class="cv-section">
+                  <h3 class="cv-section-heading uppercase_rule">{{ section.heading }}</h3>
+                  {% if section.key == "educations" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.qualification }}{% if item.institution %} · {{ item.institution }}{% endif %}</div>{% if item.field_of_study %}<div class="cv-entry-meta">{{ item.field_of_study }}</div>{% endif %}{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}
+                  {% elif section.key == "projects" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.name }}{% if item.role %} · {{ item.role }}{% endif %}</div>{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}
+                  {% elif section.key == "achievements" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.title }}</div>{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}{% endif %}
+                </section>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            {% for section in sections %}
+              {% if section.key == "summary" or section.key == "experiences" or section.key == "projects" or section.key == "achievements" %}
+                <section class="cv-section">
+                  <h3 class="cv-section-heading {{ config.section_style }}">{{ section.heading }}</h3>
+                  {% if section.key == "summary" %}<div class="cv-entry-description">{{ section.value }}</div>
+                  {% elif section.key == "experiences" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.job_title }}{% if item.employer %} · {{ item.employer }}{% endif %}</div>{% if item.location %}<div class="cv-entry-meta">{{ item.location }}</div>{% endif %}{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}
+                  {% elif section.key == "projects" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.name }}{% if item.role %} · {{ item.role }}{% endif %}</div>{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}
+                  {% elif section.key == "achievements" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.title }}</div>{% if item.description %}<div class="cv-entry-description">{{ item.description }}</div>{% endif %}</div>{% endfor %}{% endif %}
+                </section>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
         </main>
-        <aside class="cv-sidebar">
-          {% for section in sections %}
-            {% if section.key == "skills" or section.key == "educations" or section.key == "certifications" %}
-              <section class="cv-section">
-                <h3 class="cv-section-heading {{ config.section_style }}">{{ section.heading }}</h3>
-                {% if section.key == "skills" %}<div class="cv-skills">{% for item in section.value %}<span class="cv-skill">{{ item.name }}</span>{% endfor %}</div>
-                {% elif section.key == "educations" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.qualification }}</div><div class="cv-entry-meta">{{ item.institution }}{% if item.field_of_study %} · {{ item.field_of_study }}{% endif %}</div></div>{% endfor %}
-                {% elif section.key == "certifications" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.name }}</div>{% if item.issuer %}<div class="cv-entry-meta">{{ item.issuer }}</div>{% endif %}</div>{% endfor %}{% endif %}
-              </section>
-            {% endif %}
-          {% endfor %}
+        <aside class="cv-sidebar {% if config.design_style == 'split_label' %}cv-sidebar-reference{% endif %}">
+          {% if config.design_style == 'split_label' %}
+            <div class="cv-photo-placeholder" aria-hidden="true">{{ payload.contact.first_name|first|default:"" }}{{ payload.contact.last_name|first|default:"" }}</div>
+            <div class="cv-contact-list">
+              {% if payload.contact.location %}<div>⌖ {{ payload.contact.location }}</div>{% endif %}
+              {% if payload.contact.phone %}<div>⌕ {{ payload.contact.phone }}</div>{% endif %}
+              {% if payload.contact.email %}<div>✉ {{ payload.contact.email }}</div>{% endif %}
+              {% if payload.linkedin_url %}<div>in {{ payload.linkedin_url }}</div>{% endif %}
+            </div>
+            {% if payload.summary %}<section class="cv-section cv-sidebar-pattern"><h3 class="cv-section-heading uppercase_rule">Summary</h3><div class="cv-entry-description">{{ payload.summary }}</div></section>{% endif %}
+            {% if payload.skills %}<section class="cv-section"><h3 class="cv-section-heading uppercase_rule">Skills</h3><div class="cv-skills">{% for item in payload.skills %}<span class="cv-skill">• {{ item.name }}</span>{% endfor %}</div></section>{% endif %}
+            {% if payload.languages %}<section class="cv-section"><h3 class="cv-section-heading uppercase_rule">Languages</h3><div class="cv-entry-description">{% for item in payload.languages %}• {{ item.name }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div></section>{% endif %}
+          {% else %}
+            {% for section in sections %}
+              {% if section.key == "skills" or section.key == "educations" or section.key == "certifications" %}
+                <section class="cv-section">
+                  <h3 class="cv-section-heading {{ config.section_style }}">{{ section.heading }}</h3>
+                  {% if section.key == "skills" %}<div class="cv-skills">{% for item in section.value %}<span class="cv-skill">{{ item.name }}</span>{% endfor %}</div>
+                  {% elif section.key == "educations" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.qualification }}</div><div class="cv-entry-meta">{{ item.institution }}{% if item.field_of_study %} · {{ item.field_of_study }}{% endif %}</div></div>{% endfor %}
+                  {% elif section.key == "certifications" %}{% for item in section.value %}<div class="cv-entry"><div class="cv-entry-title">{{ item.name }}</div>{% if item.issuer %}<div class="cv-entry-meta">{{ item.issuer }}</div>{% endif %}</div>{% endfor %}{% endif %}
+                </section>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
         </aside>
       </div>
     {% else %}
