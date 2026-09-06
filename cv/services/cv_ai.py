@@ -201,6 +201,11 @@ def tailor_cv(cv, job_description, provider=None):
 
 
 SAFE_OVERRIDE_FIELDS = {"professional_title", "summary", "linkedin_url", "portfolio_url"}
+SAFE_OVERRIDE_SECTIONS = {
+    "summary": {"summary"},
+    "profile": SAFE_OVERRIDE_FIELDS,
+    "professional_title": {"professional_title"},
+}
 
 
 @transaction.atomic
@@ -210,7 +215,9 @@ def accept_suggestion(suggestion, user):
         raise ValueError("Suggestion does not belong to this user")
     if suggestion.status != AISuggestion.STATUS_PENDING:
         return suggestion
-    if suggestion.field_name not in SAFE_OVERRIDE_FIELDS or suggestion.section not in {"summary", "profile"}:
+
+    allowed_fields = SAFE_OVERRIDE_SECTIONS.get(suggestion.section, set())
+    if suggestion.field_name not in SAFE_OVERRIDE_FIELDS or suggestion.field_name not in allowed_fields:
         raise ValueError("This suggestion cannot be applied automatically")
 
     cv = conversation.cv
