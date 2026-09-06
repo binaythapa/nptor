@@ -145,7 +145,7 @@
         </main>
 
         <aside class="cv-preview-column">
-          <div class="box cv-preview-card"><div class="cv-card-heading"><div><p class="eyebrow">Live preview</p><h2 class="title is-5 mb-0">Your resume</h2></div><a class="button is-small is-light" href="{% url 'cv:cv_preview' cv.pk %}" target="_blank">Open</a></div><iframe id="cv-preview-frame" title="Live resume preview" src="{% url 'cv:cv_preview' cv.pk %}"></iframe></div>
+          <div class="box cv-preview-card"><div class="cv-card-heading"><div><p class="eyebrow">Live preview</p><h2 class="title is-5 mb-0">Your resume</h2></div><a class="button is-small is-light" href="{% url 'cv:cv_preview' cv.pk %}" target="_blank">Open</a></div><iframe id="cv-preview-frame" title="Live resume preview" src="{% url 'cv:cv_preview' cv.pk %}?embed=1"></iframe></div>
           <div class="box quick-actions"><p class="eyebrow">Next steps</p><a href="{% url 'cv:career_interview' %}" class="quick-action"><strong>Career interview</strong><span>Fill gaps in your master profile with AI.</span></a><a href="{% url 'cv:cv_import' %}" class="quick-action"><strong>Import a resume</strong><span>Bring an existing resume into your workflow.</span></a><a href="{% url 'cv:cv_ai_review' cv.pk %}" class="quick-action"><strong>Review with AI</strong><span>Get actionable content and structure feedback.</span></a></div>
         </aside>
       </div>
