@@ -111,7 +111,7 @@ class CVBuilderTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
         self.assertEqual(response.status_code, 200)
-        for text in ("Professional Summary", "Work Experience", "Education", "Skills", "Certifications", "Projects", "Achievements", "Save CV", "Preview"):
+        for text in ("Professional summary", "Work experience", "Education", "Skills", "Certifications", "Projects", "Achievements", "Save resume", "Open full preview"):
             self.assertContains(response, text)
 
     def test_builder_saves_selection_and_overrides(self):
