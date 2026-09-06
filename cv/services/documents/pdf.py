@@ -119,6 +119,82 @@ class PDFGenerator(DocumentGenerator):
             if details:
                 draw_wrapped(" | ".join(details), width - margin - header_width * .45, height - margin - 8, header_width * .45, max(8, config["font_size"] - 1), color=body_color, leading=config["font_size"] + 2, align="right")
             y -= 18
+        elif design == "split_label":
+            # The reference layout reserves the left third for identity/contact content.
+            sidebar_width = width * 0.34
+            main_x = sidebar_width + margin
+            main_width = width - main_x - margin
+            teal = colors.HexColor("#2c806e")
+            dark = colors.HexColor("#404040")
+            pdf.setFillColor(teal)
+            pdf.rect(0, 0, sidebar_width, height, stroke=0, fill=1)
+            pdf.setFillColor(dark)
+            pdf.rect(0, height - 168, sidebar_width, 168, stroke=0, fill=1)
+            # Lightweight geometric pattern matching the reference's teal lower panel.
+            pdf.setStrokeColor(colors.Color(0.12, 0.65, 0.62, alpha=.35))
+            pdf.setLineWidth(.5)
+            for px in range(0, int(sidebar_width) + 24, 18):
+                for py in range(0, int(height - 168), 18):
+                    pdf.line(px, py, px + 10, py + 8)
+                    pdf.line(px + 10, py + 8, px, py + 16)
+            # Placeholder portrait: keeps the template independent from an uploaded photo.
+            photo_x = sidebar_width / 2
+            photo_y = height - 110
+            pdf.setStrokeColor(colors.HexColor("#202020"))
+            pdf.setLineWidth(2.4)
+            pdf.circle(photo_x, photo_y, 46, stroke=1, fill=0)
+            pdf.circle(photo_x, photo_y + 12, 21, stroke=1, fill=0)
+            pdf.arc(photo_x - 31, photo_y - 40, photo_x + 31, photo_y + 20, startAng=20, extent=140)
+
+            side_x = 16
+            side_width = sidebar_width - 32
+            side_y = height - 190
+            side_body = colors.white
+            if contact.get("location"):
+                side_y = draw_wrapped(f"⌖ {contact['location']}", side_x, side_y, side_width, 7.5, color=side_body, leading=11)
+            if contact.get("phone"):
+                side_y = draw_wrapped(f"⌕ {contact['phone']}", side_x, side_y, side_width, 7.5, color=side_body, leading=11)
+            if contact.get("email"):
+                side_y = draw_wrapped(f"✉ {contact['email']}", side_x, side_y, side_width, 7.2, color=side_body, leading=10)
+            if payload.get("linkedin_url"):
+                side_y = draw_wrapped(f"in {payload['linkedin_url']}", side_x, side_y, side_width, 7.0, color=side_body, leading=10)
+
+            summary = payload.get("summary")
+            if summary:
+                side_y -= 8
+                side_y = section_heading("Summary", side_x, side_y, side_width, white=True)
+                side_y = draw_wrapped(summary, side_x, side_y, side_width, 7.8, color=side_body, leading=10) - 8
+            skills = payload.get("skills", [])
+            if skills:
+                side_y = section_heading("Skills", side_x, side_y, side_width, white=True)
+                for item in skills:
+                    side_y = draw_wrapped(f"• {item.get('name', '')}", side_x, side_y, side_width, 7.6, color=side_body, leading=10)
+                side_y -= 5
+            languages = payload.get("languages", [])
+            if languages:
+                side_y = section_heading("Languages", side_x, side_y, side_width, white=True)
+                for item in languages:
+                    side_y = draw_wrapped(f"• {item.get('name', '')}", side_x, side_y, side_width, 7.6, color=side_body, leading=10)
+
+            # Header belongs to the white right column in the reference layout.
+            if name:
+                y = draw_wrapped(name, main_x, height - 62, main_width, config["heading_size"] + 10, bold=True, color=teal, leading=config["heading_size"] + 12)
+            if payload.get("professional_title"):
+                y -= 2
+                y = draw_wrapped(payload["professional_title"], main_x, y, main_width, config["font_size"] + 1, color=teal, leading=config["font_size"] + 4)
+            pdf.setStrokeColor(teal)
+            pdf.setLineWidth(.8)
+            pdf.line(main_x, y - 8, width - margin, y - 8)
+            y -= 30
+
+            main_sections = (
+                ("Experience", payload.get("experiences", []), "experience"),
+                ("Education", payload.get("educations", []), "education"),
+                ("Projects", payload.get("projects", []), "project"),
+                ("Certifications", payload.get("certifications", []), "certification"),
+                ("Achievements", payload.get("achievements", []), "achievement"),
+            )
+            render_sections(main_sections, main_x, y, main_width)
         else:
             if name:
                 y = draw_wrapped(name, header_x, y, header_width, config["heading_size"] + 8, bold=True, color=accent_color, leading=config["heading_size"] + 3, align=header_align)
@@ -190,7 +266,7 @@ class PDFGenerator(DocumentGenerator):
             ("Achievements", payload.get("achievements", []), "achievement"),
         )
 
-        if config["layout"] == "sidebar":
+        if config["layout"] == "sidebar" and design != "split_label":
             sidebar_width = max(145, min(175, width * 0.27))
             column_gap = 18
             main_x = margin
@@ -220,7 +296,7 @@ class PDFGenerator(DocumentGenerator):
                 ("Achievements", payload.get("achievements", []), "achievement"),
             )
             main_y = render_sections(main_sections, main_x, main_y, main_width)
-        else:
+        elif design not in {"split_label"}:
             if design in {"split_label", "elegant"}:
                 label_width = 115
                 content_x = margin + label_width + 18
