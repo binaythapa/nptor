@@ -47,6 +47,10 @@
       </div>
     </div>
 
+    {% if error_message %}
+      <div class="notification is-danger is-light">{{ error_message }}</div>
+    {% endif %}
+
     <div class="cv-import-review-source">
       <div class="cv-import-review-source-text">
         <strong>Source</strong> · {{ imported.original_filename }}
@@ -57,7 +61,7 @@
       </div>
     </div>
 
-    <form method="post">
+    <form method="post" action="">
       {% csrf_token %}
       <div class="cv-import-review-sections">
         {% regroup imported.fields.all by section as field_groups %}
