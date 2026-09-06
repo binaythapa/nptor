@@ -1,0 +1,52 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width: 1100px;">
+    <div class="level mb-5">
+      <div>
+        <p class="is-size-7 has-text-grey mb-1">AI Job Tailoring</p>
+        <h1 class="title mb-1">Tailor {{ cv.title }}</h1>
+        <p class="subtitle is-6 mb-0">Generate targeted wording suggestions without changing your master Career Profile.</p>
+      </div>
+      <div class="buttons">
+        <a class="button" href="{% url 'cv:cv_builder' cv.pk %}">Back to Builder</a>
+        <a class="button is-light" href="{% url 'cv:cv_ats_analysis' cv.pk %}">ATS Analysis</a>
+      </div>
+    </div>
+
+    {% if error_message %}<div class="notification is-danger is-light"><strong>Tailoring could not run.</strong><br>{{ error_message }}</div>{% endif %}
+
+    <div class="box">
+      <form method="post">
+        {% csrf_token %}
+        <div class="field">
+          <label class="label">Job description</label>
+          <div class="control"><textarea class="textarea" name="job_description" rows="10" required placeholder="Paste the target job description here...">{{ job_description }}</textarea></div>
+        </div>
+        <button class="button is-primary" type="submit">Generate Tailoring Suggestions</button>
+      </form>
+    </div>
+
+    {% if conversation %}
+      {% if conversation.metadata.summary %}<div class="notification is-light"><p class="has-text-weight-semibold mb-1">Tailoring summary</p><p>{{ conversation.metadata.summary }}</p></div>{% endif %}
+      {% for suggestion in conversation.suggestions.all %}
+        <div class="box">
+          <div class="level mb-3">
+            <div><h2 class="title is-6 mb-1">{{ suggestion.title }}</h2><p class="is-size-7 has-text-grey">{{ suggestion.section }} · {{ suggestion.field_name }}</p></div>
+            <span class="tag {% if suggestion.status == 'accepted' %}is-success{% elif suggestion.status == 'rejected' %}is-light{% else %}is-warning{% endif %}">{{ suggestion.get_status_display }}</span>
+          </div>
+          {% if suggestion.reason %}<p class="mb-3"><strong>Why:</strong> {{ suggestion.reason }}</p>{% endif %}
+          <div class="columns"><div class="column"><p class="is-size-7 has-text-grey mb-1">Current</p><div class="notification is-light">{{ suggestion.current_value }}</div></div><div class="column"><p class="is-size-7 has-text-grey mb-1">Suggested</p><div class="notification is-info is-light">{{ suggestion.proposed_value }}</div></div></div>
+          {% if suggestion.status == 'pending' %}
+            <div class="buttons">
+              <form method="post" action="{% url 'cv:cv_ai_suggestion_accept' suggestion.pk %}">{% csrf_token %}<button class="button is-success is-light" type="submit">Accept</button></form>
+              <form method="post" action="{% url 'cv:cv_ai_suggestion_reject' suggestion.pk %}">{% csrf_token %}<button class="button is-light" type="submit">Reject</button></form>
+            </div>
+          {% endif %}
+        </div>
+      {% empty %}<div class="notification is-light">No tailoring suggestions were returned.</div>{% endfor %}
+    {% else %}<div class="notification is-light">Paste a job description above to generate targeted CV suggestions.</div>{% endif %}
+  </div>
+</section>
+{% endblock %}

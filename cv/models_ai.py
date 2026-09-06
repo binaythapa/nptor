@@ -75,6 +75,7 @@ class ATSAnalysis(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cv_ai_ats_analyses")
     cv_version = models.ForeignKey(CVVersion, on_delete=models.CASCADE, null=True, blank=True, related_name="ats_analyses")
     conversation = models.ForeignKey(AIConversation, on_delete=models.SET_NULL, null=True, blank=True, related_name="ats_analyses")
+    job_description = models.TextField(blank=True)
     score = models.PositiveSmallIntegerField(null=True, blank=True)
     result = models.JSONField(default=dict, blank=True)
     provider = models.CharField(max_length=60, blank=True)
