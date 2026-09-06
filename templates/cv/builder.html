@@ -1,6 +1,10 @@
 {% extends "layouts/student/base.html" %}
 {% load static %}
 
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'cv/builder.css' %}">
+{% endblock %}
+
 {% block content %}
 <section class="section cv-builder-page" data-builder-workspace="true" data-cv-id="{{ cv.pk }}">
   <div class="container is-fluid cv-builder-shell">
@@ -23,9 +27,7 @@
       </div>
     </div>
 
-    {% if form.non_field_errors %}
-      <div class="notification is-danger is-light">{{ form.non_field_errors }}</div>
-    {% endif %}
+    {% if form.non_field_errors %}<div class="notification is-danger is-light">{{ form.non_field_errors }}</div>{% endif %}
 
     <form method="post" id="cv-builder-form" novalidate>
       {% csrf_token %}
@@ -54,24 +56,11 @@
         <main class="cv-editor-column">
           <div class="box cv-card" id="section-contact">
             <div class="cv-card-heading"><div><p class="eyebrow">01</p><h2 class="title is-5">Contact</h2></div><span class="tag is-light">From account profile</span></div>
-            <div class="contact-summary">
-              <strong>{{ contact.first_name }} {{ contact.last_name }}</strong>
-              <span>{{ contact.email }}{% if contact.phone %} · {{ contact.phone }}{% endif %}</span>
-              {% if contact.location %}<span>{{ contact.location }}</span>{% endif %}
-            </div>
+            <div class="contact-summary"><strong>{{ contact.first_name }} {{ contact.last_name }}</strong><span>{{ contact.email }}{% if contact.phone %} · {{ contact.phone }}{% endif %}</span>{% if contact.location %}<span>{{ contact.location }}</span>{% endif %}</div>
             <div class="columns is-multiline mt-2">
-              <div class="column is-12">
-                <label class="label" for="{{ form.professional_title.id_for_label }}">Professional title</label>
-                {{ form.professional_title }}
-              </div>
-              <div class="column is-6">
-                <label class="label" for="{{ form.linkedin_url.id_for_label }}">LinkedIn</label>
-                {{ form.linkedin_url }}
-              </div>
-              <div class="column is-6">
-                <label class="label" for="{{ form.portfolio_url.id_for_label }}">Portfolio</label>
-                {{ form.portfolio_url }}
-              </div>
+              <div class="column is-12"><label class="label" for="{{ form.professional_title.id_for_label }}">Professional title</label>{{ form.professional_title }}</div>
+              <div class="column is-6"><label class="label" for="{{ form.linkedin_url.id_for_label }}">LinkedIn</label>{{ form.linkedin_url }}</div>
+              <div class="column is-6"><label class="label" for="{{ form.portfolio_url.id_for_label }}">Portfolio</label>{{ form.portfolio_url }}</div>
             </div>
           </div>
 
@@ -84,24 +73,18 @@
           <div class="box cv-card" id="section-experience">
             <div class="cv-card-heading"><div><p class="eyebrow">03</p><h2 class="title is-5">Work experience</h2><p class="is-size-7 has-text-grey">Select roles and edit the bullet text for this resume only.</p></div><button class="button is-small is-light section-toggle" type="button" data-section="experiences">Select all</button></div>
             <div class="builder-record-list" data-record-list="experiences">
-              {% for section in sections %}
-                {% if section.key == "experiences" %}
-                  {% for record in section.records %}
-                    <article class="builder-record-card" draggable="true" data-record-item="experiences" data-record-id="{{ record.pk }}">
-                      <div class="record-topline">
-                        <label class="checkbox"><input type="checkbox" name="experiences" value="{{ record.pk }}" data-section-input="experiences" {% if record.id in section.selected_ids %}checked{% endif %}> Include</label>
-                        <span class="drag-handle" aria-hidden="true">☷</span>
-                      </div>
-                      <p class="has-text-weight-semibold mb-1">{{ record.job_title }}</p>
-                      <p class="is-size-7 has-text-grey mb-3">{{ record.employer }}{% if record.location %} · {{ record.location }}{% endif %}</p>
-                      {% if record.start_date %}<p class="is-size-7 has-text-grey mb-3">{{ record.start_date|date:"M Y" }} – {% if record.is_current %}Present{% elif record.end_date %}{{ record.end_date|date:"M Y" }}{% endif %}</p>{% endif %}
-                      <label class="label is-small">Resume bullet / description</label>
-                      <textarea class="textarea experience-bullet" rows="4" data-experience-bullet="{{ record.pk }}">{% if cv.overrides.experience_bullets %}{{ cv.overrides.experience_bullets|get_item:record.pk }}{% else %}{{ record.description }}{% endif %}</textarea>
-                      <div class="mt-2"><button type="button" class="button is-small is-info is-light ai-action" data-ai-action="bullet" data-bullet-target="{{ record.pk }}">Rewrite with AI</button></div>
-                    </article>
-                  {% empty %}<p class="has-text-grey">No work experience has been added to your Career Profile yet.</p>{% endfor %}
-                {% endif %}
-              {% endfor %}
+              {% for section in sections %}{% if section.key == "experiences" %}
+                {% for record in section.records %}
+                  <article class="builder-record-card" draggable="true" data-record-item="experiences" data-record-id="{{ record.pk }}">
+                    <div class="record-topline"><label class="checkbox"><input type="checkbox" name="experiences" value="{{ record.pk }}" data-section-input="experiences" {% if record.id in section.selected_ids %}checked{% endif %}> Include</label><span class="drag-handle" aria-hidden="true">☷</span></div>
+                    <p class="has-text-weight-semibold mb-1">{{ record.job_title }}</p><p class="is-size-7 has-text-grey mb-3">{{ record.employer }}{% if record.location %} · {{ record.location }}{% endif %}</p>
+                    {% if record.start_date %}<p class="is-size-7 has-text-grey mb-3">{{ record.start_date|date:"M Y" }} – {% if record.is_current %}Present{% elif record.end_date %}{{ record.end_date|date:"M Y" }}{% endif %}</p>{% endif %}
+                    <label class="label is-small">Resume bullet / description</label>
+                    <textarea class="textarea experience-bullet" rows="4" data-experience-bullet="{{ record.pk }}">{{ record.description }}</textarea>
+                    <div class="mt-2"><button type="button" class="button is-small is-info is-light ai-action" data-ai-action="bullet" data-bullet-target="{{ record.pk }}">Rewrite with AI</button></div>
+                  </article>
+                {% empty %}<p class="has-text-grey">No work experience has been added to your Career Profile yet.</p>{% endfor %}
+              {% endif %}{% endfor %}
             </div>
             <div id="bullet-suggestion" class="ai-suggestion is-hidden mt-4"></div>
           </div>
@@ -109,66 +92,36 @@
           <div class="box cv-card" id="section-education">
             <div class="cv-card-heading"><div><p class="eyebrow">04</p><h2 class="title is-5">Education</h2></div><button class="button is-small is-light section-toggle" type="button" data-section="educations">Select all</button></div>
             <div class="builder-record-list" data-record-list="educations">
-              {% for section in sections %}
-                {% if section.key == "educations" %}
-                  {% for record in section.records %}
-                    <label class="builder-record-row" draggable="true"><input type="checkbox" name="educations" value="{{ record.pk }}" data-section-input="educations" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.qualification }}</strong><br><small>{{ record.institution }}{% if record.field_of_study %} · {{ record.field_of_study }}{% endif %}</small></span><span class="drag-handle">☷</span></label>
-                  {% empty %}<p class="has-text-grey">No education records have been added yet.</p>{% endfor %}
-                {% endif %}
-              {% endfor %}
+              {% for section in sections %}{% if section.key == "educations" %}{% for record in section.records %}
+                <label class="builder-record-row" draggable="true"><input type="checkbox" name="educations" value="{{ record.pk }}" data-section-input="educations" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.qualification }}</strong><br><small>{{ record.institution }}{% if record.field_of_study %} · {{ record.field_of_study }}{% endif %}</small></span><span class="drag-handle">☷</span></label>
+              {% empty %}<p class="has-text-grey">No education records have been added yet.</p>{% endfor %}{% endif %}{% endfor %}
             </div>
           </div>
 
           <div class="box cv-card" id="section-skills">
             <div class="cv-card-heading"><div><p class="eyebrow">05</p><h2 class="title is-5">Skills</h2><p class="is-size-7 has-text-grey">Use your profile skills or add CV-specific skills after reviewing AI suggestions.</p></div><button type="button" class="button is-small is-info is-light ai-action" data-ai-action="skills">Suggest skills</button></div>
             <div class="builder-record-list" data-record-list="skills">
-              {% for section in sections %}
-                {% if section.key == "skills" %}
-                  {% for record in section.records %}
-                    <label class="builder-record-row" draggable="true"><input type="checkbox" name="skills" value="{{ record.pk }}" data-section-input="skills" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.name }}</strong><br><small>{{ record.category }}{% if record.proficiency %} · {{ record.proficiency }}{% endif %}</small></span><span class="drag-handle">☷</span></label>
-                  {% empty %}<p class="has-text-grey">No profile skills have been added yet.</p>{% endfor %}
-                {% endif %}
-              {% endfor %}
+              {% for section in sections %}{% if section.key == "skills" %}{% for record in section.records %}
+                <label class="builder-record-row" draggable="true"><input type="checkbox" name="skills" value="{{ record.pk }}" data-section-input="skills" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.name }}</strong><br><small>{{ record.category }}{% if record.proficiency %} · {{ record.proficiency }}{% endif %}</small></span><span class="drag-handle">☷</span></label>
+              {% empty %}<p class="has-text-grey">No profile skills have been added yet.</p>{% endfor %}{% endif %}{% endfor %}
             </div>
-            <div class="field mt-4">
-              <label class="label">CV-specific skills</label>
-              <input class="input" id="cv-skills-input" value="{% for skill in cv.overrides.cv_skills %}{{ skill }}{% if not forloop.last %}, {% endif %}{% endfor %}" placeholder="e.g. Data Modeling, Snowflake, Python">
-              <p class="help">Comma-separated. These are stored only on this resume.</p>
-            </div>
+            <div class="field mt-4"><label class="label">CV-specific skills</label><input class="input" id="cv-skills-input" value="{% for skill in cv.overrides.cv_skills %}{{ skill }}{% if not forloop.last %}, {% endif %}{% endfor %}" placeholder="e.g. Data Modeling, Snowflake, Python"><p class="help">Comma-separated. These are stored only on this resume.</p></div>
             <div id="skills-suggestion" class="ai-suggestion is-hidden mt-4"></div>
           </div>
 
           <div class="box cv-card" id="section-projects">
             <div class="cv-card-heading"><div><p class="eyebrow">06</p><h2 class="title is-5">Projects</h2></div><button class="button is-small is-light section-toggle" type="button" data-section="projects">Select all</button></div>
-            <div class="builder-record-list" data-record-list="projects">
-              {% for section in sections %}
-                {% if section.key == "projects" %}
-                  {% for record in section.records %}<label class="builder-record-row" draggable="true"><input type="checkbox" name="projects" value="{{ record.pk }}" data-section-input="projects" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.name }}</strong>{% if record.role %}<br><small>{{ record.role }}</small>{% endif %}</span><span class="drag-handle">☷</span></label>{% empty %}<p class="has-text-grey">No projects have been added yet.</p>{% endfor %}
-                {% endif %}
-              {% endfor %}
-            </div>
+            <div class="builder-record-list" data-record-list="projects">{% for section in sections %}{% if section.key == "projects" %}{% for record in section.records %}<label class="builder-record-row" draggable="true"><input type="checkbox" name="projects" value="{{ record.pk }}" data-section-input="projects" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.name }}</strong>{% if record.role %}<br><small>{{ record.role }}</small>{% endif %}</span><span class="drag-handle">☷</span></label>{% empty %}<p class="has-text-grey">No projects have been added yet.</p>{% endfor %}{% endif %}{% endfor %}</div>
           </div>
 
           <div class="box cv-card" id="section-certifications">
             <div class="cv-card-heading"><div><p class="eyebrow">07</p><h2 class="title is-5">Certifications</h2></div><button class="button is-small is-light section-toggle" type="button" data-section="certifications">Select all</button></div>
-            <div class="builder-record-list" data-record-list="certifications">
-              {% for section in sections %}
-                {% if section.key == "certifications" %}
-                  {% for record in section.records %}<label class="builder-record-row" draggable="true"><input type="checkbox" name="certifications" value="{{ record.pk }}" data-section-input="certifications" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.name }}</strong><br><small>{{ record.issuer }}</small></span><span class="drag-handle">☷</span></label>{% empty %}<p class="has-text-grey">No certifications have been added yet.</p>{% endfor %}
-                {% endif %}
-              {% endfor %}
-            </div>
+            <div class="builder-record-list" data-record-list="certifications">{% for section in sections %}{% if section.key == "certifications" %}{% for record in section.records %}<label class="builder-record-row" draggable="true"><input type="checkbox" name="certifications" value="{{ record.pk }}" data-section-input="certifications" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.name }}</strong><br><small>{{ record.issuer }}</small></span><span class="drag-handle">☷</span></label>{% empty %}<p class="has-text-grey">No certifications have been added yet.</p>{% endfor %}{% endif %}{% endfor %}</div>
           </div>
 
           <div class="box cv-card" id="section-achievements">
             <div class="cv-card-heading"><div><p class="eyebrow">08</p><h2 class="title is-5">Achievements</h2></div><button class="button is-small is-light section-toggle" type="button" data-section="achievements">Select all</button></div>
-            <div class="builder-record-list" data-record-list="achievements">
-              {% for section in sections %}
-                {% if section.key == "achievements" %}
-                  {% for record in section.records %}<label class="builder-record-row" draggable="true"><input type="checkbox" name="achievements" value="{{ record.pk }}" data-section-input="achievements" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.title }}</strong><br><small>{{ record.description|truncatewords:24 }}</small></span><span class="drag-handle">☷</span></label>{% empty %}<p class="has-text-grey">No achievements have been added yet.</p>{% endfor %}
-                {% endif %}
-              {% endfor %}
-            </div>
+            <div class="builder-record-list" data-record-list="achievements">{% for section in sections %}{% if section.key == "achievements" %}{% for record in section.records %}<label class="builder-record-row" draggable="true"><input type="checkbox" name="achievements" value="{{ record.pk }}" data-section-input="achievements" {% if record.id in section.selected_ids %}checked{% endif %}><span><strong>{{ record.title }}</strong><br><small>{{ record.description|truncatewords:24 }}</small></span><span class="drag-handle">☷</span></label>{% empty %}<p class="has-text-grey">No achievements have been added yet.</p>{% endfor %}{% endif %}{% endfor %}</div>
           </div>
 
           <div class="box cv-card" id="section-target-job">
@@ -187,30 +140,19 @@
               <div class="column is-3"><label class="label" for="{{ form.status.id_for_label }}">Status</label>{{ form.status }}</div>
               <div class="column is-2"><label class="label" for="{{ form.template.id_for_label }}">Template</label>{{ form.template }}</div>
             </div>
-            <div class="buttons mt-2">
-              <button class="button is-primary" type="submit">Save resume</button>
-              <a class="button" href="{% url 'cv:cv_export_pdf' cv.pk %}">PDF</a>
-              <a class="button" href="{% url 'cv:cv_export_docx' cv.pk %}">Word</a>
-            </div>
+            <div class="buttons mt-2"><button class="button is-primary" type="submit">Save resume</button><a class="button" href="{% url 'cv:cv_export_pdf' cv.pk %}">PDF</a><a class="button" href="{% url 'cv:cv_export_docx' cv.pk %}">Word</a></div>
           </div>
         </main>
 
         <aside class="cv-preview-column">
-          <div class="box cv-preview-card">
-            <div class="cv-card-heading"><div><p class="eyebrow">Live preview</p><h2 class="title is-5 mb-0">Your resume</h2></div><a class="button is-small is-light" href="{% url 'cv:cv_preview' cv.pk %}" target="_blank">Open</a></div>
-            <iframe id="cv-preview-frame" title="Live resume preview" src="{% url 'cv:cv_preview' cv.pk %}"></iframe>
-          </div>
-          <div class="box quick-actions">
-            <p class="eyebrow">Next steps</p>
-            <a href="{% url 'cv:career_interview' %}" class="quick-action"><strong>Career interview</strong><span>Fill gaps in your master profile with AI.</span></a>
-            <a href="{% url 'cv:cv_import' %}" class="quick-action"><strong>Import a resume</strong><span>Bring an existing resume into your workflow.</span></a>
-            <a href="{% url 'cv:cv_ai_review' cv.pk %}" class="quick-action"><strong>Review with AI</strong><span>Get actionable content and structure feedback.</span></a>
-          </div>
+          <div class="box cv-preview-card"><div class="cv-card-heading"><div><p class="eyebrow">Live preview</p><h2 class="title is-5 mb-0">Your resume</h2></div><a class="button is-small is-light" href="{% url 'cv:cv_preview' cv.pk %}" target="_blank">Open</a></div><iframe id="cv-preview-frame" title="Live resume preview" src="{% url 'cv:cv_preview' cv.pk %}"></iframe></div>
+          <div class="box quick-actions"><p class="eyebrow">Next steps</p><a href="{% url 'cv:career_interview' %}" class="quick-action"><strong>Career interview</strong><span>Fill gaps in your master profile with AI.</span></a><a href="{% url 'cv:cv_import' %}" class="quick-action"><strong>Import a resume</strong><span>Bring an existing resume into your workflow.</span></a><a href="{% url 'cv:cv_ai_review' cv.pk %}" class="quick-action"><strong>Review with AI</strong><span>Get actionable content and structure feedback.</span></a></div>
         </aside>
       </div>
     </form>
   </div>
 </section>
 
+{{ cv.overrides|json_script:"cv-builder-overrides" }}
 <script src="{% static 'cv/builder.js' %}"></script>
 {% endblock %}
