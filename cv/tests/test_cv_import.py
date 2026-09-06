@@ -4,7 +4,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
-from cv.models import CareerEducation, CareerExperience, CareerProject, CareerSkill
 from cv.models_import import ImportedField
 from cv.services.importers.docx import extract_text_from_docx
 from cv.services.importers.parser import parse_career_facts
@@ -158,15 +157,33 @@ class CVImportTests(TestCase):
         self.assertEqual(imported.status, imported.STATUS_CONFIRMED)
         self.assertFalse(imported.fields.filter(confirmed=False).exists())
 
-    def test_confirm_import_creates_experience_education_and_project_records(self):
+    def test_confirm_import_creates_multiple_experience_entries(self):
+        imported = import_cv_source(self.user, self._pdf_upload("John Doe", "john@example.com"))
+        experience = ImportedField.objects.create(
+            cv_import=imported,
+            section="experience",
+            field_name="text",
+            value=(
+                "Software Engineer | Accenture\nBuilt ETL pipelines.\n"
+                "Data Analyst | Macro\nBuilt BI reports."
+            ),
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("cv:cv_import_review", args=[imported.pk]),
+            {f"field_{field.pk}": field.value for field in imported.fields.all()},
+        )
+
+        self.assertRedirects(response, reverse("cv:dashboard"))
+        records = imported.profile.careerexperience_records.all()
+        self.assertEqual(records.count(), 2)
+        self.assertTrue(records.filter(job_title="Software Engineer", employer="Accenture").exists())
+        self.assertTrue(records.filter(job_title="Data Analyst", employer="Macro").exists())
+
+    def test_confirm_import_creates_education_and_project_records(self):
         imported = import_cv_source(self.user, self._pdf_upload("John Doe", "john@example.com"))
         fields = [
-            ImportedField.objects.create(
-                cv_import=imported,
-                section="experience",
-                field_name="text",
-                value="Software Engineer | Accenture\nBuilt ETL pipelines and BI reports.",
-            ),
             ImportedField.objects.create(
                 cv_import=imported,
                 section="education",
@@ -189,10 +206,8 @@ class CVImportTests(TestCase):
 
         self.assertRedirects(response, reverse("cv:dashboard"))
         profile = imported.profile
-        self.assertTrue(profile.careerexperience_records.filter(job_title="Software Engineer", employer="Accenture").exists())
         self.assertTrue(profile.careereducation_records.filter(qualification="B.Tech", institution="ABC University").exists())
         self.assertTrue(profile.careerproject_records.filter(name="Retail Analytics Platform").exists())
-        self.assertEqual(len(fields), 3)
 
     def test_pdf_adapter_extracts_text(self):
         from reportlab.pdfgen import canvas
