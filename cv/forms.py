@@ -74,8 +74,7 @@ CAREER_RECORD_FORMS = {
 class CVForm(forms.ModelForm):
     class Meta:
         model = CV
-        fields = ("title", "template", "status", "overrides")
-        widgets = {"overrides": forms.Textarea(attrs={"rows": 6})}
+        fields = ("title", "template", "status")
 
     def __init__(self, *args, **kwargs):
         owner = kwargs.pop("owner", None)
