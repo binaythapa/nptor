@@ -152,8 +152,7 @@ def cv_create(request):
         form = CVForm(request.POST, owner=request.user)
         if form.is_valid():
             template = form.cleaned_data.get("template") or CVTemplate.objects.filter(is_active=True).first()
-            if template is None:
-                form.add_error("template", "No active CV template is available.")
+            if template is None: form.add_error("template", "No active CV template is available.")
             else:
                 cv = create_cv(request.user, form.cleaned_data["title"], template)
                 cv.status = form.cleaned_data["status"]
@@ -257,3 +256,149 @@ def cv_builder_ai(request, pk):
     except (AIProviderNotConfigured, AIProviderError, ValueError, requests.RequestException, TypeError) as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=400)
     return JsonResponse({"ok": True, "suggestion": suggestion})
+
+
+@login_required
+def cv_builder_ats(request, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    try:
+        data = _json_request(request)
+        target_job = (cv.overrides or {}).get("target_job", {})
+        job_description = str(data.get("job_description") or target_job.get("description") or "").strip()
+        analysis = analyze_ats(cv, job_description)
+    except (AIProviderNotConfigured, AIProviderError, ValueError, requests.RequestException, TypeError) as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+    return JsonResponse({
+        "ok": True,
+        "analysis": {
+            "score": analysis.score,
+            "job_description": analysis.job_description,
+            "result": analysis.result,
+        },
+    })
+
+
+@login_required
+def cv_duplicate(request, pk):
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    return redirect("cv:cv_builder", pk=duplicate_cv(cv).pk)
+
+
+@login_required
+def cv_templates(request):
+    templates = []
+    for template in CVTemplate.objects.filter(is_active=True).order_by("name"):
+        snapshot = get_template_snapshot(template)
+        templates.append({"template": template, "config": get_render_config(snapshot)})
+    return render(request, "cv/template_select.html", {"templates": templates})
+
+
+@login_required
+def cv_preview(request, pk):
+    cv = get_object_or_404(CV.objects.select_related("profile", "template"), pk=pk, owner=request.user)
+    return render(request, "cv/preview.html", {"cv": cv, **build_cv_render_context(cv)})
+
+
+@login_required
+def cv_versions(request, pk):
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    return render(request, "cv/versions.html", {"cv": cv, "versions": cv.versions.order_by("-version_number")})
+
+
+@login_required
+def cv_ai_review(request, pk):
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    error_message = None
+    if request.method == "POST":
+        try: review_cv(cv)
+        except (AIProviderNotConfigured, AIProviderError) as exc: error_message = str(exc)
+        else: return redirect("cv:cv_ai_review", pk=cv.pk)
+    conversation = cv.ai_conversations.filter(purpose=AIConversation.PURPOSE_REVIEW).prefetch_related("suggestions").first()
+    return render(request, "cv/ai_review.html", {"cv": cv, "conversation": conversation, "error_message": error_message})
+
+
+@login_required
+def cv_ats_analysis(request, pk):
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    error_message = None
+    job_description = ""
+    if request.method == "POST":
+        job_description = request.POST.get("job_description", "")
+        try: analyze_ats(cv, job_description)
+        except (AIProviderNotConfigured, AIProviderError, ValueError) as exc: error_message = str(exc)
+        else: return redirect("cv:cv_ats_analysis", pk=cv.pk)
+    analysis = ATSAnalysis.objects.filter(owner=request.user, cv_version__cv=cv).select_related("cv_version").first()
+    return render(request, "cv/ats_analysis.html", {"cv": cv, "analysis": analysis, "job_description": job_description or (analysis.job_description if analysis else ""), "error_message": error_message})
+
+
+@login_required
+def cv_ai_tailor(request, pk):
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    error_message = None
+    job_description = ""
+    if request.method == "POST":
+        job_description = request.POST.get("job_description", "")
+        try: tailor_cv(cv, job_description)
+        except (AIProviderNotConfigured, AIProviderError, ValueError) as exc: error_message = str(exc)
+        else: return redirect("cv:cv_ai_tailor", pk=cv.pk)
+    conversation = cv.ai_conversations.filter(purpose=AIConversation.PURPOSE_JOB_MATCH, metadata__analysis="tailoring").prefetch_related("suggestions").first()
+    return render(request, "cv/ai_tailor.html", {"cv": cv, "conversation": conversation, "job_description": job_description or (conversation.metadata.get("job_description", "") if conversation else ""), "error_message": error_message})
+
+
+@login_required
+def cv_ai_suggestion_accept(request, pk):
+    suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
+    if request.method == "POST":
+        try: accept_suggestion(suggestion, request.user)
+        except ValueError: pass
+    target = "cv:cv_ai_tailor" if suggestion.conversation.metadata.get("analysis") == "tailoring" else "cv:cv_ai_review"
+    return redirect(target, pk=suggestion.conversation.cv_id)
+
+
+@login_required
+def cv_ai_suggestion_reject(request, pk):
+    suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
+    if request.method == "POST": reject_suggestion(suggestion, request.user)
+    target = "cv:cv_ai_tailor" if suggestion.conversation.metadata.get("analysis") == "tailoring" else "cv:cv_ai_review"
+    return redirect(target, pk=suggestion.conversation.cv_id)
+
+
+@login_required
+def cv_import(request):
+    if request.method == "POST":
+        form = CVImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            try: imported = import_cv_source(request.user, form.cleaned_data["source_file"])
+            except ValueError as exc: form.add_error("source_file", str(exc))
+            else: return redirect("cv:cv_import_review", pk=imported.pk)
+    else: form = CVImportForm()
+    return render(request, "cv/import.html", {"form": form})
+
+
+@login_required
+def cv_import_review(request, pk):
+    imported = get_object_or_404(request.user.cv_imports.prefetch_related("fields"), pk=pk)
+    if request.method == "POST":
+        for field in imported.fields.all():
+            value = request.POST.get(f"field_{field.pk}")
+            if value is not None: confirm_import_field(field.pk, request.user, value)
+        return redirect("cv:cv_import_review", pk=pk)
+    return render(request, "cv/import_review.html", {"imported": imported})
+
+
+def _download_artifact(artifact):
+    return FileResponse(artifact.file.open("rb"), as_attachment=True, filename=artifact.file.name.rsplit("/", 1)[-1], content_type=artifact.mime_type)
+
+
+@login_required
+def cv_export_pdf(request, pk):
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    return _download_artifact(generate_pdf(create_cv_version(cv)))
+
+
+@login_required
+def cv_export_docx(request, pk):
+    cv = get_object_or_404(CV, pk=pk, owner=request.user)
+    return _download_artifact(generate_docx(create_cv_version(cv)))
