@@ -46,6 +46,36 @@ class CVBuilderTests(TestCase):
 
         self.assertEqual([item["id"] for item in payload["experiences"]], [second.pk, first.pk])
 
+    def test_builder_saves_reordered_records(self):
+        cv = create_cv(self.user, "Ordered CV", self.template)
+        first = CareerExperience.objects.create(profile=cv.profile, job_title="First Role", employer="First Co")
+        second = CareerExperience.objects.create(profile=cv.profile, job_title="Second Role", employer="Second Co")
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("cv:cv_builder", kwargs={"pk": cv.pk}),
+            {
+                "title": cv.title,
+                "template": self.template.pk,
+                "status": CV.STATUS_DRAFT,
+                "professional_title": "",
+                "summary": "",
+                "linkedin_url": "",
+                "portfolio_url": "",
+                "experiences": [str(second.pk), str(first.pk)],
+                "educations": [],
+                "skills": [],
+                "certifications": [],
+                "projects": [],
+                "achievements": [],
+            },
+        )
+
+        self.assertRedirects(response, reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
+        cv.refresh_from_db()
+        self.assertEqual(cv.selected_sections["experiences"], [second.pk, first.pk])
+        self.assertEqual([item["id"] for item in build_cv_payload(cv)["experiences"]], [second.pk, first.pk])
+
     def test_duplicate_cv_is_independent(self):
         original = create_cv(self.user, "Original", self.template)
         copy = duplicate_cv(original, "Tailored Version")
