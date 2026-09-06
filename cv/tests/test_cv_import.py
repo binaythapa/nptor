@@ -4,6 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
+from cv.models import CareerSkill
 from cv.models_import import ImportedField
 from cv.services.importers.docx import extract_text_from_docx
 from cv.services.importers.parser import parse_career_facts
@@ -33,7 +34,8 @@ class CVImportTests(TestCase):
         self.assertEqual(result["professional_title"], "Software Engineer")
         self.assertNotEqual(result["full_name"], "Summary")
         self.assertNotEqual(result["professional_title"], "Gyanendra Thapa is a Software Engineer, specializing in Business Intelligence (BI).")
-        self.assertEqual(result["fields"][0]["section"], "summary")
+        summary_field = next(field for field in result["fields"] if field["section"] == "summary")
+        self.assertEqual(summary_field["field_name"], "text")
 
     def test_import_review_uses_section_cards_and_textarea_for_text_fields(self):
         imported = import_cv_source(self.user, self._pdf_upload("John Doe", "john@example.com"))
@@ -56,6 +58,50 @@ class CVImportTests(TestCase):
         self.assertContains(response, f'name="field_{summary.pk}"', html=False)
         self.assertContains(response, "Please verify")
         self.assertContains(response, "Confirm &amp; Add to CV", html=False)
+
+    def test_confirm_and_add_to_cv_applies_imported_profile_fields(self):
+        imported = import_cv_source(self.user, self._pdf_upload("John Doe", "john@example.com"))
+        title = ImportedField.objects.create(
+            cv_import=imported,
+            section="contact",
+            field_name="professional_title",
+            value="Business Intelligence Engineer",
+        )
+        summary = ImportedField.objects.create(
+            cv_import=imported,
+            section="summary",
+            field_name="text",
+            value="Experienced BI engineer specializing in ETL and analytics.",
+        )
+        skill = ImportedField.objects.create(
+            cv_import=imported,
+            section="skills",
+            field_name="name",
+            value="Snowflake",
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("cv:cv_import_review", args=[imported.pk]),
+            {
+                f"field_{field.pk}": field.value
+                for field in imported.fields.all()
+            },
+        )
+
+        self.assertRedirects(response, reverse("cv:dashboard"))
+        self.user.refresh_from_db()
+        imported.refresh_from_db()
+        profile = imported.profile
+        profile.refresh_from_db()
+        self.assertEqual(self.user.first_name, "John")
+        self.assertEqual(self.user.last_name, "Doe")
+        self.assertEqual(self.user.email, "john@example.com")
+        self.assertEqual(profile.professional_title, title.value)
+        self.assertEqual(profile.summary, summary.value)
+        self.assertTrue(profile.careerskill_records.filter(name=skill.value).exists())
+        self.assertEqual(imported.status, imported.STATUS_CONFIRMED)
+        self.assertFalse(imported.fields.filter(confirmed=False).exists())
 
     def test_pdf_adapter_extracts_text(self):
         from reportlab.pdfgen import canvas
