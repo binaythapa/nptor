@@ -22,7 +22,11 @@ class GeminiProvider(AIProvider):
         generation_config = {}
         if schema:
             generation_config["response_mime_type"] = "application/json"
-            generation_config["response_schema"] = schema
+            # `response_schema` is Gemini's OpenAPI-like Schema type and does not
+            # accept JSON Schema keywords such as `additionalProperties`.
+            # `responseJsonSchema` accepts the JSON Schema subset used by our
+            # shared provider schemas, including nested additionalProperties.
+            generation_config["responseJsonSchema"] = schema
 
         payload = {
             "contents": [{"role": "user", "parts": [{"text": input_text}]}],
