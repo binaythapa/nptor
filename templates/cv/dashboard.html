@@ -30,16 +30,24 @@
             </div>
 
             {% if cvs %}
-                <div class="content">
-                    <ul>
-                        {% for cv in cvs %}
-                            <li>
-                                <a href="{% url 'cv:cv_builder' pk=cv.pk %}">{{ cv.title }}</a>
-                                {% if cv.template %}<span class="tag is-light ml-2">{{ cv.template.name }}</span>{% endif %}
-                                <span class="tag is-light ml-2">{{ cv.get_status_display }}</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                <div class="cv-dashboard-list">
+                    {% for cv in cvs %}
+                        <div class="cv-dashboard-row">
+                            <div class="cv-dashboard-main">
+                                <a class="cv-dashboard-title" href="{% url 'cv:cv_builder' pk=cv.pk %}">{{ cv.title }}</a>
+                                <span class="tag is-light">{{ cv.template.name }}</span>
+                                <span class="tag is-light">{{ cv.get_status_display }}</span>
+                            </div>
+                            <div class="cv-dashboard-actions">
+                                <a class="button is-small" href="{% url 'cv:cv_builder' pk=cv.pk %}">Open</a>
+                                <a class="button is-small is-light" href="{% url 'cv:cv_duplicate' pk=cv.pk %}">Duplicate</a>
+                                <form method="post" action="{% url 'cv:cv_delete' pk=cv.pk %}" onsubmit="return confirm('Delete {{ cv.title|escapejs }}? This cannot be undone.');">
+                                    {% csrf_token %}
+                                    <button class="button is-small is-danger is-light" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             {% else %}
                 <div class="notification is-light">
