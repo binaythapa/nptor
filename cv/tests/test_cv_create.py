@@ -1,9 +1,9 @@
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from cv.forms import CVForm
 
 
-class CVCreateFormTests(SimpleTestCase):
+class CVCreateFormTests(TestCase):
     def test_create_form_hides_internal_overrides_field(self):
         form = CVForm()
 
