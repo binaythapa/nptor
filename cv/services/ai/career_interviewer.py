@@ -1,6 +1,8 @@
+from django.db import transaction
 from django.utils import timezone
 
 from cv.models import AIConversation, AIExtraction, AIMessage
+from cv.services.ai.career_profile_population import apply_confirmed_extraction
 from cv.services.ai.provider import get_ai_provider
 from cv.services.ai.schemas import INTERVIEW_SCHEMA
 
@@ -72,9 +74,11 @@ def confirm_interview_extraction(extraction_id, user, value):
     value = str(value).strip()
     if not value:
         raise ValueError("Confirmed value is required")
-    extraction.proposed_value = value
-    extraction.confirmed = True
-    extraction.confirmed_by = user
-    extraction.confirmed_at = timezone.now()
-    extraction.save(update_fields=["proposed_value", "confirmed", "confirmed_by", "confirmed_at"])
+    with transaction.atomic():
+        extraction.proposed_value = value
+        extraction.confirmed = True
+        extraction.confirmed_by = user
+        extraction.confirmed_at = timezone.now()
+        extraction.save(update_fields=["proposed_value", "confirmed", "confirmed_by", "confirmed_at"])
+        apply_confirmed_extraction(extraction)
     return extraction
