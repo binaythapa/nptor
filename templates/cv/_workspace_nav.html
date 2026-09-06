@@ -1,0 +1,84 @@
+{% if request.resolver_match.namespace == 'cv' %}
+<nav class="cv-workspace-nav" aria-label="CV workspace navigation">
+  <div class="cv-workspace-nav-inner">
+    <div class="cv-workspace-nav-primary">
+      <a class="cv-workspace-link" href="{% url 'quiz:dashboard' %}" title="Return to the main website dashboard">
+        <i class="fa fa-house" aria-hidden="true"></i>
+        <span>Home</span>
+      </a>
+      <span class="cv-workspace-divider" aria-hidden="true"></span>
+      <a class="cv-workspace-link {% if request.resolver_match.url_name == 'dashboard' %}is-current{% endif %}" href="{% url 'cv:dashboard' %}">
+        <i class="fa fa-file-lines" aria-hidden="true"></i>
+        <span>CV Dashboard</span>
+      </a>
+      <a class="cv-workspace-link {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'profile_record_add' or request.resolver_match.url_name == 'profile_record_edit' %}is-current{% endif %}" href="{% url 'cv:profile' %}">
+        <i class="fa fa-user" aria-hidden="true"></i>
+        <span>Career Profile</span>
+      </a>
+      <a class="cv-workspace-link {% if request.resolver_match.url_name == 'career_interview' or request.resolver_match.url_name == 'career_interview_conversation' %}is-current{% endif %}" href="{% url 'cv:career_interview' %}">
+        <i class="fa fa-comments" aria-hidden="true"></i>
+        <span>Career Interview</span>
+      </a>
+      <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_import' or request.resolver_match.url_name == 'cv_import_review' %}is-current{% endif %}" href="{% url 'cv:cv_import' %}">
+        <i class="fa fa-file-import" aria-hidden="true"></i>
+        <span>Import CV</span>
+      </a>
+      <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_create' %}is-current{% endif %}" href="{% url 'cv:cv_create' %}">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+        <span>Create Resume</span>
+      </a>
+      <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_templates' %}is-current{% endif %}" href="{% url 'cv:cv_templates' %}">
+        <i class="fa fa-palette" aria-hidden="true"></i>
+        <span>Templates</span>
+      </a>
+    </div>
+
+    {% if cv %}
+      <div class="cv-workspace-nav-secondary" aria-label="Current resume actions">
+        <span class="cv-workspace-resume-name" title="Current resume">{{ cv.title }}</span>
+        <span class="cv-workspace-divider" aria-hidden="true"></span>
+        <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_builder' %}is-current{% endif %}" href="{% url 'cv:cv_builder' cv.pk %}">
+          <i class="fa fa-pen-ruler" aria-hidden="true"></i>
+          <span>Builder</span>
+        </a>
+        <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_preview' %}is-current{% endif %}" href="{% url 'cv:cv_preview' cv.pk %}">
+          <i class="fa fa-eye" aria-hidden="true"></i>
+          <span>Preview</span>
+        </a>
+        <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_ai_review' %}is-current{% endif %}" href="{% url 'cv:cv_ai_review' cv.pk %}">
+          <i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i>
+          <span>AI Review</span>
+        </a>
+        <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_ats_analysis' %}is-current{% endif %}" href="{% url 'cv:cv_ats_analysis' cv.pk %}">
+          <i class="fa fa-bullseye" aria-hidden="true"></i>
+          <span>ATS Analysis</span>
+        </a>
+        <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_ai_tailor' %}is-current{% endif %}" href="{% url 'cv:cv_ai_tailor' cv.pk %}">
+          <i class="fa fa-crosshairs" aria-hidden="true"></i>
+          <span>Tailor</span>
+        </a>
+        <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_versions' %}is-current{% endif %}" href="{% url 'cv:cv_versions' cv.pk %}">
+          <i class="fa fa-clock-rotate-left" aria-hidden="true"></i>
+          <span>Versions</span>
+        </a>
+        <a class="cv-workspace-link {% if request.resolver_match.url_name == 'cv_edit' %}is-current{% endif %}" href="{% url 'cv:cv_edit' cv.pk %}">
+          <i class="fa fa-gear" aria-hidden="true"></i>
+          <span>Edit</span>
+        </a>
+        <a class="cv-workspace-link" href="{% url 'cv:cv_duplicate' cv.pk %}">
+          <i class="fa fa-copy" aria-hidden="true"></i>
+          <span>Duplicate</span>
+        </a>
+        <a class="cv-workspace-link" href="{% url 'cv:cv_export_pdf' cv.pk %}">
+          <i class="fa fa-file-pdf" aria-hidden="true"></i>
+          <span>PDF</span>
+        </a>
+        <a class="cv-workspace-link" href="{% url 'cv:cv_export_docx' cv.pk %}">
+          <i class="fa fa-file-word" aria-hidden="true"></i>
+          <span>DOCX</span>
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
