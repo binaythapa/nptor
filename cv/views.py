@@ -4,6 +4,7 @@ import requests
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from cv.forms import CAREER_RECORD_FORMS, CareerProfileForm, CVBuilderForm, CVForm
 from cv.forms_import import CVImportForm
@@ -296,6 +297,7 @@ def cv_templates(request):
 
 
 @login_required
+@xframe_options_sameorigin
 def cv_preview(request, pk):
     cv = get_object_or_404(CV.objects.select_related("profile", "template"), pk=pk, owner=request.user)
     return render(request, "cv/preview.html", {"cv": cv, **build_cv_render_context(cv)})
