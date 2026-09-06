@@ -2,45 +2,43 @@
 
 {% block content %}
 <style>
-  .cv-template-gallery { max-width: 1180px; margin: 0 auto; }
-  .cv-template-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
-  .cv-template-page-heading { min-width: 0; }
-  .cv-template-page-heading > p:first-child { margin: 0 0 8px !important; line-height: 1.2; }
-  .cv-template-page-heading .title { margin: 0 !important; line-height: 1.15 !important; }
-  .cv-template-page-heading .subtitle { margin: 8px 0 0 !important; line-height: 1.45 !important; }
-  .cv-template-page-actions { flex: 0 0 auto; padding-top: 28px; }
-  .cv-template-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
-  .cv-template-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(15, 23, 42, .1); }
-  .cv-template-preview { min-height: 280px; padding: 18px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; overflow: hidden; }
-  .cv-mini-paper {
-    --preview-accent: #111827;
-    width: 100%;
-    max-width: 230px;
-    height: 245px;
-    margin: 0 auto;
-    padding: 17px;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid #dbe1e8;
-    border-radius: 3px;
-    box-shadow: 0 5px 14px rgba(15, 23, 42, .1);
-    color: #374151;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 6px;
-    line-height: 1.45;
-  }
+  .cv-gallery { max-width: 1240px; margin: 0 auto; }
+  .cv-hero { position: relative; overflow: hidden; margin-bottom: 28px; padding: 30px 32px; border: 1px solid #e2e8f0; border-radius: 24px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 58%, #eff6ff 100%); }
+  .cv-hero:after { content: ""; position: absolute; width: 220px; height: 220px; right: -90px; top: -110px; border-radius: 50%; background: rgba(37,99,235,.08); pointer-events: none; }
+  .cv-eyebrow { margin: 0 0 8px; color: #2563eb; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .cv-hero-title { margin: 0; color: #0f172a; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; letter-spacing: -.035em; }
+  .cv-hero-copy { max-width: 680px; margin: 10px 0 0; color: #64748b; line-height: 1.6; }
+  .cv-hero-actions { display: flex; align-items: center; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+  .cv-template-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .cv-template-filters { display: flex; gap: 7px; flex-wrap: wrap; }
+  .cv-filter { border: 1px solid #e2e8f0; border-radius: 999px; padding: 8px 13px; background: #fff; color: #475569; font-size: 12px; font-weight: 700; cursor: pointer; transition: .18s ease; }
+  .cv-filter:hover { border-color: #93c5fd; color: #1d4ed8; }
+  .cv-filter.is-active { border-color: #2563eb; background: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,.18); }
+  .cv-template-search-wrap { position: relative; min-width: 260px; }
+  .cv-template-search-wrap:before { content: "⌕"; position: absolute; left: 12px; top: 8px; color: #94a3b8; font-size: 17px; }
+  .cv-template-search { width: 100%; border: 1px solid #e2e8f0; border-radius: 11px; padding: 9px 12px 9px 34px; outline: none; background: #fff; }
+  .cv-template-search:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
+  .cv-template-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+  .cv-template-card { min-width: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 18px; background: #fff; box-shadow: 0 7px 24px rgba(15,23,42,.055); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .cv-template-card:hover { transform: translateY(-4px); border-color: #cbd5e1; box-shadow: 0 16px 38px rgba(15,23,42,.11); }
+  .cv-template-card.is-hidden { display: none; }
+  .cv-template-preview { position: relative; min-height: 320px; padding: 20px; overflow: hidden; background: radial-gradient(circle at 15% 15%, rgba(148,163,184,.15), transparent 34%), #f8fafc; border-bottom: 1px solid #e2e8f0; }
+  .cv-template-badges { position: absolute; z-index: 2; left: 14px; top: 14px; display: flex; gap: 6px; flex-wrap: wrap; max-width: 82%; }
+  .cv-badge { display: inline-flex; align-items: center; min-height: 22px; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.94); border: 1px solid rgba(226,232,240,.95); color: #475569; font-size: 9px; font-weight: 800; box-shadow: 0 3px 10px rgba(15,23,42,.07); }
+  .cv-badge-primary { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+  .cv-badge-success { background: #ecfdf5; border-color: #bbf7d0; color: #047857; }
+  .cv-mini-paper { --preview-accent:#111827; width: 238px; height: 278px; margin: 22px auto 0; padding: 17px; overflow: hidden; background: #fff; border: 1px solid #dbe1e8; border-radius: 4px; box-shadow: 0 12px 25px rgba(15,23,42,.13); color: #374151; font-family: Arial,Helvetica,sans-serif; font-size: 6px; line-height: 1.45; transform-origin: top center; }
   .cv-mini-paper.compact { padding: 14px; font-size: 5.7px; }
   .cv-mini-paper.centered .cv-mini-header { text-align: center; }
-  .cv-mini-paper.centered .cv-mini-name,
-  .cv-mini-paper.centered .cv-mini-title { margin-left: auto; margin-right: auto; }
+  .cv-mini-paper.centered .cv-mini-name, .cv-mini-paper.centered .cv-mini-title { margin-left: auto; margin-right: auto; }
   .cv-mini-paper.minimal .cv-mini-header { border-bottom: 0; padding-bottom: 5px; }
   .cv-mini-header { padding-bottom: 9px; margin-bottom: 10px; border-bottom: 1.5px solid var(--preview-accent); }
   .cv-mini-paper.compact .cv-mini-header { padding-bottom: 6px; margin-bottom: 7px; }
-  .cv-mini-name { width: 75%; margin: 0 0 4px; color: var(--preview-accent); font-size: 16px; line-height: 1.05; font-weight: 700; }
-  .cv-mini-title { width: 55%; margin: 0 0 4px; color: var(--preview-accent); font-size: 7px; font-weight: 700; }
+  .cv-mini-name { width: 78%; margin: 0 0 4px; color: var(--preview-accent); font-size: 16px; line-height: 1.05; font-weight: 700; }
+  .cv-mini-title { width: 58%; margin: 0 0 4px; color: var(--preview-accent); font-size: 7px; font-weight: 700; }
   .cv-mini-contact { color: #64748b; font-size: 5.5px; white-space: nowrap; }
   .cv-mini-body { display: block; }
-  .cv-mini-body.sidebar { display: grid; grid-template-columns: minmax(0, 1fr) 58px; gap: 10px; }
+  .cv-mini-body.sidebar { display: grid; grid-template-columns: minmax(0,1fr) 61px; gap: 10px; }
   .cv-mini-sidebar { order: 2; margin: -7px -17px -30px 0; padding: 10px 8px; background: var(--preview-accent); color: #fff; }
   .cv-mini-paper.compact .cv-mini-sidebar { margin-right: -14px; }
   .cv-mini-section { margin-bottom: 9px; break-inside: avoid; }
@@ -60,128 +58,184 @@
   .cv-mini-skills { display: flex; flex-wrap: wrap; gap: 3px; }
   .cv-mini-skill { padding: 2px 4px; border: .6px solid #cbd5e1; border-radius: 999px; color: #334155; font-size: 4.8px; }
   .cv-mini-sidebar .cv-mini-skill { border-color: rgba(255,255,255,.5); color: #fff; }
-  .cv-mini-links { color: #64748b; }
-  .cv-template-body { display: flex; flex: 1; flex-direction: column; padding: 18px; }
-  .cv-template-meta { margin-bottom: 14px; }
-  .cv-template-name { margin-bottom: 5px !important; }
-  .cv-template-description { min-height: 42px; color: #64748b; }
-  .cv-template-actions { margin-top: auto; display: flex; gap: 8px; }
+  .cv-template-preview-action { position: absolute; right: 14px; bottom: 14px; z-index: 3; border: 1px solid #e2e8f0; border-radius: 9px; padding: 7px 10px; background: rgba(255,255,255,.95); color: #334155; font-size: 10px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(15,23,42,.08); }
+  .cv-template-preview-action:hover { color: #1d4ed8; border-color: #bfdbfe; }
+  .cv-template-body { display: flex; flex: 1; flex-direction: column; padding: 17px; }
+  .cv-template-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .cv-template-name { margin: 0 !important; color: #0f172a; }
+  .cv-template-description { min-height: 40px; margin: 7px 0 12px; color: #64748b; line-height: 1.5; }
+  .cv-template-bestfor { margin: 0 0 14px; color: #64748b; font-size: 10px; }
+  .cv-template-bestfor strong { color: #334155; }
+  .cv-template-actions { display: flex; gap: 8px; margin-top: auto; }
   .cv-template-actions .button { flex: 1; }
-  @media (prefers-reduced-motion: no-preference) { .cv-template-card { transition: transform .18s ease, box-shadow .18s ease; } }
-  @media (max-width: 768px) {
-    .cv-template-page-header { flex-direction: column; gap: 16px; margin-bottom: 24px; }
-    .cv-template-page-actions { padding-top: 0; }
-    .cv-template-preview { min-height: 265px; }
-  }
+  .cv-empty { display: none; padding: 42px 20px; border: 1px dashed #cbd5e1; border-radius: 16px; text-align: center; color: #64748b; }
+  .cv-empty.is-visible { display: block; }
+  .cv-modal { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(15,23,42,.58); backdrop-filter: blur(4px); }
+  .cv-modal.is-open { display: flex; }
+  .cv-modal-dialog { width: min(760px,100%); max-height: 92vh; overflow: auto; border-radius: 20px; background: #fff; box-shadow: 0 30px 80px rgba(15,23,42,.3); }
+  .cv-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 20px; border-bottom: 1px solid #e2e8f0; }
+  .cv-modal-header h2 { margin: 0; color: #0f172a; font-size: 18px; }
+  .cv-modal-close { border: 0; background: transparent; color: #64748b; font-size: 24px; cursor: pointer; }
+  .cv-modal-preview { display: flex; justify-content: center; padding: 28px; background: #f8fafc; }
+  .cv-modal-preview .cv-mini-paper { margin: 0; width: 470px; height: 620px; padding: 34px; font-size: 9px; }
+  .cv-modal-preview .cv-mini-name { font-size: 31px; }
+  .cv-modal-preview .cv-mini-title { font-size: 12px; }
+  .cv-modal-preview .cv-mini-contact { font-size: 8px; }
+  .cv-modal-preview .cv-mini-section-heading { font-size: 10px; }
+  .cv-modal-preview .cv-mini-entry-title { font-size: 9px; }
+  .cv-modal-preview .cv-mini-entry-meta { font-size: 8px; }
+  .cv-modal-preview .cv-mini-entry-description { font-size: 8px; }
+  .cv-modal-preview .cv-mini-skill { font-size: 7px; }
+  @media (max-width: 1080px) { .cv-template-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+  @media (max-width: 820px) { .cv-template-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .cv-template-toolbar { align-items: stretch; } .cv-template-search-wrap { min-width: min(100%,320px); } }
+  @media (max-width: 560px) { .cv-hero { padding: 24px 20px; border-radius: 18px; } .cv-template-grid { grid-template-columns: 1fr; } .cv-template-preview { min-height: 305px; } .cv-modal-preview .cv-mini-paper { transform: scale(.72); transform-origin: center top; margin-bottom: -170px; } }
+  @media (prefers-reduced-motion: reduce) { .cv-template-card,.cv-filter { transition: none; } }
 </style>
 
 <section class="section">
-  <div class="container cv-template-gallery">
-    <div class="cv-template-page-header">
-      <div class="cv-template-page-heading">
-        <p class="is-size-7 has-text-weight-semibold has-text-grey">CV BUILDER</p>
-        <h1 class="title">Choose your CV template</h1>
-        <p class="subtitle is-6 has-text-grey">Pick a visual style. Your career profile and content stay unchanged.</p>
-      </div>
-      <div class="cv-template-page-actions">
+  <div class="container cv-gallery">
+    <div class="cv-hero">
+      <p class="cv-eyebrow">NPTOR CV BUILDER</p>
+      <h1 class="cv-hero-title">Build a CV that looks as strong as your experience.</h1>
+      <p class="cv-hero-copy">Choose a professionally structured template, preview the layout, and keep your career profile and content completely unchanged.</p>
+      <div class="cv-hero-actions">
         <a class="button is-light" href="{% url 'cv:dashboard' %}">Back to CVs</a>
+        <span class="is-size-7 has-text-grey">{{ templates|length }} professional templates</span>
       </div>
     </div>
 
-    <div class="columns is-multiline">
+    <div class="cv-template-toolbar">
+      <div class="cv-template-filters" id="cv-template-filters" role="group" aria-label="Filter CV templates">
+        <button type="button" class="cv-filter is-active" data-filter="all">All</button>
+        <button type="button" class="cv-filter" data-filter="ats">ATS-friendly</button>
+        <button type="button" class="cv-filter" data-filter="modern">Modern</button>
+        <button type="button" class="cv-filter" data-filter="classic">Classic</button>
+        <button type="button" class="cv-filter" data-filter="technical">Technical</button>
+        <button type="button" class="cv-filter" data-filter="academic">Academic</button>
+      </div>
+      <div class="cv-template-search-wrap">
+        <label class="is-sr-only" for="cv-template-search">Search templates</label>
+        <input id="cv-template-search" class="cv-template-search" type="search" placeholder="Search templates..." autocomplete="off">
+      </div>
+    </div>
+
+    <div class="cv-template-grid" id="cv-template-grid">
       {% for item in templates %}
         {% with template=item.template config=item.config %}
-        <div class="column is-one-quarter-desktop is-one-third-tablet">
-          <article class="cv-template-card">
-            <div class="cv-template-preview">
-              <div
-                class="cv-mini-paper cv-mini-paper--{{ config.layout }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}"
-                style="--preview-accent: {{ config.accent_color }};"
-              >
-                <header class="cv-mini-header">
-                  <div class="cv-mini-name">Alex Morgan</div>
-                  <div class="cv-mini-title">Product Designer</div>
-                  <div class="cv-mini-contact">alex.morgan@example.com · New York, NY</div>
-                </header>
-
-                <div class="cv-mini-body {% if config.layout == 'sidebar' %}sidebar{% endif %}">
-                  <main>
-                    <section class="cv-mini-section">
-                      <h3 class="cv-mini-section-heading {{ config.section_style }}">Professional Summary</h3>
-                      <div class="cv-mini-entry-description">Product designer focused on simple, accessible experiences and measurable product outcomes.</div>
-                    </section>
-
-                    <section class="cv-mini-section">
-                      <h3 class="cv-mini-section-heading {{ config.section_style }}">Experience</h3>
-                      <div class="cv-mini-entry">
-                        <div class="cv-mini-entry-title">Senior Product Designer</div>
-                        <div class="cv-mini-entry-meta">Northstar Labs · 2023–Present</div>
-                        <div class="cv-mini-entry-description">Led design systems and shipped customer-facing workflows across web and mobile products.</div>
-                      </div>
-                      <div class="cv-mini-entry">
-                        <div class="cv-mini-entry-title">Product Designer</div>
-                        <div class="cv-mini-entry-meta">Brightline · 2020–2023</div>
-                      </div>
-                    </section>
-
-                    {% if config.layout != 'sidebar' %}
-                      <section class="cv-mini-section">
-                        <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
-                        <div class="cv-mini-skills">
-                          <span class="cv-mini-skill">Figma</span>
-                          <span class="cv-mini-skill">UX Research</span>
-                          <span class="cv-mini-skill">Design Systems</span>
-                          <span class="cv-mini-skill">Prototyping</span>
-                        </div>
-                      </section>
-                    {% endif %}
-                  </main>
-
-                  {% if config.layout == 'sidebar' %}
-                    <aside class="cv-mini-sidebar">
-                      <section class="cv-mini-section">
-                        <h3 class="cv-mini-section-heading {{ config.section_style }}">Skills</h3>
-                        <div class="cv-mini-skills">
-                          <span class="cv-mini-skill">Figma</span>
-                          <span class="cv-mini-skill">Research</span>
-                          <span class="cv-mini-skill">Systems</span>
-                        </div>
-                      </section>
-                      <section class="cv-mini-section">
-                        <h3 class="cv-mini-section-heading {{ config.section_style }}">Education</h3>
-                        <div class="cv-mini-entry">
-                          <div class="cv-mini-entry-title">B.A. Design</div>
-                          <div class="cv-mini-entry-meta">State University</div>
-                        </div>
-                      </section>
-                      <section class="cv-mini-section">
-                        <h3 class="cv-mini-section-heading {{ config.section_style }}">Certifications</h3>
-                        <div class="cv-mini-entry">
-                          <div class="cv-mini-entry-title">UX Certificate</div>
-                        </div>
-                      </section>
-                    </aside>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-
-            <div class="cv-template-body">
-              <div class="cv-template-meta">
-                <h2 class="title is-5 cv-template-name">{{ template.name }}</h2>
-                <p class="is-size-7 cv-template-description">{{ template.description }}</p>
-              </div>
-              <div class="cv-template-actions">
-                <a class="button is-primary is-small" href="{% url 'cv:cv_create' %}?template={{ template.slug|urlencode }}">Use this template</a>
-              </div>
-            </div>
-          </article>
-        </div>
+          {% if template.slug == 'modern-professional' %}
+            {% with category='Modern' filter_key='modern' best_for='Product, consulting and business roles' ats='true' featured='Popular' %}
+              {% include 'cv/_template_card.html' with template=template config=config category=category filter_key=filter_key best_for=best_for ats=ats featured=featured %}
+            {% endwith %}
+          {% elif template.slug == 'technical' %}
+            {% with category='Technical' filter_key='technical' best_for='Engineering, data and technology roles' ats='true' featured='Recommended' %}
+              {% include 'cv/_template_card.html' with template=template config=config category=category filter_key=filter_key best_for=best_for ats=ats featured=featured %}
+            {% endwith %}
+          {% elif template.slug == 'academic' %}
+            {% with category='Academic' filter_key='academic' best_for='Research, teaching and academic profiles' ats='true' featured='' %}
+              {% include 'cv/_template_card.html' with template=template config=config category=category filter_key=filter_key best_for=best_for ats=ats featured=featured %}
+            {% endwith %}
+          {% elif template.slug == 'ats-classic' %}
+            {% with category='Classic' filter_key='classic' best_for='Corporate and ATS-focused applications' ats='true' featured='ATS Pick' %}
+              {% include 'cv/_template_card.html' with template=template config=config category=category filter_key=filter_key best_for=best_for ats=ats featured=featured %}
+            {% endwith %}
+          {% elif template.slug == 'executive' %}
+            {% with category='Classic' filter_key='classic' best_for='Leadership and senior professional roles' ats='true' featured='' %}
+              {% include 'cv/_template_card.html' with template=template config=config category=category filter_key=filter_key best_for=best_for ats=ats featured=featured %}
+            {% endwith %}
+          {% elif template.slug == 'fresher' %}
+            {% with category='Modern' filter_key='modern' best_for='Students, graduates and early-career roles' ats='true' featured='' %}
+              {% include 'cv/_template_card.html' with template=template config=config category=category filter_key=filter_key best_for=best_for ats=ats featured=featured %}
+            {% endwith %}
+          {% elif template.slug == 'government' %}
+            {% with category='Classic' filter_key='classic' best_for='Government and public-sector applications' ats='true' featured='' %}
+              {% include 'cv/_template_card.html' with template=template config=config category=category filter_key=filter_key best_for=best_for ats=ats featured=featured %}
+            {% endwith %}
+          {% else %}
+            {% with category='Classic' filter_key='classic' best_for='Clean, versatile professional applications' ats='true' featured='' %}
+              {% include 'cv/_template_card.html' with template=template config=config category=category filter_key=filter_key best_for=best_for ats=ats featured=featured %}
+            {% endwith %}
+          {% endif %}
         {% endwith %}
       {% empty %}
-        <div class="column"><p>No active templates are available yet.</p></div>
+        <div class="cv-empty is-visible" style="display:block;grid-column:1/-1;">No active templates are available yet.</div>
       {% endfor %}
     </div>
+    <div class="cv-empty" id="cv-template-empty">No templates match your search. Try another role, style, or category.</div>
   </div>
 </section>
+
+<div class="cv-modal" id="cv-template-modal" aria-hidden="true">
+  <div class="cv-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="cv-modal-title">
+    <div class="cv-modal-header">
+      <h2 id="cv-modal-title">Template preview</h2>
+      <button type="button" class="cv-modal-close" id="cv-modal-close" aria-label="Close preview">×</button>
+    </div>
+    <div class="cv-modal-preview" id="cv-modal-preview"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const grid = document.getElementById('cv-template-grid');
+  const search = document.getElementById('cv-template-search');
+  const empty = document.getElementById('cv-template-empty');
+  const modal = document.getElementById('cv-template-modal');
+  const modalTitle = document.getElementById('cv-modal-title');
+  const modalPreview = document.getElementById('cv-modal-preview');
+  const modalClose = document.getElementById('cv-modal-close');
+  if (!grid) return;
+
+  let activeFilter = 'all';
+
+  function applyFilters() {
+    const query = (search ? search.value : '').trim().toLowerCase();
+    let visible = 0;
+    grid.querySelectorAll('[data-template-card]').forEach(function (card) {
+      const category = (card.dataset.templateCategory || '').toLowerCase();
+      const matchesFilter = activeFilter === 'all' || category === activeFilter || (activeFilter === 'ats' && card.dataset.templateAts === 'true');
+      const haystack = (card.dataset.templateSearch || '').toLowerCase();
+      const matchesSearch = !query || haystack.indexOf(query) !== -1;
+      const show = matchesFilter && matchesSearch;
+      card.classList.toggle('is-hidden', !show);
+      if (show) visible += 1;
+    });
+    if (empty) empty.classList.toggle('is-visible', visible === 0);
+  }
+
+  document.querySelectorAll('.cv-filter').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.querySelectorAll('.cv-filter').forEach(function (item) { item.classList.remove('is-active'); });
+      button.classList.add('is-active');
+      activeFilter = button.dataset.filter || 'all';
+      applyFilters();
+    });
+  });
+  if (search) search.addEventListener('input', applyFilters);
+
+  grid.querySelectorAll('[data-preview-button]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const card = button.closest('[data-template-card]');
+      const paper = card ? card.querySelector('.cv-mini-paper') : null;
+      if (!paper || !modal || !modalPreview) return;
+      modalTitle.textContent = card.dataset.templateName || 'Template preview';
+      modalPreview.innerHTML = '';
+      modalPreview.appendChild(paper.cloneNode(true));
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    modalPreview.innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  if (modalClose) modalClose.addEventListener('click', closeModal);
+  if (modal) modal.addEventListener('click', function (event) { if (event.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeModal(); });
+})();
+</script>
 {% endblock %}
