@@ -36,7 +36,9 @@
 <div id="app" class="app-layout">
   {% include "layouts/student/header.html" %}
   <div class="container main-area">
-    {% include "layouts/student/sidebar.html" %}
+    {% if request.resolver_match.namespace != 'cv' %}
+      {% include "layouts/student/sidebar.html" %}
+    {% endif %}
     <main id="main-content" class="site-content" tabindex="-1">
       {% block content %}{% endblock %}
     </main>
