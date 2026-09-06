@@ -84,3 +84,31 @@ class ATSAnalysis(models.Model):
     class Meta:
         ordering = ["-created_at", "-id"]
         indexes = [models.Index(fields=["owner", "created_at"], name="cv_ai_ats_owner_idx")]
+
+
+class AISuggestion(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_ACCEPTED = "accepted"
+    STATUS_REJECTED = "rejected"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_ACCEPTED, "Accepted"),
+        (STATUS_REJECTED, "Rejected"),
+    )
+
+    conversation = models.ForeignKey(AIConversation, on_delete=models.CASCADE, related_name="suggestions")
+    section = models.CharField(max_length=60)
+    field_name = models.CharField(max_length=120)
+    kind = models.CharField(max_length=40, default="improvement")
+    title = models.CharField(max_length=255)
+    reason = models.TextField(blank=True)
+    current_value = models.JSONField(default=dict, blank=True)
+    proposed_value = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True)
+    accepted = models.BooleanField(default=False)
+    acted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [models.Index(fields=["conversation", "status"], name="cv_ai_sugg_status_idx")]
