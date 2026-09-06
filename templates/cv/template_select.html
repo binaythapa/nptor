@@ -5,6 +5,8 @@
   .cv-gallery { max-width: 1240px; margin: 0 auto; }
   .cv-hero { position: relative; overflow: hidden; margin-bottom: 28px; padding: 30px 32px; border: 1px solid #e2e8f0; border-radius: 24px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 58%, #eff6ff 100%); }
   .cv-hero:after { content: ""; position: absolute; width: 220px; height: 220px; right: -90px; top: -110px; border-radius: 50%; background: rgba(37,99,235,.08); pointer-events: none; }
+  .cv-template-page-header { display: block; }
+  .cv-template-page-heading { position: relative; z-index: 1; min-width: 0; }
   .cv-eyebrow { margin: 0 0 8px; color: #2563eb; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
   .cv-hero-title { margin: 0; color: #0f172a; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; letter-spacing: -.035em; }
   .cv-hero-copy { max-width: 680px; margin: 10px 0 0; color: #64748b; line-height: 1.6; }
@@ -94,13 +96,15 @@
 
 <section class="section">
   <div class="container cv-gallery">
-    <div class="cv-hero">
-      <p class="cv-eyebrow">NPTOR CV BUILDER</p>
-      <h1 class="cv-hero-title">Build a CV that looks as strong as your experience.</h1>
-      <p class="cv-hero-copy">Choose a professionally structured template, preview the layout, and keep your career profile and content completely unchanged.</p>
-      <div class="cv-hero-actions">
-        <a class="button is-light" href="{% url 'cv:dashboard' %}">Back to CVs</a>
-        <span class="is-size-7 has-text-grey">{{ templates|length }} professional templates</span>
+    <div class="cv-hero cv-template-page-header">
+      <div class="cv-template-page-heading">
+        <p class="cv-eyebrow">NPTOR CV BUILDER</p>
+        <h1 class="cv-hero-title">Build a CV that looks as strong as your experience.</h1>
+        <p class="cv-hero-copy">Choose a professionally structured template, preview the layout, and keep your career profile and content completely unchanged.</p>
+        <div class="cv-hero-actions">
+          <a class="button is-light" href="{% url 'cv:dashboard' %}">Back to CVs</a>
+          <span class="is-size-7 has-text-grey">{{ templates|length }} professional templates</span>
+        </div>
       </div>
     </div>
 
