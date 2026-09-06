@@ -10,7 +10,7 @@
 {% block extra_style %}{% endblock extra_style %}
 </style>
 </head>
-<body data-cv-template="base">
+<body data-cv-template="{{ payload.template.slug|default:'base' }}">
 {% block resume %}<div class="cv-page"><header class="cv-header"><h1 class="cv-name">{{ payload.contact.first_name }} {{ payload.contact.last_name }}</h1><div class="cv-title">{{ payload.professional_title }}</div><div class="cv-contact">{{ payload.contact.email }}{% if payload.contact.phone %} · {{ payload.contact.phone }}{% endif %}{% if payload.contact.location %} · {{ payload.contact.location }}{% endif %}</div></header>{% include "cv/render/_resume_content.html" %}</div>{% endblock resume %}
 </body>
 </html>
