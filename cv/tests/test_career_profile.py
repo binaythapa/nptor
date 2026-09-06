@@ -59,7 +59,7 @@ class CareerProfileInterviewTests(TestCase):
             reverse("cv:career_interview_confirm", kwargs={"pk": extraction.pk}),
             {"value": "Senior Data Engineer"},
         )
-        self.assertRedirects(response, reverse("cv:career_interview"))
+        self.assertRedirects(response, reverse("cv:career_interview", kwargs={"conversation_id": conversation.pk}))
         extraction.refresh_from_db()
         self.assertTrue(extraction.confirmed)
         self.assertEqual(extraction.proposed_value, "Senior Data Engineer")
@@ -85,7 +85,7 @@ class CareerProfileInterviewTests(TestCase):
 
     def test_interview_page_is_owner_scoped(self):
         conversation = AIConversation.objects.create(owner=self.other_user, purpose=AIConversation.PURPOSE_INTERVIEW)
-        response = self.client.get(reverse("cv:career_interview", kwargs={"conversation_id": conversation.pk}))
+        response = self.client.get(reverse("cv:career_interview_conversation", kwargs={"conversation_id": conversation.pk}))
         self.assertEqual(response.status_code, 404)
 
     def test_profile_is_created_for_interview_entry_point(self):
