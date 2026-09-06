@@ -8,7 +8,7 @@ class CVTemplateRenderingTests(SimpleTestCase):
             "cv/render/base.html",
             {"cv": type("CV", (), {"title": "Test CV"})(), "payload": {}, "config": {}},
         )
-        self.assertIn("data-cv-template", html)
+        self.assertIn('data-cv-template="base"', html)
 
     def test_template_variants_have_distinct_visual_markers(self):
         variants = {
@@ -24,6 +24,7 @@ class CVTemplateRenderingTests(SimpleTestCase):
         context = {
             "cv": type("CV", (), {"title": "Test CV"})(),
             "payload": {
+                "template": {"slug": ""},
                 "contact": {"first_name": "Alex", "last_name": "Morgan", "email": "alex@example.com", "phone": "555-0100", "location": "New York"},
                 "professional_title": "Product Designer",
                 "summary": "A concise professional summary.",
@@ -41,7 +42,9 @@ class CVTemplateRenderingTests(SimpleTestCase):
                 "section_style": "uppercase_rule", "density": "comfortable",
             },
         }
-        rendered = {slug: render_to_string(name, context) for slug, name in variants.items()}
+        rendered = {}
+        for slug, template_name in variants.items():
+            context["payload"]["template"]["slug"] = slug
+            rendered[slug] = render_to_string(template_name, context)
+            self.assertIn(f'data-cv-template="{slug}"', rendered[slug])
         self.assertEqual(len(set(rendered.values())), 8)
-        for slug in variants:
-            self.assertIn(f"template-{slug.replace('_', '-')}", rendered[slug])
