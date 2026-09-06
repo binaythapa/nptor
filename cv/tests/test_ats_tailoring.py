@@ -13,19 +13,18 @@ class FakeATSProvider:
     name = "fake"
     model = "fake-model"
 
-    def analyze_ats(self, payload, job_description):
-        return {
-            "score": 78,
-            "summary": "Strong data engineering alignment with a few keyword gaps.",
-            "keyword_match": ["Snowflake", "Python"],
-            "missing_keywords": ["Airflow"],
-            "strengths": ["Data engineering experience"],
-            "gaps": ["Airflow is not present"],
-            "risks": ["Summary is generic"],
-            "recommendations": ["Add relevant Airflow experience if truthful."],
-        }
-
-    def tailor_cv(self, payload, job_description):
+    def generate_structured(self, prompt, schema, *, system_prompt="", model=None):
+        if "score" in schema.get("properties", {}):
+            return {
+                "score": 78,
+                "summary": "Strong data engineering alignment with a few keyword gaps.",
+                "keyword_match": ["Snowflake", "Python"],
+                "missing_keywords": ["Airflow"],
+                "strengths": ["Data engineering experience"],
+                "gaps": ["Airflow is not present"],
+                "risks": ["Summary is generic"],
+                "recommendations": ["Add relevant Airflow experience if truthful."],
+            }
         return {
             "summary": "Tailor the existing summary toward the target role.",
             "suggestions": [
@@ -35,7 +34,7 @@ class FakeATSProvider:
                     "kind": "tailoring",
                     "title": "Target the summary",
                     "reason": "Emphasize existing data engineering strengths relevant to the job.",
-                    "current_value": payload.get("summary", ""),
+                    "current_value": "I work with data and Snowflake.",
                     "proposed_value": "Data engineer focused on Snowflake and Python delivery.",
                 }
             ],
@@ -46,10 +45,7 @@ class FailingProvider:
     name = "fake-failure"
     model = "fake-model"
 
-    def analyze_ats(self, payload, job_description):
-        raise AIProviderError("provider unavailable")
-
-    def tailor_cv(self, payload, job_description):
+    def generate_structured(self, prompt, schema, *, system_prompt="", model=None):
         raise AIProviderError("provider unavailable")
 
 
