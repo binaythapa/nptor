@@ -5,8 +5,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from cv.forms import CareerProfileForm, CVBuilderForm, CVForm
 from cv.forms_import import CVImportForm
 from cv.models import CV, CVTemplate
-from cv.models_ai import AIConversation, AISuggestion, ATSAnalysis
-from cv.services.cv_ai import AIProviderError, accept_suggestion, analyze_ats, reject_suggestion, review_cv, tailor_cv
+from cv.models_ai import AIConversation, AIExtraction, AISuggestion, ATSAnalysis
+from cv.services.ai.career_interviewer import confirm_interview_extraction, interview_turn
+from cv.services.ai.provider import AIProviderError
+from cv.services.cv_ai import accept_suggestion, analyze_ats, reject_suggestion, review_cv, tailor_cv
 from cv.services.cv_builder import build_cv_payload, create_cv, create_cv_version, duplicate_cv
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
@@ -39,6 +41,61 @@ def profile(request):
         if form.is_valid(): form.save(); return redirect("cv:profile")
     else: form = CareerProfileForm(instance=career_profile)
     return render(request, "cv/profile.html", {"form": form, "contact": account_contact_defaults(request.user), "profile": career_profile})
+
+
+@login_required
+def career_interview(request, conversation_id=None):
+    get_or_create_career_profile(request.user)
+    if conversation_id is None:
+        conversation = AIConversation.objects.create(
+            owner=request.user,
+            purpose=AIConversation.PURPOSE_INTERVIEW,
+        )
+    else:
+        conversation = get_object_or_404(
+            AIConversation,
+            pk=conversation_id,
+            owner=request.user,
+            purpose=AIConversation.PURPOSE_INTERVIEW,
+        )
+
+    error_message = None
+    if request.method == "POST":
+        try:
+            interview_turn(conversation, request.POST.get("message", ""))
+        except (AIProviderError, ValueError) as exc:
+            error_message = str(exc)
+        else:
+            return redirect("cv:career_interview", conversation_id=conversation.pk)
+
+    messages = conversation.messages.all()
+    extractions = conversation.extractions.select_related("confirmed_by").all()
+    return render(
+        request,
+        "cv/career_interview.html",
+        {
+            "conversation": conversation,
+            "messages": messages,
+            "extractions": extractions,
+            "error_message": error_message,
+        },
+    )
+
+
+@login_required
+def career_interview_confirm(request, pk):
+    extraction = get_object_or_404(
+        AIExtraction,
+        pk=pk,
+        conversation__owner=request.user,
+        conversation__purpose=AIConversation.PURPOSE_INTERVIEW,
+    )
+    if request.method == "POST":
+        try:
+            confirm_interview_extraction(extraction.pk, request.user, request.POST.get("value", ""))
+        except ValueError as exc:
+            return render(request, "cv/career_interview.html", {"conversation": extraction.conversation, "messages": extraction.conversation.messages.all(), "extractions": extraction.conversation.extractions.all(), "error_message": str(exc)})
+    return redirect("cv:career_interview", conversation_id=extraction.conversation_id)
 
 
 @login_required
@@ -169,10 +226,8 @@ def cv_ai_tailor(request, pk):
 def cv_ai_suggestion_accept(request, pk):
     suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
     if request.method == "POST":
-        try:
-            accept_suggestion(suggestion, request.user)
-        except ValueError:
-            pass
+        try: accept_suggestion(suggestion, request.user)
+        except ValueError: pass
     target = "cv:cv_ai_tailor" if suggestion.conversation.metadata.get("analysis") == "tailoring" else "cv:cv_ai_review"
     return redirect(target, pk=suggestion.conversation.cv_id)
 
@@ -180,8 +235,7 @@ def cv_ai_suggestion_accept(request, pk):
 @login_required
 def cv_ai_suggestion_reject(request, pk):
     suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
-    if request.method == "POST":
-        reject_suggestion(suggestion, request.user)
+    if request.method == "POST": reject_suggestion(suggestion, request.user)
     target = "cv:cv_ai_tailor" if suggestion.conversation.metadata.get("analysis") == "tailoring" else "cv:cv_ai_review"
     return redirect(target, pk=suggestion.conversation.cv_id)
 
