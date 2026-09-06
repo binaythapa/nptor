@@ -18,7 +18,7 @@ from cv.services.cv_workspace import builder_ai_context, save_builder_state
 from cv.services.documents.docx import generate_docx
 from cv.services.documents.pdf import generate_pdf
 from cv.services.documents.renderer import build_cv_render_context, get_render_config, get_template_snapshot
-from cv.services.importers.service import confirm_import_field, import_cv_source
+from cv.services.importers.service import confirm_import, confirm_import_field, import_cv_source
 from cv.services.profile import account_contact_defaults, get_or_create_career_profile
 
 
@@ -360,7 +360,9 @@ def cv_ai_suggestion_accept(request, pk):
 @login_required
 def cv_ai_suggestion_reject(request, pk):
     suggestion = get_object_or_404(AISuggestion.objects.select_related("conversation", "conversation__cv"), pk=pk, conversation__owner=request.user)
-    if request.method == "POST": reject_suggestion(suggestion, request.user)
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    reject_suggestion(suggestion, request.user)
     target = "cv:cv_ai_tailor" if suggestion.conversation.metadata.get("analysis") == "tailoring" else "cv:cv_ai_review"
     return redirect(target, pk=suggestion.conversation.cv_id)
 
@@ -381,10 +383,16 @@ def cv_import(request):
 def cv_import_review(request, pk):
     imported = get_object_or_404(request.user.cv_imports.prefetch_related("fields"), pk=pk)
     if request.method == "POST":
+        values = {}
         for field in imported.fields.all():
             value = request.POST.get(f"field_{field.pk}")
-            if value is not None: confirm_import_field(field.pk, request.user, value)
-        return redirect("cv:cv_import_review", pk=pk)
+            if value is not None:
+                values[field.pk] = value
+        try:
+            confirm_import(imported.pk, request.user, values)
+        except ValueError as exc:
+            return render(request, "cv/import_review.html", {"imported": imported, "error_message": str(exc)})
+        return redirect("cv:dashboard")
     return render(request, "cv/import_review.html", {"imported": imported})
 
 
