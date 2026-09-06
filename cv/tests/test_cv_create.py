@@ -54,19 +54,6 @@ class CVCreateFormTests(TestCase):
             password="test-password",
         )
         self.client.force_login(user)
-        CVTemplate.objects.create(
-            slug="modern-professional",
-            name="Modern Professional",
-            description="Contemporary two-column layout.",
-            config={
-                "accent_color": "#2563eb",
-                "layout": "sidebar",
-                "header_style": "left",
-                "section_style": "uppercase_rule",
-                "density": "comfortable",
-            },
-            is_active=True,
-        )
 
         response = self.client.get("/cv/templates/")
 
