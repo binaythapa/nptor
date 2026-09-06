@@ -62,12 +62,17 @@ def build_cv_payload(cv):
         "summary": overrides.get("summary", profile.summary),
         "linkedin_url": overrides.get("linkedin_url", profile.linkedin_url),
         "portfolio_url": overrides.get("portfolio_url", profile.portfolio_url),
+        "target_job": deepcopy(overrides.get("target_job", {})),
     }
 
-    payload["experiences"] = [
-        _serialize(item, ["id", "job_title", "employer", "location", "start_date", "end_date", "is_current", "description"])
-        for item in _selected_records(cv, "experiences", profile.careerexperience_records.all())
-    ]
+    experience_bullets = overrides.get("experience_bullets", {})
+    payload["experiences"] = []
+    for item in _selected_records(cv, "experiences", profile.careerexperience_records.all()):
+        serialized = _serialize(item, ["id", "job_title", "employer", "location", "start_date", "end_date", "is_current", "description"])
+        if str(item.id) in experience_bullets:
+            serialized["description"] = experience_bullets[str(item.id)]
+        payload["experiences"].append(serialized)
+
     payload["educations"] = [
         _serialize(item, ["id", "institution", "qualification", "field_of_study", "location", "start_date", "end_date", "description"])
         for item in _selected_records(cv, "educations", profile.careereducation_records.all())
@@ -80,6 +85,9 @@ def build_cv_payload(cv):
         _serialize(item, ["id", "name", "category", "proficiency"])
         for item in _selected_records(cv, "skills", profile.careerskill_records.all())
     ]
+    for skill in overrides.get("cv_skills", []):
+        payload["skills"].append({"id": None, "name": skill, "category": "CV-specific", "proficiency": ""})
+
     payload["achievements"] = [
         _serialize(item, ["id", "title", "description", "achieved_on"])
         for item in _selected_records(cv, "achievements", profile.careerachievement_records.all())
