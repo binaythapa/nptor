@@ -61,13 +61,19 @@ class AIProviderTests(SimpleTestCase):
         response._content = b'{"candidates":[{"content":{"parts":[{"text":"{\\"ok\\":true}"}]}}]}'
         post.return_value = response
 
+        schema = {
+            "type": "object",
+            "properties": {"ok": {"type": "boolean"}},
+            "additionalProperties": False,
+        }
         provider = GeminiProvider(api_key="test-key")
-        result = provider.generate_structured("hello", {"type": "object", "properties": {"ok": {"type": "boolean"}}})
+        result = provider.generate_structured("hello", schema)
 
         self.assertEqual(result, {"ok": True})
         payload = post.call_args.kwargs["json"]
         self.assertEqual(payload["generationConfig"]["response_mime_type"], "application/json")
-        self.assertEqual(payload["generationConfig"]["response_schema"]["type"], "object")
+        self.assertEqual(payload["generationConfig"]["responseJsonSchema"], schema)
+        self.assertNotIn("response_schema", payload["generationConfig"])
 
     @patch("cv.services.ai.ollama_provider.requests.post")
     def test_ollama_provider_supports_structured_output(self, post):
