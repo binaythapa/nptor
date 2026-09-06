@@ -35,6 +35,7 @@
 <a class="nptor-skip-link" href="#main-content">Skip to main content</a>
 <div id="app" class="app-layout">
   {% include "layouts/student/header.html" %}
+  {% include "cv/_workspace_nav.html" %}
   <div class="container main-area">
     {% if request.resolver_match.namespace != 'cv' %}
       {% include "layouts/student/sidebar.html" %}
