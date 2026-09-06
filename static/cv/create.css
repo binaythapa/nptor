@@ -1,0 +1,101 @@
+.cv-create-page {
+  min-height: calc(100vh - 4rem);
+  background: #f7f8fb;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.cv-create-shell {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+}
+
+.cv-create-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.cv-create-header .title {
+  color: #1f2937;
+}
+
+.cv-create-card {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(31, 41, 55, .06);
+}
+
+.cv-create-card .field + .field {
+  margin-top: 1.25rem;
+}
+
+.cv-create-card .input,
+.cv-create-card .select,
+.cv-create-card .select select {
+  width: 100%;
+}
+
+.cv-create-card .input,
+.cv-create-card .select select {
+  min-height: 44px;
+}
+
+.cv-create-note {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+  margin-top: 1.75rem;
+  padding: 1rem;
+  border: 1px solid #dbe4f0;
+  border-radius: 9px;
+  background: #f8fbff;
+}
+
+.cv-create-note > .icon {
+  flex: 0 0 auto;
+  margin-top: .1rem;
+}
+
+.cv-create-note p {
+  margin: .2rem 0 0;
+  color: #6b7280;
+  font-size: .9rem;
+}
+
+/* Keep the resume creation flow free from the global student navigation. */
+@supports selector(.main-area:has(.cv-create-page)) {
+  .main-area:has(.cv-create-page) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .main-area:has(.cv-create-page) > .site-sidebar {
+    display: none;
+  }
+
+  .main-area:has(.cv-create-page) > .site-content {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .cv-create-page {
+    padding: 1.25rem .75rem 2rem;
+  }
+
+  .cv-create-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .cv-create-card {
+    padding: 1.25rem;
+  }
+}
