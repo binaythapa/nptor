@@ -20,6 +20,19 @@ class CVImportTests(TestCase):
         self.assertEqual(result["email"], "john@example.com")
         self.assertFalse(result["fields"][0]["confirmed"])
 
+    def test_section_heading_is_not_used_as_name_or_professional_title(self):
+        result = parse_career_facts(
+            "Summary\n"
+            "Gyanendra Thapa is a Software Engineer, specializing in Business Intelligence (BI).\n"
+            "Experience\n"
+            "Accenture | Business Intelligence"
+        )
+
+        self.assertNotIn("full_name", result)
+        self.assertNotIn("professional_title", result)
+        self.assertEqual(result["fields"][0]["field_name"], "text")
+        self.assertEqual(result["fields"][0]["section"], "summary")
+
     def test_pdf_adapter_extracts_text(self):
         from reportlab.pdfgen import canvas
 
