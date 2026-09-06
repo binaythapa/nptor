@@ -78,3 +78,41 @@ class CVCreateFormTests(TestCase):
     def test_render_config_accepts_explicit_design_style(self):
         config = get_render_config({"config": {"design_style": "elegant", "layout": "single_column"}})
         self.assertEqual(config["design_style"], "elegant")
+
+    def test_template_gallery_marks_each_preview_with_renderer_design_style(self):
+        user = get_user_model().objects.create_user(
+            username="cv-design-gallery-user",
+            password="test-password",
+        )
+        self.client.force_login(user)
+        CVTemplate.objects.create(
+            slug="gallery-modern",
+            name="Gallery Modern",
+            description="Modern reference design",
+            config={"design_style": "modern_header", "layout": "single_column"},
+            is_active=True,
+        )
+        CVTemplate.objects.create(
+            slug="gallery-split",
+            name="Gallery Split",
+            description="Split reference design",
+            config={"design_style": "split_label", "layout": "single_column"},
+            is_active=True,
+        )
+        CVTemplate.objects.create(
+            slug="gallery-elegant",
+            name="Gallery Elegant",
+            description="Elegant reference design",
+            config={"design_style": "elegant", "layout": "single_column"},
+            is_active=True,
+        )
+
+        response = self.client.get("/cv/templates/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "cv-mini-paper--modern-header")
+        self.assertContains(response, "cv-mini-paper--split-label")
+        self.assertContains(response, "cv-mini-paper--elegant")
+        self.assertContains(response, "data-template-design=\"modern_header\"")
+        self.assertContains(response, "data-template-design=\"split_label\"")
+        self.assertContains(response, "data-template-design=\"elegant\"")
