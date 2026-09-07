@@ -15,7 +15,7 @@ class PracticeExpressCleanupTests(unittest.TestCase):
         self.assertIn('practice-filter-grid', shared_ui)
         self.assertIn('practice-filter-field', shared_ui)
         self.assertIn('practice-select-wrap', shared_ui)
-        self.assertIn('filterHint.tagName', shared_ui)
+        self.assertIn('id="filterHint"', shared_ui)
 
         self.assertIn('min-height: 48px', shared_ui)
         self.assertIn('padding: 0 15px', shared_ui)
