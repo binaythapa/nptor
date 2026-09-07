@@ -35,7 +35,7 @@
     <p class="menu-label">Account</p>
     <ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'quiz:profile' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-user"></i></span><span class="nav-label">Profile</span></a></li></ul>
     {% endif %}
-    {% if user.is_authenticated and request.active_org and request.org_role == "org_admin" %}
+    {% if user.is_authenticated and request.active_org and request.can_manage_organization %}
     <p class="menu-label">Organization</p><ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-building"></i></span><span class="nav-label">Org Dashboard</span></a></li></ul>
     {% endif %}
     {% if user.is_authenticated %}
