@@ -1,4 +1,5 @@
 from organizations.models.membership import OrganizationMember
+from organizations.models.role import OrganizationRole
 from organizations.services.tenant import TenantResolver
 
 
@@ -14,6 +15,7 @@ class ActiveOrganizationMiddleware:
         request.organization = None
         request.organization_member = None
         request.tenant_source = None
+        request.can_manage_organization = False
 
         raw_host = request.META.get("HTTP_HOST", "")
         host_org = TenantResolver.by_host(raw_host)
@@ -38,12 +40,24 @@ class ActiveOrganizationMiddleware:
             if request.organization is not None:
                 membership = memberships.filter(organization=request.organization).first()
             else:
-                admin_membership = memberships.filter(role="org_admin").first()
-                membership = admin_membership or memberships.first()
+                # Prefer an organization where the user has administration
+                # capability when no tenant was explicitly resolved. This
+                # makes the global dashboard's organization entry predictable
+                # for users who belong to multiple organizations.
+                admin_membership = memberships.filter(
+                    role__in=OrganizationRole.administrative_roles()
+                ).first()
+                staff_membership = memberships.filter(
+                    role=OrganizationRole.STAFF
+                ).first()
+                membership = admin_membership or staff_membership or memberships.first()
 
             if membership:
                 request.org_role = membership.role
                 request.organization_member = membership
+                request.can_manage_organization = OrganizationRole.is_administrator(
+                    membership.role
+                )
                 if request.organization is None:
                     request.active_org = membership.organization
 
