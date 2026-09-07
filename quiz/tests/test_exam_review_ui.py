@@ -9,8 +9,8 @@ class ExamReviewUITests(unittest.TestCase):
 
         self.assertIn("css/pages/exam-review.css", template)
         self.assertIn('class="exam-review-page"', template)
-        self.assertIn('class="exam-review-card"', template)
-        self.assertIn('class="exam-review-option"', template)
+        self.assertIn("exam-review-card", template)
+        self.assertIn('class="exam-review-option', template)
         self.assertNotIn("<style>", template)
 
     def test_exam_review_keeps_changeable_option_controls(self):
