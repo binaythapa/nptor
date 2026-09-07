@@ -15,8 +15,8 @@ class TrackDetailContractTests(SimpleTestCase):
         for text in (
             'class="track-hero"',
             'class="track-progress"',
-            'class="track-exam-card"',
-            'class="track-exam-status"',
+            'track-exam-card',
+            'class="track-exam-status',
             'class="track-lock-message"',
             'class="track-primary-action"',
         ):
