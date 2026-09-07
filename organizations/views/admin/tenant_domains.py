@@ -19,7 +19,7 @@ def organization_domains(request, slug):
                 request.POST.get("domain"),
                 is_primary=request.POST.get("is_primary") == "on",
             )
-            messages.success(request, f"Domain {record.domain} added. Verify it before activation.")
+            messages.success(request, f"Domain {record.domain} added. Add the DNS TXT record before verification.")
         except ValidationError as exc:
             messages.error(request, exc.message if hasattr(exc, "message") else str(exc))
         return redirect("organizations_admin:tenant_domains", slug=slug)
@@ -33,8 +33,11 @@ def organization_domains(request, slug):
 @require_http_methods(["POST"])
 def organization_domain_verify(request, slug, pk):
     record = get_object_or_404(OrganizationDomain, pk=pk, organization=request.organization)
-    OrganizationDomainService.verify(record)
-    messages.success(request, f"Domain {record.domain} verified.")
+    try:
+        OrganizationDomainService.verify(record)
+        messages.success(request, f"Domain {record.domain} verified.")
+    except ValidationError as exc:
+        messages.error(request, exc.message if hasattr(exc, "message") else str(exc))
     return redirect("organizations_admin:tenant_domains", slug=slug)
 
 
@@ -42,9 +45,9 @@ def organization_domain_verify(request, slug, pk):
 @require_http_methods(["POST"])
 def organization_domain_primary(request, slug, pk):
     record = get_object_or_404(OrganizationDomain, pk=pk, organization=request.organization)
-    if not record.is_verified:
-        messages.error(request, "Only verified domains can be primary.")
-    else:
+    try:
         OrganizationDomainService.set_primary(record)
         messages.success(request, f"Domain {record.domain} is now primary.")
+    except ValidationError as exc:
+        messages.error(request, exc.message if hasattr(exc, "message") else str(exc))
     return redirect("organizations_admin:tenant_domains", slug=slug)
