@@ -47,23 +47,23 @@ class OrganizationSidebarTests(TestCase):
 
     def test_owner_sees_organization_dashboard_link(self):
         html = self.render_sidebar(self.owner)
-        self.assertContains(html, "Organization")
-        self.assertContains(html, "Org Dashboard")
-        self.assertContains(html, "/org/sidebar-school/admin/dashboard/")
+        self.assertIn("Organization", html)
+        self.assertIn("Org Dashboard", html)
+        self.assertIn("/org/sidebar-school/admin/dashboard/", html)
 
     def test_admin_sees_organization_dashboard_link(self):
         html = self.render_sidebar(self.admin)
-        self.assertContains(html, "Organization")
-        self.assertContains(html, "Org Dashboard")
-        self.assertContains(html, "/org/sidebar-school/admin/dashboard/")
+        self.assertIn("Organization", html)
+        self.assertIn("Org Dashboard", html)
+        self.assertIn("/org/sidebar-school/admin/dashboard/", html)
 
     def test_staff_does_not_see_organization_dashboard_link(self):
         html = self.render_sidebar(self.staff)
-        self.assertNotContains(html, "Org Dashboard")
+        self.assertNotIn("Org Dashboard", html)
 
     def test_student_does_not_see_organization_dashboard_link(self):
         html = self.render_sidebar(self.student)
-        self.assertNotContains(html, "Org Dashboard")
+        self.assertNotIn("Org Dashboard", html)
 
     def test_owner_membership_is_preferred_when_user_has_multiple_organizations(self):
         other_org = Organization.objects.create(
