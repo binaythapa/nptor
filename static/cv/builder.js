@@ -8,6 +8,9 @@
   const csrf = form.querySelector('[name="csrfmiddlewaretoken"]').value;
   const cvId = root.dataset.cvId;
   const fields = form.elements;
+  const templateSwitch = document.getElementById('cv-template-switch');
+  const templateCurrentName = document.getElementById('cv-template-current-name');
+  const templatePosition = document.getElementById('cv-template-position');
   let saveTimer = null;
   let activeBulletTarget = null;
 
@@ -101,6 +104,45 @@
     setState('Unsaved', 'is-warning is-light');
     window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(function () { saveNow(true); }, 700);
+  }
+
+  function updateTemplateSwitcher() {
+    if (!templateSwitch) return;
+    const options = Array.from(templateSwitch.options);
+    const index = templateSwitch.selectedIndex;
+    const option = options[index];
+    if (templateCurrentName) templateCurrentName.textContent = option ? option.textContent : 'Template';
+    if (templatePosition) templatePosition.textContent = options.length ? ' · ' + (index + 1) + ' / ' + options.length : '';
+    const prev = document.getElementById('cv-template-prev');
+    const next = document.getElementById('cv-template-next');
+    if (prev) prev.disabled = options.length < 2;
+    if (next) next.disabled = options.length < 2;
+  }
+
+  async function switchTemplate(direction) {
+    if (!templateSwitch || templateSwitch.options.length < 2) return;
+    const nextIndex = (templateSwitch.selectedIndex + direction + templateSwitch.options.length) % templateSwitch.options.length;
+    templateSwitch.selectedIndex = nextIndex;
+    fields.template.value = templateSwitch.value;
+    updateTemplateSwitcher();
+    await saveNow(true);
+  }
+
+  if (templateSwitch) {
+    templateSwitch.addEventListener('change', async function () {
+      fields.template.value = templateSwitch.value;
+      updateTemplateSwitcher();
+      await saveNow(true);
+    });
+    document.getElementById('cv-template-prev').addEventListener('click', function () { switchTemplate(-1); });
+    document.getElementById('cv-template-next').addEventListener('click', function () { switchTemplate(1); });
+    const compareButton = document.getElementById('cv-template-compare');
+    if (compareButton) {
+      compareButton.addEventListener('click', function () {
+        window.open('/cv/templates/', '_blank');
+      });
+    }
+    updateTemplateSwitcher();
   }
 
   function renderSuggestion(container, value, apply) {

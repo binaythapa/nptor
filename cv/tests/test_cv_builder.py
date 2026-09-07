@@ -111,8 +111,22 @@ class CVBuilderTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
         self.assertEqual(response.status_code, 200)
-        for text in ("Professional Summary", "Work Experience", "Education", "Skills", "Certifications", "Projects", "Achievements", "Save CV", "Preview"):
+        for text in ("Professional summary", "Work experience", "Education", "Skills", "Certifications", "Projects", "Achievements", "Save resume", "Open full preview"):
             self.assertContains(response, text)
+
+    def test_builder_exposes_live_template_switcher(self):
+        second_template = CVTemplate.objects.create(slug="second-template", name="Second Template")
+        cv = create_cv(self.user, "Builder CV", self.template)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cv:cv_builder", kwargs={"pk": cv.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "cv-template-switcher")
+        self.assertContains(response, "cv-template-switch")
+        self.assertContains(response, f'value="{self.template.pk}" selected')
+        self.assertContains(response, f'value="{second_template.pk}"')
+        self.assertContains(response, "Compare templates")
 
     def test_builder_saves_selection_and_overrides(self):
         cv = create_cv(self.user, "Builder CV", self.template)
@@ -182,10 +196,27 @@ class CVBuilderTests(TestCase):
         response = self.client.get(reverse("cv:cv_preview", kwargs={"pk": cv.pk}))
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("X-Frame-Options"), "SAMEORIGIN")
         self.assertContains(response, "Preview CV")
         self.assertContains(response, "Professional Summary")
         self.assertContains(response, "data-template-layout=\"sidebar\"")
         self.assertContains(response, "#123456")
+
+    def test_embedded_preview_is_compact_and_hides_preview_toolbar(self):
+        cv = create_cv(self.user, "Embedded Preview CV", self.template)
+        cv.profile.professional_title = "Data Engineer"
+        cv.profile.summary = "Experienced data engineer."
+        cv.profile.save(update_fields=["professional_title", "summary", "updated_at"])
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cv:cv_preview", kwargs={"pk": cv.pk}) + "?embed=1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "embedded-preview")
+        self.assertContains(response, "body.embedded-preview .cv-name")
+        self.assertNotContains(response, "Edit CV")
+        self.assertNotContains(response, "Export PDF")
+        self.assertNotContains(response, "Export DOCX")
 
     def test_preview_rejects_another_users_cv(self):
         other = get_user_model().objects.create_user(username="other-preview", email="other-preview@example.com")

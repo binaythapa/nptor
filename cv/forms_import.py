@@ -5,4 +5,9 @@ class CVImportForm(forms.Form):
     source_file = forms.FileField(
         label="Existing CV",
         help_text="Upload a PDF or DOCX file (maximum 10 MB).",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "accept": ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            }
+        ),
     )

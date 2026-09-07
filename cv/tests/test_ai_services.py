@@ -1,13 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from cv.models import ATSAnalysis, AIConversation, CareerProfile, CVTemplate
+from cv.models import ATSAnalysis, AIConversation, AISuggestion, CareerProfile, CVTemplate
 from cv.models_cv import CV
 from cv.services.ai.career_interviewer import interview_turn
 from cv.services.ai.cv_reviewer import review_cv
 from cv.services.ai.cv_writer import rewrite_bullet, suggest_skills, suggest_summary
 from cv.services.ai.job_matcher import match_job
 from cv.services.cv_ai import (
+    accept_suggestion,
     analyze_ats as legacy_analyze_ats,
     review_cv as legacy_review_cv,
     set_provider_for_tests,
@@ -125,3 +126,25 @@ class AIServicesTests(TestCase):
         self.assertEqual(conversation.provider, "fake")
         self.assertEqual(conversation.metadata["analysis"], "tailoring")
         self.assertEqual(conversation.suggestions.count(), 1)
+
+    def test_accept_professional_title_suggestion_updates_cv_override(self):
+        conversation = AIConversation.objects.create(
+            owner=self.user,
+            cv=self.cv,
+            purpose=AIConversation.PURPOSE_REVIEW,
+        )
+        suggestion = AISuggestion.objects.create(
+            conversation=conversation,
+            section="professional_title",
+            field_name="professional_title",
+            title="Fix spelling in professional title",
+            current_value="soft ware engineer",
+            proposed_value="Software Engineer",
+        )
+
+        accepted = accept_suggestion(suggestion, self.user)
+
+        self.assertEqual(accepted.status, AISuggestion.STATUS_ACCEPTED)
+        self.assertTrue(accepted.accepted)
+        self.cv.refresh_from_db()
+        self.assertEqual(self.cv.overrides["professional_title"], "Software Engineer")

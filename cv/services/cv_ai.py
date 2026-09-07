@@ -5,8 +5,16 @@ import requests
 from django.db import transaction
 from django.utils import timezone
 
+from cv.models import (
+    CareerAchievement,
+    CareerCertification,
+    CareerEducation,
+    CareerExperience,
+    CareerProject,
+    CareerSkill,
+)
 from cv.models_ai import AIConversation, AIMessage, AISuggestion, ATSAnalysis
-from cv.services.ai.provider import get_ai_provider
+from cv.services.ai.provider import AIProviderRateLimited, get_ai_provider
 from cv.services.ai.schemas import (
     ATS_ANALYSIS_SCHEMA,
     CV_REVIEW_CONVERSATION_SCHEMA,
@@ -42,6 +50,8 @@ def _review_payload(payload):
 def _generate_structured(provider, prompt, schema, *, system_prompt):
     try:
         result = provider.generate_structured(prompt, schema, system_prompt=system_prompt)
+    except AIProviderRateLimited as exc:
+        raise AIProviderError(str(exc)) from exc
     except requests.RequestException as exc:
         raise AIProviderError(f"AI provider request failed: {exc}") from exc
     except (TypeError, ValueError, KeyError) as exc:
@@ -201,6 +211,53 @@ def tailor_cv(cv, job_description, provider=None):
 
 
 SAFE_OVERRIDE_FIELDS = {"professional_title", "summary", "linkedin_url", "portfolio_url"}
+SAFE_OVERRIDE_SECTIONS = {
+    "summary": {"summary"},
+    "profile": SAFE_OVERRIDE_FIELDS,
+    "professional_title": {"professional_title"},
+}
+RECORD_SUGGESTION_FIELDS = {
+    "experiences": (CareerExperience, {"job_title", "employer", "location", "description"}),
+    "educations": (CareerEducation, {"institution", "qualification", "field_of_study", "location", "description"}),
+    "projects": (CareerProject, {"name", "role", "url", "description", "technologies"}),
+    "skills": (CareerSkill, {"name", "category", "proficiency"}),
+    "achievements": (CareerAchievement, {"title", "description"}),
+    "certifications": (CareerCertification, {"name", "issuer", "credential_id", "credential_url"}),
+}
+
+
+def _apply_record_suggestion(suggestion, user):
+    config = RECORD_SUGGESTION_FIELDS.get(suggestion.section)
+    if config is None:
+        raise ValueError("This suggestion cannot be applied automatically")
+
+    model, allowed_fields = config
+    if suggestion.field_name not in allowed_fields:
+        raise ValueError("This suggestion field cannot be applied automatically")
+
+    profile = suggestion.conversation.cv.profile
+    if profile.user_id != user.id:
+        raise ValueError("Suggestion does not belong to this user")
+
+    current_value = suggestion.current_value
+    proposed_value = suggestion.proposed_value
+    if not isinstance(current_value, str) or not isinstance(proposed_value, str):
+        raise ValueError("This suggestion has an unsupported value format")
+    current_value = current_value.strip()
+    proposed_value = proposed_value.strip()
+    if not current_value or not proposed_value:
+        raise ValueError("This suggestion must contain both current and proposed text")
+
+    matches = model.objects.filter(profile=profile, **{suggestion.field_name: current_value})
+    count = matches.count()
+    if count == 0:
+        raise ValueError("The original profile value could not be found. Refresh the AI review and try again.")
+    if count > 1:
+        raise ValueError("More than one profile record has this value. This suggestion needs manual review.")
+
+    record = matches.first()
+    setattr(record, suggestion.field_name, proposed_value)
+    record.save(update_fields=[suggestion.field_name, "updated_at"])
 
 
 @transaction.atomic
@@ -210,14 +267,19 @@ def accept_suggestion(suggestion, user):
         raise ValueError("Suggestion does not belong to this user")
     if suggestion.status != AISuggestion.STATUS_PENDING:
         return suggestion
-    if suggestion.field_name not in SAFE_OVERRIDE_FIELDS or suggestion.section not in {"summary", "profile"}:
+
+    allowed_fields = SAFE_OVERRIDE_SECTIONS.get(suggestion.section, set())
+    if suggestion.field_name in SAFE_OVERRIDE_FIELDS and suggestion.field_name in allowed_fields:
+        cv = conversation.cv
+        overrides = deepcopy(cv.overrides or {})
+        overrides[suggestion.field_name] = suggestion.proposed_value
+        cv.overrides = overrides
+        cv.save(update_fields=["overrides", "updated_at"])
+    elif suggestion.section in RECORD_SUGGESTION_FIELDS:
+        _apply_record_suggestion(suggestion, user)
+    else:
         raise ValueError("This suggestion cannot be applied automatically")
 
-    cv = conversation.cv
-    overrides = deepcopy(cv.overrides or {})
-    overrides[suggestion.field_name] = suggestion.proposed_value
-    cv.overrides = overrides
-    cv.save(update_fields=["overrides", "updated_at"])
     suggestion.status = AISuggestion.STATUS_ACCEPTED
     suggestion.accepted = True
     suggestion.acted_at = timezone.now()

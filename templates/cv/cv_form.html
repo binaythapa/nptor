@@ -1,17 +1,91 @@
 {% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}Create your resume - {{ site_name|default:"Nepal Mentor" }}{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'cv/create.css' %}">
+{% endblock %}
 
 {% block content %}
-<section class="section">
-  <div class="container">
-    <h1 class="title">{{ heading }}</h1>
-    <div class="box">
-      <form method="post">
+<section class="cv-create-page">
+  <div class="cv-create-shell">
+    <div class="cv-create-header">
+      <div>
+        <p class="eyebrow">Resume builder</p>
+        <h1 class="title is-2 mb-2">Create your resume</h1>
+        <p class="subtitle is-6 has-text-grey mb-0">
+          Start with a name, choose a template, and continue to the full resume builder.
+        </p>
+      </div>
+      <a class="button is-light" href="{% url 'cv:dashboard' %}">
+        <span class="icon"><i class="fas fa-arrow-left"></i></span>
+        <span>Back to resumes</span>
+      </a>
+    </div>
+
+    <div class="cv-create-card box">
+      <form method="post" novalidate>
         {% csrf_token %}
-        {{ form.as_p }}
-        <div class="buttons mt-4">
-          <button class="button is-primary" type="submit">Save CV</button>
-          <a class="button" href="{% url 'cv:dashboard' %}">Cancel</a>
-          {% if cv %}<a class="button" href="{% url 'cv:cv_preview' cv.pk %}">Preview</a>{% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="notification is-danger is-light">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="field">
+          <label class="label" for="{{ form.title.id_for_label }}">Resume name</label>
+          <div class="control">
+            {{ form.title }}
+          </div>
+          {% if form.title.errors %}
+            <p class="help is-danger">{{ form.title.errors|striptags }}</p>
+          {% else %}
+            <p class="help">Use a name that helps you identify this resume later.</p>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <label class="label" for="{{ form.template.id_for_label }}">Template</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              {{ form.template }}
+            </div>
+          </div>
+          {% if form.template.errors %}
+            <p class="help is-danger">{{ form.template.errors|striptags }}</p>
+          {% else %}
+            <p class="help">You can change the template later in the builder.</p>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <label class="label" for="{{ form.status.id_for_label }}">Status</label>
+          <div class="control">
+            <div class="select">
+              {{ form.status }}
+            </div>
+          </div>
+          {% if form.status.errors %}
+            <p class="help is-danger">{{ form.status.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <div class="cv-create-note">
+          <span class="icon"><i class="fas fa-wand-magic-sparkles"></i></span>
+          <div>
+            <strong>Next step: build your resume</strong>
+            <p>Your career profile, sections, AI writing tools, and live preview are available after you create it.</p>
+          </div>
+        </div>
+
+        <div class="buttons is-right mt-5 mb-0">
+          <a class="button is-light" href="{% url 'cv:dashboard' %}">Cancel</a>
+          <button class="button is-primary" type="submit">
+            <span class="icon"><i class="fas fa-arrow-right"></i></span>
+            <span>Create resume</span>
+          </button>
         </div>
       </form>
     </div>

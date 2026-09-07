@@ -13,6 +13,7 @@ DEFAULT_RENDER_CONFIG = {
     "header_style": "left",
     "section_style": "uppercase_rule",
     "density": "comfortable",
+    "design_style": "modern_header",
 }
 
 ALLOWED_FONTS = {"Helvetica", "Helvetica-Bold", "Times-Roman", "Times-Bold", "Courier"}
@@ -20,6 +21,7 @@ ALLOWED_LAYOUTS = {"single_column", "sidebar"}
 ALLOWED_HEADER_STYLES = {"left", "centered", "compact"}
 ALLOWED_SECTION_STYLES = {"uppercase_rule", "title_case", "minimal"}
 ALLOWED_DENSITIES = {"comfortable", "compact"}
+ALLOWED_DESIGN_STYLES = {"modern_header", "split_label", "elegant"}
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 RENDER_SECTIONS = (
@@ -40,6 +42,18 @@ def get_template_snapshot(template):
         "name": template.name,
         "config": deepcopy(template.config or {}),
     }
+
+
+def _infer_design_style(raw, config):
+    """Map legacy template settings to one of the richer visual design systems."""
+    explicit = raw.get("design_style")
+    if explicit in ALLOWED_DESIGN_STYLES:
+        return explicit
+    if config["layout"] == "sidebar":
+        return "split_label"
+    if config["header_style"] == "centered":
+        return "elegant"
+    return "modern_header"
 
 
 def get_render_config(template_snapshot):
@@ -67,6 +81,8 @@ def get_render_config(template_snapshot):
         config["section_style"] = raw["section_style"]
     if raw.get("density") in ALLOWED_DENSITIES:
         config["density"] = raw["density"]
+
+    config["design_style"] = _infer_design_style(raw, config)
 
     if config["density"] == "compact":
         config["section_gap"] = min(config["section_gap"], 5)

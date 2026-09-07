@@ -14,7 +14,7 @@ class FakeProvider:
     name = "fake"
     model = "fake-model"
 
-    def review(self, payload):
+    def generate_structured(self, prompt, schema, *, system_prompt="", model=None):
         return {
             "summary": "The summary is too generic.",
             "suggestions": [
@@ -24,7 +24,7 @@ class FakeProvider:
                     "kind": "rewrite",
                     "title": "Strengthen the summary",
                     "reason": "Lead with measurable outcomes and domain expertise.",
-                    "current_value": payload.get("summary", ""),
+                    "current_value": "I work with data.",
                     "proposed_value": "Senior data engineer with measurable cloud delivery impact.",
                 }
             ],
@@ -35,7 +35,7 @@ class FailingProvider:
     name = "fake-failure"
     model = "fake-model"
 
-    def review(self, payload):
+    def generate_structured(self, prompt, schema, *, system_prompt="", model=None):
         raise AIProviderError("provider unavailable")
 
 
@@ -48,6 +48,9 @@ class CVAIWriterTests(TestCase):
         self.cv.profile.summary = "I work with data."
         self.cv.profile.save()
         CareerExperience.objects.create(profile=self.cv.profile, job_title="Data Engineer", employer="Example")
+
+    def tearDown(self):
+        set_provider_for_tests(None)
 
     def test_review_creates_conversation_and_pending_suggestion_without_overwriting_profile(self):
         set_provider_for_tests(FakeProvider())
