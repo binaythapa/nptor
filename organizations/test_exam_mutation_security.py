@@ -39,8 +39,6 @@ class OrganizationExamMutationSecurityTests(TestCase):
             title="Protected Exam",
             organization=self.organization,
             duration_seconds=60,
-            is_free=False,
-            price=100,
             is_published=False,
         )
 
@@ -61,7 +59,6 @@ class OrganizationExamMutationSecurityTests(TestCase):
                 "duration_seconds": 60,
                 "level": 1,
                 "passing_score": 50,
-                "is_free": "on",
                 "is_published": "on",
                 "max_mock_attempts": 3,
                 "allow_review": "on",
@@ -85,7 +82,6 @@ class OrganizationExamMutationSecurityTests(TestCase):
                 "duration_seconds": 3600,
                 "level": 1,
                 "passing_score": 10,
-                "is_free": "on",
                 "is_published": "on",
                 "max_mock_attempts": 3,
                 "allow_review": "on",
