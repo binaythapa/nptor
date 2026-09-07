@@ -1,4 +1,5 @@
-from django.db import migrations
+from django.db import migrations, models
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -10,8 +11,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="organizationdomain",
             name="organization",
-            field=__import__("django.db.models", fromlist=["ForeignKey"]).ForeignKey(
-                on_delete=__import__("django.db.models.deletion", fromlist=["CASCADE"]).CASCADE,
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
                 related_name="organization_domains",
                 to="organizations.organization",
             ),
