@@ -24,7 +24,7 @@ class OrganizationDomain(models.Model):
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
-        related_name="domains",
+        related_name="organization_domains",
     )
     domain = models.CharField(max_length=255)
     domain_type = models.CharField(max_length=30, choices=DOMAIN_TYPE_CHOICES, default=DOMAIN_TYPE_CUSTOM)
