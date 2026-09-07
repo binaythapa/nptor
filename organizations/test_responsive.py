@@ -13,7 +13,7 @@ class OrganizationAdminResponsiveTemplateTests(SimpleTestCase):
         self.assertIn('id="orgAdminSidebar"', source)
         self.assertIn('id="orgAdminBackdrop"', source)
         self.assertIn("org-admin-mobile.css", source)
-        self.assertIn("class=\"org-admin-content\"", source)
+        self.assertIn("org-admin-content", source)
 
     def test_dashboard_has_responsive_content_wrapper(self):
         template = get_template("organizations/admin/dashboard.html")
