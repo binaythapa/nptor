@@ -143,6 +143,24 @@ class TenantResolverTests(TestCase):
         with self.assertRaises(ValidationError):
             OrganizationDomainService.set_primary(record)
 
+    def test_organization_cannot_have_two_primary_domains(self):
+        OrganizationDomain.objects.create(
+            organization=self.org_a,
+            domain="primary.example.com",
+            domain_type=OrganizationDomain.DOMAIN_TYPE_SUBDOMAIN,
+            is_primary=True,
+            is_verified=True,
+        )
+
+        with self.assertRaises(ValidationError):
+            OrganizationDomain.objects.create(
+                organization=self.org_a,
+                domain="second-primary.example.com",
+                domain_type=OrganizationDomain.DOMAIN_TYPE_SUBDOMAIN,
+                is_primary=True,
+                is_verified=True,
+            )
+
     def test_membership_does_not_cross_tenant(self):
         user = User.objects.create_user(username="tenant-user", password="password")
         OrganizationMember.objects.create(user=user, organization=self.org_a, role=OrganizationRole.STUDENT)
