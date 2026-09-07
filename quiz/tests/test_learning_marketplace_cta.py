@@ -18,11 +18,14 @@ class LearningMarketplaceCTATests(SimpleTestCase):
         template = get_template("quiz/student/learning_marketplace.html")
         source = Path(template.origin.name).read_text(encoding="utf-8")
 
-        self.assertIn("Preview →", source)
-        self.assertIn("Start →", source)
+        self.assertIn("Continue", source)
+        self.assertIn("Enroll Free", source)
+        self.assertIn("View Course", source)
+        self.assertIn("View Track", source)
         self.assertIn("{% url 'quiz:learning_track' item.resource.slug %}", source)
-        self.assertIn("{% url 'courses:course_preview' item.resource.slug %}", source)
-        self.assertIn("{% url 'quiz:exam_preview' item.resource.id %}", source)
+        self.assertIn("{% url 'courses:course_learn' item.resource.slug %}", source)
+        self.assertIn("{% url 'courses:subscribe_course' item.resource.id %}", source)
+        self.assertIn("{% url 'courses:enroll_free_course' item.resource.slug %}", source)
 
     def test_learning_track_route_resolves_to_dedicated_view(self):
         self.assertEqual(
