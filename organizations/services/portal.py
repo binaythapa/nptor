@@ -30,6 +30,7 @@ class OrganizationPortalService:
             organization=organization,
             is_public=True,
             is_published=True,
+            approval_status=Course.APPROVAL_APPROVED,
         ).order_by("title")
         return {"organization": organization, "profile": profile, "config": config, "sections": sections, "courses": courses}
 
