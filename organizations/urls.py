@@ -1,6 +1,7 @@
 from django.urls import path, include
 
 from organizations.views.admin.dashboard import org_dashboard
+from organizations.views.admin.portfolio import org_portfolio
 from organizations.views.admin.courses import *
 from organizations.views.admin.students import org_students, org_student_add, org_student_update_role, org_student_remove
 from organizations.views.admin.assignments import org_assignments, org_assignment_create, org_assignment_remove
@@ -16,6 +17,7 @@ from organizations.views.admin.categories import *
 
 admin_patterns = [
     path("dashboard/", org_dashboard, name="dashboard"),
+    path("portfolio/", org_portfolio, name="portfolio"),
     path("courses/", org_courses, name="courses"),
     path("courses/attach/<int:course_id>/", org_course_attach, name="course_attach"),
     path("courses/detach/<int:course_id>/", org_course_detach, name="course_detach"),
