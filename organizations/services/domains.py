@@ -43,7 +43,10 @@ class OrganizationDomainService:
         if record.domain_type == OrganizationDomain.DOMAIN_TYPE_CUSTOM:
             try:
                 answers = dns.resolver.resolve(cls.verification_name(record), "TXT")
-                values = {str(value).strip('"') for answer in answers for value in answer.strings}
+                values = set()
+                for answer in answers:
+                    for value in answer.strings:
+                        values.add(value.decode().strip('"') if isinstance(value, bytes) else str(value).strip('"'))
             except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as exc:
                 raise ValidationError(
                     f"DNS verification failed. Add a TXT record at {cls.verification_name(record)} with the provided verification token."
