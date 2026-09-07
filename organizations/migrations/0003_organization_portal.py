@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 "ordering": ["-is_primary", "domain"],
                 "indexes": [models.Index(fields=["organization", "is_verified"], name="org_domain_verified_idx")],
                 "constraints": [
-                    models.UniqueConstraint(models.functions.Lower("domain"), name="org_domain_ci_unique"),
+                    models.UniqueConstraint(Lower("domain"), name="org_domain_ci_unique"),
                     models.UniqueConstraint(fields=["organization"], condition=models.Q(is_primary=True), name="org_one_primary_domain"),
                 ],
             },
