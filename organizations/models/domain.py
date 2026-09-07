@@ -1,4 +1,5 @@
-from django.db import models
+from django.db import models, router, transaction
+from django.core.exceptions import ValidationError
 from django.db.models.functions import Lower
 
 from .organization import Organization
@@ -38,17 +39,26 @@ class OrganizationDomain(models.Model):
         ordering = ["-is_primary", "domain"]
         constraints = [
             models.UniqueConstraint(Lower("domain"), name="org_domain_ci_unique"),
-            models.UniqueConstraint(
-                fields=["organization"],
-                condition=models.Q(is_primary=True),
-                name="org_one_primary_domain",
-            ),
         ]
         indexes = [models.Index(fields=["organization", "is_verified"], name="org_domain_verified_idx")]
 
     def save(self, *args, **kwargs):
         self.domain = self.domain.strip().lower().rstrip(".")
-        super().save(*args, **kwargs)
+        if not self.is_primary:
+            return super().save(*args, **kwargs)
+
+        using = kwargs.get("using") or router.db_for_write(type(self), instance=self)
+        with transaction.atomic(using=using):
+            Organization.objects.using(using).select_for_update().get(pk=self.organization_id)
+            existing = type(self).objects.using(using).filter(
+                organization_id=self.organization_id,
+                is_primary=True,
+            )
+            if self.pk:
+                existing = existing.exclude(pk=self.pk)
+            if existing.exists():
+                raise ValidationError("An organization can have only one primary domain.")
+            return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.domain
