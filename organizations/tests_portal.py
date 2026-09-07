@@ -12,6 +12,7 @@ from organizations.services.assignments import assign_resource
 from organizations.services.domains import OrganizationDomainService
 from organizations.services.portal import OrganizationPortalService
 from organizations.services.tenant import TenantResolver
+from quiz.models import Domain
 
 
 User = get_user_model()
@@ -92,6 +93,21 @@ class TenantResolverTests(TestCase):
     def setUp(self):
         self.org_a = Organization.objects.create(name="Alpha", slug="alpha", org_type=Organization.TYPE_SCHOOL)
         self.org_b = Organization.objects.create(name="Beta", slug="beta", org_type=Organization.TYPE_SCHOOL)
+
+    def test_organization_domain_reverse_accessor_does_not_clash_with_quiz_domain(self):
+        organization_domain = OrganizationDomain.objects.create(
+            organization=self.org_a,
+            domain="learn.example.com",
+            is_verified=True,
+        )
+        quiz_domain = Domain.objects.create(
+            organization=self.org_a,
+            name="Snowflake",
+            slug="snowflake",
+        )
+
+        self.assertEqual(list(self.org_a.organization_domains.all()), [organization_domain])
+        self.assertEqual(list(self.org_a.domains.all()), [quiz_domain])
 
     def test_slug_resolution_returns_active_tenant(self):
         self.assertEqual(TenantResolver.by_slug("alpha"), self.org_a)
