@@ -33,9 +33,7 @@ class ExamSubmissionDashboardFlowTests(unittest.TestCase):
         self.assertIn("activity_type", view_source)
         self.assertIn("activity_date", view_source)
         self.assertIn('class="dashboard-learning-activity-table"', template)
-        self.assertIn('data-activity-type="course"', template)
-        self.assertIn('data-activity-type="exam"', template)
-        self.assertIn('data-activity-type="track"', template)
+        self.assertIn('data-activity-type="{{ item.activity_type }}"', template)
         self.assertIn("Learning Activity", template)
 
     def test_learning_activity_is_paginated_and_searchable(self):
