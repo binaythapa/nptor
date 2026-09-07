@@ -9,8 +9,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
+    # Course itself is created by courses.0001. The dependency on
+    # courses.0002 was circular because courses.0002 adds the
+    # Course.subscription_plans M2M field pointing back to SubscriptionPlan.
+    # Keeping this migration at courses.0001 lets courses.0002 depend on
+    # subscriptions.0001 and completes the graph without a cycle.
     dependencies = [
-        ("courses", "0002_initial"),
+        ("courses", "0001_initial"),
         ("organizations", "0001_initial"),
         ("quiz", "0003_government_exam_catalog"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
