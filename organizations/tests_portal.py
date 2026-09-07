@@ -161,6 +161,28 @@ class TenantResolverTests(TestCase):
                 is_verified=True,
             )
 
+    def test_set_primary_switches_to_another_verified_domain(self):
+        current = OrganizationDomain.objects.create(
+            organization=self.org_a,
+            domain="current.example.com",
+            domain_type=OrganizationDomain.DOMAIN_TYPE_SUBDOMAIN,
+            is_primary=True,
+            is_verified=True,
+        )
+        replacement = OrganizationDomain.objects.create(
+            organization=self.org_a,
+            domain="replacement.example.com",
+            domain_type=OrganizationDomain.DOMAIN_TYPE_SUBDOMAIN,
+            is_verified=True,
+        )
+
+        OrganizationDomainService.set_primary(replacement)
+
+        current.refresh_from_db()
+        replacement.refresh_from_db()
+        self.assertFalse(current.is_primary)
+        self.assertTrue(replacement.is_primary)
+
     def test_membership_does_not_cross_tenant(self):
         user = User.objects.create_user(username="tenant-user", password="password")
         OrganizationMember.objects.create(user=user, organization=self.org_a, role=OrganizationRole.STUDENT)
