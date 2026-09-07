@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 
 
@@ -48,23 +48,6 @@ class LearningShortlist(models.Model):
 
     class Meta:
         ordering = ["-created_at", "id"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "resource_type", "course"],
-                condition=Q(resource_type="course"),
-                name="uniq_shortlist_user_course",
-            ),
-            models.UniqueConstraint(
-                fields=["user", "resource_type", "track"],
-                condition=Q(resource_type="track"),
-                name="uniq_shortlist_user_track",
-            ),
-            models.UniqueConstraint(
-                fields=["user", "resource_type", "exam"],
-                condition=Q(resource_type="exam"),
-                name="uniq_shortlist_user_exam",
-            ),
-        ]
 
     def clean(self):
         fields = {
@@ -80,6 +63,28 @@ class LearningShortlist(models.Model):
                 "Shortlist entry must contain exactly one resource matching resource_type."
             )
 
+    def save(self, *args, **kwargs):
+        """Persist safely on databases without conditional unique indexes.
+
+        Locking the user's row serializes shortlist writes for that user, making
+        the uniqueness check safe under concurrent requests on MySQL.
+        """
+        self.full_clean()
+
+        with transaction.atomic():
+            user = type(self.user).objects.select_for_update().get(pk=self.user_id)
+            lookup = {
+                "user_id": self.user_id,
+                "resource_type": self.resource_type,
+                **self.resource_lookup(self.resource_type, self.resource),
+            }
+            duplicate = type(self).objects.filter(**lookup).exclude(pk=self.pk).exists()
+            if duplicate:
+                raise ValidationError(
+                    "This resource is already in the user's shortlist."
+                )
+            return super().save(*args, **kwargs)
+
     @classmethod
     def resource_lookup(cls, resource_type, resource):
         fields = {
@@ -94,11 +99,13 @@ class LearningShortlist(models.Model):
 
     @classmethod
     def for_resource(cls, *, user, resource_type, resource):
-        item, created = cls.objects.get_or_create(
-            user=user,
-            resource_type=resource_type,
-            defaults=cls.resource_lookup(resource_type, resource),
-        )
+        with transaction.atomic():
+            cls.objects.select_for_update().filter(user=user).first()
+            item, created = cls.objects.get_or_create(
+                user=user,
+                resource_type=resource_type,
+                defaults=cls.resource_lookup(resource_type, resource),
+            )
         return item, created
 
     @classmethod
