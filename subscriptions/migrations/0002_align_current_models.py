@@ -39,24 +39,37 @@ def rename_existing_indexes(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("subscriptions", "0001_initial"),
     ]
 
     operations = [
-        migrations.RunPython(
-            rename_existing_indexes,
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.AlterField(
-            model_name="subscriptionplan",
-            name="price",
-            field=models.DecimalField(
-                decimal_places=2,
-                default=0,
-                max_digits=12,
-                validators=[django.core.validators.MinValueValidator(0)],
-            ),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    rename_existing_indexes,
+                    reverse_code=migrations.RunPython.noop,
+                ),
+            ],
+            state_operations=[
+                migrations.RenameIndex(
+                    model_name=model_name,
+                    old_name=old_name,
+                    new_name=new_name,
+                )
+                for model_name, old_name, new_name in INDEX_RENAMES
+            ]
+            + [
+                migrations.AlterField(
+                    model_name="subscriptionplan",
+                    name="price",
+                    field=models.DecimalField(
+                        decimal_places=2,
+                        default=0,
+                        max_digits=12,
+                        validators=[django.core.validators.MinValueValidator(0)],
+                    ),
+                ),
+            ],
         ),
     ]
