@@ -11,5 +11,5 @@ class StudentNavigationLabelTests(SimpleTestCase):
     def test_learning_navigation_replaces_courses_and_exams_label(self):
         html = TEMPLATE.read_text(encoding="utf-8")
 
-        self.assertIn('<span class="nav-label">\n            Learning\n          </span>', html)
+        self.assertIn('<span class="nav-label">Learning</span>', html)
         self.assertNotIn("Courses &amp; Exams", html)
