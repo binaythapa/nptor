@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import Q
 
 
 class LearningShortlist(models.Model):
@@ -76,7 +75,7 @@ class LearningShortlist(models.Model):
             lookup = {
                 "user_id": self.user_id,
                 "resource_type": self.resource_type,
-                **self.resource_lookup(self.resource_type, self.resource),
+                **self.resource_lookup(self.resource_type, self.resource()),
             }
             duplicate = type(self).objects.filter(**lookup).exclude(pk=self.pk).exists()
             if duplicate:
