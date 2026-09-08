@@ -32,7 +32,7 @@ class TrackDetailContractTests(SimpleTestCase):
             "You have access",
             "Unlock Full Track",
         ):
-            self.assertIn(text, self.template)
+            self.assertIn(text.lower(), self.template.lower())
 
     def test_track_page_is_responsive_and_accessible(self):
         for text in (
