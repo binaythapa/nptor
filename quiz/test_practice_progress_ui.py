@@ -9,7 +9,7 @@ class PracticeProgressUITests(SimpleTestCase):
         cls.root = Path(__file__).resolve().parents[1]
 
     def test_filter_state_is_fully_collapsed_and_accessible(self):
-        template = (self.root / "templates/quiz/student/practice/practice.html").read_text()
+        template = (self.root / "templates/quiz/student/practice/practice.html").read_text(encoding="utf-8")
 
         self.assertIn('id="filterBody"', template)
         self.assertIn('body.hidden = !expanded', template)
@@ -17,7 +17,7 @@ class PracticeProgressUITests(SimpleTestCase):
         self.assertIn('toggle.setAttribute("aria-expanded", String(expanded))', template)
 
     def test_progress_is_synchronized_after_next_or_skip_ajax(self):
-        template = (self.root / "templates/quiz/student/practice/practice.html").read_text()
+        template = (self.root / "templates/quiz/student/practice/practice.html").read_text(encoding="utf-8")
 
         self.assertIn('function updateProgress(increment)', template)
         self.assertIn('requestUrl === nextUrl || requestUrl === skipUrl', template)
