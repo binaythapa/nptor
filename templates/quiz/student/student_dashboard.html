@@ -6,7 +6,7 @@
 
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">
-<link rel="stylesheet" href="{% static 'css/pages/dashboard_learning_hub.css' %}">
+<link rel="stylesheet" href="{% static 'css/dashboard_learning_hub.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -189,7 +189,7 @@
 
     <div class="dashboard-learning-grid" data-dashboard-grid>
       {% for item in courses %}
-      <article class="dashboard-learning-card" data-learning-card data-learning-type="courses" data-learning-name="{{ item.course.title|lower }}">
+      <article class="dashboard-learning-card" data-learning-card data-learning-type="course" data-learning-name="{{ item.course.title|lower }}">
         <div class="learning-card-icon learning-card-icon-course"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></div>
         <div class="learning-card-body"><div class="learning-card-topline"><span class="learning-card-type">Course</span>{% if item.source == 'organization' %}<span class="learning-source">Assigned</span>{% else %}<span class="learning-source">Purchased</span>{% endif %}</div><h3>{{ item.course.title }}</h3><p>{{ item.completed }}/{{ item.total }} lessons · {{ item.progress }}% complete</p><progress class="dashboard-progress" value="{{ item.progress }}" max="100">{{ item.progress }}%</progress></div>
         <a href="{% url 'courses:course_learn' item.course.slug %}" class="learning-card-action" aria-label="Open {{ item.course.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
@@ -197,7 +197,7 @@
       {% endfor %}
 
       {% for item in exams %}
-      <article class="dashboard-learning-card" data-learning-card data-learning-type="exams" data-learning-name="{{ item.exam.title|lower }}">
+      <article class="dashboard-learning-card" data-learning-card data-learning-type="exam" data-learning-name="{{ item.exam.title|lower }}">
         <div class="learning-card-icon learning-card-icon-exam"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div>
         <div class="learning-card-body"><div class="learning-card-topline"><span class="learning-card-type">Exam</span><span class="learning-source">{% if item.source == 'organization' %}Assigned{% elif item.source == 'track' %}Track{% else %}Purchased{% endif %}</span></div><h3>{{ item.exam.title }}</h3><p>{{ item.exam.question_count }} questions · {% if item.exam.duration_seconds %}{% widthratio item.exam.duration_seconds 60 1 %} min{% else %}Timed{% endif %}</p>{% if item.passed %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Passed{% if item.last_score is not None %} · {{ item.last_score }}%{% endif %}</span>{% elif item.last_score is not None %}<span class="learning-result learning-result-danger"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Last score · {{ item.last_score }}%</span>{% else %}<span class="learning-result">Not attempted</span>{% endif %}</div>
         <a href="{% url 'quiz:exam_start' item.exam.id %}" class="learning-card-action" aria-label="Start {{ item.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
@@ -205,7 +205,7 @@
       {% endfor %}
 
       {% for item in tracks %}
-      <article class="dashboard-learning-card" data-learning-card data-learning-type="tracks" data-learning-name="{{ item.track.title|lower }}">
+      <article class="dashboard-learning-card" data-learning-card data-learning-type="track" data-learning-name="{{ item.track.title|lower }}">
         <div class="learning-card-icon learning-card-icon-track"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
         <div class="learning-card-body"><div class="learning-card-topline"><span class="learning-card-type">Exam Track</span><span class="learning-source">{% if item.source == 'organization' %}Assigned{% else %}Subscribed{% endif %}</span></div><h3>{{ item.track.title }}</h3><p>{{ item.exam_count }} exams · {{ item.passed }} passed</p>{% if item.completed %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Track complete</span>{% else %}<span class="learning-result">In progress</span>{% endif %}</div>
         <a href="{% url 'quiz:exam_list' %}" class="learning-card-action" aria-label="Open {{ item.track.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
