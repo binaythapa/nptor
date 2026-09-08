@@ -154,6 +154,21 @@ class Exam(models.Model):
             ),
         ]
 
+    def __init__(self, *args, **kwargs):
+        """Accept the legacy exam pricing arguments during the data-model transition.
+
+        Older integrations/tests constructed exams with ``track``, ``price``,
+        ``currency`` and ``is_free`` fields. Those fields are no longer stored
+        on ``Exam``; subscription plans are the source of truth. Keeping these
+        values in memory prevents old callers from failing at model construction
+        while allowing new persisted records to use the current schema.
+        """
+        self._legacy_track = kwargs.pop("track", None)
+        self._legacy_price = kwargs.pop("price", None)
+        self._legacy_currency = kwargs.pop("currency", None)
+        self._legacy_is_free = kwargs.pop("is_free", None)
+        super().__init__(*args, **kwargs)
+
     # =========================================================
     # VALIDATION
     # =========================================================
@@ -213,8 +228,28 @@ class Exam(models.Model):
 
     @property
     def is_free(self):
-        """Compatibility helper; pricing itself is stored on subscription plans."""
+        """Whether the exam is free under the current subscription model."""
+        if self._legacy_is_free is not None:
+            return bool(self._legacy_is_free)
         return not any(plan.price > 0 for plan in self.active_subscription_plans())
+
+    @property
+    def price(self):
+        """Deprecated in-memory compatibility value; use subscription plans."""
+        if self._legacy_price is not None:
+            return self._legacy_price
+        plans = self.active_subscription_plans()
+        return min((plan.price for plan in plans), default=0)
+
+    @property
+    def currency(self):
+        """Deprecated in-memory compatibility value; use subscription plans."""
+        return self._legacy_currency
+
+    @property
+    def track(self):
+        """Deprecated in-memory compatibility value; use TrackExam."""
+        return self._legacy_track
 
     # =========================================================
     # CATEGORY HELPERS
