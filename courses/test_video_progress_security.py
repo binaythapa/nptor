@@ -13,10 +13,10 @@ class CourseVideoProgressSecurityTests(SimpleTestCase):
     def test_player_uses_youtube_playback_time(self):
         template = (
             self.root / "templates/courses/student/course_player.html"
-        ).read_text()
+        ).read_text(encoding="utf-8")
         tracker = (
             self.root / "static/js/pages/course_video_progress.js"
-        ).read_text()
+        ).read_text(encoding="utf-8")
 
         self.assertIn("courseVideoPlayer", template)
         self.assertIn("course_video_progress.js", template)
@@ -28,7 +28,7 @@ class CourseVideoProgressSecurityTests(SimpleTestCase):
     def test_fake_elapsed_page_timer_is_not_used(self):
         template = (
             self.root / "templates/courses/student/course_player.html"
-        ).read_text()
+        ).read_text(encoding="utf-8")
 
         self.assertNotIn("let watchedSeconds=0, duration=390", template)
         self.assertNotIn("watchedSeconds+=5", template)
