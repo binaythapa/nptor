@@ -5,6 +5,19 @@ from quiz.models import UserExam
 from quiz.services.grading import grade_exam
 
 
+def get_course_exam_redirect_url(context):
+    """Return the course lesson path for a course-launched exam context."""
+    if not context:
+        return None
+
+    course_slug = context.get("course_slug")
+    lesson_id = context.get("lesson_id")
+    if not course_slug or lesson_id in (None, ""):
+        return None
+
+    return f"/courses/{course_slug}/learn/{lesson_id}/"
+
+
 def _finish_course_quiz_if_needed(request, user_exam):
     course_context = request.session.get("course_exam_context")
     if not course_context or request.session.get(f"course_exam_handled_{user_exam.id}"):
