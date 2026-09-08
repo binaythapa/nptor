@@ -31,7 +31,11 @@ def rename_existing_indexes(apps, schema_editor):
                 cursor, model._meta.db_table
             )
             if old_name in constraints and new_name not in constraints:
-                schema_editor.rename_index(model, old_name, new_name)
+                schema_editor.rename_index(
+                    model,
+                    models.Index(name=old_name),
+                    models.Index(name=new_name),
+                )
 
 
 class Migration(migrations.Migration):
