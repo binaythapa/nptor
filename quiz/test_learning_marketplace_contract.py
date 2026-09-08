@@ -34,7 +34,7 @@ class LearningMarketplaceContractTests(SimpleTestCase):
     def test_catalog_exposes_course_track_and_exam_presentation_metadata(self):
         course = SimpleNamespace(
             level="beginner",
-            subscription_plans=SimpleNamespace(all=lambda: []),
+            subscription_plans=SimpleNamespace(filter=lambda **kwargs: []),
         )
         exam = SimpleNamespace(
             duration_seconds=5400,
@@ -45,7 +45,7 @@ class LearningMarketplaceContractTests(SimpleTestCase):
         track = SimpleNamespace(
             exams=SimpleNamespace(all=lambda: []),
             pricing_type=ExamTrack.PRICING_FREE,
-            subscription_plans=SimpleNamespace(all=lambda: []),
+            subscription_plans=SimpleNamespace(filter=lambda **kwargs: []),
             lifetime_price=None,
             monthly_price=None,
             currency="INR",
