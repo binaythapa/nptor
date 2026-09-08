@@ -28,7 +28,7 @@ class TrackDetailContractTests(SimpleTestCase):
             "Completed",
             "Locked",
             "Pass the previous exam to unlock",
-            "Prerequisite exam",
+            "prerequisite rules",
             "You have access",
             "Unlock Full Track",
         ):
