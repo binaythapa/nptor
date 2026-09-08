@@ -1,0 +1,44 @@
+/* Student learning hub additions kept separate from the shared dashboard shell. */
+.learning-hub-page .dashboard-learning-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.learning-hub-page .dashboard-learning-activity-table th,
+.learning-hub-page .dashboard-learning-activity-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.learning-hub-page .dashboard-learning-activity-table tbody tr {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-learning-activity-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.dashboard-learning-activity-pagination .page-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 760px) {
+  .learning-hub-page .dashboard-learning-activity-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .dashboard-learning-activity-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
