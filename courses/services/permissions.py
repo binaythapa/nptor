@@ -10,6 +10,11 @@ from organizations.models.role import OrganizationRole
 from organizations.permissions import get_active_membership
 
 
+def _approval_status(course, name, default):
+    """Read a course approval constant while supporting lightweight test doubles."""
+    return getattr(course, name, default)
+
+
 def can_edit_course(user, course):
     """
     Determine whether a user can edit course content.
@@ -26,11 +31,12 @@ def can_edit_course(user, course):
     if user.is_superuser:
         return True
 
-    if course.approval_status not in (
-        course.APPROVAL_DRAFT,
-        course.APPROVAL_CHANGES,
-        course.APPROVAL_REJECTED,
-    ):
+    editable_states = (
+        _approval_status(course, "APPROVAL_DRAFT", "draft"),
+        _approval_status(course, "APPROVAL_CHANGES", "changes_required"),
+        _approval_status(course, "APPROVAL_REJECTED", "rejected"),
+    )
+    if course.approval_status not in editable_states:
         return False
 
     if not course.organization:
@@ -45,6 +51,11 @@ def can_edit_course(user, course):
         return False
 
     return membership.role in OrganizationRole.teaching_roles()
+
+
+# Backwards-compatible name used by older callers and security tests.
+def can_modify_course_content(user, course):
+    return can_edit_course(user, course)
 
 
 def can_create_course(user, organization=None):
@@ -222,9 +233,9 @@ def can_submit_course_for_review(user, course):
         return False
 
     return course.approval_status in (
-        course.APPROVAL_DRAFT,
-        course.APPROVAL_CHANGES,
-        course.APPROVAL_REJECTED,
+        _approval_status(course, "APPROVAL_DRAFT", "draft"),
+        _approval_status(course, "APPROVAL_CHANGES", "changes_required"),
+        _approval_status(course, "APPROVAL_REJECTED", "rejected"),
     )
 
 
@@ -239,7 +250,9 @@ def can_request_changes(user, course):
     if not can_review_course(user, course):
         return False
 
-    return course.approval_status == course.APPROVAL_PENDING
+    return course.approval_status == _approval_status(
+        course, "APPROVAL_PENDING", "pending"
+    )
 
 
 # ============================================================
@@ -253,7 +266,9 @@ def can_approve_course(user, course):
     if not can_review_course(user, course):
         return False
 
-    return course.approval_status == course.APPROVAL_PENDING
+    return course.approval_status == _approval_status(
+        course, "APPROVAL_PENDING", "pending"
+    )
 
 
 # ============================================================
@@ -267,4 +282,6 @@ def can_reject_course(user, course):
     if not can_review_course(user, course):
         return False
 
-    return course.approval_status == course.APPROVAL_PENDING
+    return course.approval_status == _approval_status(
+        course, "APPROVAL_PENDING", "pending"
+    )
