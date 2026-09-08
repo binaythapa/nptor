@@ -9,8 +9,8 @@ class PracticeLayoutTests(SimpleTestCase):
         cls.root = Path(__file__).resolve().parents[1]
 
     def test_practice_uses_express_parity_styles(self):
-        template = (self.root / "templates/quiz/student/practice/practice.html").read_text()
-        css = (self.root / "static/css/pages/practice-mobile.css").read_text()
+        template = (self.root / "templates/quiz/student/practice/practice.html").read_text(encoding="utf-8")
+        css = (self.root / "static/css/pages/practice-mobile.css").read_text(encoding="utf-8")
 
         self.assertIn("practice-mobile.css", template)
         self.assertIn(".practice-page", css)
@@ -20,7 +20,7 @@ class PracticeLayoutTests(SimpleTestCase):
         self.assertIn("!important", css)
 
     def test_parity_styles_keep_compact_desktop_proportions(self):
-        css = (self.root / "static/css/pages/practice-mobile.css").read_text()
+        css = (self.root / "static/css/pages/practice-mobile.css").read_text(encoding="utf-8")
 
         self.assertIn("max-width:1100px", css)
         self.assertIn("font-size:1.25rem", css)
