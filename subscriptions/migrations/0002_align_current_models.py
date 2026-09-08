@@ -18,7 +18,7 @@ INDEX_RENAMES = (
 
 
 def rename_existing_indexes(apps, schema_editor):
-    """Rename legacy indexes only when they actually exist."""
+    """Rename legacy MySQL indexes when present; tolerate already-renamed indexes."""
     models_by_name = {
         model._meta.model_name: model
         for model in apps.get_app_config("subscriptions").get_models()
@@ -31,14 +31,16 @@ def rename_existing_indexes(apps, schema_editor):
                 cursor, model._meta.db_table
             )
             if old_name in constraints and new_name not in constraints:
-                schema_editor.rename_index(
-                    model,
-                    models.Index(name=old_name),
-                    models.Index(name=new_name),
+                table_name = schema_editor.quote_name(model._meta.db_table)
+                old_index = schema_editor.quote_name(old_name)
+                new_index = schema_editor.quote_name(new_name)
+                schema_editor.execute(
+                    f"ALTER TABLE {table_name} RENAME INDEX {old_index} TO {new_index}"
                 )
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
         ("subscriptions", "0001_initial"),
     ]
@@ -53,13 +55,50 @@ class Migration(migrations.Migration):
             ],
             state_operations=[
                 migrations.RenameIndex(
-                    model_name=model_name,
-                    old_name=old_name,
-                    new_name=new_name,
-                )
-                for model_name, old_name, new_name in INDEX_RENAMES
-            ]
-            + [
+                    model_name="payment",
+                    old_name="sub_payment_status_idx",
+                    new_name="subscriptio_subscri_0bac84_idx",
+                ),
+                migrations.RenameIndex(
+                    model_name="payment",
+                    old_name="sub_payment_txn_idx",
+                    new_name="subscriptio_provide_906124_idx",
+                ),
+                migrations.RenameIndex(
+                    model_name="payment",
+                    old_name="sub_payment_org_status_idx",
+                    new_name="subscriptio_organiz_bbb19b_idx",
+                ),
+                migrations.RenameIndex(
+                    model_name="payment",
+                    old_name="sub_payment_user_status_idx",
+                    new_name="subscriptio_user_id_9c57a2_idx",
+                ),
+                migrations.RenameIndex(
+                    model_name="subscription",
+                    old_name="sub_user_status_idx",
+                    new_name="subscriptio_user_id_2a19e8_idx",
+                ),
+                migrations.RenameIndex(
+                    model_name="subscription",
+                    old_name="sub_org_status_idx",
+                    new_name="subscriptio_organiz_3cb096_idx",
+                ),
+                migrations.RenameIndex(
+                    model_name="subscription",
+                    old_name="sub_plan_status_idx",
+                    new_name="subscriptio_plan_id_f7cbce_idx",
+                ),
+                migrations.RenameIndex(
+                    model_name="subscription",
+                    old_name="sub_exp_status_idx",
+                    new_name="subscriptio_expires_9e8e71_idx",
+                ),
+                migrations.RenameIndex(
+                    model_name="subscriptionplan",
+                    old_name="sub_plan_active_idx",
+                    new_name="subscriptio_is_acti_dd0689_idx",
+                ),
                 migrations.AlterField(
                     model_name="subscriptionplan",
                     name="price",
