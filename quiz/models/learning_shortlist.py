@@ -71,7 +71,7 @@ class LearningShortlist(models.Model):
         self.full_clean()
 
         with transaction.atomic():
-            user = type(self.user).objects.select_for_update().get(pk=self.user_id)
+            type(self.user).objects.select_for_update().get(pk=self.user_id)
             lookup = {
                 "user_id": self.user_id,
                 "resource_type": self.resource_type,
