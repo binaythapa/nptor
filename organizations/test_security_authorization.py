@@ -248,7 +248,48 @@ class StaffTeacherOrganizationPermissionTests(TestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 403)
 
-    def test_staff_can_add_and_remove_students_but_not_admin_roles(self):
+    def test_staff_can_delete_only_their_own_content(self):
+        question = Question.objects.create(
+            organization=self.org,
+            created_by=self.staff,
+            text="Delete question",
+            difficulty=Question.EASY,
+            question_type=Question.SINGLE,
+        )
+        exam = Exam.objects.create(
+            title="Delete exam",
+            organization=self.org,
+            duration_seconds=60,
+            created_by=self.staff,
+        )
+        course = Course.objects.create(
+            title="Delete course",
+            description="Course",
+            level="beginner",
+            organization=self.org,
+            owner_type=Course.OWNER_ORGANIZATION,
+            created_by=self.staff,
+        )
+        other_course = Course.objects.create(
+            title="Protected course",
+            description="Course",
+            level="beginner",
+            organization=self.org,
+            owner_type=Course.OWNER_ORGANIZATION,
+            created_by=self.other_staff,
+        )
+
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.post(self._url("organizations_admin:question_delete", pk=question.pk)).status_code, 302)
+        self.assertEqual(self.client.post(self._url("organizations_admin:exam_delete", pk=exam.pk)).status_code, 302)
+        self.assertEqual(self.client.post(self._url("organizations_admin:org_course_delete", pk=course.pk)).status_code, 302)
+        self.assertFalse(Question.objects.filter(pk=question.pk).exists())
+        self.assertFalse(Exam.objects.filter(pk=exam.pk).exists())
+        self.assertFalse(Course.objects.filter(pk=course.pk).exists())
+        self.assertEqual(self.client.post(self._url("organizations_admin:org_course_delete", pk=other_course.pk)).status_code, 403)
+        self.assertTrue(Course.objects.filter(pk=other_course.pk).exists())
+
+    def test_staff_can_add_and_remove_students_but_not_staff_members(self):
         self.client.force_login(self.staff)
         new_student = User.objects.create_user(username="new-student", email="new-student@example.com", password="password")
         add_response = self.client.post(
@@ -265,13 +306,21 @@ class StaffTeacherOrganizationPermissionTests(TestCase):
         self.assertEqual(remove_response.status_code, 302)
         self.assertFalse(OrganizationMember.objects.filter(id=member.id).exists())
 
-        admin_user = User.objects.create_user(username="new-admin", email="new-admin@example.com", password="password")
-        admin_attempt = self.client.post(
+        new_teacher = User.objects.create_user(username="new-teacher", email="new-teacher@example.com", password="password")
+        teacher_attempt = self.client.post(
             self._url("organizations_admin:student_add"),
-            {"email": admin_user.email, "role": OrganizationRole.ORG_ADMIN},
+            {"email": new_teacher.email, "role": OrganizationRole.STAFF},
         )
-        self.assertEqual(admin_attempt.status_code, 302)
-        self.assertFalse(OrganizationMember.objects.filter(user=admin_user, organization=self.org).exists())
+        self.assertEqual(teacher_attempt.status_code, 302)
+        self.assertFalse(OrganizationMember.objects.filter(user=new_teacher, organization=self.org).exists())
+
+        self.assertEqual(
+            self.client.post(
+                self._url("organizations_admin:student_remove", member_id=OrganizationMember.objects.get(user=self.other_staff, organization=self.org).id),
+            ).status_code,
+            302,
+        )
+        self.assertTrue(OrganizationMember.objects.filter(user=self.other_staff, organization=self.org).exists())
 
     def test_staff_cannot_manage_organization_settings(self):
         self.client.force_login(self.staff)
