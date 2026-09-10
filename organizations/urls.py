@@ -12,6 +12,7 @@ from organizations.views.admin.tracks import *
 from organizations.views.my_courses import my_courses
 from organizations.views.public import org_public_page
 from organizations.views.student_portal import organization_learning
+from organizations.views.member_portal import organization_workspace
 from organizations.views.admin.domains import *
 from organizations.views.admin.categories import *
 
@@ -27,5 +28,10 @@ admin_patterns = [
     path("settings/", org_settings, name="settings"), path("domains/", org_domain_list, name="domain_list"), path("domains/add/", org_domain_create, name="domain_create"), path("domains/<int:pk>/edit/", org_domain_edit, name="domain_edit"), path("domains/<int:pk>/delete/", org_domain_delete, name="domain_delete"),
     path("categories/", org_category_list, name="category_list"), path("categories/add/", org_category_create, name="category_create"), path("categories/<int:pk>/edit/", org_category_edit, name="category_edit"), path("categories/<int:pk>/delete/", org_category_delete, name="category_delete"),
 ]
-public_patterns = [path("my-courses/", my_courses, name="my_courses"), path("learning/", organization_learning, name="learning"), path("", org_public_page, name="public_page")]
+public_patterns = [
+    path("workspace/", organization_workspace, name="workspace"),
+    path("my-courses/", my_courses, name="my_courses"),
+    path("learning/", organization_learning, name="learning"),
+    path("", org_public_page, name="public_page"),
+]
 urlpatterns = [path("admin/", include((admin_patterns, "organizations_admin"), namespace="organizations_admin")), path("", include((public_patterns, "organizations_public"), namespace="organizations_public"))]
