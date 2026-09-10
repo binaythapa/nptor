@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from organizations.models.membership import OrganizationMember
 from organizations.models.organization import Organization
+from organizations.models.portal import OrganizationPortalConfig
 from organizations.models.role import OrganizationRole
 
 User = get_user_model()
@@ -16,8 +17,10 @@ class StaffOrganizationWorkspaceTests(TestCase):
             org_type=Organization.TYPE_SCHOOL,
             is_active=True,
         )
-        self.organization.portal_config.is_published = False
-        self.organization.portal_config.save(update_fields=["is_published"])
+        OrganizationPortalConfig.objects.create(
+            organization=self.organization,
+            is_published=False,
+        )
         self.staff = User.objects.create_user(
             username="teacher",
             email="teacher@example.com",
