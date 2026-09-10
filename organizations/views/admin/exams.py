@@ -23,7 +23,7 @@ def org_exam_list(request, slug):
     exams = (
         Exam.objects
         .filter(organization=org)
-        .select_related("track", "category")
+        .select_related("primary_category")
         .order_by("-created_at")
     )
 
