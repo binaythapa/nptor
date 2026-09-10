@@ -187,20 +187,133 @@ class Exam(models.Model):
 
         errors = {}
 
-        if self.duration_seconds <= 0:
-            errors["duration_seconds"] = "Duration must be greater than zero."
-
         if self.question_count <= 0:
             errors["question_count"] = "Question count must be greater than zero."
+
+        if self.duration_seconds <= 0:
+            errors["duration_seconds"] = "Exam duration must be greater than zero."
 
         if not 0 <= self.passing_score <= 100:
             errors["passing_score"] = "Passing score must be between 0 and 100."
 
-        if self.organization_id is None and self.is_published:
-            errors["is_published"] = "Platform exams must be managed through the platform publishing workflow."
+        if self.level <= 0:
+            errors["level"] = "Exam level must be greater than zero."
+
+        if self.max_mock_attempts < 0:
+            errors["max_mock_attempts"] = "Mock attempts cannot be negative."
+
+        if (
+            self.organization_id
+            and self.primary_category_id
+            and self.primary_category.organization_id
+            and self.primary_category.organization_id != self.organization_id
+        ):
+            errors["primary_category"] = (
+                "Primary category must belong to the same organization as the exam."
+            )
+
+        if (
+            self.primary_category_id
+            and not self.primary_category.is_active
+        ):
+            errors["primary_category"] = (
+                "An inactive category cannot be the primary category of an exam."
+            )
 
         if errors:
             raise ValidationError(errors)
+
+    # =========================================================
+    # ACCESS HELPERS
+    # =========================================================
+
+    def active_subscription_plans(self):
+        prefetched = getattr(self, "_prefetched_objects_cache", {}).get(
+            "subscription_plans"
+        )
+        if prefetched is not None:
+            return [plan for plan in prefetched if plan.is_active]
+        return list(self.subscription_plans.filter(is_active=True))
+
+    @property
+    def is_free(self):
+        """Whether the exam is free under the current subscription model."""
+        if self._legacy_is_free is not None:
+            return bool(self._legacy_is_free)
+        return not any(plan.price > 0 for plan in self.active_subscription_plans())
+
+    @property
+    def price(self):
+        """Deprecated in-memory compatibility value; use subscription plans."""
+        if self._legacy_price is not None:
+            return self._legacy_price
+        plans = self.active_subscription_plans()
+        return min((plan.price for plan in plans), default=0)
+
+    @property
+    def currency(self):
+        """Deprecated in-memory compatibility value; use subscription plans."""
+        return self._legacy_currency
+
+    @property
+    def track(self):
+        """Deprecated in-memory compatibility value; use TrackExam."""
+        return self._legacy_track
+
+    # =========================================================
+    # CATEGORY HELPERS
+    # =========================================================
+
+    def get_all_categories(self):
+        category_ids = set(
+            self.categories.values_list(
+                "id",
+                flat=True,
+            )
+        )
+
+        if self.primary_category_id:
+            category_ids.add(self.primary_category_id)
+
+        if not category_ids:
+            return self.categories.none()
+
+        return self.categories.model.objects.filter(
+            id__in=category_ids,
+        )
+
+    def has_category(self, category):
+        if not category:
+            return False
+
+        if self.primary_category_id == category.id:
+            return True
+
+        return self.categories.filter(id=category.id).exists()
+
+    # =========================================================
+    # BLUEPRINT HELPERS
+    # =========================================================
+
+    def has_blueprint(self):
+        return self.allocations.exists()
+
+    def get_allocations(self):
+        return self.allocations.select_related("category").all()
+
+    # =========================================================
+    # EXAM MODE
+    # =========================================================
+
+    def is_practice_mode(self):
+        return self.allow_review is True
+
+    def is_certification_mode(self):
+        return self.allow_review is False
+
+    # =========================================================
+    # STRING
+    # =========================================================
 
     def __str__(self):
         return self.title
