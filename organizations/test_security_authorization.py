@@ -11,11 +11,11 @@ from organizations.models.membership import OrganizationMember
 from organizations.models.organization import Organization
 from organizations.models.role import OrganizationRole
 from organizations.services.assignments import assign_resource, StudentNotInOrganizationError
+from organizations.services.content_permissions import user_can_manage_owned_content
 from quiz.models import Exam, ExamTrack, Question
 from subscriptions.models import Subscription, SubscriptionEntitlement, SubscriptionPlan
 from subscriptions.services import AccessService
 from organizations.views.admin.courses import _platform_or_organization_resource
-from organizations.permissions import user_can_manage_owned_content
 
 User = get_user_model()
 
