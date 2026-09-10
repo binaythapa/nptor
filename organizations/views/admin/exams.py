@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 
-from organizations.permissions import org_admin_required
+from organizations.permissions import org_teacher_required
+from organizations.services.content_permissions import user_can_manage_owned_content
 from quiz.models import Exam, UserExam
 from quiz.forms import ExamForm
 
@@ -10,7 +12,7 @@ from quiz.forms import ExamForm
 # ============================================================
 # EXAM LIST
 # ============================================================
-@org_admin_required
+@org_teacher_required
 def org_exam_list(request, slug):
     """
     Display all exams belonging to the current organization.
@@ -38,12 +40,12 @@ def org_exam_list(request, slug):
 # ============================================================
 # CREATE EXAM
 # ============================================================
-@org_admin_required
+@org_teacher_required
 def org_exam_create(request, slug):
     """
     Create a new unpublished exam for the organization.
 
-    Organization admins may configure an exam, but publishing is
+    Organization teaching members may configure an exam, but publishing is
     intentionally reserved for the platform moderation boundary.
     """
 
@@ -57,7 +59,8 @@ def org_exam_create(request, slug):
 
             exam = form.save(commit=False)
             exam.organization = org
-            # Never allow an organization-admin form submission to
+            exam.created_by = request.user
+            # Never allow an organization teaching-member form submission to
             # publish an exam by tampering with is_published.
             exam.is_published = False
             exam.save()
@@ -88,7 +91,7 @@ def org_exam_create(request, slug):
 # ============================================================
 # UPDATE EXAM
 # ============================================================
-@org_admin_required
+@org_teacher_required
 def org_exam_update(request, slug, pk):
     """
     Update an unpublished exam belonging to the organization.
@@ -106,10 +109,13 @@ def org_exam_update(request, slug, pk):
         organization=org,
     )
 
+    if not user_can_manage_owned_content(request.user, org, exam):
+        raise PermissionDenied("You can only modify exams you created.")
+
     if exam.is_published:
         return _forbidden_exam_mutation(
             request,
-            "Published exams cannot be modified by organization admins.",
+            "Published exams cannot be modified by organization teaching members.",
         )
 
     if request.method == "POST":
@@ -124,7 +130,7 @@ def org_exam_update(request, slug, pk):
 
             exam = form.save(commit=False)
             exam.organization = org
-            # Publishing is not an organization-admin capability.
+            # Publishing is not an organization teaching-member capability.
             exam.is_published = False
             exam.save()
 
@@ -164,7 +170,7 @@ def _forbidden_exam_mutation(request, message):
 
 
 @require_POST
-@org_admin_required
+@org_teacher_required
 def org_exam_delete(request, slug, pk):
     """
     Delete an organization exam only when it has no student attempt
@@ -180,10 +186,13 @@ def org_exam_delete(request, slug, pk):
         organization=org,
     )
 
+    if not user_can_manage_owned_content(request.user, org, exam):
+        raise PermissionDenied("You can only delete exams you created.")
+
     if exam.is_published:
         return _forbidden_exam_mutation(
             request,
-            "Published exams cannot be deleted by organization admins.",
+            "Published exams cannot be deleted by organization teaching members.",
         )
 
     if UserExam.objects.filter(exam=exam).exists():
