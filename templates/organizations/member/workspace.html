@@ -37,9 +37,33 @@
 
     <section class="grid" aria-label="Organization workspace tools">
       <article class="card">
-        <h2>Course Dashboard</h2>
-        <p>Create and manage permitted learning content and courses.</p>
-        <a class="button" href="{% url 'courses:instructor_dashboard' %}">Open Course Dashboard</a>
+        <h2>Courses</h2>
+        <p>Create and manage the courses you own.</p>
+        <a class="button" href="{% url 'organizations_admin:org_course_list' slug=organization.slug %}">Manage Courses</a>
+      </article>
+
+      <article class="card">
+        <h2>Questions</h2>
+        <p>Create questions and manage the questions you own.</p>
+        <a class="button" href="{% url 'organizations_admin:questions' slug=organization.slug %}">Manage Questions</a>
+      </article>
+
+      <article class="card">
+        <h2>Exams</h2>
+        <p>Create exams and manage the exams you own.</p>
+        <a class="button" href="{% url 'organizations_admin:exams' slug=organization.slug %}">Manage Exams</a>
+      </article>
+
+      <article class="card">
+        <h2>Students</h2>
+        <p>Add or remove students in your organization.</p>
+        <a class="button" href="{% url 'organizations_admin:students' slug=organization.slug %}">Manage Students</a>
+      </article>
+
+      <article class="card">
+        <h2>Assignments</h2>
+        <p>Assign or revoke courses, tracks, and exams for organization students.</p>
+        <a class="button" href="{% url 'organizations_admin:assignments' slug=organization.slug %}">Manage Assignments</a>
       </article>
 
       <article class="card">
