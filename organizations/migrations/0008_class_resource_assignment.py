@@ -7,8 +7,8 @@ class Migration(migrations.Migration):
     dependencies = [
         ("organizations", "0007_organization_academic"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("courses", "0001_initial"),
-        ("quiz", "0001_initial"),
+        ("courses", "0002_initial"),
+        ("quiz", "0010_exam_created_by"),
     ]
 
     operations = [
