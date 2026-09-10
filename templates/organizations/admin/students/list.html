@@ -27,20 +27,24 @@
       <td>{{ m.user.get_full_name|default:m.user.username }}</td>
       <td>{{ m.user.email }}</td>
       <td>
-        <form method="post"
-              action="{% url 'organizations_admin:student_role' slug=org_slug member_id=m.id %}">
-          {% csrf_token %}
-          <div class="select is-small">
-            <select name="role" onchange="this.form.submit()">
-              <option value="student" {% if m.role == "student" %}selected{% endif %}>
-                Student
-              </option>
-              <option value="staff" {% if m.role == "staff" %}selected{% endif %}>
-                Staff
-              </option>
-            </select>
-          </div>
-        </form>
+        {% if request.organization_member.role == "staff" %}
+          {{ m.get_role_display }}
+        {% else %}
+          <form method="post"
+                action="{% url 'organizations_admin:student_role' slug=org_slug member_id=m.id %}">
+            {% csrf_token %}
+            <div class="select is-small">
+              <select name="role" onchange="this.form.submit()">
+                <option value="student" {% if m.role == "student" %}selected{% endif %}>
+                  Student
+                </option>
+                <option value="staff" {% if m.role == "staff" %}selected{% endif %}>
+                  Staff
+                </option>
+              </select>
+            </div>
+          </form>
+        {% endif %}
       </td>
       <td class="has-text-right">
         <a href="{% url 'organizations_admin:student_remove' slug=org_slug member_id=m.id %}"
