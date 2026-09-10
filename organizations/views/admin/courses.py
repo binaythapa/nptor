@@ -1,11 +1,13 @@
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from organizations.permissions import org_admin_required
+from organizations.permissions import org_admin_required, org_teacher_required
+from organizations.services.content_permissions import user_can_manage_owned_content
 from courses.forms import CourseForm
 from courses.models import Course
 from quiz.models import Exam, ExamTrack
@@ -240,14 +242,14 @@ def org_course_detach(request, slug, course_id):
     return redirect("organizations_admin:courses", slug=slug)
 
 
-@org_admin_required
+@org_teacher_required
 def org_course_list(request, slug):
     org = request.organization
     courses = Course.objects.filter(organization=org).order_by("-created_at")
     return render(request, "organizations/admin/courses/crud_list.html", {"courses": courses, "org": org})
 
 
-@org_admin_required
+@org_teacher_required
 def org_course_create(request, slug):
     org = request.organization
     if request.method == "POST":
@@ -267,10 +269,12 @@ def org_course_create(request, slug):
     return render(request, "organizations/admin/courses/create.html", {"form": form, "org": org})
 
 
-@org_admin_required
+@org_teacher_required
 def org_course_edit(request, slug, pk):
     org = request.organization
     course = get_object_or_404(Course, id=pk, organization=org)
+    if not user_can_manage_owned_content(request.user, org, course):
+        raise PermissionDenied("You can only modify courses you created.")
     if not _mutable_course_state(course):
         return HttpResponseForbidden("Course cannot be modified in its current approval state.")
     if request.method == "POST":
@@ -288,9 +292,11 @@ def org_course_edit(request, slug, pk):
 
 
 @require_POST
-@org_admin_required
+@org_teacher_required
 def org_course_delete(request, slug, pk):
     course = get_object_or_404(Course, id=pk, organization=request.organization)
+    if not user_can_manage_owned_content(request.user, request.organization, course):
+        raise PermissionDenied("You can only delete courses you created.")
     if not _mutable_course_state(course):
         return HttpResponseForbidden("Course cannot be deleted in its current approval state.")
     course.delete()
