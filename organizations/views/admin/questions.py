@@ -17,6 +17,8 @@ def org_question_dashboard(request, slug):
         organization=org,
         is_deleted=False,
     ).order_by("-updated_at")
+    if request.organization_member.role == "staff":
+        questions = questions.filter(created_by=request.user)
     return render(
         request,
         "organizations/admin/questions/dashboard.html",
