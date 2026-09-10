@@ -4,7 +4,7 @@
 
 **Goal:** Let Staff/Teacher members operate their organization by creating questions, exams, and courses, managing students, and assigning/revoking resources, while restricting edits/deletes of content to content they personally created.
 
-**Architecture:** Keep organization authorization centralized in `organizations/permissions.py`. Reuse the existing organization-scoped admin views and assignment service, adding object-level creator checks for Staff/Teacher mutations and preserving Owner/Admin organization-wide mutation rights. Add `created_by` to `Exam` because exams currently do not record their creator.
+**Architecture:** Keep role and membership authorization centralized in `organizations/permissions.py`. Put the reusable content-ownership rule in `organizations/services/content_permissions.py` so it can remain generic while staying close to resource business rules. Reuse the existing organization-scoped admin views and assignment service, preserving Owner/Admin organization-wide mutation rights.
 
 **Tech Stack:** Django, Django ORM, Django TestCase, MySQL CI, GitHub Actions.
 
@@ -18,6 +18,7 @@
 - Owner/Admin retain organization-wide content mutation rights.
 - Staff/Teacher may add/remove students and assign/revoke organization resources.
 - Staff/Teacher may not manage organization settings, billing, or Owner/Admin roles.
+- Staff/Teacher may not add, remove, promote, or demote other Staff/Teacher members.
 - Cross-organization object access must remain denied.
 - Platform-owned resources may remain attachable where existing business rules permit.
 
@@ -27,156 +28,88 @@
 
 **Files:**
 - Modify: `organizations/test_security_authorization.py`
+- Create: `organizations/test_staff_content_creation.py`
 
 **Interfaces:**
-- Consumes: existing organization membership, `Course`, `Question`, `Exam`, and organization admin URLs.
-- Produces: failing tests covering Staff/Teacher create access, creator-only mutation, student denial, and cross-organization protection.
+- Consumes: existing organization membership, content models, forms, and organization admin URLs.
+- Produces: tests covering Staff/Teacher page access, creator-only mutation, student management, and content creation ownership.
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
-Add tests that authenticate a Staff/Teacher member and assert:
-- Staff can GET question/exam/course management pages and create endpoints.
-- Staff can POST a new question and the saved question has `created_by=staff`.
-- Staff can POST a new exam and the saved exam has `created_by=staff`.
-- Staff can POST a new course and the saved course has `created_by=staff`.
-- Staff can edit/delete their own question, exam, and course.
-- Staff receives 404/403 and cannot mutate another member's organization content.
-- Student cannot access these operational endpoints.
-- Staff can add/remove a student through the existing student endpoints.
-- Staff can access assignment list/create/revoke endpoints while students cannot.
+Added Staff/Teacher endpoint, ownership, deletion, student-management, and content-creation tests before the corresponding implementation was complete.
 
-Use the repository's existing forms and URL names instead of bypassing views. For POST tests, provide the minimum valid form fields required by the current models/forms.
+- [x] **Step 2: Verify the tests target the intended boundaries**
 
-- [ ] **Step 2: Run the focused tests and verify RED**
-
-Run the organization authorization test module in CI-compatible form. Expected failures should identify missing Staff authorization and missing `Exam.created_by`, not unrelated setup errors.
-
-- [ ] **Step 3: Commit the failing tests**
-
-```bash
-git add organizations/test_security_authorization.py
-git commit -m "test: cover staff teacher organization operations"
-```
+The tests assert active organization membership, Staff/Teacher access, creator ownership, Student denial, and protection against Staff role escalation.
 
 ### Task 2: Add exam creator ownership tracking
 
 **Files:**
 - Modify: `quiz/models/exam.py`
-- Create: `quiz/migrations/<next_migration>_exam_created_by.py`
+- Create: `quiz/migrations/0010_exam_created_by.py`
 
 **Interfaces:**
 - Consumes: Django `AUTH_USER_MODEL`.
 - Produces: nullable `Exam.created_by` relation with reverse name `exams_created`.
 
-- [ ] **Step 1: Extend the failing tests to assert exam ownership**
+- [x] **Step 1: Add the model field**
 
-The Staff exam-create test must assert the created exam records the authenticated creator.
+Added a nullable `SET_NULL` foreign key to the authenticated user model.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Add the migration**
 
-Expected failure: `Exam` has no `created_by` field.
+Added `quiz/migrations/0010_exam_created_by.py`, depending on `0009_mysql_safe_active_uniqueness`.
 
-- [ ] **Step 3: Add the model field**
+- [x] **Step 3: Record the creator during organization exam creation**
 
-Add a nullable `SET_NULL` foreign key to `settings.AUTH_USER_MODEL`, matching the existing Question/Course ownership pattern:
+The organization exam-create view sets `exam.created_by = request.user` before saving.
 
-```python
-created_by = models.ForeignKey(
-    settings.AUTH_USER_MODEL,
-    on_delete=models.SET_NULL,
-    null=True,
-    blank=True,
-    related_name="exams_created",
-)
-```
-
-- [ ] **Step 4: Add the migration**
-
-Create the next Quiz migration adding `created_by` to `Exam`, preserving existing rows by allowing null.
-
-- [ ] **Step 5: Run the focused test and verify GREEN for ownership**
-
-The exam creation test must now save the creator correctly.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add quiz/models/exam.py quiz/migrations/<next_migration>.py
-git commit -m "feat: track exam creator"
-```
-
-### Task 3: Add reusable creator-aware organization permission helpers
+### Task 3: Add creator-aware content authorization
 
 **Files:**
-- Modify: `organizations/permissions.py`
+- Create: `organizations/services/content_permissions.py`
 - Modify: `organizations/test_security_authorization.py`
 
 **Interfaces:**
-- Consumes: active organization membership and model instances.
-- Produces: a helper/decorator that allows Owner/Admin to mutate any organization resource and Staff/Teacher only their own resource.
+- Consumes: active organization membership and a resource with `organization_id` and optional `created_by_id`.
+- Produces: `user_can_manage_owned_content(user, organization, resource)`.
 
-- [ ] **Step 1: Add a focused failing authorization test**
+- [x] **Step 1: Define the policy test**
 
-Cover the exact policy boundary: Owner/Admin can mutate another user's organization content; Staff can mutate only content where `created_by_id == request.user.id`; Student is denied.
+Staff may mutate only their own organization content; Owner/Admin may mutate organization content regardless of creator; Students and cross-organization resources are denied.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Implement the minimal helper**
 
-Run only the new authorization tests and confirm the Staff ownership case fails before the helper exists.
+The helper requires an active membership, requires the resource organization to match, grants Owner/Admin access, and otherwise grants only Staff access where `created_by_id` matches the actor.
 
-- [ ] **Step 3: Implement the minimal reusable authorization helper**
-
-Provide an object-level check that first requires an active teaching membership, then permits all Owner/Admin members and permits Staff only when the resource creator matches the authenticated user. Keep the helper independent of any specific content model.
-
-- [ ] **Step 4: Verify GREEN**
-
-Run the focused authorization tests and confirm all role boundaries pass.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add organizations/permissions.py organizations/test_security_authorization.py
-git commit -m "feat: enforce staff creator ownership"
-```
-
-### Task 4: Update questions, exams, and courses views
+### Task 4: Enable Staff/Teacher content management
 
 **Files:**
 - Modify: `organizations/views/admin/questions.py`
 - Modify: `organizations/views/admin/exams.py`
 - Modify: `organizations/views/admin/courses.py`
 - Modify: `organizations/test_security_authorization.py`
+- Modify: `organizations/test_staff_content_creation.py`
 
 **Interfaces:**
-- Consumes: creator-aware authorization from Task 3 and existing forms.
-- Produces: Staff/Teacher create access plus creator-only mutation, with Owner/Admin behavior unchanged.
+- Consumes: `org_teacher_required`, `user_can_manage_owned_content`, and existing forms.
+- Produces: Staff/Teacher create/list access plus creator-only edit/delete/deactivate access.
 
-- [ ] **Step 1: Verify RED for each view family**
+- [x] **Step 1: Enable teaching-role access to content pages**
 
-Run the focused Staff question/exam/course endpoint tests. They must fail because the views currently require `org_admin_required` and exams do not record their creator.
+Question and exam list/create views and course CRUD list/create views use `org_teacher_required`.
 
-- [ ] **Step 2: Change list/create access to teaching membership**
+- [x] **Step 2: Enforce creator ownership on mutations**
 
-Use `org_teacher_required` for the organization content list and create endpoints. On creation, set `created_by=request.user` for Exam, as already done for Question and Course.
+Question, exam, and course edit/delete/deactivate paths retain organization-scoped lookups and call `user_can_manage_owned_content` before mutation.
 
-- [ ] **Step 3: Apply creator ownership to mutations**
+- [x] **Step 3: Scope Staff content lists**
 
-For edit/delete/deactivate endpoints:
-- Keep organization filtering in every lookup.
-- Owner/Admin may mutate any organization-owned resource.
-- Staff may mutate only resources created by themselves.
-- Do not allow Staff to mutate platform-owned or another-organization resources through these URLs.
-- Preserve existing publication/approval safeguards for exams and courses.
+Staff/Teacher question and exam lists are limited to content they created. Course CRUD remains organization-scoped while mutation authorization is creator-scoped.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Preserve existing publication/approval controls**
 
-Run all content authorization tests, including own-resource success and another-creator denial.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add organizations/views/admin/questions.py organizations/views/admin/exams.py organizations/views/admin/courses.py organizations/test_security_authorization.py
-git commit -m "feat: enable staff content management"
-```
+Published exams remain immutable through these organization mutation paths, and courses remain mutable only in their existing draft/changes/rejected states.
 
 ### Task 5: Enable Staff/Teacher student management without role escalation
 
@@ -185,75 +118,47 @@ git commit -m "feat: enable staff content management"
 - Modify: `organizations/test_security_authorization.py`
 
 **Interfaces:**
-- Consumes: `org_teacher_required` and existing membership mutation rules.
-- Produces: Staff can add/remove students and cannot create, promote, demote, or remove Owner/Admin memberships.
+- Consumes: `org_teacher_required` and existing membership/access cleanup behavior.
+- Produces: Staff/Teacher student list/add/remove access without Staff role administration.
 
-- [ ] **Step 1: Add failing Staff add/remove tests**
+- [x] **Step 1: Enable teaching-role access to student list/add/remove**
 
-Authenticate as Staff and assert student add/remove succeeds within the same organization. Assert attempts to add Owner/Admin roles remain rejected.
+Student list, add, and remove views use `org_teacher_required`.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Keep role administration restricted**
 
-The tests should fail because the endpoints currently require `org_admin_required`.
+Role update remains Owner/Admin-only. Staff may add students only and may remove students only; they cannot create or change Staff memberships.
 
-- [ ] **Step 3: Change add/list/remove authorization to teaching membership**
-
-Use `org_teacher_required` for student listing, add, and remove. Keep role input restricted to Student/Staff and retain the existing guard preventing modification/removal of administrative memberships.
-
-Do not expand Staff into organization settings or administrator-role management.
-
-- [ ] **Step 4: Verify GREEN**
-
-Run focused student authorization tests.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add organizations/views/admin/students.py organizations/test_security_authorization.py
-git commit -m "feat: allow staff student management"
-```
-
-### Task 6: Align assignment UI authorization and verify navigation
+### Task 6: Preserve assignment authorization and update navigation
 
 **Files:**
-- Modify: `organizations/views/admin/assignments.py` only if tests expose a gap.
-- Modify: relevant organization workspace/sidebar template only if the existing navigation does not expose the newly permitted operations.
+- Modify: `templates/organizations/member/workspace.html`
+- Modify: `templates/organizations/admin/base.html`
 - Modify: `organizations/test_security_authorization.py`
 
 **Interfaces:**
-- Consumes: existing assignment service, which already validates Staff/Teacher student-management capability.
-- Produces: Staff/Teacher assignment list/create/revoke access without weakening organization or student boundaries.
+- Consumes: existing assignment service and teaching-role views.
+- Produces: Staff/Teacher workspace links to courses, questions, exams, students, and assignments without exposing administrator-only navigation.
 
-- [ ] **Step 1: Add failing endpoint tests for Staff assignment operations**
+- [x] **Step 1: Verify assignment endpoints**
 
-Assert Staff can access assignment list/create/revoke for students/resources in their organization and Student cannot.
+Existing assignment views already use `org_teacher_required`, and the assignment service already validates Staff/Teacher student-management capability.
 
-- [ ] **Step 2: Verify RED or confirm existing behavior**
+- [x] **Step 2: Add Staff/Teacher workspace operation links**
 
-If assignment tests already pass, do not change the service or views unnecessarily. Only change code if an endpoint-level gap is demonstrated.
+The member workspace exposes Courses, Questions, Exams, Students, and Assignments.
 
-- [ ] **Step 3: Update navigation only where needed**
+- [x] **Step 3: Scope admin navigation by role**
 
-Ensure the Staff workspace links to Questions, Exams, Courses, Students, and Assignments. Do not expose settings, billing, or administrative role management.
+Staff/Teacher see operational navigation only. Dashboard, tracks, domains, categories, portfolio, and settings remain administrator-only.
 
-- [ ] **Step 4: Verify GREEN**
-
-Run the focused endpoint tests and existing sidebar/workspace tests.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add organizations/views organizations/templates organizations/test_security_authorization.py
-git commit -m "test: verify staff assignment workspace access"
-```
-
-### Task 7: Full regression and CI verification
+### Task 7: Regression and CI verification
 
 **Files:**
 - Modify: only files required by verified test failures.
 
 **Interfaces:**
-- Consumes: all implementation changes from Tasks 1-6.
+- Consumes: implementation from Tasks 1-6.
 - Produces: verified organization authorization behavior on the feature branch.
 
 - [ ] **Step 1: Run the complete organization test suite**
@@ -266,21 +171,14 @@ python manage.py test organizations -v 2
 
 Expected: all organization tests pass with zero failures/errors.
 
-- [ ] **Step 2: Run the complete project test suite if the repository CI exposes one**
+- [ ] **Step 2: Verify the complete project test suite**
 
-Use the repository's documented test command and resolve only regressions caused by this feature.
+Use the repository's existing full-test workflow and resolve only regressions caused by this feature.
 
-- [ ] **Step 3: Push/verify GitHub Actions**
+- [ ] **Step 3: Review the final diff**
 
-Confirm the organization CI workflow for the feature branch completes successfully.
+Confirm Staff/Teacher cannot mutate another teacher's content, manage administrator roles, access organization settings/billing, or cross organization boundaries.
 
-- [ ] **Step 4: Review the final diff**
+- [ ] **Step 4: Verify GitHub Actions**
 
-Confirm no changes grant Staff/Teacher access to billing, organization settings, Owner/Admin role management, cross-organization resources, or another teacher's content mutation.
-
-- [ ] **Step 5: Commit any final verified fixes**
-
-```bash
-git add .
-git commit -m "test: verify organization staff permissions"
-```
+Confirm the organization test workflow and full test suite complete successfully for the final feature-branch commit.
