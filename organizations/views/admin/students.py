@@ -63,6 +63,11 @@ def org_student_add(request, slug):
         },
     )
 
+    # Staff/teachers cannot change an existing staff membership into a student.
+    if not created and request.organization_member.role == OrganizationRole.STAFF and member.role != OrganizationRole.STUDENT:
+        messages.error(request, "Staff / Teacher members cannot change another staff member's role.")
+        return redirect("organizations_admin:students", slug=slug)
+
     if not created:
         member.role = role
         member.is_active = True
