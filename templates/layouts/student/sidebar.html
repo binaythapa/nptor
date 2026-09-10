@@ -35,15 +35,17 @@
     <p class="menu-label">Account</p>
     <ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'quiz:profile' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-user"></i></span><span class="nav-label">Profile</span></a></li></ul>
     {% endif %}
-    {% if user.is_authenticated and request.active_org and (request.can_manage_organization or request.org_role == 'staff') %}
-    <p class="menu-label">Organization</p>
-    <ul class="menu-list">
-      <li>
-        <a href="{% if not is_from_course %}{% if request.can_manage_organization %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}{% url 'organizations_public:workspace' slug=request.active_org.slug %}{% endif %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
-          <span class="nav-icon"><i class="fa fa-building"></i></span><span class="nav-label">Organization</span>{% if request.can_manage_organization %}<span class="nav-badge info">Manage</span>{% else %}<span class="nav-badge link">Workspace</span>{% endif %}
-        </a>
-      </li>
-    </ul>
+    {% if user.is_authenticated and request.active_org %}
+      {% if request.can_manage_organization or request.org_role == 'staff' %}
+      <p class="menu-label">Organization</p>
+      <ul class="menu-list">
+        <li>
+          <a href="{% if not is_from_course %}{% if request.can_manage_organization %}{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}{% else %}{% url 'organizations_public:workspace' slug=request.active_org.slug %}{% endif %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}" {% if is_from_course %}title="Disabled during course practice" aria-disabled="true" tabindex="-1"{% endif %}>
+            <span class="nav-icon"><i class="fa fa-building"></i></span><span class="nav-label">Organization</span>{% if request.can_manage_organization %}<span class="nav-badge info">Manage</span>{% else %}<span class="nav-badge link">Workspace</span>{% endif %}
+          </a>
+        </li>
+      </ul>
+      {% endif %}
     {% endif %}
     {% if user.is_authenticated %}
     <p class="menu-label">Instructor</p><ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'courses:instructor_dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-chalkboard-teacher"></i></span><span class="nav-label">Course Dashboard</span><span class="nav-badge info">Manage</span></a></li></ul>
