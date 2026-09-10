@@ -39,8 +39,12 @@ def org_student_add(request, slug):
     email = (request.POST.get("email") or "").strip().lower()
     role = request.POST.get("role", OrganizationRole.STUDENT)
 
-    # Never allow this endpoint to create an owner/admin membership.
-    if role not in {OrganizationRole.STUDENT, OrganizationRole.STAFF}:
+    # Staff/teachers may add students only. Owners/admins may also add staff.
+    if request.organization_member.role == OrganizationRole.STAFF:
+        if role != OrganizationRole.STUDENT:
+            messages.error(request, "Staff / Teacher members can add students only.")
+            return redirect("organizations_admin:students", slug=slug)
+    elif role not in {OrganizationRole.STUDENT, OrganizationRole.STAFF}:
         messages.error(request, "Invalid organization role.")
         return redirect("organizations_admin:students", slug=slug)
 
@@ -109,6 +113,10 @@ def org_student_remove(request, slug, member_id):
 
     if member.role in OrganizationRole.administrative_roles():
         messages.error(request, "Cannot remove an organization administrator here.")
+        return redirect("organizations_admin:students", slug=slug)
+
+    if request.organization_member.role == OrganizationRole.STAFF and member.role != OrganizationRole.STUDENT:
+        messages.error(request, "Staff / Teacher members can remove students only.")
         return redirect("organizations_admin:students", slug=slug)
 
     # Removing membership must also revoke organization-granted access.
