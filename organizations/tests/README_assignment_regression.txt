@@ -1,0 +1,1 @@
+Regression coverage is implemented in test_assignment_views_regression.py.
