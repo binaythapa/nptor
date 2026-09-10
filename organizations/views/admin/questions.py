@@ -1,14 +1,16 @@
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.forms import inlineformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
-from organizations.permissions import org_admin_required
+from organizations.permissions import org_teacher_required
+from organizations.services.content_permissions import user_can_manage_owned_content
 from quiz.models import Question, Choice
 from quiz.forms import QuestionForm
 
 
-@org_admin_required
+@org_teacher_required
 def org_question_dashboard(request, slug):
     org = request.organization
     questions = Question.objects.filter(
@@ -31,7 +33,7 @@ ChoiceFormSet = inlineformset_factory(
 )
 
 
-@org_admin_required
+@org_teacher_required
 def org_add_question(request, slug):
     org = request.organization
     if request.method == "POST":
@@ -56,7 +58,12 @@ def org_add_question(request, slug):
     )
 
 
-@org_admin_required
+def _ensure_question_mutation_access(request, question):
+    if not user_can_manage_owned_content(request.user, request.organization, question):
+        raise PermissionDenied("You can only modify questions you created.")
+
+
+@org_teacher_required
 def org_edit_question(request, slug, pk):
     org = request.organization
     question = get_object_or_404(
@@ -65,6 +72,7 @@ def org_edit_question(request, slug, pk):
         organization=org,
         is_deleted=False,
     )
+    _ensure_question_mutation_access(request, question)
     if request.method == "POST":
         form = QuestionForm(
             request.POST,
@@ -90,21 +98,24 @@ def org_edit_question(request, slug, pk):
 
 
 @require_POST
-@org_admin_required
+@org_teacher_required
 def org_question_deactivate(request, slug, pk):
     org = request.organization
     question = get_object_or_404(Question, pk=pk, organization=org)
+    _ensure_question_mutation_access(request, question)
     question.is_deleted = True
-    question.save(update_fields=["is_deleted"])
+    question.deleted_by = request.user
+    question.save(update_fields=["is_deleted", "deleted_by"])
     messages.success(request, "Question deactivated.")
     return redirect("organizations_admin:questions", slug=slug)
 
 
 @require_POST
-@org_admin_required
+@org_teacher_required
 def org_question_delete(request, slug, pk):
     org = request.organization
     question = get_object_or_404(Question, pk=pk, organization=org)
+    _ensure_question_mutation_access(request, question)
     question.delete()
     messages.success(request, "Question deleted permanently.")
     return redirect("organizations_admin:questions", slug=slug)
