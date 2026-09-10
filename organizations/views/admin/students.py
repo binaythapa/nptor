@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from organizations.permissions import org_admin_required
+from organizations.permissions import org_admin_required, org_teacher_required
 from organizations.models.access import ResourceAccess
 from organizations.models.assignment import ResourceAssignment
 from organizations.models.membership import OrganizationMember
@@ -14,7 +14,7 @@ from organizations.models.role import OrganizationRole
 User = get_user_model()
 
 
-@org_admin_required
+@org_teacher_required
 def org_students(request, slug):
     org = request.organization
 
@@ -32,7 +32,7 @@ def org_students(request, slug):
     )
 
 
-@org_admin_required
+@org_teacher_required
 @require_POST
 def org_student_add(request, slug):
     org = request.organization
@@ -96,7 +96,7 @@ def org_student_update_role(request, slug, member_id):
     return redirect("organizations_admin:students", slug=slug)
 
 
-@org_admin_required
+@org_teacher_required
 @require_POST
 def org_student_remove(request, slug, member_id):
     org = request.organization
