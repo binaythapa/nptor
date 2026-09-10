@@ -4,6 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 
 from organizations.permissions import org_teacher_required
+from organizations.models.role import OrganizationRole
 from organizations.services.content_permissions import user_can_manage_owned_content
 from quiz.models import Exam, UserExam
 from quiz.forms import ExamForm
@@ -15,7 +16,10 @@ from quiz.forms import ExamForm
 @org_teacher_required
 def org_exam_list(request, slug):
     """
-    Display all exams belonging to the current organization.
+    Display exams available to the current organization member.
+
+    Staff/teachers see only exams they created. Owners/admins retain the
+    organization-wide view.
     """
 
     org = request.organization
@@ -26,6 +30,8 @@ def org_exam_list(request, slug):
         .select_related("primary_category")
         .order_by("-created_at")
     )
+    if request.organization_member.role == OrganizationRole.STAFF:
+        exams = exams.filter(created_by=request.user)
 
     return render(
         request,
