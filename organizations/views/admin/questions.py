@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
 from organizations.permissions import org_teacher_required
+from organizations.models.role import OrganizationRole
 from organizations.services.content_permissions import user_can_manage_owned_content
 from quiz.models import Question, Choice
 from quiz.forms import QuestionForm
@@ -17,7 +18,7 @@ def org_question_dashboard(request, slug):
         organization=org,
         is_deleted=False,
     ).order_by("-updated_at")
-    if request.organization_member.role == "staff":
+    if request.organization_member.role == OrganizationRole.STAFF:
         questions = questions.filter(created_by=request.user)
     return render(
         request,
@@ -106,8 +107,7 @@ def org_question_deactivate(request, slug, pk):
     question = get_object_or_404(Question, pk=pk, organization=org)
     _ensure_question_mutation_access(request, question)
     question.is_deleted = True
-    question.deleted_by = request.user
-    question.save(update_fields=["is_deleted", "deleted_by"])
+    question.save(update_fields=["is_deleted"])
     messages.success(request, "Question deactivated.")
     return redirect("organizations_admin:questions", slug=slug)
 
