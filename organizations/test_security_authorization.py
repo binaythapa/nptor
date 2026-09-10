@@ -15,6 +15,7 @@ from quiz.models import Exam, ExamTrack
 from subscriptions.models import Subscription, SubscriptionEntitlement, SubscriptionPlan
 from subscriptions.services import AccessService
 from organizations.views.admin.courses import _platform_or_organization_resource
+from organizations.permissions import user_can_manage_owned_content
 
 User = get_user_model()
 
@@ -91,3 +92,107 @@ class OrganizationSecurityBoundaryTests(TestCase):
             resource=course,
         ))
         self.assertIsNotNone(access)
+
+
+class StaffTeacherOrganizationPermissionTests(TestCase):
+    def setUp(self):
+        self.org = Organization.objects.create(
+            name="Teaching School",
+            slug="teaching-school",
+            org_type=Organization.TYPE_SCHOOL,
+            is_active=True,
+        )
+        self.org_other = Organization.objects.create(
+            name="Other School",
+            slug="other-school-content",
+            org_type=Organization.TYPE_SCHOOL,
+            is_active=True,
+        )
+        self.owner = User.objects.create_user(username="teacher-owner", email="teacher-owner@example.com", password="password")
+        self.admin = User.objects.create_user(username="teacher-admin", email="teacher-admin@example.com", password="password")
+        self.staff = User.objects.create_user(username="teacher-staff", email="teacher-staff@example.com", password="password")
+        self.other_staff = User.objects.create_user(username="teacher-other-staff", email="teacher-other-staff@example.com", password="password")
+        self.student = User.objects.create_user(username="teacher-student", email="teacher-student@example.com", password="password")
+        OrganizationMember.objects.create(user=self.owner, organization=self.org, role=OrganizationRole.ORG_OWNER)
+        OrganizationMember.objects.create(user=self.admin, organization=self.org, role=OrganizationRole.ORG_ADMIN)
+        OrganizationMember.objects.create(user=self.staff, organization=self.org, role=OrganizationRole.STAFF)
+        OrganizationMember.objects.create(user=self.other_staff, organization=self.org, role=OrganizationRole.STAFF)
+        OrganizationMember.objects.create(user=self.student, organization=self.org, role=OrganizationRole.STUDENT)
+
+    def test_staff_can_manage_only_content_they_created(self):
+        staff_course = Course.objects.create(
+            title="Staff Course",
+            organization=self.org,
+            owner_type=Course.OWNER_ORGANIZATION,
+            created_by=self.staff,
+        )
+        other_course = Course.objects.create(
+            title="Other Course",
+            organization=self.org,
+            owner_type=Course.OWNER_ORGANIZATION,
+            created_by=self.other_staff,
+        )
+        staff_exam = Exam.objects.create(title="Staff Exam", organization=self.org, duration_seconds=60, created_by=self.staff)
+        other_exam = Exam.objects.create(title="Other Exam", organization=self.org, duration_seconds=60, created_by=self.other_staff)
+
+        self.assertTrue(user_can_manage_owned_content(self.staff, self.org, staff_course))
+        self.assertFalse(user_can_manage_owned_content(self.staff, self.org, other_course))
+        self.assertTrue(user_can_manage_owned_content(self.staff, self.org, staff_exam))
+        self.assertFalse(user_can_manage_owned_content(self.staff, self.org, other_exam))
+        self.assertTrue(user_can_manage_owned_content(self.owner, self.org, other_course))
+        self.assertTrue(user_can_manage_owned_content(self.admin, self.org, other_exam))
+        self.assertFalse(user_can_manage_owned_content(self.student, self.org, staff_course))
+
+    def test_staff_content_ownership_cannot_cross_organization_boundary(self):
+        course = Course.objects.create(
+            title="Other Organization Course",
+            organization=self.org_other,
+            owner_type=Course.OWNER_ORGANIZATION,
+            created_by=self.staff,
+        )
+        self.assertFalse(user_can_manage_owned_content(self.staff, self.org, course))
+
+    def test_staff_can_open_operational_create_and_management_pages(self):
+        self.client.force_login(self.staff)
+        for name in (
+            "organizations_admin:questions",
+            "organizations_admin:question_add",
+            "organizations_admin:exams",
+            "organizations_admin:exam_create",
+            "organizations_admin:org_course_list",
+            "organizations_admin:org_course_create",
+            "organizations_admin:students",
+            "organizations_admin:assignments",
+            "organizations_admin:assignment_create",
+        ):
+            with self.subTest(name=name):
+                response = self.client.get(
+                    self._url(name),
+                )
+                self.assertEqual(response.status_code, 200)
+
+    def test_student_cannot_open_staff_operational_pages(self):
+        self.client.force_login(self.student)
+        for name in (
+            "organizations_admin:questions",
+            "organizations_admin:question_add",
+            "organizations_admin:exams",
+            "organizations_admin:exam_create",
+            "organizations_admin:org_course_list",
+            "organizations_admin:org_course_create",
+            "organizations_admin:students",
+            "organizations_admin:assignments",
+            "organizations_admin:assignment_create",
+        ):
+            with self.subTest(name=name):
+                response = self.client.get(self._url(name))
+                self.assertEqual(response.status_code, 403)
+
+    def test_staff_cannot_manage_organization_settings(self):
+        self.client.force_login(self.staff)
+        response = self.client.get(self._url("organizations_admin:settings"))
+        self.assertEqual(response.status_code, 403)
+
+    def _url(self, name):
+        from django.urls import reverse
+        return reverse(name, kwargs={"slug": self.org.slug})
