@@ -8,3 +8,5 @@ from .portal import OrganizationPortalConfig
 from .domain import OrganizationDomain
 from .portfolio import OrganizationPortfolioSection
 from .audit import OrganizationAuditLog
+from .student import OrganizationStudent, Guardian, StudentGuardian
+from .academic import AcademicYear, OrganizationClass, ClassSection, StudentEnrollment, ClassTeacher
