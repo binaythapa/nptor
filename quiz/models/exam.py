@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -126,6 +127,14 @@ class Exam(models.Model):
 
     updated_at = models.DateTimeField(
         auto_now=True,
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="exams_created",
     )
 
     # =========================================================

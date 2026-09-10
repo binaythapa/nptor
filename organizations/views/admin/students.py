@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from organizations.permissions import org_admin_required
+from organizations.permissions import org_admin_required, org_teacher_required
 from organizations.models.access import ResourceAccess
 from organizations.models.assignment import ResourceAssignment
 from organizations.models.membership import OrganizationMember
@@ -14,7 +14,7 @@ from organizations.models.role import OrganizationRole
 User = get_user_model()
 
 
-@org_admin_required
+@org_teacher_required
 def org_students(request, slug):
     org = request.organization
 
@@ -32,15 +32,19 @@ def org_students(request, slug):
     )
 
 
-@org_admin_required
+@org_teacher_required
 @require_POST
 def org_student_add(request, slug):
     org = request.organization
     email = (request.POST.get("email") or "").strip().lower()
     role = request.POST.get("role", OrganizationRole.STUDENT)
 
-    # Never allow this endpoint to create an owner/admin membership.
-    if role not in {OrganizationRole.STUDENT, OrganizationRole.STAFF}:
+    # Staff/teachers may add students only. Owners/admins may also add staff.
+    if request.organization_member.role == OrganizationRole.STAFF:
+        if role != OrganizationRole.STUDENT:
+            messages.error(request, "Staff / Teacher members can add students only.")
+            return redirect("organizations_admin:students", slug=slug)
+    elif role not in {OrganizationRole.STUDENT, OrganizationRole.STAFF}:
         messages.error(request, "Invalid organization role.")
         return redirect("organizations_admin:students", slug=slug)
 
@@ -58,6 +62,11 @@ def org_student_add(request, slug):
             "is_active": True,
         },
     )
+
+    # Staff/teachers cannot change an existing staff membership into a student.
+    if not created and request.organization_member.role == OrganizationRole.STAFF and member.role != OrganizationRole.STUDENT:
+        messages.error(request, "Staff / Teacher members cannot change another staff member's role.")
+        return redirect("organizations_admin:students", slug=slug)
 
     if not created:
         member.role = role
@@ -96,7 +105,7 @@ def org_student_update_role(request, slug, member_id):
     return redirect("organizations_admin:students", slug=slug)
 
 
-@org_admin_required
+@org_teacher_required
 @require_POST
 def org_student_remove(request, slug, member_id):
     org = request.organization
@@ -109,6 +118,10 @@ def org_student_remove(request, slug, member_id):
 
     if member.role in OrganizationRole.administrative_roles():
         messages.error(request, "Cannot remove an organization administrator here.")
+        return redirect("organizations_admin:students", slug=slug)
+
+    if request.organization_member.role == OrganizationRole.STAFF and member.role != OrganizationRole.STUDENT:
+        messages.error(request, "Staff / Teacher members can remove students only.")
         return redirect("organizations_admin:students", slug=slug)
 
     # Removing membership must also revoke organization-granted access.
