@@ -11,7 +11,7 @@ from organizations.models.membership import OrganizationMember
 from organizations.models.organization import Organization
 from organizations.models.role import OrganizationRole
 from organizations.services.assignments import assign_resource, StudentNotInOrganizationError
-from quiz.models import Exam, ExamTrack
+from quiz.models import Exam, ExamTrack, Question
 from subscriptions.models import Subscription, SubscriptionEntitlement, SubscriptionPlan
 from subscriptions.services import AccessService
 from organizations.views.admin.courses import _platform_or_organization_resource
@@ -166,9 +166,7 @@ class StaffTeacherOrganizationPermissionTests(TestCase):
             "organizations_admin:assignment_create",
         ):
             with self.subTest(name=name):
-                response = self.client.get(
-                    self._url(name),
-                )
+                response = self.client.get(self._url(name))
                 self.assertEqual(response.status_code, 200)
 
     def test_student_cannot_open_staff_operational_pages(self):
@@ -188,11 +186,100 @@ class StaffTeacherOrganizationPermissionTests(TestCase):
                 response = self.client.get(self._url(name))
                 self.assertEqual(response.status_code, 403)
 
+    def test_staff_can_edit_only_their_own_content(self):
+        question = Question.objects.create(
+            organization=self.org,
+            created_by=self.staff,
+            text="Staff question",
+            difficulty=Question.EASY,
+            question_type=Question.SINGLE,
+        )
+        other_question = Question.objects.create(
+            organization=self.org,
+            created_by=self.other_staff,
+            text="Other question",
+            difficulty=Question.EASY,
+            question_type=Question.SINGLE,
+        )
+        exam = Exam.objects.create(
+            title="Staff exam",
+            organization=self.org,
+            duration_seconds=60,
+            created_by=self.staff,
+        )
+        other_exam = Exam.objects.create(
+            title="Other exam",
+            organization=self.org,
+            duration_seconds=60,
+            created_by=self.other_staff,
+        )
+        course = Course.objects.create(
+            title="Staff course",
+            description="Course",
+            level="beginner",
+            organization=self.org,
+            owner_type=Course.OWNER_ORGANIZATION,
+            created_by=self.staff,
+        )
+        other_course = Course.objects.create(
+            title="Other course",
+            description="Course",
+            level="beginner",
+            organization=self.org,
+            owner_type=Course.OWNER_ORGANIZATION,
+            created_by=self.other_staff,
+        )
+
+        self.client.force_login(self.staff)
+        own_urls = (
+            self._url("organizations_admin:question_edit", pk=question.pk),
+            self._url("organizations_admin:exam_update", pk=exam.pk),
+            self._url("organizations_admin:org_course_edit", pk=course.pk),
+        )
+        other_urls = (
+            self._url("organizations_admin:question_edit", pk=other_question.pk),
+            self._url("organizations_admin:exam_update", pk=other_exam.pk),
+            self._url("organizations_admin:org_course_edit", pk=other_course.pk),
+        )
+        for url in own_urls:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 200)
+        for url in other_urls:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_staff_can_add_and_remove_students_but_not_admin_roles(self):
+        self.client.force_login(self.staff)
+        new_student = User.objects.create_user(username="new-student", email="new-student@example.com", password="password")
+        add_response = self.client.post(
+            self._url("organizations_admin:student_add"),
+            {"email": new_student.email, "role": OrganizationRole.STUDENT},
+        )
+        self.assertEqual(add_response.status_code, 302)
+        member = OrganizationMember.objects.get(user=new_student, organization=self.org)
+        self.assertEqual(member.role, OrganizationRole.STUDENT)
+
+        remove_response = self.client.post(
+            self._url("organizations_admin:student_remove", member_id=member.id),
+        )
+        self.assertEqual(remove_response.status_code, 302)
+        self.assertFalse(OrganizationMember.objects.filter(id=member.id).exists())
+
+        admin_user = User.objects.create_user(username="new-admin", email="new-admin@example.com", password="password")
+        admin_attempt = self.client.post(
+            self._url("organizations_admin:student_add"),
+            {"email": admin_user.email, "role": OrganizationRole.ORG_ADMIN},
+        )
+        self.assertEqual(admin_attempt.status_code, 302)
+        self.assertFalse(OrganizationMember.objects.filter(user=admin_user, organization=self.org).exists())
+
     def test_staff_cannot_manage_organization_settings(self):
         self.client.force_login(self.staff)
         response = self.client.get(self._url("organizations_admin:settings"))
         self.assertEqual(response.status_code, 403)
 
-    def _url(self, name):
+    def _url(self, name, **extra):
         from django.urls import reverse
-        return reverse(name, kwargs={"slug": self.org.slug})
+        kwargs = {"slug": self.org.slug}
+        kwargs.update(extra)
+        return reverse(name, kwargs=kwargs)
