@@ -17,8 +17,7 @@ class StaffOrganizationWorkspaceTests(TestCase):
             org_type=Organization.TYPE_SCHOOL,
             is_active=True,
         )
-        OrganizationPortalConfig.objects.create(
-            organization=self.organization,
+        OrganizationPortalConfig.objects.filter(organization=self.organization).update(
             is_published=False,
         )
         self.staff = User.objects.create_user(
@@ -26,10 +25,20 @@ class StaffOrganizationWorkspaceTests(TestCase):
             email="teacher@example.com",
             password="password",
         )
+        self.student = User.objects.create_user(
+            username="student",
+            email="student@example.com",
+            password="password",
+        )
         OrganizationMember.objects.create(
             user=self.staff,
             organization=self.organization,
             role=OrganizationRole.STAFF,
+        )
+        OrganizationMember.objects.create(
+            user=self.student,
+            organization=self.organization,
+            role=OrganizationRole.STUDENT,
         )
 
     def test_staff_can_open_organization_workspace_when_public_portal_is_unpublished(self):
@@ -39,3 +48,9 @@ class StaffOrganizationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Organization Workspace")
         self.assertContains(response, "Test School")
+
+    def test_student_cannot_open_staff_organization_workspace(self):
+        self.client.force_login(self.student)
+        response = self.client.get("/org/test-school/workspace/")
+
+        self.assertEqual(response.status_code, 403)
