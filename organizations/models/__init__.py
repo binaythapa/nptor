@@ -2,6 +2,7 @@ from .organization import Organization
 from .membership import OrganizationMember
 from .role import OrganizationRole
 from .assignment import ResourceAssignment
+from .class_assignment import ClassResourceAssignment
 from .access import ResourceAccess
 from .profile import OrganizationProfile
 from .portal import OrganizationPortalConfig
