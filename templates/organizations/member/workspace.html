@@ -1,0 +1,57 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Organization Workspace · {{ organization.name }}</title>
+  <style>
+    body{margin:0;background:#f6f8fb;color:#1f2937;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .container{width:min(1100px,92%);margin:0 auto}
+    header{background:#fff;border-bottom:1px solid #e5e7eb}
+    .header-inner{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{font-size:1.2rem;font-weight:700}
+    .role{display:inline-block;padding:5px 10px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:.82rem;font-weight:600;text-transform:capitalize}
+    main{padding:42px 0}
+    h1{margin:0 0 8px;font-size:2rem}
+    .intro{margin:0 0 28px;color:#64748b}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:22px;box-shadow:0 4px 18px rgba(15,23,42,.05)}
+    .card h2{margin:0 0 8px;font-size:1.1rem}
+    .card p{margin:0 0 16px;color:#64748b;line-height:1.55}
+    .button{display:inline-block;padding:9px 14px;border-radius:8px;background:#3273dc;color:#fff;text-decoration:none;font-weight:600}
+    .button.secondary{background:#eef2ff;color:#3730a3}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="brand">{{ organization.name }}</div>
+      <span class="role">{{ membership.get_role_display }}</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Organization Workspace</h1>
+    <p class="intro">Your authenticated workspace for teaching and organization-related work.</p>
+
+    <section class="grid" aria-label="Organization workspace tools">
+      <article class="card">
+        <h2>Course Dashboard</h2>
+        <p>Create and manage permitted learning content and courses.</p>
+        <a class="button" href="{% url 'courses:instructor_dashboard' %}">Open Course Dashboard</a>
+      </article>
+
+      <article class="card">
+        <h2>Organization</h2>
+        <p>View your organization context and membership role.</p>
+        {% if membership.is_administrator %}
+          <a class="button secondary" href="{% url 'organizations_admin:dashboard' slug=organization.slug %}">Manage Organization</a>
+        {% else %}
+          <span class="role">{{ membership.get_role_display }}</span>
+        {% endif %}
+      </article>
+    </section>
+  </main>
+</body>
+</html>
