@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from organizations.permissions import org_admin_required, org_teacher_required
+from organizations.models import OrganizationStudent
 from organizations.models.access import ResourceAccess
 from organizations.models.assignment import ResourceAssignment
 from organizations.models.membership import OrganizationMember
@@ -18,12 +19,21 @@ User = get_user_model()
 def org_students(request, slug):
     org = request.organization
 
-    members = (
+    members = list(
         OrganizationMember.objects
         .filter(organization=org)
         .select_related("user")
         .order_by("role", "user__username")
     )
+
+    student_profiles = OrganizationStudent.objects.filter(
+        organization=org,
+        user_id__in=[member.user_id for member in members],
+    ).values_list("user_id", "id")
+    profile_ids = dict(student_profiles)
+
+    for member in members:
+        member.student_profile_id = profile_ids.get(member.user_id)
 
     return render(
         request,
