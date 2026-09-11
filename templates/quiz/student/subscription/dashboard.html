@@ -1,0 +1,209 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}Subscription Control Panel{% endblock %}
+
+{% block head_extra %}
+<style>
+    .subscription-page { max-width: 1400px; margin: 0 auto; }
+    .subscription-page .page-header { margin-bottom: 24px; }
+    .subscription-page .page-subtitle { color: #6b7280; }
+    .subscription-page .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .subscription-page .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+    .subscription-page .field { margin-bottom: 14px; }
+    .subscription-page label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .subscription-page select,
+    .subscription-page input { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 6px; }
+    .subscription-page .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .subscription-page button,
+    .subscription-page .button-link { border: 0; border-radius: 6px; padding: 9px 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+    .subscription-page .primary { background: #2563eb; color: #fff; }
+    .subscription-page .danger { background: #dc2626; color: #fff; }
+    .subscription-page .secondary { background: #f3f4f6; color: #111827; }
+    .subscription-page .info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; }
+    .subscription-page table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .subscription-page th, .subscription-page td { padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: middle; }
+    .subscription-page th { font-size: 12px; text-transform: uppercase; color: #6b7280; }
+    .subscription-page .table-wrap { overflow-x: auto; }
+    .subscription-page .muted { color: #6b7280; }
+    .subscription-page .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 12px; }
+    #subscription-toast { display:none; position:fixed; top:80px; right:25px; z-index:99999; padding:12px 16px; border-radius:7px; background:#111827; color:#fff; }
+    @media (max-width: 800px) { .subscription-page .card-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="subscription-page">
+    {% csrf_token %}
+
+    <div class="page-header">
+        <h2>Subscription Control Panel</h2>
+        <p class="page-subtitle">Manage track access here. Individual exams are not sold; exams are included through courses/tracks or an all-access subscription.</p>
+    </div>
+
+    <div class="card-grid">
+        <div class="card">
+            <h3>Grant Track Access</h3>
+            <p class="muted">Use this for a manual track entitlement.</p>
+            <div class="field">
+                <label for="track_user">User</label>
+                <select id="track_user">
+                    {% for u in users %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="track_id">Track</label>
+                <select id="track_id">
+                    {% for t in tracks %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="actions">
+                <button type="button" class="primary" onclick="adminSubscribeTrack()">Grant Track Access</button>
+                <button type="button" class="danger" onclick="adminRevokeTrack()">Revoke Track Access</button>
+            </div>
+        </div>
+
+        <div class="card info">
+            <h3>Website-wide All-Access</h3>
+            <p>Monthly/yearly all-access plans are handled as payments and entitlements. This gives the user access to the complete paid catalog while the subscription is active.</p>
+            <a class="button-link secondary" href="{% url 'quiz:admin_payment_list' %}">Open Payments &amp; Manual Payment</a>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+        <h3>Active Track Subscriptions</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>User</th><th>Track</th><th>Status</th><th>Expiry</th><th>Extend</th><th>Action</th></tr></thead>
+                <tbody>
+                {% for s in track_subs %}
+                    {% if s.is_active %}
+                    <tr>
+                        <td>{{ s.user.username }}</td>
+                        <td><strong>{{ s.track.title }}</strong></td>
+                        <td><span class="badge">Active</span></td>
+                        <td>
+                            <input type="datetime-local" value="{% if s.expires_at %}{{ s.expires_at|date:'Y-m-d\\TH:i' }}{% endif %}" onchange="updateTrackExpiry('{{ s.user.id }}','{{ s.track.id }}',this.value)">
+                            {% if s.expires_at %}<small class="muted">{{ s.expires_at|timeuntil }} remaining</small>{% else %}<small class="muted">Lifetime</small>{% endif %}
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button type="button" class="secondary" onclick="quickAddDays('{{ s.user.id }}','{{ s.track.id }}',7)">+7</button>
+                                <button type="button" class="secondary" onclick="quickAddDays('{{ s.user.id }}','{{ s.track.id }}',30)">+30</button>
+                            </div>
+                        </td>
+                        <td><button type="button" class="danger" onclick="revokeTrackRow('{{ s.user.id }}','{{ s.track.id }}',this)">Revoke</button></td>
+                    </tr>
+                    {% endif %}
+                {% empty %}
+                    <tr><td colspan="6" class="muted">No track subscriptions found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+        <h3>Subscription History</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>User</th><th>Plan</th><th>Status</th><th>Starts</th><th>Expires</th></tr></thead>
+                <tbody>
+                {% for s in subscriptions %}
+                    <tr>
+                        <td>{{ s.user.username }}</td>
+                        <td>{{ s.plan.name|default:'—' }}</td>
+                        <td>{{ s.get_status_display }}</td>
+                        <td>{{ s.starts_at }}</td>
+                        <td>{% if s.expires_at %}{{ s.expires_at }}{% else %}Lifetime{% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="muted">No subscriptions found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="subscription-toast"></div>
+
+<script>
+function csrfToken() {
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : '';
+}
+
+async function postRequest(url, data) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        body: new URLSearchParams(data)
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.success === false) {
+        throw new Error(payload.error || 'Request failed');
+    }
+    return payload;
+}
+
+function toast(message) {
+    const el = document.getElementById('subscription-toast');
+    el.textContent = message;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+async function adminSubscribeTrack() {
+    try {
+        await postRequest("{% url 'quiz:admin_subscribe_track' %}", {
+            user_id: document.getElementById('track_user').value,
+            track_id: document.getElementById('track_id').value
+        });
+        toast('Track access granted.');
+        location.reload();
+    } catch (error) { toast(error.message); }
+}
+
+async function adminRevokeTrack() {
+    try {
+        await postRequest("{% url 'quiz:admin_revoke_track' %}", {
+            user_id: document.getElementById('track_user').value,
+            track_id: document.getElementById('track_id').value
+        });
+        toast('Track access revoked.');
+        location.reload();
+    } catch (error) { toast(error.message); }
+}
+
+async function revokeTrackRow(userId, trackId, button) {
+    try {
+        await postRequest("{% url 'quiz:admin_revoke_track' %}", { user_id: userId, track_id: trackId });
+        button.closest('tr').remove();
+        toast('Track access revoked.');
+    } catch (error) { toast(error.message); }
+}
+
+async function updateTrackExpiry(userId, trackId, expiresAt) {
+    try {
+        await postRequest("{% url 'quiz:admin_update_track_expiry' %}", {
+            user_id: userId, track_id: trackId, expires_at: expiresAt
+        });
+        toast('Expiry updated.');
+    } catch (error) { toast(error.message); }
+}
+
+async function quickAddDays(userId, trackId, days) {
+    try {
+        await postRequest("{% url 'quiz:admin_add_track_days' %}", {
+            user_id: userId, item_id: trackId, days: days
+        });
+        toast('Subscription extended.');
+        location.reload();
+    } catch (error) { toast(error.message); }
+}
+</script>
+{% endblock %}
