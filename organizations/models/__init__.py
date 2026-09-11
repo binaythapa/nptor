@@ -11,3 +11,4 @@ from .portfolio import OrganizationPortfolioSection
 from .audit import OrganizationAuditLog
 from .student import OrganizationStudent, Guardian, StudentGuardian
 from .academic import AcademicYear, OrganizationClass, ClassSection, StudentEnrollment, ClassTeacher
+from .access_request import OrganizationAccessRequest
