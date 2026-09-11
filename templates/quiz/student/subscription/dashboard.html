@@ -1,1481 +1,209 @@
 {% extends "layouts/admin/base_admin.html" %}
 
-{% block title %}
-    Subscription Control Panel
-{% endblock %}
-
+{% block title %}Subscription Control Panel{% endblock %}
 
 {% block head_extra %}
-
-<!-- ============================================================
-     BULMA
-     Loaded ONLY for this page
-     ============================================================ -->
-
-<link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
->
-
 <style>
-
-/* ============================================================
-   SUBSCRIPTION PAGE
-   ============================================================ */
-
-.subscription-page {
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-
-/* ============================================================
-   HEADER
-   ============================================================ */
-
-.subscription-page .page-header {
-    margin-bottom: 30px;
-}
-
-.subscription-page .page-header h2 {
-    margin-bottom: 8px;
-}
-
-.subscription-page .page-subtitle {
-    color: #6b7280;
-    font-size: 15px;
-}
-
-
-/* ============================================================
-   ADMIN CONTROL CARDS
-   ============================================================ */
-
-.subscription-page .subscription-card {
-    height: 100%;
-}
-
-.subscription-page .subscription-card .box {
-    height: 100%;
-}
-
-.subscription-page .subscription-card-title {
-    margin-bottom: 18px !important;
-}
-
-
-/* ============================================================
-   FORM CONTROLS
-   ============================================================ */
-
-.subscription-page .field {
-    margin-bottom: 14px;
-}
-
-.subscription-page select {
-    cursor: pointer;
-}
-
-
-/* ============================================================
-   BUTTON GROUP
-   ============================================================ */
-
-.subscription-page .action-buttons {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-
-/* ============================================================
-   TABLE
-   ============================================================ */
-
-.subscription-page .table-container {
-    width: 100%;
-    overflow-x: auto;
-    border-radius: 8px;
-}
-
-.subscription-page .subscription-table {
-    width: 100%;
-    min-width: 1050px;
-}
-
-.subscription-page .subscription-table th {
-    white-space: nowrap;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: #4b5563;
-    vertical-align: middle;
-}
-
-.subscription-page .subscription-table td {
-    vertical-align: middle;
-    white-space: nowrap;
-}
-
-.subscription-page .subscription-table .expiry-input {
-    min-width: 190px;
-}
-
-
-/* ============================================================
-   EMPTY STATE
-   ============================================================ */
-
-.subscription-page .empty-state {
-    text-align: center;
-    padding: 35px 20px;
-    color: #6b7280;
-}
-
-
-/* ============================================================
-   EXPIRED
-   ============================================================ */
-
-.subscription-page .expired-row {
-    background: #fff5f5 !important;
-}
-
-.subscription-page .expired-row:hover {
-    background: #feecec !important;
-}
-
-
-/* ============================================================
-   TOAST
-   ============================================================ */
-
-#subscription-toast {
-    display: none;
-
-    position: fixed;
-    top: 80px;
-    right: 25px;
-
-    min-width: 280px;
-    max-width: 420px;
-
-    z-index: 99999;
-
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-
-/* ============================================================
-   SECTION
-   ============================================================ */
-
-.subscription-page .section-title {
-    margin-top: 25px;
-    margin-bottom: 15px;
-}
-
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-
-@media screen and (max-width: 768px) {
-
-    .subscription-page .columns {
-        display: block;
-    }
-
-    .subscription-page .column {
-        margin-bottom: 20px;
-    }
-
-    .subscription-page .page-header h2 {
-        font-size: 24px;
-    }
-
-    #subscription-toast {
-        left: 15px;
-        right: 15px;
-        min-width: auto;
-    }
-}
-
+    .subscription-page { max-width: 1400px; margin: 0 auto; }
+    .subscription-page .page-header { margin-bottom: 24px; }
+    .subscription-page .page-subtitle { color: #6b7280; }
+    .subscription-page .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .subscription-page .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+    .subscription-page .field { margin-bottom: 14px; }
+    .subscription-page label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .subscription-page select,
+    .subscription-page input { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 6px; }
+    .subscription-page .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .subscription-page button,
+    .subscription-page .button-link { border: 0; border-radius: 6px; padding: 9px 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+    .subscription-page .primary { background: #2563eb; color: #fff; }
+    .subscription-page .danger { background: #dc2626; color: #fff; }
+    .subscription-page .secondary { background: #f3f4f6; color: #111827; }
+    .subscription-page .info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; }
+    .subscription-page table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .subscription-page th, .subscription-page td { padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: middle; }
+    .subscription-page th { font-size: 12px; text-transform: uppercase; color: #6b7280; }
+    .subscription-page .table-wrap { overflow-x: auto; }
+    .subscription-page .muted { color: #6b7280; }
+    .subscription-page .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 12px; }
+    #subscription-toast { display:none; position:fixed; top:80px; right:25px; z-index:99999; padding:12px 16px; border-radius:7px; background:#111827; color:#fff; }
+    @media (max-width: 800px) { .subscription-page .card-grid { grid-template-columns: 1fr; } }
 </style>
-
 {% endblock %}
 
-
 {% block content %}
-
 <div class="subscription-page">
-
-    <!-- ========================================================
-         PAGE HEADER
-         ======================================================== -->
-
-    <div class="page-header">
-
-        <h2 class="title is-4">
-            🎛 Subscription Control Panel
-        </h2>
-
-        <p class="page-subtitle">
-            Manage pricing models, subscriptions & coupons from one place
-        </p>
-
-    </div>
-
-
-    <!-- ========================================================
-         CSRF
-         ======================================================== -->
-
     {% csrf_token %}
 
+    <div class="page-header">
+        <h2>Subscription Control Panel</h2>
+        <p class="page-subtitle">Manage track access here. Individual exams are not sold; exams are included through courses/tracks or an all-access subscription.</p>
+    </div>
 
-    <!-- ========================================================
-         TOAST
-         ======================================================== -->
-
-    <div
-        id="subscription-toast"
-        class="notification is-success is-light"
-    ></div>
-
-
-    <!-- ========================================================
-         ADMIN USER CONTROL
-         ======================================================== -->
-
-    <h3 class="title is-5 section-title">
-        👤 User Subscriptions (Admin)
-    </h3>
-
-
-    <div class="columns is-variable is-5">
-
-
-        <!-- ====================================================
-             EXAM SUBSCRIPTION
-             ==================================================== -->
-
-        <div class="column is-6">
-
-            <div class="subscription-card">
-
-                <div class="box">
-
-                    <h4 class="title is-6 subscription-card-title">
-                        📘 Exam Subscription
-                    </h4>
-
-
-                    <!-- USER -->
-
-                    <div class="field">
-
-                        <label class="label">
-                            User
-                        </label>
-
-                        <div class="control">
-
-                            <div class="select is-fullwidth">
-
-                                <select id="exam_user">
-
-                                    {% for u in users %}
-
-                                    <option value="{{ u.id }}">
-                                        {{ u.username }}
-                                    </option>
-
-                                    {% endfor %}
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- EXAM -->
-
-                    <div class="field">
-
-                        <label class="label">
-                            Exam
-                        </label>
-
-                        <div class="control">
-
-                            <div class="select is-fullwidth">
-
-                                <select id="exam_id">
-
-                                    {% for e in exams %}
-
-                                    <option value="{{ e.id }}">
-                                        {{ e.title }}
-                                    </option>
-
-                                    {% endfor %}
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- BUTTONS -->
-
-                    <div class="action-buttons">
-
-                        <button
-                            type="button"
-                            class="button is-success"
-                            onclick="adminSubscribeExam()"
-                        >
-                            Subscribe
-                        </button>
-
-                        <button
-                            type="button"
-                            class="button is-danger"
-                            onclick="adminRevokeExam()"
-                        >
-                            Revoke
-                        </button>
-
-                    </div>
-
-                </div>
-
+    <div class="card-grid">
+        <div class="card">
+            <h3>Grant Track Access</h3>
+            <p class="muted">Use this for a manual track entitlement.</p>
+            <div class="field">
+                <label for="track_user">User</label>
+                <select id="track_user">
+                    {% for u in users %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}
+                </select>
             </div>
-
+            <div class="field">
+                <label for="track_id">Track</label>
+                <select id="track_id">
+                    {% for t in tracks %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="actions">
+                <button type="button" class="primary" onclick="adminSubscribeTrack()">Grant Track Access</button>
+                <button type="button" class="danger" onclick="adminRevokeTrack()">Revoke Track Access</button>
+            </div>
         </div>
 
-
-        <!-- ====================================================
-             TRACK SUBSCRIPTION
-             ==================================================== -->
-
-        <div class="column is-6">
-
-            <div class="subscription-card">
-
-                <div class="box">
-
-                    <h4 class="title is-6 subscription-card-title">
-                        📚 Track Subscription
-                    </h4>
-
-
-                    <!-- USER -->
-
-                    <div class="field">
-
-                        <label class="label">
-                            User
-                        </label>
-
-                        <div class="control">
-
-                            <div class="select is-fullwidth">
-
-                                <select id="track_user">
-
-                                    {% for u in users %}
-
-                                    <option value="{{ u.id }}">
-                                        {{ u.username }}
-                                    </option>
-
-                                    {% endfor %}
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- TRACK -->
-
-                    <div class="field">
-
-                        <label class="label">
-                            Track
-                        </label>
-
-                        <div class="control">
-
-                            <div class="select is-fullwidth">
-
-                                <select id="track_id">
-
-                                    {% for t in tracks %}
-
-                                    <option value="{{ t.id }}">
-                                        {{ t.title }}
-                                    </option>
-
-                                    {% endfor %}
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- BUTTONS -->
-
-                    <div class="action-buttons">
-
-                        <button
-                            type="button"
-                            class="button is-success"
-                            onclick="adminSubscribeTrack()"
-                        >
-                            Subscribe
-                        </button>
-
-                        <button
-                            type="button"
-                            class="button is-danger"
-                            onclick="adminRevokeTrack()"
-                        >
-                            Revoke
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+        <div class="card info">
+            <h3>Website-wide All-Access</h3>
+            <p>Monthly/yearly all-access plans are handled as payments and entitlements. This gives the user access to the complete paid catalog while the subscription is active.</p>
+            <a class="button-link secondary" href="{% url 'quiz:admin_payment_list' %}">Open Payments &amp; Manual Payment</a>
         </div>
-
     </div>
 
-
-    <hr>
-
-
-    <!-- ========================================================
-         ACTIVE SUBSCRIPTIONS
-         ======================================================== -->
-
-    <h3 class="title is-5 section-title">
-        🟢 Active Subscriptions
-    </h3>
-
-
-    <div class="table-container">
-
-        <table class="table is-fullwidth is-striped is-hoverable subscription-table">
-
-            <thead>
-
-                <tr>
-
-                    <th>User</th>
-                    <th>Item</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Granted By</th>
-                    <th>Expiry</th>
-                    <th>Remaining</th>
-                    <th>Extend</th>
-                    <th>Action</th>
-
-                </tr>
-
-            </thead>
-
-
-            <tbody>
-
-
-                <!-- ==================================================
-                     ACTIVE EXAMS
-                     ================================================== -->
-
-                {% for s in exam_subs %}
-
-                    {% if s.is_active %}
-
-                        {% if not s.expires_at or s.expires_at > now %}
-
-                        <tr>
-
-                            <td>
-                                {{ s.user.username }}
-                            </td>
-
-
-                            <td>
-                                <strong>
-                                    {{ s.exam.title }}
-                                </strong>
-                            </td>
-
-
-                            <td>
-                                <span class="tag is-link is-light">
-                                    Exam
-                                </span>
-                            </td>
-
-
-                            <td>
-                                <span class="tag is-success">
-                                    Active
-                                </span>
-                            </td>
-
-
-                            <td>
-
-                                {% if s.subscribed_by_admin %}
-
-                                    <span class="tag is-info">
-                                        Admin
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="tag is-light">
-                                        User
-                                    </span>
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
-
-                                <input
-                                    type="datetime-local"
-                                    class="input is-small expiry-input"
-                                    value="{% if s.expires_at %}{{ s.expires_at|date:'Y-m-d\\TH:i' }}{% endif %}"
-                                    onchange="updateExamExpiry(
-                                        '{{ s.user.id }}',
-                                        '{{ s.exam.id }}',
-                                        this.value
-                                    )"
-                                >
-
-                            </td>
-
-
-                            <td>
-
-                                {% if s.expires_at %}
-
-                                    <span class="tag is-warning">
-                                        {{ s.expires_at|timeuntil }}
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="tag is-success">
-                                        ∞ Lifetime
-                                    </span>
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
-
-                                <div class="buttons are-small">
-
-                                    <button
-                                        type="button"
-                                        class="button"
-                                        onclick="quickAddDays(
-                                            'exam',
-                                            '{{ s.user.id }}',
-                                            '{{ s.exam.id }}',
-                                            7
-                                        )"
-                                    >
-                                        +7
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="button"
-                                        onclick="quickAddDays(
-                                            'exam',
-                                            '{{ s.user.id }}',
-                                            '{{ s.exam.id }}',
-                                            30
-                                        )"
-                                    >
-                                        +30
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-
-                            <td>
-
-                                <button
-                                    type="button"
-                                    class="button is-danger is-small"
-                                    onclick="revokeExamRow(
-                                        '{{ s.user.id }}',
-                                        '{{ s.exam.id }}',
-                                        this
-                                    )"
-                                >
-                                    Revoke
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                        {% endif %}
-
-                    {% endif %}
-
-                {% empty %}
-
-                    <tr>
-
-                        <td
-                            colspan="9"
-                            class="empty-state"
-                        >
-                            No exam subscriptions found.
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-
-                <!-- ==================================================
-                     ACTIVE TRACKS
-                     ================================================== -->
-
+    <div class="card" style="margin-top:24px;">
+        <h3>Active Track Subscriptions</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>User</th><th>Track</th><th>Status</th><th>Expiry</th><th>Extend</th><th>Action</th></tr></thead>
+                <tbody>
                 {% for s in track_subs %}
-
                     {% if s.is_active %}
-
-                        {% if not s.expires_at or s.expires_at > now %}
-
-                        <tr>
-
-                            <td>
-                                {{ s.user.username }}
-                            </td>
-
-
-                            <td>
-                                <strong>
-                                    {{ s.track.title }}
-                                </strong>
-                            </td>
-
-
-                            <td>
-                                <span class="tag is-primary is-light">
-                                    Track
-                                </span>
-                            </td>
-
-
-                            <td>
-                                <span class="tag is-success">
-                                    Active
-                                </span>
-                            </td>
-
-
-                            <td>
-
-                                {% if s.subscribed_by_admin %}
-
-                                    <span class="tag is-info">
-                                        Admin
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="tag is-light">
-                                        User
-                                    </span>
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
-
-                                <input
-                                    type="datetime-local"
-                                    class="input is-small expiry-input"
-                                    value="{% if s.expires_at %}{{ s.expires_at|date:'Y-m-d\\TH:i' }}{% endif %}"
-                                    onchange="updateTrackExpiry(
-                                        '{{ s.user.id }}',
-                                        '{{ s.track.id }}',
-                                        this.value
-                                    )"
-                                >
-
-                            </td>
-
-
-                            <td>
-
-                                {% if s.expires_at %}
-
-                                    <span class="tag is-warning">
-                                        {{ s.expires_at|timeuntil }}
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="tag is-success">
-                                        ∞ Lifetime
-                                    </span>
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
-
-                                <div class="buttons are-small">
-
-                                    <button
-                                        type="button"
-                                        class="button"
-                                        onclick="quickAddDays(
-                                            'track',
-                                            '{{ s.user.id }}',
-                                            '{{ s.track.id }}',
-                                            7
-                                        )"
-                                    >
-                                        +7
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="button"
-                                        onclick="quickAddDays(
-                                            'track',
-                                            '{{ s.user.id }}',
-                                            '{{ s.track.id }}',
-                                            30
-                                        )"
-                                    >
-                                        +30
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-
-                            <td>
-
-                                <button
-                                    type="button"
-                                    class="button is-danger is-small"
-                                    onclick="revokeTrackRow(
-                                        '{{ s.user.id }}',
-                                        '{{ s.track.id }}',
-                                        this
-                                    )"
-                                >
-                                    Revoke
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                        {% endif %}
-
-                    {% endif %}
-
-                {% empty %}
-
                     <tr>
-
-                        <td
-                            colspan="9"
-                            class="empty-state"
-                        >
-                            No track subscriptions found.
+                        <td>{{ s.user.username }}</td>
+                        <td><strong>{{ s.track.title }}</strong></td>
+                        <td><span class="badge">Active</span></td>
+                        <td>
+                            <input type="datetime-local" value="{% if s.expires_at %}{{ s.expires_at|date:'Y-m-d\\TH:i' }}{% endif %}" onchange="updateTrackExpiry('{{ s.user.id }}','{{ s.track.id }}',this.value)">
+                            {% if s.expires_at %}<small class="muted">{{ s.expires_at|timeuntil }} remaining</small>{% else %}<small class="muted">Lifetime</small>{% endif %}
                         </td>
-
+                        <td>
+                            <div class="actions">
+                                <button type="button" class="secondary" onclick="quickAddDays('{{ s.user.id }}','{{ s.track.id }}',7)">+7</button>
+                                <button type="button" class="secondary" onclick="quickAddDays('{{ s.user.id }}','{{ s.track.id }}',30)">+30</button>
+                            </div>
+                        </td>
+                        <td><button type="button" class="danger" onclick="revokeTrackRow('{{ s.user.id }}','{{ s.track.id }}',this)">Revoke</button></td>
                     </tr>
-
+                    {% endif %}
+                {% empty %}
+                    <tr><td colspan="6" class="muted">No track subscriptions found.</td></tr>
                 {% endfor %}
-
-
-            </tbody>
-
-        </table>
-
+                </tbody>
+            </table>
+        </div>
     </div>
 
-
-    <hr>
-
-
-    <!-- ========================================================
-         REVOKED / EXPIRED
-         ======================================================== -->
-
-    <h3 class="title is-5 section-title">
-        🔴 Revoked / Expired Subscriptions
-    </h3>
-
-
-    <div class="table-container">
-
-        <table class="table is-fullwidth is-striped is-hoverable subscription-table">
-
-            <thead>
-
-                <tr>
-
-                    <th>User</th>
-                    <th>Item</th>
-                    <th>Type</th>
-                    <th>Status</th>
-
-                </tr>
-
-            </thead>
-
-
-            <tbody>
-
-
-                <!-- ==================================================
-                     REVOKED / EXPIRED EXAMS
-                     ================================================== -->
-
-                {% for s in exam_subs %}
-
-                    {% if not s.is_active %}
-
-                    <tr class="expired-row">
-
-                        <td>
-                            {{ s.user.username }}
-                        </td>
-
-                        <td>
-                            {{ s.exam.title }}
-                        </td>
-
-                        <td>
-                            <span class="tag is-link is-light">
-                                Exam
-                            </span>
-                        </td>
-
-                        <td>
-                            <span class="tag is-danger">
-                                Revoked / Expired
-                            </span>
-                        </td>
-
+    <div class="card" style="margin-top:24px;">
+        <h3>Subscription History</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>User</th><th>Plan</th><th>Status</th><th>Starts</th><th>Expires</th></tr></thead>
+                <tbody>
+                {% for s in subscriptions %}
+                    <tr>
+                        <td>{{ s.user.username }}</td>
+                        <td>{{ s.plan.name|default:'—' }}</td>
+                        <td>{{ s.get_status_display }}</td>
+                        <td>{{ s.starts_at }}</td>
+                        <td>{% if s.expires_at %}{{ s.expires_at }}{% else %}Lifetime{% endif %}</td>
                     </tr>
-
-                    {% endif %}
-
+                {% empty %}
+                    <tr><td colspan="5" class="muted">No subscriptions found.</td></tr>
                 {% endfor %}
-
-
-                <!-- ==================================================
-                     REVOKED / EXPIRED TRACKS
-                     ================================================== -->
-
-                {% for s in track_subs %}
-
-                    {% if not s.is_active %}
-
-                    <tr class="expired-row">
-
-                        <td>
-                            {{ s.user.username }}
-                        </td>
-
-                        <td>
-                            {{ s.track.title }}
-                        </td>
-
-                        <td>
-                            <span class="tag is-primary is-light">
-                                Track
-                            </span>
-                        </td>
-
-                        <td>
-                            <span class="tag is-danger">
-                                Revoked / Expired
-                            </span>
-                        </td>
-
-                    </tr>
-
-                    {% endif %}
-
-                {% endfor %}
-
-
-            </tbody>
-
-        </table>
-
+                </tbody>
+            </table>
+        </div>
     </div>
-
 </div>
 
-
-<!-- ============================================================
-     JAVASCRIPT
-     ============================================================ -->
+<div id="subscription-toast"></div>
 
 <script>
+function csrfToken() {
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : '';
+}
 
-(function () {
-
-    "use strict";
-
-
-    /* =========================================================
-       CSRF
-       ========================================================= */
-
-    function csrfToken() {
-
-        const token = document.querySelector(
-            '[name="csrfmiddlewaretoken"]'
-        );
-
-        if (!token) {
-            console.error("CSRF token not found.");
-            return "";
-        }
-
-        return token.value;
+async function postRequest(url, data) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        body: new URLSearchParams(data)
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.success === false) {
+        throw new Error(payload.error || 'Request failed');
     }
-
-
-    /* =========================================================
-       TOAST
-       ========================================================= */
-
-    window.showToast = function (
-        message,
-        type = "is-success"
-    ) {
-
-        const toast = document.getElementById(
-            "subscription-toast"
-        );
-
-        if (!toast) {
-            return;
-        }
-
-        toast.className =
-            "notification " + type;
-
-        toast.innerText = message;
-
-        toast.style.display = "block";
-
-
-        setTimeout(function () {
-
-            toast.style.display = "none";
-
-        }, 2500);
-
-    };
-
-
-    /* =========================================================
-       GENERIC POST
-       ========================================================= */
-
-    async function postRequest(url, data) {
-
-        try {
-
-            const response = await fetch(
-                url,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "X-CSRFToken": csrfToken(),
-                        "Content-Type":
-                            "application/x-www-form-urlencoded"
-                    },
-
-                    body: new URLSearchParams(data)
-                }
-            );
-
-            let payload = {};
-
-            try {
-                payload = await response.json();
-            } catch (parseError) {
-                payload = {};
-            }
-
-            if (!response.ok || payload.success === false) {
-                throw new Error(
-                    payload.error ||
-                    ("HTTP " + response.status)
-                );
-            }
-
-            return true;
-
-        } catch (error) {
-
-            console.error(error);
-
-            showToast(
-                error.message ||
-                "Operation failed. Please try again.",
-                "is-danger"
-            );
-
-            return false;
-
-        }
-
-    }
-
-
-    /* =========================================================
-       ADMIN SUBSCRIBE EXAM
-       ========================================================= */
-
-    window.adminSubscribeExam = async function () {
-
-        const userId =
-            document.getElementById(
-                "exam_user"
-            ).value;
-
-        const examId =
-            document.getElementById(
-                "exam_id"
-            ).value;
-
-
-        const success = await postRequest(
-
-            "{% url 'quiz:admin_subscribe_exam' %}",
-
-            {
-                user_id: userId,
-                exam_id: examId
-            }
-
-        );
-
-
-        if (success) {
-
-            showToast(
-                "Exam subscription activated."
-            );
-
-            setTimeout(
-                () => window.location.reload(),
-                700
-            );
-
-        }
-
-    };
-
-
-    /* =========================================================
-       ADMIN REVOKE EXAM
-       ========================================================= */
-
-    window.adminRevokeExam = async function () {
-
-        const userId =
-            document.getElementById(
-                "exam_user"
-            ).value;
-
-        const examId =
-            document.getElementById(
-                "exam_id"
-            ).value;
-
-
-        const success = await postRequest(
-
-            "{% url 'quiz:admin_revoke_exam' %}",
-
-            {
-                user_id: userId,
-                exam_id: examId
-            }
-
-        );
-
-
-        if (success) {
-
-            showToast(
-                "Exam subscription revoked.",
-                "is-danger"
-            );
-
-            setTimeout(
-                () => window.location.reload(),
-                700
-            );
-
-        }
-
-    };
-
-
-    /* =========================================================
-       ADMIN SUBSCRIBE TRACK
-       ========================================================= */
-
-    window.adminSubscribeTrack = async function () {
-
-        const userId =
-            document.getElementById(
-                "track_user"
-            ).value;
-
-        const trackId =
-            document.getElementById(
-                "track_id"
-            ).value;
-
-
-        const success = await postRequest(
-
-            "{% url 'quiz:admin_subscribe_track' %}",
-
-            {
-                user_id: userId,
-                track_id: trackId
-            }
-
-        );
-
-
-        if (success) {
-
-            showToast(
-                "Track subscription activated."
-            );
-
-            setTimeout(
-                () => window.location.reload(),
-                700
-            );
-
-        }
-
-    };
-
-
-    /* =========================================================
-       ADMIN REVOKE TRACK
-       ========================================================= */
-
-    window.adminRevokeTrack = async function () {
-
-        const userId =
-            document.getElementById(
-                "track_user"
-            ).value;
-
-        const trackId =
-            document.getElementById(
-                "track_id"
-            ).value;
-
-
-        const success = await postRequest(
-
-            "{% url 'quiz:admin_revoke_track' %}",
-
-            {
-                user_id: userId,
-                track_id: trackId
-            }
-
-        );
-
-
-        if (success) {
-
-            showToast(
-                "Track subscription revoked.",
-                "is-danger"
-            );
-
-            setTimeout(
-                () => window.location.reload(),
-                700
-            );
-
-        }
-
-    };
-
-
-    /* =========================================================
-       REVOKE EXAM FROM TABLE
-       ========================================================= */
-
-    window.revokeExamRow = async function (
-        userId,
-        examId,
-        button
-    ) {
-
-        const success = await postRequest(
-
-            "{% url 'quiz:admin_revoke_exam' %}",
-
-            {
-                user_id: userId,
-                exam_id: examId
-            }
-
-        );
-
-
-        if (success) {
-
-            const row =
-                button.closest("tr");
-
-            if (row) {
-                row.remove();
-            }
-
-            showToast(
-                "Exam subscription revoked.",
-                "is-danger"
-            );
-
-        }
-
-    };
-
-
-    /* =========================================================
-       REVOKE TRACK FROM TABLE
-       ========================================================= */
-
-    window.revokeTrackRow = async function (
-        userId,
-        trackId,
-        button
-    ) {
-
-        const success = await postRequest(
-
-            "{% url 'quiz:admin_revoke_track' %}",
-
-            {
-                user_id: userId,
-                track_id: trackId
-            }
-
-        );
-
-
-        if (success) {
-
-            const row =
-                button.closest("tr");
-
-            if (row) {
-                row.remove();
-            }
-
-            showToast(
-                "Track subscription revoked.",
-                "is-danger"
-            );
-
-        }
-
-    };
-
-
-    /* =========================================================
-       UPDATE EXAM EXPIRY
-       ========================================================= */
-
-    window.updateExamExpiry = async function (
-        userId,
-        examId,
-        expiresAt
-    ) {
-
-        const success = await postRequest(
-
-            "{% url 'quiz:admin_update_exam_expiry' %}",
-
-            {
-                user_id: userId,
-                exam_id: examId,
-                expires_at: expiresAt
-            }
-
-        );
-
-
-        if (success) {
-
-            showToast(
-                "Exam expiry updated."
-            );
-
-        }
-
-    };
-
-
-    /* =========================================================
-       UPDATE TRACK EXPIRY
-       ========================================================= */
-
-    window.updateTrackExpiry = async function (
-        userId,
-        trackId,
-        expiresAt
-    ) {
-
-        const success = await postRequest(
-
-            "{% url 'quiz:admin_update_track_expiry' %}",
-
-            {
-                user_id: userId,
-                track_id: trackId,
-                expires_at: expiresAt
-            }
-
-        );
-
-
-        if (success) {
-
-            showToast(
-                "Track expiry updated."
-            );
-
-        }
-
-    };
-
-
-    /* =========================================================
-       QUICK EXTENSION
-       ========================================================= */
-
-    window.quickAddDays = async function (
-        type,
-        userId,
-        itemId,
-        days
-    ) {
-
-        let url;
-
-
-        if (type === "exam") {
-
-            url =
-                "{% url 'quiz:admin_add_exam_days' %}";
-
-        } else {
-
-            url =
-                "{% url 'quiz:admin_add_track_days' %}";
-
-        }
-
-
-        const success = await postRequest(
-
-            url,
-
-            {
-                user_id: userId,
-                item_id: itemId,
-                days: days
-            }
-
-        );
-
-
-        if (success) {
-
-            showToast(
-                "Subscription extended by " +
-                days +
-                " days."
-            );
-
-            setTimeout(
-                () => window.location.reload(),
-                700
-            );
-
-        }
-
-    };
-
-})();
-
+    return payload;
+}
+
+function toast(message) {
+    const el = document.getElementById('subscription-toast');
+    el.textContent = message;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+async function adminSubscribeTrack() {
+    try {
+        await postRequest("{% url 'quiz:admin_subscribe_track' %}", {
+            user_id: document.getElementById('track_user').value,
+            track_id: document.getElementById('track_id').value
+        });
+        toast('Track access granted.');
+        location.reload();
+    } catch (error) { toast(error.message); }
+}
+
+async function adminRevokeTrack() {
+    try {
+        await postRequest("{% url 'quiz:admin_revoke_track' %}", {
+            user_id: document.getElementById('track_user').value,
+            track_id: document.getElementById('track_id').value
+        });
+        toast('Track access revoked.');
+        location.reload();
+    } catch (error) { toast(error.message); }
+}
+
+async function revokeTrackRow(userId, trackId, button) {
+    try {
+        await postRequest("{% url 'quiz:admin_revoke_track' %}", { user_id: userId, track_id: trackId });
+        button.closest('tr').remove();
+        toast('Track access revoked.');
+    } catch (error) { toast(error.message); }
+}
+
+async function updateTrackExpiry(userId, trackId, expiresAt) {
+    try {
+        await postRequest("{% url 'quiz:admin_update_track_expiry' %}", {
+            user_id: userId, track_id: trackId, expires_at: expiresAt
+        });
+        toast('Expiry updated.');
+    } catch (error) { toast(error.message); }
+}
+
+async function quickAddDays(userId, trackId, days) {
+    try {
+        await postRequest("{% url 'quiz:admin_add_track_days' %}", {
+            user_id: userId, item_id: trackId, days: days
+        });
+        toast('Subscription extended.');
+        location.reload();
+    } catch (error) { toast(error.message); }
+}
 </script>
-
 {% endblock %}
