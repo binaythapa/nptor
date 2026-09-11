@@ -17,8 +17,8 @@ class TrackExamForm(forms.ModelForm):
         }
 
     def __init__(self, *args, organization=None, **kwargs):
-        self.organization = organization
         super().__init__(*args, **kwargs)
+        self.organization = organization
         exam_qs = Exam.objects.filter(
             Q(organization=organization) | Q(organization__isnull=True)
         ).order_by("title")
@@ -33,8 +33,13 @@ class BaseTrackExamFormSet(BaseInlineFormSet):
     def __init__(self, *args, organization=None, **kwargs):
         self.organization = organization
         super().__init__(*args, **kwargs)
+        exam_qs = Exam.objects.filter(
+            Q(organization=organization) | Q(organization__isnull=True)
+        ).order_by("title")
         for form in self.forms:
             form.organization = organization
+            form.fields["exam"].queryset = exam_qs
+            form.fields["prerequisite_exams"].queryset = exam_qs
 
     def clean(self):
         super().clean()
@@ -61,9 +66,7 @@ class BaseTrackExamFormSet(BaseInlineFormSet):
             prerequisite_ids = {item.pk for item in prerequisites}
             invalid = prerequisite_ids - allowed_ids
             if invalid:
-                raise ValidationError(
-                    "Every prerequisite must also be included in this track."
-                )
+                raise ValidationError("Every prerequisite must also be included in this track.")
             if exam.pk in prerequisite_ids:
                 raise ValidationError("An exam cannot be its own prerequisite.")
             graph[exam.pk] = prerequisite_ids
@@ -84,9 +87,7 @@ class BaseTrackExamFormSet(BaseInlineFormSet):
             return False
 
         if any(visit(node) for node in graph):
-            raise ValidationError(
-                "Track exam prerequisites cannot contain a circular dependency."
-            )
+            raise ValidationError("Track exam prerequisites cannot contain a circular dependency.")
 
 
 TrackExamFormSet = inlineformset_factory(
