@@ -1,128 +1,161 @@
 {% extends "layouts/admin/base_admin.html" %}
-{% load widget_tweaks %}
+{% load widget_tweaks static %}
+
+{% block title %}{% if mode == "edit" %}Edit Track{% else %}Create Track{% endif %} – Admin{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="container">
-
-  <!-- HEADER -->
-  <div class="mb-5">
-    <h1 class="title is-4">
-      {% if mode == "edit" %}✏️ Edit Track{% else %}➕ Create Track{% endif %}
-    </h1>
-    <p class="subtitle is-6 has-text-grey">
-      Control scope, pricing, trials & availability
-    </p>
-  </div>
-
-  <form method="post">
-    {% csrf_token %}
-
-    <div class="box">
-
-      <!-- TITLE -->
-      <div class="field">
-        <label class="label">Title</label>
-        {% render_field form.title class+="input" %}
-      </div>
-
-      <!-- SLUG -->
-      <div class="field">
-        <label class="label">Slug</label>
-        {% render_field form.slug class+="input" %}
-        <p class="help">Used in URLs, must be unique</p>
-      </div>
-
-      <!-- DESCRIPTION -->
-      <div class="field">
-        <label class="label">Description</label>
-        {% render_field form.description class+="textarea" rows="3" %}
-      </div>
-
-      <!-- SUBSCRIPTION SCOPE -->
-      <div class="field">
-        <label class="label">Subscription Scope</label>
-        <div class="select is-fullwidth">
-          {% render_field form.subscription_scope %}
+<div class="admin-exam-page">
+    <div class="admin-exam-header">
+        <div>
+            <h1 class="admin-exam-title">
+                <span class="admin-exam-title-icon" aria-hidden="true">{% if mode == "edit" %}✏️{% else %}➕{% endif %}</span>
+                {% if mode == "edit" %}Edit Track{% else %}Create Track{% endif %}
+            </h1>
+            <p class="admin-exam-subtitle">Control scope, pricing, trials & availability.</p>
         </div>
-        <p class="help">
-          <strong>Track</strong> → unlocks all exams under this track<br>
-          <strong>Exam</strong> → subscription applies per exam
-        </p>
-      </div>
-
-      <hr>
-
-      <!-- PRICING TYPE -->
-      <div class="field">
-        <label class="label">Pricing Type</label>
-        <div class="select is-fullwidth">
-          {% render_field form.pricing_type id="pricing_type" %}
-        </div>
-      </div>
-
-      <!-- MONTHLY PRICE -->
-      <div class="field pricing pricing-monthly">
-        <label class="label">Monthly Price</label>
-        {% render_field form.monthly_price class+="input" %}
-      </div>
-
-      <!-- LIFETIME PRICE -->
-      <div class="field pricing pricing-lifetime">
-        <label class="label">Lifetime Price</label>
-        {% render_field form.lifetime_price class+="input" %}
-      </div>
-
-      <!-- TRIAL DAYS -->
-      <div class="field">
-        <label class="label">Trial Days</label>
-        {% render_field form.trial_days class+="input" %}
-      </div>
-
-      <!-- CURRENCY -->
-      <div class="field">
-        <label class="label">Currency</label>
-        {% render_field form.currency class+="input" %}
-      </div>
-
-      <!-- ACTIVE -->
-      <div class="field">
-        <label class="checkbox">
-          {% render_field form.is_active %}
-          Active
-        </label>
-      </div>
-
     </div>
 
-    <!-- ACTIONS -->
-    <div class="field is-grouped mt-5">
-      <a href="{% url 'quiz:admin_track_list' %}" class="button is-light">
-        Cancel
-      </a>
-      <button class="button is-primary">
-        Save Track
-      </button>
-    </div>
+    <form method="post">
+        {% csrf_token %}
 
-  </form>
+        {% if form.non_field_errors %}
+        <div class="admin-exam-errors">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="admin-exam-card">
+            <div class="admin-exam-section">
+                <div class="admin-exam-field">
+                    <label class="admin-exam-label" for="{{ form.title.id_for_label }}">Title</label>
+                    <div class="admin-exam-control">
+                        {% render_field form.title class+="input" %}
+                    </div>
+                    {% for error in form.title.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                </div>
+
+                <div class="admin-exam-field">
+                    <label class="admin-exam-label" for="{{ form.slug.id_for_label }}">Slug</label>
+                    <div class="admin-exam-control">
+                        {% render_field form.slug class+="input" %}
+                    </div>
+                    <p class="admin-exam-subtitle" style="margin-top:6px;font-size:.78rem;">Used in URLs, must be unique.</p>
+                    {% for error in form.slug.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                </div>
+
+                <div class="admin-exam-field">
+                    <label class="admin-exam-label" for="{{ form.description.id_for_label }}">Description</label>
+                    <div class="admin-exam-control">
+                        {% render_field form.description class+="input" rows="4" %}
+                    </div>
+                    {% for error in form.description.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                </div>
+            </div>
+
+            <div class="admin-exam-section">
+                <div class="admin-exam-field">
+                    <label class="admin-exam-label" for="{{ form.subscription_scope.id_for_label }}">Subscription Scope</label>
+                    <div class="admin-exam-control">
+                        {% render_field form.subscription_scope class+="admin-exam-select" %}
+                    </div>
+                    <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;line-height:1.55;">
+                        <strong>Track</strong> → unlocks all exams under this track<br>
+                        <strong>Exam</strong> → subscription applies per exam
+                    </p>
+                    {% for error in form.subscription_scope.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                </div>
+            </div>
+
+            <div class="admin-exam-section">
+                <div class="admin-exam-grid admin-exam-grid-2">
+                    <div class="admin-exam-field pricing pricing-monthly">
+                        <label class="admin-exam-label" for="{{ form.pricing_type.id_for_label }}">Pricing Type</label>
+                        <div class="admin-exam-control">
+                            {% render_field form.pricing_type id="pricing_type" %}
+                        </div>
+                        {% for error in form.pricing_type.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="admin-exam-field pricing pricing-monthly-field">
+                        <label class="admin-exam-label" for="{{ form.monthly_price.id_for_label }}">Monthly Price</label>
+                        <div class="admin-exam-control">
+                            {% render_field form.monthly_price class+="input" %}
+                        </div>
+                        {% for error in form.monthly_price.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+
+                <div id="lifetime-price-box" class="admin-exam-field">
+                    <label class="admin-exam-label" for="{{ form.lifetime_price.id_for_label }}">Lifetime Price</label>
+                    <div class="admin-exam-control">
+                        {% render_field form.lifetime_price class+="input" %}
+                    </div>
+                    {% for error in form.lifetime_price.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                </div>
+
+                <div class="admin-exam-grid admin-exam-grid-2">
+                    <div class="admin-exam-field">
+                        <label class="admin-exam-label" for="{{ form.trial_days.id_for_label }}">Trial Days</label>
+                        <div class="admin-exam-control">
+                            {% render_field form.trial_days class+="input" %}
+                        </div>
+                        {% for error in form.trial_days.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="admin-exam-field">
+                        <label class="admin-exam-label" for="{{ form.currency.id_for_label }}">Currency</label>
+                        <div class="admin-exam-control">
+                            {% render_field form.currency class+="input" %}
+                        </div>
+                        {% for error in form.currency.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="admin-exam-field">
+                    <label class="admin-exam-check">
+                        {% render_field form.is_active %}
+                        <span>Active</span>
+                    </label>
+                    {% for error in form.is_active.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-exam-actions">
+            <a href="{% url 'quiz:admin_track_list' %}" class="admin-exam-button admin-exam-button-secondary">Cancel</a>
+            <button class="admin-exam-button admin-exam-button-primary" type="submit">Save Track</button>
+        </div>
+    </form>
 </div>
 
-<!-- ================= JS ================= -->
 <script>
-function togglePricing(){
-  const type = document.getElementById("pricing_type").value;
-  document.querySelectorAll(".pricing").forEach(el => el.style.display = "none");
+(function () {
+    const pricingType = document.getElementById("pricing_type");
+    const monthlyPriceField = document.querySelector(".pricing-monthly-field");
+    const lifetimePriceBox = document.getElementById("lifetime-price-box");
 
-  if(type === "monthly"){
-    document.querySelector(".pricing-monthly").style.display = "block";
-  }
-  if(type === "lifetime"){
-    document.querySelector(".pricing-lifetime").style.display = "block";
-  }
-}
+    if (!pricingType) return;
 
-document.getElementById("pricing_type").addEventListener("change", togglePricing);
-togglePricing();
+    function togglePricing() {
+        const type = pricingType.value;
+        if (monthlyPriceField) {
+            monthlyPriceField.style.display = type === "monthly" ? "block" : "none";
+        }
+        if (lifetimePriceBox) {
+            lifetimePriceBox.style.display = type === "lifetime" ? "block" : "none";
+        }
+    }
+
+    pricingType.addEventListener("change", togglePricing);
+    togglePricing();
+})();
 </script>
-
 {% endblock %}
