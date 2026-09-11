@@ -6,7 +6,7 @@ from accounts.views.auth import verify_login_otp_view
 from accounts.views.security import logout_view
 from accounts.views.password_reset import request_password_reset_otp_view, verify_password_reset_otp_view, password_reset_success_view
 from accounts.views.register import register_view, verify_registration_otp_view, registration_success_view, check_email_availability
-from accounts.views.monitoring import user_monitoring
+from accounts.views.platform_users import user_monitoring
 from accounts.views.notifications import notification_list, notification_read
 from accounts.views.organization_requests import organization_requests, organization_request_detail, organization_request_approve, organization_request_reject
 
