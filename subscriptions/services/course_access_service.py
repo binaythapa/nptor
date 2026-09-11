@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 
 from organizations.models.access import ResourceAccess
 from subscriptions.models import (
@@ -49,7 +50,7 @@ class CourseAccessService:
             .select_related("subscription", "subscription__plan")
             .filter(
                 subscription__user=user,
-                resource_type=self.RESOURCE_TYPE if False else SubscriptionEntitlement.RESOURCE_COURSE,
+                resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
                 course=course,
                 is_active=True,
                 subscription__status=Subscription.STATUS_ACTIVE,
@@ -129,12 +130,9 @@ class CourseAccessService:
             subscription=subscription,
         )
 
-        if not SubscriptionEntitlement.objects.filter(
-            subscription=subscription,
-            is_active=True,
-        ).exists():
+        if not SubscriptionEntitlement.objects.filter(subscription=subscription, is_active=True).exists():
             subscription.status = Subscription.STATUS_CANCELLED
-            subscription.cancelled_at = subscription.cancelled_at or __import__("django.utils.timezone", fromlist=["timezone"]).timezone.now()
+            subscription.cancelled_at = timezone.now()
             subscription.save(update_fields=["status", "cancelled_at", "updated_at"])
 
         return result
