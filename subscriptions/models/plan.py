@@ -7,6 +7,14 @@ from django.core.validators import MinValueValidator
 
 class SubscriptionPlan(models.Model):
 
+    SCOPE_RESOURCE = "resource"
+    SCOPE_ALL_ACCESS = "all_access"
+
+    SCOPE_CHOICES = (
+        (SCOPE_RESOURCE, "Resource"),
+        (SCOPE_ALL_ACCESS, "All Access"),
+    )
+
     name = models.CharField(
         max_length=100,
     )
@@ -15,6 +23,14 @@ class SubscriptionPlan(models.Model):
         max_length=100,
         unique=True,
         help_text="Unique internal identifier for this plan.",
+    )
+
+    scope = models.CharField(
+        max_length=20,
+        choices=SCOPE_CHOICES,
+        default=SCOPE_RESOURCE,
+        db_index=True,
+        help_text="Resource plans are attached to courses/tracks; all-access plans unlock the whole platform.",
     )
 
     description = models.TextField(
@@ -62,10 +78,16 @@ class SubscriptionPlan(models.Model):
             models.Index(
                 fields=["is_active"],
             ),
+            models.Index(
+                fields=["scope", "is_active"],
+            ),
         ]
 
     def is_lifetime(self):
         return self.duration_days is None
+
+    def is_all_access(self):
+        return self.scope == self.SCOPE_ALL_ACCESS
 
     def __str__(self):
         return self.name
