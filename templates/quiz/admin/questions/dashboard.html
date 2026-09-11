@@ -1,6 +1,10 @@
 {% extends "layouts/admin/base_admin.html" %}
 {% block title %}Question Dashboard{% endblock %}
 
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'css/question_admin.css' %}">
+{% endblock %}
+
 {% block content %}
 <section class="section question-dashboard">
 <div class="container">
