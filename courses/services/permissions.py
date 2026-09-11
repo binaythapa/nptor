@@ -19,10 +19,10 @@ def can_edit_course(user, course):
     """
     Determine whether a user can edit course content.
 
-    Only draft, changes-required, and rejected courses are mutable
-    by instructors. Pending and approved courses are frozen so that
-    approved content cannot be changed without another review.
-    Platform administrators can always modify course content.
+    Only draft, changes-required, and rejected courses are mutable.
+    Organization owners/admins may modify organization courses; staff
+    may modify only organization courses they created. Platform courses
+    remain restricted to platform administrators.
     """
 
     if not user or not user.is_authenticated:
@@ -50,7 +50,13 @@ def can_edit_course(user, course):
     if not membership:
         return False
 
-    return membership.role in OrganizationRole.teaching_roles()
+    if membership.role in OrganizationRole.administrative_roles():
+        return True
+
+    return (
+        membership.role == OrganizationRole.STAFF
+        and course.created_by_id == user.id
+    )
 
 
 # Backwards-compatible name used by older callers and security tests.
