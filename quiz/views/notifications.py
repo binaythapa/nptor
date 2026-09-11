@@ -41,6 +41,7 @@ from quiz.models import (
     ExamTrack,
     UserExam,
     Coupon,
+    Notification,
 )
 from quiz.services.access import can_access_exam
 from quiz.services.pricing import apply_coupon
