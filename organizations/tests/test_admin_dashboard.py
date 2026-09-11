@@ -36,7 +36,7 @@ class OrganizationAdminDashboardTests(TestCase):
         response = self.client.get(reverse("organizations_admin:dashboard", kwargs={"slug": self.organization.slug}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Organization Dashboard")
-        self.assertContains(response, "Search this organization")
+        self.assertContains(response, "Search students, courses, tracks, exams, questions, categories or domains")
         self.assertContains(response, "Manage students")
         self.assertContains(response, reverse("organizations_admin:courses", kwargs={"slug": self.organization.slug}))
 
