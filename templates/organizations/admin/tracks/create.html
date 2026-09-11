@@ -5,113 +5,93 @@
 {% block title %}Create Exam Track{% endblock %}
 
 {% block content %}
-
-{% with org_slug=request.organization.slug %}
-
 <div class="container py-5">
+  <nav class="breadcrumb"><ul>
+    <li><a href="{% url 'organizations_admin:dashboard' slug=org.slug %}">Dashboard</a></li>
+    <li><a href="{% url 'organizations_admin:org_track_list' slug=org.slug %}">Tracks</a></li>
+    <li class="is-active"><a href="#">Create Track</a></li>
+  </ul></nav>
 
-  <!-- HEADER -->
-  <div class="mb-6">
-
-    <nav class="breadcrumb">
-      <ul>
-        <li>
-          <a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
-            Dashboard
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}">
-            Tracks
-          </a>
-        </li>
-        <li class="is-active"><a href="#">Create Track</a></li>
-      </ul>
-    </nav>
-
-    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
-      <h1 class="title is-3">📚 Create Exam Track</h1>
-      <span class="tag is-info is-light">Organization Track</span>
-    </div>
-
+  <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
+    <h1 class="title is-3">📚 Create Exam Track</h1>
+    <span class="tag is-info is-light">Organization Track</span>
   </div>
 
-
-  <!-- ================= FORM ================= -->
-
-  <form method="post">
-
+  <form method="post" id="track-form">
     {% csrf_token %}
-
-    <div class="card">
-
-      <header class="card-header">
-        <p class="card-header-title">
-          Track Details
-        </p>
-      </header>
-
+    <div class="card mb-5">
+      <header class="card-header"><p class="card-header-title">Track Details</p></header>
       <div class="card-content">
-
         {% for field in form %}
         <div class="field mb-4">
-
-          <label class="label">
-            {{ field.label }}
-
-            {% if field.field.required %}
-              <span class="has-text-danger">*</span>
-            {% endif %}
-          </label>
-
+          <label class="label">{{ field.label }}{% if field.field.required %} <span class="has-text-danger">*</span>{% endif %}</label>
           <div class="control">
-
-            {% if field.field.widget.input_type == "textarea" %}
-                {{ field }}
-            {% else %}
-                {% render_field field class+="input" %}
-            {% endif %}
-
+            {% if field.field.widget.input_type == "textarea" %}{{ field }}{% else %}{% render_field field class+="input" %}{% endif %}
           </div>
-
-          {% if field.errors %}
-            <p class="help is-danger">
-              {{ field.errors.0 }}
-            </p>
-          {% endif %}
-
+          {% if field.errors %}<p class="help is-danger">{{ field.errors.0 }}</p>{% endif %}
         </div>
         {% endfor %}
-
       </div>
-
     </div>
 
-
-    <!-- ================= ACTION BUTTONS ================= -->
+    <div class="card mb-5">
+      <header class="card-header"><p class="card-header-title">Track Exams &amp; Prerequisites</p></header>
+      <div class="card-content">
+        <p class="help mb-4">Add multiple exams, set their order, mark them required/optional, and select prerequisites from exams in this track.</p>
+        {{ track_exams.management_form }}
+        {% if track_exams.non_form_errors %}<div class="notification is-danger is-light">{{ track_exams.non_form_errors }}</div>{% endif %}
+        <div id="track-exam-rows">
+          {% for item in track_exams.forms %}
+          <div class="box track-exam-row">
+            {% for hidden in item.hidden_fields %}{{ hidden }}{% endfor %}
+            <div class="columns is-vcentered">
+              <div class="column is-5"><label class="label">Exam</label>{{ item.exam }}</div>
+              <div class="column is-2"><label class="label">Order</label>{{ item.order }}</div>
+              <div class="column is-2"><label class="label">Required</label>{{ item.is_required }}</div>
+              <div class="column is-3"><label class="label">Prerequisites</label>{{ item.prerequisite_exams }}</div>
+            </div>
+            {% if item.errors %}<div class="notification is-danger is-light">{{ item.errors }}</div>{% endif %}
+            <button type="button" class="button is-small is-danger is-light remove-track-exam">Remove exam</button>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="button is-link is-light" id="add-track-exam">+ Add Exam</button>
+        <template id="track-exam-empty-form">{{ track_exams.empty_form.as_p }}</template>
+      </div>
+    </div>
 
     <div class="field is-grouped is-grouped-centered mt-5">
-
-      <div class="control">
-        <a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"
-           class="button is-light">
-           Cancel
-        </a>
-      </div>
-
-      <div class="control">
-        <button type="submit"
-                class="button is-primary">
-          ➕ Create Track
-        </button>
-      </div>
-
+      <a href="{% url 'organizations_admin:org_track_list' slug=org.slug %}" class="button is-light">Cancel</a>
+      <button type="submit" class="button is-primary">➕ Create Track</button>
     </div>
-
   </form>
-
 </div>
 
-{% endwith %}
-
+<style>
+.track-exam-row select[multiple] { min-height: 8rem; width: 100%; }
+.track-exam-row select:not([multiple]), .track-exam-row input[type="number"] { width: 100%; }
+</style>
+<script>
+(function () {
+  const rows = document.getElementById('track-exam-rows');
+  const total = document.getElementById('id_track_exams-TOTAL_FORMS');
+  const template = document.getElementById('track-exam-empty-form');
+  document.getElementById('add-track-exam').addEventListener('click', function () {
+    const index = Number(total.value);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'box track-exam-row';
+    wrapper.innerHTML = template.innerHTML.replaceAll('__prefix__', index);
+    wrapper.insertAdjacentHTML('beforeend', '<button type="button" class="button is-small is-danger is-light remove-track-exam">Remove exam</button>');
+    rows.appendChild(wrapper);
+    total.value = index + 1;
+  });
+  rows.addEventListener('click', function (event) {
+    if (!event.target.classList.contains('remove-track-exam')) return;
+    const row = event.target.closest('.track-exam-row');
+    const deleted = row.querySelector('input[name$="-DELETE"]');
+    if (deleted) { deleted.value = 'on'; row.style.display = 'none'; }
+    else row.remove();
+  });
+})();
+</script>
 {% endblock %}
