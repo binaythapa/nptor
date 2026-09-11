@@ -1,0 +1,21 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% block content %}
+<div class="admin-page-header"><div><h1 class="title is-4">Organization Access Request</h1><p class="admin-muted">Request #{{ access_request.pk }}</p></div><a class="button" href="{% url 'accounts:organization_requests' %}">Back</a></div>
+<div class="columns">
+  <div class="column is-8"><div class="box">
+    <p><strong>Requester</strong><br>{{ access_request.user.get_username }}{% if access_request.user.email %} · {{ access_request.user.email }}{% endif %}</p>
+    <p><strong>Organization</strong><br>{{ access_request.organization.name }}</p>
+    <p><strong>Service</strong><br>{{ access_request.get_service_display }}</p>
+    <p><strong>Requested role</strong><br>{{ access_request.get_requested_role_display }}</p>
+    <p><strong>Reason</strong><br>{{ access_request.reason|default:"—"|linebreaksbr }}</p>
+    <p><strong>Requested</strong><br>{{ access_request.requested_at|date:"M d, Y H:i" }}</p>
+    {% if access_request.reviewed_at %}<p><strong>Reviewed</strong><br>{{ access_request.reviewed_at|date:"M d, Y H:i" }} by {{ access_request.reviewed_by.get_username }}</p>{% endif %}
+    {% if access_request.review_notes %}<p><strong>Review notes</strong><br>{{ access_request.review_notes|linebreaksbr }}</p>{% endif %}
+  </div></div>
+  <div class="column is-4">
+    {% if access_request.status == 'PENDING' %}
+    <div class="box"><form method="post" action="{% url 'accounts:organization_request_approve' access_request.pk %}">{% csrf_token %}<textarea class="textarea mb-3" name="review_notes" rows="4" placeholder="Optional review notes"></textarea><button class="button is-success is-fullwidth" type="submit">Approve & Activate</button></form><form method="post" action="{% url 'accounts:organization_request_reject' access_request.pk %}" style="margin-top:10px">{% csrf_token %}<textarea class="textarea mb-3" name="review_notes" rows="3" placeholder="Reason for rejection"></textarea><button class="button is-danger is-light is-fullwidth" type="submit">Reject Request</button></form></div>
+    {% else %}<div class="box"><strong>Status</strong><p>{{ access_request.get_status_display }}</p></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

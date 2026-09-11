@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db.models import Avg, Count, Q, Sum
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.utils import timezone
 
 from accounts.models import Notification
@@ -10,20 +10,12 @@ from courses.models import Course, CourseEnrollment
 from organizations.models.access_request import OrganizationAccessRequest
 from organizations.models.membership import OrganizationMember
 from organizations.models.organization import Organization
-from organizations.permissions import is_platform_admin, platform_admin_required
+from organizations.permissions import platform_admin_required
 from subscriptions.models import Subscription, SubscriptionEntitlement
 from quiz.models import Exam, UserExam
 
 
 User = get_user_model()
-
-
-def dashboard_dispatch(request):
-    if not request.user.is_authenticated:
-        return redirect("accounts:request-login-otp")
-    if is_platform_admin(request.user):
-        return redirect("quiz:admin_dashboard")
-    return redirect("quiz:student_dashboard")
 
 
 @platform_admin_required
@@ -76,5 +68,6 @@ def admin_dashboard(request):
         "active_members": OrganizationMember.objects.filter(is_active=True).count(),
         "active_entitlements": SubscriptionEntitlement.objects.filter(is_active=True).count(),
         "enrollments": CourseEnrollment.objects.count(),
+        "thirty_day_revenue": revenue_30d,
     }
     return render(request, "quiz/admin/admin_dashboard.html", context)

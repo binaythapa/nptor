@@ -5,9 +5,14 @@
   <a class="button {% if status == 'PENDING' %}is-link{% endif %}" href="?status=PENDING">Pending</a>
   <a class="button {% if status == 'APPROVED' %}is-link{% endif %}" href="?status=APPROVED">Approved</a>
   <a class="button {% if status == 'REJECTED' %}is-link{% endif %}" href="?status=REJECTED">Rejected</a>
-  <a class="button {% if status == 'ALL' %}is-link{% endif %}" href="?status=ALL">All</a>
+  <a class="button" href="?">All</a>
 </div>
 <div class="admin-panel">
-{% for item in requests %}<div class="admin-list-row" style="display:flex;justify-content:space-between;gap:20px;padding:14px;border-bottom:1px solid #eee"><div><strong>{{ item.organization.name }}</strong><div class="admin-muted">{{ item.user.get_username }} · {{ item.get_service_display }} · {{ item.get_requested_role_display }}</div></div><div><span class="admin-badge {% if item.status == 'PENDING' %}admin-badge-yellow{% elif item.status == 'APPROVED' %}admin-badge-green{% else %}admin-badge-red{% endif %}">{{ item.get_status_display }}</span> <a href="{% url 'accounts:organization_request_detail' item.pk %}">Review</a></div></div>{% empty %}<div style="padding:30px;text-align:center">No requests found.</div>{% endfor %}
+  {% for item in requests %}
+  <div class="admin-list-row" style="display:flex;justify-content:space-between;gap:20px;padding:14px;border-bottom:1px solid #eee">
+    <div><strong>{{ item.organization.name }}</strong><div class="admin-muted">{{ item.user.get_username }} · {{ item.get_service_display }} · {{ item.get_requested_role_display }}</div></div>
+    <div><span class="admin-badge {% if item.status == 'PENDING' %}admin-badge-yellow{% elif item.status == 'APPROVED' %}admin-badge-green{% else %}admin-badge-red{% endif %}">{{ item.get_status_display }}</span> <a href="{% url 'accounts:organization_request_detail' item.pk %}">Review</a></div>
+  </div>
+  {% empty %}<div style="padding:30px;text-align:center">No requests found.</div>{% endfor %}
 </div>
 {% endblock %}

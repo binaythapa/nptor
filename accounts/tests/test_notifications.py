@@ -20,10 +20,10 @@ class NotificationServiceTests(TestCase):
 
     def test_mark_read_is_idempotent(self):
         notification = create_notification(self.user, "system", "Hello", "World")
-        mark_notification_read(notification, self.user)
+        mark_notification_read(notification)
         notification.refresh_from_db()
         self.assertFalse(notification.is_unread_for(self.user))
-        mark_notification_read(notification, self.user)
+        mark_notification_read(notification)
         self.assertFalse(notification.is_unread_for(self.user))
 
     def test_notification_center_is_recipient_isolated(self):

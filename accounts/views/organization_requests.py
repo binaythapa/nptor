@@ -13,7 +13,7 @@ def organization_requests(request):
     status = request.GET.get("status", OrganizationAccessRequest.STATUS_PENDING)
     service = request.GET.get("service")
     qs = OrganizationAccessRequest.objects.select_related("user", "organization", "reviewed_by")
-    if status and status != "ALL":
+    if status:
         qs = qs.filter(status=status)
     if service:
         qs = qs.filter(service=service)

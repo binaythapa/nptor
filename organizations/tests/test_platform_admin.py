@@ -4,6 +4,7 @@ from django.test import RequestFactory, TestCase
 
 from organizations.models.membership import OrganizationMember
 from organizations.models.organization import Organization
+from organizations.models.profile import OrganizationProfile
 from organizations.models.role import OrganizationRole
 from organizations.permissions import platform_admin_required
 

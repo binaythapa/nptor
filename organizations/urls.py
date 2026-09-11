@@ -18,6 +18,7 @@ from organizations.views.admin.categories import *
 from organizations.views.admin.academic import academic_dashboard, academic_year_create, class_create, section_create, teacher_assign, student_enroll
 from organizations.views.admin.class_assignments import class_assignment_create
 from organizations.views.student_profile import organization_student_profile, organization_student_profile_edit, organization_student_profile_admin, organization_student_profile_admin_edit
+from organizations.views.access_requests import request_access, request_status
 
 admin_patterns = [
     path("dashboard/", org_dashboard, name="dashboard"), path("portfolio/", org_portfolio, name="portfolio"),
@@ -40,6 +41,8 @@ public_patterns = [
     path("student-profile/edit/", organization_student_profile_edit, name="student_profile_edit"),
     path("student-profile/<int:student_id>/", organization_student_profile_admin, name="student_profile_admin"),
     path("student-profile/<int:student_id>/edit/", organization_student_profile_admin_edit, name="student_profile_admin_edit"),
+    path("request-access/", request_access, name="request_access"),
+    path("request-access/status/", request_status, name="request_status"),
     path("", org_public_page, name="public_page"),
 ]
 urlpatterns = [path("admin/", include((admin_patterns, "organizations_admin"), namespace="organizations_admin")), path("", include((public_patterns, "organizations_public"), namespace="organizations_public"))]
