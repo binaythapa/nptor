@@ -17,10 +17,11 @@ from organizations.views.admin.domains import *
 from organizations.views.admin.categories import *
 from organizations.views.admin.academic import academic_dashboard, academic_year_create, class_create, section_create, teacher_assign, student_enroll
 from organizations.views.admin.class_assignments import class_assignment_create
+from organizations.views.admin.search import org_autocomplete, org_search
 from organizations.views.student_profile import organization_student_profile, organization_student_profile_edit, organization_student_profile_admin, organization_student_profile_admin_edit
 
 admin_patterns = [
-    path("dashboard/", org_dashboard, name="dashboard"), path("portfolio/", org_portfolio, name="portfolio"),
+    path("dashboard/", org_dashboard, name="dashboard"), path("search/", org_search, name="search"), path("search/autocomplete/", org_autocomplete, name="autocomplete"), path("portfolio/", org_portfolio, name="portfolio"),
     path("tenant-domains/", organization_domains, name="tenant_domains"), path("tenant-domains/<int:pk>/verify/", organization_domain_verify, name="tenant_domain_verify"), path("tenant-domains/<int:pk>/primary/", organization_domain_primary, name="tenant_domain_primary"),
     path("courses/", org_courses, name="courses"), path("courses/attach/<int:course_id>/", org_course_attach, name="course_attach"), path("courses/detach/<int:course_id>/", org_course_detach, name="course_detach"), path("courses/manage/", org_course_list, name="org_course_list"), path("courses/add/", org_course_create, name="org_course_create"), path("courses/<int:pk>/edit/", org_course_edit, name="org_course_edit"), path("courses/<int:pk>/delete/", org_course_delete, name="org_course_delete"),
     path("students/", org_students, name="students"), path("students/add/", org_student_add, name="student_add"), path("students/<int:member_id>/role/", org_student_update_role, name="student_role"), path("students/<int:member_id>/remove/", org_student_remove, name="student_remove"),
