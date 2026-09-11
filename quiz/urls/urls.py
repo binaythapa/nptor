@@ -15,6 +15,13 @@ from quiz.views.questions import *
 from quiz.views.practice_express import *
 from quiz.views.auth import *
 from quiz.views.admin_subscription_views import *
+from quiz.views.admin_course_access import (
+    admin_course_access_data,
+    admin_subscribe_course,
+    admin_revoke_course,
+    admin_update_course_expiry,
+    admin_add_course_days,
+)
 from quiz.views.admin_payments import admin_payment_list, admin_add_manual_payment
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
@@ -125,6 +132,11 @@ urlpatterns = [
     path("track/<int:track_id>/checkout/", track_checkout, name="track_checkout"),
 
     path("dashboard/admin/subscriptions/", subscription_admin_panel, name="subscription_admin_panel"),
+    path("dashboard/admin/course-access/data/", admin_course_access_data, name="admin_course_access_data"),
+    path("dashboard/admin/subscribe/course/", admin_subscribe_course, name="admin_subscribe_course"),
+    path("dashboard/admin/revoke/course/", admin_revoke_course, name="admin_revoke_course"),
+    path("dashboard/admin/update-expiry/course/", admin_update_course_expiry, name="admin_update_course_expiry"),
+    path("dashboard/admin/add-course-days/", admin_add_course_days, name="admin_add_course_days"),
     path("dashboard/admin/subscribe/track/", admin_subscribe_track, name="admin_subscribe_track"),
     path("dashboard/admin/revoke/track/", admin_revoke_track, name="admin_revoke_track"),
     path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_track_expiry"),
