@@ -55,7 +55,11 @@
         <div class="navbar-end">
             <div class="navbar-item">
                 <span class="tag is-info is-light mr-2">{{ request.organization_member.get_role_display }}</span>
-                <a href="{% url 'quiz:dashboard' %}" class="button is-small is-outlined">Back to Platform</a>
+                {% if request.organization_member.is_administrator %}
+                    <a href="{% url 'organizations_admin:dashboard' slug=org_slug %}" class="button is-small is-outlined">Back to Dashboard</a>
+                {% else %}
+                    <a href="{% url 'organizations_public:workspace' slug=org_slug %}" class="button is-small is-outlined">Back to Dashboard</a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -107,10 +111,18 @@
             {% if user.is_authenticated %}
                 {% if request.active_org and request.active_org.slug %}
                     {% if not is_from_course %}
-                        <a href="{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}">Org Dashboard</a>
+                        {% if request.organization_member.is_administrator %}
+                            <a href="{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}">Back to Dashboard</a>
+                        {% else %}
+                            <a href="{% url 'organizations_public:workspace' slug=request.active_org.slug %}">Back to Dashboard</a>
+                        {% endif %}
                     {% else %}
-                        <span class="is-disabled" title="Disabled during course practice">Org Dashboard</span>
+                        <span class="is-disabled" title="Disabled during course practice">Back to Dashboard</span>
                     {% endif %}
+                {% elif user.is_staff or user.is_superuser %}
+                    <a href="{% url 'quiz:admin_dashboard' %}">Back to Dashboard</a>
+                {% else %}
+                    <a href="{% url 'quiz:student_dashboard' %}">Back to Dashboard</a>
                 {% endif %}
                 {% if course %}
                     <div class="course-menu">
