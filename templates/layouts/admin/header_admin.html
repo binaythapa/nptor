@@ -1,14 +1,14 @@
 {% load static %}
 
-<header class="admin-header">
+<header class="admin-header" style="background:#111827;color:#fff;border-bottom:1px solid #1f2937;box-shadow:0 2px 8px rgba(0,0,0,.15);">
   <div class="admin-header-inner">
     <div class="admin-header-left">
       <button id="admin-sidebar-toggle" class="button is-white is-small mr-3" type="button" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation"><i class="fa fa-bars" aria-hidden="true"></i></button>
-      <a class="admin-brand" href="{% url 'quiz:dashboard' %}"><img src="{% static 'images/logo.jpg' %}" class="admin-logo" alt="{{ site_name|default:'NPTOR' }}"><span class="admin-brand-text">NPTOR Admin</span></a>
+      <a class="admin-brand" href="{% url 'quiz:dashboard' %}" style="color:#fff;"><img src="{% static 'images/logo.jpg' %}" class="admin-logo" alt="{{ site_name|default:'NPTOR' }}"><span class="admin-brand-text">NPTOR Admin</span></a>
     </div>
     <div class="admin-header-right">
-      <a href="{% url 'accounts:notifications' %}" class="admin-notification-link" aria-label="Notifications"><i class="fa fa-bell" aria-hidden="true"></i>{% if unread_notifications_count %}<span class="admin-notification-badge">{{ unread_notifications_count }}</span>{% endif %}</a>
-      <span class="admin-user is-hidden-mobile"><strong>{{ user.first_name|default:user.username }}</strong></span>
+      <a href="{% url 'accounts:notifications' %}" class="admin-notification-link" aria-label="Notifications" style="color:#fff;"><i class="fa fa-bell" aria-hidden="true"></i>{% if unread_notifications_count %}<span class="admin-notification-badge">{{ unread_notifications_count }}</span>{% endif %}</a>
+      <span class="admin-user is-hidden-mobile" style="color:#d1d5db;"><strong>{{ user.first_name|default:user.username }}</strong></span>
       <a href="#logout" class="button is-light is-small" aria-label="Log out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa fa-right-from-bracket" aria-hidden="true"></i></a>
       <button id="theme-toggle" class="button is-white is-small" type="button" aria-label="Toggle theme"><i class="fa fa-moon" aria-hidden="true"></i></button>
     </div>
