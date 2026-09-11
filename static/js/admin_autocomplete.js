@@ -13,12 +13,14 @@
 
     function inferScope() {
         const path = window.location.pathname;
-        if (path.includes("/accounts/admin/users")) return "users";
+        if (path.includes("/accounts/admin/users") || path.includes("/quiz/users")) return "users";
+        if (path.includes("/admin/organization-requests")) return "organizations";
         if (path.includes("/courses/admin/")) return "courses";
         if (path.includes("/dashboard/admin/tracks")) return "tracks";
         if (path.includes("/dashboard/admin/exams")) return "exams";
         if (path.includes("/dashboard/questions")) return "questions";
         if (path.includes("/dashboard/admin/coupons")) return "coupons";
+        if (path.includes("/dashboard/admin/payments") || path.includes("/dashboard/admin/mock-attempts")) return "users";
         if (path.includes("/notifications")) return "notifications";
         return null;
     }
