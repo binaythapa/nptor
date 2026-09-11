@@ -3,6 +3,7 @@
 {% block title %}Dashboard · {{ org.name }} · NPTOR{% endblock %}
 
 {% block content %}
+<div class="org-dashboard">
 <div class="admin-page-header">
   <div>
     <p class="org-breadcrumb">Organization / {{ org.name }}</p>
@@ -22,7 +23,7 @@
   </form>
 </div>
 
-<div class="org-kpi-grid mb-4">
+<div class="org-kpi-grid org-stat-grid mb-4">
   <a class="org-kpi-card" href="{% url 'organizations_admin:students' slug=org.slug %}">
     <span class="org-kpi-label">Students</span><strong class="org-kpi-value">{{ stats.students }}</strong><span class="org-kpi-link">Manage students →</span>
   </a>
@@ -96,5 +97,6 @@
       </div>
     </section>
   </div>
+</div>
 </div>
 {% endblock %}
