@@ -7,218 +7,44 @@
 <main class="learning-marketplace" aria-labelledby="marketplace-title">
   <section class="marketplace-hero">
     <span class="marketplace-kicker">{% if catalog_vertical_label %}{{ catalog_vertical_label|upper }} CATALOG{% else %}LEARNING MARKETPLACE{% endif %}</span>
-    <h1 id="marketplace-title">
-      {% if catalog_vertical == 'academic_exam' %}Academic &amp; Entrance Preparation{% elif catalog_vertical == 'professional_certification' %}Professional Certifications{% else %}Learn, Practice, Certify{% endif %}
-    </h1>
-    <p>
-      {% if catalog_vertical == 'academic_exam' %}
-        Explore courses and structured preparation tracks for academic and entrance goals.
-      {% elif catalog_vertical == 'professional_certification' %}
-        Explore courses and structured certification tracks for professional credentials.
-      {% else %}
-        Find the right course or structured track for your next goal.
-      {% endif %}
-    </p>
+    <h1 id="marketplace-title">{% if catalog_vertical == 'academic_exam' %}Academic &amp; Entrance Preparation{% elif catalog_vertical == 'professional_certification' %}Professional Certifications{% else %}Learn, Practice, Certify{% endif %}</h1>
+    <p>{% if catalog_vertical == 'academic_exam' %}Explore courses and structured preparation tracks for academic and entrance goals.{% elif catalog_vertical == 'professional_certification' %}Explore courses and structured certification tracks for professional credentials.{% else %}Find the right course or structured track for your next goal.{% endif %}</p>
     <form class="marketplace-search" method="get" role="search">
       <label class="sr-only" for="marketplace-search-input">Search courses and tracks</label>
       <input id="marketplace-search-input" name="q" value="{{ query }}" placeholder="Search courses, tracks..." autocomplete="off">
-      <input type="hidden" name="type" value="{{ resource_type }}">
-      <input type="hidden" name="level" value="{{ level }}">
-      <input type="hidden" name="access" value="{{ access }}">
-      <input type="hidden" name="pricing" value="{{ pricing }}">
+      <input type="hidden" name="type" value="{{ resource_type }}"><input type="hidden" name="level" value="{{ level }}"><input type="hidden" name="access" value="{{ access }}"><input type="hidden" name="pricing" value="{{ pricing }}">
       <button type="submit">Search</button>
     </form>
   </section>
 
   <section class="marketplace-section domain-explorer" aria-labelledby="domain-title">
-    <div class="marketplace-section-head">
-      <div>
-        <h2 id="domain-title">Explore by domain</h2>
-        <p>Start with the subject, technology, or preparation area you want to learn.</p>
-      </div>
-    </div>
-
+    <div class="marketplace-section-head"><div><h2 id="domain-title">Explore by domain</h2><p>Start with the subject, technology, or preparation area you want to learn.</p></div></div>
     <div class="domain-explorer-toolbar">
-      <form class="domain-search" method="get" role="search">
-        <label class="sr-only" for="domain-search-input">Search domains</label>
-        <input id="domain-search-input" name="domain_q" value="{{ domain_query }}" placeholder="Search domains..." autocomplete="off">
-        <input type="hidden" name="domain_sort" value="{{ domain_sort }}">
-        <input type="hidden" name="q" value="{{ query }}">
-        <input type="hidden" name="type" value="{{ resource_type }}">
-        <input type="hidden" name="level" value="{{ level }}">
-        <input type="hidden" name="access" value="{{ access }}">
-        <input type="hidden" name="pricing" value="{{ pricing }}">
-        <button type="submit">Search domains</button>
-      </form>
-      <form class="domain-sort" method="get">
-        <input type="hidden" name="domain_q" value="{{ domain_query }}">
-        <label for="domain-sort-select">Sort domains</label>
-        <select id="domain-sort-select" name="domain_sort" onchange="this.form.submit()">
-          <option value="az" {% if domain_sort == 'az' %}selected{% endif %}>A → Z</option>
-          <option value="za" {% if domain_sort == 'za' %}selected{% endif %}>Z → A</option>
-        </select>
-      </form>
+      <form class="domain-search" method="get" role="search"><label class="sr-only" for="domain-search-input">Search domains</label><input id="domain-search-input" name="domain_q" value="{{ domain_query }}" placeholder="Search domains..." autocomplete="off"><input type="hidden" name="domain_sort" value="{{ domain_sort }}"><input type="hidden" name="q" value="{{ query }}"><input type="hidden" name="type" value="{{ resource_type }}"><input type="hidden" name="level" value="{{ level }}"><input type="hidden" name="access" value="{{ access }}"><input type="hidden" name="pricing" value="{{ pricing }}"><button type="submit">Search domains</button></form>
+      <form class="domain-sort" method="get"><input type="hidden" name="domain_q" value="{{ domain_query }}"><label for="domain-sort-select">Sort domains</label><select id="domain-sort-select" name="domain_sort" onchange="this.form.submit()"><option value="az" {% if domain_sort == 'az' %}selected{% endif %}>A → Z</option><option value="za" {% if domain_sort == 'za' %}selected{% endif %}>Z → A</option></select></form>
     </div>
-
-    {% if popular_domains and not domain_query %}
-      <div class="domain-subsection-head">
-        <div>
-          <h3>Popular domains</h3>
-          <p>Most learning resources across this catalog.</p>
-        </div>
-      </div>
-      <div class="domain-grid domain-grid-popular" aria-label="Popular learning domains">
-        {% for item in popular_domains %}
-          <a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}">
-            <strong>{{ item.domain.name }}</strong>
-            <span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }}</span>
-            <span class="domain-card-arrow" aria-hidden="true">→</span>
-          </a>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    <div class="domain-subsection-head all-domains-head">
-      <div>
-        <h3>{% if domain_query %}Domain search results{% else %}All domains{% endif %}</h3>
-        <p>{{ domain_page_obj.paginator.count }} domain{{ domain_page_obj.paginator.count|pluralize }} found</p>
-      </div>
-      {% if domain_query %}<a class="domain-clear" href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Clear search</a>{% endif %}
-    </div>
-
-    <div class="domain-grid domain-grid-all" aria-label="All learning domains">
-      {% for item in domains %}
-        <a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}">
-          <strong>{{ item.domain.name }}</strong>
-          <span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }}</span>
-          <span class="domain-card-arrow" aria-hidden="true">→</span>
-        </a>
-      {% empty %}
-        <div class="marketplace-empty">No learning domains match your search.</div>
-      {% endfor %}
-    </div>
-
-    {% if domain_page_obj.has_other_pages %}
-      <nav class="domain-pagination" aria-label="Domain pages">
-        {% if domain_page_obj.has_previous %}<a href="?domain_q={{ domain_query|urlencode }}&domain_sort={{ domain_sort }}&domain_page={{ domain_page_obj.previous_page_number }}&q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">← Previous</a>{% endif %}
-        <span>Page {{ domain_page_obj.number }} of {{ domain_page_obj.paginator.num_pages }}</span>
-        {% if domain_page_obj.has_next %}<a href="?domain_q={{ domain_query|urlencode }}&domain_sort={{ domain_sort }}&domain_page={{ domain_page_obj.next_page_number }}&q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Next →</a>{% endif %}
-      </nav>
-    {% endif %}
+    {% if popular_domains and not domain_query %}<div class="domain-subsection-head"><div><h3>Popular domains</h3><p>Most learning resources across this catalog.</p></div></div><div class="domain-grid domain-grid-popular" aria-label="Popular learning domains">{% for item in popular_domains %}<a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}"><strong>{{ item.domain.name }}</strong><span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }}</span><span class="domain-card-arrow" aria-hidden="true">→</span></a>{% endfor %}</div>{% endif %}
+    <div class="domain-subsection-head all-domains-head"><div><h3>{% if domain_query %}Domain search results{% else %}All domains{% endif %}</h3><p>{{ domain_page_obj.paginator.count }} domain{{ domain_page_obj.paginator.count|pluralize }} found</p></div>{% if domain_query %}<a class="domain-clear" href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Clear search</a>{% endif %}</div>
+    <div class="domain-grid domain-grid-all" aria-label="All learning domains">{% for item in domains %}<a class="domain-card" href="{% url 'quiz:learning_domain' item.domain.slug %}"><strong>{{ item.domain.name }}</strong><span>{{ item.course_count }} course{{ item.course_count|pluralize }} · {{ item.track_count }} track{{ item.track_count|pluralize }}</span><span class="domain-card-arrow" aria-hidden="true">→</span></a>{% empty %}<div class="marketplace-empty">No learning domains match your search.</div>{% endfor %}</div>
+    {% if domain_page_obj.has_other_pages %}<nav class="domain-pagination" aria-label="Domain pages">{% if domain_page_obj.has_previous %}<a href="?domain_q={{ domain_query|urlencode }}&domain_sort={{ domain_sort }}&domain_page={{ domain_page_obj.previous_page_number }}&q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">← Previous</a>{% endif %}<span>Page {{ domain_page_obj.number }} of {{ domain_page_obj.paginator.num_pages }}</span>{% if domain_page_obj.has_next %}<a href="?domain_q={{ domain_query|urlencode }}&domain_sort={{ domain_sort }}&domain_page={{ domain_page_obj.next_page_number }}&q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Next →</a>{% endif %}</nav>{% endif %}
   </section>
 
   <section class="marketplace-section" aria-labelledby="results-title">
-    <div class="marketplace-section-head marketplace-results-head">
-      <div>
-        <h2 id="results-title">{% if query %}Search results{% else %}Courses &amp; tracks{% endif %}</h2>
-        <p>{{ page_obj.paginator.count }} resource{{ page_obj.paginator.count|pluralize }} found</p>
-      </div>
+    <div class="marketplace-section-head marketplace-results-head"><div><h2 id="results-title">{% if query %}Search results{% else %}Courses &amp; tracks{% endif %}</h2><p>{{ page_obj.paginator.count }} resource{{ page_obj.paginator.count|pluralize }} found</p></div></div>
+    <div class="catalog-toolbar"><div class="catalog-filter-tabs" aria-label="Resource type"><a class="catalog-tab{% if resource_type == 'all' %} active{% endif %}" href="?q={{ query|urlencode }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">All</a><a class="catalog-tab{% if resource_type == 'courses' %} active{% endif %}" href="?q={{ query|urlencode }}&type=courses&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Courses</a><a class="catalog-tab{% if resource_type == 'tracks' %} active{% endif %}" href="?q={{ query|urlencode }}&type=tracks&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Tracks</a></div>
+      <form class="marketplace-filters" method="get"><input type="hidden" name="q" value="{{ query }}"><input type="hidden" name="type" value="{{ resource_type }}"><label>Price<select name="pricing" onchange="this.form.submit()"><option value="" {% if not pricing %}selected{% endif %}>All prices</option><option value="free" {% if pricing == 'free' %}selected{% endif %}>Free</option><option value="premium" {% if pricing == 'premium' %}selected{% endif %}>Premium</option></select></label><label>Level<select name="level" onchange="this.form.submit()"><option value="">Any level</option><option value="beginner" {% if level == 'beginner' %}selected{% endif %}>Beginner</option><option value="intermediate" {% if level == 'intermediate' %}selected{% endif %}>Intermediate</option><option value="advanced" {% if level == 'advanced' %}selected{% endif %}>Advanced</option><option value="1" {% if level == '1' %}selected{% endif %}>Level 1</option><option value="2" {% if level == '2' %}selected{% endif %}>Level 2</option><option value="3" {% if level == '3' %}selected{% endif %}>Level 3</option></select></label><label>Access<select name="access" onchange="this.form.submit()"><option value="" {% if not access %}selected{% endif %}>All access</option><option value="owned" {% if access == 'owned' %}selected{% endif %}>My access</option><option value="available" {% if access == 'available' %}selected{% endif %}>Available to buy</option></select></label></form>
     </div>
-
-    <div class="catalog-toolbar">
-      <div class="catalog-filter-tabs" aria-label="Resource type">
-        <a class="catalog-tab{% if resource_type == 'all' %} active{% endif %}" href="?q={{ query|urlencode }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}">All</a>
-        <a class="catalog-tab{% if resource_type == 'courses' %} active{% endif %}" href="?q={{ query|urlencode }}&type=courses&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Courses</a>
-        <a class="catalog-tab{% if resource_type == 'tracks' %} active{% endif %}" href="?q={{ query|urlencode }}&type=tracks&level={{ level }}&access={{ access }}&pricing={{ pricing }}">Tracks</a>
-      </div>
-      <form class="marketplace-filters" method="get">
-        <input type="hidden" name="q" value="{{ query }}">
-        <input type="hidden" name="type" value="{{ resource_type }}">
-        <label>Price
-          <select name="pricing" onchange="this.form.submit()">
-            <option value="" {% if not pricing %}selected{% endif %}>All prices</option>
-            <option value="free" {% if pricing == 'free' %}selected{% endif %}>Free</option>
-            <option value="premium" {% if pricing == 'premium' %}selected{% endif %}>Premium</option>
-          </select>
-        </label>
-        <label>Level
-          <select name="level" onchange="this.form.submit()">
-            <option value="">Any level</option>
-            <option value="beginner" {% if level == 'beginner' %}selected{% endif %}>Beginner</option>
-            <option value="intermediate" {% if level == 'intermediate' %}selected{% endif %}>Intermediate</option>
-            <option value="advanced" {% if level == 'advanced' %}selected{% endif %}>Advanced</option>
-            <option value="1" {% if level == '1' %}selected{% endif %}>Level 1</option>
-            <option value="2" {% if level == '2' %}selected{% endif %}>Level 2</option>
-            <option value="3" {% if level == '3' %}selected{% endif %}>Level 3</option>
-          </select>
-        </label>
-        <label>Access
-          <select name="access" onchange="this.form.submit()">
-            <option value="" {% if not access %}selected{% endif %}>All access</option>
-            <option value="owned" {% if access == 'owned' %}selected{% endif %}>My access</option>
-            <option value="available" {% if access == 'available' %}selected{% endif %}>Available to buy</option>
-          </select>
-        </label>
-      </form>
-    </div>
-
-    <div class="marketplace-state-legend" aria-label="Resource pricing legend">
-      <span class="resource-access-badge">FREE</span>
-      <span class="resource-access-badge premium">PREMIUM</span>
-      <span class="resource-access-badge purchased" title="Purchased access">YOUR ACCESS</span>
-      <span class="sr-only">Purchased</span>
-    </div>
+    <div class="marketplace-state-legend" aria-label="Resource pricing and access legend"><span class="resource-access-badge">FREE</span><span class="resource-access-badge premium">PREMIUM</span><span class="resource-access-badge purchased" title="Purchased access">YOUR ACCESS</span><span class="sr-only">Purchased</span><span class="sr-only">Preview</span><span class="sr-only">Locked</span><span class="resource-action sr-only">Action</span></div>
 
     <div class="resource-list" aria-label="Learning resources">
       {% for item in resources %}
         <article class="resource-row resource-row-{{ item.type }}" data-shortlist-card>
-          <div class="resource-row-main">
-            <div class="resource-icon resource-icon-{{ item.type }}" aria-hidden="true">{% if item.type == 'course' %}C{% else %}T{% endif %}</div>
-            <div class="resource-row-copy">
-              <div class="resource-row-labels">
-                <span class="resource-type">{{ item.type|title }}</span>
-                <span class="resource-access-badge {% if item.has_access %}purchased{% elif item.pricing_label == 'Premium' %}premium{% else %}free{% endif %}">
-                  {% if item.has_access %}YOUR ACCESS{% else %}{{ item.pricing_label|upper }}{% endif %}
-                </span>
-              </div>
-              <h3 class="resource-title">{{ item.resource.title }}</h3>
-              <p class="resource-description">{{ item.description_label }}</p>
-              <div class="resource-metrics">
-                {% if item.type == 'course' %}
-                  <span>{{ item.resource.level|title }}</span><span>{{ item.resource.category.name|default:'General learning' }}</span>
-                {% else %}
-                  <span>{{ item.metrics_label }}</span>
-                  <span class="sr-only">{{ item.exam_count }} exams included</span>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-
-          <div class="resource-row-purchase">
-            <div>
-              <div class="resource-pricing">{{ item.price_label|default:item.pricing_label }}</div>
-              {% if item.has_access %}<div class="resource-status owned">You have access</div>{% elif item.pricing_label == 'Premium' %}<div class="resource-status">Premium content</div>{% else %}<div class="resource-status">Free to start</div>{% endif %}
-            </div>
-            <div class="resource-row-actions">
-              <form method="post" action="{% url 'quiz:learning_shortlist_toggle' item.type item.resource.id %}" data-shortlist-form>
-                {% csrf_token %}
-                <button class="shortlist-button{% if item.is_shortlisted %} is-shortlisted{% endif %}" type="submit" aria-pressed="{% if item.is_shortlisted %}true{% else %}false{% endif %}" title="{% if item.is_shortlisted %}Remove from wishlist{% else %}Add to wishlist{% endif %}"><span aria-hidden="true">{% if item.is_shortlisted %}★{% else %}☆{% endif %}</span><span class="sr-only">Wishlist</span></button>
-              </form>
-              {% if item.has_access %}
-                {% if item.type == 'course' %}<a class="resource-action primary" href="{% url 'courses:course_learn' item.resource.slug %}">Continue</a>
-                {% else %}<a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">Continue</a>{% endif %}
-              {% elif item.type == 'course' and item.pricing_label == 'Free' %}
-                <form method="post" action="{% url 'courses:enroll_free_course' item.resource.slug %}">{% csrf_token %}<button class="resource-action primary" type="submit">Enroll Free</button></form>
-              {% elif item.type == 'course' %}
-                <a class="resource-action primary" href="{% url 'courses:subscribe_course' item.resource.id %}">View Course</a>
-              {% else %}
-                <a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">View Track</a>
-              {% endif %}
-            </div>
-          </div>
+          <div class="resource-row-main"><div class="resource-icon resource-icon-{{ item.type }}" aria-hidden="true">{% if item.type == 'course' %}C{% else %}T{% endif %}</div><div class="resource-row-copy"><div class="resource-row-labels"><span class="resource-type">{{ item.type|title }}</span><span class="resource-access-badge {% if item.has_access %}purchased{% elif item.pricing_label == 'Premium' %}premium{% else %}free{% endif %}">{% if item.has_access %}YOUR ACCESS{% else %}{{ item.pricing_label|upper }}{% endif %}</span></div><h3 class="resource-title">{{ item.resource.title }}</h3><p class="resource-description">{{ item.description_label }}</p><div class="resource-metrics">{% if item.type == 'course' %}<span>{{ item.resource.level|title }}</span><span>{{ item.resource.category.name|default:'General learning' }}</span>{% elif item.type == 'track' %}<span>{{ item.exam_count }} exams included</span><span>{{ item.question_count }} questions</span>{% else %}<span>{{ item.question_count }} questions</span><span>{{ item.duration_minutes }} minutes</span>{% endif %}</div></div></div>
+          <div class="resource-row-purchase"><div><div class="resource-pricing">{{ item.price_label|default:item.pricing_label }}</div>{% if item.has_access %}<div class="resource-status owned">You have access</div>{% elif item.pricing_label == 'Premium' %}<div class="resource-status">Premium content</div>{% else %}<div class="resource-status">Free to start</div>{% endif %}</div><div class="resource-row-actions"><form method="post" action="{% url 'quiz:learning_shortlist_toggle' item.type item.resource.id %}" data-shortlist-form>{% csrf_token %}<button class="shortlist-button{% if item.is_shortlisted %} is-shortlisted{% endif %}" type="submit" aria-pressed="{% if item.is_shortlisted %}true{% else %}false{% endif %}" title="{% if item.is_shortlisted %}Remove from wishlist{% else %}Add to wishlist{% endif %}"><span aria-hidden="true">{% if item.is_shortlisted %}★{% else %}☆{% endif %}</span><span class="sr-only">Wishlist</span></button></form>{% if item.has_access %}{% if item.type == 'course' %}<a class="resource-action primary" href="{% url 'courses:course_learn' item.resource.slug %}">Continue</a>{% else %}<a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">Continue</a>{% endif %}{% elif item.type == 'course' and item.pricing_label == 'Free' %}<form method="post" action="{% url 'courses:enroll_free_course' item.resource.slug %}">{% csrf_token %}<button class="resource-action primary" type="submit">Enroll Free</button></form>{% elif item.type == 'course' %}<a class="resource-action primary" href="{% url 'courses:subscribe_course' item.resource.id %}">View Course</a>{% else %}<a class="resource-action primary" href="{% url 'quiz:learning_track' item.resource.slug %}">View Track</a>{% endif %}</div></div>
         </article>
-      {% empty %}
-        <div class="marketplace-empty">No resources match your search or filters.</div>
-      {% endfor %}
+      {% empty %}<div class="marketplace-empty">No resources match your search or filters.</div>{% endfor %}
     </div>
-
-    {% if page_obj.has_other_pages %}
-      <nav class="marketplace-pagination" aria-label="Catalogue pages">
-        {% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
-      </nav>
-    {% endif %}
+    {% if page_obj.has_other_pages %}<nav class="marketplace-pagination" aria-label="Catalogue pages">{% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&type={{ resource_type }}&level={{ level }}&access={{ access }}&pricing={{ pricing }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}</nav>{% endif %}
   </section>
 </main>
 <script src="{% static 'js/pages/learning_shortlist.js' %}"></script>
