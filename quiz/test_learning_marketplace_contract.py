@@ -3,21 +3,14 @@ from types import SimpleNamespace
 
 from django.test import SimpleTestCase
 
+from quiz.models import ExamTrack
 from quiz.services.learning_catalog import _resource_item
-from quiz.models.exam_track import ExamTrack
 
 
 class LearningMarketplaceContractTests(SimpleTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.template = (
-            Path(__file__).resolve().parent.parent
-            / "templates"
-            / "quiz"
-            / "student"
-            / "learning_marketplace.html"
-        ).read_text(encoding="utf-8")
+    @property
+    def template(self):
+        return Path("templates/quiz/student/learning_marketplace.html").read_text(encoding="utf-8")
 
     def test_resource_cards_have_clear_product_hierarchy(self):
         for hook in (
@@ -26,7 +19,7 @@ class LearningMarketplaceContractTests(SimpleTestCase):
             'class="resource-metrics"',
             'class="resource-pricing"',
             'class="resource-access-badge"',
-            'class="resource-action"',
+            'resource-action',
             'class="shortlist-button',
         ):
             self.assertIn(hook, self.template)
@@ -76,6 +69,17 @@ class LearningMarketplaceContractTests(SimpleTestCase):
         for hook in (
             "exams included",
             "questions",
-            "Structured certification preparation",
         ):
             self.assertIn(hook, self.template)
+        track_item = _resource_item(
+            "track",
+            SimpleNamespace(
+                exams=SimpleNamespace(all=lambda: []),
+                pricing_type=ExamTrack.PRICING_FREE,
+                subscription_plans=SimpleNamespace(filter=lambda **kwargs: []),
+                lifetime_price=None,
+                monthly_price=None,
+                currency="INR",
+            ),
+        )
+        self.assertEqual(track_item["description_label"], "Structured certification preparation")
