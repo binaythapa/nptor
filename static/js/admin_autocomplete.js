@@ -77,7 +77,7 @@
             if (!results[index]) return;
             input.value = results[index].label || "";
             close();
-            if (input.dataset.autocompleteSubmit === "true") form.submit();
+            if (input.dataset.autocompleteSubmit !== "false") form.submit();
         }
 
         function render(items) {
