@@ -33,9 +33,16 @@ def org_students(request, slug):
 
 
 @org_teacher_required
-@require_POST
 def org_student_add(request, slug):
     org = request.organization
+
+    if request.method == "GET":
+        return render(
+            request,
+            "organizations/admin/students/add.html",
+            {"org": org},
+        )
+
     email = (request.POST.get("email") or "").strip().lower()
     role = request.POST.get("role", OrganizationRole.STUDENT)
 
