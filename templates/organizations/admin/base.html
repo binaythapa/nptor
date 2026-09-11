@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
 <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 <link rel="stylesheet" href="{% static 'css/org-admin.css' %}">
+<link rel="stylesheet" href="{% static 'css/org-admin-mobile.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 {% block head_extra %}{% endblock %}
 </head>
@@ -17,7 +18,7 @@
 <header class="admin-header org-admin-header">
   <div class="admin-header-inner">
     <div class="admin-header-left">
-      <button id="admin-sidebar-toggle" class="button is-white is-small mr-3" type="button" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation">
+      <button id="orgMobileMenuButton" class="button is-white is-small mr-3" type="button" aria-controls="orgAdminSidebar" aria-expanded="false" aria-label="Open navigation">
         <i class="fa fa-bars" aria-hidden="true"></i>
       </button>
       <a class="admin-brand" href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
@@ -45,7 +46,8 @@
 </header>
 
 <div class="org-admin-layout">
-  <aside id="admin-sidebar" class="admin-sidebar org-admin-sidebar" aria-label="Organization navigation">
+  <div id="orgAdminBackdrop" class="admin-sidebar-overlay" aria-hidden="true"></div>
+  <aside id="orgAdminSidebar" class="admin-sidebar org-admin-sidebar" aria-label="Organization navigation">
     <p class="menu-label">Overview</p>
     <ul class="menu-list">
       <li><a class="{% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}" href="{% url 'organizations_admin:dashboard' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-chart-line"></i></span><span class="menu-text">Dashboard</span></a></li>
@@ -78,7 +80,7 @@
     </ul>
   </aside>
 
-  <main id="admin-main" class="admin-content" tabindex="-1">
+  <main id="admin-main" class="admin-content org-admin-content" tabindex="-1">
     <section class="section">
       <div class="container">
         {% block content %}{% endblock %}
@@ -91,6 +93,23 @@
 <script>window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'organizations_admin:autocomplete' slug=org_slug %}";</script>
 <script src="{% static 'js/admin_navigation.js' %}"></script>
 <script src="{% static 'js/admin_autocomplete.js' %}"></script>
+<script>
+(function () {
+  const button = document.getElementById('orgMobileMenuButton');
+  const sidebar = document.getElementById('orgAdminSidebar');
+  const backdrop = document.getElementById('orgAdminBackdrop');
+  if (!button || !sidebar || !backdrop) return;
+  const setOpen = (open) => {
+    sidebar.classList.toggle('is-active', open);
+    backdrop.classList.toggle('is-active', open);
+    document.body.classList.toggle('org-admin-sidebar-open', open);
+    button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  button.addEventListener('click', () => setOpen(!sidebar.classList.contains('is-active')));
+  backdrop.addEventListener('click', () => setOpen(false));
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setOpen(false); });
+})();
+</script>
 {% block scripts_extra %}{% endblock %}
 {% endwith %}
 </body>
