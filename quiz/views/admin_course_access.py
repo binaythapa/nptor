@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from courses.models import Course
 from organizations.models.access import ResourceAccess
@@ -16,39 +16,17 @@ from subscriptions.services.plan_service import get_plan_for_course
 User = get_user_model()
 
 
-def _course_payload(course):
-    plans = course.subscription_plans.filter(
-        is_active=True,
-        scope="resource",
-    ).order_by("price", "id")
-    return {
-        "id": course.id,
-        "title": course.title,
-        "plans": [
-            {
-                "id": plan.id,
-                "name": plan.name,
-                "price": str(plan.price),
-                "currency": plan.currency,
-                "duration_days": plan.duration_days,
-            }
-            for plan in plans
-        ],
-    }
-
-
 @staff_member_required
+@require_GET
 def admin_course_access_data(request):
-    courses = (
-        Course.objects
-        .prefetch_related("subscription_plans")
-        .filter(is_published=True)
-        .order_by("title")
-    )
-
     subscriptions = (
         SubscriptionEntitlement.objects
-        .select_related("subscription", "subscription__user", "subscription__plan", "course")
+        .select_related(
+            "subscription",
+            "subscription__user",
+            "subscription__plan",
+            "course",
+        )
         .filter(
             resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
             course__isnull=False,
@@ -79,10 +57,7 @@ def admin_course_access_data(request):
             "expires_display": subscription.expires_at.strftime("%Y-%m-%d %H:%M") if subscription.expires_at else "Lifetime",
         })
 
-    return JsonResponse({
-        "courses": [_course_payload(course) for course in courses],
-        "active_course_access": active,
-    })
+    return JsonResponse({"active_course_access": active})
 
 
 @staff_member_required
