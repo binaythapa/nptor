@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.forms import BaseInlineFormSet, inlineformset_factory
 
 from quiz.models import Exam, ExamTrack, TrackExam
@@ -19,7 +20,7 @@ class TrackExamForm(forms.ModelForm):
         self.organization = organization
         super().__init__(*args, **kwargs)
         exam_qs = Exam.objects.filter(
-            forms.models.Q(organization=organization) | forms.models.Q(organization__isnull=True)
+            Q(organization=organization) | Q(organization__isnull=True)
         ).order_by("title")
         self.fields["exam"].queryset = exam_qs
         self.fields["prerequisite_exams"].queryset = exam_qs
@@ -40,7 +41,11 @@ class BaseTrackExamFormSet(BaseInlineFormSet):
         if any(self.errors):
             return
 
-        rows = [form.cleaned_data for form in self.forms if form.cleaned_data and not form.cleaned_data.get("DELETE")]
+        rows = [
+            form.cleaned_data
+            for form in self.forms
+            if form.cleaned_data and not form.cleaned_data.get("DELETE")
+        ]
         exams = [row.get("exam") for row in rows if row.get("exam")]
         exam_ids = [exam.pk for exam in exams]
         if len(exam_ids) != len(set(exam_ids)):
@@ -53,7 +58,7 @@ class BaseTrackExamFormSet(BaseInlineFormSet):
             if not exam:
                 continue
             prerequisites = row.get("prerequisite_exams") or []
-            prerequisite_ids = {exam.pk for exam in prerequisites}
+            prerequisite_ids = {item.pk for item in prerequisites}
             invalid = prerequisite_ids - allowed_ids
             if invalid:
                 raise ValidationError(
@@ -79,7 +84,9 @@ class BaseTrackExamFormSet(BaseInlineFormSet):
             return False
 
         if any(visit(node) for node in graph):
-            raise ValidationError("Track exam prerequisites cannot contain a circular dependency.")
+            raise ValidationError(
+                "Track exam prerequisites cannot contain a circular dependency."
+            )
 
 
 TrackExamFormSet = inlineformset_factory(
