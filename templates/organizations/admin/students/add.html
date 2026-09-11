@@ -1,11 +1,8 @@
-
-
-
 {% extends "organizations/admin/base.html" %}
-
 
 {% block content %}
 
+{% with org_slug=request.organization.slug %}
 <h2 class="title is-4">➕ Add Student</h2>
 
 <form method="post">
@@ -24,13 +21,16 @@
       <div class="select">
         <select name="role">
           <option value="student">Student</option>
-          <option value="staff">Staff</option>
+          {% if request.organization_member.role != "staff" %}
+            <option value="staff">Staff</option>
+          {% endif %}
         </select>
       </div>
     </div>
   </div>
 
   <button class="button is-success">Add</button>
+  <a href="{% url 'organizations_admin:students' slug=org_slug %}" class="button is-light">Cancel</a>
 </form>
+{% endwith %}
 {% endblock %}
-
