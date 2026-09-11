@@ -1,0 +1,110 @@
+/* Page-specific refinements layered over admin-crud.css. */
+
+/* Question dashboard: the five KPI cards should stay on one row at desktop widths. */
+.admin-content .dashboard-header + .columns.is-multiline {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.admin-content .dashboard-header + .columns.is-multiline > .column {
+  width: auto;
+  padding: 0;
+  min-width: 0;
+}
+
+.admin-content .dashboard-header + .columns.is-multiline > .column .box {
+  height: 92px;
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+}
+
+/* Keep form filters compact even when legacy Bulma column markup is present. */
+.admin-content form.box:has(select) > .columns,
+.admin-content .admin-filter-bar > .columns {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.6fr) repeat(2, minmax(150px, 1fr)) minmax(150px, 1fr) minmax(100px, .7fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.admin-content form.box:has(select) > .columns > .column,
+.admin-content .admin-filter-bar > .columns > .column {
+  width: auto;
+  padding: 0;
+}
+
+/* Question table action area and metadata */
+.admin-content .question-meta .tag { margin: 0; }
+.admin-content .question-cell { gap: 4px; }
+.admin-content .question-text { font-size: .86rem; }
+.admin-content .action-buttons .button { min-width: 34px; justify-content: center; }
+
+/* CRUD list headers */
+.org-admin-content > .container > .level,
+.org-admin-content > .container > .admin-crud-header {
+  margin-bottom: 16px;
+}
+
+/* Full-width form cards should not inherit unnecessary Bulma vertical spacing. */
+.admin-content .container > .card,
+.admin-content .container > form > .card,
+.org-admin-content .container > .card,
+.org-admin-content .container > form > .card {
+  margin-bottom: 16px;
+}
+
+/* Multi-select fields and Django select widgets */
+.admin-content select[multiple],
+.org-admin-content select[multiple] {
+  min-height: 120px;
+  padding: 6px;
+}
+
+.admin-content select[multiple] option,
+.org-admin-content select[multiple] option { padding: 6px 8px; }
+
+/* Do not let the shared button rule make icon-only header controls oversized. */
+.admin-content .card-header-icon,
+.org-admin-content .card-header-icon {
+  min-width: 36px;
+  width: 36px;
+  min-height: 36px;
+  height: 36px;
+  padding: 6px;
+}
+
+/* Mobile */
+@media (max-width: 1100px) {
+  .admin-content .dashboard-header + .columns.is-multiline {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-content form.box:has(select) > .columns,
+  .admin-content .admin-filter-bar > .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-content .dashboard-header + .columns.is-multiline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-content form.box:has(select) > .columns,
+  .admin-content .admin-filter-bar > .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-content .dashboard-header + .columns.is-multiline > .column { width: auto; }
+}
+
+@media (max-width: 480px) {
+  .admin-content .dashboard-header + .columns.is-multiline {
+    grid-template-columns: 1fr;
+  }
+}
