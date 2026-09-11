@@ -1,0 +1,24 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+<div class="container py-6">
+  <div class="has-text-centered mb-6">
+    <h1 class="title">All-access Subscription</h1>
+    <p class="subtitle">Complete access to courses, tracks, and exams across NPTOR.</p>
+  </div>
+  <div class="columns is-centered is-multiline">
+    {% for plan in plans %}
+    <div class="column is-5">
+      <div class="box is-flex is-flex-direction-column" style="height:100%">
+        <h2 class="title is-4">{{ plan.name }}</h2>
+        {% if plan.description %}<p class="has-text-grey mb-4">{{ plan.description }}</p>{% endif %}
+        <p class="title is-3 mb-2">{{ plan.currency }} {{ plan.price }}</p>
+        <p class="mb-5">{% if plan.duration_days %}Access for {{ plan.duration_days }} days.{% else %}Lifetime access.{% endif %}</p>
+        <a class="button is-primary is-fullwidth mt-auto" href="{% url 'payments:subscription_checkout' plan.id %}">Get complete access</a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="column is-12 has-text-centered"><p>No all-access subscription plans are currently available.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

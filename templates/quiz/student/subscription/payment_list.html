@@ -1,61 +1,28 @@
 {% extends "layouts/admin/base_admin.html" %}
 {% load static %}
-
 {% block title %}Payment Records{% endblock %}
-
-{% block head_extra %}
-<link rel="stylesheet" href="{% static 'css/payment_admin.css' %}">
-{% endblock %}
-
+{% block head_extra %}<link rel="stylesheet" href="{% static 'css/payment_admin.css' %}">{% endblock %}
 {% block content %}
 <div class="admin-payment-page">
   <div class="admin-page-header">
-    <div>
-      <h1>Payment Records</h1>
-      <p class="admin-muted">Review recorded payments and add manual transactions.</p>
-    </div>
-
-    <div class="admin-payment-actions">
-      <button type="button" class="button is-link is-small" onclick="openPaymentModal()">
-        Add Manual Payment
-      </button>
-    </div>
+    <div><h1>Payment Records</h1><p class="admin-muted">Sell courses, tracks, or all-access subscriptions. Individual exams are not sold.</p></div>
+    <div class="admin-payment-actions"><button type="button" class="button is-link is-small" onclick="openPaymentModal()">Add Manual Payment</button></div>
   </div>
-
   <section class="admin-panel admin-payment-table-panel">
     <div class="admin-payment-table-scroll">
       <table class="table is-fullwidth admin-payment-table">
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Item</th>
-            <th>Amount</th>
-            <th>Method</th>
-            <th>Paid At</th>
-          </tr>
-        </thead>
+        <thead><tr><th>User</th><th>Product</th><th>Plan</th><th>Amount</th><th>Method</th><th>Paid At</th></tr></thead>
         <tbody>
           {% for p in payments %}
           <tr>
             <td class="admin-payment-user">{{ p.user.username }}</td>
-            <td class="admin-payment-item">
-              {% if p.track %}
-                {{ p.track.title }}
-              {% else %}
-                {{ p.exam.title }}
-              {% endif %}
-            </td>
-            <td>₹{{ p.amount }}</td>
+            <td class="admin-payment-item">{{ p.target_name }}</td>
+            <td>{% if p.subscription_plan %}{{ p.subscription_plan.name }}{% else %}—{% endif %}</td>
+            <td>{{ p.currency }} {{ p.amount }}</td>
             <td>{{ p.get_payment_method_display }}</td>
             <td>{{ p.paid_at|date:"M d, Y H:i" }}</td>
           </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5" class="admin-payment-empty">
-              No payment records found
-            </td>
-          </tr>
-          {% endfor %}
+          {% empty %}<tr><td colspan="6" class="admin-payment-empty">No payment records found</td></tr>{% endfor %}
         </tbody>
       </table>
     </div>
@@ -64,203 +31,30 @@
 
 <div class="admin-payment-modal" id="paymentModal" aria-hidden="true">
   <div class="admin-payment-modal-backdrop" onclick="closePaymentModal()"></div>
-
   <div class="admin-payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
-    <header class="admin-payment-modal-header">
-      <h2 id="paymentModalTitle">Add Manual Payment</h2>
-      <button type="button" class="admin-payment-modal-close" aria-label="Close" onclick="closePaymentModal()">&times;</button>
-    </header>
-
+    <header class="admin-payment-modal-header"><h2 id="paymentModalTitle">Add Manual Payment</h2><button type="button" class="admin-payment-modal-close" aria-label="Close" onclick="closePaymentModal()">&times;</button></header>
     <section class="admin-payment-modal-body">
       <form id="paymentCsrfForm">{% csrf_token %}</form>
-
       <div class="admin-payment-form-grid">
-        <div class="admin-payment-field">
-          <label for="user">User <span class="admin-payment-required">*</span></label>
-          <select id="user" class="admin-payment-control">
-            <option value="">-- Select User --</option>
-            {% for u in users %}
-              <option value="{{ u.id }}">{{ u.username }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="admin-payment-field">
-          <label for="exam">Exam <span class="admin-payment-hint">(optional)</span></label>
-          <select id="exam" class="admin-payment-control">
-            <option value="">---</option>
-            {% for e in exams %}
-              <option value="{{ e.id }}">{{ e.title }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="admin-payment-field">
-          <label for="track">Track <span class="admin-payment-hint">(optional)</span></label>
-          <select id="track" class="admin-payment-control">
-            <option value="">---</option>
-            {% for t in tracks %}
-              <option value="{{ t.id }}">{{ t.title }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="admin-payment-field">
-          <label for="plan">Subscription Plan <span class="admin-payment-hint">(required for track)</span></label>
-          <select id="plan" class="admin-payment-control">
-            <option value="">-- Select Plan --</option>
-            {% for plan in plans %}
-              <option value="{{ plan.id }}">
-                {{ plan.name }} — ₹{{ plan.price }}
-                {% if plan.duration_days %}
-                  / {{ plan.duration_days }} days
-                {% else %}
-                  (Lifetime)
-                {% endif %}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="admin-payment-field">
-          <label for="coupon">Coupon <span class="admin-payment-hint">(optional)</span></label>
-          <input class="admin-payment-control" id="coupon" placeholder="COUPON2025">
-        </div>
-
-        <div class="admin-payment-field">
-          <label for="reference">Reference ID</label>
-          <input class="admin-payment-control" id="reference" placeholder="UPI / Txn Ref">
-        </div>
+        <div class="admin-payment-field"><label for="user">User <span class="admin-payment-required">*</span></label><select id="user" class="admin-payment-control"><option value="">-- Select User --</option>{% for u in users %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}</select></div>
+        <div class="admin-payment-field"><label for="purchaseType">Purchase Type <span class="admin-payment-required">*</span></label><select id="purchaseType" class="admin-payment-control"><option value="">-- Select --</option><option value="course">Course</option><option value="track">Track</option><option value="subscription">All-access Subscription</option></select></div>
+        <div class="admin-payment-field" id="courseField"><label for="course">Course <span class="admin-payment-hint">(required for Course)</span></label><select id="course" class="admin-payment-control"><option value="">-- Select Course --</option>{% for c in courses %}<option value="{{ c.id }}">{{ c.title }}</option>{% endfor %}</select></div>
+        <div class="admin-payment-field" id="trackField"><label for="track">Track <span class="admin-payment-hint">(required for Track)</span></label><select id="track" class="admin-payment-control"><option value="">-- Select Track --</option>{% for t in tracks %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}</select></div>
+        <div class="admin-payment-field"><label for="plan">Subscription Plan <span class="admin-payment-required">*</span></label><select id="plan" class="admin-payment-control"><option value="">-- Select Plan --</option>{% for plan in plans %}<option value="{{ plan.id }}" data-scope="{{ plan.scope }}">{{ plan.name }} — {{ plan.currency }} {{ plan.price }}{% if plan.duration_days %} / {{ plan.duration_days }} days{% else %} (Lifetime){% endif %}{% if plan.scope == 'all_access' %} — All Access{% endif %}</option>{% endfor %}</select></div>
+        <div class="admin-payment-field"><label for="method">Payment Method</label><select id="method" class="admin-payment-control"><option value="upi">UPI</option><option value="bank">Bank Transfer</option><option value="cash">Cash</option><option value="other">Other</option></select></div>
+        <div class="admin-payment-field"><label for="reference">Reference ID</label><input class="admin-payment-control" id="reference" placeholder="UPI / Txn Ref"></div>
       </div>
     </section>
-
-    <footer class="admin-payment-modal-footer">
-      <button type="button" class="admin-payment-button admin-payment-button-primary" onclick="submitPayment()">
-        Save Payment
-      </button>
-      <button type="button" class="admin-payment-button admin-payment-button-secondary" onclick="closePaymentModal()">
-        Cancel
-      </button>
-    </footer>
+    <footer class="admin-payment-modal-footer"><button type="button" class="admin-payment-button admin-payment-button-primary" onclick="submitPayment()">Save Payment</button><button type="button" class="admin-payment-button admin-payment-button-secondary" onclick="closePaymentModal()">Cancel</button></footer>
   </div>
 </div>
-
 <script>
-function getCSRF() {
-  return document.querySelector("#paymentCsrfForm input[name=csrfmiddlewaretoken]").value;
-}
-
-function openPaymentModal() {
-  const modal = document.getElementById("paymentModal");
-  modal.classList.add("is-open");
-  modal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
-
-function closePaymentModal() {
-  const modal = document.getElementById("paymentModal");
-  modal.classList.remove("is-open");
-  modal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-}
-
-/* =============================
-   AUTO-LOAD PLANS ON TRACK CHANGE
-   ============================= */
-document.getElementById("track").addEventListener("change", function () {
-  const trackId = this.value;
-  const planSelect = document.getElementById("plan");
-
-  planSelect.innerHTML = '<option value="">-- Select Plan --</option>';
-  planSelect.disabled = true;
-
-  // Disable exam if track selected
-  document.getElementById("exam").disabled = !!trackId;
-
-  if (!trackId) {
-    planSelect.disabled = false;
-    return;
-  }
-
-  fetch(`/quiz/admin/track/${trackId}/plans/`)
-    .then(res => res.json())
-    .then(data => {
-      if (!data.plans.length) {
-        alert("No active subscription plans for this track");
-        return;
-      }
-
-      data.plans.forEach(p => {
-        const label = p.duration_days
-          ? `${p.name} — ₹${p.price} / ${p.duration_days} days`
-          : `${p.name} — ₹${p.price} (Lifetime)`;
-
-        planSelect.insertAdjacentHTML(
-          "beforeend",
-          `<option value="${p.id}">${label}</option>`
-        );
-      });
-
-      planSelect.disabled = false;
-    });
-});
-
-/* =============================
-   EXAM CHANGE → DISABLE TRACK+PLAN
-   ============================= */
-document.getElementById("exam").addEventListener("change", function () {
-  const hasExam = !!this.value;
-
-  document.getElementById("track").disabled = hasExam;
-  document.getElementById("plan").disabled = hasExam;
-});
-
-/* =============================
-   SUBMIT PAYMENT
-   ============================= */
-function submitPayment() {
-  const user = document.getElementById("user").value;
-  const exam = document.getElementById("exam").value;
-  const track = document.getElementById("track").value;
-  const plan = document.getElementById("plan").value;
-
-  if (!user) {
-    alert("User is required");
-    return;
-  }
-
-  if (exam && track) {
-    alert("Select either Exam OR Track");
-    return;
-  }
-
-  if (track && !plan) {
-    alert("Subscription plan is required for track");
-    return;
-  }
-
-  fetch("{% url 'quiz:admin_add_manual_payment' %}", {
-    method: "POST",
-    headers: {
-      "X-CSRFToken": getCSRF(),
-    },
-    body: new URLSearchParams({
-      user_id: user,
-      exam_id: exam,
-      track_id: track,
-      plan_id: plan,
-      coupon: document.getElementById("coupon").value,
-      reference_id: document.getElementById("reference").value,
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      location.reload();
-    } else {
-      alert(data.error || "Payment failed");
-    }
-  });
-}
+function getCSRF(){return document.querySelector('#paymentCsrfForm input[name=csrfmiddlewaretoken]').value;}
+function openPaymentModal(){const m=document.getElementById('paymentModal');m.classList.add('is-open');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';updateFields();}
+function closePaymentModal(){const m=document.getElementById('paymentModal');m.classList.remove('is-open');m.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+function updateFields(){const type=document.getElementById('purchaseType').value;document.getElementById('courseField').style.display=type==='course'?'':'none';document.getElementById('trackField').style.display=type==='track'?'':'none';const plan=document.getElementById('plan');Array.from(plan.options).forEach((o,i)=>{if(i===0){o.hidden=false;return;}const scope=o.dataset.scope; o.hidden=(type==='subscription' ? scope!=='all_access' : scope!=='resource');}); if(plan.options[plan.selectedIndex]?.hidden) plan.value='';}
+document.getElementById('purchaseType').addEventListener('change',updateFields);
+function submitPayment(){const type=document.getElementById('purchaseType').value;const user=document.getElementById('user').value;const course=document.getElementById('course').value;const track=document.getElementById('track').value;const plan=document.getElementById('plan').value;if(!user||!type||!plan){alert('User, purchase type and plan are required');return;}if(type==='course'&&!course){alert('Course is required');return;}if(type==='track'&&!track){alert('Track is required');return;}fetch("{% url 'quiz:admin_add_manual_payment' %}",{method:'POST',headers:{'X-CSRFToken':getCSRF()},body:new URLSearchParams({user_id:user,purchase_type:type,course_id:course,track_id:track,plan_id:plan,payment_method:document.getElementById('method').value,reference_id:document.getElementById('reference').value})}).then(r=>r.json()).then(data=>{if(data.success)location.reload();else alert(data.error||'Payment failed');}).catch(()=>alert('Payment request failed'));}
+updateFields();
 </script>
 {% endblock %}

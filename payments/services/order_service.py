@@ -7,14 +7,12 @@ from django.db import transaction
 
 from payments.models import PaymentOrder
 from quiz.services.coupon_service import CouponService
-from subscriptions.services.plan_service import (
-    get_plan_for_course,
-    get_plan_for_track,
-)
+from subscriptions.models import SubscriptionPlan
+from subscriptions.services.plan_service import get_plan_for_course, get_plan_for_track
 
 
 class OrderService:
-    """Create immutable payment-order pricing from server-side resource data."""
+    """Create immutable payment-order pricing from server-side product data."""
 
     @staticmethod
     def generate_order_number():
@@ -42,14 +40,15 @@ class OrderService:
         valid = (
             PaymentOrder.RESOURCE_COURSE,
             PaymentOrder.RESOURCE_TRACK,
-            PaymentOrder.RESOURCE_EXAM,
+            PaymentOrder.RESOURCE_SUBSCRIPTION,
         )
         if resource_type not in valid:
-            raise ValidationError("Invalid payment resource type.")
+            raise ValidationError("Individual exams are not sold separately.")
         return {
             "course": resource if resource_type == PaymentOrder.RESOURCE_COURSE else None,
             "track": resource if resource_type == PaymentOrder.RESOURCE_TRACK else None,
-            "exam": resource if resource_type == PaymentOrder.RESOURCE_EXAM else None,
+            "exam": None,
+            "subscription_plan": resource if resource_type == PaymentOrder.RESOURCE_SUBSCRIPTION else None,
         }
 
     @staticmethod
@@ -59,41 +58,22 @@ class OrderService:
         elif resource_type == PaymentOrder.RESOURCE_TRACK:
             plan = get_plan_for_track(resource)
         else:
-            # Individual exams already expose their commercial price.
-            plan = None
+            plan = resource
+            if not isinstance(plan, SubscriptionPlan) or not plan.is_all_access() or not plan.is_active:
+                raise ValidationError("A valid all-access subscription plan is required.")
 
-        if resource_type in (
-            PaymentOrder.RESOURCE_COURSE,
-            PaymentOrder.RESOURCE_TRACK,
-        ):
-            if not plan:
-                raise ValidationError(
-                    "No active subscription plan is configured for this resource."
-                )
-            return plan.price, (plan.currency or "INR").strip().upper()
-
-        return resource.price, (
-            getattr(resource, "currency", None) or "INR"
-        ).strip().upper()
+        if not plan:
+            raise ValidationError("No active subscription plan is configured for this resource.")
+        return plan.price, (plan.currency or "INR").strip().upper()
 
     @staticmethod
     @transaction.atomic
-    def create_order(
-        *,
-        user,
-        resource_type,
-        resource,
-        amount,
-        currency="INR",
-        coupon_code=None,
-    ):
+    def create_order(*, user, resource_type, resource, amount, currency="INR", coupon_code=None):
         if not user or not user.is_authenticated:
             raise ValidationError("Authentication is required.")
 
         resource_fields = OrderService._validate_resource(resource_type, resource)
-        authoritative_amount, authoritative_currency = (
-            OrderService._authoritative_pricing(resource_type, resource)
-        )
+        authoritative_amount, authoritative_currency = OrderService._authoritative_pricing(resource_type, resource)
         supplied_amount = OrderService._normalize_amount(amount)
         expected_amount = OrderService._normalize_amount(authoritative_amount)
         supplied_currency = (currency or "INR").strip().upper()
@@ -112,7 +92,7 @@ class OrderService:
             coupon_kwargs = {
                 "course": resource if resource_type == PaymentOrder.RESOURCE_COURSE else None,
                 "track": resource if resource_type == PaymentOrder.RESOURCE_TRACK else None,
-                "exam": resource if resource_type == PaymentOrder.RESOURCE_EXAM else None,
+                "exam": None,
             }
             coupon = CouponService.validate_coupon(coupon_code, **coupon_kwargs)
             pricing = CouponService.calculate_price(original_amount, coupon)
@@ -126,7 +106,8 @@ class OrderService:
             resource_type=resource_type,
             course=resource_fields["course"],
             track=resource_fields["track"],
-            exam=resource_fields["exam"],
+            exam=None,
+            subscription_plan=resource_fields["subscription_plan"],
             amount=final_amount,
             original_amount=original_amount,
             discount_amount=discount_amount,

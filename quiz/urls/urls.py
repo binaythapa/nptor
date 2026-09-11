@@ -15,6 +15,7 @@ from quiz.views.questions import *
 from quiz.views.practice_express import *
 from quiz.views.auth import *
 from quiz.views.admin_subscription_views import *
+from quiz.views.admin_payments import admin_payment_list, admin_add_manual_payment
 from quiz.views.notifications import *
 from quiz.views.dashboards import *
 from quiz.views.student_dashboard import student_dashboard
@@ -67,27 +68,14 @@ from quiz.views.practice import (
 # PAYMENT CHECKOUT
 # ============================================================
 
-from payments.views.checkout import (
-    track_checkout,
-    exam_checkout,
-)
+from payments.views.checkout import track_checkout
 
 app_name = "quiz"
 
 urlpatterns = [
     path("", learning_marketplace, name="exam_list"),
-    path(
-        "certifications/",
-        learning_marketplace,
-        {"catalog_vertical": "professional_certification"},
-        name="certifications",
-    ),
-    path(
-        "academic-entrance/",
-        learning_marketplace,
-        {"catalog_vertical": "academic_exam"},
-        name="academic_entrance",
-    ),
+    path("certifications/", learning_marketplace, {"catalog_vertical": "professional_certification"}, name="certifications"),
+    path("academic-entrance/", learning_marketplace, {"catalog_vertical": "academic_exam"}, name="academic_entrance"),
     path("learning/", learning_marketplace, name="learning_marketplace"),
     path("learning/domain/<slug:slug>/", learning_domain, name="learning_domain"),
     path("learning/track/<slug:slug>/", learning_track, name="learning_track"),
@@ -135,16 +123,11 @@ urlpatterns = [
     path("notifications/<int:pk>/", notification_read, name="notification_detail"),
 
     path("track/<int:track_id>/checkout/", track_checkout, name="track_checkout"),
-    path("exam/<int:exam_id>/checkout/", exam_checkout, name="exam_checkout"),
 
     path("dashboard/admin/subscriptions/", subscription_admin_panel, name="subscription_admin_panel"),
-    path("dashboard/admin/subscribe/exam/", admin_subscribe_exam, name="admin_subscribe_exam"),
-    path("dashboard/admin/revoke/exam/", admin_revoke_exam, name="admin_revoke_exam"),
     path("dashboard/admin/subscribe/track/", admin_subscribe_track, name="admin_subscribe_track"),
     path("dashboard/admin/revoke/track/", admin_revoke_track, name="admin_revoke_track"),
-    path("dashboard/admin/update-expiry/exam/", admin_update_exam_expiry, name="admin_update_exam_expiry"),
     path("dashboard/admin/update-expiry/track/", admin_update_track_expiry, name="admin_update_track_expiry"),
-    path("dashboard/admin/add-exam-days/", admin_add_exam_days, name="admin_add_exam_days"),
     path("dashboard/admin/add-track-days/", admin_add_track_days, name="admin_add_track_days"),
 
     path("dashboard/admin/exams/", admin_exam_list, name="admin_exam_list"),

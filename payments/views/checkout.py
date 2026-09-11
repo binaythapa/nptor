@@ -9,10 +9,11 @@ from quiz.models import Exam, ExamTrack
 from payments.models import PaymentOrder
 from payments.services import OrderService, PaymentService
 from subscriptions.services import AccessService
+from subscriptions.services.global_access import has_all_access_subscription
 from subscriptions.services.plan_service import (
     get_plan_for_course,
-    get_plan_for_exam,
     get_plan_for_track,
+    get_all_access_plan,
 )
 
 DEFAULT_GATEWAY = "dummy"
@@ -51,20 +52,14 @@ def _start_payment(*, request, resource_type, resource, amount, currency="INR", 
         return redirect("quiz:exam_list")
 
     try:
-        result = PaymentService.initiate_payment(
-            order=order,
-            gateway_name=DEFAULT_GATEWAY,
-        )
+        result = PaymentService.initiate_payment(order=order, gateway_name=DEFAULT_GATEWAY)
     except Exception:
         messages.error(request, "Unable to start payment. Please try again.")
         return redirect("quiz:exam_list")
 
     if not result.get("success"):
         gateway_response = result.get("gateway_response") or {}
-        messages.error(
-            request,
-            gateway_response.get("error", "Unable to initialize payment."),
-        )
+        messages.error(request, gateway_response.get("error", "Unable to initialize payment."))
         return redirect("quiz:exam_list")
 
     gateway_response = result.get("gateway_response") or {}
@@ -72,80 +67,61 @@ def _start_payment(*, request, resource_type, resource, amount, currency="INR", 
     if payment_url:
         return redirect(payment_url)
 
-    return redirect(
-        "payments:payment_checkout",
-        order_number=order.order_number,
-    )
+    return redirect("payments:payment_checkout", order_number=order.order_number)
 
 
 @login_required
 def course_checkout(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
-
     if not course.is_publicly_available():
         messages.error(request, "This course is not currently available for purchase.")
         return redirect("quiz:exam_list")
-
-    if AccessService.has_access(
-        student=request.user,
-        resource_type=AccessService.RESOURCE_COURSE,
-        resource=course,
-    ):
+    if AccessService.has_access(student=request.user, resource_type=AccessService.RESOURCE_COURSE, resource=course):
         messages.info(request, "You already have access to this course.")
         return redirect("quiz:exam_list")
-
     plan = get_plan_for_course(course)
     if not plan:
         messages.error(request, "No subscription plan is available for this course.")
         return redirect("quiz:exam_list")
-
     if plan.price == 0:
         messages.info(request, "This course is free.")
         return redirect("quiz:exam_list")
-
-    return _start_payment(
-        request=request,
-        resource_type=PaymentOrder.RESOURCE_COURSE,
-        resource=course,
-        amount=plan.price,
-        currency=plan.currency,
-        return_to=request.GET.get("next"),
-    )
+    return _start_payment(request=request, resource_type=PaymentOrder.RESOURCE_COURSE, resource=course, amount=plan.price, currency=plan.currency, return_to=request.GET.get("next"))
 
 
 @login_required
 def track_checkout(request, track_id):
     track = get_object_or_404(ExamTrack, pk=track_id, is_active=True)
-
-    if AccessService.has_access(
-        student=request.user,
-        resource_type=AccessService.RESOURCE_TRACK,
-        resource=track,
-    ):
+    if AccessService.has_access(student=request.user, resource_type=AccessService.RESOURCE_TRACK, resource=track):
         messages.info(request, "You already have access to this track.")
         return redirect("quiz:exam_list")
-
     plan = get_plan_for_track(track)
     if not plan:
         messages.error(request, "No subscription plan is available for this track.")
         return redirect("quiz:exam_list")
-
     if plan.price == 0:
         messages.info(request, "This track is free.")
         return redirect("quiz:exam_list")
+    return _start_payment(request=request, resource_type=PaymentOrder.RESOURCE_TRACK, resource=track, amount=plan.price, currency=plan.currency, return_to=request.GET.get("next"))
 
-    return _start_payment(
-        request=request,
-        resource_type=PaymentOrder.RESOURCE_TRACK,
-        resource=track,
-        amount=plan.price,
-        currency=plan.currency,
-        return_to=request.GET.get("next"),
-    )
+
+@login_required
+def subscription_checkout(request, plan_id):
+    plan = get_all_access_plan(plan_id)
+    if not plan:
+        messages.error(request, "The selected all-access subscription plan is not available.")
+        return redirect("quiz:exam_list")
+    if has_all_access_subscription(request.user):
+        messages.info(request, "You already have an active all-access subscription.")
+        return redirect("quiz:exam_list")
+    if plan.price == 0:
+        messages.info(request, "This subscription plan is free.")
+        return redirect("quiz:exam_list")
+    return _start_payment(request=request, resource_type=PaymentOrder.RESOURCE_SUBSCRIPTION, resource=plan, amount=plan.price, currency=plan.currency, return_to=request.GET.get("next"))
 
 
 @login_required
 def exam_checkout(request, exam_id):
-    """Disable standalone exam purchases; students purchase/access the parent course or track."""
+    """Individual exams are not commercial products."""
     messages.info(request, "Exams are accessed through their course or certification track.")
     return redirect("quiz:exam_list")

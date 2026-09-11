@@ -8,7 +8,6 @@ from quiz.services.coupon_service import CouponService
 from subscriptions.models import Subscription, SubscriptionEntitlement
 from subscriptions.services.plan_service import (
     get_plan_for_course,
-    get_plan_for_exam,
     get_plan_for_track,
 )
 from subscriptions.services.subscription_service import SubscriptionService
@@ -28,7 +27,7 @@ class PaymentFulfillmentService:
             .select_for_update()
             .select_related(
                 "order", "order__user", "order__exam",
-                "order__track", "order__course",
+                "order__track", "order__course", "order__subscription_plan",
             )
             .get(pk=transaction_obj.pk)
         )
@@ -53,11 +52,7 @@ class PaymentFulfillmentService:
         if not resource:
             raise ValidationError("Payment order has no valid resource.")
 
-        if order.resource_type == PaymentOrder.RESOURCE_EXAM:
-            result = PaymentFulfillmentService._fulfill_exam(
-                order=order, transaction_obj=transaction_obj, exam=resource
-            )
-        elif order.resource_type == PaymentOrder.RESOURCE_TRACK:
+        if order.resource_type == PaymentOrder.RESOURCE_TRACK:
             result = PaymentFulfillmentService._fulfill_track(
                 order=order, transaction_obj=transaction_obj, track=resource
             )
@@ -65,6 +60,12 @@ class PaymentFulfillmentService:
             result = PaymentFulfillmentService._fulfill_course(
                 order=order, transaction_obj=transaction_obj, course=resource
             )
+        elif order.resource_type == PaymentOrder.RESOURCE_SUBSCRIPTION:
+            result = PaymentFulfillmentService._fulfill_subscription(
+                order=order, transaction_obj=transaction_obj, plan=resource
+            )
+        elif order.resource_type == PaymentOrder.RESOURCE_EXAM:
+            raise ValidationError("Individual exam purchases are no longer supported.")
         else:
             raise ValidationError("Unsupported payment resource type.")
 
@@ -108,9 +109,7 @@ class PaymentFulfillmentService:
                 user=user,
                 resource_type=resource_type,
                 subscription=subscription,
-                **{
-                    resource_type: resource,
-                },
+                **{resource_type: resource},
             )
             .first()
         )
@@ -121,40 +120,10 @@ class PaymentFulfillmentService:
         }
 
     @staticmethod
-    def _fulfill_exam(*, order, transaction_obj, exam):
-        plan = get_plan_for_exam(exam, None)
-        if not plan:
-            raise ValidationError(
-                "No active subscription plan is configured for this exam."
-            )
-
-        subscription, entitlement = SubscriptionService.create_or_reactivate_subscription(
-            user=order.user,
-            resource_type=SubscriptionEntitlement.RESOURCE_EXAM,
-            resource=exam,
-            plan=plan,
-            granted_by=None,
-            notes=f"Online exam payment: {order.order_number}",
-        )
-        PaymentFulfillmentService._update_paid_subscription(
-            subscription, order, transaction_obj
-        )
-        result = PaymentFulfillmentService._access_result(
-            user=order.user,
-            resource_type=SubscriptionEntitlement.RESOURCE_EXAM,
-            resource=exam,
-            subscription=subscription,
-        )
-        result["entitlement"] = entitlement
-        return result
-
-    @staticmethod
     def _fulfill_track(*, order, transaction_obj, track):
         plan = get_plan_for_track(track, None)
         if not plan:
-            raise ValidationError(
-                "No active subscription plan is configured for this track."
-            )
+            raise ValidationError("No active subscription plan is configured for this track.")
 
         subscription, entitlement = SubscriptionService.create_or_reactivate_subscription(
             user=order.user,
@@ -164,9 +133,7 @@ class PaymentFulfillmentService:
             granted_by=None,
             notes=f"Online track payment: {order.order_number}",
         )
-        PaymentFulfillmentService._update_paid_subscription(
-            subscription, order, transaction_obj
-        )
+        PaymentFulfillmentService._update_paid_subscription(subscription, order, transaction_obj)
         result = PaymentFulfillmentService._access_result(
             user=order.user,
             resource_type=SubscriptionEntitlement.RESOURCE_TRACK,
@@ -181,37 +148,26 @@ class PaymentFulfillmentService:
     def _fulfill_course(*, order, transaction_obj, course):
         plan = get_plan_for_course(course, None)
         if not plan:
-            raise ValidationError(
-                "No active subscription plan is configured for this course."
-            )
+            raise ValidationError("No active subscription plan is configured for this course.")
 
         now = timezone.now()
         subscription = (
-            Subscription.objects
-            .filter(
+            Subscription.objects.filter(
                 user=order.user,
                 plan=plan,
                 status=Subscription.STATUS_ACTIVE,
                 starts_at__lte=now,
-            )
-            .filter(
-                expires_at__isnull=True,
-            )
-            .order_by("-created_at")
-            .first()
+            ).filter(expires_at__isnull=True).order_by("-created_at").first()
         )
         if not subscription:
             subscription = (
-                Subscription.objects
-                .filter(
+                Subscription.objects.filter(
                     user=order.user,
                     plan=plan,
                     status=Subscription.STATUS_ACTIVE,
                     starts_at__lte=now,
                     expires_at__gt=now,
-                )
-                .order_by("-created_at")
-                .first()
+                ).order_by("-created_at").first()
             )
 
         if subscription:
@@ -230,13 +186,11 @@ class PaymentFulfillmentService:
             )
 
         entitlement = (
-            SubscriptionEntitlement.objects
-            .filter(
+            SubscriptionEntitlement.objects.filter(
                 subscription=subscription,
                 resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
                 course=course,
-            )
-            .first()
+            ).first()
         )
         if entitlement:
             if not entitlement.is_active:
@@ -264,9 +218,7 @@ class PaymentFulfillmentService:
             subscription=subscription,
             expires_at=subscription.expires_at,
         )
-        PaymentFulfillmentService._update_paid_subscription(
-            subscription, order, transaction_obj
-        )
+        PaymentFulfillmentService._update_paid_subscription(subscription, order, transaction_obj)
         result = PaymentFulfillmentService._access_result(
             user=order.user,
             resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
@@ -275,3 +227,29 @@ class PaymentFulfillmentService:
         )
         result["entitlement"] = entitlement
         return result
+
+    @staticmethod
+    @transaction.atomic
+    def _fulfill_subscription(*, order, transaction_obj, plan):
+        if not plan.is_all_access() or not plan.is_active:
+            raise ValidationError("Only active all-access plans can be fulfilled.")
+
+        now = timezone.now()
+        subscription = SubscriptionService.create_subscription(
+            plan=plan,
+            user=order.user,
+            organization=None,
+            granted_by=None,
+            subscribed_by_admin=False,
+            payment_status="success",
+            order_id=order.order_number,
+            notes=f"Online all-access subscription: {order.order_number}",
+            start_at=now,
+        )
+        PaymentFulfillmentService._update_paid_subscription(subscription, order, transaction_obj)
+        return {
+            "subscription": subscription,
+            "access": None,
+            "access_created": True,
+            "entitlement": None,
+        }

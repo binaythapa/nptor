@@ -17,6 +17,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "code",
+        "scope",
         "price",
         "currency",
         "duration_days",
@@ -25,6 +26,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
+        "scope",
         "is_active",
         "currency",
         "duration_days",
