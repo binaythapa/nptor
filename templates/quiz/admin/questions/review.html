@@ -1,139 +1,125 @@
 {% extends "layouts/admin/base_admin.html" %}
-{% block title %}Question Review{% endblock %}
+{% load static %}
+
+{% block title %}Question Review – Admin{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/admin_question_review.css' %}">
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'css/admin_question_review.css' %}">
+{% endblock %}
 
 {% block content %}
-<section class="section">
-<div class="container" style="max-width: 900px;">
-
-<!-- ================= HEADER WITH BACK ================= -->
-<div class="is-flex is-align-items-center mb-4"
-     style="gap: 10px; flex-wrap: wrap;">
-
-  <!-- Back Button -->
-  <a href="#"
-   onclick="history.back(); return false;"
-   class="button is-light is-small">
-   ← Back
-</a>
-
-  <h1 class="title is-4 mb-0">
-    🧠 Question Review
-  </h1>
-
-</div>
-
-<!-- ================= QUESTION ================= -->
-<div class="box">
-  <div class="content">
-    {{ question.text|safe }}
-  </div>
-
-  <p class="is-size-7 has-text-grey mt-1">
-    {{ question.category }} · {{ question.difficulty }} · {{ question.question_type }}
-  </p>
-
-  <!-- EDIT BUTTON (Now Redirects Properly) -->
-  <a href="{% url 'quiz:edit_question' question.id %}"
-     class="button is-small is-link mt-2">
-     ✏️ Edit Question
-  </a>
-
-  {% if question.explanation %}
-    <hr>
-    <p class="is-size-7 has-text-grey">Explanation</p>
-    <div class="content is-small">
-      {{ question.explanation|safe }}
+<div class="admin-question-review-page">
+    <div class="admin-question-review-header">
+        <div>
+            <h1 class="admin-question-review-title">
+                <span class="admin-question-review-title-icon" aria-hidden="true">🧠</span>
+                Question Review
+            </h1>
+            <p class="admin-question-review-subtitle">Review question content, answers, status, and user feedback.</p>
+        </div>
+        <a href="{% url 'quiz:question_dashboard' %}" class="admin-question-review-button admin-question-review-button-secondary">← Back to Questions</a>
     </div>
-  {% endif %}
-</div>
 
-<!-- ================= CHOICES ================= -->
-<div class="box">
-  <p class="has-text-weight-semibold mb-2">Choices</p>
-  {% for c in question.choices.all %}
-    <p>
-      {% if c.is_correct %}
-        <span class="has-text-success">✔</span>
-      {% else %}
-        <span class="has-text-grey">✖</span>
-      {% endif %}
-      {{ c.text }}
-    </p>
-  {% endfor %}
-</div>
+    <div class="admin-question-review-card">
+        <div class="admin-question-review-question">
+            {{ question.text|safe }}
+        </div>
 
-<!-- ================= QUESTION ACTIONS (KEPT) ================= -->
-<div class="box">
-  <div class="buttons">
-    <button class="button is-small is-warning"
-            onclick="toggleQuestion({{ question.id }})">
-      {% if question.is_active %}Deactivate{% else %}Activate{% endif %}
-    </button>
+        <div class="admin-question-review-meta">
+            <span>{{ question.category }}</span>
+            <span>·</span>
+            <span>{{ question.difficulty }}</span>
+            <span>·</span>
+            <span>{{ question.question_type }}</span>
+            {% if question.is_active %}
+                <span class="admin-question-review-status admin-question-review-status-active">Active</span>
+            {% else %}
+                <span class="admin-question-review-status admin-question-review-status-inactive">Inactive</span>
+            {% endif %}
+        </div>
 
-    {% if request.user.is_superuser %}
-      <button class="button is-small is-danger is-light"
-              onclick="deleteQuestion({{ question.id }})">
-        Delete
-      </button>
+        <div class="admin-question-review-actions">
+            <a href="{% url 'quiz:edit_question' question.id %}" class="admin-question-review-button admin-question-review-button-primary">✏️ Edit Question</a>
+        </div>
+    </div>
+
+    {% if question.explanation %}
+    <div class="admin-question-review-card">
+        <div class="admin-question-review-card-header">Explanation</div>
+        <div class="admin-question-review-content">
+            {{ question.explanation|safe }}
+        </div>
+    </div>
     {% endif %}
-  </div>
-</div>
 
-<!-- ================= DISCUSSIONS (KEPT FULLY) ================= -->
-<div class="box">
-  <p class="has-text-weight-semibold mb-2">
-    🚩 User Feedback & Issues ({{ discussions.count }})
-  </p>
-
-  {% for d in discussions %}
-    <div id="discussion-{{ d.id }}"
-         class="mb-3 p-2 {% if d.is_resolved %}has-background-success-light{% endif %}"
-         style="border-left:4px solid
-           {% if d.is_pinned %}#3b82f6
-           {% elif d.is_answer_incorrect %}#f97316
-           {% else %}#e5e7eb{% endif %};">
-
-      <p class="is-size-7 has-text-grey">
-        {{ d.user }} · {{ d.created_at|date:"M d, Y" }}
-        · {{ d.discussion_type }}
-        {% if d.severity %}· {{ d.severity }}{% endif %}
-      </p>
-
-      <p class="mt-1">{{ d.content }}</p>
-
-      <div class="buttons mt-2">
-
-        {% if not d.is_resolved %}
-          <button class="button is-small is-success"
-                  onclick="resolveDiscussion({{ d.id }})">
-            ✅ Resolve
-          </button>
-        {% else %}
-          <span class="tag is-success is-light">Resolved</span>
-        {% endif %}
-
-        <button class="button is-small is-success is-light"
-                onclick="verifyDiscussion({{ d.id }})">
-          ✔ Verify
-        </button>
-
-        <button class="button is-small is-info is-light"
-                onclick="pinDiscussion({{ d.id }})">
-          📌 Pin
-        </button>
-
-        <button class="button is-small is-danger is-light"
-                onclick="deleteDiscussion({{ d.id }})">
-          🗑 Remove
-        </button>
-
-      </div>
+    <div class="admin-question-review-card">
+        <div class="admin-question-review-card-header">Answer Choices</div>
+        <div class="admin-question-review-choices">
+            {% for c in question.choices.all %}
+            <div class="admin-question-review-choice {% if c.is_correct %}admin-question-review-choice-correct{% endif %}">
+                <span class="admin-question-review-choice-icon" aria-hidden="true">
+                    {% if c.is_correct %}✔{% else %}✖{% endif %}
+                </span>
+                <span>{{ c.text }}</span>
+                {% if c.is_correct %}<span class="admin-question-review-correct-label">Correct answer</span>{% endif %}
+            </div>
+            {% empty %}
+            <p class="admin-question-review-muted">No answer choices available.</p>
+            {% endfor %}
+        </div>
     </div>
-  {% empty %}
-    <p class="has-text-grey is-size-7">No feedback yet</p>
-  {% endfor %}
-</div>
 
+    <div class="admin-question-review-card">
+        <div class="admin-question-review-card-header">Question Actions</div>
+        <div class="admin-question-review-actions">
+            <button class="admin-question-review-button admin-question-review-button-warning" onclick="toggleQuestion({{ question.id }})">
+                {% if question.is_active %}Deactivate{% else %}Activate{% endif %}
+            </button>
+
+            {% if request.user.is_superuser %}
+            <button class="admin-question-review-button admin-question-review-button-danger" onclick="deleteQuestion({{ question.id }})">Delete</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="admin-question-review-card">
+        <div class="admin-question-review-card-header">
+            User Feedback &amp; Issues
+            <span class="admin-question-review-count">{{ discussions.count }}</span>
+        </div>
+
+        {% for d in discussions %}
+        <div id="discussion-{{ d.id }}" class="admin-question-review-discussion {% if d.is_resolved %}admin-question-review-discussion-resolved{% endif %} {% if d.is_pinned %}admin-question-review-discussion-pinned{% elif d.is_answer_incorrect %}admin-question-review-discussion-incorrect{% endif %}">
+            <div class="admin-question-review-discussion-meta">
+                <span>{{ d.user }}</span>
+                <span>·</span>
+                <span>{{ d.created_at|date:"M d, Y" }}</span>
+                <span>·</span>
+                <span>{{ d.discussion_type }}</span>
+                {% if d.severity %}<span>· {{ d.severity }}</span>{% endif %}
+            </div>
+
+            <div class="admin-question-review-discussion-content">{{ d.content }}</div>
+
+            <div class="admin-question-review-discussion-actions">
+                {% if not d.is_resolved %}
+                <button class="admin-question-review-button admin-question-review-button-success" onclick="resolveDiscussion({{ d.id }})">✅ Resolve</button>
+                {% else %}
+                <span class="admin-question-review-resolved-label">Resolved</span>
+                {% endif %}
+
+                <button class="admin-question-review-button admin-question-review-button-success-light" onclick="verifyDiscussion({{ d.id }})">✔ Verify</button>
+                <button class="admin-question-review-button admin-question-review-button-info" onclick="pinDiscussion({{ d.id }})">📌 Pin</button>
+                <button class="admin-question-review-button admin-question-review-button-danger-light" onclick="deleteDiscussion({{ d.id }})">🗑 Remove</button>
+            </div>
+        </div>
+        {% empty %}
+        <p class="admin-question-review-muted">No feedback yet.</p>
+        {% endfor %}
+    </div>
 </div>
-</section>
 {% endblock %}
