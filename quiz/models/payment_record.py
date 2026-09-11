@@ -4,7 +4,7 @@ from django.db import models
 
 
 class PaymentRecord(models.Model):
-    """Immutable audit record for a completed manual payment."""
+    """Immutable payment history. One row = one payment."""
 
     PAYMENT_UPI = "upi"
     PAYMENT_BANK = "bank"
@@ -19,14 +19,10 @@ class PaymentRecord(models.Model):
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payment_records")
-
+    track = models.ForeignKey("ExamTrack", null=True, blank=True, on_delete=models.SET_NULL)
+    exam = models.ForeignKey("Exam", null=True, blank=True, on_delete=models.SET_NULL)
     course = models.ForeignKey("courses.Course", null=True, blank=True, on_delete=models.SET_NULL, related_name="payment_records")
-    track = models.ForeignKey("ExamTrack", null=True, blank=True, on_delete=models.SET_NULL, related_name="payment_records")
     subscription_plan = models.ForeignKey("subscriptions.SubscriptionPlan", null=True, blank=True, on_delete=models.SET_NULL, related_name="payment_records")
-
-    # Legacy exam target retained for historical rows only. New manual payments never set it.
-    exam = models.ForeignKey("Exam", null=True, blank=True, on_delete=models.SET_NULL, related_name="payment_records")
-
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     currency = models.CharField(max_length=10, default="INR")
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
@@ -36,20 +32,21 @@ class PaymentRecord(models.Model):
     created_by_admin = models.BooleanField(default=True)
 
     def clean(self):
-        selected = [bool(self.course), bool(self.track), bool(self.subscription_plan)]
-        if sum(selected) != 1:
-            if self.exam:
-                # Historical exam records can still be loaded/edited by migrations/admin.
-                if any(selected):
-                    raise ValidationError("Legacy exam payments cannot also have a course, track, or subscription plan.")
-                return
-            raise ValidationError("Payment must target exactly one course, track, or subscription plan.")
-
         if self.exam:
-            raise ValidationError("Individual exam purchases are no longer supported.")
+            if self.track or self.course or self.subscription_plan:
+                raise ValidationError("Legacy exam payments cannot also target a course, track, or subscription plan.")
+            return
 
-        if self.subscription_plan and not self.subscription_plan.is_all_access():
-            raise ValidationError("A subscription payment must use an all-access plan.")
+        if self.course and self.track:
+            raise ValidationError("Payment cannot be for both a course and track.")
+        if self.track or self.course:
+            if self.subscription_plan and self.subscription_plan.scope != "resource":
+                raise ValidationError("Course/track payments require a resource subscription plan.")
+            return
+        if not self.subscription_plan:
+            raise ValidationError("Payment must be linked to a track, course, or all-access subscription plan.")
+        if not self.subscription_plan.is_all_access():
+            raise ValidationError("A standalone subscription payment must use an all-access plan.")
 
     def target_name(self):
         if self.course:

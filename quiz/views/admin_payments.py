@@ -10,10 +10,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from courses.models import Course
-from organizations.models.access import ResourceAccess
+from organizations.models import ResourceAccess
 from quiz.models import Coupon, ExamTrack
 from quiz.models.payment_record import PaymentRecord
-from subscriptions.models import Subscription, SubscriptionPlan
+from subscriptions.models import SubscriptionPlan
 from subscriptions.services.plan_service import get_plan_for_course, get_plan_for_track
 from subscriptions.services.subscription_service import SubscriptionService
 
@@ -23,9 +23,7 @@ logger = logging.getLogger(__name__)
 
 @staff_member_required
 def admin_payment_list(request):
-    payments = PaymentRecord.objects.select_related(
-        "user", "course", "track", "subscription_plan"
-    ).order_by("-paid_at")
+    payments = PaymentRecord.objects.select_related("user", "course", "track", "subscription_plan").order_by("-paid_at")
     return render(request, "quiz/student/subscription/payment_list.html", {
         "payments": payments,
         "users": User.objects.filter(is_active=True).order_by("username"),
@@ -50,7 +48,6 @@ def admin_add_manual_payment(request):
 
     if purchase_type not in {"course", "track", "subscription"}:
         return JsonResponse({"success": False, "error": "Select Course, Track, or All-access Subscription."}, status=400)
-
     if payment_method not in dict(PaymentRecord.PAYMENT_METHOD_CHOICES):
         return JsonResponse({"success": False, "error": "Invalid payment method."}, status=400)
 
@@ -62,19 +59,16 @@ def admin_add_manual_payment(request):
         plan = plan or get_plan_for_course(course)
         if not plan or plan.scope != SubscriptionPlan.SCOPE_RESOURCE:
             return JsonResponse({"success": False, "error": "Select a valid course plan."}, status=400)
-        resource_type = "course"
-        resource = course
+        resource_type, resource = "course", course
     elif purchase_type == "track":
         plan = plan or get_plan_for_track(track)
         if not plan or plan.scope != SubscriptionPlan.SCOPE_RESOURCE:
             return JsonResponse({"success": False, "error": "Select a valid track plan."}, status=400)
-        resource_type = "track"
-        resource = track
+        resource_type, resource = "track", track
     else:
         if not plan or not plan.is_all_access():
             return JsonResponse({"success": False, "error": "Select an all-access subscription plan."}, status=400)
-        resource_type = None
-        resource = None
+        resource_type = resource = None
 
     if purchase_type in {"course", "track"}:
         subscription, entitlement = SubscriptionService.create_or_reactivate_subscription(
@@ -114,10 +108,7 @@ def admin_add_manual_payment(request):
     subscription.payment_id = reference_id
     subscription.subscribed_by_admin = True
     subscription.granted_by = request.user
-    subscription.save(update_fields=[
-        "amount", "currency", "payment_status", "payment_id",
-        "subscribed_by_admin", "granted_by", "updated_at",
-    ])
+    subscription.save(update_fields=["amount", "currency", "payment_status", "payment_id", "subscribed_by_admin", "granted_by", "updated_at"])
 
     record = PaymentRecord.objects.create(
         user=user,
