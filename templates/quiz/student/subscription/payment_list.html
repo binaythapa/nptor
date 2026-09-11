@@ -1,112 +1,113 @@
 {% extends "layouts/admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Payment Records{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'css/payment_admin.css' %}">
+{% endblock %}
+
 {% block content %}
+<div class="admin-payment-page">
+  <div class="admin-page-header">
+    <div>
+      <h1>Payment Records</h1>
+      <p class="admin-muted">Review recorded payments and add manual transactions.</p>
+    </div>
 
-<div class="mb-4 is-flex is-justify-content-space-between is-align-items-center">
-  <h1 class="title is-4">💳 Payment Records</h1>
+    <div class="admin-payment-actions">
+      <button type="button" class="button is-link is-small" onclick="openPaymentModal()">
+        Add Manual Payment
+      </button>
+    </div>
+  </div>
 
-  <button class="button is-primary" onclick="openPaymentModal()">
-    ➕ Add Manual Payment
-  </button>
+  <section class="admin-panel admin-payment-table-panel">
+    <div class="admin-payment-table-scroll">
+      <table class="table is-fullwidth admin-payment-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Item</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Paid At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td class="admin-payment-user">{{ p.user.username }}</td>
+            <td class="admin-payment-item">
+              {% if p.track %}
+                {{ p.track.title }}
+              {% else %}
+                {{ p.exam.title }}
+              {% endif %}
+            </td>
+            <td>₹{{ p.amount }}</td>
+            <td>{{ p.get_payment_method_display }}</td>
+            <td>{{ p.paid_at|date:"M d, Y H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="admin-payment-empty">
+              No payment records found
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
 
-<!-- ===================== PAYMENTS TABLE ===================== -->
-<table class="table is-fullwidth is-striped is-hoverable">
-  <thead>
-    <tr>
-      <th>User</th>
-      <th>Item</th>
-      <th>Amount</th>
-      <th>Method</th>
-      <th>Paid At</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for p in payments %}
-    <tr>
-      <td>{{ p.user.username }}</td>
-      <td>
-        {% if p.track %}
-          {{ p.track.title }}
-        {% else %}
-          {{ p.exam.title }}
-        {% endif %}
-      </td>
-      <td>₹{{ p.amount }}</td>
-      <td>{{ p.get_payment_method_display }}</td>
-      <td>{{ p.paid_at|date:"M d, Y H:i" }}</td>
-    </tr>
-    {% empty %}
-    <tr>
-      <td colspan="5" class="has-text-centered has-text-grey">
-        No payment records found
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="admin-payment-modal" id="paymentModal" aria-hidden="true">
+  <div class="admin-payment-modal-backdrop" onclick="closePaymentModal()"></div>
 
-<!-- ===================== MODAL ===================== -->
-<div class="modal" id="paymentModal">
-  <div class="modal-background" onclick="closePaymentModal()"></div>
-
-  <div class="modal-card">
-    <header class="modal-card-head">
-      <p class="modal-card-title">Add Manual Payment</p>
-      <button class="delete" onclick="closePaymentModal()"></button>
+  <div class="admin-payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
+    <header class="admin-payment-modal-header">
+      <h2 id="paymentModalTitle">Add Manual Payment</h2>
+      <button type="button" class="admin-payment-modal-close" aria-label="Close" onclick="closePaymentModal()">&times;</button>
     </header>
 
-    <section class="modal-card-body">
+    <section class="admin-payment-modal-body">
+      <form id="paymentCsrfForm">{% csrf_token %}</form>
 
-      <!-- CSRF -->
-      <form>{% csrf_token %}</form>
-
-      <!-- USER -->
-      <div class="field">
-        <label class="label">User <span class="has-text-danger">*</span></label>
-        <div class="select is-fullwidth">
-          <select id="user">
+      <div class="admin-payment-form-grid">
+        <div class="admin-payment-field">
+          <label for="user">User <span class="admin-payment-required">*</span></label>
+          <select id="user" class="admin-payment-control">
             <option value="">-- Select User --</option>
             {% for u in users %}
               <option value="{{ u.id }}">{{ u.username }}</option>
             {% endfor %}
           </select>
         </div>
-      </div>
 
-      <!-- EXAM -->
-      <div class="field">
-        <label class="label">Exam (optional)</label>
-        <div class="select is-fullwidth">
-          <select id="exam">
+        <div class="admin-payment-field">
+          <label for="exam">Exam <span class="admin-payment-hint">(optional)</span></label>
+          <select id="exam" class="admin-payment-control">
             <option value="">---</option>
             {% for e in exams %}
               <option value="{{ e.id }}">{{ e.title }}</option>
             {% endfor %}
           </select>
         </div>
-      </div>
 
-      <!-- TRACK -->
-      <div class="field">
-        <label class="label">Track (optional)</label>
-        <div class="select is-fullwidth">
-          <select id="track">
+        <div class="admin-payment-field">
+          <label for="track">Track <span class="admin-payment-hint">(optional)</span></label>
+          <select id="track" class="admin-payment-control">
             <option value="">---</option>
             {% for t in tracks %}
               <option value="{{ t.id }}">{{ t.title }}</option>
             {% endfor %}
           </select>
         </div>
-      </div>
 
-      <!-- PLAN (REQUIRED FOR TRACK) -->
-      <div class="field">
-        <label class="label">
-          Subscription Plan
-          <span class="has-text-danger">(required for track)</span>
-        </label>
-        <div class="select is-fullwidth">
-          <select id="plan">
+        <div class="admin-payment-field">
+          <label for="plan">Subscription Plan <span class="admin-payment-hint">(required for track)</span></label>
+          <select id="plan" class="admin-payment-control">
             <option value="">-- Select Plan --</option>
             {% for plan in plans %}
               <option value="{{ plan.id }}">
@@ -120,43 +121,47 @@
             {% endfor %}
           </select>
         </div>
-      </div>
 
-      <!-- COUPON -->
-      <div class="field">
-        <label class="label">Coupon (optional)</label>
-        <input class="input" id="coupon" placeholder="COUPON2025">
-      </div>
+        <div class="admin-payment-field">
+          <label for="coupon">Coupon <span class="admin-payment-hint">(optional)</span></label>
+          <input class="admin-payment-control" id="coupon" placeholder="COUPON2025">
+        </div>
 
-      <!-- REFERENCE -->
-      <div class="field">
-        <label class="label">Reference ID</label>
-        <input class="input" id="reference" placeholder="UPI / Txn Ref">
+        <div class="admin-payment-field">
+          <label for="reference">Reference ID</label>
+          <input class="admin-payment-control" id="reference" placeholder="UPI / Txn Ref">
+        </div>
       </div>
-
     </section>
 
-    <footer class="modal-card-foot">
-      <button class="button is-success" onclick="submitPayment()">
+    <footer class="admin-payment-modal-footer">
+      <button type="button" class="admin-payment-button admin-payment-button-primary" onclick="submitPayment()">
         Save Payment
       </button>
-      <button class="button" onclick="closePaymentModal()">Cancel</button>
+      <button type="button" class="admin-payment-button admin-payment-button-secondary" onclick="closePaymentModal()">
+        Cancel
+      </button>
     </footer>
   </div>
 </div>
 
-<!-- ===================== SCRIPT ===================== -->
 <script>
 function getCSRF() {
-  return document.querySelector("input[name=csrfmiddlewaretoken]").value;
+  return document.querySelector("#paymentCsrfForm input[name=csrfmiddlewaretoken]").value;
 }
 
 function openPaymentModal() {
-  document.getElementById("paymentModal").classList.add("is-active");
+  const modal = document.getElementById("paymentModal");
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
 }
 
 function closePaymentModal() {
-  document.getElementById("paymentModal").classList.remove("is-active");
+  const modal = document.getElementById("paymentModal");
+  modal.classList.remove("is-open");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
 }
 
 /* =============================
@@ -172,7 +177,10 @@ document.getElementById("track").addEventListener("change", function () {
   // Disable exam if track selected
   document.getElementById("exam").disabled = !!trackId;
 
-  if (!trackId) return;
+  if (!trackId) {
+    planSelect.disabled = false;
+    return;
+  }
 
   fetch(`/quiz/admin/track/${trackId}/plans/`)
     .then(res => res.json())
@@ -255,6 +263,4 @@ function submitPayment() {
   });
 }
 </script>
-
-
 {% endblock %}
