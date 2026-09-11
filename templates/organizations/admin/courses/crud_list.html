@@ -1,0 +1,67 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block title %}Manage Courses{% endblock %}
+
+{% block content %}
+<div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
+  <div>
+    <h1 class="title is-4 mb-1">Manage Courses</h1>
+    <p class="has-text-grey">Courses owned by {{ org.name }}.</p>
+  </div>
+  <a href="{% url 'organizations_admin:org_course_create' slug=org.slug %}" class="button is-primary">+ Add Course</a>
+</div>
+
+<div class="box">
+  <div class="table-container">
+    <table class="table is-fullwidth is-striped is-hoverable">
+      <thead>
+        <tr>
+          <th>Course</th>
+          <th>Approval</th>
+          <th>Published</th>
+          <th>Created</th>
+          <th class="has-text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for course in courses %}
+        <tr>
+          <td>
+            <strong>{{ course.title }}</strong>
+            {% if course.created_by_id == request.user.id %}
+              <span class="tag is-info is-light ml-2">Created by you</span>
+            {% endif %}
+          </td>
+          <td>{{ course.get_approval_status_display }}</td>
+          <td>
+            {% if course.is_published %}
+              <span class="tag is-success">Published</span>
+            {% else %}
+              <span class="tag is-light">Draft</span>
+            {% endif %}
+          </td>
+          <td>{{ course.created_at|date:"M d, Y" }}</td>
+          <td class="has-text-right">
+            {% if course.created_by_id == request.user.id or request.organization_member.is_administrator %}
+              <a href="{% url 'organizations_admin:org_course_edit' slug=org.slug pk=course.pk %}" class="button is-small is-warning">Edit</a>
+              {% if course.approval_status == 'draft' or course.approval_status == 'changes_requested' or course.approval_status == 'rejected' %}
+              <form method="post" action="{% url 'organizations_admin:org_course_delete' slug=org.slug pk=course.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="button is-small is-danger" onclick="return confirm('Delete this course?');">Delete</button>
+              </form>
+              {% endif %}
+            {% else %}
+              <span class="has-text-grey">View only</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="has-text-centered py-6">No organization courses found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
