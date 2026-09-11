@@ -12,10 +12,10 @@
 </head>
 <body>
 <a class="admin-skip-link" href="#admin-main">Skip to main content</a>
+
+{% include "layouts/admin/header_admin.html" %}
+
 <div class="admin-layout">
-    <header class="admin-header">
-        {% include "layouts/admin/header_admin.html" %}
-    </header>
     <aside id="admin-sidebar" class="admin-sidebar" aria-label="Admin navigation">
         {% include "layouts/admin/sidebar_admin.html" %}
     </aside>
@@ -27,6 +27,7 @@
         </section>
     </main>
 </div>
+
 {% include "layouts/student/footer.html" %}
 <form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">
     {% csrf_token %}
