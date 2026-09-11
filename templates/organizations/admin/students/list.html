@@ -47,11 +47,15 @@
         {% endif %}
       </td>
       <td class="has-text-right">
-        <a href="{% url 'organizations_admin:student_remove' slug=org_slug member_id=m.id %}"
-           class="button is-danger is-small"
-           onclick="return confirm('Remove this student?')">
-          Remove
-        </a>
+        {% if request.organization_member.is_administrator or m.role == "student" %}
+          <a href="{% url 'organizations_admin:student_remove' slug=org_slug member_id=m.id %}"
+             class="button is-danger is-small"
+             onclick="return confirm('Remove this student?')">
+            Remove
+          </a>
+        {% else %}
+          <span class="has-text-grey-light">—</span>
+        {% endif %}
       </td>
     </tr>
     {% empty %}
