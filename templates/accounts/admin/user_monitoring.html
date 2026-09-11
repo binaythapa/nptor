@@ -3,204 +3,148 @@
 {% block title %}User Monitoring – Admin{% endblock %}
 
 {% block content %}
+<div class="admin-page-header">
+    <div>
+        <h1>👥 User Monitoring</h1>
+        <p class="admin-muted">Monitor platform users, subscriptions, activity and performance.</p>
+    </div>
+    <span class="admin-page-count">{{ page_obj.paginator.count }} users</span>
+</div>
 
-<h2 class="title is-4 mb-4">👥 User Monitoring</h2>
-
-<!-- 🔎 SEARCH -->
-<form method="get" class="mb-4">
-    <div class="field has-addons">
-        <div class="control is-expanded">
-            <input class="input"
+<div class="admin-panel" style="margin-bottom:16px;">
+    <form method="get" class="admin-toolbar">
+        <div class="admin-search-form">
+            <label class="is-sr-only" for="admin-user-search">Search users</label>
+            <input id="admin-user-search"
+                   class="input"
                    type="text"
                    name="q"
-                   placeholder="Search user..."
+                   placeholder="Search by username, name or email..."
                    value="{{ search_query }}">
+            <button class="button is-link" type="submit">Search</button>
         </div>
-        <div class="control">
-            <button class="button is-link">Search</button>
-        </div>
-    </div>
-</form>
-
-<p class="mb-4">
-    <strong>Total Results:</strong> {{ page_obj.paginator.count }}
-</p>
-
-<hr>
-
-<!-- ================================================= -->
-<!-- 📊 GLOBAL KPI SUMMARY -->
-<!-- ================================================= -->
-
-<h3 class="title is-5 mt-5 mb-3">📊 Platform KPI Overview</h3>
-
-<div class="columns is-multiline mb-5">
-
-    <div class="column is-3">
-        <div class="box has-text-centered">
-            <p class="heading">Total Users</p>
-            <p class="title is-5">{{ total_users }}</p>
-        </div>
-    </div>
-
-    <div class="column is-3">
-        <div class="box has-text-centered">
-            <p class="heading">Active Users</p>
-            <p class="title is-5">{{ active_users }}</p>
-        </div>
-    </div>
-
-    <div class="column is-3">
-        <div class="box has-text-centered">
-            <p class="heading">Total Attempts</p>
-            <p class="title is-5">{{ total_attempts_all }}</p>
-        </div>
-    </div>
-
-    <div class="column is-3">
-        <div class="box has-text-centered">
-            <p class="heading">Avg Score</p>
-            <p class="title is-5">
-                {% if avg_score_all %}
-                    {{ avg_score_all|floatformat:1 }}%
-                {% else %}
-                    —
-                {% endif %}
-            </p>
-        </div>
-    </div>
-
+        <p class="admin-muted">Showing {{ page_obj.paginator.count }} matching users</p>
+    </form>
 </div>
 
-<hr>
-
-<!-- ================================================= -->
-<!-- 👥 USER TABLE -->
-<!-- ================================================= -->
-
-<div class="table-container">
-<table class="table is-fullwidth is-striped is-hoverable">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Exam Sub</th>
-            <th>Track Sub</th>
-            <th>Course Subs</th>
-            <th>Attempts</th>
-            <th>Avg Score</th>
-            <th>Last Attempt</th>
-            <th>Active</th>
-            <th>Joined</th>
-        </tr>
-    </thead>
-
-    <tbody>
-    {% for user in page_obj %}
-        <tr>
-            <td>{{ user.username }}</td>
-
-            <td>
-                {% if user.get_full_name %}
-                    {{ user.get_full_name }}
-                {% else %}
-                    —
-                {% endif %}
-            </td>
-
-            <td>{{ user.email }}</td>
-
-            <td>
-                {% if user.is_superuser %}
-                    <span class="tag is-danger">Admin</span>
-                {% elif user.is_staff %}
-                    <span class="tag is-info">Instructor</span>
-                {% else %}
-                    <span class="tag is-light">Student</span>
-                {% endif %}
-            </td>
-
-            <td>
-                {% if user.has_exam_subscription %}
-                    <span class="tag is-success">Active</span>
-                {% else %}
-                    —
-                {% endif %}
-            </td>
-
-            <td>
-                {% if user.has_track_subscription %}
-                    <span class="tag is-success">Active</span>
-                {% else %}
-                    —
-                {% endif %}
-            </td>
-
-            <td>{{ user.total_course_subs }}</td>
-            <td>{{ user.total_attempts }}</td>
-
-            <td>
-                {% if user.avg_score %}
-                    {{ user.avg_score|floatformat:1 }}%
-                {% else %}
-                    —
-                {% endif %}
-            </td>
-
-            <td>
-                {% if user.last_attempt %}
-                    {{ user.last_attempt|date:"Y-m-d H:i" }}
-                {% else %}
-                    —
-                {% endif %}
-            </td>
-
-            <td>
-                {% if user.is_active %}
-                    <span class="tag is-success">Yes</span>
-                {% else %}
-                    <span class="tag is-danger">No</span>
-                {% endif %}
-            </td>
-
-            <td>{{ user.date_joined|date:"Y-m-d" }}</td>
-        </tr>
-
-    {% empty %}
-        <tr>
-            <td colspan="12" class="has-text-centered">
-                No users found.
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+<div class="admin-kpi-grid" style="grid-template-columns:repeat(4,minmax(0,1fr)); margin-bottom:16px;">
+    <div class="admin-kpi-card">
+        <span class="admin-kpi-label">Total Users</span>
+        <strong class="admin-kpi-value">{{ total_users }}</strong>
+    </div>
+    <div class="admin-kpi-card">
+        <span class="admin-kpi-label">Active Users</span>
+        <strong class="admin-kpi-value">{{ active_users }}</strong>
+    </div>
+    <div class="admin-kpi-card">
+        <span class="admin-kpi-label">Total Attempts</span>
+        <strong class="admin-kpi-value">{{ total_attempts_all }}</strong>
+    </div>
+    <div class="admin-kpi-card">
+        <span class="admin-kpi-label">Average Score</span>
+        <strong class="admin-kpi-value">
+            {% if avg_score_all %}
+                {{ avg_score_all|floatformat:1 }}%
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+    </div>
 </div>
 
-<!-- 📄 PAGINATION -->
+<div class="admin-panel admin-table-panel">
+    <div class="admin-panel-header" style="padding:20px 20px 0;">
+        <div>
+            <h2>User directory</h2>
+            <p>Platform-wide user activity and subscription overview.</p>
+        </div>
+    </div>
 
-<nav class="pagination is-centered mt-5" role="navigation">
+    <div class="admin-table-scroll">
+        <table class="table is-fullwidth is-hoverable admin-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Exam Sub</th>
+                    <th>Track Sub</th>
+                    <th>Course Subs</th>
+                    <th>Attempts</th>
+                    <th>Avg Score</th>
+                    <th>Last Attempt</th>
+                    <th>Active</th>
+                    <th>Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for user in page_obj %}
+                <tr>
+                    <td><strong>{{ user.username }}</strong></td>
+                    <td>{% if user.get_full_name %}{{ user.get_full_name }}{% else %}—{% endif %}</td>
+                    <td>{{ user.email|default:"—" }}</td>
+                    <td>
+                        {% if user.is_superuser %}
+                            <span class="admin-badge admin-badge-red">Admin</span>
+                        {% elif user.is_staff %}
+                            <span class="admin-badge admin-badge-yellow">Instructor</span>
+                        {% else %}
+                            <span class="admin-badge">Student</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.has_exam_subscription %}
+                            <span class="admin-badge admin-badge-green">Active</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if user.has_track_subscription %}
+                            <span class="admin-badge admin-badge-green">Active</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>{{ user.total_course_subs }}</td>
+                    <td>{{ user.total_attempts }}</td>
+                    <td>
+                        {% if user.avg_score %}
+                            {{ user.avg_score|floatformat:1 }}%
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if user.last_attempt %}
+                            {{ user.last_attempt|date:"Y-m-d H:i" }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                            <span class="admin-badge admin-badge-green">Yes</span>
+                        {% else %}
+                            <span class="admin-badge admin-badge-red">No</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="12" class="admin-empty">No users found.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
+<nav class="pagination is-centered mt-5" role="navigation" aria-label="User pagination">
     {% if page_obj.has_previous %}
-        <a class="pagination-previous"
-           href="?q={{ search_query }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.previous_page_number }}">
-           Previous
-        </a>
+        <a class="pagination-previous" href="?q={{ search_query }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.previous_page_number }}">Previous</a>
     {% else %}
         <a class="pagination-previous" disabled>Previous</a>
     {% endif %}
 
     {% if page_obj.has_next %}
-        <a class="pagination-next"
-           href="?q={{ search_query }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.next_page_number }}">
-           Next
-        </a>
+        <a class="pagination-next" href="?q={{ search_query }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.next_page_number }}">Next</a>
     {% else %}
         <a class="pagination-next" disabled>Next</a>
     {% endif %}
-
 </nav>
-
 {% endblock %}
