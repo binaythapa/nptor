@@ -21,24 +21,30 @@ def get_student_for_admin(student_id, organization):
 
 
 def get_student_for_teacher(*, actor, student_id, organization):
+    """
+    Return any student belonging to the actor's organization.
+
+    Staff/Teacher access is organization-wide for student academic
+    operations. It is not limited to students in the teacher's
+    assigned classes. Profile editing remains separately restricted
+    to the student and organization administrators.
+    """
     student = get_student_for_admin(student_id, organization)
     if not student:
         return None
-    membership = OrganizationMember.objects.filter(user=actor, organization=organization, is_active=True).first()
+
+    membership = OrganizationMember.objects.filter(
+        user=actor,
+        organization=organization,
+        is_active=True,
+    ).first()
     if not membership:
         raise PermissionDenied("Active organization membership is required.")
-    if membership.role in OrganizationRole.administrative_roles():
+
+    if membership.role in OrganizationRole.teaching_roles():
         return student
-    if membership.role != OrganizationRole.STAFF:
-        raise PermissionDenied("Teacher access is required.")
-    allowed = student.enrollments.filter(
-        status="active",
-        class_section__teacher_assignments__teacher=actor,
-        class_section__teacher_assignments__is_active=True,
-    ).exists()
-    if not allowed:
-        raise PermissionDenied("Teacher is not assigned to this student's class.")
-    return student
+
+    raise PermissionDenied("Teacher access is required.")
 
 
 def update_student_profile(*, actor, organization, student, data):
