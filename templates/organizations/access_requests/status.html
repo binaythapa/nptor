@@ -1,0 +1,6 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+<section style="max-width:900px;margin:40px auto;padding:0 15px"><div style="display:flex;justify-content:space-between;align-items:center"><h1 class="title is-4">Organization Requests</h1><a class="button is-primary" href="{% url 'organizations_public:request_access' %}">New Request</a></div>
+{% for item in requests %}<article class="box"><div style="display:flex;justify-content:space-between"><strong>{{ item.organization.name }}</strong><span>{{ item.get_status_display }}</span></div><p>{{ item.get_service_display }}{% if item.requested_role %} · {{ item.get_requested_role_display }}{% endif %}</p><small>Requested {{ item.requested_at|date:"M d, Y H:i" }}{% if item.reviewed_at %} · Reviewed {{ item.reviewed_at|date:"M d, Y H:i" }}{% endif %}</small>{% if item.review_notes %}<p class="mt-2">{{ item.review_notes }}</p>{% endif %}</article>{% empty %}<p>No organization access requests yet.</p>{% endfor %}
+</section>
+{% endblock %}
