@@ -2,6 +2,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.http import JsonResponse
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET
 
 from courses.models import Course
@@ -59,7 +60,10 @@ def admin_autocomplete(request):
         results = [_result(item.id, item.title) for item in qs]
     elif scope == "questions":
         qs = Question.objects.filter(text__istartswith=query).order_by("id")[:SEARCH_LIMIT]
-        results = [_result(item.id, item.text) for item in qs]
+        results = [
+            _result(item.id, strip_tags(item.text or "").strip()[:160])
+            for item in qs
+        ]
     elif scope == "categories":
         qs = Category.objects.filter(is_active=True, name__istartswith=query).order_by("name")[:SEARCH_LIMIT]
         results = [_result(item.id, item.name) for item in qs]
