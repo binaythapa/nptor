@@ -31,8 +31,8 @@
         .admin-list-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; flex-shrink:0; }
         .admin-action-link { font-size:.82rem; font-weight:700; }
 
-        /* Admin footer: keep the shared student footer markup, but give it an admin shell. */
-        .admin-footer { margin-left:var(--admin-sidebar-width,232px); background:#111827; color:#cbd5e1; border-top:1px solid #1f2937; }
+        /* Admin footer spans the full application shell below sidebar and content. */
+        .admin-footer { width:100%; margin-left:0; background:#111827; color:#cbd5e1; border-top:1px solid #1f2937; }
         .admin-footer .site-footer { margin:0; padding:16px 30px; background:transparent; color:inherit; }
         .admin-footer .footer-inner { width:100%; max-width:1500px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px; }
         .admin-footer .footer-links { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
@@ -46,7 +46,6 @@
             .admin-search-form .input { min-width:0; flex:1; }
             .admin-list-row { align-items:flex-start; flex-direction:column; gap:10px; }
             .admin-list-actions { justify-content:flex-start; }
-            .admin-footer { margin-left:0; }
             .admin-footer .site-footer { padding:14px 16px; }
             .admin-footer .footer-inner { align-items:flex-start; flex-direction:column; }
         }
