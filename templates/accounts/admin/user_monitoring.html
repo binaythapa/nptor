@@ -18,6 +18,14 @@
             <input id="admin-user-search" class="input" type="text" name="q" placeholder="Search by username, name or email..." value="{{ search_query }}">
             <button class="button is-link" type="submit">Search</button>
         </div>
+        <div class="admin-user-scope-filter">
+            <label for="admin-user-scope">User type</label>
+            <select id="admin-user-scope" name="user_scope" class="select">
+                <option value="all"{% if user_scope == "all" %} selected{% endif %}>All Users</option>
+                <option value="public"{% if user_scope == "public" %} selected{% endif %}>Public Users</option>
+                <option value="organization"{% if user_scope == "organization" %} selected{% endif %}>Organization Users</option>
+            </select>
+        </div>
         <p class="admin-muted">Showing {{ page_obj.paginator.count }} matching users</p>
     </form>
 </div>
@@ -64,8 +72,8 @@
 </div>
 
 <nav class="admin-pagination" aria-label="User pagination">
-    {% if page_obj.has_previous %}<a class="admin-pagination-link" href="?q={{ search_query }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.previous_page_number }}">Previous</a>{% else %}<span class="admin-pagination-link is-disabled">Previous</span>{% endif %}
+    {% if page_obj.has_previous %}<a class="admin-pagination-link" href="?q={{ search_query|urlencode }}&user_scope={{ user_scope }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.previous_page_number }}">Previous</a>{% else %}<span class="admin-pagination-link is-disabled">Previous</span>{% endif %}
     <span class="admin-pagination-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}<a class="admin-pagination-link" href="?q={{ search_query }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.next_page_number }}">Next</a>{% else %}<span class="admin-pagination-link is-disabled">Next</span>{% endif %}
+    {% if page_obj.has_next %}<a class="admin-pagination-link" href="?q={{ search_query|urlencode }}&user_scope={{ user_scope }}&sort={{ sort_by }}&order={{ order }}&page={{ page_obj.next_page_number }}">Next</a>{% else %}<span class="admin-pagination-link is-disabled">Next</span>{% endif %}
 </nav>
 {% endblock %}
