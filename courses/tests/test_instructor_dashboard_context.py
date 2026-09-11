@@ -42,15 +42,16 @@ class InstructorDashboardContextTests(TestCase):
         with patch(
             "courses.views.instructor_dashboard_view.can_view_instructor_dashboard",
             return_value=True,
-        ):
-            response = instructor_dashboard(request)
+        ), patch("courses.views.instructor_dashboard_view.render") as render:
+            instructor_dashboard(request)
 
-        self.assertEqual(response.status_code, 200)
+        context = render.call_args.args[2]
         self.assertEqual(
-            list(response.context_data["organization_courses"]),
+            list(context["organization_courses"]),
             [organization_course],
         )
         self.assertEqual(
-            list(response.context_data["my_courses"]),
+            list(context["my_courses"]),
             [personal_course],
         )
+        self.assertFalse(context["admin_courses"].exists())
