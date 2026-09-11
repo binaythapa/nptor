@@ -2,446 +2,224 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Courses{% endblock %}</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        {% block title %}
-            Courses
-        {% endblock %}
-    </title>
+    {% if request.organization %}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+        <link rel="stylesheet" href="{% static 'css/pages/org-admin-mobile.css' %}">
+    {% endif %}
 
     <style>
-
-        /* ================= BODY ================= */
-
         body {
-            font-family:
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                Roboto,
-                Arial,
-                sans-serif;
-
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             margin: 0;
-
             background: #f4f6f9;
         }
 
-
-        /* ================= NAVBAR ================= */
-
-        nav {
+        nav.course-nav {
             background: #111827;
-
             padding: 12px 24px;
-
             display: flex;
-
             justify-content: space-between;
-
             align-items: center;
         }
 
-
-        /* ================= NAV LEFT ================= */
-
-        .nav-left {
-            display: flex;
-
-            align-items: center;
-
-            gap: 20px;
-        }
-
-
-        /* ================= NAV RIGHT ================= */
-
-        .nav-right {
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-
-            color: #e5e7eb;
-        }
-
-
-        /* ================= NAV LINKS ================= */
-
-        nav a {
-            color: #e5e7eb;
-
-            text-decoration: none;
-
-            font-size: 14px;
-
-            font-weight: 500;
-
-            transition: all 0.2s ease;
-        }
-
-        nav a:hover {
-            color: #ffffff;
-        }
-
-
-        /* ================= DISABLED LINK ================= */
-
-        .is-disabled {
-            opacity: 0.5;
-
-            cursor: not-allowed;
-
-            pointer-events: none;
-        }
-
-
-        /* ================= DIVIDER ================= */
-
-        .nav-divider {
-            height: 20px;
-
-            width: 1px;
-
-            background: #374151;
-        }
-
-
-        /* ================= COURSE CONTEXT MENU ================= */
-
-        .course-menu {
-            display: flex;
-
-            gap: 8px;
-
-            padding-left: 15px;
-
-            border-left: 1px solid #374151;
-        }
-
-
-        /* ================= MENU BUTTON ================= */
-
-        .menu-btn {
-            padding: 5px 12px;
-
-            font-size: 12px;
-
-            border-radius: 20px;
-
-            text-decoration: none;
-
-            font-weight: 500;
-
-            transition: all 0.2s ease;
-        }
-
-
-          /* ================= HOME ================= */
-
-.menu-home {
-    background: #4b5563;
-    color: #f9fafb;
-}
-
-.menu-home:hover {
-    background: #374151;
-    color: white;
-}
-
-        /* ================= BUILDER ================= */
-
-        .menu-builder {
-            background: #1e3a8a;
-
-            color: #c7d2fe;
-        }
-
-        .menu-builder:hover {
-            background: #2563eb;
-
-            color: white;
-        }
-
-
-        /* ================= EDIT ================= */
-
-        .menu-edit {
-            background: #374151;
-
-            color: #e5e7eb;
-        }
-
-        .menu-edit:hover {
-            background: #4b5563;
-        }
-
-
-        /* ================= VIEW ================= */
-
-        .menu-view {
-            background: #065f46;
-
-            color: #d1fae5;
-        }
-
-        .menu-view:hover {
-            background: #047857;
-
-            color: white;
-        }
-
-
-        /* ================= USER ================= */
-
-        .nav-user {
-            font-size: 13px;
-
-            color: #9ca3af;
-        }
-
-
-        /* ================= LOGOUT ================= */
-
-        .logout-link {
-            color: #f87171;
-        }
-
-        .logout-link:hover {
-            color: #ef4444;
-        }
-
-
-        /* ================= MAIN CONTAINER ================= */
-
-        .container {
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+        .nav-right { display: flex; align-items: center; gap: 12px; color: #e5e7eb; }
+        nav.course-nav a { color: #e5e7eb; text-decoration: none; font-size: 14px; font-weight: 500; }
+        nav.course-nav a:hover { color: #fff; }
+        .is-disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
+        .nav-divider { height: 20px; width: 1px; background: #374151; }
+        .course-menu { display: flex; gap: 8px; padding-left: 15px; border-left: 1px solid #374151; }
+        .menu-btn { padding: 5px 12px; font-size: 12px; border-radius: 20px; text-decoration: none; font-weight: 500; }
+        .menu-home { background: #4b5563; color: #f9fafb; padding: 5px 12px; border-radius: 20px; }
+        .menu-builder { background: #1e3a8a; color: #c7d2fe; }
+        .menu-edit { background: #374151; color: #e5e7eb; }
+        .menu-view { background: #065f46; color: #d1fae5; }
+        .nav-user { font-size: 13px; color: #9ca3af; }
+        .logout-link { color: #f87171 !important; }
+
+        .course-container {
             max-width: 1100px;
-
             margin: 30px auto;
-
             padding: 20px;
-
-            background: white;
-
+            background: #fff;
             border-radius: 10px;
-
-            box-shadow:
-                0 6px 18px
-                rgba(0, 0, 0, 0.05);
+            box-shadow: 0 6px 18px rgba(0,0,0,.05);
         }
 
+        hr { margin: 20px 0; }
 
-        /* ================= HR ================= */
-
-        hr {
-            margin: 20px 0;
+        {% if request.organization %}
+        .org-course-content {
+            min-width: 0;
         }
-
+        .org-course-content .course-container {
+            max-width: none;
+            margin: 0;
+            box-shadow: none;
+            border-radius: 0;
+        }
+        .org-course-titlebar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        {% endif %}
     </style>
 
-    <!-- HTMX -->
-    <script
-        src="https://unpkg.com/htmx.org@1.9.10">
-    </script>
-
-    {% block extra_head %}
-    {% endblock %}
-
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    {% block extra_head %}{% endblock %}
 </head>
 
+<body {% if request.organization %}class="org-admin-page"{% endif %}>
 
-<body>
+{% if request.organization %}
+    {% with org_slug=request.organization.slug %}
+    <nav class="navbar is-light org-admin-topbar">
+        <div class="navbar-brand">
+            <button type="button" class="org-mobile-menu-btn" id="orgMobileMenuButton" aria-controls="orgAdminSidebar" aria-expanded="false">☰</button>
+            {% if request.organization_member.is_administrator %}
+                <a class="navbar-item org-admin-brand" href="{% url 'organizations_admin:dashboard' slug=org_slug %}">🏢 {{ request.organization.name }}</a>
+            {% else %}
+                <a class="navbar-item org-admin-brand" href="{% url 'organizations_public:workspace' slug=org_slug %}">🏢 {{ request.organization.name }}</a>
+            {% endif %}
+        </div>
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <span class="tag is-info is-light mr-2">{{ request.organization_member.get_role_display }}</span>
+                <a href="{% url 'quiz:dashboard' %}" class="button is-small is-outlined">Back to Platform</a>
+            </div>
+        </div>
+    </nav>
 
+    <section class="section pt-4 org-admin-shell">
+        <div class="container is-fluid">
+            <div class="columns org-admin-main">
+                <div class="org-admin-backdrop" id="orgAdminBackdrop"></div>
+                <aside class="column is-3 org-admin-sidebar" id="orgAdminSidebar">
+                    <nav class="menu">
+                        {% if request.organization_member.is_administrator %}
+                            <p class="menu-label">Overview</p>
+                            <ul class="menu-list">
+                                <li><a href="{% url 'organizations_admin:dashboard' slug=org_slug %}"><i class="fa fa-chart-line mr-1"></i>Dashboard</a></li>
+                            </ul>
+                        {% endif %}
 
-<!-- =========================================================
-     NAVIGATION
-========================================================= -->
+                        <p class="menu-label">People</p>
+                        <ul class="menu-list">
+                            <li><a href="{% url 'organizations_admin:students' slug=org_slug %}">Students</a></li>
+                        </ul>
 
-<nav>
+                        <p class="menu-label">Learning</p>
+                        <ul class="menu-list">
+                            {% if request.organization_member.is_administrator %}
+                                <li><a href="{% url 'organizations_admin:courses' slug=org_slug %}">Courses</a></li>
+                                <li><a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}">Learning Tracks</a></li>
+                            {% else %}
+                                <li><a href="{% url 'organizations_admin:org_course_list' slug=org_slug %}">My Courses</a></li>
+                            {% endif %}
+                            <li><a href="{% url 'organizations_admin:exams' slug=org_slug %}">Exams</a></li>
+                            <li><a href="{% url 'organizations_admin:questions' slug=org_slug %}">Questions</a></li>
+                        </ul>
 
-    <!-- ================= LEFT SIDE ================= -->
+                        <p class="menu-label">Operations</p>
+                        <ul class="menu-list">
+                            <li><a href="{% url 'organizations_admin:assignments' slug=org_slug %}">Assignments</a></li>
+                            {% if request.organization_member.is_administrator %}
+                                <li><a href="{% url 'organizations_admin:domain_list' slug=org_slug %}">Domains</a></li>
+                                <li><a href="{% url 'organizations_admin:category_list' slug=org_slug %}">Categories</a></li>
+                            {% endif %}
+                        </ul>
 
-    <div class="nav-left">
+                        {% if request.organization_member.is_administrator %}
+                            <p class="menu-label">Portfolio & Settings</p>
+                            <ul class="menu-list">
+                                <li><a href="{% url 'organizations_admin:portfolio' slug=org_slug %}">Portfolio</a></li>
+                                <li><a href="{% url 'organizations_admin:settings' slug=org_slug %}">Settings</a></li>
+                            </ul>
+                        {% endif %}
+                    </nav>
+                </aside>
 
-        {% if user.is_authenticated %}
-
-
-            <!-- =================================================
-                 ORGANIZATION DASHBOARD
-            ================================================= -->
-
-            {% if request.active_org and request.active_org.slug %}
-
-                {% if not is_from_course %}
-
-                    <a
-                        href="{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}"
-                        class="py-1"
-                    >
-                        Org Dashboard
-                    </a>
-
-                {% else %}
-
-                    <span
-                        class="py-1 is-disabled"
-                        title="Disabled during course practice"
-                    >
-                        Org Dashboard
-                    </span>
-
+                <main class="column is-9 org-admin-content org-course-content">
+                    {% block content %}{% endblock %}
+                </main>
+            </div>
+        </div>
+    </section>
+    {% endwith %}
+{% else %}
+    <nav class="course-nav">
+        <div class="nav-left">
+            {% if user.is_authenticated %}
+                {% if request.active_org and request.active_org.slug %}
+                    {% if not is_from_course %}
+                        <a href="{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}">Org Dashboard</a>
+                    {% else %}
+                        <span class="is-disabled" title="Disabled during course practice">Org Dashboard</span>
+                    {% endif %}
                 {% endif %}
 
+                {% if course %}
+                    <div class="course-menu">
+                        <a href="{% url 'quiz:dashboard' %}" class="menu-home">Home</a>
+                        <a href="{% url 'courses:course_builder' course.slug %}" class="menu-btn menu-builder">Sections</a>
+                        <a href="{% url 'courses:course_edit' course.slug %}" class="menu-btn menu-edit">Edit</a>
+                        <a href="{% url 'courses:course_learn' course.slug %}?preview=1" class="menu-btn menu-view">Preview</a>
+                    </div>
+                {% endif %}
+
+                {% if lesson %}
+                    <div class="nav-divider"></div>
+                    <a href="{% url 'courses:lesson_edit' lesson.id %}">Edit Lesson</a>
+                {% endif %}
             {% endif %}
+        </div>
 
+        <div class="nav-right">
+            {% if user.is_authenticated %}
+                <span class="nav-user">{{ user.username }}</span>
+                <a href="#" class="logout-link" onclick="event.preventDefault();document.getElementById('logout-form').submit();">Logout</a>
+                <form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">{% csrf_token %}</form>
+            {% else %}
+                <a href="{% url 'accounts:request-login-otp' %}">Login</a>
+            {% endif %}
+        </div>
+    </nav>
 
-            <!-- =================================================
-                 COURSE CONTEXT
-            ================================================= -->
-
-
-
-
-{% if course %}
-
-    <div class="course-menu">
-
-        <a
-    href="{% url 'quiz:dashboard' %}"
-    class="menu-home"
->
-    Home
-</a>
-
-        <a
-            href="{% url 'courses:course_builder' course.slug %}"
-            class="menu-btn menu-builder"
-        >
-            Sections
-        </a>
-
-        <a
-            href="{% url 'courses:course_edit' course.slug %}"
-            class="menu-btn menu-edit"
-        >
-            Edit
-        </a>
-
-        <a
-            href="{% url 'courses:course_learn' course.slug %}?preview=1"
-            class="menu-btn menu-view"
-        >
-            Preview
-        </a>
-
-    </div>
-
+    <main class="course-container">
+        {% block content %}{% endblock %}
+    </main>
 {% endif %}
 
-
-
-
-
-            <!-- =================================================
-                 LESSON CONTEXT
-            ================================================= -->
-
-            {% if lesson %}
-
-                <div class="nav-divider"></div>
-
-                <a
-                    href="{% url 'courses:lesson_edit' lesson.id %}"
-                >
-                    Edit Lesson
-                </a>
-
-            {% endif %}
-
-
-        {% endif %}
-
-    </div>
-
-
-    <!-- ================= RIGHT SIDE ================= -->
-
-    <div class="nav-right">
-
-        {% if user.is_authenticated %}
-
-            <span class="nav-user">
-
-                {{ user.username }}
-
-            </span>
-
-
-            <!-- =================================================
-                 LOGOUT
-            ================================================= -->
-
-            <a
-                href="#"
-                class="logout-link"
-                onclick="
-                    event.preventDefault();
-                    document.getElementById('logout-form').submit();
-                "
-            >
-                Logout
-            </a>
-
-
-            <form
-                id="logout-form"
-                method="post"
-                action="{% url 'accounts:logout' %}"
-                style="display:none;"
-            >
-
-                {% csrf_token %}
-
-            </form>
-
-
-        {% else %}
-
-            <a
-                href="{% url 'accounts:request-login-otp' %}"
-            >
-                Login
-            </a>
-
-        {% endif %}
-
-    </div>
-
-</nav>
-
-
-<!-- =========================================================
-     MAIN CONTENT
-========================================================= -->
-
-<main class="container">
-
-    {% block content %}
-    {% endblock %}
-
-</main>
-
+{% if request.organization %}
+<script>
+(function(){
+    const body = document.body;
+    const menu = document.getElementById('orgMobileMenuButton');
+    const backdrop = document.getElementById('orgAdminBackdrop');
+    function closeMenu(){
+        body.classList.remove('org-sidebar-open');
+        if (menu) menu.setAttribute('aria-expanded', 'false');
+    }
+    if (menu) menu.onclick = function(){
+        const open = body.classList.toggle('org-sidebar-open');
+        menu.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+    if (backdrop) backdrop.onclick = closeMenu;
+    document.addEventListener('keydown', function(event){
+        if (event.key === 'Escape') closeMenu();
+    });
+})();
+</script>
+{% endif %}
 
 </body>
-
 </html>
