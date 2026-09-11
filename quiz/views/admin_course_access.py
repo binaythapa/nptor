@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from courses.models import Course
+from organizations.models.access import ResourceAccess
 from subscriptions.models import Subscription, SubscriptionEntitlement
 from subscriptions.services.course_access_service import CourseAccessService
 from subscriptions.services.plan_service import get_plan_for_course
@@ -145,19 +146,17 @@ def admin_update_course_expiry(request):
     subscription.cancelled_at = None
     subscription.save(update_fields=["expires_at", "status", "cancelled_at", "updated_at"])
 
-    from organizations.models.access import ResourceAccess
-    access = ResourceAccess.objects.filter(
+    ResourceAccess.objects.filter(
         user=user,
         resource_type=ResourceAccess.RESOURCE_COURSE,
         course=course,
-        source=ResourceAccess.SOURCE_ADMIN,
         subscription=subscription,
-    ).first()
-    if access:
-        access.is_active = True
-        access.revoked_at = None
-        access.expires_at = subscription.expires_at
-        access.save(update_fields=["is_active", "revoked_at", "expires_at", "updated_at"])
+    ).update(
+        is_active=True,
+        revoked_at=None,
+        expires_at=subscription.expires_at,
+        updated_at=timezone.now(),
+    )
 
     return JsonResponse({"success": True})
 
@@ -183,5 +182,17 @@ def admin_add_course_days(request):
     subscription.status = Subscription.STATUS_ACTIVE
     subscription.cancelled_at = None
     subscription.save(update_fields=["expires_at", "status", "cancelled_at", "updated_at"])
+
+    ResourceAccess.objects.filter(
+        user=user,
+        resource_type=ResourceAccess.RESOURCE_COURSE,
+        course=course,
+        subscription=subscription,
+    ).update(
+        is_active=True,
+        revoked_at=None,
+        expires_at=subscription.expires_at,
+        updated_at=timezone.now(),
+    )
 
     return JsonResponse({"success": True, "expires_at": subscription.expires_at.isoformat()})
