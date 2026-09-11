@@ -5,12 +5,14 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
 from courses.models import Course
+from organizations.models import Organization
 from quiz.models import Category, Difficulty, Exam, ExamTrack, Notification, Question
 
 SEARCH_LIMIT = 20
 ALLOWED_SCOPES = {
     "users", "courses", "tracks", "exams", "questions",
     "categories", "domains", "difficulties", "coupons", "notifications",
+    "organizations",
 }
 
 User = get_user_model()
@@ -74,6 +76,11 @@ def admin_autocomplete(request):
             is_active=True, code__istartswith=query
         ).order_by("code")[:SEARCH_LIMIT]
         results = [_result(item.id, item.code) for item in qs]
+    elif scope == "organizations":
+        qs = Organization.objects.filter(
+            Q(name__istartswith=query) | Q(slug__istartswith=query)
+        ).order_by("name")[:SEARCH_LIMIT]
+        results = [_result(item.id, item.name, item.slug) for item in qs]
     else:
         qs = Notification.objects.filter(title__istartswith=query).order_by("-created_at")[:SEARCH_LIMIT]
         results = [_result(item.id, item.title) for item in qs]
