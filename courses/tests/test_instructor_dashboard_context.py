@@ -55,3 +55,31 @@ class InstructorDashboardContextTests(TestCase):
             [personal_course],
         )
         self.assertFalse(context["admin_courses"].exists())
+
+    def test_platform_admin_courses_are_not_duplicated_in_my_courses(self):
+        user = get_user_model().objects.create_superuser(
+            username="platform-admin",
+            password="test-password",
+            email="admin@example.com",
+        )
+        platform_course = Course.objects.create(
+            title="Platform Course",
+            description="Platform course",
+            level="beginner",
+            owner_type=Course.OWNER_PLATFORM,
+            organization=None,
+            created_by=user,
+        )
+
+        request = RequestFactory().get("/courses/instructor/dashboard/")
+        request.user = user
+
+        with patch("courses.views.instructor_dashboard_view.render") as render:
+            instructor_dashboard(request)
+
+        context = render.call_args.args[2]
+        self.assertEqual(
+            list(context["admin_courses"]),
+            [platform_course],
+        )
+        self.assertFalse(context["my_courses"].exists())
