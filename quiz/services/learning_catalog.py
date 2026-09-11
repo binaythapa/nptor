@@ -15,9 +15,7 @@ VALID_RESOURCE_TYPES = {"all", "courses", "tracks"}
 VALID_ACCESS_FILTERS = {"", "owned", "available"}
 VALID_PRICING_FILTERS = {"", "free", "premium"}
 VALID_DOMAIN_SORTS = {"az", "za"}
-VALID_CATALOG_VERTICALS = {
-    value for value, _ in ContentVertical.TYPE_CHOICES
-}
+VALID_CATALOG_VERTICALS = {value for value, _ in ContentVertical.TYPE_CHOICES}
 
 
 def _public_courses():
@@ -77,10 +75,10 @@ def _track_exams(track):
 
 
 def _domain_for_track(track):
-    domains = []
     manager = getattr(track, "track_exams", None)
     if manager is None:
         return None
+    domains = []
     for membership in manager.all():
         exam = membership.exam
         if not exam.is_published or exam.organization_id is not None:
@@ -164,23 +162,30 @@ def _resource_item(resource_type, resource):
         if plans:
             plan = min(plans, key=lambda value: value.price)
             item["price_label"] = f"{plan.currency} {plan.price:,.2f}"
+    elif resource_type == "exam":
+        item["duration_minutes"] = round(getattr(resource, "duration_seconds", 0) / 60)
+        item["question_count"] = getattr(resource, "question_count", 0)
+        item["passing_score"] = getattr(resource, "passing_score", None)
+        item["pricing_label"] = "Free" if getattr(resource, "is_free", False) else "Premium"
+        item["description_label"] = "Practice exam"
     elif resource_type == "track":
         published_exams = [
             exam for exam in _track_exams(resource)
-            if exam.is_published and exam.organization_id is None
+            if getattr(exam, "is_published", False) and getattr(exam, "organization_id", None) is None
         ]
         domain = _domain_for_track(resource)
         item["domain_slug"] = domain.slug if domain else ""
         item["exam_count"] = len(published_exams)
-        item["question_count"] = sum(exam.question_count for exam in published_exams)
-        is_free = not _active_plans(resource) and resource.pricing_type == resource.PRICING_FREE
+        item["question_count"] = sum(getattr(exam, "question_count", 0) for exam in published_exams)
+        pricing_free = getattr(resource, "PRICING_FREE", ExamTrack.PRICING_FREE)
+        is_free = not _active_plans(resource) and getattr(resource, "pricing_type", None) == pricing_free
         item["pricing_label"] = "Free" if is_free else "Premium"
         item["description_label"] = "Structured certification preparation"
         if is_free:
             item["price_label"] = "Free"
-        elif resource.lifetime_price is not None:
+        elif getattr(resource, "lifetime_price", None) is not None:
             item["price_label"] = f"{resource.currency} {resource.lifetime_price:,.2f}"
-        elif resource.monthly_price is not None:
+        elif getattr(resource, "monthly_price", None) is not None:
             item["price_label"] = f"{resource.currency} {resource.monthly_price:,.2f} / month"
         elif _active_plans(resource):
             plan = min(_active_plans(resource), key=lambda value: value.price)
@@ -209,119 +214,68 @@ def _add_user_state(user, items):
 
 
 def _build_domain_explorer(domains, domain_query="", domain_sort="az", domain_page=1):
-    popular_domains = sorted(
-        domains,
-        key=lambda item: (
-            -(item["course_count"] + item["track_count"]),
-            item["domain"].name.lower(),
-        ),
-    )[:POPULAR_DOMAIN_COUNT]
-
+    popular_domains = sorted(domains, key=lambda item: (-(item["course_count"] + item["track_count"]), item["domain"].name.lower()))[:POPULAR_DOMAIN_COUNT]
     needle = (domain_query or "").strip().lower()
     if needle:
         domains = [item for item in domains if needle in item["domain"].name.lower()]
-
     if domain_sort not in VALID_DOMAIN_SORTS:
         domain_sort = "az"
-    domains = sorted(
-        domains,
-        key=lambda item: item["domain"].name.lower(),
-        reverse=domain_sort == "za",
-    )
-
+    domains = sorted(domains, key=lambda item: item["domain"].name.lower(), reverse=domain_sort == "za")
     paginator = Paginator(domains, DOMAIN_PER_PAGE)
     try:
         page_number = max(int(domain_page), 1)
     except (TypeError, ValueError):
         page_number = 1
-
     return popular_domains, paginator.get_page(page_number), domain_sort
 
 
 def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, pricing="", page=1, per_page=DEFAULT_PER_PAGE, domain_query="", domain_sort="az", domain_page=1, catalog_vertical=None):
     if catalog_vertical not in VALID_CATALOG_VERTICALS:
         catalog_vertical = None
-
     courses = list(_public_courses().order_by("title"))
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
-
-    courses = [
-        item for item in courses
-        if _matches_vertical(getattr(item.category, "domain", None), catalog_vertical)
-    ]
-    exams = [
-        item for item in exams
-        if _matches_vertical(getattr(item.primary_category, "domain", None), catalog_vertical)
-    ]
-    tracks = [
-        item for item in tracks
-        if _matches_vertical(_domain_for_track(item), catalog_vertical)
-    ]
-
-    active_domains = list(
-        Domain.objects.filter(
-            is_active=True,
-            organization__isnull=True,
-        ).select_related("content_vertical").order_by("name")
-    )
-    active_domains = [
-        item for item in active_domains
-        if _matches_vertical(item, catalog_vertical)
-    ]
+    courses = [item for item in courses if _matches_vertical(getattr(item.category, "domain", None), catalog_vertical)]
+    exams = [item for item in exams if _matches_vertical(getattr(item.primary_category, "domain", None), catalog_vertical)]
+    tracks = [item for item in tracks if _matches_vertical(_domain_for_track(item), catalog_vertical)]
+    active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).select_related("content_vertical").order_by("name"))
+    active_domains = [item for item in active_domains if _matches_vertical(item, catalog_vertical)]
     domains = [_domain_summary(item, courses, exams, tracks) for item in active_domains]
     domains = [item for item in domains if item["course_count"] or item["track_count"]]
     popular_domains, domain_page_obj, domain_sort = _build_domain_explorer(domains, domain_query, domain_sort, domain_page)
-
     selected_domain = domain
     if selected_domain is not None and catalog_vertical and not _matches_vertical(selected_domain, catalog_vertical):
         selected_domain = None
-
     if selected_domain is not None:
         courses = [item for item in courses if item.category and item.category.domain_id == selected_domain.id]
         exams = [item for item in exams if item.primary_category and item.primary_category.domain_id == selected_domain.id]
         tracks = [item for item in tracks if (_domain_for_track(item) and _domain_for_track(item).id == selected_domain.id)]
-
     if category is not None:
         category_ids = set(category.get_descendants_include_self())
         courses = [item for item in courses if item.category_id in category_ids]
         exams = [item for item in exams if item.primary_category_id in category_ids or any(cat.id in category_ids for cat in item.categories.all())]
-
     if resource_type not in VALID_RESOURCE_TYPES:
         resource_type = "all"
     if access not in VALID_ACCESS_FILTERS:
         access = ""
     if pricing not in VALID_PRICING_FILTERS:
         pricing = ""
-
     needle = query.lower()
     courses = [item for item in courses if _matches_query(item, "course", needle)]
     tracks = [item for item in tracks if _matches_query(item, "track", needle)]
     courses = [item for item in courses if _matches_level(item, "course", level)]
-    tracks = [
-        item for item in tracks
-        if not level or any(_matches_level(exam, "exam", level) for exam in _track_exams(item))
-    ]
-
+    tracks = [item for item in tracks if not level or any(_matches_level(exam, "exam", level) for exam in _track_exams(item))]
     resources = []
     if resource_type in {"all", "courses"}:
         resources.extend(_resource_item("course", item) for item in courses)
     if resource_type in {"all", "tracks"}:
         resources.extend(_resource_item("track", item) for item in tracks)
-
     if pricing:
         resources = [item for item in resources if item["pricing_label"].lower() == pricing]
-
     resources.sort(key=lambda item: item["resource"].title.lower())
-
     if access in {"owned", "available"}:
         resources = _add_user_state(user, resources)
-        resources = [
-            item for item in resources
-            if (access == "owned" and item["has_access"])
-            or (access == "available" and not item["has_access"])
-        ]
-
+        resources = [item for item in resources if (access == "owned" and item["has_access"]) or (access == "available" and not item["has_access"])]
     try:
         page_size = min(max(int(per_page), 1), MAX_PER_PAGE)
     except (TypeError, ValueError):
@@ -332,24 +286,10 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     except (TypeError, ValueError):
         page_number = 1
     page_obj = paginator.get_page(page_number)
-
     if access not in {"owned", "available"}:
         _add_user_state(user, page_obj.object_list)
-
-    selected_categories = (
-        Category.objects.filter(
-            is_active=True,
-            domain=selected_domain,
-            organization__isnull=True,
-            parent__isnull=True,
-        ).order_by("name")
-        if selected_domain else Category.objects.none()
-    )
-
-    vertical_label = None
-    if catalog_vertical:
-        vertical_label = dict(ContentVertical.TYPE_CHOICES).get(catalog_vertical)
-
+    selected_categories = Category.objects.filter(is_active=True, domain=selected_domain, organization__isnull=True, parent__isnull=True).order_by("name") if selected_domain else Category.objects.none()
+    vertical_label = dict(ContentVertical.TYPE_CHOICES).get(catalog_vertical) if catalog_vertical else None
     return {
         "domains": domain_page_obj.object_list,
         "popular_domains": popular_domains,
