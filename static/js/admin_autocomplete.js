@@ -51,17 +51,40 @@
 
         let timer = null;
         let requestId = 0;
+        let results = [];
+        let activeIndex = -1;
 
         function close() {
             menu.classList.remove("is-open");
             menu.innerHTML = "";
+            results = [];
+            activeIndex = -1;
         }
 
-        function render(results) {
+        function setActive(index) {
+            const options = menu.querySelectorAll(".admin-autocomplete-option");
+            options.forEach(function (option) { option.classList.remove("is-active"); });
+            activeIndex = index;
+            if (activeIndex >= 0 && options[activeIndex]) {
+                options[activeIndex].classList.add("is-active");
+                options[activeIndex].scrollIntoView({block: "nearest"});
+            }
+        }
+
+        function choose(index) {
+            if (!results[index]) return;
+            input.value = results[index].label || "";
+            close();
+            if (input.dataset.autocompleteSubmit === "true") form.submit();
+        }
+
+        function render(items) {
+            results = items.slice(0, LIMIT);
+            activeIndex = -1;
             if (!results.length) {
                 menu.innerHTML = '<div class="admin-autocomplete-empty">No matching records</div>';
             } else {
-                menu.innerHTML = results.slice(0, LIMIT).map(function (item, index) {
+                menu.innerHTML = results.map(function (item, index) {
                     return '<button type="button" class="admin-autocomplete-option" role="option" data-index="' + index + '">' +
                         '<span>' + escapeHtml(item.label) + '</span>' +
                         (item.subtitle ? '<small>' + escapeHtml(item.subtitle) + '</small>' : '') +
@@ -69,11 +92,7 @@
                 }).join("");
                 menu.querySelectorAll(".admin-autocomplete-option").forEach(function (button, index) {
                     button.addEventListener("mousedown", function (event) { event.preventDefault(); });
-                    button.addEventListener("click", function () {
-                        input.value = results[index].label || "";
-                        close();
-                        if (input.dataset.autocompleteSubmit === "true") form.submit();
-                    });
+                    button.addEventListener("click", function () { choose(index); });
                 });
             }
             menu.classList.add("is-open");
@@ -100,8 +119,25 @@
         });
 
         input.addEventListener("keydown", function (event) {
-            if (event.key === "Escape") close();
+            if (!menu.classList.contains("is-open") || !results.length) {
+                if (event.key === "Escape") close();
+                return;
+            }
+            if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setActive(activeIndex < results.length - 1 ? activeIndex + 1 : 0);
+            } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setActive(activeIndex > 0 ? activeIndex - 1 : results.length - 1);
+            } else if (event.key === "Enter" && activeIndex >= 0) {
+                event.preventDefault();
+                choose(activeIndex);
+            } else if (event.key === "Escape") {
+                event.preventDefault();
+                close();
+            }
         });
+
         document.addEventListener("click", function (event) {
             if (!wrapper.contains(event.target)) close();
         });
