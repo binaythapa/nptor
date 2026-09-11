@@ -10,6 +10,7 @@ from organizations.permissions import org_admin_required, org_teacher_required
 from organizations.services.content_permissions import user_can_manage_owned_content
 from courses.forms import CourseForm
 from courses.models import Course
+from courses.views.instructor_views import course_create, course_edit
 from quiz.models import Exam, ExamTrack
 from subscriptions.models import Subscription, SubscriptionEntitlement
 
@@ -251,44 +252,17 @@ def org_course_list(request, slug):
 
 @org_teacher_required
 def org_course_create(request, slug):
-    org = request.organization
-    if request.method == "POST":
-        form = CourseForm(request.POST, request.FILES, organization=org)
-        if form.is_valid():
-            course = form.save(commit=False)
-            course.owner_type = Course.OWNER_ORGANIZATION
-            course.organization = org
-            course.created_by = request.user
-            course.is_published = False
-            course.save()
-            form.save_m2m()
-            messages.success(request, "Course created successfully.")
-            return redirect("organizations_admin:org_course_list", slug=slug)
-    else:
-        form = CourseForm(organization=org)
-    return render(request, "organizations/admin/courses/create.html", {"form": form, "org": org})
+    """Use the canonical course app create page and workflow."""
+    return course_create(request)
 
 
 @org_teacher_required
 def org_course_edit(request, slug, pk):
-    org = request.organization
-    course = get_object_or_404(Course, id=pk, organization=org)
-    if not user_can_manage_owned_content(request.user, org, course):
+    """Use the canonical course app edit page and workflow."""
+    course = get_object_or_404(Course, id=pk, organization=request.organization)
+    if not user_can_manage_owned_content(request.user, request.organization, course):
         raise PermissionDenied("You can only modify courses you created.")
-    if not _mutable_course_state(course):
-        return HttpResponseForbidden("Course cannot be modified in its current approval state.")
-    if request.method == "POST":
-        form = CourseForm(request.POST, request.FILES, instance=course, organization=org)
-        if form.is_valid():
-            updated = form.save(commit=False)
-            updated.is_published = False
-            updated.save()
-            form.save_m2m()
-            messages.success(request, "Course updated successfully.")
-            return redirect("organizations_admin:org_course_list", slug=slug)
-    else:
-        form = CourseForm(instance=course, organization=org)
-    return render(request, "organizations/admin/courses/edit.html", {"form": form, "course": course, "org": org})
+    return course_edit(request, course.slug)
 
 
 @require_POST
