@@ -9,14 +9,14 @@ from accounts.services.notifications import create_notification
 from organizations.models.access_request import OrganizationAccessRequest
 from organizations.models.membership import OrganizationMember
 from organizations.models.role import OrganizationRole
-from organizations.permissions import get_active_membership, is_platform_admin
+from organizations.permissions import get_active_membership
 
 
 User = get_user_model()
 
 
 def _require_platform_admin(user):
-    if not is_platform_admin(user):
+    if not user or not user.is_authenticated or not user.is_staff:
         raise PermissionDenied("Platform administrator access required.")
 
 
@@ -41,7 +41,7 @@ def submit_access_request(user, organization, service=OrganizationAccessRequest.
         user=user, organization=organization, service=service,
         requested_role=requested_role, reason=reason.strip(),
     )
-    platform_admins = User.objects.filter(Q(is_superuser=True) | Q(profile__is_platform_admin=True)).distinct().only("id")
+    platform_admins = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)).distinct().only("id")
     for admin in platform_admins:
         create_notification(
             admin, "organization", "New organization access request",
