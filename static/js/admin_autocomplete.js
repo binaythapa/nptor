@@ -75,8 +75,13 @@
 
         function choose(index) {
             if (!results[index]) return;
-            input.value = results[index].label || "";
+            const result = results[index];
+            input.value = result.label || "";
             close();
+            if (result.url) {
+                window.location.href = result.url;
+                return;
+            }
             if (input.dataset.autocompleteSubmit !== "false") form.submit();
         }
 
