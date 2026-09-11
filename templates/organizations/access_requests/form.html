@@ -1,0 +1,5 @@
+{% extends "layouts/student/base.html" %}
+{% block content %}
+<section style="max-width:720px;margin:40px auto;padding:0 15px"><h1 class="title is-4">Request Organization Access</h1><p class="mb-5">Choose an organization and the service/role you need. Access is activated only after NPTOR admin approval.</p>
+<form method="post">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<div class="field"><label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label><div class="control">{{ field }}</div>{% for error in field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}</div>{% endfor %}<button class="button is-primary" type="submit">Submit Request</button> <a class="button" href="{% url 'organizations_public:request_status' %}">View Requests</a></form></section>
+{% endblock %}
