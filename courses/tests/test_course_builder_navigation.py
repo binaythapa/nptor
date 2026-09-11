@@ -35,6 +35,18 @@ class CourseBuilderNavigationTemplateTests(SimpleTestCase):
         self.assertIn('/quiz/dashboard/admin/', html)
         self.assertIn('Back to Dashboard', html)
 
+    def test_platform_admin_keeps_nptor_dashboard_when_org_context_is_active(self):
+        user = type(
+            "User",
+            (),
+            {"is_authenticated": True, "is_staff": True, "is_superuser": True},
+        )()
+        org = type("Org", (), {"slug": "acme"})()
+        request = type("Request", (), {"organization": None, "active_org": org})()
+        html = self.render(user=user, request=request)
+        self.assertIn('/quiz/dashboard/admin/', html)
+        self.assertNotIn('/org/acme/workspace/', html)
+
     def test_normal_user_gets_student_dashboard(self):
         user = type(
             "User",
