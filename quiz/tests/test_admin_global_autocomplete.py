@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from courses.models import Course
-from quiz.models import Exam, ExamTrack, Question
+from quiz.models import Exam, ExamTrack
 
 
 User = get_user_model()
@@ -36,8 +36,6 @@ class AdminGlobalAutocompleteTests(TestCase):
         ExamTrack.objects.create(title="Accounting Track", slug="accounting-track")
         Exam.objects.create(title="Test Exam", duration_seconds=600, created_by=self.admin)
         Exam.objects.create(title="Accounting Exam", duration_seconds=600, created_by=self.admin)
-        Question.objects.create(text="Test question", difficulty="easy", is_active=True)
-        Question.objects.create(text="Another question", difficulty="easy", is_active=True)
 
     def search(self, scope, query):
         return self.client.get(
