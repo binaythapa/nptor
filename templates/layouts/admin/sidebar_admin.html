@@ -2,7 +2,6 @@
 <ul class="menu-list">
     <li><a href="{% url 'quiz:dashboard' %}"><span class="icon is-small"><i class="fa fa-chart-line"></i></span><span class="menu-text">Dashboard</span></a></li>
     <li><a href="{% url 'accounts:user_monitoring' %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Users</span></a></li>
-    <li><a href="{% url 'accounts:organization_requests' %}"><span class="icon is-small"><i class="fa fa-building"></i></span><span class="menu-text">Organization Requests</span></a></li>
 </ul>
 <p class="menu-label">Content</p>
 <ul class="menu-list">
@@ -17,5 +16,5 @@
 </ul>
 <p class="menu-label">System</p>
 <ul class="menu-list">
-    <li><a href="{% url 'accounts:notifications' %}"><span class="icon is-small"><i class="fa fa-bell"></i></span><span class="menu-text">Notifications</span></a></li>
+    <li><a href="{% url 'quiz:notifications_list' %}"><span class="icon is-small"><i class="fa fa-bell"></i></span><span class="menu-text">Notifications</span></a></li>
 </ul>
