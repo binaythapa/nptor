@@ -4,349 +4,50 @@
 
 {% block head_extra %}
 <style>
-    .subscription-page { max-width: 1400px; margin: 0 auto; }
-    .subscription-page .page-header { margin-bottom: 24px; }
-    .subscription-page .page-subtitle { color: #6b7280; }
-    .subscription-page .card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-    .subscription-page .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
-    .subscription-page .field { margin-bottom: 14px; }
-    .subscription-page label { display: block; font-weight: 600; margin-bottom: 6px; }
-    .subscription-page select,
-    .subscription-page input { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 6px; }
-    .subscription-page .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .subscription-page button,
-    .subscription-page .button-link { border: 0; border-radius: 6px; padding: 9px 13px; cursor: pointer; text-decoration: none; display: inline-block; }
-    .subscription-page .primary { background: #2563eb; color: #fff; }
-    .subscription-page .danger { background: #dc2626; color: #fff; }
-    .subscription-page .secondary { background: #f3f4f6; color: #111827; }
-    .subscription-page .info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; }
-    .subscription-page table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    .subscription-page th, .subscription-page td { padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: middle; }
-    .subscription-page th { font-size: 12px; text-transform: uppercase; color: #6b7280; }
-    .subscription-page .table-wrap { overflow-x: auto; }
-    .subscription-page .muted { color: #6b7280; }
-    .subscription-page .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 12px; }
-    .subscription-page .empty { padding: 16px 0; color: #6b7280; }
-    #subscription-toast { display:none; position:fixed; top:80px; right:25px; z-index:99999; padding:12px 16px; border-radius:7px; background:#111827; color:#fff; }
-    @media (max-width: 1100px) { .subscription-page .card-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 800px) { .subscription-page .card-grid { grid-template-columns: 1fr; } }
+.subscription-page{max-width:1440px;margin:0 auto}.subscription-page .page-header{margin-bottom:24px}.subscription-page .page-subtitle{color:#6b7280;margin:6px 0 0}.subscription-page .card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:stretch}.subscription-page .card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-sizing:border-box}.subscription-page .action-card{display:flex;flex-direction:column;min-height:430px}.subscription-page .card-body{flex:1}.subscription-page .field{margin-bottom:16px}.subscription-page label{display:block;font-weight:600;margin-bottom:7px}.subscription-page input{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid #d1d5db;border-radius:7px;background:#fff}.subscription-page .actions{display:flex;gap:8px;flex-wrap:wrap}.subscription-page .card-actions{margin-top:auto;padding-top:16px}.subscription-page button,.subscription-page .button-link{border:0;border-radius:7px;padding:10px 13px;cursor:pointer;text-decoration:none;display:inline-block}.subscription-page .primary{background:#2563eb;color:#fff}.subscription-page .danger{background:#dc2626;color:#fff}.subscription-page .secondary{background:#f3f4f6;color:#111827}.subscription-page .info{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}.subscription-page .muted{color:#6b7280}.subscription-page .autocomplete{position:relative}.subscription-page .autocomplete-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:1000;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 10px 25px rgba(15,23,42,.12);max-height:230px;overflow-y:auto;display:none}.subscription-page .autocomplete-menu.open{display:block}.subscription-page .autocomplete-option{width:100%;border:0;border-radius:0;background:#fff;color:#111827;text-align:left;padding:10px 12px;cursor:pointer}.subscription-page .autocomplete-option:hover{background:#f3f4f6}.subscription-page .autocomplete-empty{padding:10px 12px;color:#6b7280}.subscription-page .selected-resource{margin-top:6px;font-size:12px;color:#2563eb;min-height:16px}.subscription-page .plan-select{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid #d1d5db;border-radius:7px;background:#fff}.subscription-page table{width:100%;border-collapse:collapse;margin-top:12px}.subscription-page th,.subscription-page td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:middle}.subscription-page th{font-size:12px;text-transform:uppercase;color:#6b7280;white-space:nowrap}.subscription-page .table-wrap{overflow-x:auto}.subscription-page .badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:12px}.subscription-page .section-header{display:flex;justify-content:space-between;gap:12px;align-items:center}.subscription-page .section-note{font-size:12px;color:#6b7280}#subscription-toast{display:none;position:fixed;top:80px;right:25px;z-index:99999;padding:12px 16px;border-radius:7px;background:#111827;color:#fff}@media(max-width:1100px){.subscription-page .card-grid{grid-template-columns:1fr 1fr}}@media(max-width:800px){.subscription-page .card-grid{grid-template-columns:1fr}}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="subscription-page">
-    {% csrf_token %}
-
-    <div class="page-header">
-        <h2>Access &amp; Subscription Control Panel</h2>
-        <p class="page-subtitle">Manage direct course/track access here. Individual exams are never sold; exams are included through courses, tracks, or an all-access subscription.</p>
-    </div>
-
-    <div class="card-grid">
-        <div class="card">
-            <h3>Grant Course Access</h3>
-            <p class="muted">Use this for a manual course entitlement.</p>
-            <div class="field">
-                <label for="course_user">User</label>
-                <select id="course_user">
-                    {% for u in users %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="field">
-                <label for="course_id">Course</label>
-                <select id="course_id"><option value="">Loading courses…</option></select>
-            </div>
-            <div class="field">
-                <label for="course_plan_id">Course Plan</label>
-                <select id="course_plan_id"><option value="">Select a course first</option></select>
-            </div>
-            <div class="actions">
-                <button type="button" class="primary" onclick="adminSubscribeCourse()">Grant Course Access</button>
-                <button type="button" class="danger" onclick="adminRevokeCourse()">Revoke Course Access</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>Grant Track Access</h3>
-            <p class="muted">A track entitlement also grants access to the courses contained in that track.</p>
-            <div class="field">
-                <label for="track_user">User</label>
-                <select id="track_user">
-                    {% for u in users %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="field">
-                <label for="track_id">Track</label>
-                <select id="track_id">
-                    {% for t in tracks %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="actions">
-                <button type="button" class="primary" onclick="adminSubscribeTrack()">Grant Track Access</button>
-                <button type="button" class="danger" onclick="adminRevokeTrack()">Revoke Track Access</button>
-            </div>
-        </div>
-
-        <div class="card info">
-            <h3>Website-wide All-Access</h3>
-            <p>Monthly/yearly all-access plans are handled as payments and entitlements. This gives the user access to the complete paid catalog while the subscription is active.</p>
-            <a class="button-link secondary" href="{% url 'quiz:admin_payment_list' %}">Open Payments &amp; Manual Payment</a>
-        </div>
-    </div>
-
-    <div class="card" style="margin-top:24px;">
-        <h3>Active Course Access</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>User</th><th>Course</th><th>Plan</th><th>Status</th><th>Expiry</th><th>Extend</th><th>Action</th></tr></thead>
-                <tbody id="course-access-body"><tr><td colspan="7" class="empty">Loading course access…</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="card" style="margin-top:24px;">
-        <h3>Active Track Access</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>User</th><th>Track</th><th>Status</th><th>Expiry</th><th>Extend</th><th>Action</th></tr></thead>
-                <tbody>
-                {% for s in track_subs %}
-                    {% if s.is_active %}
-                    <tr>
-                        <td>{{ s.user.username }}</td>
-                        <td><strong>{{ s.track.title }}</strong></td>
-                        <td><span class="badge">Active</span></td>
-                        <td>
-                            <input type="datetime-local" value="{% if s.expires_at %}{{ s.expires_at|date:'Y-m-d\\TH:i' }}{% endif %}" onchange="updateTrackExpiry('{{ s.user.id }}','{{ s.track.id }}',this.value)">
-                            {% if s.expires_at %}<small class="muted">{{ s.expires_at|timeuntil }} remaining</small>{% else %}<small class="muted">Lifetime</small>{% endif %}
-                        </td>
-                        <td>
-                            <div class="actions">
-                                <button type="button" class="secondary" onclick="quickAddTrackDays('{{ s.user.id }}','{{ s.track.id }}',7)">+7</button>
-                                <button type="button" class="secondary" onclick="quickAddTrackDays('{{ s.user.id }}','{{ s.track.id }}',30)">+30</button>
-                            </div>
-                        </td>
-                        <td><button type="button" class="danger" onclick="revokeTrackRow('{{ s.user.id }}','{{ s.track.id }}',this)">Revoke</button></td>
-                    </tr>
-                    {% endif %}
-                {% empty %}
-                    <tr><td colspan="6" class="muted">No track subscriptions found.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="card" style="margin-top:24px;">
-        <h3>Subscription History</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>User</th><th>Plan</th><th>Status</th><th>Starts</th><th>Expires</th></tr></thead>
-                <tbody>
-                {% for s in subscriptions %}
-                    <tr>
-                        <td>{{ s.user.username }}</td>
-                        <td>{{ s.plan.name|default:'—' }}</td>
-                        <td>{{ s.get_status_display }}</td>
-                        <td>{{ s.starts_at }}</td>
-                        <td>{% if s.expires_at %}{{ s.expires_at }}{% else %}Lifetime{% endif %}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="5" class="muted">No subscriptions found.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+{% csrf_token %}
+<div class="page-header"><h2>Access &amp; Subscription Control Panel</h2><p class="page-subtitle">Manage direct course/track access here. Individual exams are never sold; exams are included through courses, tracks, or an all-access subscription.</p></div>
+<div class="card-grid">
+<div class="card action-card"><div class="card-body"><h3>Grant Course Access</h3><p class="muted">Search and select a user and published course. Results are loaded from the server as you type.</p>
+<div class="field"><label for="course_user_search">User</label><div class="autocomplete" data-search-url="{% url 'quiz:admin_subscription_user_search' %}" data-target="course_user_id" data-type="user"><input id="course_user_search" type="text" autocomplete="off" placeholder="Type username…"><div class="autocomplete-menu"></div><input id="course_user_id" type="hidden"></div><div id="course_user_selected" class="selected-resource"></div></div>
+<div class="field"><label for="course_search">Course</label><div class="autocomplete" data-search-url="{% url 'quiz:admin_subscription_course_search' %}" data-target="course_id" data-type="course"><input id="course_search" type="text" autocomplete="off" placeholder="Type course name…"><div class="autocomplete-menu"></div><input id="course_id" type="hidden"></div><div id="course_selected" class="selected-resource"></div></div>
+<div class="field"><label for="course_plan_id">Course Plan</label><select id="course_plan_id" class="plan-select" disabled><option value="">Select a course first</option></select></div></div><div class="actions card-actions"><button type="button" class="primary" onclick="adminSubscribeCourse()">Grant Course Access</button><button type="button" class="danger" onclick="adminRevokeCourse()">Revoke Course Access</button></div></div>
+<div class="card action-card"><div class="card-body"><h3>Grant Track Access</h3><p class="muted">A track entitlement also grants access to the courses contained in that track.</p>
+<div class="field"><label for="track_user_search">User</label><div class="autocomplete" data-search-url="{% url 'quiz:admin_subscription_user_search' %}" data-target="track_user_id" data-type="user"><input id="track_user_search" type="text" autocomplete="off" placeholder="Type username…"><div class="autocomplete-menu"></div><input id="track_user_id" type="hidden"></div><div id="track_user_selected" class="selected-resource"></div></div>
+<div class="field"><label for="track_search">Track</label><div class="autocomplete" data-search-url="{% url 'quiz:admin_subscription_track_search' %}" data-target="track_id" data-type="track"><input id="track_search" type="text" autocomplete="off" placeholder="Type track name…"><div class="autocomplete-menu"></div><input id="track_id" type="hidden"></div><div id="track_selected" class="selected-resource"></div></div></div><div class="actions card-actions"><button type="button" class="primary" onclick="adminSubscribeTrack()">Grant Track Access</button><button type="button" class="danger" onclick="adminRevokeTrack()">Revoke Track Access</button></div></div>
+<div class="card action-card info"><div class="card-body"><h3>Website-wide All-Access</h3><p>Monthly/yearly all-access plans are handled as payments and entitlements. This gives the user access to the complete paid catalog while the subscription is active.</p><p><strong>Individual exams are not sold.</strong> They remain included through courses, tracks, or all-access.</p></div><div class="actions card-actions"><a class="button-link secondary" href="{% url 'quiz:admin_payment_list' %}">Open Payments &amp; Manual Payment</a></div></div>
 </div>
-
-<div id="subscription-toast"></div>
-
+<div class="card" style="margin-top:24px"><div class="section-header"><h3>Active Course Access</h3><span class="section-note">Active course access is loaded separately from the searchable course catalog.</span></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Course</th><th>Plan</th><th>Status</th><th>Expiry</th><th>Extend</th><th>Action</th></tr></thead><tbody id="course-access-body"><tr><td colspan="7" class="muted">Loading course access…</td></tr></tbody></table></div></div>
+<div class="card" style="margin-top:24px"><h3>Active Track Access</h3><div class="table-wrap"><table><thead><tr><th>User</th><th>Track</th><th>Status</th><th>Expiry</th><th>Extend</th><th>Action</th></tr></thead><tbody>{% for s in track_subs %}{% if s.is_active %}<tr><td>{{ s.user.username }}</td><td><strong>{{ s.track.title }}</strong></td><td><span class="badge">Active</span></td><td><input type="datetime-local" value="{% if s.expires_at %}{{ s.expires_at|date:'Y-m-d\\TH:i' }}{% endif %}" onchange="updateTrackExpiry('{{ s.user.id }}','{{ s.track.id }}',this.value)">{% if s.expires_at %}<small class="muted">{{ s.expires_at|timeuntil }} remaining</small>{% else %}<small class="muted">Lifetime</small>{% endif %}</td><td><div class="actions"><button type="button" class="secondary" onclick="quickAddTrackDays('{{ s.user.id }}','{{ s.track.id }}',7)">+7</button><button type="button" class="secondary" onclick="quickAddTrackDays('{{ s.user.id }}','{{ s.track.id }}',30)">+30</button></div></td><td><button type="button" class="danger" onclick="revokeTrackRow('{{ s.user.id }}','{{ s.track.id }}',this)">Revoke</button></td></tr>{% endif %}{% empty %}<tr><td colspan="6" class="muted">No track subscriptions found.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card" style="margin-top:24px"><h3>Subscription History</h3><div class="table-wrap"><table><thead><tr><th>User</th><th>Plan</th><th>Status</th><th>Starts</th><th>Expires</th></tr></thead><tbody>{% for s in subscriptions %}<tr><td>{{ s.user.username }}</td><td>{{ s.plan.name|default:'—' }}</td><td>{{ s.get_status_display }}</td><td>{{ s.starts_at }}</td><td>{% if s.expires_at %}{{ s.expires_at }}{% else %}Lifetime{% endif %}</td></tr>{% empty %}<tr><td colspan="5" class="muted">No subscriptions found.</td></tr>{% endfor %}</tbody></table></div></div>
+</div><div id="subscription-toast"></div>
 <script>
-const courseAccessDataUrl = "{% url 'quiz:admin_course_access_data' %}";
-
-function csrfToken() {
-    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
-    return input ? input.value : '';
-}
-
-async function postRequest(url, data) {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrfToken(),
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-        },
-        body: new URLSearchParams(data)
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload.success === false) throw new Error(payload.error || 'Request failed');
-    return payload;
-}
-
-function toast(message) {
-    const el = document.getElementById('subscription-toast');
-    el.textContent = message;
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 2500);
-}
-
-function renderCoursePlans() {
-    const courseId = document.getElementById('course_id').value;
-    const course = window.courseAccessCourses.find(c => String(c.id) === String(courseId));
-    const planSelect = document.getElementById('course_plan_id');
-    planSelect.innerHTML = '';
-    if (!course || !course.plans.length) {
-        planSelect.innerHTML = '<option value="">No active course plan</option>';
-        return;
-    }
-    course.plans.forEach(plan => {
-        const duration = plan.duration_days ? ` · ${plan.duration_days} days` : ' · Lifetime';
-        const option = document.createElement('option');
-        option.value = plan.id;
-        option.textContent = `${plan.name} — ${plan.currency} ${plan.price}${duration}`;
-        planSelect.appendChild(option);
-    });
-}
-
-function renderCourseAccess(rows) {
-    const body = document.getElementById('course-access-body');
-    if (!rows.length) {
-        body.innerHTML = '<tr><td colspan="7" class="muted">No active course access found.</td></tr>';
-        return;
-    }
-    body.innerHTML = rows.map(row => {
-        const expiryValue = row.expires_at ? new Date(row.expires_at).toISOString().slice(0, 16) : '';
-        const expiryText = row.expires_display === 'Lifetime' ? '<small class="muted">Lifetime</small>' : `<small class="muted">${row.expires_display}</small>`;
-        return `<tr>
-            <td>${escapeHtml(row.username)}</td>
-            <td><strong>${escapeHtml(row.course_title)}</strong></td>
-            <td>${escapeHtml(row.plan_name)}</td>
-            <td><span class="badge">Active</span></td>
-            <td><input type="datetime-local" value="${expiryValue}" onchange="updateCourseExpiry(${row.user_id},${row.course_id},this.value)">${expiryText}</td>
-            <td><div class="actions"><button type="button" class="secondary" onclick="quickAddCourseDays(${row.user_id},${row.course_id},7)">+7</button><button type="button" class="secondary" onclick="quickAddCourseDays(${row.user_id},${row.course_id},30)">+30</button></div></td>
-            <td><button type="button" class="danger" onclick="revokeCourseRow(${row.user_id},${row.course_id},this)">Revoke</button></td>
-        </tr>`;
-    }).join('');
-}
-
-function escapeHtml(value) {
-    return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
-}
-
-async function loadCourseAccess() {
-    try {
-        const response = await fetch(courseAccessDataUrl, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
-        const payload = await response.json();
-        window.courseAccessCourses = payload.courses || [];
-        const select = document.getElementById('course_id');
-        select.innerHTML = '';
-        if (!window.courseAccessCourses.length) {
-            select.innerHTML = '<option value="">No published courses</option>';
-        } else {
-            window.courseAccessCourses.forEach(course => {
-                const option = document.createElement('option');
-                option.value = course.id;
-                option.textContent = course.title;
-                select.appendChild(option);
-            });
-        }
-        renderCoursePlans();
-        renderCourseAccess(payload.active_course_access || []);
-    } catch (error) {
-        document.getElementById('course-access-body').innerHTML = '<tr><td colspan="7" class="muted">Unable to load course access.</td></tr>';
-        toast(error.message || 'Unable to load courses.');
-    }
-}
-
-document.getElementById('course_id').addEventListener('change', renderCoursePlans);
-
-async function adminSubscribeCourse() {
-    try {
-        await postRequest("{% url 'quiz:admin_subscribe_course' %}", {
-            user_id: document.getElementById('course_user').value,
-            course_id: document.getElementById('course_id').value,
-            plan_id: document.getElementById('course_plan_id').value
-        });
-        toast('Course access granted.');
-        loadCourseAccess();
-    } catch (error) { toast(error.message); }
-}
-
-async function adminRevokeCourse() {
-    try {
-        await postRequest("{% url 'quiz:admin_revoke_course' %}", {
-            user_id: document.getElementById('course_user').value,
-            course_id: document.getElementById('course_id').value
-        });
-        toast('Course access revoked.');
-        loadCourseAccess();
-    } catch (error) { toast(error.message); }
-}
-
-async function revokeCourseRow(userId, courseId, button) {
-    try {
-        await postRequest("{% url 'quiz:admin_revoke_course' %}", {user_id: userId, course_id: courseId});
-        button.closest('tr').remove();
-        toast('Course access revoked.');
-    } catch (error) { toast(error.message); }
-}
-
-async function updateCourseExpiry(userId, courseId, expiresAt) {
-    try {
-        await postRequest("{% url 'quiz:admin_update_course_expiry' %}", {user_id: userId, course_id: courseId, expires_at: expiresAt});
-        toast('Course expiry updated.');
-    } catch (error) { toast(error.message); }
-}
-
-async function quickAddCourseDays(userId, courseId, days) {
-    try {
-        await postRequest("{% url 'quiz:admin_add_course_days' %}", {user_id: userId, course_id: courseId, days: days});
-        toast('Course access extended.');
-        loadCourseAccess();
-    } catch (error) { toast(error.message); }
-}
-
-async function adminSubscribeTrack() {
-    try {
-        await postRequest("{% url 'quiz:admin_subscribe_track' %}", {user_id: document.getElementById('track_user').value, track_id: document.getElementById('track_id').value});
-        toast('Track access granted.');
-        location.reload();
-    } catch (error) { toast(error.message); }
-}
-
-async function adminRevokeTrack() {
-    try {
-        await postRequest("{% url 'quiz:admin_revoke_track' %}", {user_id: document.getElementById('track_user').value, track_id: document.getElementById('track_id').value});
-        toast('Track access revoked.');
-        location.reload();
-    } catch (error) { toast(error.message); }
-}
-
-async function revokeTrackRow(userId, trackId, button) {
-    try {
-        await postRequest("{% url 'quiz:admin_revoke_track' %}", {user_id: userId, track_id: trackId});
-        button.closest('tr').remove();
-        toast('Track access revoked.');
-    } catch (error) { toast(error.message); }
-}
-
-async function updateTrackExpiry(userId, trackId, expiresAt) {
-    try {
-        await postRequest("{% url 'quiz:admin_update_track_expiry' %}", {user_id: userId, track_id: trackId, expires_at: expiresAt});
-        toast('Expiry updated.');
-    } catch (error) { toast(error.message); }
-}
-
-async function quickAddTrackDays(userId, trackId, days) {
-    try {
-        await postRequest("{% url 'quiz:admin_add_track_days' %}", {user_id: userId, item_id: trackId, days: days});
-        toast('Track access extended.');
-        location.reload();
-    } catch (error) { toast(error.message); }
-}
-
+const courseAccessDataUrl="{% url 'quiz:admin_course_access_data' %}";
+function csrfToken(){const i=document.querySelector('input[name="csrfmiddlewaretoken"]');return i?i.value:''}
+async function postRequest(url,data){const r=await fetch(url,{method:'POST',headers:{'X-CSRFToken':csrfToken(),'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:new URLSearchParams(data)});const p=await r.json().catch(()=>({}));if(!r.ok||p.success===false)throw new Error(p.error||'Request failed');return p}
+function toast(message){const e=document.getElementById('subscription-toast');e.textContent=message;e.style.display='block';clearTimeout(window.subscriptionToastTimer);window.subscriptionToastTimer=setTimeout(()=>e.style.display='none',2500)}
+function escapeHtml(v){return String(v).replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]))}
+function renderCoursePlans(plans){const s=document.getElementById('course_plan_id');s.innerHTML='';if(!plans.length){s.disabled=true;s.innerHTML='<option value="">No active course plan</option>';return}s.disabled=false;plans.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=`${p.name} — ${p.currency} ${p.price}${p.duration_days?' · '+p.duration_days+' days':' · Lifetime'}`;s.appendChild(o)})}
+function setSelected(c,item){c.querySelector('input[type="hidden"]').value=item.id;const i=c.querySelector('input[type="text"]');const m=c.querySelector('.autocomplete-menu');const type=c.dataset.type;i.value=type==='user'?item.label:item.title;m.classList.remove('open');const selected=document.getElementById(c.dataset.target.replace('_id','_selected'));if(selected)selected.textContent=`Selected: ${type==='user'?item.label:item.title}`;if(type==='course')renderCoursePlans(item.plans||[])}
+function clearSelection(c){c.querySelector('input[type="hidden"]').value='';const selected=document.getElementById(c.dataset.target.replace('_id','_selected'));if(selected)selected.textContent='';if(c.dataset.type==='course')renderCoursePlans([])}
+function setupAutocomplete(c){const input=c.querySelector('input[type="text"]'),menu=c.querySelector('.autocomplete-menu');let timer=null,token=0;input.addEventListener('input',()=>{clearSelection(c);const q=input.value.trim();clearTimeout(timer);if(!q){menu.classList.remove('open');menu.innerHTML='';return}timer=setTimeout(async()=>{const current=++token;try{const r=await fetch(`${c.dataset.searchUrl}?q=${encodeURIComponent(q)}`,{headers:{'X-Requested-With':'XMLHttpRequest'}});const p=await r.json();if(current!==token)return;const results=p.results||[];if(!results.length){menu.innerHTML='<div class="autocomplete-empty">No matching results</div>';menu.classList.add('open');return}menu.innerHTML=results.map((x,i)=>`<button type="button" class="autocomplete-option" data-index="${i}">${escapeHtml(c.dataset.type==='user'?x.label:x.title)}</button>`).join('');menu.querySelectorAll('.autocomplete-option').forEach((o,i)=>o.addEventListener('click',()=>setSelected(c,results[i])));menu.classList.add('open')}catch(e){menu.innerHTML='<div class="autocomplete-empty">Unable to search right now</div>';menu.classList.add('open')}},250)});document.addEventListener('click',e=>{if(!c.contains(e.target))menu.classList.remove('open')})}
+document.querySelectorAll('.autocomplete').forEach(setupAutocomplete);
+async function adminSubscribeCourse(){const u=document.getElementById('course_user_id').value,c=document.getElementById('course_id').value,p=document.getElementById('course_plan_id').value;if(!u||!c||!p)return toast('Select a user, course, and course plan first.');try{await postRequest("{% url 'quiz:admin_subscribe_course' %}",{user_id:u,course_id:c,plan_id:p});toast('Course access granted.');loadCourseAccess()}catch(e){toast(e.message)}}
+async function adminRevokeCourse(){const u=document.getElementById('course_user_id').value,c=document.getElementById('course_id').value;if(!u||!c)return toast('Select a user and course first.');try{await postRequest("{% url 'quiz:admin_revoke_course' %}",{user_id:u,course_id:c});toast('Course access revoked.');loadCourseAccess()}catch(e){toast(e.message)}}
+async function revokeCourseRow(u,c,b){try{await postRequest("{% url 'quiz:admin_revoke_course' %}",{user_id:u,course_id:c});b.closest('tr').remove();toast('Course access revoked.')}catch(e){toast(e.message)}}
+async function updateCourseExpiry(u,c,e){try{await postRequest("{% url 'quiz:admin_update_course_expiry' %}",{user_id:u,course_id:c,expires_at:e});toast('Course expiry updated.')}catch(x){toast(x.message)}}
+async function quickAddCourseDays(u,c,d){try{await postRequest("{% url 'quiz:admin_add_course_days' %}",{user_id:u,course_id:c,days:d});toast('Course access extended.');loadCourseAccess()}catch(e){toast(e.message)}}
+async function adminSubscribeTrack(){const u=document.getElementById('track_user_id').value,t=document.getElementById('track_id').value;if(!u||!t)return toast('Select a user and track first.');try{await postRequest("{% url 'quiz:admin_subscribe_track' %}",{user_id:u,track_id:t});toast('Track access granted.');window.location.reload()}catch(e){toast(e.message)}}
+async function adminRevokeTrack(){const u=document.getElementById('track_user_id').value,t=document.getElementById('track_id').value;if(!u||!t)return toast('Select a user and track first.');try{await postRequest("{% url 'quiz:admin_revoke_track' %}",{user_id:u,track_id:t});toast('Track access revoked.');window.location.reload()}catch(e){toast(e.message)}}
+async function revokeTrackRow(u,t,b){try{await postRequest("{% url 'quiz:admin_revoke_track' %}",{user_id:u,track_id:t});b.closest('tr').remove();toast('Track access revoked.')}catch(e){toast(e.message)}}
+async function updateTrackExpiry(u,t,e){try{await postRequest("{% url 'quiz:admin_update_track_expiry' %}",{user_id:u,track_id:t,expires_at:e});toast('Track expiry updated.')}catch(x){toast(x.message)}}
+async function quickAddTrackDays(u,t,d){try{await postRequest("{% url 'quiz:admin_add_track_days' %}",{user_id:u,item_id:t,days:d});toast('Track access extended.');window.location.reload()}catch(e){toast(e.message)}}
+async function loadCourseAccess(){const b=document.getElementById('course-access-body');try{const r=await fetch(courseAccessDataUrl,{headers:{'X-Requested-With':'XMLHttpRequest'}}),p=await r.json(),rows=p.active_course_access||[];if(!rows.length){b.innerHTML='<tr><td colspan="7" class="muted">No active course access found.</td></tr>';return}b.innerHTML=rows.map(x=>{const ev=x.expires_at?new Date(x.expires_at).toISOString().slice(0,16):'',et=x.expires_display==='Lifetime'?'<small class="muted">Lifetime</small>':`<small class="muted">${escapeHtml(x.expires_display)}</small>`;return `<tr><td>${escapeHtml(x.username)}</td><td><strong>${escapeHtml(x.course_title)}</strong></td><td>${escapeHtml(x.plan_name)}</td><td><span class="badge">Active</span></td><td><input type="datetime-local" value="${ev}" onchange="updateCourseExpiry(${x.user_id},${x.course_id},this.value)">${et}</td><td><div class="actions"><button type="button" class="secondary" onclick="quickAddCourseDays(${x.user_id},${x.course_id},7)">+7</button><button type="button" class="secondary" onclick="quickAddCourseDays(${x.user_id},${x.course_id},30)">+30</button></div></td><td><button type="button" class="danger" onclick="revokeCourseRow(${x.user_id},${x.course_id},this)">Revoke</button></td></tr>`}).join('')}catch(e){b.innerHTML='<tr><td colspan="7" class="muted">Unable to load course access.</td></tr>';toast('Unable to load course access.')}}
 loadCourseAccess();
 </script>
 {% endblock %}
