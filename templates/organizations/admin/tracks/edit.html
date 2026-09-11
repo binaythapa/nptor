@@ -36,6 +36,7 @@
           {% for item in track_exams.forms %}
           <div class="box track-exam-row">
             {% for hidden in item.hidden_fields %}{{ hidden }}{% endfor %}
+            <div style="display:none">{{ item.DELETE }}</div>
             <div class="columns is-vcentered">
               <div class="column is-5"><label class="label">Exam</label>{{ item.exam }}</div>
               <div class="column is-2"><label class="label">Order</label>{{ item.order }}</div>
