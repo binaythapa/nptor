@@ -24,7 +24,15 @@
   <tbody>
     {% for m in members %}
     <tr>
-      <td>{{ m.user.get_full_name|default:m.user.username }}</td>
+      <td>
+        {% if m.role == "student" and m.student_profile_id %}
+          <a href="{% url 'organizations_public:student_profile_admin' slug=org_slug student_id=m.student_profile_id %}">
+            {{ m.user.get_full_name|default:m.user.username }}
+          </a>
+        {% else %}
+          {{ m.user.get_full_name|default:m.user.username }}
+        {% endif %}
+      </td>
       <td>{{ m.user.email }}</td>
       <td>
         {% if request.organization_member.role == "staff" %}
