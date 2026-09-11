@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from organizations.forms.student import OrganizationStudentProfileForm
 from organizations.models import OrganizationStudent
-from organizations.permissions import org_admin_required, org_student_required
+from organizations.permissions import org_admin_required, org_student_required, org_teacher_required
 from organizations.services.students import get_organization_student, get_student_for_teacher, update_student_profile
 
 
@@ -27,10 +27,25 @@ def organization_student_profile_edit(request, slug):
     return render(request, "organizations/student/profile_edit.html", {"organization": request.organization, "student": student, "form": form})
 
 
-@org_admin_required
+@org_teacher_required
 def organization_student_profile_admin(request, slug, student_id):
-    student = get_object_or_404(OrganizationStudent.objects.select_related("user", "organization"), id=student_id, organization=request.organization)
-    return render(request, "organizations/student/profile.html", {"organization": request.organization, "student": student, "admin_view": True})
+    student = get_student_for_teacher(
+        actor=request.user,
+        student_id=student_id,
+        organization=request.organization,
+    )
+    if not student:
+        return redirect("organizations_admin:students", slug=slug)
+    return render(
+        request,
+        "organizations/student/profile.html",
+        {
+            "organization": request.organization,
+            "student": student,
+            "admin_view": request.organization_member.is_administrator,
+            "teacher_view": request.organization_member.role == "staff",
+        },
+    )
 
 
 @org_admin_required
