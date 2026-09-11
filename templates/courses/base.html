@@ -109,7 +109,13 @@
     <nav class="course-nav">
         <div class="nav-left">
             {% if user.is_authenticated %}
-                {% if request.active_org and request.active_org.slug %}
+                {% if user.is_staff or user.is_superuser %}
+                    {% if not is_from_course %}
+                        <a href="{% url 'quiz:admin_dashboard' %}">Back to Dashboard</a>
+                    {% else %}
+                        <span class="is-disabled" title="Disabled during course practice">Back to Dashboard</span>
+                    {% endif %}
+                {% elif request.active_org and request.active_org.slug %}
                     {% if not is_from_course %}
                         {% if request.organization_member.is_administrator %}
                             <a href="{% url 'organizations_admin:dashboard' slug=request.active_org.slug %}">Back to Dashboard</a>
@@ -119,10 +125,12 @@
                     {% else %}
                         <span class="is-disabled" title="Disabled during course practice">Back to Dashboard</span>
                     {% endif %}
-                {% elif user.is_staff or user.is_superuser %}
-                    <a href="{% url 'quiz:admin_dashboard' %}">Back to Dashboard</a>
                 {% else %}
-                    <a href="{% url 'quiz:student_dashboard' %}">Back to Dashboard</a>
+                    {% if not is_from_course %}
+                        <a href="{% url 'quiz:student_dashboard' %}">Back to Dashboard</a>
+                    {% else %}
+                        <span class="is-disabled" title="Disabled during course practice">Back to Dashboard</span>
+                    {% endif %}
                 {% endif %}
                 {% if course %}
                     <div class="course-menu">
