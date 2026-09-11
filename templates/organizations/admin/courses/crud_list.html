@@ -8,7 +8,7 @@
     <h1 class="title is-4 mb-1">Manage Courses</h1>
     <p class="has-text-grey">Courses owned by {{ org.name }}.</p>
   </div>
-  <a href="{% url 'organizations_admin:org_course_create' slug=org.slug %}" class="button is-primary">+ Add Course</a>
+  <a href="{% url 'courses:course_create' %}" class="button is-primary">+ Add Course</a>
 </div>
 
 <div class="box">
@@ -43,8 +43,8 @@
           <td>{{ course.created_at|date:"M d, Y" }}</td>
           <td class="has-text-right">
             {% if course.created_by_id == request.user.id or request.organization_member.is_administrator %}
-              <a href="{% url 'organizations_admin:org_course_edit' slug=org.slug pk=course.pk %}" class="button is-small is-warning">Edit</a>
-              {% if course.approval_status == 'draft' or course.approval_status == 'changes_requested' or course.approval_status == 'rejected' %}
+              <a href="{% url 'courses:course_edit' slug=course.slug %}" class="button is-small is-warning">Edit</a>
+              {% if course.approval_status == 'draft' or course.approval_status == 'changes_required' or course.approval_status == 'rejected' %}
               <form method="post" action="{% url 'organizations_admin:org_course_delete' slug=org.slug pk=course.pk %}" style="display:inline">
                 {% csrf_token %}
                 <button type="submit" class="button is-small is-danger" onclick="return confirm('Delete this course?');">Delete</button>
