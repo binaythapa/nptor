@@ -34,7 +34,6 @@ from django.utils.formats import get_format
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
-# Project-specific imports
 from quiz.forms import *
 from quiz.models import (
     Exam,
@@ -45,14 +44,9 @@ from quiz.models import (
 )
 from quiz.services.access import can_access_exam
 from quiz.services.pricing import apply_coupon
-
 from quiz.utils import get_leaf_category_name
 
-
-# Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()
-
-# Logger
 logger = logging.getLogger(__name__)
 
 # ============================================================
@@ -61,62 +55,21 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def notifications_list(request):
-    """
-    Display notifications available to the current user.
-
-    A notification is visible when:
-
-        1. It is a broadcast notification
-           (users field is empty)
-
-        OR
-
-        2. The notification explicitly targets
-           the current user.
-    """
-
-    notifications = (
-        Notification.objects
-        .order_by("-created_at")
-    )
-
+    """Display notifications available to the current user."""
+    notifications = Notification.objects.order_by("-created_at")
     visible = []
 
     for notification in notifications:
-
-        # ----------------------------------------------------
-        # Determine visibility
-        # ----------------------------------------------------
-
         is_visible = (
             not notification.users.exists()
-            or notification.users.filter(
-                id=request.user.id
-            ).exists()
+            or notification.users.filter(id=request.user.id).exists()
         )
-
         if not is_visible:
             continue
-
-        # ----------------------------------------------------
-        # Add transient template property
-        # ----------------------------------------------------
-
-        notification.is_unread = (
-            notification.unread_for(request.user)
-        )
-
+        notification.is_unread = notification.unread_for(request.user)
         visible.append(notification)
 
-    # --------------------------------------------------------
-    # Unread count
-    # --------------------------------------------------------
-
-    unread_count = sum(
-        1
-        for notification in visible
-        if notification.is_unread
-    )
+    unread_count = sum(1 for notification in visible if notification.is_unread)
 
     return render(
         request,
@@ -124,6 +77,11 @@ def notifications_list(request):
         {
             "notifications": visible,
             "unread_count": unread_count,
+            "base_template": (
+                "layouts/admin/base_admin.html"
+                if request.user.is_staff
+                else "courses/base.html"
+            ),
         },
     )
 
@@ -134,44 +92,28 @@ def notifications_list(request):
 
 @login_required
 def notification_read(request, pk):
-    """
-    Mark one notification as read and display it.
-    """
-
-    notification = get_object_or_404(
-        Notification,
-        pk=pk,
-    )
-
-    # --------------------------------------------------------
-    # Security
-    # --------------------------------------------------------
+    """Mark one notification as read and display it."""
+    notification = get_object_or_404(Notification, pk=pk)
 
     is_visible = (
         not notification.users.exists()
-        or notification.users.filter(
-            id=request.user.id
-        ).exists()
+        or notification.users.filter(id=request.user.id).exists()
     )
-
     if not is_visible:
-        raise PermissionDenied(
-            "You do not have access to this notification."
-        )
+        raise PermissionDenied("You do not have access to this notification.")
 
-    # --------------------------------------------------------
-    # Mark read
-    # --------------------------------------------------------
-
-    notification.mark_read(
-        request.user
-    )
+    notification.mark_read(request.user)
 
     return render(
         request,
         "quiz/notification_detail.html",
         {
             "notification": notification,
+            "base_template": (
+                "layouts/admin/base_admin.html"
+                if request.user.is_staff
+                else "courses/base.html"
+            ),
         },
     )
 
@@ -182,43 +124,20 @@ def notification_read(request, pk):
 
 @login_required
 def notifications_mark_all(request):
-    """
-    Mark all visible notifications as read.
-    """
-
+    """Mark all visible notifications as read."""
     if request.method != "POST":
-        return redirect(
-            "quiz:notifications_list"
-        )
+        return redirect("quiz:notifications_list")
 
-    notifications = (
-        Notification.objects
-        .order_by("-created_at")[:200]
-    )
+    notifications = Notification.objects.order_by("-created_at")[:200]
 
     for notification in notifications:
-
         is_visible = (
             not notification.users.exists()
-            or notification.users.filter(
-                id=request.user.id
-            ).exists()
+            or notification.users.filter(id=request.user.id).exists()
         )
-
         if not is_visible:
             continue
+        if notification.unread_for(request.user):
+            notification.mark_read(request.user)
 
-        if notification.unread_for(
-            request.user
-        ):
-
-            notification.mark_read(
-                request.user
-            )
-
-    return redirect(
-        request.META.get(
-            "HTTP_REFERER",
-            "/",
-        )
-    )
+    return redirect(request.META.get("HTTP_REFERER", "/"))
