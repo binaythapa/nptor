@@ -1,109 +1,169 @@
 {% extends "layouts/admin/base_admin.html" %}
-{% load widget_tweaks %}
-{% load static %}
+{% load widget_tweaks static %}
+
+{% block title %}Edit Question – Admin{% endblock %}
+
+{% block extra_head %}
+{{ form.media }}
+<link rel="stylesheet" href="{% static 'css/admin_question_form.css' %}">
+{% endblock %}
 
 {% block head_extra %}
 {{ form.media }}
+<link rel="stylesheet" href="{% static 'css/admin_question_form.css' %}">
 {% endblock %}
 
-{% block title %}Edit Question{% endblock %}
-
 {% block content %}
-<div class="container py-5">
+<div class="admin-question-page">
+    <div class="admin-question-header">
+        <div>
+            <h1 class="admin-question-title">
+                <span class="admin-question-title-icon" aria-hidden="true">✏️</span>
+                Edit Question
+            </h1>
+            <p class="admin-question-subtitle">Update question details and choices.</p>
+        </div>
+        <span class="admin-question-tag">Edit</span>
+    </div>
 
-  <div class="mb-6">
-    <h1 class="title is-3">✏️ Edit Question</h1>
-    <p class="subtitle is-6 has-text-grey">
-      Update question details and choices
-    </p>
-  </div>
+    <form method="post" id="question-form">
+        {% csrf_token %}
 
-  <form method="post">
-    {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="admin-question-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
 
-    <!-- QUESTION DETAILS -->
-    <div class="card mb-5">
-      <header class="card-header">
-        <p class="card-header-title">Question Details</p>
-      </header>
+        <div class="admin-question-card">
+            <div class="admin-question-card-header">Question Details</div>
 
-      <div class="card-content">
+            {% for field in form %}
+            <div class="admin-question-field">
+                <label class="admin-question-label" for="{{ field.id_for_label }}">
+                    {{ field.label }}{% if field.field.required %} <span class="has-text-danger">*</span>{% endif %}
+                </label>
 
-        {% for field in form %}
-          <div class="field mb-4">
-            <label class="label">
-              {{ field.label }}
-              {% if field.field.required %}
-                <span class="has-text-danger">*</span>
-              {% endif %}
-            </label>
+                {% if field.name == "categories" %}
+                    <div class="admin-question-checkboxes">
+                        {% for checkbox in field %}
+                            <label for="{{ checkbox.id_for_label }}">
+                                {{ checkbox.tag }}
+                                <span>{{ checkbox.choice_label }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% elif field.name == "text" or field.name == "explanation" %}
+                    <div class="admin-question-control">{{ field }}</div>
+                {% else %}
+                    <div class="admin-question-control">
+                        {% render_field field %}
+                    </div>
+                {% endif %}
 
-            <div class="control">
-              {% if field.name == "text" or field.name == "explanation" %}
-                {{ field }}
-              {% else %}
-                {% render_field field class+="input" %}
-              {% endif %}
+                {% if field.help_text %}<p class="admin-question-help">{{ field.help_text }}</p>{% endif %}
+                {% for error in field.errors %}<p class="admin-question-field-error">{{ error }}</p>{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="admin-question-card">
+            <div class="admin-question-choice-header">
+                <div class="admin-question-card-header" style="margin:0;padding:0;border:0;">Answer Choices</div>
+                <button type="button" class="admin-question-choice-add" id="add-choice-btn" aria-label="Add answer choice">➕</button>
             </div>
 
-            {% if field.errors %}
-              <p class="help is-danger">{{ field.errors.0 }}</p>
-            {% endif %}
-          </div>
-        {% endfor %}
+            {{ choice_formset.management_form }}
 
-      </div>
-    </div>
+            <div class="admin-question-table-wrap">
+                <table class="admin-question-table" id="choices-table">
+                    <thead>
+                        <tr>
+                            <th>Choice Text</th>
+                            <th class="center">Correct?</th>
+                            <th class="center">Order</th>
+                            <th class="center">Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cform in choice_formset %}
+                        <tr class="choice-row" data-index="{{ forloop.counter0 }}">
+                            <td>
+                                {% render_field cform.text class+="input" %}
+                                {{ cform.id }}
+                            </td>
+                            <td class="center">{{ cform.is_correct }}</td>
+                            <td class="center">
+                                {% render_field cform.order class+="input choice-order" %}
+                            </td>
+                            <td class="center">{{ cform.DELETE }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-    <!-- CHOICES -->
-    <div class="card mb-5">
-      <header class="card-header">
-        <p class="card-header-title">Answer Choices</p>
-      </header>
+            <div class="admin-question-warning admin-question-hidden" id="no-correct-warning">
+                At least one correct answer is required.
+            </div>
+        </div>
 
-      <div class="card-content">
-
-        {{ choice_formset.management_form }}
-
-        <table class="table is-fullwidth is-hoverable">
-          <thead>
-            <tr>
-              <th>Choice</th>
-              <th>Correct</th>
-              <th>Order</th>
-              <th>Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for cform in choice_formset %}
-            <tr>
-              <td>
-                {{ cform.text }}
-                {{ cform.id }}
-              </td>
-              <td>{{ cform.is_correct }}</td>
-              <td>{{ cform.order }}</td>
-              <td>{{ cform.DELETE }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-
-      </div>
-    </div>
-
-    <!-- ACTIONS -->
-    <div class="field is-grouped is-grouped-centered">
-      <a href="{% url 'quiz:question_review' question.id %}"
-         class="button is-light">
-         Cancel
-      </a>
-
-      <button type="submit" class="button is-primary">
-        Update Question
-      </button>
-    </div>
-
-  </form>
+        <div class="admin-question-actions">
+            <a href="{% url 'quiz:question_review' question.id %}" class="admin-question-button admin-question-button-secondary">Cancel</a>
+            <button type="submit" class="admin-question-button admin-question-button-primary">Update Question</button>
+        </div>
+    </form>
 </div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("question-form");
+    const addBtn = document.getElementById("add-choice-btn");
+    const tableBody = document.querySelector("#choices-table tbody");
+    const totalForms = document.getElementById("id_choices-TOTAL_FORMS");
+    const warning = document.getElementById("no-correct-warning");
+
+    function validateCorrectAnswers() {
+        const checkboxes = document.querySelectorAll("input[name$='-is_correct']");
+        const activeCheckboxes = Array.from(checkboxes).filter(cb => {
+            const row = cb.closest("tr");
+            const deleteBox = row ? row.querySelector("input[name$='-DELETE']") : null;
+            return !deleteBox || !deleteBox.checked;
+        });
+        const valid = activeCheckboxes.some(cb => cb.checked);
+        warning.classList.toggle("admin-question-hidden", valid);
+        return valid;
+    }
+
+    form.addEventListener("submit", function(e) {
+        if (!validateCorrectAnswers()) {
+            e.preventDefault();
+            warning.scrollIntoView({behavior: "smooth", block: "center"});
+        }
+    });
+
+    addBtn.addEventListener("click", function() {
+        const index = parseInt(totalForms.value, 10);
+        const row = `
+            <tr class="choice-row" data-index="${index}">
+                <td>
+                    <input type="text" name="choices-${index}-text" class="input">
+                    <input type="hidden" name="choices-${index}-id">
+                </td>
+                <td class="center">
+                    <input type="checkbox" name="choices-${index}-is_correct">
+                </td>
+                <td class="center">
+                    <input type="number" name="choices-${index}-order" value="${index + 1}" class="input choice-order">
+                </td>
+                <td class="center">
+                    <input type="checkbox" name="choices-${index}-DELETE">
+                </td>
+            </tr>`;
+
+        tableBody.insertAdjacentHTML("beforeend", row);
+        totalForms.value = index + 1;
+    });
+});
+</script>
 {% endblock %}
