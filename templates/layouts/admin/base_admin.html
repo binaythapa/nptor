@@ -112,7 +112,9 @@
     </main>
 </div>
 
-{% include "layouts/student/footer.html" %}
+<div class="admin-footer">
+    {% include "layouts/student/footer.html" %}
+</div>
 <form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">
     {% csrf_token %}
 </form>
