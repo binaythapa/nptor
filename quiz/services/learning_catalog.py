@@ -67,12 +67,18 @@ def _public_tracks():
 
 
 def _track_exams(track):
-    return [item.exam for item in track.track_exams.all()]
+    manager = getattr(track, "track_exams", None)
+    if manager is not None:
+        return [item.exam for item in manager.all()]
+    legacy_manager = getattr(track, "exams", None)
+    if legacy_manager is not None:
+        return list(legacy_manager.all())
+    return []
 
 
 def _domain_for_track(track):
     domains = []
-    for membership in track.track_exams.all():
+    for membership in getattr(track, "track_exams", []).all() if getattr(track, "track_exams", None) is not None else []:
         exam = membership.exam
         if not exam.is_published or exam.organization_id is not None:
             continue
@@ -188,175 +194,16 @@ def _add_user_state(user, items):
     for item in items:
         resource_type = getattr(AccessService, f"RESOURCE_{item['type'].upper()}")
         resource = item["resource"]
-        item["is_shortlisted"] = (item["type"], resource.id) in shortlisted
         item["has_access"] = _has_access(user, resource_type, resource)
+        item["is_shortlisted"] = (resource_type, resource.id) in shortlisted
         if item["has_access"]:
-            item["access_label"] = "Purchased"
+            item["access_label"] = "You have access"
         elif item["pricing_label"] == "Premium":
             item["access_label"] = "Premium"
         else:
             item["access_label"] = "Free"
-    return items
 
 
-def _build_domain_explorer(domains, domain_query="", domain_sort="az", domain_page=1):
-    popular_domains = sorted(
-        domains,
-        key=lambda item: (
-            -(item["course_count"] + item["track_count"]),
-            item["domain"].name.lower(),
-        ),
-    )[:POPULAR_DOMAIN_COUNT]
-
-    needle = (domain_query or "").strip().lower()
-    if needle:
-        domains = [item for item in domains if needle in item["domain"].name.lower()]
-
-    if domain_sort not in VALID_DOMAIN_SORTS:
-        domain_sort = "az"
-    domains = sorted(
-        domains,
-        key=lambda item: item["domain"].name.lower(),
-        reverse=domain_sort == "za",
-    )
-
-    paginator = Paginator(domains, DOMAIN_PER_PAGE)
-    try:
-        page_number = max(int(domain_page), 1)
-    except (TypeError, ValueError):
-        page_number = 1
-
-    return popular_domains, paginator.get_page(page_number), domain_sort
-
-
-def build_learning_catalog(*, user, domain=None, query="", resource_type="all", category=None, level=None, access=None, pricing="", page=1, per_page=DEFAULT_PER_PAGE, domain_query="", domain_sort="az", domain_page=1, catalog_vertical=None):
-    if catalog_vertical not in VALID_CATALOG_VERTICALS:
-        catalog_vertical = None
-
-    courses = list(_public_courses().order_by("title"))
-    exams = list(_public_exams().order_by("title"))
-    tracks = list(_public_tracks().order_by("title"))
-
-    courses = [
-        item for item in courses
-        if _matches_vertical(getattr(item.category, "domain", None), catalog_vertical)
-    ]
-    exams = [
-        item for item in exams
-        if _matches_vertical(getattr(item.primary_category, "domain", None), catalog_vertical)
-    ]
-    tracks = [
-        item for item in tracks
-        if _matches_vertical(_domain_for_track(item), catalog_vertical)
-    ]
-
-    active_domains = list(
-        Domain.objects.filter(
-            is_active=True,
-            organization__isnull=True,
-        ).select_related("content_vertical").order_by("name")
-    )
-    active_domains = [
-        item for item in active_domains
-        if _matches_vertical(item, catalog_vertical)
-    ]
-    domains = [_domain_summary(item, courses, exams, tracks) for item in active_domains]
-    domains = [item for item in domains if item["course_count"] or item["track_count"]]
-    popular_domains, domain_page_obj, domain_sort = _build_domain_explorer(domains, domain_query, domain_sort, domain_page)
-
-    selected_domain = domain
-    if selected_domain is not None and catalog_vertical and not _matches_vertical(selected_domain, catalog_vertical):
-        selected_domain = None
-
-    if selected_domain is not None:
-        courses = [item for item in courses if item.category and item.category.domain_id == selected_domain.id]
-        exams = [item for item in exams if item.primary_category and item.primary_category.domain_id == selected_domain.id]
-        tracks = [item for item in tracks if (_domain_for_track(item) and _domain_for_track(item).id == selected_domain.id)]
-
-    if category is not None:
-        category_ids = set(category.get_descendants_include_self())
-        courses = [item for item in courses if item.category_id in category_ids]
-        exams = [item for item in exams if item.primary_category_id in category_ids or any(cat.id in category_ids for cat in item.categories.all())]
-
-    if resource_type not in VALID_RESOURCE_TYPES:
-        resource_type = "all"
-    if access not in VALID_ACCESS_FILTERS:
-        access = ""
-    if pricing not in VALID_PRICING_FILTERS:
-        pricing = ""
-
-    needle = query.lower()
-    courses = [item for item in courses if _matches_query(item, "course", needle)]
-    tracks = [item for item in tracks if _matches_query(item, "track", needle)]
-    courses = [item for item in courses if _matches_level(item, "course", level)]
-    tracks = [
-        item for item in tracks
-        if not level or any(_matches_level(exam, "exam", level) for exam in _track_exams(item))
-    ]
-
-    resources = []
-    if resource_type in {"all", "courses"}:
-        resources.extend(_resource_item("course", item) for item in courses)
-    if resource_type in {"all", "tracks"}:
-        resources.extend(_resource_item("track", item) for item in tracks)
-
-    if pricing:
-        resources = [item for item in resources if item["pricing_label"].lower() == pricing]
-
-    resources.sort(key=lambda item: item["resource"].title.lower())
-
-    if access in {"owned", "available"}:
-        resources = _add_user_state(user, resources)
-        resources = [
-            item for item in resources
-            if (access == "owned" and item["has_access"])
-            or (access == "available" and not item["has_access"])
-        ]
-
-    try:
-        page_size = min(max(int(per_page), 1), MAX_PER_PAGE)
-    except (TypeError, ValueError):
-        page_size = DEFAULT_PER_PAGE
-    paginator = Paginator(resources, page_size)
-    try:
-        page_number = max(int(page), 1)
-    except (TypeError, ValueError):
-        page_number = 1
-    page_obj = paginator.get_page(page_number)
-
-    if access not in {"owned", "available"}:
-        _add_user_state(user, page_obj.object_list)
-
-    selected_categories = (
-        Category.objects.filter(
-            is_active=True,
-            domain=selected_domain,
-            organization__isnull=True,
-            parent__isnull=True,
-        ).order_by("name")
-        if selected_domain else Category.objects.none()
-    )
-
-    vertical_label = None
-    if catalog_vertical:
-        vertical_label = dict(ContentVertical.TYPE_CHOICES).get(catalog_vertical)
-
-    return {
-        "domains": domain_page_obj.object_list,
-        "popular_domains": popular_domains,
-        "domain_page_obj": domain_page_obj,
-        "domain_query": domain_query,
-        "domain_sort": domain_sort,
-        "resources": page_obj.object_list,
-        "page_obj": page_obj,
-        "selected_domain": selected_domain,
-        "categories": selected_categories,
-        "query": query,
-        "resource_type": resource_type,
-        "category": category,
-        "level": level,
-        "access": access,
-        "pricing": pricing,
-        "catalog_vertical": catalog_vertical,
-        "catalog_vertical_label": vertical_label,
-    }
+def _paginate(items, page, per_page=DEFAULT_PER_PAGE):
+    paginator = Paginator(items, min(max(int(per_page), 1), MAX_PER_PAGE))
+    return paginator.get_page(page)
