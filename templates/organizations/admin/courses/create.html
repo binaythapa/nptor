@@ -1,0 +1,12 @@
+{% extends "organizations/admin/base.html" %}
+{% block title %}Add Course{% endblock %}
+{% block content %}
+<div class="mb-5"><h1 class="title is-4">Add Course</h1><p class="has-text-grey">{{ org.name }}</p></div>
+<div class="box">
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+{% if form.non_field_errors %}<div class="notification is-danger is-light">{{ form.non_field_errors }}</div>{% endif %}
+{% for field in form %}<div class="field"><label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label><div class="control">{{ field }}</div>{% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}{% for error in field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}</div>{% endfor %}
+<div class="field is-grouped mt-5"><div class="control"><button type="submit" class="button is-primary">Create Course</button></div><div class="control"><a href="{% url 'organizations_admin:org_course_list' slug=org.slug %}" class="button is-light">Cancel</a></div></div>
+</form></div>
+{% endblock %}
