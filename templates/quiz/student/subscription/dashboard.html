@@ -1,13 +1,13 @@
 {% extends "layouts/admin/base_admin.html" %}
 
-{% block title %}Subscription Control Panel{% endblock %}
+{% block title %}Access & Subscription Control Panel{% endblock %}
 
 {% block head_extra %}
 <style>
     .subscription-page { max-width: 1400px; margin: 0 auto; }
     .subscription-page .page-header { margin-bottom: 24px; }
     .subscription-page .page-subtitle { color: #6b7280; }
-    .subscription-page .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .subscription-page .card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
     .subscription-page .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
     .subscription-page .field { margin-bottom: 14px; }
     .subscription-page label { display: block; font-weight: 600; margin-bottom: 6px; }
@@ -26,7 +26,9 @@
     .subscription-page .table-wrap { overflow-x: auto; }
     .subscription-page .muted { color: #6b7280; }
     .subscription-page .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 12px; }
+    .subscription-page .empty { padding: 16px 0; color: #6b7280; }
     #subscription-toast { display:none; position:fixed; top:80px; right:25px; z-index:99999; padding:12px 16px; border-radius:7px; background:#111827; color:#fff; }
+    @media (max-width: 1100px) { .subscription-page .card-grid { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 800px) { .subscription-page .card-grid { grid-template-columns: 1fr; } }
 </style>
 {% endblock %}
@@ -36,14 +38,37 @@
     {% csrf_token %}
 
     <div class="page-header">
-        <h2>Subscription Control Panel</h2>
-        <p class="page-subtitle">Manage track access here. Individual exams are not sold; exams are included through courses/tracks or an all-access subscription.</p>
+        <h2>Access &amp; Subscription Control Panel</h2>
+        <p class="page-subtitle">Manage direct course/track access here. Individual exams are never sold; exams are included through courses, tracks, or an all-access subscription.</p>
     </div>
 
     <div class="card-grid">
         <div class="card">
+            <h3>Grant Course Access</h3>
+            <p class="muted">Use this for a manual course entitlement.</p>
+            <div class="field">
+                <label for="course_user">User</label>
+                <select id="course_user">
+                    {% for u in users %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="course_id">Course</label>
+                <select id="course_id"><option value="">Loading courses…</option></select>
+            </div>
+            <div class="field">
+                <label for="course_plan_id">Course Plan</label>
+                <select id="course_plan_id"><option value="">Select a course first</option></select>
+            </div>
+            <div class="actions">
+                <button type="button" class="primary" onclick="adminSubscribeCourse()">Grant Course Access</button>
+                <button type="button" class="danger" onclick="adminRevokeCourse()">Revoke Course Access</button>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>Grant Track Access</h3>
-            <p class="muted">Use this for a manual track entitlement.</p>
+            <p class="muted">A track entitlement also grants access to the courses contained in that track.</p>
             <div class="field">
                 <label for="track_user">User</label>
                 <select id="track_user">
@@ -70,7 +95,17 @@
     </div>
 
     <div class="card" style="margin-top:24px;">
-        <h3>Active Track Subscriptions</h3>
+        <h3>Active Course Access</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>User</th><th>Course</th><th>Plan</th><th>Status</th><th>Expiry</th><th>Extend</th><th>Action</th></tr></thead>
+                <tbody id="course-access-body"><tr><td colspan="7" class="empty">Loading course access…</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+        <h3>Active Track Access</h3>
         <div class="table-wrap">
             <table>
                 <thead><tr><th>User</th><th>Track</th><th>Status</th><th>Expiry</th><th>Extend</th><th>Action</th></tr></thead>
@@ -87,8 +122,8 @@
                         </td>
                         <td>
                             <div class="actions">
-                                <button type="button" class="secondary" onclick="quickAddDays('{{ s.user.id }}','{{ s.track.id }}',7)">+7</button>
-                                <button type="button" class="secondary" onclick="quickAddDays('{{ s.user.id }}','{{ s.track.id }}',30)">+30</button>
+                                <button type="button" class="secondary" onclick="quickAddTrackDays('{{ s.user.id }}','{{ s.track.id }}',7)">+7</button>
+                                <button type="button" class="secondary" onclick="quickAddTrackDays('{{ s.user.id }}','{{ s.track.id }}',30)">+30</button>
                             </div>
                         </td>
                         <td><button type="button" class="danger" onclick="revokeTrackRow('{{ s.user.id }}','{{ s.track.id }}',this)">Revoke</button></td>
@@ -128,6 +163,8 @@
 <div id="subscription-toast"></div>
 
 <script>
+const courseAccessDataUrl = "{% url 'quiz:admin_course_access_data' %}";
+
 function csrfToken() {
     const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
     return input ? input.value : '';
@@ -144,9 +181,7 @@ async function postRequest(url, data) {
         body: new URLSearchParams(data)
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload.success === false) {
-        throw new Error(payload.error || 'Request failed');
-    }
+    if (!response.ok || payload.success === false) throw new Error(payload.error || 'Request failed');
     return payload;
 }
 
@@ -157,12 +192,125 @@ function toast(message) {
     setTimeout(() => { el.style.display = 'none'; }, 2500);
 }
 
+function renderCoursePlans() {
+    const courseId = document.getElementById('course_id').value;
+    const course = window.courseAccessCourses.find(c => String(c.id) === String(courseId));
+    const planSelect = document.getElementById('course_plan_id');
+    planSelect.innerHTML = '';
+    if (!course || !course.plans.length) {
+        planSelect.innerHTML = '<option value="">No active course plan</option>';
+        return;
+    }
+    course.plans.forEach(plan => {
+        const duration = plan.duration_days ? ` · ${plan.duration_days} days` : ' · Lifetime';
+        const option = document.createElement('option');
+        option.value = plan.id;
+        option.textContent = `${plan.name} — ${plan.currency} ${plan.price}${duration}`;
+        planSelect.appendChild(option);
+    });
+}
+
+function renderCourseAccess(rows) {
+    const body = document.getElementById('course-access-body');
+    if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="7" class="muted">No active course access found.</td></tr>';
+        return;
+    }
+    body.innerHTML = rows.map(row => {
+        const expiryValue = row.expires_at ? new Date(row.expires_at).toISOString().slice(0, 16) : '';
+        const expiryText = row.expires_display === 'Lifetime' ? '<small class="muted">Lifetime</small>' : `<small class="muted">${row.expires_display}</small>`;
+        return `<tr>
+            <td>${escapeHtml(row.username)}</td>
+            <td><strong>${escapeHtml(row.course_title)}</strong></td>
+            <td>${escapeHtml(row.plan_name)}</td>
+            <td><span class="badge">Active</span></td>
+            <td><input type="datetime-local" value="${expiryValue}" onchange="updateCourseExpiry(${row.user_id},${row.course_id},this.value)">${expiryText}</td>
+            <td><div class="actions"><button type="button" class="secondary" onclick="quickAddCourseDays(${row.user_id},${row.course_id},7)">+7</button><button type="button" class="secondary" onclick="quickAddCourseDays(${row.user_id},${row.course_id},30)">+30</button></div></td>
+            <td><button type="button" class="danger" onclick="revokeCourseRow(${row.user_id},${row.course_id},this)">Revoke</button></td>
+        </tr>`;
+    }).join('');
+}
+
+function escapeHtml(value) {
+    return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+
+async function loadCourseAccess() {
+    try {
+        const response = await fetch(courseAccessDataUrl, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+        const payload = await response.json();
+        window.courseAccessCourses = payload.courses || [];
+        const select = document.getElementById('course_id');
+        select.innerHTML = '';
+        if (!window.courseAccessCourses.length) {
+            select.innerHTML = '<option value="">No published courses</option>';
+        } else {
+            window.courseAccessCourses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.id;
+                option.textContent = course.title;
+                select.appendChild(option);
+            });
+        }
+        renderCoursePlans();
+        renderCourseAccess(payload.active_course_access || []);
+    } catch (error) {
+        document.getElementById('course-access-body').innerHTML = '<tr><td colspan="7" class="muted">Unable to load course access.</td></tr>';
+        toast(error.message || 'Unable to load courses.');
+    }
+}
+
+document.getElementById('course_id').addEventListener('change', renderCoursePlans);
+
+async function adminSubscribeCourse() {
+    try {
+        await postRequest("{% url 'quiz:admin_subscribe_course' %}", {
+            user_id: document.getElementById('course_user').value,
+            course_id: document.getElementById('course_id').value,
+            plan_id: document.getElementById('course_plan_id').value
+        });
+        toast('Course access granted.');
+        loadCourseAccess();
+    } catch (error) { toast(error.message); }
+}
+
+async function adminRevokeCourse() {
+    try {
+        await postRequest("{% url 'quiz:admin_revoke_course' %}", {
+            user_id: document.getElementById('course_user').value,
+            course_id: document.getElementById('course_id').value
+        });
+        toast('Course access revoked.');
+        loadCourseAccess();
+    } catch (error) { toast(error.message); }
+}
+
+async function revokeCourseRow(userId, courseId, button) {
+    try {
+        await postRequest("{% url 'quiz:admin_revoke_course' %}", {user_id: userId, course_id: courseId});
+        button.closest('tr').remove();
+        toast('Course access revoked.');
+    } catch (error) { toast(error.message); }
+}
+
+async function updateCourseExpiry(userId, courseId, expiresAt) {
+    try {
+        await postRequest("{% url 'quiz:admin_update_course_expiry' %}", {user_id: userId, course_id: courseId, expires_at: expiresAt});
+        toast('Course expiry updated.');
+    } catch (error) { toast(error.message); }
+}
+
+async function quickAddCourseDays(userId, courseId, days) {
+    try {
+        await postRequest("{% url 'quiz:admin_add_course_days' %}", {user_id: userId, course_id: courseId, days: days});
+        toast('Course access extended.');
+        loadCourseAccess();
+    } catch (error) { toast(error.message); }
+}
+
 async function adminSubscribeTrack() {
     try {
-        await postRequest("{% url 'quiz:admin_subscribe_track' %}", {
-            user_id: document.getElementById('track_user').value,
-            track_id: document.getElementById('track_id').value
-        });
+        await postRequest("{% url 'quiz:admin_subscribe_track' %}", {user_id: document.getElementById('track_user').value, track_id: document.getElementById('track_id').value});
         toast('Track access granted.');
         location.reload();
     } catch (error) { toast(error.message); }
@@ -170,10 +318,7 @@ async function adminSubscribeTrack() {
 
 async function adminRevokeTrack() {
     try {
-        await postRequest("{% url 'quiz:admin_revoke_track' %}", {
-            user_id: document.getElementById('track_user').value,
-            track_id: document.getElementById('track_id').value
-        });
+        await postRequest("{% url 'quiz:admin_revoke_track' %}", {user_id: document.getElementById('track_user').value, track_id: document.getElementById('track_id').value});
         toast('Track access revoked.');
         location.reload();
     } catch (error) { toast(error.message); }
@@ -181,7 +326,7 @@ async function adminRevokeTrack() {
 
 async function revokeTrackRow(userId, trackId, button) {
     try {
-        await postRequest("{% url 'quiz:admin_revoke_track' %}", { user_id: userId, track_id: trackId });
+        await postRequest("{% url 'quiz:admin_revoke_track' %}", {user_id: userId, track_id: trackId});
         button.closest('tr').remove();
         toast('Track access revoked.');
     } catch (error) { toast(error.message); }
@@ -189,21 +334,19 @@ async function revokeTrackRow(userId, trackId, button) {
 
 async function updateTrackExpiry(userId, trackId, expiresAt) {
     try {
-        await postRequest("{% url 'quiz:admin_update_track_expiry' %}", {
-            user_id: userId, track_id: trackId, expires_at: expiresAt
-        });
+        await postRequest("{% url 'quiz:admin_update_track_expiry' %}", {user_id: userId, track_id: trackId, expires_at: expiresAt});
         toast('Expiry updated.');
     } catch (error) { toast(error.message); }
 }
 
-async function quickAddDays(userId, trackId, days) {
+async function quickAddTrackDays(userId, trackId, days) {
     try {
-        await postRequest("{% url 'quiz:admin_add_track_days' %}", {
-            user_id: userId, item_id: trackId, days: days
-        });
-        toast('Subscription extended.');
+        await postRequest("{% url 'quiz:admin_add_track_days' %}", {user_id: userId, item_id: trackId, days: days});
+        toast('Track access extended.');
         location.reload();
     } catch (error) { toast(error.message); }
 }
+
+loadCourseAccess();
 </script>
 {% endblock %}
