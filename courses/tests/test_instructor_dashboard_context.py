@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import RequestFactory, TestCase
 
 from courses.models import Course
-from courses.views.instructor_views import instructor_dashboard
+from courses.views.instructor_dashboard_view import instructor_dashboard
 from organizations.models import Organization
 
 
@@ -40,7 +40,7 @@ class InstructorDashboardContextTests(TestCase):
         request.organization = organization
 
         with patch(
-            "courses.views.instructor_views.can_view_instructor_dashboard",
+            "courses.views.instructor_dashboard_view.can_view_instructor_dashboard",
             return_value=True,
         ):
             response = instructor_dashboard(request)
