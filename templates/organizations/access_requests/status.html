@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="max-width:1000px;margin:40px auto">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h1>Organization Requests</h1><a class="button is-primary" href="{% url 'organizations_public:request_access' %}">New Request</a></div>
+  {% for item in requests %}
+    <article style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:18px;margin:12px 0">
+      <div style="display:flex;justify-content:space-between"><strong>{{ item.organization.name }}</strong><span>{{ item.get_status_display }}</span></div>
+      <p>{{ item.get_service_display }}{% if item.requested_role %} · {{ item.get_requested_role_display }}{% endif %}</p>
+      <small>Requested {{ item.requested_at|date:"M d, Y H:i" }}{% if item.reviewed_at %} · Reviewed {{ item.reviewed_at|date:"M d, Y H:i" }}{% endif %}</small>
+      {% if item.review_notes %}<p>{{ item.review_notes }}</p>{% endif %}
+    </article>
+  {% empty %}<p>No organization access requests yet.</p>{% endfor %}
+</div>
+{% endblock %}
