@@ -4,6 +4,7 @@ from .role import OrganizationRole
 from .assignment import ResourceAssignment
 from .class_assignment import ClassResourceAssignment
 from .access import ResourceAccess
+from .access_request import OrganizationAccessRequest
 from .profile import OrganizationProfile
 from .portal import OrganizationPortalConfig
 from .domain import OrganizationDomain
