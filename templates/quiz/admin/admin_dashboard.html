@@ -14,107 +14,26 @@
         <strong class="admin-kpi-value">{{ total_users }}</strong>
         <span class="admin-highlight">{{ new_users_7d }} new · {{ active_users_7d }} active this week</span>
     </a>
-
-    <div class="admin-kpi-card">
-        <span class="admin-kpi-label">Organizations</span>
-        <strong class="admin-kpi-value">{{ total_orgs }}</strong>
-        <span class="admin-highlight">{{ active_orgs }} active · {{ total_org_members }} members</span>
-    </div>
-
-    <div class="admin-kpi-card">
-        <span class="admin-kpi-label">Courses</span>
-        <strong class="admin-kpi-value">{{ total_courses }}</strong>
-        <span class="admin-highlight">{{ published_courses }} published · {{ total_enrollments }} enrollments</span>
-    </div>
-
-    <div class="admin-kpi-card">
-        <span class="admin-kpi-label">Exam attempts</span>
-        <strong class="admin-kpi-value">{{ total_attempts }}</strong>
-        <span class="admin-highlight">{{ pass_rate }}% pass rate{% if most_attempted_exam %} · {{ most_attempted_exam.title }} most attempted{% endif %}</span>
-    </div>
-
-    <div class="admin-kpi-card">
-        <span class="admin-kpi-label">Revenue</span>
-        <strong class="admin-kpi-value">₹{{ total_revenue|floatformat:2 }}</strong>
-        <span class="admin-highlight">₹{{ revenue_30d|floatformat:2 }} in last 30 days</span>
-    </div>
+    <div class="admin-kpi-card"><span class="admin-kpi-label">Organizations</span><strong class="admin-kpi-value">{{ total_orgs }}</strong><span class="admin-highlight">{{ active_orgs }} active · {{ total_org_members }} members</span></div>
+    <div class="admin-kpi-card"><span class="admin-kpi-label">Courses</span><strong class="admin-kpi-value">{{ total_courses }}</strong><span class="admin-highlight">{{ published_courses }} published · {{ total_enrollments }} enrollments</span></div>
+    <div class="admin-kpi-card"><span class="admin-kpi-label">Exam attempts</span><strong class="admin-kpi-value">{{ total_attempts }}</strong><span class="admin-highlight">{{ pass_rate }}% pass rate{% if most_attempted_exam %} · {{ most_attempted_exam.title }} most attempted{% endif %}</span></div>
+    <div class="admin-kpi-card"><span class="admin-kpi-label">Revenue</span><strong class="admin-kpi-value">₹{{ total_revenue|floatformat:2 }}</strong><span class="admin-highlight">₹{{ revenue_30d|floatformat:2 }} in last 30 days</span></div>
 </div>
 
 <div class="columns is-variable is-4 mt-2">
     <div class="column is-7">
         <section class="admin-panel">
-            <div class="admin-panel-header">
-                <div>
-                    <h2>Needs attention</h2>
-                    <p class="admin-muted">Work that may require an administrator.</p>
-                </div>
-            </div>
-            <a class="admin-attention-row" href="{% url 'accounts:organization_requests' %}">
-                <span>
-                    <strong>Organization access requests</strong>
-                    <small>Users waiting for approval</small>
-                </span>
-                <span class="admin-attention-count">0</span>
-            </a>
-            <a class="admin-attention-row" href="{% url 'courses:admin-pending-courses' %}">
-                <span>
-                    <strong>Course reviews</strong>
-                    <small>Courses waiting for moderation</small>
-                </span>
-                <span class="admin-attention-count">{{ pending_course_reviews }}</span>
-            </a>
+            <div class="admin-panel-header"><div><h2>Needs attention</h2><p class="admin-muted">Work that may require an administrator.</p></div></div>
+            <a class="admin-attention-row" href="{% url 'accounts:organization_requests' %}"><span><strong>Organization access requests</strong><small>Users waiting for approval</small></span><span class="admin-attention-count">{{ pending_organization_requests|default:0 }}</span></a>
+            <a class="admin-attention-row" href="{% url 'courses:admin-pending-courses' %}"><span><strong>Course reviews</strong><small>Courses waiting for moderation</small></span><span class="admin-attention-count">{{ pending_course_reviews }}</span></a>
         </section>
 
-        <section class="admin-panel mt-4">
-            <div class="admin-panel-header">
-                <div>
-                    <h2>Exam activity</h2>
-                    <p class="admin-muted">Current assessment performance.</p>
-                </div>
-                <a href="{% url 'quiz:admin_exam_list' %}">View exams</a>
-            </div>
-            <div class="admin-health-row">
-                <span>Completed attempts</span>
-                <strong>{{ total_attempts }}</strong>
-            </div>
-            <div class="admin-health-row">
-                <span>Average score</span>
-                <strong>{% if avg_score %}{{ avg_score }}%{% else %}—{% endif %}</strong>
-            </div>
-            <div class="admin-health-row">
-                <span>Most attempted</span>
-                <strong>{% if most_attempted_exam %}{{ most_attempted_exam.title }}{% else %}—{% endif %}</strong>
-            </div>
-        </section>
+        <section class="admin-panel mt-4"><div class="admin-panel-header"><div><h2>Exam activity</h2><p class="admin-muted">Current assessment performance.</p></div><a href="{% url 'quiz:admin_exam_list' %}">View exams</a></div><div class="admin-health-row"><span>Completed attempts</span><strong>{{ total_attempts }}</strong></div><div class="admin-health-row"><span>Pass rate</span><strong>{{ pass_rate }}%</strong></div></section>
     </div>
 
     <div class="column is-5">
-        <section class="admin-panel">
-            <div class="admin-panel-header">
-                <div>
-                    <h2>Platform health</h2>
-                    <p class="admin-muted">Current operating snapshot.</p>
-                </div>
-            </div>
-            <div class="admin-health-row"><span>Active track subscriptions</span><strong>{{ active_track_subs }}</strong></div>
-            <div class="admin-health-row"><span>Active organizations</span><strong>{{ active_orgs }}</strong></div>
-            <div class="admin-health-row"><span>Published courses</span><strong>{{ published_courses }}</strong></div>
-            <div class="admin-health-row"><span>Students in organizations</span><strong>{{ org_student_count }}</strong></div>
-        </section>
-
-        <section class="admin-panel mt-4">
-            <div class="admin-panel-header">
-                <div>
-                    <h2>Organization snapshot</h2>
-                    <p class="admin-muted">Current organization membership totals.</p>
-                </div>
-                <a href="{% url 'accounts:organization_requests' %}">Requests</a>
-            </div>
-            <div class="admin-health-row"><span>Organizations</span><strong>{{ total_orgs }}</strong></div>
-            <div class="admin-health-row"><span>Active organizations</span><strong>{{ active_orgs }}</strong></div>
-            <div class="admin-health-row"><span>Organization members</span><strong>{{ total_org_members }}</strong></div>
-            <div class="admin-health-row"><span>Organization admins</span><strong>{{ org_admin_count }}</strong></div>
-        </section>
+        <section class="admin-panel"><div class="admin-panel-header"><div><h2>Platform health</h2><p class="admin-muted">Key operational indicators.</p></div></div><div class="admin-health-row"><span>Active users</span><strong>{{ active_users_7d }}</strong></div><div class="admin-health-row"><span>Published courses</span><strong>{{ published_courses }}</strong></div><div class="admin-health-row"><span>Active organizations</span><strong>{{ active_orgs }}</strong></div></section>
+        <section class="admin-panel mt-4"><div class="admin-panel-header"><div><h2>Organizations</h2><p class="admin-muted">Current organization footprint.</p></div></div><div class="admin-health-row"><span>Total organizations</span><strong>{{ total_orgs }}</strong></div><div class="admin-health-row"><span>Total members</span><strong>{{ total_org_members }}</strong></div></section>
     </div>
 </div>
 {% endblock %}
