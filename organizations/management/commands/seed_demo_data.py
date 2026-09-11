@@ -134,8 +134,8 @@ class Command(BaseCommand):
 
     def _create_memberships(self, organization, users):
         roles = {
-            "owner": OrganizationMember.ROLE_OWNER,
-            "admin": OrganizationMember.ROLE_ADMIN,
+            "owner": OrganizationMember.ROLE_ORG_OWNER,
+            "admin": OrganizationMember.ROLE_ORG_ADMIN,
             "teacher": OrganizationMember.ROLE_STAFF,
             "student1": OrganizationMember.ROLE_STUDENT,
             "student2": OrganizationMember.ROLE_STUDENT,
@@ -370,6 +370,5 @@ class Command(BaseCommand):
                         notes="Seeded demo assignment.",
                     )
                 except Exception as exc:
-                    # The command is idempotent; an already-active assignment is expected.
                     if "already assigned" not in str(exc).lower():
                         raise
