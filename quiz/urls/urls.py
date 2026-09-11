@@ -11,6 +11,7 @@ from quiz.forms import EmailOrUsernameLoginForm
 # ============================================================
 
 from quiz.views.admin import *
+from quiz.views.admin_autocomplete import admin_autocomplete
 from quiz.views.questions import *
 from quiz.views.practice_express import *
 from quiz.views.auth import *
@@ -136,6 +137,7 @@ urlpatterns = [
 
     path("track/<int:track_id>/checkout/", track_checkout, name="track_checkout"),
 
+    path("dashboard/admin/autocomplete/", admin_autocomplete, name="admin_autocomplete"),
     path("dashboard/admin/subscriptions/", subscription_admin_panel, name="subscription_admin_panel"),
     path("dashboard/admin/subscriptions/search/users/", admin_subscription_user_search, name="admin_subscription_user_search"),
     path("dashboard/admin/subscriptions/search/courses/", admin_subscription_course_search, name="admin_subscription_course_search"),
