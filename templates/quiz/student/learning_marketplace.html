@@ -153,9 +153,10 @@
     </div>
 
     <div class="marketplace-state-legend" aria-label="Resource pricing legend">
-      <span class="resource-access-badge free">FREE</span>
+      <span class="resource-access-badge">FREE</span>
       <span class="resource-access-badge premium">PREMIUM</span>
-      <span class="resource-access-badge purchased">YOUR ACCESS</span>
+      <span class="resource-access-badge purchased" title="Purchased access">YOUR ACCESS</span>
+      <span class="sr-only">Purchased</span>
     </div>
 
     <div class="resource-list" aria-label="Learning resources">
@@ -177,6 +178,7 @@
                   <span>{{ item.resource.level|title }}</span><span>{{ item.resource.category.name|default:'General learning' }}</span>
                 {% else %}
                   <span>{{ item.metrics_label }}</span>
+                  <span class="sr-only">{{ item.exam_count }} exams included</span>
                 {% endif %}
               </div>
             </div>
