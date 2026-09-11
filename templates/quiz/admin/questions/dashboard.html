@@ -2,281 +2,60 @@
 {% block title %}Question Dashboard{% endblock %}
 
 {% block content %}
-<style>
-
-/* ================= DASHBOARD HEADER ================= */
-
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .dashboard-actions {
-    width: 100%;
-  }
-
-  .dashboard-actions .button {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-/* ================= TABLE IMPROVEMENTS ================= */
-
-.table {
-  table-layout: fixed;
-  width: 100%;
-}
-
-.table td {
-  vertical-align: middle;
-}
-
-.question-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.question-text {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  white-space: normal;
-  word-break: break-word;
-}
-
-.question-text.expanded {
-  -webkit-line-clamp: unset;
-}
-
-.expand-toggle {
-  font-size: 0.75rem;
-  color: #2563eb;
-  cursor: pointer;
-  display: none;
-}
-
-.question-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
-.question-row {
-  cursor: pointer;
-}
-
-.question-row:hover {
-  background: #f9fafb;
-}
-
-.action-buttons .button {
-  padding: 4px 6px;
-}
-
-.duplicate-tag {
-  font-size: 0.7rem;
-}
-
-</style>
-
-<section class="section">
+<section class="section question-dashboard">
 <div class="container">
 
-<!-- ================= HEADER ================= -->
-<div class="dashboard-header">
+<div class="admin-page-header question-dashboard-header">
   <div>
-    <h1 class="title is-4">🧠 Question Dashboard</h1>
-    <p class="has-text-grey is-size-7">
-      Review question quality, flags, duplicates & discussions
-    </p>
+    <h1>🧠 Question Dashboard</h1>
+    <p class="admin-muted">Review question quality, flags, duplicates & discussions</p>
   </div>
 
-  <div class="dashboard-actions">
-    <a href="{% url 'quiz:admin_dashboard' %}"
-       class="button is-light is-small">
-      ← Back to Dashboard
-    </a>
-
-    <a href="{% url 'quiz:add_question' %}"
-       class="button is-light is-small">
-      ➕ Add Question
-    </a>
+  <div class="question-dashboard-actions">
+    <a href="{% url 'quiz:admin_dashboard' %}" class="button is-light is-small">← Back to Dashboard</a>
+    <a href="{% url 'quiz:add_question' %}" class="button is-link is-small">➕ Add Question</a>
   </div>
 </div>
 
-<!-- ================= KPI BLOCKS ================= -->
-<div class="columns is-multiline mb-4">
-
-  <div class="column is-3">
-    <div class="box has-text-centered">
-      <p class="heading">📘 Total</p>
-      <p class="title">{{ total_questions }}</p>
-    </div>
-  </div>
-
-  <div class="column is-3">
-    <div class="box has-text-centered has-text-success">
-      <p class="heading">✅ Active</p>
-      <p class="title">{{ active_questions }}</p>
-    </div>
-  </div>
-
-  <div class="column is-3">
-    <div class="box has-text-centered has-text-warning">
-      <p class="heading">🚩 Flagged</p>
-      <p class="title">{{ flagged_questions }}</p>
-    </div>
-  </div>
-
-  <div class="column is-3">
-    <div class="box has-text-centered has-text-danger">
-      <p class="heading">🚫 Disabled</p>
-      <p class="title">{{ disabled_questions }}</p>
-    </div>
-  </div>
-
-  <!-- 🔁 NEW DUPLICATE KPI -->
-  <div class="column is-3">
-    <div class="box has-text-centered has-text-danger">
-      <p class="heading">🔁 Duplicates</p>
-      <p class="title">{{ duplicate_questions_count }}</p>
-    </div>
-  </div>
-
+<div class="question-kpi-grid">
+  <div class="admin-kpi-card question-kpi"><span class="admin-kpi-label">📘 Total</span><strong class="admin-kpi-value">{{ total_questions }}</strong></div>
+  <div class="admin-kpi-card question-kpi"><span class="admin-kpi-label">✅ Active</span><strong class="admin-kpi-value question-kpi-success">{{ active_questions }}</strong></div>
+  <div class="admin-kpi-card question-kpi"><span class="admin-kpi-label">🚩 Flagged</span><strong class="admin-kpi-value question-kpi-warning">{{ flagged_questions }}</strong></div>
+  <div class="admin-kpi-card question-kpi"><span class="admin-kpi-label">🚫 Disabled</span><strong class="admin-kpi-value question-kpi-danger">{{ disabled_questions }}</strong></div>
+  <div class="admin-kpi-card question-kpi"><span class="admin-kpi-label">🔁 Duplicates</span><strong class="admin-kpi-value question-kpi-danger">{{ duplicate_questions_count }}</strong></div>
 </div>
 
-<!-- ================= TABS ================= -->
-<div class="tabs is-toggle is-small mb-4">
-  <ul>
-    <li class="{% if tab == 'all' %}is-active{% endif %}">
-      <a href="?tab=all">📘 All Questions</a>
-    </li>
-
-    <li class="{% if tab == 'review' %}is-active{% endif %}">
-      <a href="?tab=review">
-        🚩 Needs Review
-        {% if needs_review_count %}
-          <span class="tag is-danger ml-1">{{ needs_review_count }}</span>
-        {% endif %}
-      </a>
-    </li>
-
-    <!-- 🔁 DUPLICATES TAB -->
-    <li class="{% if tab == 'duplicates' %}is-active{% endif %}">
-      <a href="?tab=duplicates">
-        🔁 Duplicates
-        {% if duplicate_questions_count %}
-          <span class="tag is-danger ml-1">
-            {{ duplicate_questions_count }}
-          </span>
-        {% endif %}
-      </a>
-    </li>
-
-  </ul>
+<div class="question-tabs" role="navigation" aria-label="Question filters">
+  <a class="question-tab {% if tab == 'all' %}is-active{% endif %}" href="?tab=all">📘 All Questions</a>
+  <a class="question-tab {% if tab == 'review' %}is-active{% endif %}" href="?tab=review">🚩 Needs Review {% if needs_review_count %}<span class="admin-badge admin-badge-red">{{ needs_review_count }}</span>{% endif %}</a>
+  <a class="question-tab {% if tab == 'duplicates' %}is-active{% endif %}" href="?tab=duplicates">🔁 Duplicates {% if duplicate_questions_count %}<span class="admin-badge admin-badge-red">{{ duplicate_questions_count }}</span>{% endif %}</a>
 </div>
 
-<!-- ================= FILTERS (UNCHANGED) ================= -->
-<form method="get" class="box mb-4">
-<input type="hidden" name="tab" value="{{ tab }}">
-<div class="columns is-multiline">
-
-  <div class="column is-3">
-    <input class="input" name="q" placeholder="Search question..."
-           value="{{ search }}">
+<form method="get" class="admin-panel question-filter-panel">
+  <input type="hidden" name="tab" value="{{ tab }}">
+  <div class="question-filter-grid">
+    <div><label for="question-search">Search</label><input id="question-search" class="input" name="q" placeholder="Search question..." value="{{ search }}"></div>
+    <div><label for="question-category">Category</label><div class="select is-fullwidth"><select id="question-category" name="category"><option value="">All categories</option>{% for cat in categories %}<option value="{{ cat.id }}" {% if cat.id|stringformat:"s" == selected_category %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}</select></div></div>
+    <div><label for="question-difficulty">Difficulty</label><div class="select is-fullwidth"><select id="question-difficulty" name="difficulty"><option value="">All</option><option value="easy" {% if selected_difficulty == "easy" %}selected{% endif %}>Easy</option><option value="medium" {% if selected_difficulty == "medium" %}selected{% endif %}>Medium</option><option value="hard" {% if selected_difficulty == "hard" %}selected{% endif %}>Hard</option></select></div></div>
+    <div><label for="question-status">Status</label><div class="select is-fullwidth"><select id="question-status" name="status"><option value="">All Status</option><option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option><option value="disabled" {% if selected_status == "disabled" %}selected{% endif %}>Disabled</option></select></div></div>
+    <div class="question-filter-submit"><label>&nbsp;</label><button class="button is-link" type="submit">Filter</button></div>
   </div>
-
-  <div class="column is-3">
-    <div class="select is-fullwidth">
-      <select name="category">
-        <option value="">All categories</option>
-        {% for cat in categories %}
-          <option value="{{ cat.id }}"
-            {% if cat.id|stringformat:"s" == selected_category %}selected{% endif %}>
-            {{ cat.name }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
-
-  <div class="column is-2">
-    <div class="select is-fullwidth">
-      <select name="difficulty">
-        <option value="">All</option>
-        <option value="easy" {% if selected_difficulty == "easy" %}selected{% endif %}>Easy</option>
-        <option value="medium" {% if selected_difficulty == "medium" %}selected{% endif %}>Medium</option>
-        <option value="hard" {% if selected_difficulty == "hard" %}selected{% endif %}>Hard</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="column is-2">
-    <div class="select is-fullwidth">
-      <select name="status">
-        <option value="">All Status</option>
-        <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
-        <option value="disabled" {% if selected_status == "disabled" %}selected{% endif %}>Disabled</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="column is-2">
-    <button class="button is-link is-fullwidth">Filter</button>
-  </div>
-
-</div>
 </form>
 
-<!-- ================= TABLE ================= -->
-<div class="table-container">
-<table class="table is-fullwidth is-striped is-hoverable">
-
-<thead>
-<tr>
-  <th style="width:60px;">ID</th>
-  <th style="width:45%">Question</th>
-  <th>🔁</th>
-  <th>💬</th>
-  <th>🚩</th>
-  <th>Status</th>
-  <th style="width:150px;">Actions</th>
-</tr>
-</thead>
-
-<tbody id="question-table-body">
-{% include "quiz/admin/questions/_question_rows.html" %}
-</tbody>
-
-</table>
-
-<div id="scroll-loader"
-     class="has-text-centered has-text-grey mt-4"
-     style="display:none;">
-  ⏳ Loading more questions...
+<div class="admin-panel admin-table-panel question-table-panel">
+  <div class="admin-panel-header question-table-header">
+    <div><h2>Question directory</h2><p>Review, manage and monitor question quality.</p></div>
+  </div>
+  <div class="admin-table-scroll">
+    <table class="table is-fullwidth is-hoverable admin-table question-table">
+      <thead><tr><th>ID</th><th>Question</th><th>🔁</th><th>💬</th><th>🚩</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="question-table-body">{% include "quiz/admin/questions/_question_rows.html" %}</tbody>
+    </table>
+  </div>
+  <div id="scroll-loader" class="admin-empty" style="display:none;">⏳ Loading more questions...</div>
+  <div id="end-of-list" class="admin-empty" style="display:none;">🎉 You’ve reached the end of the list</div>
 </div>
 
-<div id="end-of-list"
-     class="has-text-centered has-text-grey mt-4"
-     style="display:none;">
-  🎉 You’ve reached the end of the list
-</div>
-
-</div>
 </div>
 </section>
 
@@ -285,62 +64,41 @@ let currentPage = {{ questions.number }};
 let hasNext = {{ questions.has_next|yesno:"true,false" }};
 let loading = false;
 
-/* ROW CLICK */
 document.addEventListener("click", function (e) {
   const row = e.target.closest(".question-row");
   if (!row) return;
-
   if (e.target.closest("a") || e.target.closest("button") || e.target.closest("form")) return;
-
   window.location.href = row.dataset.reviewUrl;
 });
 
-/* Infinite Scroll */
 function loadMoreQuestions() {
   if (!hasNext || loading) return;
-
   loading = true;
   document.getElementById("scroll-loader").style.display = "block";
-
-  const url =
-    window.location.href.replace(/(&|\?)page=\d+/, '') +
-    (window.location.search.includes('?') ? '&' : '?') +
-    'page=' + (currentPage + 1);
-
+  const url = window.location.href.replace(/(&|\?)page=\d+/, '') + (window.location.search.includes('?') ? '&' : '?') + 'page=' + (currentPage + 1);
   fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
     .then(res => res.json())
     .then(data => {
-      document.getElementById("question-table-body")
-        .insertAdjacentHTML("beforeend", data.html);
-
+      document.getElementById("question-table-body").insertAdjacentHTML("beforeend", data.html);
       currentPage++;
       hasNext = data.has_next;
       loading = false;
-
       document.getElementById("scroll-loader").style.display = "none";
-
-      if (!hasNext) {
-        document.getElementById("end-of-list").style.display = "block";
-      }
+      if (!hasNext) document.getElementById("end-of-list").style.display = "block";
+    })
+    .catch(() => {
+      loading = false;
+      document.getElementById("scroll-loader").style.display = "none";
     });
 }
 
 window.addEventListener("scroll", function () {
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-    loadMoreQuestions();
-  }
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) loadMoreQuestions();
 });
-</script>
 
-<script>
 function confirmDelete(e, id) {
   e.stopPropagation();
-
-  return confirm(
-    "⚠️ Are you sure you want to delete this question?\n\n" +
-    "This action will soft-delete the question and hide it from users."
-  );
+  return confirm("⚠️ Are you sure you want to delete this question?\n\nThis action will soft-delete the question and hide it from users.");
 }
 </script>
-
 {% endblock %}
