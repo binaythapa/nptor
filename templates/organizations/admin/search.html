@@ -1,0 +1,40 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block title %}Search · {{ org.name }}{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div>
+        <p class="org-breadcrumb"><a href="{% url 'organizations_admin:dashboard' slug=org.slug %}">{{ org.name }}</a> / Search</p>
+        <h1 class="title is-4 mb-1">Search organization</h1>
+        <p class="admin-muted">Find students, courses, tracks, exams, questions, categories and domains.</p>
+    </div>
+</div>
+
+<section class="admin-panel">
+    <form class="org-search-page-form" method="get" action="{% url 'organizations_admin:search' slug=org.slug %}">
+        <input class="input" type="search" name="q" value="{{ query }}" placeholder="Search by name, title, username or ID" autocomplete="off" data-autocomplete-scope="all">
+        <button class="button is-link" type="submit"><i class="fa fa-search mr-1"></i> Search</button>
+    </form>
+</section>
+
+{% if query %}
+<section class="admin-panel mt-4">
+    <div class="admin-panel-header">
+        <div><h2>Search results</h2><p class="admin-muted">Showing matches for “{{ query }}”.</p></div>
+        <span class="admin-page-count">{{ results|length }} result{{ results|length|pluralize }}</span>
+    </div>
+    <div class="org-search-results">
+        {% for result in results %}
+        <a class="org-search-result" href="{{ result.url }}">
+            <span class="org-search-result-icon"><i class="fa fa-magnifying-glass"></i></span>
+            <span><strong>{{ result.label|striptags }}</strong><small>{{ result.subtitle }}</small></span>
+            <i class="fa fa-arrow-right"></i>
+        </a>
+        {% empty %}
+        <div class="org-empty-state">No matching organization records found.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

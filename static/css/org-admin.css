@@ -1,0 +1,54 @@
+/* NPTOR organization admin shell - same visual system as platform admin. */
+.org-admin-page { min-height:100vh; }
+.org-admin-header .admin-header-inner { gap:18px; }
+.org-admin-header .admin-header-left { flex:1; }
+.org-admin-context { display:flex; align-items:center; gap:9px; min-width:0; }
+.org-admin-context-name { color:#fff; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+.org-admin-role { color:#cbd5e1; font-size:.74rem; padding-left:9px; border-left:1px solid #374151; white-space:nowrap; }
+.org-admin-search { position:relative; width:min(430px, 38vw); margin-left:auto; }
+.org-admin-search .input { width:100%; min-height:38px; padding-left:38px; border:1px solid #374151; border-radius:9px; background:#1f2937; color:#fff; box-shadow:none; }
+.org-admin-search .input::placeholder { color:#94a3b8; }
+.org-admin-search .input:focus { border-color:#60a5fa; background:#111827; }
+.org-admin-search .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:#94a3b8; z-index:2; pointer-events:none; }
+.org-admin-layout { display:flex; align-items:stretch; min-height:calc(100vh - var(--admin-header-height)); }
+.org-admin-layout .admin-content { min-width:0; flex:1; }
+.org-admin-sidebar .org-sidebar-section { margin-bottom:4px; }
+.org-admin-sidebar .menu-label { margin-top:18px; }
+.org-admin-sidebar .menu-list a.is-active { background:#eff6ff; color:#1d4ed8; font-weight:700; }
+.org-admin-sidebar .menu-list a.is-active .icon { color:#2563eb; }
+.org-breadcrumb { margin:0 0 6px; color:#94a3b8; font-size:.75rem; }
+.org-breadcrumb a { color:#64748b; text-decoration:none; }
+.org-breadcrumb a:hover { color:#2563eb; }
+.org-dashboard-grid { display:grid; grid-template-columns:minmax(0, 1.45fr) minmax(280px, .85fr); gap:16px; }
+.org-kpi-grid { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:12px; }
+.org-kpi-card { display:flex; flex-direction:column; min-height:126px; padding:17px 18px; background:#fff; border:1px solid var(--admin-border); border-radius:var(--admin-radius); box-shadow:var(--admin-shadow); text-decoration:none; color:inherit; transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+a.org-kpi-card:hover { transform:translateY(-1px); box-shadow:var(--admin-shadow-hover); border-color:#d5dbe5; color:inherit; }
+.org-kpi-label { color:#6b7280; font-size:.72rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+.org-kpi-value { margin-top:8px; color:#172033; font-size:1.8rem; line-height:1; }
+.org-kpi-link { margin-top:auto; padding-top:12px; color:#2563eb; font-size:.72rem; font-weight:700; }
+.org-health-row { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:13px 0; border-bottom:1px solid var(--admin-border-soft); }
+.org-health-row:last-child { border-bottom:0; padding-bottom:0; }
+.org-health-row strong { color:#172033; }
+.org-search-page-form { display:flex; gap:9px; max-width:760px; }
+.org-search-page-form .input { flex:1; min-width:0; }
+.org-search-results { border-top:1px solid var(--admin-border-soft); }
+.org-search-result { display:flex; align-items:center; gap:12px; padding:13px 4px; border-bottom:1px solid var(--admin-border-soft); color:#172033; text-decoration:none; }
+.org-search-result:last-child { border-bottom:0; }
+.org-search-result:hover { background:#f8fafc; color:#1d4ed8; }
+.org-search-result > span:nth-child(2) { min-width:0; flex:1; }
+.org-search-result strong, .org-search-result small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.org-search-result small { margin-top:2px; color:#6b7280; font-size:.74rem; }
+.org-search-result-icon { width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; background:#eff6ff; color:#2563eb; }
+.org-empty-state { padding:22px 4px; color:#6b7280; }
+.org-recent-table { width:100%; border-collapse:collapse; }
+.org-recent-table th, .org-recent-table td { padding:11px 8px; border-bottom:1px solid var(--admin-border-soft); text-align:left; font-size:.82rem; }
+.org-recent-table th { color:#4b5563; font-weight:700; }
+.org-recent-table td { color:#4b5563; }
+.org-action-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
+.org-action-card { padding:14px; border:1px solid var(--admin-border); border-radius:10px; background:#fff; color:#172033; text-decoration:none; }
+.org-action-card:hover { border-color:#bfdbfe; background:#f8fbff; color:#1d4ed8; }
+.org-action-card strong, .org-action-card small { display:block; }
+.org-action-card small { margin-top:3px; color:#6b7280; }
+@media (max-width:1100px) { .org-kpi-grid { grid-template-columns:repeat(3, minmax(0,1fr)); } .org-dashboard-grid { grid-template-columns:1fr; } .org-admin-search { width:min(360px, 34vw); } }
+@media (max-width:800px) { .org-admin-search { display:none; } .org-context-mobile-search { display:block; } .org-kpi-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } .org-action-grid { grid-template-columns:1fr; } }
+@media (max-width:650px) { .org-kpi-grid { grid-template-columns:1fr; } .org-search-page-form { flex-direction:column; } .org-recent-table { min-width:650px; } .org-table-scroll { overflow-x:auto; } .org-admin-context-name { max-width:150px; } }

@@ -1,1 +1,102 @@
-{% extends "organizations/admin/base.html" %}{% block content %}<div class="org-dashboard"><h2 class="title is-4">Organization Dashboard</h2><div class="org-stat-grid">{% for label,value in stats.items %}{% if label != 'recent_assignments' %}<div class="box has-text-centered org-stat-card"><p class="heading">{{ label|title|cut:'_' }}</p><p class="title is-4">{{ value }}</p></div>{% endif %}{% endfor %}</div><div class="box"><h3 class="title is-5">Attention</h3><div class="columns"><div class="column"><strong>{{ stats.overdue_assignments }}</strong><br>Overdue assignments</div><div class="column"><strong>{{ stats.not_started }}</strong><br>Not started</div></div></div><div class="box"><h3 class="title is-5">Recent Assignments</h3><div class="table-container"><table class="table is-fullwidth is-striped"><thead><tr><th>Student</th><th>Resource</th><th>Status</th><th>Due</th></tr></thead><tbody>{% for assignment in stats.recent_assignments %}<tr><td>{{ assignment.student }}</td><td>{{ assignment.resource_name }}</td><td>{{ assignment.get_status_display }}</td><td>{{ assignment.due_at|default:'—' }}</td></tr>{% empty %}<tr><td colspan="4">No assignments yet.</td></tr>{% endfor %}</tbody></table></div></div><div class="columns is-multiline"><div class="column is-4"><div class="box"><strong>Question Structure</strong><a class="button is-link is-light is-fullwidth mt-3" href="{% url 'organizations_admin:domain_list' slug=org.slug %}">Manage Domains</a><a class="button is-link is-light is-fullwidth mt-2" href="{% url 'organizations_admin:category_list' slug=org.slug %}">Manage Categories</a></div></div><div class="column is-4"><div class="box"><strong>Exam Management</strong><a class="button is-link is-light is-fullwidth mt-3" href="{% url 'organizations_admin:questions' slug=org.slug %}">Questions</a><a class="button is-link is-light is-fullwidth mt-2" href="{% url 'organizations_admin:exams' slug=org.slug %}">Exams</a></div></div><div class="column is-4"><div class="box"><strong>Portfolio</strong><a class="button is-primary is-fullwidth mt-3" href="{% url 'organizations_admin:portfolio' slug=org.slug %}">Manage Portfolio</a><a class="button is-link is-light is-fullwidth mt-2" href="{% url 'organizations_admin:tenant_domains' slug=org.slug %}">Custom Domains</a></div></div></div></div>{% endblock %}
+{% extends "organizations/admin/base.html" %}
+
+{% block title %}Dashboard · {{ org.name }} · NPTOR{% endblock %}
+
+{% block content %}
+<div class="org-dashboard">
+<div class="admin-page-header">
+  <div>
+    <p class="org-breadcrumb">Organization / {{ org.name }}</p>
+    <h1 class="title is-4 mb-1">Organization Dashboard</h1>
+    <p class="admin-muted">Manage learning, people and assessments for {{ org.name }}.</p>
+  </div>
+  <div class="admin-page-actions">
+    <a class="button is-light" href="{% url 'organizations_admin:students' slug=org.slug %}"><i class="fa fa-users mr-1"></i> Students</a>
+    <a class="button is-link" href="{% url 'organizations_admin:courses' slug=org.slug %}"><i class="fa fa-graduation-cap mr-1"></i> Courses</a>
+  </div>
+</div>
+
+<div class="admin-panel mb-4">
+  <form class="org-search-page-form" method="get" action="{% url 'organizations_admin:search' slug=org.slug %}" data-autocomplete-scope="all">
+    <input class="input" type="search" name="q" placeholder="Search students, courses, tracks, exams, questions, categories or domains" autocomplete="off" aria-label="Search organization">
+    <button class="button is-link" type="submit"><i class="fa fa-search mr-1"></i> Search</button>
+  </form>
+</div>
+
+<div class="org-kpi-grid org-stat-grid mb-4">
+  <a class="org-kpi-card" href="{% url 'organizations_admin:students' slug=org.slug %}">
+    <span class="org-kpi-label">Students</span><strong class="org-kpi-value">{{ stats.students }}</strong><span class="org-kpi-link">Manage students →</span>
+  </a>
+  <a class="org-kpi-card" href="{% url 'organizations_admin:courses' slug=org.slug %}">
+    <span class="org-kpi-label">Courses</span><strong class="org-kpi-value">{{ stats.courses }}</strong><span class="org-kpi-link">Manage courses →</span>
+  </a>
+  <a class="org-kpi-card" href="{% url 'organizations_admin:org_track_list' slug=org.slug %}">
+    <span class="org-kpi-label">Learning Tracks</span><strong class="org-kpi-value">{{ stats.learning_tracks }}</strong><span class="org-kpi-link">Manage tracks →</span>
+  </a>
+  <a class="org-kpi-card" href="{% url 'organizations_admin:exams' slug=org.slug %}">
+    <span class="org-kpi-label">Exams</span><strong class="org-kpi-value">{{ stats.exams }}</strong><span class="org-kpi-link">Manage exams →</span>
+  </a>
+  <a class="org-kpi-card" href="{% url 'organizations_admin:assignments' slug=org.slug %}">
+    <span class="org-kpi-label">Assignments</span><strong class="org-kpi-value">{{ stats.assignments }}</strong><span class="org-kpi-link">Manage assignments →</span>
+  </a>
+</div>
+
+<div class="org-dashboard-grid">
+  <div>
+    <section class="admin-panel">
+      <div class="admin-panel-header">
+        <div><h2>Needs attention</h2><p class="admin-muted">Items that may require action.</p></div>
+      </div>
+      <a class="admin-attention-row" href="{% url 'organizations_admin:assignments' slug=org.slug %}">
+        <span><strong>Overdue assignments</strong><small>Assignments past their due date</small></span>
+        <span class="admin-attention-count">{{ stats.overdue_assignments }}</span>
+      </a>
+      <a class="admin-attention-row" href="{% url 'organizations_admin:assignments' slug=org.slug %}">
+        <span><strong>Not started</strong><small>Assigned resources awaiting a start</small></span>
+        <span class="admin-attention-count">{{ stats.not_started }}</span>
+      </a>
+    </section>
+
+    <section class="admin-panel mt-4">
+      <div class="admin-panel-header">
+        <div><h2>Recent assignments</h2><p class="admin-muted">Latest resources assigned to organization members.</p></div>
+        <a href="{% url 'organizations_admin:assignments' slug=org.slug %}">View all</a>
+      </div>
+      <div class="org-table-scroll">
+        <table class="org-recent-table">
+          <thead><tr><th>Student</th><th>Resource</th><th>Status</th><th>Due</th></tr></thead>
+          <tbody>
+          {% for assignment in stats.recent_assignments %}
+            <tr><td>{{ assignment.student }}</td><td>{{ assignment.resource_name }}</td><td>{{ assignment.get_status_display }}</td><td>{{ assignment.due_at|default:'—' }}</td></tr>
+          {% empty %}
+            <tr><td colspan="4">No assignments yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section class="admin-panel">
+      <div class="admin-panel-header"><div><h2>Organization health</h2><p class="admin-muted">Current learning activity.</p></div></div>
+      <div class="org-health-row"><span>Students</span><strong>{{ stats.students }}</strong></div>
+      <div class="org-health-row"><span>Assigned exams</span><strong>{{ stats.assigned_exams }}</strong></div>
+      <div class="org-health-row"><span>Overdue assignments</span><strong>{{ stats.overdue_assignments }}</strong></div>
+      <div class="org-health-row"><span>Not started</span><strong>{{ stats.not_started }}</strong></div>
+    </section>
+
+    <section class="admin-panel mt-4">
+      <div class="admin-panel-header"><div><h2>Quick management</h2><p class="admin-muted">Jump directly to common organization tasks.</p></div></div>
+      <div class="org-action-grid">
+        <a class="org-action-card" href="{% url 'organizations_admin:questions' slug=org.slug %}"><strong>Questions</strong><small>Manage question bank</small></a>
+        <a class="org-action-card" href="{% url 'organizations_admin:domain_list' slug=org.slug %}"><strong>Domains</strong><small>Manage knowledge domains</small></a>
+        <a class="org-action-card" href="{% url 'organizations_admin:category_list' slug=org.slug %}"><strong>Categories</strong><small>Manage classifications</small></a>
+        <a class="org-action-card" href="{% url 'organizations_admin:portfolio' slug=org.slug %}"><strong>Portfolio</strong><small>Manage organization profile</small></a>
+        <a class="org-action-card" href="{% url 'organizations_admin:settings' slug=org.slug %}"><strong>Settings</strong><small>Organization configuration</small></a>
+      </div>
+    </section>
+  </div>
+</div>
+</div>
+{% endblock %}

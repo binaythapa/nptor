@@ -1,7 +1,9 @@
+from django.db.models import Q
 from django.utils import timezone
 
 from courses.models import Course
 from organizations.models import OrganizationMember, ResourceAssignment
+from quiz.models import Exam, ExamTrack
 
 
 def get_overview(organization):
@@ -16,9 +18,20 @@ def get_overview(organization):
             ResourceAssignment.STATUS_REVOKED,
         ]
     )
+    visible_courses = Course.objects.filter(
+        Q(organization=organization) | Q(organization__isnull=True, is_published=True)
+    )
+    visible_tracks = ExamTrack.objects.filter(
+        Q(organization=organization) | Q(organization__isnull=True)
+    )
+    visible_exams = Exam.objects.filter(
+        Q(organization=organization) | Q(organization__isnull=True)
+    )
     return {
         "students": students.count(),
-        "courses": Course.objects.filter(organization=organization, is_published=True).count(),
+        "courses": visible_courses.count(),
+        "learning_tracks": visible_tracks.count(),
+        "exams": visible_exams.count(),
         "assignments": assignments.count(),
         "assigned_exams": assignments.filter(resource_type=ResourceAssignment.RESOURCE_EXAM).count(),
         "overdue_assignments": overdue.count(),

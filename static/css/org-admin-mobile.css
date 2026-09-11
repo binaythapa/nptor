@@ -1,0 +1,73 @@
+/* Organization admin mobile compatibility layer. */
+
+.org-admin-content {
+  min-width: 0;
+}
+
+.org-admin-sidebar {
+  transition: transform 0.2s ease;
+}
+
+#orgAdminBackdrop {
+  display: none;
+}
+
+@media (max-width: 650px) {
+  #orgMobileMenuButton {
+    display: inline-flex;
+  }
+
+  .org-admin-layout {
+    position: relative;
+  }
+
+  .org-admin-sidebar {
+    position: fixed;
+    inset: var(--admin-header-height, 64px) auto 0 0;
+    z-index: 40;
+    width: min(82vw, 300px);
+    overflow-y: auto;
+    transform: translateX(-105%);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  }
+
+  .org-admin-sidebar.is-active {
+    transform: translateX(0);
+  }
+
+  #orgAdminBackdrop {
+    position: fixed;
+    inset: var(--admin-header-height, 64px) 0 0;
+    z-index: 35;
+    display: block;
+    border: 0;
+    padding: 0;
+    background: rgba(17, 24, 39, 0.42);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  #orgAdminBackdrop.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .org-admin-content {
+    width: 100%;
+  }
+
+  .org-dashboard .admin-page-header {
+    align-items: flex-start;
+  }
+
+  .org-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 651px) {
+  #orgMobileMenuButton {
+    display: none;
+  }
+}

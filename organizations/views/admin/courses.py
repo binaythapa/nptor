@@ -175,9 +175,11 @@ def org_courses(request, slug):
         )
     tracks = [{"track": track, "is_attached": track.id in subscribed_track_ids} for track in visible_tracks]
 
+    # Exam does not have a ``track`` ForeignKey. Keep this queryset limited to
+    # actual relations so Django's select_related validation cannot fail.
     visible_exams = Exam.objects.filter(
         Q(organization=org) | Q(organization__isnull=True)
-    ).select_related("track").order_by("title")
+    ).order_by("title")
     subscribed_exam_ids = set()
     if active_subscription:
         subscribed_exam_ids = set(

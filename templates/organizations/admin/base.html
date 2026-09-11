@@ -3,88 +3,114 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>{% block title %}Organization Dashboard{% endblock %}</title>
+<title>{% block title %}{{ request.organization.name }} · NPTOR Admin{% endblock %}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1e293b">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+<meta name="theme-color" content="#111827">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+<link rel="stylesheet" href="{% static 'css/org-admin.css' %}">
+<link rel="stylesheet" href="{% static 'css/org-admin-mobile.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="{% static 'css/theme.css' %}">
-<link rel="stylesheet" href="{% static 'css/pages/org-admin-mobile.css' %}">
 {% block head_extra %}{% endblock %}
 </head>
 <body class="org-admin-page">
 {% with org_slug=request.organization.slug %}
-<nav class="navbar is-light org-admin-topbar">
-  <div class="navbar-brand">
-    <button type="button" class="org-mobile-menu-btn" id="orgMobileMenuButton" aria-controls="orgAdminSidebar" aria-expanded="false">☰</button>
-    {% if request.organization_member.is_administrator %}
-      <a class="navbar-item org-admin-brand" href="{% url 'organizations_admin:dashboard' slug=org_slug %}">🏢 {{ request.organization.name }}</a>
-    {% else %}
-      <a class="navbar-item org-admin-brand" href="{% url 'organizations_public:workspace' slug=org_slug %}">🏢 {{ request.organization.name }}</a>
-    {% endif %}
-  </div>
-  <div class="navbar-end">
-    <div class="navbar-item">
-      <span class="tag is-info is-light mr-2">{{ request.organization_member.get_role_display }}</span>
-      <a href="{% url 'quiz:dashboard' %}" class="button is-small is-outlined">Back to Platform</a>
+<header class="admin-header org-admin-header">
+  <div class="admin-header-inner">
+    <div class="admin-header-left">
+      <button id="orgMobileMenuButton" class="button is-white is-small mr-3" type="button" aria-controls="orgAdminSidebar" aria-expanded="false" aria-label="Open navigation">
+        <i class="fa fa-bars" aria-hidden="true"></i>
+      </button>
+      <a class="admin-brand" href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
+        <img src="{% static 'images/logo.jpg' %}" class="admin-logo" alt="NPTOR">
+        <span class="org-admin-context">
+          <span class="admin-brand-text">NPTOR</span>
+          <span class="org-admin-context-name">{{ request.organization.name }}</span>
+          <span class="org-admin-role">{{ request.organization_member.get_role_display }}</span>
+        </span>
+      </a>
+    </div>
+
+    <form class="org-admin-search" method="get" action="{% url 'organizations_admin:search' slug=org_slug %}" data-autocomplete-scope="all">
+      <i class="fa fa-search search-icon" aria-hidden="true"></i>
+      <input class="input" type="search" name="q" placeholder="Search this organization..." autocomplete="off" aria-label="Search this organization">
+    </form>
+
+    <div class="admin-header-right">
+      <a href="{% url 'quiz:dashboard' %}" class="button is-light is-small" title="Back to platform"><i class="fa fa-arrow-left mr-1"></i><span class="is-hidden-mobile">Platform</span></a>
+      <a href="{% url 'quiz:notifications_list' %}" class="admin-notification-link" aria-label="Notifications"><i class="fa fa-bell" aria-hidden="true"></i></a>
+      <a href="#logout" class="button is-light is-small" aria-label="Log out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa fa-right-from-bracket" aria-hidden="true"></i></a>
+      <button id="theme-toggle" class="button is-white is-small" type="button" aria-label="Toggle theme"><i class="fa fa-moon" aria-hidden="true"></i></button>
     </div>
   </div>
-</nav>
+</header>
 
-<section class="section pt-4 org-admin-shell">
-<div class="container is-fluid">
-<div class="columns org-admin-main">
-<div class="org-admin-backdrop" id="orgAdminBackdrop"></div>
-<aside class="column is-3 org-admin-sidebar" id="orgAdminSidebar">
-<nav class="menu">
-  {% if request.organization_member.is_administrator %}
+<div class="org-admin-layout">
+  <div id="orgAdminBackdrop" class="admin-sidebar-overlay" aria-hidden="true"></div>
+  <aside id="orgAdminSidebar" class="admin-sidebar org-admin-sidebar" aria-label="Organization navigation">
     <p class="menu-label">Overview</p>
     <ul class="menu-list">
-      <li><a href="{% url 'organizations_admin:dashboard' slug=org_slug %}"><i class="fa fa-chart-line mr-1"></i>Dashboard</a></li>
+      <li><a class="{% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}" href="{% url 'organizations_admin:dashboard' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-chart-line"></i></span><span class="menu-text">Dashboard</span></a></li>
     </ul>
-  {% endif %}
 
-  <p class="menu-label">People</p>
-  <ul class="menu-list">
-    <li><a href="{% url 'organizations_admin:students' slug=org_slug %}">Students</a></li>
-  </ul>
+    <p class="menu-label">People</p>
+    <ul class="menu-list">
+      <li><a class="{% if request.resolver_match.url_name == 'students' %}is-active{% endif %}" href="{% url 'organizations_admin:students' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Students</span></a></li>
+    </ul>
 
-  <p class="menu-label">Learning</p>
-  <ul class="menu-list">
-    {% if request.organization_member.is_administrator %}
-      <li><a href="{% url 'organizations_admin:courses' slug=org_slug %}">Courses</a></li>
-      <li><a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}">Learning Tracks</a></li>
-    {% else %}
-      <li><a href="{% url 'organizations_admin:org_course_list' slug=org_slug %}">My Courses</a></li>
-    {% endif %}
-    <li><a href="{% url 'organizations_admin:exams' slug=org_slug %}">Exams</a></li>
-    <li><a href="{% url 'organizations_admin:questions' slug=org_slug %}">Questions</a></li>
-  </ul>
+    <p class="menu-label">Learning</p>
+    <ul class="menu-list">
+      <li><a class="{% if request.resolver_match.url_name == 'courses' or request.resolver_match.url_name == 'org_course_list' %}is-active{% endif %}" href="{% url 'organizations_admin:courses' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span class="menu-text">Courses</span></a></li>
+      <li><a class="{% if request.resolver_match.url_name == 'org_track_list' %}is-active{% endif %}" href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-road"></i></span><span class="menu-text">Learning Tracks</span></a></li>
+      <li><a class="{% if request.resolver_match.url_name == 'exams' %}is-active{% endif %}" href="{% url 'organizations_admin:exams' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-file-lines"></i></span><span class="menu-text">Exams</span></a></li>
+      <li><a class="{% if request.resolver_match.url_name == 'questions' %}is-active{% endif %}" href="{% url 'organizations_admin:questions' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-circle-question"></i></span><span class="menu-text">Questions</span></a></li>
+    </ul>
 
-  <p class="menu-label">Operations</p>
-  <ul class="menu-list">
-    <li><a href="{% url 'organizations_admin:assignments' slug=org_slug %}">Assignments</a></li>
-    {% if request.organization_member.is_administrator %}
-      <li><a href="{% url 'organizations_admin:domain_list' slug=org_slug %}">Domains</a></li>
-      <li><a href="{% url 'organizations_admin:category_list' slug=org_slug %}">Categories</a></li>
-    {% endif %}
-  </ul>
+    <p class="menu-label">Operations</p>
+    <ul class="menu-list">
+      <li><a class="{% if request.resolver_match.url_name == 'assignments' %}is-active{% endif %}" href="{% url 'organizations_admin:assignments' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-list-check"></i></span><span class="menu-text">Assignments</span></a></li>
+      <li><a class="{% if request.resolver_match.url_name == 'domain_list' %}is-active{% endif %}" href="{% url 'organizations_admin:domain_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-layer-group"></i></span><span class="menu-text">Domains</span></a></li>
+      <li><a class="{% if request.resolver_match.url_name == 'category_list' %}is-active{% endif %}" href="{% url 'organizations_admin:category_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-tags"></i></span><span class="menu-text">Categories</span></a></li>
+    </ul>
 
-  {% if request.organization_member.is_administrator %}
     <p class="menu-label">Portfolio & Settings</p>
     <ul class="menu-list">
-      <li><a href="{% url 'organizations_admin:portfolio' slug=org_slug %}">Portfolio</a></li>
-      <li><a href="{% url 'organizations_admin:settings' slug=org_slug %}">Settings</a></li>
+      <li><a class="{% if request.resolver_match.url_name == 'portfolio' %}is-active{% endif %}" href="{% url 'organizations_admin:portfolio' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-briefcase"></i></span><span class="menu-text">Portfolio</span></a></li>
+      <li><a class="{% if request.resolver_match.url_name == 'settings' %}is-active{% endif %}" href="{% url 'organizations_admin:settings' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-gear"></i></span><span class="menu-text">Settings</span></a></li>
     </ul>
-  {% endif %}
-</nav>
-</aside>
-<main class="column is-9 org-admin-content">{% block content %}{% endblock %}</main>
+  </aside>
+
+  <main id="admin-main" class="admin-content org-admin-content" tabindex="-1">
+    <section class="section">
+      <div class="container">
+        {% block content %}{% endblock %}
+      </div>
+    </section>
+  </main>
 </div>
-</div>
-</section>
-{% endwith %}
-<script>(function(){const p=document.body,m=document.getElementById('orgMobileMenuButton'),b=document.getElementById('orgAdminBackdrop');function c(){p.classList.remove('org-sidebar-open');if(m)m.setAttribute('aria-expanded','false')}if(m)m.onclick=function(){const o=p.classList.toggle('org-sidebar-open');m.setAttribute('aria-expanded',o?'true':'false')};if(b)b.onclick=c;document.addEventListener('keydown',e=>{if(e.key==='Escape')c()})})();</script>
+
+<form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">{% csrf_token %}</form>
+<script>window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'organizations_admin:autocomplete' slug=org_slug %}";</script>
+<script src="{% static 'js/admin_navigation.js' %}"></script>
+<script src="{% static 'js/admin_autocomplete.js' %}"></script>
+<script>
+(function () {
+  const button = document.getElementById('orgMobileMenuButton');
+  const sidebar = document.getElementById('orgAdminSidebar');
+  const backdrop = document.getElementById('orgAdminBackdrop');
+  if (!button || !sidebar || !backdrop) return;
+  const setOpen = (open) => {
+    sidebar.classList.toggle('is-active', open);
+    backdrop.classList.toggle('is-active', open);
+    document.body.classList.toggle('org-admin-sidebar-open', open);
+    button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  button.addEventListener('click', () => setOpen(!sidebar.classList.contains('is-active')));
+  backdrop.addEventListener('click', () => setOpen(false));
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setOpen(false); });
+})();
+</script>
 {% block scripts_extra %}{% endblock %}
+{% endwith %}
 </body>
 </html>
