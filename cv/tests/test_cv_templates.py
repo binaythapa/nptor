@@ -20,21 +20,13 @@ EXPECTED_TEMPLATES = {
 
 class CVTemplateTests(TestCase):
     def test_template_slugs_are_stable(self):
-        template = CVTemplate.objects.create(
-            slug="ats-classic",
-            name="ATS Classic",
-            config={"font": "Arial", "accent": "#111827"},
-        )
+        template = CVTemplate.objects.get(slug="ats-classic")
         self.assertEqual(template.slug, "ats-classic")
-        self.assertEqual(template.config["font"], "Arial")
+        self.assertEqual(template.name, "ATS Classic")
 
     def test_template_configuration_is_independent_of_cv_content(self):
-        template = CVTemplate.objects.create(
-            slug="modern-professional",
-            name="Modern Professional",
-            config={"layout": "two-column"},
-        )
-        self.assertEqual(template.config["layout"], "two-column")
+        template = CVTemplate.objects.get(slug="modern-professional")
+        self.assertIn("layout", template.config)
 
     def test_seed_command_creates_exactly_eight_default_templates(self):
         call_command("seed_cv_templates")
