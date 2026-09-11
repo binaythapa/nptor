@@ -16,6 +16,7 @@ from courses.views.student_library import (
 )
 from courses.views.student_enrollment import enroll_free_course
 from courses.views.certificate import certificate_verify, certificate_download
+from courses.views.instructor_dashboard_view import instructor_dashboard
 
 from courses.views.instructor_views import update_order
 from courses.permissions import (
@@ -109,7 +110,7 @@ urlpatterns = [
 
     path(
         "instructor/dashboard/",
-        instructor_dashboard_access_required(instructor_views.instructor_dashboard),
+        instructor_dashboard_access_required(instructor_dashboard),
         name="instructor_dashboard",
     ),
     path(
