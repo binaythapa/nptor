@@ -3,7 +3,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from courses.models import Course
-from organizations.models import Organization, OrganizationMember, OrganizationStudent
+from organizations.models import Organization, OrganizationMember
 from organizations.models.role import OrganizationRole
 
 
@@ -11,8 +11,18 @@ class OrganizationAdminDashboardTests(TestCase):
     def setUp(self):
         User = get_user_model()
         self.owner = User.objects.create_user(username="owner", password="test-password")
-        self.other_org = Organization.objects.create(name="Other School", slug="other-school", created_by=self.owner)
-        self.organization = Organization.objects.create(name="School", slug="school", created_by=self.owner)
+        self.other_org = Organization.objects.create(
+            name="Other School",
+            slug="other-school",
+            org_type=Organization.TYPE_SCHOOL,
+            created_by=self.owner,
+        )
+        self.organization = Organization.objects.create(
+            name="School",
+            slug="school",
+            org_type=Organization.TYPE_SCHOOL,
+            created_by=self.owner,
+        )
         OrganizationMember.objects.create(
             user=self.owner,
             organization=self.organization,
