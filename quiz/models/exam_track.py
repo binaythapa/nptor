@@ -42,6 +42,13 @@ class ExamTrack(models.Model):
         default=TRACK,
     )
 
+    courses = models.ManyToManyField(
+        "courses.Course",
+        blank=True,
+        related_name="exam_tracks",
+        help_text="Courses included in this track.",
+    )
+
     # =====================================================
     # DYNAMIC PRICING
     # CENTRALIZED SUBSCRIPTION SYSTEM
@@ -155,7 +162,8 @@ class ExamTrack(models.Model):
 
     def has_dynamic_plans(self):
         return self.subscription_plans.filter(
-            is_active=True
+            is_active=True,
+            scope="resource",
         ).exists()
 
     def is_free(self):
