@@ -31,8 +31,7 @@ class PaymentOrder(models.Model):
     RESOURCE_COURSE = "course"
     RESOURCE_TRACK = "track"
     RESOURCE_SUBSCRIPTION = "subscription"
-    # Kept only so historical rows can still be loaded safely.
-    RESOURCE_EXAM = "exam"
+    RESOURCE_EXAM = "exam"  # historical rows only
 
     RESOURCE_TYPE_CHOICES = (
         (RESOURCE_COURSE, "Course"),
@@ -41,90 +40,25 @@ class PaymentOrder(models.Model):
         (RESOURCE_EXAM, "Exam (legacy)"),
     )
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="payment_orders",
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payment_orders")
+    order_number = models.CharField(max_length=50, unique=True, db_index=True)
+    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPE_CHOICES, db_index=True)
 
-    order_number = models.CharField(
-        max_length=50,
-        unique=True,
-        db_index=True,
-    )
-
-    resource_type = models.CharField(
-        max_length=20,
-        choices=RESOURCE_TYPE_CHOICES,
-        db_index=True,
-    )
-
-    course = models.ForeignKey(
-        "courses.Course",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="payment_orders",
-    )
-
-    track = models.ForeignKey(
-        "quiz.ExamTrack",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="payment_orders",
-    )
-
-    exam = models.ForeignKey(
-        "quiz.Exam",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="payment_orders",
-    )
-
-    subscription_plan = models.ForeignKey(
-        "subscriptions.SubscriptionPlan",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="payment_orders",
-    )
+    course = models.ForeignKey("courses.Course", null=True, blank=True, on_delete=models.PROTECT, related_name="payment_orders")
+    track = models.ForeignKey("quiz.ExamTrack", null=True, blank=True, on_delete=models.PROTECT, related_name="payment_orders")
+    exam = models.ForeignKey("quiz.Exam", null=True, blank=True, on_delete=models.PROTECT, related_name="payment_orders")
+    subscription_plan = models.ForeignKey("subscriptions.SubscriptionPlan", null=True, blank=True, on_delete=models.PROTECT, related_name="payment_orders")
 
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    original_amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Original price before applying any discount.",
-    )
-    discount_amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        help_text="Total discount applied to this order.",
-    )
-    coupon = models.ForeignKey(
-        "quiz.Coupon",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="payment_orders",
-    )
+    original_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Original price before applying any discount.")
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"), help_text="Total discount applied to this order.")
+    coupon = models.ForeignKey("quiz.Coupon", null=True, blank=True, on_delete=models.PROTECT, related_name="payment_orders")
     currency = models.CharField(max_length=10, default="INR")
 
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_PENDING,
-        db_index=True,
-    )
-
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True)
     gateway = models.CharField(max_length=50, blank=True, default="", db_index=True)
     gateway_order_id = models.CharField(max_length=255, blank=True, default="", db_index=True)
     gateway_payment_id = models.CharField(max_length=255, blank=True, default="", db_index=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     paid_at = models.DateTimeField(null=True, blank=True)
@@ -139,28 +73,22 @@ class PaymentOrder(models.Model):
 
     def clean(self):
         super().clean()
-
         resources = {
             self.RESOURCE_COURSE: self.course,
             self.RESOURCE_TRACK: self.track,
             self.RESOURCE_SUBSCRIPTION: self.subscription_plan,
             self.RESOURCE_EXAM: self.exam,
         }
-        selected = resources.get(self.resource_type)
-        if selected is None:
+        if resources.get(self.resource_type) is None:
             raise ValidationError({"resource_type": "The selected resource must be provided."})
-
         for resource_type, resource in resources.items():
             if resource_type != self.resource_type and resource is not None:
                 raise ValidationError({"resource_type": "Only one resource can be associated with an order."})
-
         if self.resource_type == self.RESOURCE_SUBSCRIPTION:
-            if not self.subscription_plan.is_all_access():
+            if not self.subscription_plan or not self.subscription_plan.is_all_access():
                 raise ValidationError({"subscription_plan": "Only all-access plans can be purchased as subscriptions."})
-
         if self.resource_type == self.RESOURCE_EXAM:
             raise ValidationError({"resource_type": "Individual exam purchases are no longer supported."})
-
         if self.amount is not None and self.amount < Decimal("0"):
             raise ValidationError({"amount": "Order amount cannot be negative."})
         if self.original_amount is not None and self.original_amount < Decimal("0"):
@@ -189,7 +117,7 @@ class PaymentOrder(models.Model):
 
 
 class PaymentTransaction(models.Model):
-    """Record of a payment attempt. One order can have multiple attempts."""
+    """Immutable-ish record of a payment attempt."""
 
     STATUS_CREATED = "created"
     STATUS_PENDING = "pending"
@@ -205,24 +133,22 @@ class PaymentTransaction(models.Model):
         (STATUS_REFUNDED, "Refunded"),
     )
 
-    order = models.ForeignKey(
-        PaymentOrder,
-        on_delete=models.CASCADE,
-        related_name="transactions",
-    )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_CREATED, db_index=True)
+    gateway = models.CharField(max_length=50, db_index=True)
     gateway_transaction_id = models.CharField(max_length=255, blank=True, default="", db_index=True)
-    gateway_response = models.JSONField(default=dict, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=10, default="INR")
+    currency = models.CharField(max_length=10)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, db_index=True, default=STATUS_CREATED)
+    failure_reason = models.TextField(blank=True, default="")
+    raw_response = models.JSONField(blank=True, default=dict)
+    order = models.ForeignKey(PaymentOrder, on_delete=models.PROTECT, related_name="transactions")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
         indexes = [
+            models.Index(fields=["gateway", "gateway_transaction_id"]),
             models.Index(fields=["order", "status"]),
-            models.Index(fields=["gateway_transaction_id"]),
         ]
 
     def __str__(self):
