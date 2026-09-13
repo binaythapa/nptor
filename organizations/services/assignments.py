@@ -15,7 +15,7 @@ from quiz.models import Exam, ExamTrack
 
 
 class AssignmentError(Exception):
-    pass
+    """Base exception for assignment service errors."""
 class InvalidAssignmentError(AssignmentError):
     pass
 class StudentNotInOrganizationError(AssignmentError):
@@ -85,7 +85,6 @@ def _resource_filter(*, resource_type, resource):
 def _get_resource(*, resource_type, resource_id, organization):
     if not resource_id:
         raise InvalidAssignmentError("A resource ID is required.")
-
     if resource_type == ResourceAssignment.RESOURCE_COURSE:
         resource = Course.objects.filter(pk=resource_id).first()
         if not resource:
@@ -93,48 +92,35 @@ def _get_resource(*, resource_type, resource_id, organization):
         if resource.organization_id is not None and resource.organization_id != organization.id:
             raise ResourceNotAvailableError("This course is not available to this organization.")
         return resource
-
     if resource_type == ResourceAssignment.RESOURCE_TRACK:
         resource = ExamTrack.objects.filter(pk=resource_id, organization=organization).first()
         if not resource:
             raise ResourceNotAvailableError("Exam track not found or is not available to this organization.")
         return resource
-
-    # Exams remain reusable content. They are intentionally not a standalone
-    # student-assignment resource; assign the Course or Track containing them.
     if resource_type == ResourceAssignment.RESOURCE_EXAM:
         raise InvalidAssignmentError("Exams cannot be assigned directly. Assign the Course or Track containing the Exam.")
-
     raise InvalidAssignmentError("Unsupported resource type.")
 
 
 def _find_active_assignment(*, student, organization, resource_type, resource):
-    filters = {
-        "student": student, "organization": organization,
-        "resource_type": resource_type, "is_active": True,
-    }
+    filters = {"student": student, "organization": organization, "resource_type": resource_type, "is_active": True}
     filters.update(_resource_filter(resource_type=resource_type, resource=resource))
     return ResourceAssignment.objects.filter(**filters).first()
 
 
 def _find_latest_assignment(*, student, organization, resource_type, resource):
-    filters = {
-        "student": student, "organization": organization,
-        "resource_type": resource_type,
-    }
+    filters = {"student": student, "organization": organization, "resource_type": resource_type}
     filters.update(_resource_filter(resource_type=resource_type, resource=resource))
     return ResourceAssignment.objects.filter(**filters).order_by("-assigned_at").first()
 
 
 def _get_or_create_resource_access(*, student, organization, resource_type, resource, assignment, expires_at=None):
-    filters = {
-        "user": student, "organization": organization,
-        "resource_type": resource_type,
-        "source": ResourceAccess.SOURCE_ORGANIZATION,
-    }
+    filters = {"user": student, "organization": organization, "resource_type": resource_type, "source": ResourceAccess.SOURCE_ORGANIZATION}
     filters.update(_resource_filter(resource_type=resource_type, resource=resource))
-    defaults = {"assignment": assignment, "is_active": True, "expires_at": expires_at}
-    access, created = ResourceAccess.objects.get_or_create(**filters, defaults=defaults)
+    access, created = ResourceAccess.objects.get_or_create(
+        **filters,
+        defaults={"assignment": assignment, "is_active": True, "expires_at": expires_at},
+    )
     if created:
         return access
     update_fields = []
@@ -155,37 +141,20 @@ def _get_or_create_resource_access(*, student, organization, resource_type, reso
 
 @transaction.atomic
 def assign_resource(*, student, organization, resource_type, resource_id, actor, starts_at=None, due_at=None, expires_at=None, notes="", allow_reactivate=False):
-    """Assign a Course or Track to an organization student."""
+    """Assign an organization Course or Track to a student."""
     if organization is None:
         raise InvalidAssignmentError("An organization is required.")
     if not organization.is_active:
         raise InvalidAssignmentError("Cannot create assignments for an inactive organization.")
-
     _validate_actor(actor=actor, organization=organization)
     _validate_student(student=student, organization=organization)
-
-    valid_types = {
-        ResourceAssignment.RESOURCE_COURSE,
-        ResourceAssignment.RESOURCE_TRACK,
-    }
-    if resource_type not in valid_types:
+    if resource_type not in {ResourceAssignment.RESOURCE_COURSE, ResourceAssignment.RESOURCE_TRACK}:
         raise InvalidAssignmentError("Only Courses and Tracks can be assigned to students.")
-
     _validate_dates(starts_at=starts_at, due_at=due_at, expires_at=expires_at)
     resource = _get_resource(resource_type=resource_type, resource_id=resource_id, organization=organization)
-
-    active_assignment = _find_active_assignment(
-        student=student, organization=organization,
-        resource_type=resource_type, resource=resource,
-    )
-    if active_assignment:
+    if _find_active_assignment(student=student, organization=organization, resource_type=resource_type, resource=resource):
         raise DuplicateActiveAssignmentError("This resource is already assigned to this student.")
-
-    historical_assignment = _find_latest_assignment(
-        student=student, organization=organization,
-        resource_type=resource_type, resource=resource,
-    )
-
+    historical_assignment = _find_latest_assignment(student=student, organization=organization, resource_type=resource_type, resource=resource)
     if historical_assignment and allow_reactivate:
         assignment = historical_assignment
         assignment.assigned_by = actor
@@ -212,17 +181,11 @@ def assign_resource(*, student, organization, resource_type, resource_id, actor,
         else:
             assignment.track = resource
         assignment.save()
-
     access = _get_or_create_resource_access(
-        student=student, organization=organization,
-        resource_type=resource_type, resource=resource,
-        assignment=assignment, expires_at=expires_at,
+        student=student, organization=organization, resource_type=resource_type,
+        resource=resource, assignment=assignment, expires_at=expires_at,
     )
-    return AssignmentResult(
-        assignment=assignment,
-        access=access,
-        created=not bool(historical_assignment and allow_reactivate),
-    )
+    return AssignmentResult(assignment=assignment, access=access, created=not bool(historical_assignment and allow_reactivate))
 
 
 @transaction.atomic
@@ -240,4 +203,60 @@ def revoke_assignment(*, assignment, actor, reason=""):
     assignment.revoke_reason = reason or ""
     assignment.save()
     ResourceAccess.objects.filter(assignment=assignment, is_active=True).update(is_active=False, revoked_at=now)
+    return assignment
+
+
+@transaction.atomic
+def cancel_assignment(*, assignment, actor, reason=""):
+    if assignment is None:
+        raise InvalidAssignmentError("An assignment is required.")
+    _validate_actor(actor=actor, organization=assignment.organization)
+    if not assignment.is_active:
+        return assignment
+    now = timezone.now()
+    assignment.is_active = False
+    assignment.status = ResourceAssignment.STATUS_CANCELLED
+    assignment.revoked_at = now
+    assignment.revoked_by = actor
+    assignment.revoke_reason = reason or ""
+    assignment.save()
+    ResourceAccess.objects.filter(assignment=assignment, is_active=True).update(is_active=False, revoked_at=now)
+    return assignment
+
+
+def start_assignment(*, assignment):
+    if assignment is None:
+        raise InvalidAssignmentError("An assignment is required.")
+    if not assignment.is_active:
+        raise InvalidAssignmentError("Cannot start an inactive assignment.")
+    if assignment.status != ResourceAssignment.STATUS_ASSIGNED:
+        return assignment
+    assignment.status = ResourceAssignment.STATUS_STARTED
+    assignment.save(update_fields=["status", "updated_at"])
+    return assignment
+
+
+def complete_assignment(*, assignment):
+    if assignment is None:
+        raise InvalidAssignmentError("An assignment is required.")
+    if not assignment.is_active:
+        raise InvalidAssignmentError("Cannot complete an inactive assignment.")
+    assignment.status = ResourceAssignment.STATUS_COMPLETED
+    assignment.completed_at = timezone.now()
+    assignment.save(update_fields=["status", "completed_at", "updated_at"])
+    return assignment
+
+
+def expire_assignment(*, assignment):
+    if assignment is None:
+        raise InvalidAssignmentError("An assignment is required.")
+    if not assignment.is_active:
+        return assignment
+    now = timezone.now()
+    assignment.is_active = False
+    assignment.status = ResourceAssignment.STATUS_EXPIRED
+    if assignment.revoked_at is None:
+        assignment.revoked_at = now
+    assignment.save(update_fields=["is_active", "status", "revoked_at", "updated_at"])
+    ResourceAccess.objects.filter(assignment=assignment, is_active=True).update(is_active=False, revoked_at=assignment.revoked_at)
     return assignment
