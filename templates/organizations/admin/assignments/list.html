@@ -1,50 +1,54 @@
 {% extends "organizations/admin/base.html" %}
 
+{% block title %}Student Assignments{% endblock %}
+
 {% block content %}
-
 {% with org_slug=request.organization.slug %}
+<div class="container py-5">
+  <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
+    <div>
+      <h1 class="title is-3 mb-2">Student Assignments</h1>
+      <p class="subtitle is-6 has-text-grey">Manage Courses and Tracks assigned to your organization's students.</p>
+    </div>
+    <a href="{% url 'organizations_admin:assignment_create' slug=org_slug %}" class="button is-primary">+ Assign Resource</a>
+  </div>
 
-<h2 class="title is-4">📝 Assignments</h2>
+  <div class="notification is-info is-light mb-5">
+    Organization Courses and Tracks are internal learning resources. Students receive access through assignments; they do not purchase these resources.
+  </div>
 
-<a href="{% url 'organizations_admin:assignment_create' slug=org_slug %}"
-   class="button is-primary mb-4">
-  ➕ Assign Course
-</a>
-
-<table class="table is-fullwidth is-striped is-hoverable">
-  <thead>
-    <tr>
-      <th>Student</th>
-      <th>Course</th>
-      <th>Assigned On</th>
-      <th class="has-text-right">Action</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    {% for a in assignments %}
-    <tr>
-      <td>{{ a.student.email }}</td>
-      <td>{{ a.course.title }}</td>
-      <td>{{ a.assigned_at|date:"d M Y" }}</td>
-      <td class="has-text-right">
-        <a href="{% url 'organizations_admin:assignment_remove' slug=org_slug assignment_id=a.id %}"
-           class="button is-danger is-small"
-           onclick="return confirm('Remove assignment?')">
-          Remove
-        </a>
-      </td>
-    </tr>
-    {% empty %}
-    <tr>
-      <td colspan="4" class="has-text-centered has-text-grey">
-        No assignments yet.
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
+  <div class="card">
+    <div class="card-content p-0">
+      <div class="table-container">
+        <table class="table is-fullwidth is-hoverable mb-0">
+          <thead>
+            <tr><th>Student</th><th>Resource</th><th>Type</th><th>Status</th><th>Assigned On</th><th class="has-text-right">Action</th></tr>
+          </thead>
+          <tbody>
+            {% for a in assignments %}
+            <tr>
+              <td>{{ a.student.get_full_name|default:a.student.email }}</td>
+              <td>{% if a.course %}{{ a.course.title }}{% elif a.track %}{{ a.track.title }}{% elif a.exam %}{{ a.exam.title }}{% else %}—{% endif %}</td>
+              <td>{% if a.course %}Course{% elif a.track %}Track{% else %}Exam{% endif %}</td>
+              <td><span class="tag {% if a.is_active %}is-success is-light{% else %}is-light{% endif %}">{{ a.get_status_display }}</span></td>
+              <td>{{ a.assigned_at|date:"d M Y" }}</td>
+              <td class="has-text-right">
+                {% if a.is_active %}
+                <form method="post" action="{% url 'organizations_admin:assignment_remove' slug=org_slug assignment_id=a.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="button is-danger is-small" onclick="return confirm('Revoke this assignment?')">Revoke</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="has-text-centered has-text-grey py-6">No student assignments yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endwith %}
-
 {% endblock %}
