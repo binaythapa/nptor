@@ -17,20 +17,6 @@ def _track_formset(request, track, organization):
     )
 
 
-def _save_selected_exams(track, exams):
-    selected = list(exams or [])
-    selected_ids = {exam.pk for exam in selected}
-    TrackExam.objects.filter(track=track).exclude(exam_id__in=selected_ids).delete()
-    existing = {row.exam_id: row for row in TrackExam.objects.filter(track=track)}
-    for order, exam in enumerate(selected, start=1):
-        row = existing.get(exam.pk)
-        if row is None:
-            TrackExam.objects.create(track=track, exam=exam, order=order)
-        elif row.order != order:
-            row.order = order
-            row.save(update_fields=["order"])
-
-
 def _organization_exams_are_valid(form, organization):
     exams = list(form.cleaned_data.get("exams") or [])
     invalid = [exam for exam in exams if exam.organization_id != organization.id]
@@ -57,20 +43,23 @@ def org_track_list(request, slug):
 @org_admin_required
 def org_track_create(request, slug):
     org = request.organization
-    if request.method == "POST":
-        form = ExamTrackForm(request.POST, organization=org)
-        if form.is_valid() and _organization_exams_are_valid(form, org):
-            track = form.save(commit=False)
-            track.organization = org
-            track.save()
-            _save_selected_exams(track, form.cleaned_data.get("exams"))
-            return redirect("organizations_admin:org_track_exams", slug=slug, pk=track.pk)
-    else:
-        form = ExamTrackForm(organization=org)
+    track = ExamTrack(organization=org)
+    form = ExamTrackForm(request.POST or None, instance=track, organization=org)
+    formset = _track_formset(request, track, org)
+
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        track = form.save(commit=False)
+        track.organization = org
+        track.save()
+        formset.instance = track
+        formset.save()
+        messages.success(request, f'Track "{track.title}" created successfully with its exam progression rules.')
+        return redirect("organizations_admin:org_track_list", slug=slug)
+
     return render(
         request,
         "organizations/admin/tracks/create.html",
-        {"form": form, "org": org},
+        {"form": form, "formset": formset, "org": org},
     )
 
 
@@ -78,20 +67,22 @@ def org_track_create(request, slug):
 def org_track_edit(request, slug, pk):
     org = request.organization
     track = get_object_or_404(ExamTrack, pk=pk, organization=org)
-    if request.method == "POST":
-        form = ExamTrackForm(request.POST, instance=track, organization=org)
-        if form.is_valid() and _organization_exams_are_valid(form, org):
-            updated = form.save(commit=False)
-            updated.organization = org
-            updated.save()
-            _save_selected_exams(track, form.cleaned_data.get("exams"))
-            return redirect("organizations_admin:org_track_exams", slug=slug, pk=track.pk)
-    else:
-        form = ExamTrackForm(instance=track, organization=org)
+    form = ExamTrackForm(request.POST or None, instance=track, organization=org)
+    formset = _track_formset(request, track, org)
+
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        updated = form.save(commit=False)
+        updated.organization = org
+        updated.save()
+        formset.instance = updated
+        formset.save()
+        messages.success(request, f'Included exams and prerequisites updated for "{track.title}".')
+        return redirect("organizations_admin:org_track_list", slug=slug)
+
     return render(
         request,
         "organizations/admin/tracks/edit.html",
-        {"form": form, "track": track, "org": org},
+        {"form": form, "formset": formset, "track": track, "org": org},
     )
 
 
