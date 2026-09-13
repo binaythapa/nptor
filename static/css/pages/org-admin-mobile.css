@@ -1,19 +1,31 @@
 /* ==========================================================
    ORGANIZATION ADMIN EXPERIENCE
-   Organization pages reuse the platform admin visual system.
+   Shared platform-style header/sidebar with the original
+   organization page content styling preserved.
 ========================================================== */
 
 .org-admin-page {
     min-width: 0;
     overflow-x: hidden;
+    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
 }
 
 .org-admin-page .org-admin-layout {
     min-width: 0;
 }
 
+/* Keep organization content on the existing Bulma/theme layout. */
 .org-admin-page .org-admin-content {
     min-width: 0;
+    flex: 1 1 auto;
+    width: auto;
+    padding: 0;
+    overflow-x: auto;
+    background: var(--bg);
+    color: var(--text);
 }
 
 .org-admin-page .org-admin-header .admin-brand {
@@ -77,6 +89,17 @@
     min-width: 0;
 }
 
+@media (max-width: 1023px) {
+    .org-admin-page .org-admin-shell {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .org-dashboard .org-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
     .org-admin-page .org-admin-header .admin-header-inner {
         min-height: 56px;
@@ -109,16 +132,17 @@
         transform: translateX(0);
     }
 
-    .org-admin-page .admin-content {
+    .org-admin-page .org-admin-content {
         width: 100%;
-        padding: 20px 16px 32px;
-    }
-
-    .org-admin-page .admin-content > .section {
         padding: 0;
+        overflow-x: hidden;
     }
 
-    .org-admin-page .admin-content > .section > .container {
+    .org-admin-page .org-admin-content > .section {
+        padding: 1rem .75rem 2rem;
+    }
+
+    .org-admin-page .org-admin-content > .section > .container {
         width: 100%;
     }
 
@@ -163,7 +187,7 @@
         display: none;
     }
 
-    .org-admin-page .admin-content {
+    .org-admin-page .org-admin-content > .section {
         padding-left: .65rem;
         padding-right: .65rem;
     }
