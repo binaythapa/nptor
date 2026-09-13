@@ -116,8 +116,19 @@ def admin_autocomplete(request):
         qs = Question.objects.filter(text__istartswith=query).order_by("id")[:SEARCH_LIMIT]
         results = [_result(item.id, strip_tags(item.text or "").strip()[:160]) for item in qs]
     elif scope == "categories":
-        qs = Category.objects.filter(is_active=True, name__istartswith=query).order_by("name")[:SEARCH_LIMIT]
-        results = [_result(item.id, item.name) for item in qs]
+        qs = _tenant_queryset(
+            Category.objects.filter(is_active=True, name__istartswith=query),
+            request,
+            include_global=True,
+        ).select_related("domain", "parent").order_by("name")[:SEARCH_LIMIT]
+        results = [
+            _result(
+                item.id,
+                item.full_path(),
+                item.domain.name if item.domain else "",
+            )
+            for item in qs
+        ]
     elif scope == "domains":
         qs = __import__("quiz.models", fromlist=["Domain"]).Domain.objects.filter(
             is_active=True, name__istartswith=query
