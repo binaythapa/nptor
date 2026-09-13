@@ -2,6 +2,7 @@ from django.utils import timezone
 
 from courses.models import Course
 from organizations.models import OrganizationMember, ResourceAssignment
+from quiz.models import Exam, ExamTrack
 
 
 def get_overview(organization):
@@ -16,12 +17,24 @@ def get_overview(organization):
             ResourceAssignment.STATUS_REVOKED,
         ]
     )
+
     return {
         "students": students.count(),
-        "courses": Course.objects.filter(organization=organization, is_published=True).count(),
+        "courses": Course.objects.filter(
+            organization=organization,
+            is_published=True,
+        ).count(),
+        "tracks": ExamTrack.objects.filter(organization=organization).count(),
+        "exams": Exam.objects.filter(organization=organization).count(),
         "assignments": assignments.count(),
-        "assigned_exams": assignments.filter(resource_type=ResourceAssignment.RESOURCE_EXAM).count(),
+        "assigned_exams": assignments.filter(
+            resource_type=ResourceAssignment.RESOURCE_EXAM,
+        ).count(),
         "overdue_assignments": overdue.count(),
-        "not_started": assignments.filter(status=ResourceAssignment.STATUS_ASSIGNED).count(),
-        "recent_assignments": assignments.select_related("student", "course", "track", "exam").order_by("-assigned_at")[:10],
+        "not_started": assignments.filter(
+            status=ResourceAssignment.STATUS_ASSIGNED,
+        ).count(),
+        "recent_assignments": assignments.select_related(
+            "student", "course", "track", "exam"
+        ).order_by("-assigned_at")[:10],
     }
