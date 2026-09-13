@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
@@ -36,7 +37,7 @@ def org_track_create(request, slug):
             track = form.save(commit=False)
             track.organization = org
             track.save()
-            return redirect("organizations_admin:org_track_list", slug=slug)
+            return redirect("organizations_admin:org_track_exams", slug=slug, pk=track.pk)
     else:
         form = ExamTrackForm(organization=org)
     return render(
@@ -56,13 +57,29 @@ def org_track_edit(request, slug, pk):
             updated = form.save(commit=False)
             updated.organization = org
             updated.save()
-            return redirect("organizations_admin:org_track_list", slug=slug)
+            return redirect("organizations_admin:org_track_exams", slug=slug, pk=track.pk)
     else:
         form = ExamTrackForm(instance=track, organization=org)
     return render(
         request,
         "organizations/admin/tracks/edit.html",
         {"form": form, "track": track, "org": org},
+    )
+
+
+@org_admin_required
+def org_track_exams(request, slug, pk):
+    org = request.organization
+    track = get_object_or_404(ExamTrack, pk=pk, organization=org)
+    formset = _track_formset(request, track, org)
+    if request.method == "POST" and formset.is_valid():
+        formset.save()
+        messages.success(request, f'Included exams and prerequisites updated for "{track.title}".')
+        return redirect("organizations_admin:org_track_list", slug=slug)
+    return render(
+        request,
+        "organizations/admin/tracks/exams.html",
+        {"formset": formset, "track": track, "org": org},
     )
 
 
