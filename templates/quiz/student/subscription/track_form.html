@@ -29,7 +29,7 @@
                     </div>
                 </div>
                 {% for field in form %}
-                    {% if field.name != "exams" and field.name != "subscription_scope" and field.name != "subscription_plans" and field.name != "pricing_type" and field.name != "monthly_price" and field.name != "lifetime_price" and field.name != "trial_days" and field.name != "currency" and field.name != "is_active" %}
+                    {% if field.name != "exams" and field.name != "subscription_scope" and field.name != "subscription_plans" and field.name != "pricing_type" and field.name != "monthly_price" and field.name != "lifetime_price" and field.name != "trial_days" and field.name != "currency" and field.name != "is_active" and field.name != "organization" %}
                     <div class="admin-exam-field">
                         <label class="admin-exam-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                         <div class="admin-exam-control">{% render_field field class+="input" %}</div>
@@ -104,7 +104,6 @@
                             </div>
                         </div>
                         {% endif %}
-                    {% empty %}
                     {% endfor %}
                 </div>
 
