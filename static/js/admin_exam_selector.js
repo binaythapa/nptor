@@ -1,6 +1,6 @@
 /* =========================================================
-   NPTOR ADMIN EXAM SELECTOR
-   Server-side prefix search for large Course/Track exam lists.
+   NPTOR ADMIN SEARCHABLE MULTI-SELECT
+   Server-side prefix search for large Course/Track/Category lists.
    ========================================================= */
 (function () {
     "use strict";
@@ -34,8 +34,14 @@
             .admin-exam-selector-option,.admin-search-select-option { display:block; width:100%; padding:10px 12px; border:0; border-bottom:1px solid #f1f5f9; background:#fff; color:#111827; text-align:left; cursor:pointer; }
             .admin-exam-selector-option:hover,.admin-search-select-option:hover { background:#eff6ff; }
             .admin-exam-selector-empty,.admin-search-select-empty { padding:10px 12px; color:#64748b; font-size:.82rem; }
+            .admin-search-select-count { margin-top:6px; color:#64748b; font-size:.75rem; }
         `;
         document.head.appendChild(style);
+    }
+
+    function organizationIdFor(select, form) {
+        const field = form.querySelector("select[name='organization'], select[name$='-organization'], input[name='organization'], input[name$='-organization']");
+        return field ? field.value : (select.dataset.autocompleteOrganization || "");
     }
 
     function attach(select) {
@@ -71,9 +77,9 @@
             input = document.createElement("input");
             input.type = "text";
             input.className = "admin-exam-selector-input";
-            input.placeholder = select.dataset.searchPlaceholder || "Search exams...";
+            input.placeholder = select.dataset.searchPlaceholder || "Search...";
             input.autocomplete = "off";
-            input.setAttribute("aria-label", "Search exams");
+            input.setAttribute("aria-label", "Search");
             wrapper.insertBefore(input, select);
             selectedContainer = document.createElement("div");
             selectedContainer.className = "admin-exam-selector-selected";
@@ -164,8 +170,9 @@
             if (!query) return;
             timer = setTimeout(function () {
                 const current = ++requestId;
-                const params = new URLSearchParams({scope: "exams", q: query});
-                const organization = select.dataset.autocompleteOrganization;
+                const scope = select.dataset.autocompleteScope || "exams";
+                const params = new URLSearchParams({scope: scope, q: query});
+                const organization = organizationIdFor(select, form);
                 if (organization) params.set("organization", organization);
                 if (select.dataset.autocompleteTrackExamsOnly === "true") {
                     const ids = trackExamIds();
@@ -186,8 +193,9 @@
                         const optionClass = useExisting ? "admin-search-select-option" : "admin-exam-selector-option";
                         const emptyClass = useExisting ? "admin-search-select-empty" : "admin-exam-selector-empty";
                         menu.innerHTML = results.length ? results.map(function (item, index) {
-                            return '<button type="button" class="' + optionClass + '" data-index="' + index + '">' + escapeHtml(item.label) + '</button>';
-                        }).join("") : '<div class="' + emptyClass + '">No matching exams</div>';
+                            const subtitle = item.subtitle ? '<small>' + escapeHtml(item.subtitle) + '</small>' : '';
+                            return '<button type="button" class="' + optionClass + '" data-index="' + index + '">' + escapeHtml(item.label) + subtitle + '</button>';
+                        }).join("") : '<div class="' + emptyClass + '">No matching ' + escapeHtml(scope) + '</div>';
                         menu.classList.add("is-open");
                         menu.querySelectorAll("button").forEach(function (button, index) {
                             button.addEventListener("mousedown", function (event) { event.preventDefault(); });
@@ -210,7 +218,7 @@
     }
 
     function init(root) {
-        (root || document).querySelectorAll("select[multiple][name$='exams']").forEach(attach);
+        (root || document).querySelectorAll("select[multiple][data-admin-search-select='true']").forEach(attach);
     }
 
     function start() {
