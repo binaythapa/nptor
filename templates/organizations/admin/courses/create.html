@@ -1,0 +1,188 @@
+{% extends "organizations/admin/base.html" %}
+{% load static widget_tweaks %}
+
+{% block title %}Create Course{% endblock %}
+
+{% block head_extra %}
+<style>
+  .org-course-page { max-width: 1080px; margin: 0 auto; }
+  .org-course-header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:24px; }
+  .org-course-title { margin:0; color:#111827; font-size:clamp(1.55rem,2.4vw,2rem); font-weight:750; letter-spacing:-.025em; }
+  .org-course-subtitle { margin:7px 0 0; color:#6b7280; font-size:.9rem; }
+  .org-course-back { flex-shrink:0; }
+  .org-course-card { margin-bottom:20px; padding:24px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+  .org-course-card:last-of-type { margin-bottom:0; }
+  .org-course-card-title { margin:0 0 18px; color:#111827; font-size:1rem; font-weight:750; }
+  .org-course-field { margin-bottom:18px; }
+  .org-course-field:last-child { margin-bottom:0; }
+  .org-course-label { display:block; margin-bottom:7px; color:#374151; font-size:.78rem; font-weight:700; }
+  .org-course-control .input,
+  .org-course-control select,
+  .org-course-control textarea,
+  .org-course-control input[type="file"] { width:100%; min-height:42px; box-sizing:border-box; border:1px solid #d8dde6; border-radius:8px; box-shadow:none; background:#fff; color:#1f2937; font-size:.88rem; }
+  .org-course-control .input { padding:0 12px; }
+  .org-course-control textarea { min-height:120px; padding:10px 12px; resize:vertical; }
+  .org-course-control select { padding:0 36px 0 12px; }
+  .org-course-control input[type="file"] { padding:8px 10px; }
+  .org-course-control .input:focus,
+  .org-course-control select:focus,
+  .org-course-control textarea:focus,
+  .org-course-control input[type="file"]:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); outline:none; }
+  .org-course-help { margin-top:6px; color:#6b7280; font-size:.76rem; line-height:1.45; }
+  .org-course-error { margin-top:6px; color:#b42318; font-size:.75rem; }
+  .org-course-exams { padding:12px 14px; border:1px solid #d8dde6; border-radius:8px; background:#fff; }
+  .org-course-exams .admin-search-select { width:100%; }
+  .org-course-section-list { display:flex; flex-direction:column; gap:10px; }
+  .org-course-section { position:relative; padding:18px 52px 18px 16px; border:1px solid #e2e6ed; border-radius:10px; background:#f8fafc; }
+  .org-course-section-grid { display:grid; grid-template-columns:minmax(0,1fr) 110px; gap:14px; }
+  .org-course-section .input { width:100%; min-height:40px; box-sizing:border-box; border:1px solid #d8dde6; border-radius:8px; box-shadow:none; padding:0 10px; }
+  .org-course-remove { position:absolute; top:14px; right:12px; border:1px solid #fecaca; border-radius:6px; background:#fff; color:#b42318; padding:5px 9px; font-size:.72rem; font-weight:650; cursor:pointer; }
+  .org-course-remove:hover { background:#fff1f2; }
+  .org-course-add { margin-top:14px; }
+  .org-course-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:22px; }
+  .org-course-button { display:inline-flex; align-items:center; justify-content:center; min-height:40px; padding:0 16px; border-radius:8px; font-size:.83rem; font-weight:700; text-decoration:none; cursor:pointer; }
+  .org-course-button-primary { border:1px solid #2563eb; background:#2563eb; color:#fff; }
+  .org-course-button-primary:hover { background:#1d4ed8; color:#fff; }
+  .org-course-button-secondary { border:1px solid #d8dde6; background:#fff; color:#374151; }
+  .org-course-button-secondary:hover { background:#f8fafc; color:#111827; }
+  @media(max-width:700px){
+    .org-course-header { flex-direction:column; }
+    .org-course-back { width:100%; }
+    .org-course-back .org-course-button { width:100%; }
+    .org-course-card { padding:18px; }
+    .org-course-section-grid { grid-template-columns:1fr; }
+    .org-course-actions { flex-direction:column-reverse; align-items:stretch; }
+    .org-course-button { width:100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% with org_slug=request.organization.slug %}
+<div class="org-course-page">
+  <div class="org-course-header">
+    <div>
+      <h1 class="org-course-title">Create New Course</h1>
+      <p class="org-course-subtitle">Create a private course for {{ request.organization.name }}.</p>
+    </div>
+    <div class="org-course-back">
+      <a href="{% url 'organizations_admin:org_course_list' slug=org_slug %}" class="org-course-button org-course-button-secondary">← Back to Courses</a>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="notification is-danger is-light">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="org-course-card">
+      <h2 class="org-course-card-title">Course Details</h2>
+      {% for field in form %}
+        {% if field.name != "exams" %}
+          <div class="org-course-field">
+            <label class="org-course-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="has-text-danger">*</span>{% endif %}</label>
+            <div class="org-course-control">
+              {% if field.name == "description" %}
+                {% render_field field class+="textarea" %}
+              {% elif field.name == "thumbnail" %}
+                {{ field }}
+              {% else %}
+                {% render_field field class+="input" %}
+              {% endif %}
+            </div>
+            {% if field.help_text %}<p class="org-course-help">{{ field.help_text }}</p>{% endif %}
+            {% for error in field.errors %}<p class="org-course-error">{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="org-course-field">
+        <label class="org-course-label" for="{{ form.exams.id_for_label }}">{{ form.exams.label }}</label>
+        <div class="org-course-exams">{{ form.exams }}</div>
+        {% if form.exams.help_text %}<p class="org-course-help">{{ form.exams.help_text }}</p>{% endif %}
+        {% for error in form.exams.errors %}<p class="org-course-error">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="org-course-card">
+      <h2 class="org-course-card-title">Sections</h2>
+      {{ formset.management_form }}
+      {% if formset.non_form_errors %}<div class="notification is-danger is-light">{{ formset.non_form_errors }}</div>{% endif %}
+
+      <div id="section-formset" class="org-course-section-list">
+        {% for section_form in formset %}
+          <div class="org-course-section">
+            {{ section_form.id }}
+            <div class="org-course-section-grid">
+              <div>
+                <label class="org-course-label" for="{{ section_form.title.id_for_label }}">{{ section_form.title.label }}</label>
+                {% render_field section_form.title class+="input" %}
+                {% for error in section_form.title.errors %}<p class="org-course-error">{{ error }}</p>{% endfor %}
+              </div>
+              <div>
+                <label class="org-course-label" for="{{ section_form.order.id_for_label }}">{{ section_form.order.label }}</label>
+                {% render_field section_form.order class+="input" %}
+                {% for error in section_form.order.errors %}<p class="org-course-error">{{ error }}</p>{% endfor %}
+              </div>
+            </div>
+            <button type="button" class="org-course-remove" onclick="removeSection(this)">Remove</button>
+          </div>
+        {% endfor %}
+      </div>
+
+      <template id="section-empty-form">
+        <div class="org-course-section">
+          {{ formset.empty_form.id }}
+          <div class="org-course-section-grid">
+            <div>
+              <label class="org-course-label" for="{{ formset.empty_form.title.id_for_label }}">{{ formset.empty_form.title.label }}</label>
+              {% render_field formset.empty_form.title class+="input" %}
+            </div>
+            <div>
+              <label class="org-course-label" for="{{ formset.empty_form.order.id_for_label }}">{{ formset.empty_form.order.label }}</label>
+              {% render_field formset.empty_form.order class+="input" %}
+            </div>
+          </div>
+          <button type="button" class="org-course-remove" onclick="removeSection(this)">Remove</button>
+        </div>
+      </template>
+      <button type="button" id="add-section" class="org-course-button org-course-button-secondary org-course-add">+ Add Section</button>
+    </div>
+
+    <div class="org-course-actions">
+      <a href="{% url 'organizations_admin:org_course_list' slug=org_slug %}" class="org-course-button org-course-button-secondary">Cancel</a>
+      <button type="submit" class="org-course-button org-course-button-primary">Create Course</button>
+    </div>
+  </form>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'quiz:admin_autocomplete' %}";
+
+(function () {
+  const formset = document.getElementById("section-formset");
+  const totalForms = document.getElementById("id_sections-TOTAL_FORMS");
+  const template = document.getElementById("section-empty-form");
+  const addButton = document.getElementById("add-section");
+
+  if (!formset || !totalForms || !template || !addButton) return;
+
+  addButton.addEventListener("click", function () {
+    const index = parseInt(totalForms.value, 10);
+    const html = template.innerHTML.replace(/__prefix__/g, index);
+    formset.insertAdjacentHTML("beforeend", html);
+    totalForms.value = index + 1;
+  });
+
+  window.removeSection = function (button) {
+    const section = button.closest(".org-course-section");
+    if (!section) return;
+    section.remove();
+    totalForms.value = formset.querySelectorAll(".org-course-section").length;
+  };
+})();
+</script>
+<script src="{% static 'js/admin_exam_selector.js' %}"></script>
+{% endblock %}
