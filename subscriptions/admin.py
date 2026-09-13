@@ -7,57 +7,67 @@ from .models import (
 )
 
 
-# ============================================================
-# SUBSCRIPTION PLAN
-# ============================================================
-
 @admin.register(SubscriptionPlan)
 class SubscriptionPlanAdmin(admin.ModelAdmin):
-
     list_display = (
         "name",
         "code",
-        "scope",
+        "product_type",
         "price",
         "currency",
-        "duration_days",
+        "billing_interval",
         "is_active",
         "created_at",
     )
 
     list_filter = (
-        "scope",
+        "product_type",
+        "access_mode",
+        "interval_unit",
         "is_active",
         "currency",
-        "duration_days",
         "created_at",
     )
 
-    search_fields = (
-        "name",
-        "code",
-        "description",
+    search_fields = ("name", "code", "description")
+
+    readonly_fields = ("created_at", "updated_at")
+
+    fieldsets = (
+        ("Plan", {
+            "fields": (
+                "name",
+                "code",
+                "description",
+                "product_type",
+                "access_mode",
+                "max_courses",
+                "max_tracks",
+            )
+        }),
+        ("Billing", {
+            "fields": (
+                "price",
+                "currency",
+                "interval_unit",
+                "interval_count",
+            ),
+            "description": "Use an explicit interval for new plans. Choose Lifetime for one-time lifetime access.",
+        }),
+        ("Status", {"fields": ("is_active",)}),
+        ("Audit", {"fields": ("created_at", "updated_at")}),
     )
 
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-    )
-
-    ordering = (
-        "-created_at",
-    )
-
+    ordering = ("-created_at",)
     list_per_page = 50
 
+    @admin.display(description="Billing interval")
+    def billing_interval(self, obj):
+        return obj.get_billing_interval_label()
 
-# ============================================================
-# SUBSCRIPTION
-# ============================================================
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-
     list_display = (
         "id",
         "user",
@@ -92,25 +102,13 @@ class SubscriptionAdmin(admin.ModelAdmin):
         "plan__code",
     )
 
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-    )
-
-    ordering = (
-        "-created_at",
-    )
-
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
     list_per_page = 50
 
 
-# ============================================================
-# SUBSCRIPTION ENTITLEMENT
-# ============================================================
-
 @admin.register(SubscriptionEntitlement)
 class SubscriptionEntitlementAdmin(admin.ModelAdmin):
-
     list_display = (
         "id",
         "subscription",
@@ -120,11 +118,7 @@ class SubscriptionEntitlementAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "resource_type",
-        "is_active",
-        "created_at",
-    )
+    list_filter = ("resource_type", "is_active", "created_at")
 
     search_fields = (
         "subscription__user__username",
@@ -134,46 +128,17 @@ class SubscriptionEntitlementAdmin(admin.ModelAdmin):
         "exam__title",
     )
 
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-    )
-
-    ordering = (
-        "-created_at",
-    )
-
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
     list_per_page = 50
 
     def resource_display(self, obj):
-
-        if obj.resource_type == (
-            SubscriptionEntitlement.RESOURCE_COURSE
-        ):
-            return (
-                str(obj.course)
-                if obj.course
-                else "-"
-            )
-
-        if obj.resource_type == (
-            SubscriptionEntitlement.RESOURCE_TRACK
-        ):
-            return (
-                str(obj.track)
-                if obj.track
-                else "-"
-            )
-
-        if obj.resource_type == (
-            SubscriptionEntitlement.RESOURCE_EXAM
-        ):
-            return (
-                str(obj.exam)
-                if obj.exam
-                else "-"
-            )
-
+        if obj.resource_type == SubscriptionEntitlement.RESOURCE_COURSE:
+            return str(obj.course) if obj.course else "-"
+        if obj.resource_type == SubscriptionEntitlement.RESOURCE_TRACK:
+            return str(obj.track) if obj.track else "-"
+        if obj.resource_type == SubscriptionEntitlement.RESOURCE_EXAM:
+            return str(obj.exam) if obj.exam else "-"
         return "-"
 
     resource_display.short_description = "Resource"
