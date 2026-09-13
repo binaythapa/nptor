@@ -1,18 +1,43 @@
 from django import forms
 from django.forms import inlineformset_factory
+from django.db import transaction
 from django.db.models import Q
 
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
-from .models import Course, CourseSection, Lesson
+from .models import Course, CourseSection, Lesson, CourseExam
 from quiz.models import Category, Exam
 from quiz.search_widgets import SearchableModelMultipleChoiceWidget
 from subscriptions.models import SubscriptionPlan
 
 
-# =====================================================
-# COURSE FORM
-# =====================================================
+def save_course_exams(course, exams):
+    """Synchronize a course's reusable exam memberships."""
+    selected_exams = list(exams or [])
+    selected_ids = {exam.pk for exam in selected_exams}
+
+    with transaction.atomic():
+        CourseExam.objects.filter(course=course).exclude(
+            exam_id__in=selected_ids,
+        ).delete()
+
+        existing = {
+            membership.exam_id: membership
+            for membership in CourseExam.objects.filter(course=course)
+        }
+
+        for order, exam in enumerate(selected_exams, start=1):
+            membership = existing.get(exam.pk)
+            if membership is None:
+                CourseExam.objects.create(
+                    course=course,
+                    exam=exam,
+                    order=order,
+                )
+            elif membership.order != order:
+                membership.order = order
+                membership.save(update_fields=["order"])
+
 
 class CourseForm(forms.ModelForm):
 
@@ -81,18 +106,20 @@ class CourseForm(forms.ModelForm):
         )
 
         if self.instance.pk:
-            self.fields["exams"].initial = self.instance.exams.all()
+            self.fields["exams"].initial = self.instance.course_exams.values_list(
+                "exam_id",
+                flat=True,
+            )
 
     def save(self, commit=True):
         course = super().save(commit=commit)
         if commit:
-            self.instance.exams.set(self.cleaned_data.get("exams") or [])
+            save_course_exams(
+                course,
+                self.cleaned_data.get("exams") or [],
+            )
         return course
 
-
-# =====================================================
-# COURSE SECTION FORMSET
-# =====================================================
 
 CourseSectionFormSet = inlineformset_factory(
     Course,
@@ -105,10 +132,6 @@ CourseSectionFormSet = inlineformset_factory(
     can_delete=True
 )
 
-
-# =====================================================
-# LESSON FORM
-# =====================================================
 
 class LessonForm(forms.ModelForm):
 
