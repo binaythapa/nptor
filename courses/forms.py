@@ -5,7 +5,8 @@ from django.db.models import Q
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 from .models import Course, CourseSection, Lesson
-from quiz.models import Category
+from quiz.models import Category, Exam
+from subscriptions.models import SubscriptionPlan
 
 
 # =====================================================
@@ -23,6 +24,13 @@ class CourseForm(forms.ModelForm):
         )
     )
 
+    exams = forms.ModelMultipleChoiceField(
+        queryset=Exam.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"size": 10}),
+        help_text="Select the reusable exams included in this course. Exams are not sold separately.",
+    )
+
     class Meta:
         model = Course
         fields = [
@@ -32,6 +40,7 @@ class CourseForm(forms.ModelForm):
             "thumbnail",
             "level",
             "subscription_plans",
+            "exams",
             "is_public",
             "is_published",
         ]
@@ -49,6 +58,32 @@ class CourseForm(forms.ModelForm):
                 Q(organization=organization) | Q(organization__isnull=True),
                 is_active=True,
             ).order_by("name")
+            self.fields["exams"].queryset = Exam.objects.filter(
+                Q(organization=organization) | Q(organization__isnull=True),
+                is_published=True,
+            ).order_by("title")
+        else:
+            self.fields["exams"].queryset = Exam.objects.filter(
+                is_published=True
+            ).order_by("title")
+
+        self.fields["subscription_plans"].queryset = SubscriptionPlan.objects.filter(
+            is_active=True,
+            product_type=SubscriptionPlan.PRODUCT_COURSE,
+            access_mode=SubscriptionPlan.ACCESS_SINGLE_RESOURCE,
+        ).order_by("price", "name")
+        self.fields["subscription_plans"].help_text = (
+            "Course product plans only. Buying a course grants this course and its included exams."
+        )
+
+        if self.instance.pk:
+            self.fields["exams"].initial = self.instance.exams.all()
+
+    def save(self, commit=True):
+        course = super().save(commit=commit)
+        if commit:
+            self.instance.exams.set(self.cleaned_data.get("exams") or [])
+        return course
 
 
 # =====================================================
