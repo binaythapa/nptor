@@ -6,7 +6,8 @@
 <title>{% block title %}Organization Dashboard{% endblock %}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
-<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+<link rel="stylesheet" href="{% static 'css/theme.css' %}">
 <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="{% static 'css/pages/org-admin-mobile.css' %}">
@@ -88,9 +89,9 @@
     {% endif %}
   </aside>
 
-  <main id="admin-main" class="admin-content org-admin-content" tabindex="-1">
-    <section class="section">
-      <div class="container">
+  <main id="admin-main" class="org-admin-content" tabindex="-1">
+    <section class="section pt-4 org-admin-shell">
+      <div class="container is-fluid">
         {% block content %}{% endblock %}
       </div>
     </section>
