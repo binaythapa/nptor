@@ -1,0 +1,79 @@
+{% load widget_tweaks %}
+
+<div class="admin-exam-section admin-exam-allocation-section">
+    <div class="admin-exam-section-heading">
+        <div>
+            <h2 class="admin-exam-section-title">Exam Category Allocations</h2>
+            <p class="admin-exam-help">Optionally control how questions are selected from each category. Use either a percentage or a fixed question count for each row.</p>
+        </div>
+    </div>
+
+    {{ formset.management_form }}
+
+    {% if formset.non_form_errors %}
+        <div class="admin-exam-errors admin-exam-allocation-errors">
+            {{ formset.non_form_errors }}
+        </div>
+    {% endif %}
+
+    <div class="admin-exam-allocation-table" data-formset-prefix="{{ formset.prefix }}">
+        <div class="admin-exam-allocation-header" aria-hidden="true">
+            <div>Category</div>
+            <div>Percentage <span class="admin-exam-allocation-help" title="Use this when this category should receive a percentage of the exam questions.">?</span></div>
+            <div>Fixed Count <span class="admin-exam-allocation-help" title="Use this when this category should contribute an exact number of questions.">?</span></div>
+            <div>Delete?</div>
+        </div>
+
+        <div class="admin-exam-allocation-rows" data-formset-rows>
+            {% for allocation_form in formset.forms %}
+                <div class="admin-exam-allocation-row{% if allocation_form.instance.pk and allocation_form.DELETE.value %} is-deleted{% endif %}" data-formset-row>
+                    {{ allocation_form.id }}
+                    <div class="admin-exam-allocation-category">
+                        {% render_field allocation_form.category class+="input" %}
+                        {% for error in allocation_form.category.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div>
+                        {% render_field allocation_form.percentage class+="input" %}
+                        {% for error in allocation_form.percentage.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div>
+                        {% render_field allocation_form.fixed_count class+="input" %}
+                        {% for error in allocation_form.fixed_count.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="admin-exam-allocation-delete">
+                        <label class="admin-exam-allocation-delete-control" title="Remove this allocation">
+                            {% render_field allocation_form.DELETE %}
+                            <span aria-hidden="true">×</span>
+                            <span class="sr-only">Delete allocation</span>
+                        </label>
+                    </div>
+                    {% if allocation_form.non_field_errors %}
+                        <div class="admin-exam-allocation-row-error">{{ allocation_form.non_field_errors }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="admin-exam-allocation-empty" data-empty-form-template hidden>
+            <div class="admin-exam-allocation-row" data-formset-row>
+                {{ formset.empty_form.id }}
+                <div class="admin-exam-allocation-category">
+                    {% render_field formset.empty_form.category class+="input" %}
+                </div>
+                <div>{% render_field formset.empty_form.percentage class+="input" %}</div>
+                <div>{% render_field formset.empty_form.fixed_count class+="input" %}</div>
+                <div class="admin-exam-allocation-delete">
+                    <label class="admin-exam-allocation-delete-control" title="Remove this allocation">
+                        {% render_field formset.empty_form.DELETE %}
+                        <span aria-hidden="true">×</span>
+                        <span class="sr-only">Delete allocation</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="admin-exam-allocation-add" data-add-form>
+            <span aria-hidden="true">＋</span> Add another Exam category allocation
+        </button>
+    </div>
+</div>
