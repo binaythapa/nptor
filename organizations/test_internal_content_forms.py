@@ -1,7 +1,6 @@
 from django.test import SimpleTestCase
 
-from organizations.views.admin.courses import OrganizationCourseForm
-from organizations.views.admin.tracks import OrganizationExamTrackForm
+from organizations.forms.content import OrganizationCourseForm, OrganizationExamTrackForm
 
 
 class OrganizationInternalContentFormTests(SimpleTestCase):
