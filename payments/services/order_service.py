@@ -37,13 +37,12 @@ class OrderService:
     def _validate_resource(resource_type, resource):
         if not resource:
             raise ValidationError("Purchase resource is required.")
-        valid = (
-            PaymentOrder.RESOURCE_COURSE,
-            PaymentOrder.RESOURCE_TRACK,
-            PaymentOrder.RESOURCE_SUBSCRIPTION,
-        )
+        valid = (PaymentOrder.RESOURCE_COURSE, PaymentOrder.RESOURCE_TRACK, PaymentOrder.RESOURCE_SUBSCRIPTION)
         if resource_type not in valid:
             raise ValidationError("Individual exams are not sold separately.")
+        if resource_type == PaymentOrder.RESOURCE_SUBSCRIPTION:
+            if not isinstance(resource, SubscriptionPlan) or not resource.is_account_plan() or not resource.is_active:
+                raise ValidationError("A valid Account subscription plan is required.")
         return {
             "course": resource if resource_type == PaymentOrder.RESOURCE_COURSE else None,
             "track": resource if resource_type == PaymentOrder.RESOURCE_TRACK else None,
@@ -59,9 +58,8 @@ class OrderService:
             plan = get_plan_for_track(resource)
         else:
             plan = resource
-            if not isinstance(plan, SubscriptionPlan) or not plan.is_all_access() or not plan.is_active:
-                raise ValidationError("A valid all-access subscription plan is required.")
-
+            if not isinstance(plan, SubscriptionPlan) or not plan.is_account_plan() or not plan.is_active:
+                raise ValidationError("A valid Account subscription plan is required.")
         if not plan:
             raise ValidationError("No active subscription plan is configured for this resource.")
         return plan.price, (plan.currency or "INR").strip().upper()
@@ -71,13 +69,11 @@ class OrderService:
     def create_order(*, user, resource_type, resource, amount, currency="INR", coupon_code=None):
         if not user or not user.is_authenticated:
             raise ValidationError("Authentication is required.")
-
         resource_fields = OrderService._validate_resource(resource_type, resource)
         authoritative_amount, authoritative_currency = OrderService._authoritative_pricing(resource_type, resource)
         supplied_amount = OrderService._normalize_amount(amount)
         expected_amount = OrderService._normalize_amount(authoritative_amount)
         supplied_currency = (currency or "INR").strip().upper()
-
         if supplied_amount != expected_amount:
             raise ValidationError("Payment amount does not match the current price.")
         if supplied_currency != authoritative_currency:
@@ -87,7 +83,6 @@ class OrderService:
         discount_amount = Decimal("0.00")
         final_amount = original_amount
         coupon = None
-
         if coupon_code:
             coupon_kwargs = {
                 "course": resource if resource_type == PaymentOrder.RESOURCE_COURSE else None,
