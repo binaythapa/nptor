@@ -16,8 +16,9 @@
 <thead>
 <tr>
 <th>Track</th>
+<th>Included Exams</th>
 <th>Created</th>
-<th style="width:180px;">Actions</th>
+<th style="width:280px;">Actions</th>
 </tr>
 </thead>
 
@@ -31,10 +32,18 @@
 </td>
 
 <td>
+{{ track.track_exams.all|length }}
+</td>
+
+<td>
 {{ track.created_at|date:"d M Y" }}
 </td>
 
 <td>
+<a href="{% url 'organizations_admin:org_track_exams' slug=org_slug pk=track.id %}"
+   class="button is-small is-link">
+   📚 Exams &amp; Prerequisites
+</a>
 
 <a href="{% url 'organizations_admin:org_track_edit' slug=org_slug pk=track.id %}"
    class="button is-small is-info">
@@ -54,7 +63,7 @@
 {% empty %}
 
 <tr>
-<td colspan="3">No tracks created.</td>
+<td colspan="4">No tracks created.</td>
 </tr>
 
 {% endfor %}
