@@ -1,72 +1,35 @@
 {% extends "layouts/admin/base_admin.html" %}
 {% block content %}
-
-<h1 class="title is-4">📚 Tracks</h1>
-<div class="mb-4 is-flex is-justify-content-space-between is-align-items-center">
-  <h2 class="title is-4">📦 Tracks</h2>
-
-  <a href="{% url 'quiz:admin_track_create' %}"
-     class="button is-primary">
-    ➕ Add New Track
-  </a>
-</div>
-
-<table class="table is-fullwidth is-striped">
-<thead>
-<tr>
-  <th>Title</th>
-  <th>Pricing</th>
-  <th>Status</th>
-  <th>Actions</th>
-</tr>
-</thead>
-<tbody>
-
-{% csrf_token %}
-
-{% for t in tracks %}
-<tr>
-  <td>{{ t.title }}</td>
-  <td>
-    <div class="select is-small">
-      <select onchange="updatePricing('{{ t.id }}', this.value)">
-        <option value="free" {% if t.pricing_type == "free" %}selected{% endif %}>Free</option>
-        <option value="monthly" {% if t.pricing_type == "monthly" %}selected{% endif %}>Monthly</option>
-        <option value="lifetime" {% if t.pricing_type == "lifetime" %}selected{% endif %}>Lifetime</option>
-      </select>
+<div class="container">
+  <div class="mb-5 is-flex is-justify-content-space-between is-align-items-center">
+    <div>
+      <h1 class="title is-4">📦 Tracks</h1>
+      <p class="subtitle is-6 has-text-grey">Sellable Track products. Each Track can contain reusable Exams and is independent of Courses.</p>
     </div>
-  </td>
-  <td>
-    <span class="tag {% if t.is_active %}is-success{% else %}is-danger{% endif %}">
-      {{ t.is_active|yesno:"Active,Inactive" }}
-    </span>
-  </td>
-  <td>
-    <a href="{% url 'quiz:admin_track_update' t.id %}"
-       class="button is-small is-link">Edit</a>
-  </td>
-</tr>
-{% endfor %}
+    <a href="{% url 'quiz:admin_track_create' %}" class="button is-primary">➕ Add New Track</a>
+  </div>
 
-</tbody>
-</table>
+  <div class="notification is-info is-light">
+    Exams are content, not products. A Track subscription grants the Track and its included Exams. Courses are managed separately and are never implicitly added to a Track.
+  </div>
 
-<script>
-function csrf(){return document.querySelector('[name=csrfmiddlewaretoken]').value;}
-
-function updatePricing(trackId, pricingType){
-  fetch("{% url 'quiz:update_track_pricing_type' %}",{
-    method:"POST",
-    headers:{
-      "X-CSRFToken": csrf(),
-      "Content-Type":"application/x-www-form-urlencoded"
-    },
-    body:new URLSearchParams({
-      track_id:trackId,
-      pricing_type:pricingType
-    })
-  });
-}
-</script>
-
+  <table class="table is-fullwidth is-striped is-hoverable">
+    <thead><tr><th>Title</th><th>Included Exams</th><th>Track Plans</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for t in tracks %}
+      <tr>
+        <td><strong>{{ t.title }}</strong>{% if t.organization %}<br><small class="has-text-grey">{{ t.organization.name }}</small>{% endif %}</td>
+        <td>{{ t.track_exams.all|length }}</td>
+        <td>
+          {% for plan in t.subscription_plans.all %}<span class="tag is-link is-light mr-1">{{ plan.name }} · {{ plan.currency }} {{ plan.price }}</span>{% empty %}<span class="has-text-grey">No Track plan</span>{% endfor %}
+        </td>
+        <td><span class="tag {% if t.is_active %}is-success{% else %}is-danger{% endif %}">{{ t.is_active|yesno:"Active,Inactive" }}</span></td>
+        <td><a href="{% url 'quiz:admin_track_update' t.id %}" class="button is-small is-link">Edit</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="has-text-centered has-text-grey">No tracks created yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}
