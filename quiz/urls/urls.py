@@ -6,16 +6,18 @@ from django.conf.urls.static import static
 
 from quiz.forms import EmailOrUsernameLoginForm
 
-# ============================================================
-# QUIZ VIEWS
-# ============================================================
-
 from quiz.views.admin import *
 from quiz.views.admin_autocomplete import admin_autocomplete
 from quiz.views.questions import *
 from quiz.views.practice_express import *
 from quiz.views.auth import *
 from quiz.views.admin_subscription_views import *
+from quiz.views.admin_exam_views import (
+    admin_exam_create,
+    admin_exam_delete,
+    admin_exam_list,
+    admin_exam_update,
+)
 from quiz.views.admin_track_product_views import admin_track_create, admin_track_update
 from quiz.views.admin_track_exam_views import admin_track_exams
 from quiz.views.admin_course_access import (
@@ -194,7 +196,4 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT,
-    )
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
