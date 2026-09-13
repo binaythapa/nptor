@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from courses.models import Course
-from quiz.models import Exam, ExamTrack
+from quiz.models import ExamTrack
 from payments.models import PaymentOrder
 from payments.services import OrderService, PaymentService
 from subscriptions.services import AccessService
@@ -13,7 +13,7 @@ from subscriptions.services.global_access import has_all_access_subscription
 from subscriptions.services.plan_service import (
     get_plan_for_course,
     get_plan_for_track,
-    get_all_access_plan,
+    get_account_plans,
 )
 
 DEFAULT_GATEWAY = "dummy"
@@ -25,11 +25,7 @@ def _safe_return_url(request, value):
         return None
     if not value.startswith("/") or value.startswith("//"):
         return None
-    if not url_has_allowed_host_and_scheme(
-        value,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
+    if not url_has_allowed_host_and_scheme(value, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
         return None
     return value
 
@@ -38,35 +34,24 @@ def _start_payment(*, request, resource_type, resource, amount, currency="INR", 
     safe_return = _safe_return_url(request, return_to)
     if safe_return:
         request.session[PAYMENT_RETURN_SESSION_KEY] = safe_return
-
     try:
-        order = OrderService.create_order(
-            user=request.user,
-            resource_type=resource_type,
-            resource=resource,
-            amount=amount,
-            currency=currency,
-        )
+        order = OrderService.create_order(user=request.user, resource_type=resource_type, resource=resource, amount=amount, currency=currency)
     except ValidationError as exc:
         messages.error(request, str(exc))
         return redirect("quiz:exam_list")
-
     try:
         result = PaymentService.initiate_payment(order=order, gateway_name=DEFAULT_GATEWAY)
     except Exception:
         messages.error(request, "Unable to start payment. Please try again.")
         return redirect("quiz:exam_list")
-
     if not result.get("success"):
         gateway_response = result.get("gateway_response") or {}
         messages.error(request, gateway_response.get("error", "Unable to initialize payment."))
         return redirect("quiz:exam_list")
-
     gateway_response = result.get("gateway_response") or {}
     payment_url = gateway_response.get("payment_url")
     if payment_url:
         return redirect(payment_url)
-
     return redirect("payments:payment_checkout", order_number=order.order_number)
 
 
@@ -107,10 +92,7 @@ def track_checkout(request, track_id):
 
 @login_required
 def subscription_checkout(request, plan_id):
-    plan = get_all_access_plan(plan_id)
-    if not plan:
-        messages.error(request, "The selected all-access subscription plan is not available.")
-        return redirect("quiz:exam_list")
+    plan = get_object_or_404(get_account_plans(), id=plan_id)
     if has_all_access_subscription(request.user):
         messages.info(request, "You already have an active all-access subscription.")
         return redirect("quiz:exam_list")
