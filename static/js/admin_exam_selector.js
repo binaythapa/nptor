@@ -67,7 +67,6 @@
             select.parentNode.insertBefore(wrapper, select);
             wrapper.appendChild(select);
             select.style.display = "none";
-
             input = document.createElement("input");
             input.type = "text";
             input.className = "admin-exam-selector-input";
@@ -75,11 +74,9 @@
             input.autocomplete = "off";
             input.setAttribute("aria-label", "Search exams");
             wrapper.insertBefore(input, select);
-
             selectedContainer = document.createElement("div");
             selectedContainer.className = "admin-exam-selector-selected";
             wrapper.insertBefore(selectedContainer, select);
-
             menu = document.createElement("div");
             menu.className = "admin-exam-selector-menu";
             menu.setAttribute("role", "listbox");
@@ -144,6 +141,15 @@
             input.focus();
         }
 
+        function trackExamIds() {
+            const trackContainer = select.closest("#track-exam-formset");
+            if (!trackContainer) return [];
+            return Array.from(trackContainer.querySelectorAll("select[name$='-exam']"))
+                .map(function (examSelect) { return examSelect.value; })
+                .filter(Boolean)
+                .filter(function (value, index, values) { return values.indexOf(value) === index; });
+        }
+
         let timer = null;
         let requestId = 0;
         function search(query) {
@@ -155,6 +161,15 @@
                 const params = new URLSearchParams({scope: "exams", q: query});
                 const organization = select.dataset.autocompleteOrganization;
                 if (organization) params.set("organization", organization);
+                if (select.dataset.autocompleteTrackExamsOnly === "true") {
+                    const ids = trackExamIds();
+                    if (ids.length) params.set("ids", ids.join(","));
+                    else {
+                        menu.innerHTML = '<div class="admin-search-select-empty">Add an included Track Exam first</div>';
+                        menu.classList.add("is-open");
+                        return;
+                    }
+                }
                 fetch(endpoint + "?" + params.toString(), {headers: {"X-Requested-With": "XMLHttpRequest"}})
                     .then(function (response) { return response.ok ? response.json() : {results: []}; })
                     .then(function (data) {
@@ -170,14 +185,12 @@
                         menu.classList.add("is-open");
                         menu.querySelectorAll("button").forEach(function (button, index) {
                             button.addEventListener("mousedown", function (event) { event.preventDefault(); });
-                            button.addEventListener("click", function () {
-                                if (results[index]) addResult(results[index]);
-                            });
+                            button.addEventListener("click", function () { if (results[index]) addResult(results[index]); });
                         });
                     })
                     .catch(function () {
                         if (current === requestId) {
-                            menu.innerHTML = '<div class="admin-exam-selector-empty">Unable to search right now</div>';
+                            menu.innerHTML = '<div class="admin-search-select-empty">Unable to search right now</div>';
                             menu.classList.add("is-open");
                         }
                     });
