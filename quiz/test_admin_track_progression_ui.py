@@ -37,6 +37,7 @@ class AdminTrackProgressionUITests(TestCase):
 
     def test_track_form_exposes_progression_configuration(self):
         response = self.client.get(reverse("quiz:admin_track_update", args=[self.track.pk]))
+        content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Prerequisite Exams")
@@ -44,6 +45,7 @@ class AdminTrackProgressionUITests(TestCase):
         self.assertContains(response, "+ Add Exam")
         self.assertContains(response, "No exams added yet")
         self.assertNotContains(response, "Select the reusable exams included in this Track")
+        self.assertEqual(content.count('id="id_organization"'), 1)
 
     def test_track_search_templates_are_not_initialized_before_dynamic_clone(self):
         for path, marker in (
