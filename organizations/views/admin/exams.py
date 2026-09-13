@@ -4,6 +4,7 @@ from django.forms import HiddenInput
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
+from organizations.models import Organization
 from organizations.permissions import org_teacher_required
 from organizations.models.role import OrganizationRole
 from organizations.services.content_permissions import user_can_manage_owned_content
@@ -28,10 +29,7 @@ class OrganizationExamForm(ExamForm):
         self.fields["primary_category"].queryset = category_qs
         self.fields["categories"].queryset = category_qs
 
-        self.fields["organization"].queryset = type(self.fields["organization"].queryset).filter(
-            self.fields["organization"].queryset,
-            pk=organization.pk,
-        )
+        self.fields["organization"].queryset = Organization.objects.filter(pk=organization.pk)
         self.fields["organization"].initial = organization
         self.fields["organization"].required = True
         self.fields["organization"].widget = HiddenInput()
@@ -40,13 +38,6 @@ class OrganizationExamForm(ExamForm):
         self.fields["categories"].widget.attrs["data-autocomplete-organization-only"] = "true"
         self.fields["categories"].help_text = "Search and select categories belonging to this organization."
         self.fields["primary_category"].help_text = "Select the main category from this organization's category catalog."
-
-    def clean(self):
-        cleaned_data = super().clean()
-        organization = cleaned_data.get("organization")
-        if organization is not None and self.fields["organization"].queryset.filter(pk=organization.pk).exists() is False:
-            self.add_error("organization", "Invalid organization.")
-        return cleaned_data
 
 
 # ============================================================
