@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
 from organizations.permissions import org_admin_required
-from quiz.models import ExamTrack
+from quiz.models import ExamTrack, TrackExam
 from quiz.forms import ExamTrackForm
 from quiz.track_forms import TrackExamFormSet
 
@@ -15,6 +15,20 @@ def _track_formset(request, track, organization):
         organization=organization,
         prefix="track_exams",
     )
+
+
+def _save_selected_exams(track, exams):
+    selected = list(exams or [])
+    selected_ids = {exam.pk for exam in selected}
+    TrackExam.objects.filter(track=track).exclude(exam_id__in=selected_ids).delete()
+    existing = {row.exam_id: row for row in TrackExam.objects.filter(track=track)}
+    for order, exam in enumerate(selected, start=1):
+        row = existing.get(exam.pk)
+        if row is None:
+            TrackExam.objects.create(track=track, exam=exam, order=order)
+        elif row.order != order:
+            row.order = order
+            row.save(update_fields=["order"])
 
 
 @org_admin_required
@@ -37,6 +51,7 @@ def org_track_create(request, slug):
             track = form.save(commit=False)
             track.organization = org
             track.save()
+            _save_selected_exams(track, form.cleaned_data.get("exams"))
             return redirect("organizations_admin:org_track_exams", slug=slug, pk=track.pk)
     else:
         form = ExamTrackForm(organization=org)
@@ -57,6 +72,7 @@ def org_track_edit(request, slug, pk):
             updated = form.save(commit=False)
             updated.organization = org
             updated.save()
+            _save_selected_exams(track, form.cleaned_data.get("exams"))
             return redirect("organizations_admin:org_track_exams", slug=slug, pk=track.pk)
     else:
         form = ExamTrackForm(instance=track, organization=org)
