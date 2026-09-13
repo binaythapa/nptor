@@ -18,7 +18,8 @@
             const row = rows[rows.length - 1];
             if (row) {
                 const order = row.querySelector("[name$='-order']");
-                if (order && !order.value) order.value = index + 1;
+                const nextOrder = container.querySelectorAll(".track-exam-row").length;
+                if (order && !order.value) order.value = nextOrder;
             }
         });
     }
