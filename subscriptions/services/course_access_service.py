@@ -36,12 +36,17 @@ class CourseAccessService:
         plan = plan or get_plan_for_course(course)
         if not plan:
             raise ValueError("No active subscription plan is attached to this course.")
-        if not plan.is_active or plan.is_all_access():
-            raise ValueError("The selected course plan is inactive or is an all-access plan.")
+        if (
+            not plan.is_active
+            or plan.product_type != plan.PRODUCT_COURSE
+            or plan.access_mode != plan.ACCESS_SINGLE_RESOURCE
+        ):
+            raise ValueError("The selected plan is not a valid course plan.")
         if not course.subscription_plans.filter(
             pk=plan.pk,
             is_active=True,
-            scope=plan.SCOPE_RESOURCE,
+            product_type=plan.PRODUCT_COURSE,
+            access_mode=plan.ACCESS_SINGLE_RESOURCE,
         ).exists():
             raise ValueError("The selected plan is not attached to this course.")
 
