@@ -61,13 +61,17 @@
     <li><a href="{% url 'organizations_admin:questions' slug=org_slug %}">Questions</a></li>
   </ul>
 
+  {% if request.organization_member.is_administrator %}
+    <p class="menu-label">Classification</p>
+    <ul class="menu-list">
+      <li><a href="{% url 'organizations_admin:domain_list' slug=org_slug %}">Domains</a></li>
+      <li><a href="{% url 'organizations_admin:category_list' slug=org_slug %}">Categories</a></li>
+    </ul>
+  {% endif %}
+
   <p class="menu-label">Operations</p>
   <ul class="menu-list">
     <li><a href="{% url 'organizations_admin:assignments' slug=org_slug %}">Assignments</a></li>
-    {% if request.organization_member.is_administrator %}
-      <li><a href="{% url 'organizations_admin:domain_list' slug=org_slug %}">Domains</a></li>
-      <li><a href="{% url 'organizations_admin:category_list' slug=org_slug %}">Categories</a></li>
-    {% endif %}
   </ul>
 
   {% if request.organization_member.is_administrator %}
