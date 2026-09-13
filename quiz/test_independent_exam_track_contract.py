@@ -13,6 +13,7 @@ class IndependentExamTrackContractTests(SimpleTestCase):
         self.assertNotIn("is_free", field_names)
         self.assertNotIn("price", field_names)
         self.assertNotIn("currency", field_names)
+        self.assertNotIn("subscription_plans", field_names)
 
     def test_track_exam_is_the_composition_boundary(self):
         field_names = {field.name for field in TrackExam._meta.get_fields()}
