@@ -13,41 +13,37 @@ class AccessService(_ResourceAccessService):
 
     @staticmethod
     def has_course_access(student, course):
-        if has_all_access_subscription(student):
+        if not student or not course:
+            return False
+        if has_all_access_subscription(student) or AccountAccessService.has_course_access(student, course):
             return True
-        if AccountAccessService.has_course_access(student, course):
-            return True
-        return _ResourceAccessService.has_access(
-            student=student,
-            resource_type=_ResourceAccessService.RESOURCE_COURSE,
-            resource=course,
-        )
+        if getattr(course, "is_publicly_available", lambda: False)():
+            plans = list(course.subscription_plans.filter(is_active=True))
+            if not plans or any(plan.price <= 0 for plan in plans):
+                return True
+        return _ResourceAccessService.has_access(student=student, resource_type=_ResourceAccessService.RESOURCE_COURSE, resource=course)
 
     @staticmethod
     def has_track_access(student, track):
-        if has_all_access_subscription(student):
+        if not student or not track:
+            return False
+        if has_all_access_subscription(student) or AccountAccessService.has_track_access(student, track):
             return True
-        if AccountAccessService.has_track_access(student, track):
+        if getattr(track, "organization_id", None) is None and track.is_free():
             return True
-        return _ResourceAccessService.has_access(
-            student=student,
-            resource_type=_ResourceAccessService.RESOURCE_TRACK,
-            resource=track,
-        )
+        return _ResourceAccessService.has_access(student=student, resource_type=_ResourceAccessService.RESOURCE_TRACK, resource=track)
 
     @staticmethod
     def has_exam_access(student, exam):
+        if not student or not exam:
+            return False
         if has_all_access_subscription(student):
             return True
 
         # Direct admin/system access remains a compatibility path. Purchased
         # exam access is no longer a product; normal subscriber access is
         # inherited only through Course or Track parents.
-        if _ResourceAccessService.has_access(
-            student=student,
-            resource_type=_ResourceAccessService.RESOURCE_EXAM,
-            resource=exam,
-        ):
+        if _ResourceAccessService.has_access(student=student, resource_type=_ResourceAccessService.RESOURCE_EXAM, resource=exam):
             return True
 
         from courses.models import CourseExam
@@ -56,11 +52,9 @@ class AccessService(_ResourceAccessService):
         for membership in CourseExam.objects.filter(exam=exam).select_related("course"):
             if AccessService.has_course_access(student, membership.course):
                 return True
-
         for membership in TrackExam.objects.filter(exam=exam).select_related("track"):
             if AccessService.has_track_access(student, membership.track):
                 return True
-
         return False
 
     @staticmethod
