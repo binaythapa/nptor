@@ -36,21 +36,19 @@ class OrganizationExamFormTests(TestCase):
     def test_organization_exam_form_shows_only_current_organization_categories(self):
         form = OrganizationExamForm(organization=self.organization)
 
-        primary_ids = set(form.fields["primary_category"].queryset.values_list("id", flat=True))
         category_ids = set(form.fields["categories"].queryset.values_list("id", flat=True))
 
-        self.assertEqual(primary_ids, {self.org_category.pk})
         self.assertEqual(category_ids, {self.org_category.pk})
         self.assertEqual(form.fields["organization"].queryset.count(), 1)
         self.assertEqual(form.fields["organization"].queryset.first(), self.organization)
         self.assertEqual(form.fields["organization"].widget.__class__.__name__, "HiddenInput")
+        self.assertNotIn("primary_category", form.fields)
 
     def test_organization_exam_form_rejects_other_organization_category(self):
         form = OrganizationExamForm(
             {
                 "title": "School Exam",
                 "organization": self.organization.pk,
-                "primary_category": self.other_category.pk,
                 "categories": [self.other_category.pk],
                 "question_count": 10,
                 "duration_seconds": 600,
@@ -63,5 +61,5 @@ class OrganizationExamFormTests(TestCase):
         )
 
         self.assertFalse(form.is_valid())
-        self.assertIn("primary_category", form.errors)
+        self.assertIn("categories", form.errors)
         self.assertNotIn("Global", [str(category) for category in form.fields["categories"].queryset])
