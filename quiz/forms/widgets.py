@@ -1,5 +1,5 @@
 from django.forms.widgets import SelectMultiple
-from django.utils.html import conditional_escape, format_html
+from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 
 
@@ -40,21 +40,6 @@ class SearchableModelMultipleChoiceWidget(SelectMultiple):
         select_attrs.append('name="{}"'.format(conditional_escape(name)))
         select_attrs.append('style="display:none"')
 
-        input_id = "{}_search".format(final_attrs.get("id", name))
-        placeholder = final_attrs.get(
-            "data-search-placeholder", "Search exams..."
-        )
-        search_html = format_html(
-            '<div class="admin-search-select" data-admin-search-select-ui="true">'
-            '<input type="text" id="{}" class="admin-search-select-input" '
-            'placeholder="{}" autocomplete="off" aria-label="Search exams">'
-            '<div class="admin-search-select-selected" role="list" aria-live="polite"></div>'
-            '<div class="admin-search-select-menu" role="listbox"></div>'
-            '</div>',
-            input_id,
-            placeholder,
-        )
-
         select_html = ["<select {}>".format(" ".join(select_attrs))]
         for option_value, option_label in options:
             select_html.append(
@@ -65,11 +50,21 @@ class SearchableModelMultipleChoiceWidget(SelectMultiple):
             )
         select_html.append("</select>")
 
+        input_id = "{}_search".format(final_attrs.get("id", name))
+        placeholder = final_attrs.get(
+            "data-search-placeholder", "Search exams..."
+        )
+
         return mark_safe(
             '<div class="admin-search-select" data-admin-search-select-ui="true">'
-            + str(search_html).replace(
-                '<div class="admin-search-select" data-admin-search-select-ui="true">', "", 1
-            ).rsplit("</div>", 1)[0]
-            + "".join(select_html)
-            + "</div>"
+            '<input type="text" id="{}" class="admin-search-select-input" '
+            'placeholder="{}" autocomplete="off" aria-label="Search exams">'
+            '<div class="admin-search-select-selected" role="list" aria-live="polite"></div>'
+            '<div class="admin-search-select-menu" role="listbox"></div>'
+            '{}'
+            '</div>'.format(
+                conditional_escape(input_id),
+                conditional_escape(placeholder),
+                "".join(select_html),
+            )
         )
