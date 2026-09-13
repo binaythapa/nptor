@@ -114,6 +114,8 @@
                 </div>
             </div>
 
+            {% include "quiz/student/subscription/_exam_category_allocations.html" %}
+
             <div class="admin-exam-section">
                 <div class="admin-exam-section-heading">
                     <div>
@@ -152,4 +154,5 @@
 {% block scripts_extra %}
 <script src="{% static 'js/admin_exam_selector.js' %}"></script>
 <script src="{% static 'js/admin_single_exam_selector.js' %}"></script>
+<script src="{% static 'js/admin_exam_allocation_formset.js' %}"></script>
 {% endblock %}
