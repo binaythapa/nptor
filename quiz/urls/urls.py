@@ -16,6 +16,7 @@ from quiz.views.questions import *
 from quiz.views.practice_express import *
 from quiz.views.auth import *
 from quiz.views.admin_subscription_views import *
+from quiz.views.admin_track_product_views import admin_track_create, admin_track_update
 from quiz.views.admin_track_exam_views import admin_track_exams
 from quiz.views.admin_course_access import (
     admin_course_access_data,
