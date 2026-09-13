@@ -37,7 +37,7 @@
           <div class="columns is-multiline">
             <div class="column is-6">
               <label class="label" for="{{ form.exam.id_for_label }}">Exam</label>
-              {% render_field form.exam class+="input" %}
+              {{ form.exam }}
               {% for error in form.exam.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
             </div>
             <div class="column is-2">
@@ -71,4 +71,5 @@
 
 {% block scripts_extra %}
 <script src="{% static 'js/admin_exam_selector.js' %}"></script>
+<script src="{% static 'js/admin_single_exam_selector.js' %}"></script>
 {% endblock %}
