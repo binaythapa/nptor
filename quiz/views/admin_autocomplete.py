@@ -35,6 +35,19 @@ def _tenant_queryset(queryset, request):
     return queryset.filter(organization__isnull=True)
 
 
+def _allowed_ids(request):
+    """Return an optional comma-separated ID allow-list for dependent selectors."""
+    raw = (request.GET.get("ids") or "").strip()
+    if not raw:
+        return None
+    values = []
+    for value in raw.split(","):
+        value = value.strip()
+        if value.isdigit():
+            values.append(int(value))
+    return values
+
+
 @staff_member_required
 @require_GET
 def admin_autocomplete(request):
@@ -66,7 +79,11 @@ def admin_autocomplete(request):
         qs = _tenant_queryset(ExamTrack.objects.filter(title__istartswith=query), request).order_by("title")[:SEARCH_LIMIT]
         results = [_result(item.id, item.title) for item in qs]
     elif scope == "exams":
-        qs = _tenant_queryset(Exam.objects.filter(title__istartswith=query), request).order_by("title")[:SEARCH_LIMIT]
+        qs = _tenant_queryset(Exam.objects.filter(title__istartswith=query), request)
+        allowed_ids = _allowed_ids(request)
+        if allowed_ids is not None:
+            qs = qs.filter(pk__in=allowed_ids)
+        qs = qs.order_by("title")[:SEARCH_LIMIT]
         results = [_result(item.id, item.title) for item in qs]
     elif scope == "questions":
         qs = Question.objects.filter(text__istartswith=query).order_by("id")[:SEARCH_LIMIT]
