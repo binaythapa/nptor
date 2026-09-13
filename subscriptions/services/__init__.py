@@ -2,7 +2,6 @@ from .subscription_service import SubscriptionService
 from .access_service import AccessService as _ResourceAccessService
 from .account_access_service import AccountAccessService
 from .global_access import has_all_access_subscription
-from subscriptions.models import Subscription, SubscriptionEntitlement
 
 
 class AccessService(_ResourceAccessService):
@@ -41,10 +40,9 @@ class AccessService(_ResourceAccessService):
         if has_all_access_subscription(student):
             return True
 
-        # A direct admin/system ResourceAccess record remains a legitimate
-        # compatibility path, but subscription product ownership is inherited
-        # only through Course or Track parents.
-        direct = ResourceAccess = _ResourceAccessService
+        # Direct admin/system access remains a compatibility path. Purchased
+        # exam access is no longer a product; normal subscriber access is
+        # inherited only through Course or Track parents.
         if _ResourceAccessService.has_access(
             student=student,
             resource_type=_ResourceAccessService.RESOURCE_EXAM,
@@ -55,17 +53,12 @@ class AccessService(_ResourceAccessService):
         from courses.models import CourseExam
         from quiz.models import TrackExam
 
-        if CourseExam.objects.filter(exam=exam).exists():
-            if any(
-                AccessService.has_course_access(student, course)
-                for course in CourseExam.objects.filter(exam=exam).values_list("course", flat=True)
-            ):
+        for membership in CourseExam.objects.filter(exam=exam).select_related("course"):
+            if AccessService.has_course_access(student, membership.course):
                 return True
 
-        for track_id in TrackExam.objects.filter(exam=exam).values_list("track", flat=True):
-            from quiz.models import ExamTrack
-            track = ExamTrack.objects.filter(pk=track_id).first()
-            if track and AccessService.has_track_access(student, track):
+        for membership in TrackExam.objects.filter(exam=exam).select_related("track"):
+            if AccessService.has_track_access(student, membership.track):
                 return True
 
         return False
