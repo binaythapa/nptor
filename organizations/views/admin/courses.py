@@ -293,7 +293,7 @@ def org_course_create(request, slug):
 
     return render(
         request,
-        "courses/instructor/course_create.html",
+        "organizations/admin/courses/create.html",
         {"form": form, "formset": formset, "organization": org},
     )
 
