@@ -1,7 +1,8 @@
 from django.core.exceptions import PermissionDenied
+from django.utils import timezone
 
 from accounts.models import UserProfile
-from organizations.models import ClassTeacher, OrganizationMember, OrganizationStudent
+from organizations.models import OrganizationMember, OrganizationStudent
 from organizations.models.role import OrganizationRole
 
 
@@ -9,10 +10,18 @@ def get_organization_student(user, organization):
     membership = OrganizationMember.objects.filter(user=user, organization=organization, is_active=True).first()
     if not membership or membership.role != OrganizationRole.STUDENT:
         raise PermissionDenied("An active student membership is required.")
-    student = OrganizationStudent.objects.filter(
-        user=user, organization=organization, status=OrganizationStudent.STATUS_ACTIVE
-    ).select_related("user", "organization").first()
-    if not student:
+
+    # Provision the organization-scoped profile lazily as a safe fallback for
+    # student memberships created before automatic profile provisioning.
+    student, _ = OrganizationStudent.objects.get_or_create(
+        user=user,
+        organization=organization,
+        defaults={
+            "status": OrganizationStudent.STATUS_ACTIVE,
+            "joined_date": timezone.localdate(),
+        },
+    )
+    if student.status != OrganizationStudent.STATUS_ACTIVE:
         raise PermissionDenied("Student enrollment is required for this organization.")
     return student
 
