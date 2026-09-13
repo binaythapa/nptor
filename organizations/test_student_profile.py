@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 
-from accounts.models import UserProfile
 from organizations.models import AcademicYear, ClassSection, ClassTeacher, Organization, OrganizationClass, OrganizationMember, OrganizationStudent, StudentEnrollment
 from organizations.models.role import OrganizationRole
 from organizations.services.students import get_organization_student, get_student_for_teacher, update_student_profile
@@ -93,3 +92,10 @@ class StudentProfileTests(TestCase):
         )
         self.student.refresh_from_db()
         self.assertEqual(self.student.student_id, "S001")
+
+    def test_student_workspace_surfaces_my_profile(self):
+        self.client.force_login(self.student_user)
+        response = self.client.get(f"/org/{self.org.slug}/workspace/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "My Profile")
+        self.assertContains(response, f"/org/{self.org.slug}/student-profile/")
