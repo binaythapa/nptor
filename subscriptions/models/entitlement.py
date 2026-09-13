@@ -7,7 +7,12 @@ from .subscription import Subscription
 
 
 class SubscriptionEntitlement(models.Model):
-    """Defines which resources are included in a subscription."""
+    """Defines which resources are included in a subscription.
+
+    Course and Track are the subscriber-facing product resources. Exam is kept
+    only for legacy organization/data compatibility and is not valid for a
+    user-owned purchasable subscription.
+    """
 
     RESOURCE_COURSE = "course"
     RESOURCE_TRACK = "track"
@@ -16,36 +21,14 @@ class SubscriptionEntitlement(models.Model):
     RESOURCE_TYPE_CHOICES = (
         (RESOURCE_COURSE, "Course"),
         (RESOURCE_TRACK, "Exam Track"),
-        (RESOURCE_EXAM, "Exam"),
+        (RESOURCE_EXAM, "Exam (Legacy)"),
     )
 
     resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPE_CHOICES, db_index=True)
-    subscription = models.ForeignKey(
-        Subscription,
-        on_delete=models.CASCADE,
-        related_name="entitlements",
-    )
-    course = models.ForeignKey(
-        "courses.Course",
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="subscription_entitlements",
-    )
-    track = models.ForeignKey(
-        "quiz.ExamTrack",
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="subscription_entitlements",
-    )
-    exam = models.ForeignKey(
-        "quiz.Exam",
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="subscription_entitlements",
-    )
+    subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE, related_name="entitlements")
+    course = models.ForeignKey("courses.Course", null=True, blank=True, on_delete=models.CASCADE, related_name="subscription_entitlements")
+    track = models.ForeignKey("quiz.ExamTrack", null=True, blank=True, on_delete=models.CASCADE, related_name="subscription_entitlements")
+    exam = models.ForeignKey("quiz.Exam", null=True, blank=True, on_delete=models.CASCADE, related_name="subscription_entitlements")
     is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -74,11 +57,7 @@ class SubscriptionEntitlement(models.Model):
         super().clean()
         errors = {}
 
-        if self.resource_type not in {
-            self.RESOURCE_COURSE,
-            self.RESOURCE_TRACK,
-            self.RESOURCE_EXAM,
-        }:
+        if self.resource_type not in {self.RESOURCE_COURSE, self.RESOURCE_TRACK, self.RESOURCE_EXAM}:
             errors["resource_type"] = "Invalid subscription resource type."
 
         if self.resource_type == self.RESOURCE_COURSE:
@@ -102,16 +81,13 @@ class SubscriptionEntitlement(models.Model):
                 errors["course"] = "Course must be empty for an exam entitlement."
             if self.track:
                 errors["track"] = "Track must be empty for an exam entitlement."
+            if self.subscription_id and self.subscription.user_id:
+                errors["resource_type"] = "Exams are not independently purchasable user subscription resources."
 
         if errors:
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        """Enforce one entitlement per subscription/resource on MySQL.
-
-        The subscription row is locked before checking for a duplicate, which
-        serializes entitlement creation/update for the same subscription.
-        """
         self.full_clean()
         with transaction.atomic():
             Subscription.objects.select_for_update().get(pk=self.subscription_id)
@@ -126,9 +102,7 @@ class SubscriptionEntitlement(models.Model):
                 **{f"{resource_field}_id": getattr(self, f"{resource_field}_id")},
             ).exclude(pk=self.pk).exists()
             if duplicate:
-                raise ValidationError(
-                    "This resource is already included in the subscription."
-                )
+                raise ValidationError("This resource is already included in the subscription.")
             return super().save(*args, **kwargs)
 
     def get_resource(self):
@@ -141,17 +115,13 @@ class SubscriptionEntitlement(models.Model):
         return None
 
     def is_valid(self):
-        if not self.is_active:
-            return False
-        if not self.get_resource():
+        if not self.is_active or not self.get_resource():
             return False
         return self.subscription.is_valid()
 
     def activate(self):
         if not self.subscription.is_valid():
-            raise ValidationError(
-                "Cannot activate an entitlement for an invalid subscription."
-            )
+            raise ValidationError("Cannot activate an entitlement for an invalid subscription.")
         self.is_active = True
         self.save(update_fields=["is_active", "updated_at"])
 
