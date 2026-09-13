@@ -8,7 +8,6 @@ from django.views.decorators.http import require_POST
 
 from organizations.permissions import org_admin_required, org_teacher_required
 from organizations.services.content_permissions import user_can_manage_owned_content
-from courses.forms import CourseForm
 from courses.models import Course
 from courses.views.instructor_views import course_create, course_edit
 from quiz.models import Exam, ExamTrack
@@ -139,6 +138,7 @@ def org_courses(request, slug):
         is_published=True,
     )
     active_subscription = get_active_organization_subscription(org)
+
     subscribed_course_ids = set()
     if active_subscription:
         subscribed_course_ids = set(
@@ -149,8 +149,11 @@ def org_courses(request, slug):
                 course__isnull=False,
             ).values_list("course_id", flat=True)
         )
+
     subscribed_courses = Course.objects.filter(id__in=subscribed_course_ids)
-    visible_courses = (organization_courses | platform_courses | subscribed_courses).distinct().order_by("title")
+    visible_courses = (
+        organization_courses | platform_courses | subscribed_courses
+    ).distinct().order_by("title")
     courses = [
         {
             "course": course,
@@ -173,22 +176,27 @@ def org_courses(request, slug):
                 track__isnull=False,
             ).values_list("track_id", flat=True)
         )
-    tracks = [{"track": track, "is_attached": track.id in subscribed_track_ids} for track in visible_tracks]
+    tracks = [
+        {
+            "track": track,
+            "is_attached": track.id in subscribed_track_ids,
+            "can_edit": track.organization_id == org.id,
+        }
+        for track in visible_tracks
+    ]
 
+    # Exams are reusable content, not independently sellable resources.
+    # Keep them visible for content management without an attach/detach state.
     visible_exams = Exam.objects.filter(
         Q(organization=org) | Q(organization__isnull=True)
-    ).select_related("track").order_by("title")
-    subscribed_exam_ids = set()
-    if active_subscription:
-        subscribed_exam_ids = set(
-            SubscriptionEntitlement.objects.filter(
-                subscription=active_subscription,
-                resource_type=SubscriptionEntitlement.RESOURCE_EXAM,
-                is_active=True,
-                exam__isnull=False,
-            ).values_list("exam_id", flat=True)
-        )
-    exams = [{"exam": exam, "is_attached": exam.id in subscribed_exam_ids} for exam in visible_exams]
+    ).order_by("title")
+    exams = [
+        {
+            "exam": exam,
+            "can_edit": exam.organization_id == org.id,
+        }
+        for exam in visible_exams
+    ]
 
     return render(
         request,
@@ -304,33 +312,4 @@ def org_track_detach(request, slug, pk):
         return redirect("organizations_admin:courses", slug=slug)
     success = deactivate_resource_entitlement(request.organization, SubscriptionEntitlement.RESOURCE_TRACK, pk)
     messages.success(request, "Track detached successfully.") if success else messages.info(request, "Track was not attached.")
-    return redirect("organizations_admin:courses", slug=slug)
-
-
-@require_POST
-@org_admin_required
-def org_exam_attach(request, slug, pk):
-    org = request.organization
-    exam = get_object_or_404(Exam, pk=pk)
-    if not _platform_or_organization_resource(exam, org):
-        messages.error(request, "You cannot attach a resource owned by another organization.")
-        return redirect("organizations_admin:courses", slug=slug)
-    try:
-        _, created = create_resource_entitlement(org, SubscriptionEntitlement.RESOURCE_EXAM, exam)
-    except ValueError as exc:
-        messages.error(request, str(exc))
-        return redirect("organizations_admin:courses", slug=slug)
-    messages.success(request, "Exam attached successfully.") if created else messages.info(request, "Exam is already attached.")
-    return redirect("organizations_admin:courses", slug=slug)
-
-
-@require_POST
-@org_admin_required
-def org_exam_detach(request, slug, pk):
-    exam = get_object_or_404(Exam, pk=pk)
-    if not _platform_or_organization_resource(exam, request.organization):
-        messages.error(request, "You cannot detach a resource owned by another organization.")
-        return redirect("organizations_admin:courses", slug=slug)
-    success = deactivate_resource_entitlement(request.organization, SubscriptionEntitlement.RESOURCE_EXAM, pk)
-    messages.success(request, "Exam detached successfully.") if success else messages.info(request, "Exam was not attached.")
     return redirect("organizations_admin:courses", slug=slug)
