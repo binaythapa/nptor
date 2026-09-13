@@ -4,7 +4,7 @@
 Provide every active organization student with a private, organization-specific profile that they can complete and maintain from their account.
 
 ## Architecture
-`OrganizationMember` remains the organization boundary. Each student membership has one `OrganizationStudent` record, so the same user can have independent profiles in multiple organizations. Personal fields that are organization-specific are stored on `OrganizationStudent`; global account identity remains on the user model.
+`OrganizationMember` remains the organization boundary. Each student membership has one `OrganizationStudent` record, so the same user can have independent student records in multiple organizations. Organization-specific student/enrollment data is stored on `OrganizationStudent`; global account identity and the user's primary contact phone remain on the account profile.
 
 ## Student lifecycle
 - When an organization adds a user with the `student` role, an `OrganizationStudent` profile is created automatically if one does not already exist.
@@ -12,7 +12,9 @@ Provide every active organization student with a private, organization-specific 
 - Removing organization membership does not expose the profile to the student because profile access requires an active student membership.
 
 ## Editable profile data
-Students may maintain first name, last name, date of birth, contact phone, guardian name, guardian relationship, guardian phone, guardian email, and address.
+Students may maintain first name, last name, date of birth, contact phone, guardian name, guardian phone, and address.
+
+The contact phone is stored on the existing account `UserProfile`, while guardian and organization-specific student fields remain on `OrganizationStudent`.
 
 Enrollment/administrative fields such as student ID, admission number, status, joined date, class, section, and roll number remain organization-controlled.
 
@@ -26,6 +28,6 @@ Enrollment/administrative fields such as student ID, admission number, status, j
 Student-facing organization navigation exposes `My Profile` when the current membership is a student. The profile page provides a clear completion/edit action and displays the organization name so students understand which organization's profile they are editing.
 
 ## Validation
-- Contact phone and guardian phone are stored as strings to support international formats.
-- Email fields use Django email validation.
+- Contact phone is stored using the existing account profile phone field.
+- Guardian phone is stored as a string to support international formats.
 - Profile creation is idempotent and keyed by `(organization, user)` through the existing `OrganizationStudent` uniqueness constraint.
