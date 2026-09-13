@@ -1,7 +1,7 @@
 from django import forms
 from django.test import SimpleTestCase
 
-from quiz.forms.widgets import SearchableModelMultipleChoiceWidget
+from quiz.search_widgets import SearchableModelMultipleChoiceWidget
 
 
 class SearchableExamSelectorTests(SimpleTestCase):
