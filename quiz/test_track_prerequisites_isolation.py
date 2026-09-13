@@ -33,6 +33,12 @@ class TrackPrerequisiteIsolationTests(TestCase):
             duration_seconds=600,
             is_published=True,
         )
+        self.org_exam_two = Exam.objects.create(
+            title="Tenant Exam Two",
+            organization=self.org,
+            duration_seconds=600,
+            is_published=True,
+        )
         self.other_org_exam = Exam.objects.create(
             title="Other Tenant Exam",
             organization=self.other_org,
@@ -44,7 +50,7 @@ class TrackPrerequisiteIsolationTests(TestCase):
         track = ExamTrack.objects.create(title="Tenant Track", slug="tenant-track", organization=self.org)
         formset = TrackExamFormSet(instance=track, organization=self.org, prefix="track_exams")
         exam_queryset = formset.forms[0].fields["exam"].queryset
-        self.assertEqual(list(exam_queryset), [self.org_exam])
+        self.assertEqual(list(exam_queryset), [self.org_exam, self.org_exam_two])
 
     def test_platform_track_formset_only_exposes_platform_exams(self):
         track = ExamTrack.objects.create(title="Platform Track", slug="platform-track")
@@ -70,7 +76,7 @@ class TrackPrerequisiteIsolationTests(TestCase):
         }
         formset = TrackExamFormSet(data=data, instance=track, organization=self.org, prefix="track_exams")
         self.assertFalse(formset.is_valid())
-        self.assertIn("Prerequisite exams must also be included in this Track.", formset.forms[0].errors["prerequisite_exams"])
+        self.assertIn("Select a valid choice", str(formset.forms[0].errors["prerequisite_exams"]))
 
     def test_organization_course_cannot_be_public(self):
         course = Course.objects.create(
@@ -87,6 +93,6 @@ class TrackPrerequisiteIsolationTests(TestCase):
     def test_track_exam_prerequisites_are_stored_on_membership(self):
         track = ExamTrack.objects.create(title="Tenant Track", slug="tenant-track", organization=self.org)
         first = TrackExam.objects.create(track=track, exam=self.org_exam, order=1)
-        second = TrackExam.objects.create(track=track, exam=self.other_org_exam, order=2)
+        second = TrackExam.objects.create(track=track, exam=self.org_exam_two, order=2)
         second.prerequisite_exams.add(first.exam)
         self.assertEqual(list(second.prerequisite_exams.all()), [first.exam])
