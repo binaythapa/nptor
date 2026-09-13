@@ -8,6 +8,18 @@ from quiz.forms import EmailOrUsernameLoginForm
 
 from quiz.views.admin import *
 from quiz.views.admin_autocomplete import admin_autocomplete
+from quiz.views.admin_classification import (
+    admin_domain_list,
+    admin_domain_create,
+    admin_domain_update,
+    admin_domain_toggle,
+    admin_domain_delete,
+    admin_category_list,
+    admin_category_create,
+    admin_category_update,
+    admin_category_toggle,
+    admin_category_delete,
+)
 from quiz.views.questions import *
 from quiz.views.practice_express import *
 from quiz.views.auth import *
@@ -134,6 +146,16 @@ urlpatterns = [
     path("track/<int:track_id>/checkout/", track_checkout, name="track_checkout"),
 
     path("dashboard/admin/autocomplete/", admin_autocomplete, name="admin_autocomplete"),
+    path("dashboard/admin/domains/", admin_domain_list, name="admin_domain_list"),
+    path("dashboard/admin/domains/add/", admin_domain_create, name="admin_domain_create"),
+    path("dashboard/admin/domains/<int:pk>/edit/", admin_domain_update, name="admin_domain_update"),
+    path("dashboard/admin/domains/<int:pk>/toggle/", admin_domain_toggle, name="admin_domain_toggle"),
+    path("dashboard/admin/domains/<int:pk>/delete/", admin_domain_delete, name="admin_domain_delete"),
+    path("dashboard/admin/categories/", admin_category_list, name="admin_category_list"),
+    path("dashboard/admin/categories/add/", admin_category_create, name="admin_category_create"),
+    path("dashboard/admin/categories/<int:pk>/edit/", admin_category_update, name="admin_category_update"),
+    path("dashboard/admin/categories/<int:pk>/toggle/", admin_category_toggle, name="admin_category_toggle"),
+    path("dashboard/admin/categories/<int:pk>/delete/", admin_category_delete, name="admin_category_delete"),
     path("dashboard/admin/subscriptions/", subscription_admin_panel, name="subscription_admin_panel"),
     path("dashboard/admin/subscriptions/search/users/", admin_subscription_user_search, name="admin_subscription_user_search"),
     path("dashboard/admin/subscriptions/search/courses/", admin_subscription_course_search, name="admin_subscription_course_search"),
