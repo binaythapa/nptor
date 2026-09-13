@@ -63,13 +63,3 @@ def admin_track_update(request, pk):
         "quiz/student/subscription/track_form.html",
         {"form": form, "formset": formset, "mode": "edit"},
     )
-
-
-# Exam CRUD is imported here after the legacy subscription views so the
-# URL configuration resolves the complete reusable-exam implementation.
-from quiz.views.admin_exam_views import (  # noqa: E402,F401
-    admin_exam_create,
-    admin_exam_delete,
-    admin_exam_list,
-    admin_exam_update,
-)
