@@ -1,4 +1,4 @@
-/* NPTOR single-value server-side exam autocomplete. */
+/* NPTOR single-value server-side autocomplete. */
 (function () {
     "use strict";
 
@@ -11,6 +11,12 @@
         return String(value == null ? "" : value).replace(/[&<>\"']/g, function (ch) {
             return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch];
         });
+    }
+
+    function organizationIdFor(select) {
+        const form = select.closest("form");
+        const field = form && form.querySelector("select[name='organization'], select[name$='-organization'], input[name='organization'], input[name$='-organization']");
+        return field ? field.value : (select.dataset.autocompleteOrganization || "");
     }
 
     function attach(wrapper) {
@@ -75,8 +81,9 @@
             if (!query) return;
             timer = setTimeout(function () {
                 const current = ++requestId;
-                const params = new URLSearchParams({scope: "exams", q: query});
-                const organization = select.dataset.autocompleteOrganization;
+                const scope = select.dataset.autocompleteScope || "exams";
+                const params = new URLSearchParams({scope: scope, q: query});
+                const organization = organizationIdFor(select);
                 if (organization) params.set("organization", organization);
                 fetch(endpoint + "?" + params.toString(), {headers: {"X-Requested-With": "XMLHttpRequest"}})
                     .then(function (response) { return response.ok ? response.json() : {results: []}; })
@@ -86,8 +93,9 @@
                             return !selected || String(item.id) !== selected.id;
                         });
                         menu.innerHTML = results.length ? results.map(function (item, index) {
-                            return '<button type="button" class="admin-search-select-option" data-index="' + index + '">' + escapeHtml(item.label) + '</button>';
-                        }).join("") : '<div class="admin-search-select-empty">No matching exams</div>';
+                            const subtitle = item.subtitle ? '<small>' + escapeHtml(item.subtitle) + '</small>' : '';
+                            return '<button type="button" class="admin-search-select-option" data-index="' + index + '">' + escapeHtml(item.label) + subtitle + '</button>';
+                        }).join("") : '<div class="admin-search-select-empty">No matching ' + escapeHtml(scope) + '</div>';
                         menu.classList.add("is-open");
                         menu.querySelectorAll("button").forEach(function (button, index) {
                             button.addEventListener("mousedown", function (event) { event.preventDefault(); });
