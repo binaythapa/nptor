@@ -1,0 +1,36 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Manage Track Exams – Admin{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px;margin:0 auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:16px;">
+    <div>
+      <h1 class="title is-4">Manage Track Exams</h1>
+      <p class="subtitle is-6 has-text-grey">{{ track.title }}</p>
+    </div>
+    <a href="{% url 'quiz:admin_track_update' track.id %}" class="button is-light">← Back to Track</a>
+  </div>
+
+  <div class="notification is-info is-light">
+    <strong>Reusable exam model:</strong> the same Exam may belong to multiple Tracks and Courses. Selecting exams here changes only this Track; it does not create a Course relationship or a standalone exam product.
+  </div>
+
+  <div class="box">
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="notification is-danger is-light">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="field">
+        <label class="label" for="{{ form.exams.id_for_label }}">{{ form.exams.label }}</label>
+        <div class="control">{% render_field form.exams %}</div>
+        {% if form.exams.help_text %}<p class="help">{{ form.exams.help_text }}</p>{% endif %}
+        {% for error in form.exams.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+      </div>
+      <div style="margin-top:20px;">
+        <button type="submit" class="button is-primary">Save Included Exams</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
