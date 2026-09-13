@@ -8,8 +8,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name="exam",
-            name="subscription_plans",
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],
+            state_operations=[
+                migrations.RemoveField(
+                    model_name="exam",
+                    name="subscription_plans",
+                ),
+            ],
         ),
     ]
