@@ -54,7 +54,7 @@
                 <div class="admin-exam-section-heading">
                     <div>
                         <h2 class="admin-exam-section-title">Classification</h2>
-                        <p class="admin-exam-help">Use categories to control catalog classification and question allocation.</p>
+                        <p class="admin-exam-help">Search the category catalog and select only the categories that apply.</p>
                     </div>
                 </div>
                 <div class="admin-exam-grid admin-exam-grid-2">
@@ -65,8 +65,8 @@
                         {% for error in form.primary_category.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
                     </div>
                     <div class="admin-exam-field admin-exam-field-wide">
-                        <label class="admin-exam-label">Categories</label>
-                        <div class="admin-exam-checkboxes">{% render_field form.categories %}</div>
+                        <label class="admin-exam-label" for="{{ form.categories.id_for_label }}">Categories</label>
+                        <div class="admin-exam-control">{% render_field form.categories %}</div>
                         {% if form.categories.help_text %}<p class="admin-exam-help">{{ form.categories.help_text }}</p>{% endif %}
                         {% for error in form.categories.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
                     </div>
@@ -147,4 +147,8 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{% static 'js/admin_exam_selector.js' %}"></script>
 {% endblock %}
