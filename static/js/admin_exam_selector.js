@@ -185,23 +185,27 @@
         }
 
         input.addEventListener("input", function () { search(input.value.trim()); });
-        input.addEventListener("keydown", function (event) {
-            if (event.key === "Escape") close();
-        });
-        document.addEventListener("click", function (event) {
-            if (!wrapper.contains(event.target)) close();
-        });
-
+        input.addEventListener("keydown", function (event) { if (event.key === "Escape") close(); });
+        document.addEventListener("click", function (event) { if (!wrapper.contains(event.target)) close(); });
         renderSelected();
     }
 
-    function init() {
-        document.querySelectorAll("select[multiple][name$='exams']").forEach(attach);
+    function init(root) {
+        (root || document).querySelectorAll("select[multiple][name$='exams']").forEach(attach);
     }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-    } else {
-        init();
+    function start() {
+        init(document);
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) init(node);
+                });
+            });
+        });
+        observer.observe(document.body, {childList: true, subtree: true});
     }
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+    else start();
 })();
