@@ -23,7 +23,8 @@
     <div class="col-md-6"><div class="card h-100"><div class="card-body">
       <h5>Contact & Guardian</h5>
       <dl class="row mb-0">
-        <dt class="col-sm-5">Email</dt><dd class="col-sm-7">{{ student.user.email }}</dd>
+        <dt class="col-sm-5">Email</dt><dd class="col-sm-7">{{ student.user.email|default:"—" }}</dd>
+        <dt class="col-sm-5">Contact number</dt><dd class="col-sm-7">{{ student.user.profile.phone|default:"—" }}</dd>
         <dt class="col-sm-5">Guardian</dt><dd class="col-sm-7">{{ student.guardian_name|default:"—" }}</dd>
         <dt class="col-sm-5">Guardian phone</dt><dd class="col-sm-7">{{ student.guardian_phone|default:"—" }}</dd>
         <dt class="col-sm-5">Address</dt><dd class="col-sm-7">{{ student.address|default:"—" }}</dd>
