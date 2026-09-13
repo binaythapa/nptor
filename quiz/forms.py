@@ -9,7 +9,7 @@ from subscriptions.models import SubscriptionPlan
 from organizations.models.organization import Organization
 
 from .models import Category, Choice, Domain, Exam, ExamTrack, Question
-from .search_widgets import SearchableModelMultipleChoiceWidget
+from .search_widgets import SearchableModelChoiceWidget, SearchableModelMultipleChoiceWidget
 
 User = get_user_model()
 
@@ -93,6 +93,10 @@ class ExamForm(forms.ModelForm):
             "is_published", "max_mock_attempts", "allow_review",
         ]
         widgets = {
+            "primary_category": SearchableModelChoiceWidget(attrs={
+                "data-autocomplete-scope": "categories",
+                "data-search-placeholder": "Search primary category...",
+            }),
             "categories": SearchableModelMultipleChoiceWidget(attrs={
                 "data-autocomplete-scope": "categories",
                 "data-search-placeholder": "Search categories...",
