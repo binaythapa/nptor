@@ -1,14 +1,15 @@
 {% extends "organizations/admin/base.html" %}
 {% load widget_tweaks static %}
 
-{% block title %}Create Exam Track{% endblock %}
+{% block title %}Create Organization Track{% endblock %}
 
 {% block content %}
 {% with org_slug=request.organization.slug %}
 <div class="container py-5">
   <div class="mb-6">
     <nav class="breadcrumb"><ul><li><a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">Dashboard</a></li><li><a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}">Tracks</a></li><li class="is-active"><a href="#">Create Track</a></li></ul></nav>
-    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4"><h1 class="title is-3">📚 Create Exam Track</h1><span class="tag is-info is-light">Organization Track</span></div>
+    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4"><h1 class="title is-3">📚 Create Track</h1><span class="tag is-info is-light">Private Organization Resource</span></div>
+    <div class="notification is-info is-light">This Track is created for your organization and is not sold to public users. Student access is managed by the organization.</div>
   </div>
 
   <form method="post">
