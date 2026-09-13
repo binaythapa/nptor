@@ -2,7 +2,7 @@ from django import forms
 from django.forms import BaseInlineFormSet, inlineformset_factory
 
 from quiz.models import Exam, ExamTrack, TrackExam
-from quiz.search_widgets import SearchableModelMultipleChoiceWidget
+from quiz.search_widgets import SearchableModelChoiceWidget, SearchableModelMultipleChoiceWidget
 
 
 class TrackExamAssignmentForm(forms.ModelForm):
@@ -10,7 +10,7 @@ class TrackExamAssignmentForm(forms.ModelForm):
         model = TrackExam
         fields = ["exam", "order", "is_required", "prerequisite_exams"]
         widgets = {
-            "exam": SearchableModelMultipleChoiceWidget(),
+            "exam": SearchableModelChoiceWidget(),
             "prerequisite_exams": SearchableModelMultipleChoiceWidget(
                 attrs={
                     "data-autocomplete-scope": "exams",
