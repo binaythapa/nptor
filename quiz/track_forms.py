@@ -15,6 +15,7 @@ class TrackExamAssignmentForm(forms.ModelForm):
                 attrs={
                     "data-autocomplete-scope": "exams",
                     "data-search-placeholder": "Search prerequisite exams...",
+                    "data-autocomplete-track-exams-only": "true",
                 }
             ),
         }
