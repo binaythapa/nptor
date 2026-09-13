@@ -203,7 +203,7 @@ def admin_category_delete(request, pk):
     if request.method != "POST":
         raise Http404
     category = get_object_or_404(_global_category_queryset(), pk=pk)
-    if category.children.exists() or category.primary_questions.exists() or category.questions.exists() or category.primary_exams.exists() or category.exams.exists():
+    if category.children.exists() or category.primary_questions.exists() or category.questions.exists() or category.exams.exists() or category.exam_allocations.exists():
         messages.error(request, "This category cannot be deleted while it is referenced by child categories, questions, or exams. Deactivate it instead.")
     else:
         category.delete()
