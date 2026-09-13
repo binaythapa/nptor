@@ -1,13 +1,52 @@
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.forms import HiddenInput
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
 from organizations.permissions import org_teacher_required
 from organizations.models.role import OrganizationRole
 from organizations.services.content_permissions import user_can_manage_owned_content
-from quiz.models import Exam, UserExam
+from quiz.models import Exam, UserExam, Category
 from quiz.forms import ExamForm
+
+
+class OrganizationExamForm(ExamForm):
+    """Global exam form layout with organization-only classification choices."""
+
+    def __init__(self, *args, organization=None, **kwargs):
+        super().__init__(*args, organization=organization, **kwargs)
+        if organization is None:
+            return
+
+        category_qs = (
+            Category.objects
+            .filter(organization=organization, is_active=True)
+            .select_related("domain", "parent")
+            .order_by("domain__name", "parent__name", "name")
+        )
+        self.fields["primary_category"].queryset = category_qs
+        self.fields["categories"].queryset = category_qs
+
+        self.fields["organization"].queryset = type(self.fields["organization"].queryset).filter(
+            self.fields["organization"].queryset,
+            pk=organization.pk,
+        )
+        self.fields["organization"].initial = organization
+        self.fields["organization"].required = True
+        self.fields["organization"].widget = HiddenInput()
+
+        self.fields["primary_category"].widget.attrs["data-autocomplete-organization-only"] = "true"
+        self.fields["categories"].widget.attrs["data-autocomplete-organization-only"] = "true"
+        self.fields["categories"].help_text = "Search and select categories belonging to this organization."
+        self.fields["primary_category"].help_text = "Select the main category from this organization's category catalog."
+
+    def clean(self):
+        cleaned_data = super().clean()
+        organization = cleaned_data.get("organization")
+        if organization is not None and self.fields["organization"].queryset.filter(pk=organization.pk).exists() is False:
+            self.add_error("organization", "Invalid organization.")
+        return cleaned_data
 
 
 # ============================================================
@@ -48,41 +87,26 @@ def org_exam_list(request, slug):
 # ============================================================
 @org_teacher_required
 def org_exam_create(request, slug):
-    """
-    Create a new unpublished exam for the organization.
-
-    Organization teaching members may configure an exam, but publishing is
-    intentionally reserved for the platform moderation boundary.
-    """
+    """Create a new unpublished organization exam using the global admin form layout."""
 
     org = request.organization
 
     if request.method == "POST":
-
-        form = ExamForm(request.POST, organization=org)
+        form = OrganizationExamForm(request.POST, organization=org)
 
         if form.is_valid():
-
             exam = form.save(commit=False)
             exam.organization = org
             exam.created_by = request.user
-            # Never allow an organization teaching-member form submission to
-            # publish an exam by tampering with is_published.
+            # Organization teaching members cannot publish directly.
             exam.is_published = False
             exam.save()
-
-            # save ManyToMany fields
             form.save_m2m()
 
             messages.success(request, "Exam created successfully.")
-
-            return redirect(
-                "organizations_admin:exams",
-                slug=slug,
-            )
-
+            return redirect("organizations_admin:exams", slug=slug)
     else:
-        form = ExamForm(organization=org)
+        form = OrganizationExamForm(organization=org)
 
     return render(
         request,
@@ -125,32 +149,23 @@ def org_exam_update(request, slug, pk):
         )
 
     if request.method == "POST":
-
-        form = ExamForm(
+        form = OrganizationExamForm(
             request.POST,
             instance=exam,
             organization=org,
         )
 
         if form.is_valid():
-
             exam = form.save(commit=False)
             exam.organization = org
-            # Publishing is not an organization teaching-member capability.
             exam.is_published = False
             exam.save()
-
             form.save_m2m()
 
             messages.success(request, "Exam updated successfully.")
-
-            return redirect(
-                "organizations_admin:exams",
-                slug=slug,
-            )
-
+            return redirect("organizations_admin:exams", slug=slug)
     else:
-        form = ExamForm(
+        form = OrganizationExamForm(
             instance=exam,
             organization=org,
         )
