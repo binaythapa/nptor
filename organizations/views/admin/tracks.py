@@ -31,6 +31,18 @@ def _save_selected_exams(track, exams):
             row.save(update_fields=["order"])
 
 
+def _organization_exams_are_valid(form, organization):
+    exams = list(form.cleaned_data.get("exams") or [])
+    invalid = [exam for exam in exams if exam.organization_id != organization.id]
+    if invalid:
+        form.add_error(
+            "exams",
+            "Organization Tracks can only contain Exams created by this organization.",
+        )
+        return False
+    return True
+
+
 @org_admin_required
 def org_track_list(request, slug):
     org = request.organization
@@ -47,7 +59,7 @@ def org_track_create(request, slug):
     org = request.organization
     if request.method == "POST":
         form = ExamTrackForm(request.POST, organization=org)
-        if form.is_valid():
+        if form.is_valid() and _organization_exams_are_valid(form, org):
             track = form.save(commit=False)
             track.organization = org
             track.save()
@@ -68,7 +80,7 @@ def org_track_edit(request, slug, pk):
     track = get_object_or_404(ExamTrack, pk=pk, organization=org)
     if request.method == "POST":
         form = ExamTrackForm(request.POST, instance=track, organization=org)
-        if form.is_valid():
+        if form.is_valid() and _organization_exams_are_valid(form, org):
             updated = form.save(commit=False)
             updated.organization = org
             updated.save()
