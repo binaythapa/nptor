@@ -1,4 +1,3 @@
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.http import JsonResponse
@@ -6,7 +5,8 @@ from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET
 
 from courses.models import Course
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationMember
+from organizations.models.role import OrganizationRole
 from quiz.models import Category, Difficulty, Exam, ExamTrack, Notification, Question
 
 SEARCH_LIMIT = 20
@@ -27,10 +27,12 @@ def _result(item_id, label, subtitle=""):
     return {"id": item_id, "label": label, "subtitle": subtitle}
 
 
-def _tenant_queryset(queryset, request):
+def _tenant_queryset(queryset, request, include_global=False):
     """Scope searchable content to one tenant; no tenant means platform content."""
     organization_id = (request.GET.get("organization") or "").strip()
     if organization_id:
+        if include_global:
+            return queryset.filter(Q(organization_id=organization_id) | Q(organization__isnull=True))
         return queryset.filter(organization_id=organization_id)
     return queryset.filter(organization__isnull=True)
 
@@ -48,10 +50,31 @@ def _allowed_ids(request):
     return values
 
 
-@staff_member_required
+def _can_use_autocomplete(request):
+    """Allow platform staff or authorized organization teaching members."""
+    if not request.user.is_authenticated:
+        return False
+    if request.user.is_staff:
+        return True
+
+    organization_id = (request.GET.get("organization") or "").strip()
+    if not organization_id or not organization_id.isdigit():
+        return False
+
+    return OrganizationMember.objects.filter(
+        user=request.user,
+        organization_id=int(organization_id),
+        is_active=True,
+        role__in=OrganizationRole.teaching_roles(),
+    ).exists()
+
+
 @require_GET
 def admin_autocomplete(request):
     """Return small, prefix-matched recommendation lists for admin search fields."""
+    if not _can_use_autocomplete(request):
+        return JsonResponse({"results": []}, status=403)
+
     query = _query(request)
     scope = (request.GET.get("scope") or "").strip().lower()
 
@@ -79,7 +102,11 @@ def admin_autocomplete(request):
         qs = _tenant_queryset(ExamTrack.objects.filter(title__istartswith=query), request).order_by("title")[:SEARCH_LIMIT]
         results = [_result(item.id, item.title) for item in qs]
     elif scope == "exams":
-        qs = _tenant_queryset(Exam.objects.filter(title__istartswith=query), request)
+        qs = _tenant_queryset(
+            Exam.objects.filter(title__istartswith=query, is_published=True),
+            request,
+            include_global=True,
+        )
         allowed_ids = _allowed_ids(request)
         if allowed_ids is not None:
             qs = qs.filter(pk__in=allowed_ids)
