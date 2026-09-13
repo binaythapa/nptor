@@ -10,6 +10,7 @@ class TrackExamAssignmentForm(forms.ModelForm):
         model = TrackExam
         fields = ["exam", "order", "is_required", "prerequisite_exams"]
         widgets = {
+            "exam": SearchableModelMultipleChoiceWidget(),
             "prerequisite_exams": SearchableModelMultipleChoiceWidget(
                 attrs={
                     "data-autocomplete-scope": "exams",
@@ -27,7 +28,9 @@ class TrackExamAssignmentForm(forms.ModelForm):
             "Optional exams that must be passed before this exam becomes available in the Track."
         )
         if organization is not None:
-            self.fields["prerequisite_exams"].widget.attrs["data-autocomplete-organization"] = str(organization.pk)
+            org_id = str(organization.pk)
+            self.fields["exam"].widget.attrs["data-autocomplete-organization"] = org_id
+            self.fields["prerequisite_exams"].widget.attrs["data-autocomplete-organization"] = org_id
 
 
 class TrackExamInlineFormSet(BaseInlineFormSet):
@@ -46,7 +49,9 @@ class TrackExamInlineFormSet(BaseInlineFormSet):
             form.fields["exam"].queryset = self.exam_queryset
             form.fields["prerequisite_exams"].queryset = self.exam_queryset
             if organization is not None:
-                form.fields["prerequisite_exams"].widget.attrs["data-autocomplete-organization"] = str(organization.pk)
+                org_id = str(organization.pk)
+                form.fields["exam"].widget.attrs["data-autocomplete-organization"] = org_id
+                form.fields["prerequisite_exams"].widget.attrs["data-autocomplete-organization"] = org_id
 
     def clean(self):
         super().clean()
