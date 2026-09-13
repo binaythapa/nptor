@@ -174,6 +174,7 @@
                 const params = new URLSearchParams({scope: scope, q: query});
                 const organization = organizationIdFor(select, form);
                 if (organization) params.set("organization", organization);
+                if (select.dataset.autocompleteOrganizationOnly === "true") params.set("organization_only", "true");
                 if (select.dataset.autocompleteTrackExamsOnly === "true") {
                     const ids = trackExamIds();
                     if (ids.length) params.set("ids", ids.join(","));
