@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.staticfiles import finders
 from django.test import TestCase
 from django.urls import reverse
 
@@ -39,8 +40,20 @@ class AdminTrackProgressionUITests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Prerequisite Exams")
-        self.assertContains(response, "Priority")
+        self.assertContains(response, "Order")
+        self.assertContains(response, "+ Add Exam")
+        self.assertContains(response, "No exams added yet")
         self.assertNotContains(response, "Select the reusable exams included in this Track")
+
+    def test_track_search_templates_are_not_initialized_before_dynamic_clone(self):
+        for path, marker in (
+            ("js/admin_exam_selector.js", "select.closest(\"#track-exam-empty-form\")"),
+            ("js/admin_single_exam_selector.js", "wrapper.closest(\"#track-exam-empty-form\")"),
+        ):
+            file_path = finders.find(path)
+            self.assertIsNotNone(file_path)
+            with open(file_path, encoding="utf-8") as source:
+                self.assertIn(marker, source.read())
 
     def test_track_form_saves_order_required_and_prerequisite(self):
         response = self.client.post(
