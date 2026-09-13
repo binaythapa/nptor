@@ -39,6 +39,7 @@
     }
 
     function attach(select) {
+        if (select.closest("#track-exam-empty-form")) return;
         if (select.dataset.adminExamSelectorReady === "1" || !select.multiple) return;
         const form = select.closest("form");
         if (!form) return;
@@ -144,7 +145,12 @@
         function trackExamIds() {
             const trackContainer = select.closest("#track-exam-formset");
             if (!trackContainer) return [];
+            const currentRow = select.closest(".track-exam-row");
+            const currentExam = currentRow && currentRow.querySelector("select[name$='-exam']");
             return Array.from(trackContainer.querySelectorAll("select[name$='-exam']"))
+                .filter(function (examSelect) {
+                    return !(currentExam && examSelect === currentExam && select.dataset.autocompleteTrackExamsOnly === "true");
+                })
                 .map(function (examSelect) { return examSelect.value; })
                 .filter(Boolean)
                 .filter(function (value, index, values) { return values.indexOf(value) === index; });
@@ -165,7 +171,7 @@
                     const ids = trackExamIds();
                     if (ids.length) params.set("ids", ids.join(","));
                     else {
-                        menu.innerHTML = '<div class="admin-search-select-empty">Add an included Track Exam first</div>';
+                        menu.innerHTML = '<div class="admin-search-select-empty">Add another exam to this Track first</div>';
                         menu.classList.add("is-open");
                         return;
                     }
