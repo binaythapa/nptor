@@ -16,6 +16,7 @@ from quiz.views.questions import *
 from quiz.views.practice_express import *
 from quiz.views.auth import *
 from quiz.views.admin_subscription_views import *
+from quiz.views.admin_track_exam_views import admin_track_exams
 from quiz.views.admin_course_access import (
     admin_course_access_data,
     admin_subscribe_course,
@@ -63,10 +64,6 @@ from quiz.views.government_catalog import (
 )
 from quiz.views.government_dashboard import government_program_dashboard
 
-# ============================================================
-# PRACTICE
-# ============================================================
-
 from quiz.views.practice import (
     practice,
     practice_feedback_ajax,
@@ -76,10 +73,6 @@ from quiz.views.practice import (
     discussion_submit_ajax,
     practice_skip_ajax
 )
-
-# ============================================================
-# PAYMENT CHECKOUT
-# ============================================================
 
 from payments.views.checkout import track_checkout
 
@@ -159,6 +152,7 @@ urlpatterns = [
     path("dashboard/admin/tracks/", admin_track_list, name="admin_track_list"),
     path("dashboard/admin/tracks/add/", admin_track_create, name="admin_track_create"),
     path("dashboard/admin/tracks/<int:pk>/edit/", admin_track_update, name="admin_track_update"),
+    path("dashboard/admin/tracks/<int:pk>/exams/", admin_track_exams, name="admin_track_exams"),
     path("dashboard/admin/tracks/<int:pk>/delete/", admin_track_delete, name="admin_track_delete"),
     path("dashboard/admin/coupons/", admin_coupon_list, name="admin_coupon_list"),
     path("dashboard/admin/coupons/add/", admin_coupon_create, name="admin_coupon_create"),
