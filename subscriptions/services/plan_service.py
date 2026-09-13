@@ -38,6 +38,11 @@ def get_plan_for_course(course, plan_id=None):
     return plans.first()
 
 
+def get_plan_for_exam(exam, plan_id=None):
+    """Deprecated: Exams are not independently sellable products."""
+    return None
+
+
 def get_account_plans():
     return _active_plans(
         SubscriptionPlan.objects.filter(
