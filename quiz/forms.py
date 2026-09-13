@@ -31,40 +31,16 @@ User = get_user_model()
 
 class CustomerRegisterForm(forms.ModelForm):
 
-    username = forms.CharField(
-        widget=forms.TextInput(),
-        required=True,
-    )
-
-    password = forms.CharField(
-        widget=forms.PasswordInput(),
-        required=True,
-    )
-
-    email = forms.CharField(
-        widget=forms.EmailInput(),
-        required=True,
-    )
-
-    first_name = forms.CharField(
-        widget=forms.TextInput(),
-        required=True,
-    )
-
-    last_name = forms.CharField(
-        widget=forms.TextInput(),
-        required=True,
-    )
+    username = forms.CharField(widget=forms.TextInput(), required=True)
+    password = forms.CharField(widget=forms.PasswordInput(), required=True)
+    email = forms.CharField(widget=forms.EmailInput(), required=True)
+    first_name = forms.CharField(widget=forms.TextInput(), required=True)
+    last_name = forms.CharField(widget=forms.TextInput(), required=True)
 
     class Meta:
         model = Client
         fields = (
-            "username",
-            "password",
-            "email",
-            "first_name",
-            "last_name",
-            "contact",
+            "username", "password", "email", "first_name", "last_name", "contact",
         )
 
     def clean_username(self):
@@ -93,12 +69,7 @@ class RegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = (
-            "username",
-            "email",
-            "password1",
-            "password2",
-        )
+        fields = ("username", "email", "password1", "password2")
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
@@ -114,21 +85,10 @@ class RegistrationForm(UserCreationForm):
 class EmailOrUsernameLoginForm(AuthenticationForm):
 
     username = forms.CharField(
-        widget=forms.TextInput(
-            attrs={
-                "class": "input",
-                "placeholder": "Username or Email",
-            }
-        )
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Username or Email"})
     )
-
     password = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "input",
-                "placeholder": "Password",
-            }
-        )
+        widget=forms.PasswordInput(attrs={"class": "input", "placeholder": "Password"})
     )
 
 
@@ -141,12 +101,7 @@ class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
         fields = [
-            "primary_category",
-            "categories",
-            "difficulty",
-            "question_type",
-            "text",
-            "explanation",
+            "primary_category", "categories", "difficulty", "question_type", "text", "explanation",
         ]
         widgets = {
             "categories": forms.CheckboxSelectMultiple(),
@@ -157,20 +112,15 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         organization = kwargs.pop("organization", None)
         super().__init__(*args, **kwargs)
-
         category_qs = (
-            Category.objects
-            .filter(is_active=True)
+            Category.objects.filter(is_active=True)
             .select_related("domain", "parent")
             .order_by("domain__name", "parent__name", "name")
         )
-
         if organization is not None:
             category_qs = category_qs.filter(
-                models.Q(organization=organization)
-                | models.Q(organization__isnull=True)
+                models.Q(organization=organization) | models.Q(organization__isnull=True)
             )
-
         self.fields["primary_category"].queryset = category_qs
         self.fields["categories"].queryset = category_qs
         self.fields["primary_category"].label = "Primary Category"
@@ -186,11 +136,7 @@ class ChoiceForm(forms.ModelForm):
 
     class Meta:
         model = Choice
-        fields = [
-            "text",
-            "is_correct",
-            "order",
-        ]
+        fields = ["text", "is_correct", "order"]
 
 
 # ============================================================
@@ -198,12 +144,12 @@ class ChoiceForm(forms.ModelForm):
 # ============================================================
 
 class ExamForm(forms.ModelForm):
+    """Manage reusable exam content; access is inherited from Course/Track."""
 
     class Meta:
         model = Exam
         fields = [
             "title",
-            "subscription_plans",
             "primary_category",
             "categories",
             "question_count",
@@ -216,38 +162,20 @@ class ExamForm(forms.ModelForm):
         ]
         widgets = {
             "categories": forms.CheckboxSelectMultiple(),
-            "subscription_plans": forms.SelectMultiple(),
         }
 
     def __init__(self, *args, **kwargs):
         organization = kwargs.pop("organization", None)
         super().__init__(*args, **kwargs)
-
         category_qs = (
-            Category.objects
-            .filter(is_active=True)
+            Category.objects.filter(is_active=True)
             .select_related("domain", "parent")
             .order_by("domain__name", "parent__name", "name")
         )
-
         if organization is not None:
             category_qs = category_qs.filter(
-                models.Q(organization=organization)
-                | models.Q(organization__isnull=True)
+                models.Q(organization=organization) | models.Q(organization__isnull=True)
             )
-
-        self.fields["subscription_plans"].queryset = (
-            SubscriptionPlan.objects
-            .filter(is_active=True)
-            .order_by("price", "name")
-        )
-        self.fields["subscription_plans"].required = False
-        self.fields["subscription_plans"].label = "Direct Access Plans"
-        self.fields["subscription_plans"].help_text = (
-            "Optional plans that grant direct access to this reusable exam. "
-            "Track pricing remains independent."
-        )
-
         self.fields["primary_category"].queryset = category_qs
         self.fields["categories"].queryset = category_qs
         self.fields["primary_category"].label = "Primary Category"
@@ -261,7 +189,6 @@ class ExamForm(forms.ModelForm):
         cleaned_data = super().clean()
         primary_category = cleaned_data.get("primary_category")
         categories = cleaned_data.get("categories")
-
         if primary_category:
             category_list = list(categories or [])
             if primary_category not in category_list:
@@ -275,11 +202,9 @@ class ExamForm(forms.ModelForm):
                     "primary_category",
                     "Primary category must belong to the same organization as the exam, or be a global category.",
                 )
-
             if categories:
                 invalid_categories = [
-                    category
-                    for category in categories
+                    category for category in categories
                     if category.organization_id not in (None, organization_id)
                 ]
                 if invalid_categories:
@@ -292,7 +217,6 @@ class ExamForm(forms.ModelForm):
             category_ids = [category.id for category in categories]
             if len(category_ids) != len(set(category_ids)):
                 self.add_error("categories", "Duplicate categories are not allowed.")
-
         return cleaned_data
 
 
@@ -301,6 +225,14 @@ class ExamForm(forms.ModelForm):
 # ============================================================
 
 class ExamTrackForm(forms.ModelForm):
+    """Manage a sellable Track and the reusable exams it contains."""
+
+    exams = forms.ModelMultipleChoiceField(
+        queryset=Exam.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"size": 10}),
+        help_text="Select the reusable exams included in this track. Exams are not sold separately.",
+    )
 
     class Meta:
         model = ExamTrack
@@ -308,6 +240,9 @@ class ExamTrackForm(forms.ModelForm):
             "title",
             "slug",
             "description",
+            "organization",
+            "exams",
+            "subscription_plans",
             "pricing_type",
             "monthly_price",
             "lifetime_price",
@@ -316,13 +251,49 @@ class ExamTrackForm(forms.ModelForm):
             "is_active",
         ]
         widgets = {
-            "description": forms.Textarea(
-                attrs={
-                    "rows": 4,
-                    "class": "textarea",
-                }
-            )
+            "description": forms.Textarea(attrs={"rows": 4, "class": "textarea"}),
+            "subscription_plans": forms.SelectMultiple(attrs={"size": 8}),
         }
+
+    def __init__(self, *args, **kwargs):
+        organization = kwargs.pop("organization", None)
+        super().__init__(*args, **kwargs)
+
+        exam_qs = Exam.objects.filter(is_published=True).order_by("title")
+        if organization is not None:
+            exam_qs = exam_qs.filter(
+                models.Q(organization=organization) | models.Q(organization__isnull=True)
+            )
+            self.fields["organization"].initial = organization
+        self.fields["exams"].queryset = exam_qs
+        self.fields["subscription_plans"].queryset = SubscriptionPlan.objects.filter(
+            is_active=True,
+            product_type=SubscriptionPlan.PRODUCT_TRACK,
+            access_mode=SubscriptionPlan.ACCESS_SINGLE_RESOURCE,
+        ).order_by("price", "name")
+        self.fields["subscription_plans"].help_text = (
+            "Track product plans only. Buying a track grants this track and its included exams."
+        )
+        if self.instance.pk:
+            self.fields["exams"].initial = self.instance.track_exams.values_list("exam_id", flat=True)
+
+    def clean(self):
+        cleaned = super().clean()
+        plans = cleaned.get("subscription_plans")
+        pricing_type = cleaned.get("pricing_type")
+        if plans and pricing_type != ExamTrack.PRICING_FREE:
+            raise forms.ValidationError("Use Track Subscription Plans instead of legacy pricing.")
+        return cleaned
+
+    def save(self, commit=True):
+        track = super().save(commit=commit)
+        if commit:
+            track.exams.set(self.cleaned_data.get("exams") or [])
+            # The product model no longer supports per-exam subscription scope.
+            if track.subscription_scope != ExamTrack.TRACK:
+                track.subscription_scope = ExamTrack.TRACK
+                track.save(update_fields=["subscription_scope"])
+        return track
 
 
 # ============================================================
@@ -333,11 +304,7 @@ class DomainForm(forms.ModelForm):
 
     class Meta:
         model = Domain
-        fields = [
-            "name",
-            "slug",
-            "is_active",
-        ]
+        fields = ["name", "slug", "is_active"]
 
 
 # ============================================================
@@ -348,10 +315,4 @@ class CategoryForm(forms.ModelForm):
 
     class Meta:
         model = Category
-        fields = [
-            "domain",
-            "name",
-            "slug",
-            "parent",
-            "is_active",
-        ]
+        fields = ["domain", "name", "slug", "parent", "is_active"]
