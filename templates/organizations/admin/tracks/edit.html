@@ -1,18 +1,19 @@
 {% extends "organizations/admin/base.html" %}
 {% load widget_tweaks static %}
 
-{% block title %}Edit Exam Track{% endblock %}
+{% block title %}Edit Organization Track{% endblock %}
 
 {% block content %}
 <div class="container py-5">
   <div class="mb-6">
     <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
       <div>
-        <h1 class="title is-3">✏️ Edit Exam Track</h1>
-        <p class="subtitle is-6 has-text-grey">Update track details and configure exam progression.</p>
+        <h1 class="title is-3">✏️ Edit Track</h1>
+        <p class="subtitle is-6 has-text-grey">Update this private organization Track and its exam progression.</p>
       </div>
-      <span class="tag is-info is-light">Organization Track</span>
+      <span class="tag is-info is-light">Private Organization Resource</span>
     </div>
+    <div class="notification is-info is-light">This Track is private to your organization and is not sold to public users. Student access is managed by the organization.</div>
   </div>
 
   <form method="post">
