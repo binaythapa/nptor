@@ -9,6 +9,7 @@ from subscriptions.models import SubscriptionPlan
 from organizations.models.organization import Organization
 
 from .models import Category, Choice, Domain, Exam, ExamTrack, Question
+from .search_widgets import SearchableModelMultipleChoiceWidget
 
 User = get_user_model()
 
@@ -91,7 +92,12 @@ class ExamForm(forms.ModelForm):
             "question_count", "duration_seconds", "level", "passing_score",
             "is_published", "max_mock_attempts", "allow_review",
         ]
-        widgets = {"categories": forms.CheckboxSelectMultiple()}
+        widgets = {
+            "categories": SearchableModelMultipleChoiceWidget(attrs={
+                "data-autocomplete-scope": "categories",
+                "data-search-placeholder": "Search categories...",
+            }),
+        }
 
     def __init__(self, *args, **kwargs):
         organization = kwargs.pop("organization", None)
@@ -112,7 +118,7 @@ class ExamForm(forms.ModelForm):
         self.fields["primary_category"].label = "Primary Category"
         self.fields["categories"].label = "Categories"
         self.fields["primary_category"].help_text = "Main category used to classify this exam."
-        self.fields["categories"].help_text = "Select all categories covered by this exam."
+        self.fields["categories"].help_text = "Search by category name and select one or more categories. Only matching results are loaded."
         self.fields["primary_category"].required = False
         self.fields["categories"].required = False
         self.fields["question_count"].help_text = "Total number of questions allocated to each attempt."
