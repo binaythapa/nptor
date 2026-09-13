@@ -93,6 +93,15 @@ class StudentProfileTests(TestCase):
         self.student.refresh_from_db()
         self.assertEqual(self.student.student_id, "S001")
 
+    def test_existing_student_membership_gets_profile_on_first_access(self):
+        legacy_user = User.objects.create_user(username="legacy-student", email="legacy@example.com", password="password")
+        OrganizationMember.objects.create(user=legacy_user, organization=self.org, role=OrganizationRole.STUDENT)
+        self.assertFalse(OrganizationStudent.objects.filter(user=legacy_user, organization=self.org).exists())
+        profile = get_organization_student(legacy_user, self.org)
+        self.assertEqual(profile.user, legacy_user)
+        self.assertEqual(profile.organization, self.org)
+        self.assertEqual(profile.status, OrganizationStudent.STATUS_ACTIVE)
+
     def test_student_workspace_surfaces_my_profile(self):
         self.client.force_login(self.student_user)
         response = self.client.get(f"/org/{self.org.slug}/workspace/")
