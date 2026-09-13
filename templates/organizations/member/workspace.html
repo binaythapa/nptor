@@ -36,6 +36,14 @@
     <p class="intro">Your authenticated workspace for teaching and organization-related work.</p>
 
     <section class="grid" aria-label="Organization workspace tools">
+      {% if membership.is_student %}
+      <article class="card">
+        <h2>My Profile</h2>
+        <p>Complete your personal, contact, address, and guardian information for {{ organization.name }}.</p>
+        <a class="button" href="{% url 'organizations_public:student_profile' slug=organization.slug %}">View My Profile</a>
+      </article>
+      {% endif %}
+
       <article class="card">
         <h2>Courses</h2>
         <p>Create and manage the courses you own.</p>
