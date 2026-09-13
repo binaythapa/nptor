@@ -85,6 +85,7 @@
                 const params = new URLSearchParams({scope: scope, q: query});
                 const organization = organizationIdFor(select);
                 if (organization) params.set("organization", organization);
+                if (select.dataset.autocompleteOrganizationOnly === "true") params.set("organization_only", "true");
                 fetch(endpoint + "?" + params.toString(), {headers: {"X-Requested-With": "XMLHttpRequest"}})
                     .then(function (response) { return response.ok ? response.json() : {results: []}; })
                     .then(function (data) {
