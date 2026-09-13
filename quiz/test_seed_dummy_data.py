@@ -4,7 +4,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from courses.models import Course, CourseSection, Lesson
+from courses.models import Course, CourseExam, CourseSection, Lesson
 from organizations.models import Organization, OrganizationMember
 from quiz.models import Category, Choice, Exam, ExamTrack, Question, TrackExam
 from subscriptions.models import SubscriptionPlan
@@ -30,6 +30,21 @@ class SeedDummyDataTests(TestCase):
         self.assertGreaterEqual(TrackExam.objects.filter(track__title__startswith="Demo ").count(), 3)
         self.assertGreaterEqual(SubscriptionPlan.objects.filter(code__startswith="demo-").count(), 3)
         self.assertGreaterEqual(OrganizationMember.objects.filter(organization__slug="demo-academy").count(), 3)
+
+        course_exams = list(
+            CourseExam.objects.filter(
+                course__slug="demo-data-analytics-course",
+            )
+            .select_related("exam")
+            .order_by("order")
+        )
+        self.assertEqual(
+            [(item.exam.title, item.order) for item in course_exams],
+            [
+                ("Demo SQL Foundations Exam", 1),
+                ("Demo Python Fundamentals Exam", 2),
+            ],
+        )
 
         track = ExamTrack.objects.get(slug="demo-data-analytics-track")
         items = list(track.track_exams.select_related("exam").order_by("order"))
