@@ -9,7 +9,7 @@ from organizations.permissions import org_teacher_required
 from organizations.models.role import OrganizationRole
 from organizations.services.content_permissions import user_can_manage_owned_content
 from quiz.models import Exam, UserExam, Category
-from quiz.forms import ExamForm
+from quiz.forms import ExamCategoryAllocationFormSet, ExamForm
 
 
 class OrganizationExamForm(ExamForm):
@@ -38,6 +38,15 @@ class OrganizationExamForm(ExamForm):
         self.fields["categories"].widget.attrs["data-autocomplete-organization-only"] = "true"
         self.fields["categories"].help_text = "Search and select categories belonging to this organization."
         self.fields["primary_category"].help_text = "Select the main category from this organization's category catalog."
+
+
+def _organization_allocation_categories(organization):
+    return (
+        Category.objects
+        .filter(organization=organization, is_active=True)
+        .select_related("domain", "parent")
+        .order_by("domain__name", "parent__name", "name")
+    )
 
 
 # ============================================================
@@ -82,28 +91,34 @@ def org_exam_create(request, slug):
 
     org = request.organization
 
-    if request.method == "POST":
-        form = OrganizationExamForm(request.POST, organization=org)
+    form = OrganizationExamForm(request.POST or None, organization=org)
+    form.instance.organization = org
+    formset = ExamCategoryAllocationFormSet(
+        request.POST or None,
+        instance=form.instance,
+        category_queryset=_organization_allocation_categories(org),
+    )
 
-        if form.is_valid():
-            exam = form.save(commit=False)
-            exam.organization = org
-            exam.created_by = request.user
-            # Organization teaching members cannot publish directly.
-            exam.is_published = False
-            exam.save()
-            form.save_m2m()
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        exam = form.save(commit=False)
+        exam.organization = org
+        exam.created_by = request.user
+        # Organization teaching members cannot publish directly.
+        exam.is_published = False
+        exam.save()
+        form.save_m2m()
+        formset.instance = exam
+        formset.save()
 
-            messages.success(request, "Exam created successfully.")
-            return redirect("organizations_admin:exams", slug=slug)
-    else:
-        form = OrganizationExamForm(organization=org)
+        messages.success(request, "Exam created successfully.")
+        return redirect("organizations_admin:exams", slug=slug)
 
     return render(
         request,
         "organizations/admin/exams/create.html",
         {
             "form": form,
+            "formset": formset,
             "org": org,
         },
     )
@@ -139,33 +154,34 @@ def org_exam_update(request, slug, pk):
             "Published exams cannot be modified by organization teaching members.",
         )
 
-    if request.method == "POST":
-        form = OrganizationExamForm(
-            request.POST,
-            instance=exam,
-            organization=org,
-        )
+    form = OrganizationExamForm(
+        request.POST or None,
+        instance=exam,
+        organization=org,
+    )
+    formset = ExamCategoryAllocationFormSet(
+        request.POST or None,
+        instance=exam,
+        category_queryset=_organization_allocation_categories(org),
+    )
 
-        if form.is_valid():
-            exam = form.save(commit=False)
-            exam.organization = org
-            exam.is_published = False
-            exam.save()
-            form.save_m2m()
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        exam = form.save(commit=False)
+        exam.organization = org
+        exam.is_published = False
+        exam.save()
+        form.save_m2m()
+        formset.save()
 
-            messages.success(request, "Exam updated successfully.")
-            return redirect("organizations_admin:exams", slug=slug)
-    else:
-        form = OrganizationExamForm(
-            instance=exam,
-            organization=org,
-        )
+        messages.success(request, "Exam updated successfully.")
+        return redirect("organizations_admin:exams", slug=slug)
 
     return render(
         request,
         "organizations/admin/exams/edit.html",
         {
             "form": form,
+            "formset": formset,
             "exam": exam,
             "org": org,
         },
