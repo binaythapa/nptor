@@ -55,6 +55,14 @@ class AdminTrackProgressionUITests(TestCase):
             with open(file_path, encoding="utf-8") as source:
                 self.assertIn(marker, source.read())
 
+    def test_new_track_exam_defaults_to_next_visible_order(self):
+        file_path = finders.find("js/admin_track_exam_formset.js")
+        self.assertIsNotNone(file_path)
+        with open(file_path, encoding="utf-8") as source:
+            script = source.read()
+        self.assertIn("const nextOrder = container.querySelectorAll(\".track-exam-row\").length;", script)
+        self.assertIn("order.value = nextOrder;", script)
+
     def test_track_form_saves_order_required_and_prerequisite(self):
         response = self.client.post(
             reverse("quiz:admin_track_update", args=[self.track.pk]),
