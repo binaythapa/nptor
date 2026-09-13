@@ -6,6 +6,7 @@ from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 from .models import Course, CourseSection, Lesson
 from quiz.models import Category, Exam
+from quiz.forms.widgets import SearchableModelMultipleChoiceWidget
 from subscriptions.models import SubscriptionPlan
 
 
@@ -27,8 +28,10 @@ class CourseForm(forms.ModelForm):
     exams = forms.ModelMultipleChoiceField(
         queryset=Exam.objects.none(),
         required=False,
-        widget=forms.SelectMultiple(attrs={"size": 10}),
-        help_text="Select the reusable exams included in this course. Exams are not sold separately.",
+        widget=SearchableModelMultipleChoiceWidget(
+            attrs={"data-autocomplete-scope": "exams"}
+        ),
+        help_text="Search by exam title and select the reusable exams included in this course. Exams are not sold separately.",
     )
 
     class Meta:
@@ -62,6 +65,7 @@ class CourseForm(forms.ModelForm):
                 Q(organization=organization) | Q(organization__isnull=True),
                 is_published=True,
             ).order_by("title")
+            self.fields["exams"].widget.attrs["data-autocomplete-organization"] = str(organization.pk)
         else:
             self.fields["exams"].queryset = Exam.objects.filter(
                 is_published=True
