@@ -33,14 +33,6 @@
 
             <div class="admin-exam-section">
                 <div class="admin-exam-field">
-                    <label class="admin-exam-label">Included Exams</label>
-                    <div class="admin-exam-control" style="padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f8fafc;">
-                        {% for membership in form.instance.track_exams.all %}<span class="tag is-link is-light" style="margin:2px;">{{ membership.exam.title }}</span>{% empty %}<span class="admin-exam-subtitle">No exams are currently included.</span>{% endfor %}
-                    </div>
-                    {% if mode == "edit" %}<p style="margin-top:10px;"><a class="admin-exam-button admin-exam-button-secondary" href="{% url 'quiz:admin_track_exams' form.instance.pk %}">Manage Included Exams</a></p>{% else %}<p class="admin-exam-subtitle" style="margin-top:8px;">Save the Track first, then assign its reusable Exams.</p>{% endif %}
-                </div>
-
-                <div class="admin-exam-field">
                     <label class="admin-exam-label" for="{{ form.subscription_plans.id_for_label }}">Track Subscription Plans</label>
                     <div class="admin-exam-control">{% render_field form.subscription_plans class+="admin-exam-select" size="8" %}</div>
                     <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;">Only Track product plans should be selected. Buying a Track grants the Track and its included Exams.</p>
