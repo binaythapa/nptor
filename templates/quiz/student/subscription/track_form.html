@@ -2,7 +2,9 @@
 {% load widget_tweaks static %}
 
 {% block title %}{% if mode == "edit" %}Edit Track{% else %}Create Track{% endif %} – Admin{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}"><style>
+.track-progression-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:10px}.track-progression-table th{padding:10px 12px;text-align:left;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}.track-progression-table td{padding:12px;border-top:1px solid #e5e7eb;vertical-align:top}.track-progression-table .priority{width:90px}.track-progression-table .required{width:90px}.track-progression-row{background:#fff}.track-progression-help{margin:0 0 14px;font-size:.82rem;line-height:1.55}.track-progression-actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px}.track-remove-row{border:0;background:transparent;color:#b42318;cursor:pointer;font-weight:600}.track-exam-row.is-deleted{display:none}.track-exam-errors{margin-top:5px;color:#b42318;font-size:.8rem}.track-exam-field .admin-search-select{min-width:0}.track-exam-field input[type=number]{width:80px}.track-exam-field .admin-exam-check{white-space:nowrap}
+</style>{% endblock %}
 {% block head_extra %}<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">{% endblock %}
 
 {% block content %}
@@ -16,11 +18,14 @@
 
     <form method="post">
         {% csrf_token %}
+        {{ formset.management_form }}
         {% if form.non_field_errors %}<div class="admin-exam-errors">{{ form.non_field_errors }}</div>{% endif %}
+        {% if formset.non_form_errors %}<div class="admin-exam-errors">{{ formset.non_form_errors }}</div>{% endif %}
+
         <div class="admin-exam-card">
             <div class="admin-exam-section">
                 {% for field in form %}
-                    {% if field.name != "subscription_scope" and field.name != "subscription_plans" and field.name != "pricing_type" and field.name != "monthly_price" and field.name != "lifetime_price" and field.name != "trial_days" %}
+                    {% if field.name != "exams" and field.name != "subscription_scope" and field.name != "subscription_plans" and field.name != "pricing_type" and field.name != "monthly_price" and field.name != "lifetime_price" and field.name != "trial_days" %}
                     <div class="admin-exam-field">
                         <label class="admin-exam-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                         <div class="admin-exam-control">{% render_field field class+="input" %}</div>
@@ -29,6 +34,78 @@
                     </div>
                     {% endif %}
                 {% endfor %}
+            </div>
+
+            <div class="admin-exam-section">
+                <div class="admin-exam-field">
+                    <label class="admin-exam-label">Exams &amp; Progression</label>
+                    <p class="track-progression-help">Set the exam priority and completion dependencies for this Track. Priority controls the sequence; a prerequisite keeps an exam locked until that prerequisite has been passed. These rules belong to this Track and do not change the reusable Exam itself.</p>
+
+                    <div id="track-exam-formset">
+                        {% for inline_form in formset.forms %}
+                        <div class="track-exam-row{% if inline_form.DELETE.value %} is-deleted{% endif %}" data-form-index="{{ forloop.counter0 }}">
+                            {{ inline_form.id }}
+                            <div class="track-exam-field">
+                                <label class="admin-exam-label" for="{{ inline_form.exam.id_for_label }}">Exam</label>
+                                <div class="admin-exam-control">{% render_field inline_form.exam %}</div>
+                                {% for error in inline_form.exam.errors %}<p class="track-exam-errors">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="track-exam-field priority">
+                                <label class="admin-exam-label" for="{{ inline_form.order.id_for_label }}">Priority</label>
+                                <div class="admin-exam-control">{% render_field inline_form.order class+="input" %}</div>
+                                {% for error in inline_form.order.errors %}<p class="track-exam-errors">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="track-exam-field required">
+                                <label class="admin-exam-check">{% render_field inline_form.is_required %}<span>Required</span></label>
+                                {% for error in inline_form.is_required.errors %}<p class="track-exam-errors">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="track-exam-field">
+                                <label class="admin-exam-label" for="{{ inline_form.prerequisite_exams.id_for_label }}">Prerequisite Exams</label>
+                                <div class="admin-exam-control">{% render_field inline_form.prerequisite_exams %}</div>
+                                {% for error in inline_form.prerequisite_exams.errors %}<p class="track-exam-errors">{{ error }}</p>{% endfor %}
+                            </div>
+                            <div class="track-exam-field">
+                                {% if inline_form.instance.pk %}
+                                    <label class="admin-exam-label">&nbsp;</label>
+                                    <label class="track-remove-row">{% render_field inline_form.DELETE %} Remove</label>
+                                {% else %}
+                                    <label class="admin-exam-label">&nbsp;</label>
+                                    <button type="button" class="track-remove-row js-remove-new-track-exam">Remove</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div id="track-exam-empty-form" hidden>
+                        <div class="track-exam-row">
+                            {{ formset.empty_form.id }}
+                            <div class="track-exam-field">
+                                <label class="admin-exam-label" for="{{ formset.empty_form.exam.id_for_label }}">Exam</label>
+                                <div class="admin-exam-control">{% render_field formset.empty_form.exam %}</div>
+                            </div>
+                            <div class="track-exam-field priority">
+                                <label class="admin-exam-label" for="{{ formset.empty_form.order.id_for_label }}">Priority</label>
+                                <div class="admin-exam-control">{% render_field formset.empty_form.order class+="input" %}</div>
+                            </div>
+                            <div class="track-exam-field required">
+                                <label class="admin-exam-check">{% render_field formset.empty_form.is_required %}<span>Required</span></label>
+                            </div>
+                            <div class="track-exam-field">
+                                <label class="admin-exam-label" for="{{ formset.empty_form.prerequisite_exams.id_for_label }}">Prerequisite Exams</label>
+                                <div class="admin-exam-control">{% render_field formset.empty_form.prerequisite_exams %}</div>
+                            </div>
+                            <div class="track-exam-field">
+                                <label class="admin-exam-label">&nbsp;</label>
+                                <button type="button" class="track-remove-row js-remove-new-track-exam">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="track-progression-actions">
+                        <span class="admin-exam-subtitle">Example: Exam 1 → Priority 1, Exam 2 → Priority 2 with Exam 1 as prerequisite.</span>
+                        <button type="button" id="add-track-exam" class="admin-exam-button admin-exam-button-secondary">+ Add Exam</button>
+                    </div>
+                </div>
             </div>
 
             <div class="admin-exam-section">
@@ -59,4 +136,23 @@
 
 {% block scripts_extra %}
 <script src="{% static 'js/admin_exam_selector.js' %}"></script>
+<script src="{% static 'js/admin_single_exam_selector.js' %}"></script>
+<script src="{% static 'js/admin_track_exam_formset.js' %}"></script>
+<script>
+(function () {
+    function bindRemoveButtons() {
+        document.querySelectorAll('.js-remove-new-track-exam').forEach(function (button) {
+            if (button.dataset.bound === 'true') return;
+            button.dataset.bound = 'true';
+            button.addEventListener('click', function () {
+                var row = button.closest('.track-exam-row');
+                if (row) row.remove();
+            });
+        });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindRemoveButtons);
+    else bindRemoveButtons();
+    new MutationObserver(bindRemoveButtons).observe(document.getElementById('track-exam-formset') || document.body, {childList: true, subtree: true});
+})();
+</script>
 {% endblock %}
