@@ -1,0 +1,45 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}Domains · Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div>
+        <h1 class="title is-4 mb-1">Domains</h1>
+        <p class="admin-muted">Manage platform-wide domains used to organize learning content.</p>
+    </div>
+    <a class="button is-link" href="{% url 'quiz:admin_domain_create' %}"><span class="icon"><i class="fa fa-plus"></i></span><span>Add domain</span></a>
+</div>
+
+<section class="admin-panel">
+    <form class="admin-toolbar mb-4" method="get">
+        <div class="admin-search-form">
+            <input class="input" type="search" name="q" value="{{ query }}" placeholder="Search domains..." aria-label="Search domains">
+            <button class="button is-light" type="submit">Search</button>
+            {% if query %}<a class="button is-white" href="{% url 'quiz:admin_domain_list' %}">Clear</a>{% endif %}
+        </div>
+        <span class="admin-page-count">{{ domains|length }} domain{{ domains|length|pluralize }}</span>
+    </form>
+
+    {% if domains %}
+    <div class="admin-table-scroll">
+        <table class="table is-fullwidth admin-table">
+            <thead><tr><th>Domain</th><th>Catalog vertical</th><th>Categories</th><th>Status</th><th class="has-text-right">Actions</th></tr></thead>
+            <tbody>
+            {% for domain in domains %}
+            <tr>
+                <td><strong>{{ domain.name }}</strong><span class="admin-table-subtext">{{ domain.slug }}</span></td>
+                <td>{{ domain.content_vertical.name|default:"—" }}</td>
+                <td>{{ domain.categories.count }}</td>
+                <td>{% if domain.is_active %}<span class="tag is-success is-light">Active</span>{% else %}<span class="tag is-light">Inactive</span>{% endif %}</td>
+                <td><div class="admin-action-buttons is-justify-content-flex-end"><a class="button is-small is-light" href="{% url 'quiz:admin_domain_update' domain.pk %}">Edit</a><form method="post" action="{% url 'quiz:admin_domain_toggle' domain.pk %}">{% csrf_token %}<button class="button is-small is-light" type="submit">{% if domain.is_active %}Deactivate{% else %}Activate{% endif %}</button></form>{% if not domain.categories.exists %}<form method="post" action="{% url 'quiz:admin_domain_delete' domain.pk %}" onsubmit="return confirm('Delete this domain?');">{% csrf_token %}<button class="button is-small is-danger is-light" type="submit">Delete</button></form>{% endif %}</div></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="has-text-centered py-6"><p class="title is-6">No domains found</p><p class="admin-muted">Create your first platform-wide domain.</p></div>
+    {% endif %}
+</section>
+{% endblock %}
