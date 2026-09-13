@@ -1,0 +1,43 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}Categories · Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div><h1 class="title is-4 mb-1">Categories</h1><p class="admin-muted">Manage the hierarchical categories used by global exams and questions.</p></div>
+    <a class="button is-link" href="{% url 'quiz:admin_category_create' %}"><span class="icon"><i class="fa fa-plus"></i></span><span>Add category</span></a>
+</div>
+
+<section class="admin-panel">
+    <form class="admin-toolbar mb-4" method="get">
+        <div class="admin-search-form">
+            <input class="input" type="search" name="q" value="{{ query }}" placeholder="Search categories..." aria-label="Search categories">
+            <div class="select"><select name="domain" aria-label="Filter by domain"><option value="">All domains</option>{% for domain in domains %}<option value="{{ domain.pk }}"{% if selected_domain == domain.pk|stringformat:'s' %} selected{% endif %}>{{ domain.name }}</option>{% endfor %}</select></div>
+            <button class="button is-light" type="submit">Filter</button>
+            {% if query or selected_domain %}<a class="button is-white" href="{% url 'quiz:admin_category_list' %}">Clear</a>{% endif %}
+        </div>
+        <span class="admin-page-count">{{ categories|length }} categor{{ categories|length|pluralize:"y,ies" }}</span>
+    </form>
+
+    {% if categories %}
+    <div class="admin-table-scroll">
+        <table class="table is-fullwidth admin-table">
+            <thead><tr><th>Category</th><th>Domain</th><th>Parent</th><th>Status</th><th class="has-text-right">Actions</th></tr></thead>
+            <tbody>
+            {% for category in categories %}
+            <tr>
+                <td><strong>{{ category.name }}</strong><span class="admin-table-subtext">{{ category.slug }}</span></td>
+                <td>{{ category.domain.name|default:"—" }}</td>
+                <td>{{ category.parent.name|default:"Root category" }}</td>
+                <td>{% if category.is_active %}<span class="tag is-success is-light">Active</span>{% else %}<span class="tag is-light">Inactive</span>{% endif %}</td>
+                <td><div class="admin-action-buttons is-justify-content-flex-end"><a class="button is-small is-light" href="{% url 'quiz:admin_category_update' category.pk %}">Edit</a><form method="post" action="{% url 'quiz:admin_category_toggle' category.pk %}">{% csrf_token %}<button class="button is-small is-light" type="submit">{% if category.is_active %}Deactivate{% else %}Activate{% endif %}</button></form>{% if not category.children.exists and not category.primary_questions.exists and not category.questions.exists and not category.primary_exams.exists and not category.exams.exists %}<form method="post" action="{% url 'quiz:admin_category_delete' category.pk %}" onsubmit="return confirm('Delete this category?');">{% csrf_token %}<button class="button is-small is-danger is-light" type="submit">Delete</button></form>{% endif %}</div></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="has-text-centered py-6"><p class="title is-6">No categories found</p><p class="admin-muted">Create a category or adjust the current filters.</p></div>
+    {% endif %}
+</section>
+{% endblock %}
