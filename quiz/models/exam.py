@@ -21,15 +21,6 @@ class Exam(models.Model):
         related_name="exams",
     )
 
-    # Legacy relationship retained temporarily so old data can be migrated
-    # safely. New purchasing code never selects a plan through this field.
-    subscription_plans = models.ManyToManyField(
-        "subscriptions.SubscriptionPlan",
-        blank=True,
-        related_name="exams",
-        help_text="Legacy exam-plan relationship. Exams are not independently sellable.",
-    )
-
     primary_category = models.ForeignKey(
         "Category",
         on_delete=models.SET_NULL,
@@ -90,10 +81,6 @@ class Exam(models.Model):
             errors["primary_category"] = "An inactive category cannot be the primary category of an exam."
         if errors:
             raise ValidationError(errors)
-
-    def active_subscription_plans(self):
-        """Deprecated: standalone exam plans are no longer a source of access."""
-        return []
 
     @property
     def is_free(self):
