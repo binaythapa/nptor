@@ -97,6 +97,8 @@
                 </div>
             </div>
 
+            {% include "quiz/student/subscription/_exam_category_allocations.html" %}
+
             <div class="admin-exam-section">
                 <div class="admin-exam-section-heading">
                     <div>
@@ -138,4 +140,5 @@
 <script>window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'quiz:admin_autocomplete' %}";</script>
 <script src="{% static 'js/admin_exam_selector.js' %}"></script>
 <script src="{% static 'js/admin_single_exam_selector.js' %}"></script>
+<script src="{% static 'js/admin_exam_allocation_formset.js' %}"></script>
 {% endif %}
