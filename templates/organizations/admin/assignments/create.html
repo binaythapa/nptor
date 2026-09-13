@@ -1,180 +1,98 @@
 {% extends "organizations/admin/base.html" %}
 
+{% block title %}Assign Learning Resource{% endblock %}
+
 {% block content %}
-
-<h2 class="title is-4">➕ Assign Resource</h2>
-
-<form method="post">
-{% csrf_token %}
-
-<!-- ================= STUDENT ================= -->
-
-<div class="field">
-  <label class="label">Student</label>
-
-  <div class="control">
-    <div class="select is-fullwidth">
-      <select name="student_id" required>
-
-        {% for s in students %}
-        <option value="{{ s.id }}">
-          {{ s.user.get_full_name|default:s.user.email }}
-        </option>
-        {% endfor %}
-
-      </select>
-    </div>
+{% with org_slug=request.organization.slug %}
+<div class="container py-5">
+  <div class="mb-5">
+    <nav class="breadcrumb"><ul><li><a href="{% url 'organizations_admin:dashboard' slug=org_slug %}">Dashboard</a></li><li><a href="{% url 'organizations_admin:assignments' slug=org_slug %}">Assignments</a></li><li class="is-active"><a href="#">Assign</a></li></ul></nav>
+    <h1 class="title is-3">Assign Learning Resource</h1>
+    <p class="subtitle is-6 has-text-grey">Assign an organization Course or Track directly to a student. No purchase or subscription is involved.</p>
   </div>
-</div>
 
+  <form method="post">
+    {% csrf_token %}
+    <div class="card mb-5">
+      <header class="card-header"><p class="card-header-title">Student &amp; Resource</p></header>
+      <div class="card-content">
+        <div class="field">
+          <label class="label">Student <span class="has-text-danger">*</span></label>
+          <div class="select is-fullwidth">
+            <select name="student_id" required>
+              <option value="">Select student</option>
+              {% for s in students %}
+                <option value="{{ s.id }}">{{ s.user.get_full_name|default:s.user.email }}{% if s.student_id %} — {{ s.student_id }}{% endif %}</option>
+              {% empty %}
+                <option value="" disabled>No active students found</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
 
-<!-- ================= RESOURCE TYPE ================= -->
+        <div class="field">
+          <label class="label">Resource Type <span class="has-text-danger">*</span></label>
+          <div class="select is-fullwidth">
+            <select name="resource_type" id="resource_type" required onchange="toggleResource()">
+              <option value="">Select type</option>
+              <option value="course">Course</option>
+              <option value="track">Track</option>
+            </select>
+          </div>
+        </div>
 
-<div class="field">
-  <label class="label">Resource Type</label>
+        <div class="field resource-field" id="course_field" style="display:none;">
+          <label class="label">Course <span class="has-text-danger">*</span></label>
+          <div class="select is-fullwidth">
+            <select name="course_id" id="course_select" disabled>
+              <option value="">Select course</option>
+              {% for course in courses %}<option value="{{ course.id }}">{{ course.title }}</option>{% empty %}<option value="" disabled>No assignable courses found</option>{% endfor %}
+            </select>
+          </div>
+        </div>
 
-  <div class="control">
-    <div class="select is-fullwidth">
-
-      <select name="resource_type" id="resource_type" required onchange="toggleResource()">
-        <option value="">Select Type</option>
-        <option value="course">Course</option>
-        <option value="track">Exam Track</option>
-        <option value="exam">Exam</option>
-      </select>
-
+        <div class="field resource-field" id="track_field" style="display:none;">
+          <label class="label">Track <span class="has-text-danger">*</span></label>
+          <div class="select is-fullwidth">
+            <select name="track_id" id="track_select" disabled>
+              <option value="">Select Track</option>
+              {% for track in tracks %}<option value="{{ track.id }}">{{ track.title }}</option>{% empty %}<option value="" disabled>No organization Tracks found</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <div class="card mb-5">
+      <header class="card-header"><p class="card-header-title">Assignment Schedule <span class="tag is-light ml-2">Optional</span></p></header>
+      <div class="card-content">
+        <div class="columns">
+          <div class="column"><label class="label">Start</label><input class="input" type="datetime-local" name="starts_at"></div>
+          <div class="column"><label class="label">Due</label><input class="input" type="datetime-local" name="due_at"></div>
+          <div class="column"><label class="label">Expires</label><input class="input" type="datetime-local" name="expires_at"></div>
+        </div>
+        <div class="field"><label class="label">Internal Note</label><textarea class="textarea" name="notes" rows="3" placeholder="Optional note for organization staff"></textarea></div>
+      </div>
+    </div>
+
+    <div class="field is-grouped is-grouped-centered">
+      <div class="control"><a href="{% url 'organizations_admin:assignments' slug=org_slug %}" class="button is-light">Cancel</a></div>
+      <div class="control"><button type="submit" class="button is-primary">Assign Resource</button></div>
+    </div>
+  </form>
 </div>
-
-
-<!-- ================= COURSE ================= -->
-
-<div class="field resource-field" id="course_field" style="display:none;">
-
-<label class="label">Course</label>
-
-<div class="control">
-<div class="select is-fullwidth">
-
-<select name="course_id" id="course_select">
-
-{% if courses %}
-{% for c in courses %}
-<option value="{{ c.id }}">
-{{ c.title }}
-</option>
-{% endfor %}
-{% else %}
-<option disabled>No courses attached</option>
-{% endif %}
-
-</select>
-
-</div>
-</div>
-</div>
-
-
-<!-- ================= TRACK ================= -->
-
-<div class="field resource-field" id="track_field" style="display:none;">
-
-<label class="label">Exam Track</label>
-
-<div class="control">
-<div class="select is-fullwidth">
-
-<select name="track_id" id="track_select">
-
-{% if tracks %}
-{% for t in tracks %}
-<option value="{{ t.id }}">
-{{ t.title }}
-</option>
-{% endfor %}
-{% else %}
-<option disabled>No tracks attached</option>
-{% endif %}
-
-</select>
-
-</div>
-</div>
-</div>
-
-
-<!-- ================= EXAM ================= -->
-
-<div class="field resource-field" id="exam_field" style="display:none;">
-
-<label class="label">Exam</label>
-
-<div class="control">
-<div class="select is-fullwidth">
-
-<select name="exam_id" id="exam_select">
-
-{% if exams %}
-{% for e in exams %}
-<option value="{{ e.id }}">
-{{ e.title }}
-</option>
-{% endfor %}
-{% else %}
-<option disabled>No exams attached</option>
-{% endif %}
-
-</select>
-
-</div>
-</div>
-</div>
-
-
-<button class="button is-success mt-4">
-Assign
-</button>
-
-</form>
-
-
-<!-- ================= JS ================= -->
-
 <script>
-
-function toggleResource(){
-
-let type = document.getElementById("resource_type").value
-
-// hide all fields
-document.getElementById("course_field").style.display = "none"
-document.getElementById("track_field").style.display = "none"
-document.getElementById("exam_field").style.display = "none"
-
-// disable all selects
-document.getElementById("course_select").disabled = true
-document.getElementById("track_select").disabled = true
-document.getElementById("exam_select").disabled = true
-
-
-if(type === "course"){
-document.getElementById("course_field").style.display = "block"
-document.getElementById("course_select").disabled = false
+function toggleResource() {
+  const type = document.getElementById("resource_type").value;
+  const courseField = document.getElementById("course_field");
+  const trackField = document.getElementById("track_field");
+  const course = document.getElementById("course_select");
+  const track = document.getElementById("track_select");
+  courseField.style.display = type === "course" ? "block" : "none";
+  trackField.style.display = type === "track" ? "block" : "none";
+  course.disabled = type !== "course";
+  track.disabled = type !== "track";
 }
-
-if(type === "track"){
-document.getElementById("track_field").style.display = "block"
-document.getElementById("track_select").disabled = false
-}
-
-if(type === "exam"){
-document.getElementById("exam_field").style.display = "block"
-document.getElementById("exam_select").disabled = false
-}
-
-}
-
 </script>
-
+{% endwith %}
 {% endblock %}
