@@ -10,7 +10,7 @@ from subscriptions.models import SubscriptionPlan
 from organizations.models.organization import Organization
 
 from .models import Category, Choice, Domain, Exam, ExamCategoryAllocation, ExamTrack, Question
-from .search_widgets import SearchableModelChoiceWidget, SearchableModelMultipleChoiceWidget
+from .search_widgets import SearchableModelMultipleChoiceWidget
 
 User = get_user_model()
 
@@ -89,15 +89,11 @@ class ExamForm(forms.ModelForm):
     class Meta:
         model = Exam
         fields = [
-            "title", "organization", "primary_category", "categories",
+            "title", "organization", "categories",
             "question_count", "duration_seconds", "level", "passing_score",
             "is_published", "max_mock_attempts", "allow_review",
         ]
         widgets = {
-            "primary_category": SearchableModelChoiceWidget(attrs={
-                "data-autocomplete-scope": "categories",
-                "data-search-placeholder": "Search primary category...",
-            }),
             "categories": SearchableModelMultipleChoiceWidget(attrs={
                 "data-autocomplete-scope": "categories",
                 "data-search-placeholder": "Search categories...",
@@ -118,13 +114,9 @@ class ExamForm(forms.ModelForm):
         self.fields["organization"].label = "Organization"
         self.fields["organization"].help_text = "Leave blank for a platform-wide exam."
 
-        self.fields["primary_category"].queryset = category_qs
         self.fields["categories"].queryset = category_qs
-        self.fields["primary_category"].label = "Primary Category"
         self.fields["categories"].label = "Categories"
-        self.fields["primary_category"].help_text = "Main category used to classify this exam."
         self.fields["categories"].help_text = "Search by category name and select one or more categories. Only matching results are loaded."
-        self.fields["primary_category"].required = False
         self.fields["categories"].required = False
         self.fields["question_count"].help_text = "Total number of questions allocated to each attempt."
         self.fields["duration_seconds"].help_text = "Maximum duration for one attempt, in seconds."
@@ -136,19 +128,10 @@ class ExamForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        primary_category = cleaned_data.get("primary_category")
         categories = cleaned_data.get("categories")
         organization = cleaned_data.get("organization")
 
-        if primary_category:
-            category_list = list(categories or [])
-            if primary_category not in category_list:
-                category_list.append(primary_category)
-                cleaned_data["categories"] = category_list
-
         organization_id = organization.id if organization else None
-        if primary_category and primary_category.organization_id not in (None, organization_id):
-            self.add_error("primary_category", "Primary category must belong to the selected organization, or be a global category.")
         if categories:
             invalid_categories = [category for category in categories if category.organization_id not in (None, organization_id)]
             if invalid_categories:
