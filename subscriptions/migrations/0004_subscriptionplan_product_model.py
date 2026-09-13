@@ -1,5 +1,4 @@
 from django.db import migrations, models
-from django.core.validators import MinValueValidator
 
 
 def populate_product_model(apps, schema_editor):
@@ -32,6 +31,8 @@ def reverse_product_model(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("subscriptions", "0003_subscriptionplan_scope"),
+        ("courses", "0002_initial"),
+        ("quiz", "0012_paymentrecord_commerce_targets"),
     ]
 
     operations = [
@@ -64,20 +65,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="subscriptionplan",
             name="max_courses",
-            field=models.PositiveIntegerField(
-                blank=True,
-                help_text="Maximum Courses selectable for a limited Account plan. NULL means not applicable/unlimited by this field.",
-                null=True,
-            ),
+            field=models.PositiveIntegerField(blank=True, null=True, help_text="Maximum Courses selectable for a limited Account plan. NULL means not applicable/unlimited by this field."),
         ),
         migrations.AddField(
             model_name="subscriptionplan",
             name="max_tracks",
-            field=models.PositiveIntegerField(
-                blank=True,
-                help_text="Maximum Tracks selectable for a limited Account plan. NULL means not applicable/unlimited by this field.",
-                null=True,
-            ),
+            field=models.PositiveIntegerField(blank=True, null=True, help_text="Maximum Tracks selectable for a limited Account plan. NULL means not applicable/unlimited by this field."),
         ),
         migrations.RunPython(populate_product_model, reverse_product_model),
         migrations.AddIndex(
