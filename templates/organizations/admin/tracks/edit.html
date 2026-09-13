@@ -1,98 +1,92 @@
 {% extends "organizations/admin/base.html" %}
-{% load widget_tweaks %}
+{% load widget_tweaks static %}
 
 {% block title %}Edit Exam Track{% endblock %}
 
 {% block content %}
-
 <div class="container py-5">
-
-  <!-- HEADER -->
   <div class="mb-6">
-    <h1 class="title is-3">✏️ Edit Exam Track</h1>
-    <p class="subtitle is-6 has-text-grey">
-      Update exam track details and pricing
-    </p>
+    <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+      <div>
+        <h1 class="title is-3">✏️ Edit Exam Track</h1>
+        <p class="subtitle is-6 has-text-grey">Update track details and configure exam progression.</p>
+      </div>
+      <span class="tag is-info is-light">Organization Track</span>
+    </div>
   </div>
 
   <form method="post">
     {% csrf_token %}
+    {% if form.non_field_errors %}<div class="notification is-danger is-light">{{ form.non_field_errors }}</div>{% endif %}
 
-    <!-- TRACK DETAILS -->
     <div class="card mb-5">
-
-      <header class="card-header">
-        <p class="card-header-title">
-          Track Information
-        </p>
-      </header>
-
+      <header class="card-header"><p class="card-header-title">Track Information</p></header>
       <div class="card-content">
-
         {% for field in form %}
-
-        <div class="field mb-4">
-
-          <label class="label">
-            {{ field.label }}
-            {% if field.field.required %}
-            <span class="has-text-danger">*</span>
-            {% endif %}
-          </label>
-
-          <div class="control">
-
-            {% if field.name == "description" %}
-                {{ field }}
-            {% else %}
-                {% render_field field class+="input" %}
-            {% endif %}
-
-          </div>
-
-          {% if field.help_text %}
-          <p class="help">{{ field.help_text }}</p>
+          {% if field.name != "exams" %}
+            <div class="field mb-4">
+              <label class="label">{{ field.label }}{% if field.field.required %} <span class="has-text-danger">*</span>{% endif %}</label>
+              <div class="control">
+                {% if field.name == "description" %}{{ field }}{% else %}{% render_field field class+="input" %}{% endif %}
+              </div>
+              {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+              {% for error in field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            </div>
           {% endif %}
-
-          {% if field.errors %}
-          <p class="help is-danger">
-            {{ field.errors.0 }}
-          </p>
-          {% endif %}
-
-        </div>
-
         {% endfor %}
-
       </div>
-
     </div>
 
-    <!-- ACTION BUTTONS -->
+    <div class="card mb-5">
+      <header class="card-header"><p class="card-header-title">Track Exams &amp; Prerequisites</p></header>
+      <div class="card-content">
+        <div class="notification is-info is-light">
+          Configure the progression for every Exam in this Track. Prerequisites are optional, must also be included in this Track, and must be passed before the dependent Exam becomes available.
+        </div>
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<div class="notification is-danger is-light">{{ formset.non_form_errors }}</div>{% endif %}
+        <div id="track-exam-formset">
+          {% for exam_form in formset %}
+            <div class="box track-exam-row">
+              {{ exam_form.id }}
+              <div class="columns is-multiline">
+                <div class="column is-5"><label class="label">Exam</label>{{ exam_form.exam }}{% for error in exam_form.exam.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}</div>
+                <div class="column is-2"><label class="label">Order</label>{% render_field exam_form.order class+="input" %}{% for error in exam_form.order.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}</div>
+                <div class="column is-2"><label class="label">Required</label><label class="checkbox">{% render_field exam_form.is_required %} Required</label>{% for error in exam_form.is_required.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}</div>
+                <div class="column is-12"><label class="label">Prerequisite Exams</label>{{ exam_form.prerequisite_exams }}<p class="help">Select Exams that must be passed before this Exam becomes available.</p>{% for error in exam_form.prerequisite_exams.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}</div>
+                {% if exam_form.instance.pk %}<div class="column is-12"><label class="checkbox">{% render_field exam_form.DELETE %} Remove this Exam from the Track</label></div>{% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <template id="track-exam-empty-form">
+          <div class="box track-exam-row">
+            {{ formset.empty_form.id }}
+            <div class="columns is-multiline">
+              <div class="column is-5"><label class="label">Exam</label>{{ formset.empty_form.exam }}</div>
+              <div class="column is-2"><label class="label">Order</label>{% render_field formset.empty_form.order class+="input" %}</div>
+              <div class="column is-2"><label class="label">Required</label><label class="checkbox">{% render_field formset.empty_form.is_required %} Required</label></div>
+              <div class="column is-12"><label class="label">Prerequisite Exams</label>{{ formset.empty_form.prerequisite_exams }}<p class="help">Select Exams that must be passed before this Exam becomes available.</p></div>
+            </div>
+          </div>
+        </template>
+        <button type="button" class="button is-light" id="add-track-exam">+ Add another Track Exam</button>
+      </div>
+    </div>
 
     {% with org_slug=request.organization.slug %}
-
     <div class="field is-grouped is-grouped-centered">
-
-      <div class="control">
-        <a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"
-           class="button is-light">
-           Cancel
-        </a>
-      </div>
-
-      <div class="control">
-        <button type="submit" class="button is-primary">
-          Update Track
-        </button>
-      </div>
-
+      <div class="control"><a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}" class="button is-light">Cancel</a></div>
+      <div class="control"><button type="submit" class="button is-primary">Update Track</button></div>
     </div>
-
     {% endwith %}
-
   </form>
-
 </div>
+{% endblock %}
 
+{% block scripts_extra %}
+<script>window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'quiz:admin_autocomplete' %}";</script>
+<script src="{% static 'js/admin_exam_selector.js' %}"></script>
+<script src="{% static 'js/admin_single_exam_selector.js' %}"></script>
+<script src="{% static 'js/admin_track_exam_formset.js' %}"></script>
 {% endblock %}
