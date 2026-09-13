@@ -1,7 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from subscriptions.models import AccountSubscriptionSelection, Subscription
+from subscriptions.models import (
+    AccountSubscriptionSelection,
+    Subscription,
+    SubscriptionPlan,
+)
 
 
 class AccountAccessService:
@@ -15,7 +19,7 @@ class AccountAccessService:
             .filter(
                 user=user,
                 status=Subscription.STATUS_ACTIVE,
-                plan__product_type=Subscription.plan.field.related_model.PRODUCT_ACCOUNT,
+                plan__product_type=SubscriptionPlan.PRODUCT_ACCOUNT,
                 plan__is_active=True,
             )
         )
@@ -76,8 +80,9 @@ class AccountAccessService:
         if not user or subscription.user_id != user.id:
             raise ValidationError("Account subscription does not belong to this user.")
         locked = AccountAccessService._get_subscription_for_update(subscription, user)
-        if AccountSubscriptionSelection.objects.filter(subscription=locked, course=course).exists():
-            return AccountSubscriptionSelection.objects.get(subscription=locked, course=course), False
+        existing = AccountSubscriptionSelection.objects.filter(subscription=locked, course=course).first()
+        if existing:
+            return existing, False
         quota = locked.plan.max_courses or 0
         used = AccountSubscriptionSelection.objects.filter(subscription=locked, course__isnull=False).count()
         if used >= quota:
@@ -94,8 +99,9 @@ class AccountAccessService:
         if not user or subscription.user_id != user.id:
             raise ValidationError("Account subscription does not belong to this user.")
         locked = AccountAccessService._get_subscription_for_update(subscription, user)
-        if AccountSubscriptionSelection.objects.filter(subscription=locked, track=track).exists():
-            return AccountSubscriptionSelection.objects.get(subscription=locked, track=track), False
+        existing = AccountSubscriptionSelection.objects.filter(subscription=locked, track=track).first()
+        if existing:
+            return existing, False
         quota = locked.plan.max_tracks or 0
         used = AccountSubscriptionSelection.objects.filter(subscription=locked, track__isnull=False).count()
         if used >= quota:
