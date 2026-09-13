@@ -187,8 +187,6 @@ def org_courses(request, slug):
         for track in visible_tracks
     ]
 
-    # Exams are reusable content, not independently sellable resources.
-    # Keep them visible for content management without an attach/detach state.
     visible_exams = Exam.objects.filter(
         Q(organization=org) | Q(organization__isnull=True)
     ).order_by("title")
@@ -338,7 +336,7 @@ def org_course_edit(request, slug, pk):
 
     return render(
         request,
-        "courses/instructor/course_edit.html",
+        "organizations/admin/courses/edit.html",
         {"form": form, "formset": formset, "course": course, "organization": org},
     )
 
