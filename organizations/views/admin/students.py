@@ -90,6 +90,19 @@ def org_student_add(request, slug):
         member.is_active = True
         member.save(update_fields=["role", "is_active"])
 
+    # Every active student membership gets an organization-scoped profile.
+    # get_or_create keeps this safe when the student is re-added or already
+    # has a profile from an earlier membership.
+    if member.role == OrganizationRole.STUDENT and member.is_active:
+        OrganizationStudent.objects.get_or_create(
+            organization=org,
+            user=user,
+            defaults={
+                "status": OrganizationStudent.STATUS_ACTIVE,
+                "joined_date": timezone.localdate(),
+            },
+        )
+
     messages.success(request, f"{user.email} added to organization.")
     return redirect("organizations_admin:students", slug=slug)
 
@@ -118,6 +131,17 @@ def org_student_update_role(request, slug, member_id):
 
     member.role = new_role
     member.save(update_fields=["role"])
+
+    if new_role == OrganizationRole.STUDENT and member.is_active:
+        OrganizationStudent.objects.get_or_create(
+            organization=org,
+            user=member.user,
+            defaults={
+                "status": OrganizationStudent.STATUS_ACTIVE,
+                "joined_date": timezone.localdate(),
+            },
+        )
+
     messages.success(request, "Role updated successfully.")
     return redirect("organizations_admin:students", slug=slug)
 
