@@ -3,7 +3,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from courses.models import Course
-from quiz.models import Exam, ExamTrack
+from organizations.models import Organization
+from quiz.models import Category, Exam, ExamTrack
 
 
 User = get_user_model()
@@ -37,11 +38,36 @@ class AdminGlobalAutocompleteTests(TestCase):
         Exam.objects.create(title="Test Exam", duration_seconds=600, created_by=self.admin)
         Exam.objects.create(title="Accounting Exam", duration_seconds=600, created_by=self.admin)
 
-    def search(self, scope, query):
-        return self.client.get(
-            reverse("quiz:admin_autocomplete"),
-            {"scope": scope, "q": query},
+        self.organization = Organization.objects.create(
+            name="Test Organization",
+            slug="test-organization",
+            org_type=Organization.TYPE_SCHOOL,
         )
+        self.other_organization = Organization.objects.create(
+            name="Other Organization",
+            slug="other-organization",
+            org_type=Organization.TYPE_SCHOOL,
+        )
+        python = Category.objects.create(name="Python", slug="python")
+        Category.objects.create(
+            name="Django",
+            slug="django",
+            parent=python,
+        )
+        Category.objects.create(
+            name="Python Testing",
+            slug="python-testing",
+            organization=self.organization,
+        )
+        Category.objects.create(
+            name="Python Internal",
+            slug="python-internal",
+            organization=self.other_organization,
+        )
+
+    def search(self, scope, query, **params):
+        params.update({"scope": scope, "q": query})
+        return self.client.get(reverse("quiz:admin_autocomplete"), params)
 
     def test_users_are_prefix_matched(self):
         response = self.search("users", "test")
@@ -62,6 +88,24 @@ class AdminGlobalAutocompleteTests(TestCase):
         response = self.search("exams", "test")
         self.assertEqual(response.status_code, 200)
         self.assertEqual([r["label"] for r in response.json()["results"]], ["Test Exam"])
+
+    def test_categories_are_prefix_matched_and_include_hierarchy(self):
+        response = self.search("categories", "djan")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([r["label"] for r in response.json()["results"]], ["Python → Django"])
+        self.assertEqual([r["subtitle"] for r in response.json()["results"]], [""])
+
+    def test_categories_are_scoped_to_selected_organization(self):
+        response = self.search(
+            "categories",
+            "python",
+            organization=self.organization.id,
+        )
+        self.assertEqual(response.status_code, 200)
+        labels = [r["label"] for r in response.json()["results"]]
+        self.assertIn("Python", labels)
+        self.assertIn("Python Testing", labels)
+        self.assertNotIn("Python Internal", labels)
 
     def test_unknown_scope_returns_no_results(self):
         response = self.search("unknown", "test")
