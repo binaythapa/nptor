@@ -2,13 +2,14 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.db import models
+from django.forms import BaseInlineFormSet, inlineformset_factory
 
 from accounts.models.client import Client
 from ckeditor.widgets import CKEditorWidget
 from subscriptions.models import SubscriptionPlan
 from organizations.models.organization import Organization
 
-from .models import Category, Choice, Domain, Exam, ExamTrack, Question
+from .models import Category, Choice, Domain, Exam, ExamCategoryAllocation, ExamTrack, Question
 from .search_widgets import SearchableModelChoiceWidget, SearchableModelMultipleChoiceWidget
 
 User = get_user_model()
@@ -33,8 +34,8 @@ class CustomerRegisterForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("Customer with this email already exists.")
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("This email is already in use.")
         return email
 
 
@@ -156,6 +157,90 @@ class ExamForm(forms.ModelForm):
             if len(category_ids) != len(set(category_ids)):
                 self.add_error("categories", "Duplicate categories are not allowed.")
         return cleaned_data
+
+
+class ExamCategoryAllocationForm(forms.ModelForm):
+    class Meta:
+        model = ExamCategoryAllocation
+        fields = ["category", "percentage", "fixed_count"]
+        widgets = {
+            "percentage": forms.NumberInput(attrs={"class": "input", "min": 1, "max": 100, "placeholder": "e.g. 20"}),
+            "fixed_count": forms.NumberInput(attrs={"class": "input", "min": 1, "placeholder": "e.g. 10"}),
+        }
+
+    def __init__(self, *args, category_queryset=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if category_queryset is not None:
+            self.fields["category"].queryset = category_queryset
+        self.fields["category"].label = "Category"
+        self.fields["percentage"].label = "Percentage"
+        self.fields["fixed_count"].label = "Fixed Count"
+
+    def clean(self):
+        cleaned = super().clean()
+        percentage = cleaned.get("percentage")
+        fixed_count = cleaned.get("fixed_count")
+        if percentage is not None and fixed_count is not None:
+            raise forms.ValidationError("Use either percentage or fixed count, not both.")
+        if percentage is None and fixed_count is None and not self.cleaned_data.get("DELETE"):
+            raise forms.ValidationError("Enter a percentage or fixed question count.")
+        return cleaned
+
+
+class ExamCategoryAllocationFormSet(BaseInlineFormSet):
+    def __init__(self, *args, category_queryset=None, **kwargs):
+        self.category_queryset = category_queryset
+        super().__init__(*args, **kwargs)
+
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        kwargs["category_queryset"] = self.category_queryset
+        return kwargs
+
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        seen_categories = set()
+        fixed_total = 0
+        percentage_total = 0
+        organization_id = getattr(self.instance, "organization_id", None)
+
+        for form in self.forms:
+            if not form.cleaned_data or form.cleaned_data.get("DELETE"):
+                continue
+
+            category = form.cleaned_data.get("category")
+            if not category:
+                continue
+
+            if category.pk in seen_categories:
+                form.add_error("category", "Each category can be allocated only once.")
+            seen_categories.add(category.pk)
+
+            if category.organization_id not in (None, organization_id):
+                form.add_error("category", "Allocation category must belong to this exam's organization or be global.")
+
+            fixed_total += form.cleaned_data.get("fixed_count") or 0
+            percentage_total += form.cleaned_data.get("percentage") or 0
+
+        question_count = getattr(self.instance, "question_count", None)
+        if question_count and fixed_total > question_count:
+            self.add_error(None, "Fixed category allocations cannot exceed the exam question count.")
+        if percentage_total > 100:
+            self.add_error(None, "Percentage category allocations cannot exceed 100%.")
+
+
+ExamCategoryAllocationFormSet = inlineformset_factory(
+    Exam,
+    ExamCategoryAllocation,
+    form=ExamCategoryAllocationForm,
+    formset=ExamCategoryAllocationFormSet,
+    extra=1,
+    can_delete=True,
+    fields=("category", "percentage", "fixed_count"),
+)
 
 
 class ExamTrackForm(forms.ModelForm):
