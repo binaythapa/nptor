@@ -21,15 +21,6 @@ class Exam(models.Model):
         related_name="exams",
     )
 
-    primary_category = models.ForeignKey(
-        "Category",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="primary_exams",
-        help_text="Primary category used for the exam's main classification.",
-    )
-
     categories = models.ManyToManyField(
         "Category",
         blank=True,
@@ -52,7 +43,6 @@ class Exam(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["organization", "is_published"], name="exam_org_pub_idx"),
-            models.Index(fields=["primary_category", "is_published"], name="exam_primary_cat_idx"),
         ]
 
     def __init__(self, *args, **kwargs):
@@ -75,10 +65,6 @@ class Exam(models.Model):
             errors["level"] = "Exam level must be greater than zero."
         if self.max_mock_attempts < 0:
             errors["max_mock_attempts"] = "Mock attempts cannot be negative."
-        if self.organization_id and self.primary_category_id and self.primary_category.organization_id and self.primary_category.organization_id != self.organization_id:
-            errors["primary_category"] = "Primary category must belong to the same organization as the exam."
-        if self.primary_category_id and not self.primary_category.is_active:
-            errors["primary_category"] = "An inactive category cannot be the primary category of an exam."
         if errors:
             raise ValidationError(errors)
 
@@ -101,18 +87,11 @@ class Exam(models.Model):
         return self._legacy_track
 
     def get_all_categories(self):
-        category_ids = set(self.categories.values_list("id", flat=True))
-        if self.primary_category_id:
-            category_ids.add(self.primary_category_id)
-        if not category_ids:
-            return self.categories.none()
-        return self.categories.model.objects.filter(id__in=category_ids)
+        return self.categories.all()
 
     def has_category(self, category):
         if not category:
             return False
-        if self.primary_category_id == category.id:
-            return True
         return self.categories.filter(id=category.id).exists()
 
     def has_blueprint(self):
