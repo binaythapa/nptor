@@ -11,6 +11,11 @@
     <li><a href="{% url 'quiz:admin_exam_list' %}"><span class="icon is-small"><i class="fa fa-file-alt"></i></span><span class="menu-text">Exams</span></a></li>
     <li><a href="{% url 'quiz:question_dashboard' %}"><span class="icon is-small"><i class="fa fa-question-circle"></i></span><span class="menu-text">Questions</span></a></li>
 </ul>
+<p class="menu-label">Classification</p>
+<ul class="menu-list">
+    <li><a href="{% url 'quiz:admin_domain_list' %}"><span class="icon is-small"><i class="fa fa-layer-group"></i></span><span class="menu-text">Domains</span></a></li>
+    <li><a href="{% url 'quiz:admin_category_list' %}"><span class="icon is-small"><i class="fa fa-sitemap"></i></span><span class="menu-text">Categories</span></a></li>
+</ul>
 <p class="menu-label">Business</p>
 <ul class="menu-list">
     <li><a href="{% url 'quiz:subscription_admin_panel' %}"><span class="icon is-small"><i class="fa fa-credit-card"></i></span><span class="menu-text">Subscriptions</span></a></li>
