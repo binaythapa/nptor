@@ -2,7 +2,6 @@
 {% load widget_tweaks static %}
 
 {% block title %}{% if mode == "edit" %}Edit Track{% else %}Create Track{% endif %} – Admin{% endblock %}
-
 {% block extra_head %}<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">{% endblock %}
 {% block head_extra %}<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">{% endblock %}
 
@@ -10,10 +9,7 @@
 <div class="admin-exam-page">
     <div class="admin-exam-header">
         <div>
-            <h1 class="admin-exam-title">
-                <span class="admin-exam-title-icon" aria-hidden="true">{% if mode == "edit" %}✏️{% else %}➕{% endif %}</span>
-                {% if mode == "edit" %}Edit Track{% else %}Create Track{% endif %}
-            </h1>
+            <h1 class="admin-exam-title"><span class="admin-exam-title-icon" aria-hidden="true">{% if mode == "edit" %}✏️{% else %}➕{% endif %}</span>{% if mode == "edit" %}Edit Track{% else %}Create Track{% endif %}</h1>
             <p class="admin-exam-subtitle">A Track is a sellable product containing reusable Exams. Tracks are independent of Courses.</p>
         </div>
     </div>
@@ -39,19 +35,15 @@
                 <div class="admin-exam-field">
                     <label class="admin-exam-label">Included Exams</label>
                     <div class="admin-exam-control" style="padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f8fafc;">
-                        {% for membership in form.instance.track_exams.all %}
-                            <span class="tag is-link is-light" style="margin:2px;">{{ membership.exam.title }}</span>
-                        {% empty %}
-                            <span class="admin-exam-subtitle">No exams are currently included in this Track.</span>
-                        {% endfor %}
+                        {% for membership in form.instance.track_exams.all %}<span class="tag is-link is-light" style="margin:2px;">{{ membership.exam.title }}</span>{% empty %}<span class="admin-exam-subtitle">No exams are currently included.</span>{% endfor %}
                     </div>
-                    <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;">Exams are reusable content and are not sold separately. Existing Track membership is shown here; Course membership is independent.</p>
+                    {% if mode == "edit" %}<p style="margin-top:10px;"><a class="admin-exam-button admin-exam-button-secondary" href="{% url 'quiz:admin_track_exams' form.instance.pk %}">Manage Included Exams</a></p>{% else %}<p class="admin-exam-subtitle" style="margin-top:8px;">Save the Track first, then assign its reusable Exams.</p>{% endif %}
                 </div>
 
                 <div class="admin-exam-field">
                     <label class="admin-exam-label" for="{{ form.subscription_plans.id_for_label }}">Track Subscription Plans</label>
                     <div class="admin-exam-control">{% render_field form.subscription_plans class+="admin-exam-select" size="8" %}</div>
-                    <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;">Only Track product plans should be selected. Buying a Track grants this Track and its included Exams.</p>
+                    <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;">Only Track product plans should be selected. Buying a Track grants the Track and its included Exams.</p>
                     {% for error in form.subscription_plans.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
                 </div>
             </div>
@@ -68,10 +60,7 @@
                 </div>
             </div>
         </div>
-        <div class="admin-exam-actions">
-            <a href="{% url 'quiz:admin_track_list' %}" class="admin-exam-button admin-exam-button-secondary">Cancel</a>
-            <button class="admin-exam-button admin-exam-button-primary" type="submit">Save Track</button>
-        </div>
+        <div class="admin-exam-actions"><a href="{% url 'quiz:admin_track_list' %}" class="admin-exam-button admin-exam-button-secondary">Cancel</a><button class="admin-exam-button admin-exam-button-primary" type="submit">Save Track</button></div>
     </form>
 </div>
 {% endblock %}
