@@ -39,15 +39,6 @@ class SearchableModelMultipleChoiceWidget(SelectMultiple):
                 )
         select_attrs.append('name="{}"'.format(conditional_escape(name)))
         select_attrs.append('style="display:none"')
-        select_html = ["<select {}>".format(" ".join(select_attrs))]
-        for option_value, option_label in options:
-            select_html.append(
-                '<option value="{}" selected>{}</option>'.format(
-                    conditional_escape(option_value),
-                    conditional_escape(option_label),
-                )
-            )
-        select_html.append("</select>")
 
         input_id = "{}_search".format(final_attrs.get("id", name))
         placeholder = final_attrs.get(
@@ -64,4 +55,21 @@ class SearchableModelMultipleChoiceWidget(SelectMultiple):
             placeholder,
         )
 
-        return mark_safe("".join(select_html) + str(search_html))
+        select_html = ["<select {}>".format(" ".join(select_attrs))]
+        for option_value, option_label in options:
+            select_html.append(
+                '<option value="{}" selected>{}</option>'.format(
+                    conditional_escape(option_value),
+                    conditional_escape(option_label),
+                )
+            )
+        select_html.append("</select>")
+
+        return mark_safe(
+            '<div class="admin-search-select" data-admin-search-select-ui="true">'
+            + str(search_html).replace(
+                '<div class="admin-search-select" data-admin-search-select-ui="true">', "", 1
+            ).rsplit("</div>", 1)[0]
+            + "".join(select_html)
+            + "</div>"
+        )
