@@ -14,6 +14,7 @@
     }
 
     function attach(wrapper) {
+        if (wrapper.closest("#track-exam-empty-form")) return;
         if (wrapper.dataset.ready === "1") return;
         const select = wrapper.querySelector("select[data-admin-search-select-single]");
         const input = wrapper.querySelector(".admin-search-select-input");
@@ -92,6 +93,12 @@
                             button.addEventListener("mousedown", function (event) { event.preventDefault(); });
                             button.addEventListener("click", function () { if (results[index]) choose(results[index]); });
                         });
+                    })
+                    .catch(function () {
+                        if (current === requestId) {
+                            menu.innerHTML = '<div class="admin-search-select-empty">Unable to search right now</div>';
+                            menu.classList.add("is-open");
+                        }
                     });
             }, DEBOUNCE_MS);
         }
