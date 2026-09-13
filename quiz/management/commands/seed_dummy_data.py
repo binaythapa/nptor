@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 
-from courses.models import Course, CourseSection, Lesson
+from courses.models import Course, CourseExam, CourseSection, Lesson
 from organizations.models import Organization, OrganizationMember
 from quiz.models import (
     Category,
@@ -399,7 +399,12 @@ class Command(BaseCommand):
                 },
             )
             course.subscription_plans.add(plan)
-            course.exams.set(course_exams)
+            for order, exam in enumerate(course_exams, 1):
+                self._get_or_create(
+                    CourseExam,
+                    {"course": course, "exam": exam},
+                    {"order": order, "is_required": True},
+                )
             courses.append(course)
             section = self._get_or_create(
                 CourseSection,
@@ -452,6 +457,7 @@ class Command(BaseCommand):
             ExamTrack,
             TrackExam,
             Course,
+            CourseExam,
             CourseSection,
             Lesson,
             SubscriptionPlan,
@@ -518,56 +524,35 @@ class Command(BaseCommand):
         if getattr(field, "choices", None):
             return field.choices[0][0]
         if isinstance(field, models.EmailField):
-            return f"{DEMO_CODE_PREFIX}{model._meta.model_name}-{uuid4().hex[:8]}@example.test"
+            return f"{DEMO_CODE_PREFIX}{model._meta.model_name}@example.test"
         if isinstance(field, models.URLField):
-            return f"https://example.test/demo/{model._meta.model_name}"
-        if isinstance(field, models.UUIDField):
-            return uuid4()
+            return "https://example.test/demo"
         if isinstance(field, models.BooleanField):
-            return "active" in name
-        if isinstance(
-            field,
-            (
-                models.IntegerField,
-                models.PositiveIntegerField,
-                models.PositiveSmallIntegerField,
-                models.SmallIntegerField,
-            ),
-        ):
+            return True
+        if isinstance(field, models.IntegerField):
             return 1
         if isinstance(field, models.FloatField):
             return 1.0
         if isinstance(field, models.DecimalField):
             return Decimal("1.00")
-        if isinstance(field, models.DateTimeField):
-            return timezone.now()
-        if isinstance(field, models.DateField):
-            return timezone.localdate()
-        if isinstance(field, models.TimeField):
-            return timezone.localtime().time()
         if isinstance(field, models.JSONField):
             return {}
-        if isinstance(field, models.BinaryField):
-            return b"demo"
-        if isinstance(field, models.SlugField):
-            return f"{DEMO_CODE_PREFIX}{model._meta.model_name}-{uuid4().hex[:8]}"
-        if isinstance(field, (models.CharField, models.TextField)):
-            if name in {"name", "title", "label"}:
-                return f"{DEMO_PREFIX}{model._meta.verbose_name.title()}"
-            if "code" in name:
-                return f"{DEMO_CODE_PREFIX}{model._meta.model_name}-{uuid4().hex[:8]}"
-            return f"{DEMO_PREFIX}{model._meta.verbose_name.title()} sample"
+        if isinstance(field, models.UUIDField):
+            return uuid4()
+        if isinstance(field, models.DateField):
+            return timezone.localdate()
+        if isinstance(field, models.DateTimeField):
+            return timezone.now()
+        if isinstance(field, models.TextField):
+            return f"{DEMO_PREFIX}{model._meta.model_name} sample"
+        if isinstance(field, models.CharField):
+            return f"{DEMO_PREFIX}{model._meta.model_name}"
         return None
 
     def _seed_generic_m2m(self, obj, model, stack):
         for field in model._meta.many_to_many:
             if field.auto_created:
                 continue
-            related = field.remote_field.model.objects.order_by("pk").first()
-            if related is None:
-                related = self._generic_instance(field.remote_field.model, stack)
+            related = self._generic_instance(field.remote_field.model, stack)
             if related is not None:
-                try:
-                    getattr(obj, field.name).add(related)
-                except (IntegrityError, TypeError, ValueError):
-                    pass
+                getattr(obj, field.name).add(related)
