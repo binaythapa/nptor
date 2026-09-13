@@ -73,7 +73,7 @@ def org_assignments(request, slug):
     assignments = (
         ResourceAssignment.objects
         .filter(organization=organization)
-        .select_related("student", "assigned_by", "revoked_by", "course", "track", "exam", "resource_access")
+        .select_related("student", "assigned_by", "revoked_by", "course", "track", "exam")
         .order_by("-assigned_at")
     )
     return render(
