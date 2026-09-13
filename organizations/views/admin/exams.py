@@ -26,7 +26,6 @@ class OrganizationExamForm(ExamForm):
             .select_related("domain", "parent")
             .order_by("domain__name", "parent__name", "name")
         )
-        self.fields["primary_category"].queryset = category_qs
         self.fields["categories"].queryset = category_qs
 
         self.fields["organization"].queryset = Organization.objects.filter(pk=organization.pk)
@@ -34,10 +33,8 @@ class OrganizationExamForm(ExamForm):
         self.fields["organization"].required = True
         self.fields["organization"].widget = HiddenInput()
 
-        self.fields["primary_category"].widget.attrs["data-autocomplete-organization-only"] = "true"
         self.fields["categories"].widget.attrs["data-autocomplete-organization-only"] = "true"
         self.fields["categories"].help_text = "Search and select categories belonging to this organization."
-        self.fields["primary_category"].help_text = "Select the main category from this organization's category catalog."
 
 
 def _organization_allocation_categories(organization):
@@ -66,7 +63,6 @@ def org_exam_list(request, slug):
     exams = (
         Exam.objects
         .filter(organization=org)
-        .select_related("primary_category")
         .order_by("-created_at")
     )
     if request.organization_member.role == OrganizationRole.STAFF:
