@@ -54,7 +54,8 @@ class SearchableModelMultipleChoiceWidget(SelectMultiple):
             '<input type="text" id="{}" class="admin-search-select-input" placeholder="{}" autocomplete="off" aria-label="Search exams">'
             '<div class="admin-search-select-selected" role="list" aria-live="polite"></div>'
             '<div class="admin-search-select-menu" role="listbox"></div>'
-            '{}'</div>'.format(
+            '{}'
+            '</div>'.format(
                 conditional_escape(input_id), conditional_escape(placeholder), "".join(select_html)
             )
         )
@@ -97,7 +98,8 @@ class SearchableModelChoiceWidget(Select):
             '<input type="text" id="{}" class="admin-search-select-input" placeholder="{}" autocomplete="off" aria-label="Search exam">'
             '<div class="admin-search-select-selected" role="list" aria-live="polite"></div>'
             '<div class="admin-search-select-menu" role="listbox"></div>'
-            '{}'</div>'.format(
+            '{}'
+            '</div>'.format(
                 conditional_escape(input_id), conditional_escape(placeholder), select_html
             )
         )
