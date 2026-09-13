@@ -1,15 +1,17 @@
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from organizations.forms.content import OrganizationCourseForm
 from organizations.permissions import org_admin_required, org_teacher_required
 from organizations.services.content_permissions import user_can_manage_owned_content
+from courses.forms import CourseSectionFormSet
 from courses.models import Course
-from courses.views.instructor_views import course_create, course_edit
 from quiz.models import Exam, ExamTrack
 from subscriptions.models import Subscription, SubscriptionEntitlement
 
@@ -260,17 +262,85 @@ def org_course_list(request, slug):
 
 @org_teacher_required
 def org_course_create(request, slug):
-    """Use the canonical course app create page and workflow."""
-    return course_create(request)
+    """Create private organization-owned course content without commerce fields."""
+    org = request.organization
+    form = OrganizationCourseForm(
+        request.POST or None,
+        request.FILES or None,
+        organization=org,
+    )
+    formset = CourseSectionFormSet(
+        request.POST or None,
+        prefix="sections",
+    )
+
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        with transaction.atomic():
+            course = form.save(commit=False)
+            course.created_by = request.user
+            course.save()
+            form.save_m2m()
+
+            sections = formset.save(commit=False)
+            for index, section in enumerate(sections, start=1):
+                section.course = course
+                if not section.order:
+                    section.order = index
+                section.save()
+
+        messages.success(request, f'Course "{course.title}" created for {org.name}.')
+        return redirect("organizations_admin:org_course_list", slug=slug)
+
+    return render(
+        request,
+        "courses/instructor/course_create.html",
+        {"form": form, "formset": formset, "organization": org},
+    )
 
 
 @org_teacher_required
 def org_course_edit(request, slug, pk):
-    """Use the canonical course app edit page and workflow."""
-    course = get_object_or_404(Course, id=pk, organization=request.organization)
-    if not user_can_manage_owned_content(request.user, request.organization, course):
+    """Edit private organization-owned course content without commerce fields."""
+    org = request.organization
+    course = get_object_or_404(Course, id=pk, organization=org)
+    if not user_can_manage_owned_content(request.user, org, course):
         raise PermissionDenied("You can only modify courses you created.")
-    return course_edit(request, course.slug)
+
+    form = OrganizationCourseForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=course,
+        organization=org,
+    )
+    formset = CourseSectionFormSet(
+        request.POST or None,
+        instance=course,
+        queryset=course.sections.order_by("order"),
+        prefix="sections",
+    )
+
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        with transaction.atomic():
+            course = form.save(commit=False)
+            course.created_by = course.created_by or request.user
+            course.save()
+            form.save_m2m()
+
+            sections = formset.save(commit=False)
+            for section in sections:
+                section.course = course
+                section.save()
+            for obj in formset.deleted_objects:
+                obj.delete()
+
+        messages.success(request, f'Course "{course.title}" updated.')
+        return redirect("organizations_admin:org_course_list", slug=slug)
+
+    return render(
+        request,
+        "courses/instructor/course_edit.html",
+        {"form": form, "formset": formset, "course": course, "organization": org},
+    )
 
 
 @require_POST
