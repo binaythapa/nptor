@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 
+from accounts.models import UserProfile
 from organizations.models import AcademicYear, ClassSection, ClassTeacher, Organization, OrganizationClass, OrganizationMember, OrganizationStudent, StudentEnrollment
 from organizations.models.role import OrganizationRole
 from organizations.services.students import get_organization_student, get_student_for_teacher, update_student_profile
@@ -28,11 +29,17 @@ class StudentProfileTests(TestCase):
 
     def test_student_can_view_and_update_own_profile(self):
         self.assertEqual(get_organization_student(self.student_user, self.org), self.student)
-        update_student_profile(actor=self.student_user, organization=self.org, student=self.student, data={"first_name": "New", "guardian_name": "Parent"})
+        update_student_profile(
+            actor=self.student_user,
+            organization=self.org,
+            student=self.student,
+            data={"first_name": "New", "guardian_name": "Parent", "contact_phone": "+977-9800000000"},
+        )
         self.student.refresh_from_db()
         self.student_user.refresh_from_db()
         self.assertEqual(self.student.guardian_name, "Parent")
         self.assertEqual(self.student_user.first_name, "New")
+        self.assertEqual(str(self.student_user.profile.phone), "+977-9800000000")
 
     def test_student_cannot_update_enrollment_or_student_id(self):
         with self.assertRaises(PermissionDenied):
@@ -54,3 +61,35 @@ class StudentProfileTests(TestCase):
     def test_student_cannot_view_profile_from_another_organization(self):
         with self.assertRaises(PermissionDenied):
             get_organization_student(self.student_user, self.other_org)
+
+    def test_student_profile_is_organization_specific(self):
+        OrganizationMember.objects.create(user=self.student_user, organization=self.other_org, role=OrganizationRole.STUDENT)
+        other_profile = OrganizationStudent.objects.create(
+            organization=self.other_org,
+            user=self.student_user,
+            student_id="OTHER-001",
+            guardian_name="Other Guardian",
+        )
+        self.assertEqual(get_organization_student(self.student_user, self.org), self.student)
+        self.assertEqual(get_organization_student(self.student_user, self.other_org), other_profile)
+
+    def test_adding_student_membership_provisions_profile(self):
+        new_student = User.objects.create_user(username="new-student", email="new.student@example.com", password="password")
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            f"/org/{self.org.slug}/admin/students/add/",
+            {"email": new_student.email, "role": OrganizationRole.STUDENT},
+        )
+        self.assertEqual(response.status_code, 302)
+        profile = OrganizationStudent.objects.get(organization=self.org, user=new_student)
+        self.assertEqual(profile.status, OrganizationStudent.STATUS_ACTIVE)
+        self.assertIsNotNone(profile.joined_date)
+
+    def test_readding_student_does_not_replace_existing_profile(self):
+        self.client.force_login(self.admin)
+        self.client.post(
+            f"/org/{self.org.slug}/admin/students/add/",
+            {"email": self.student_user.email, "role": OrganizationRole.STUDENT},
+        )
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.student_id, "S001")
