@@ -2,9 +2,9 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
+from organizations.forms.content import OrganizationExamTrackForm
 from organizations.permissions import org_admin_required
 from quiz.models import ExamTrack, TrackExam
-from quiz.forms import ExamTrackForm
 from quiz.track_forms import TrackExamFormSet
 
 
@@ -44,13 +44,14 @@ def org_track_list(request, slug):
 def org_track_create(request, slug):
     org = request.organization
     track = ExamTrack(organization=org)
-    form = ExamTrackForm(request.POST or None, instance=track, organization=org)
+    form = OrganizationExamTrackForm(request.POST or None, instance=track, organization=org)
     formset = _track_formset(request, track, org)
 
     if request.method == "POST" and form.is_valid() and formset.is_valid():
         track = form.save(commit=False)
         track.organization = org
         track.save()
+        form.save_m2m()
         formset.instance = track
         formset.save()
         messages.success(request, f'Track "{track.title}" created successfully with its exam progression rules.')
@@ -67,13 +68,14 @@ def org_track_create(request, slug):
 def org_track_edit(request, slug, pk):
     org = request.organization
     track = get_object_or_404(ExamTrack, pk=pk, organization=org)
-    form = ExamTrackForm(request.POST or None, instance=track, organization=org)
+    form = OrganizationExamTrackForm(request.POST or None, instance=track, organization=org)
     formset = _track_formset(request, track, org)
 
     if request.method == "POST" and form.is_valid() and formset.is_valid():
         updated = form.save(commit=False)
         updated.organization = org
         updated.save()
+        form.save_m2m()
         formset.instance = updated
         formset.save()
         messages.success(request, f'Included exams and prerequisites updated for "{track.title}".')
