@@ -25,7 +25,7 @@
                     </div>
                 </div>
                 <div class="admin-exam-grid admin-exam-grid-2">
-                    <div class="admin-exam-field admin-exam-field-wide">
+                    <div class="admin-exam-field admin-exam-field-wide" style="grid-column: 1 / -1;">
                         <label class="admin-exam-label" for="{{ form.title.id_for_label }}">Title</label>
                         <div class="admin-exam-control">{% render_field form.title class+="input" %}</div>
                         {% for error in form.title.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
