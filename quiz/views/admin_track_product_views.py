@@ -51,7 +51,10 @@ def admin_track_update(request, pk):
 
     if request.method == "POST" and form.is_valid() and formset.is_valid():
         with transaction.atomic():
-            form.save(commit=True)
+            track = form.save(commit=False)
+            track.save()
+            form.save_m2m()
+            formset.instance = track
             formset.save()
         return redirect("quiz:admin_track_list")
 
