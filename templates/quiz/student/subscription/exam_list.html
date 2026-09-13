@@ -1,170 +1,84 @@
 {% extends "layouts/admin/base_admin.html" %}
 
 {% block content %}
-
 <div class="container">
-
-  <!-- ================= HEADER ================= -->
   <div class="mb-5 is-flex is-justify-content-space-between is-align-items-center">
     <div>
       <h1 class="title is-4">📝 Exams</h1>
-      <p class="subtitle is-6 has-text-grey">
-        Manage exams, pricing, publishing & limits
-      </p>
+      <p class="subtitle is-6 has-text-grey">Manage reusable exam content. Exams are included through Courses and Tracks and are not standalone products.</p>
     </div>
-
     <div class="buttons">
-      <a href="{% url 'quiz:subscription_admin_panel' %}"
-         class="button is-light">
-        ← Dashboard
-      </a>
-
-      <a href="{% url 'quiz:admin_exam_create' %}"
-         class="button is-primary">
-        ➕ Create Exam
-      </a>
+      <a href="{% url 'quiz:subscription_admin_panel' %}" class="button is-light">← Dashboard</a>
+      <a href="{% url 'quiz:admin_exam_create' %}" class="button is-primary">➕ Create Exam</a>
     </div>
   </div>
 
-  <!-- ================= TABLE ================= -->
+  <div class="notification is-info is-light">
+    <strong>Commerce rule:</strong> Exams have no standalone price or subscription. Add an exam to a Course or Track to make it available through that product.
+  </div>
+
   <div class="box">
     <div class="table-container">
       <table class="table is-fullwidth is-striped is-hoverable">
         <thead>
           <tr>
             <th>Title</th>
-            <th>Track</th>
+            <th>Included In</th>
             <th>Questions</th>
             <th>Duration</th>
-            <th>Pricing</th>
             <th>Status</th>
             <th>Created</th>
             <th class="has-text-centered">Actions</th>
           </tr>
         </thead>
         <tbody>
-
         {% for exam in exams %}
           <tr>
-
-            <!-- TITLE -->
+            <td><strong>{{ exam.title }}</strong></td>
             <td>
-  <button class="button is-small"
-          onclick="togglePublish('{{ exam.id }}', this)">
-    {% if exam.is_published %}
-      <span class="tag is-success">Published</span>
-    {% else %}
-      <span class="tag is-danger">Hidden</span>
-    {% endif %}
-  </button>
-</td>
-
-
-            <!-- TRACK -->
-            <td>
-              {% if exam.track %}
-                {{ exam.track.title }}
-              {% else %}
-                <span class="has-text-grey">—</span>
-              {% endif %}
+              {% with memberships=exam.track_memberships.all %}
+                {% if memberships %}
+                  {% for membership in memberships %}<span class="tag is-link is-light mr-1">Track: {{ membership.track.title }}</span>{% endfor %}
+                {% else %}<span class="has-text-grey">Courses/Tracks can include this exam</span>{% endif %}
+              {% endwith %}
             </td>
-
-            <!-- QUESTION COUNT -->
-            <td>
-              {{ exam.question_count }}
-            </td>
-
-            <!-- DURATION -->
-            <td>
-              {{ exam.duration_seconds|divisibleby:60 }}
-              min
-            </td>
-
-            <!-- PRICING -->
-            <td>
-              {% if exam.is_free %}
-                <span class="tag is-success">Free</span>
-              {% else %}
-                <span class="tag is-warning">
-                  {{ exam.currency }} {{ exam.price }}
-                </span>
-              {% endif %}
-            </td>
-
-            <!-- STATUS -->
-            <td>
-              {% if exam.is_published %}
-                <span class="tag is-success">Published</span>
-              {% else %}
-                <span class="tag is-danger">Hidden</span>
-              {% endif %}
-            </td>
-
-            <!-- CREATED -->
-            <td>
-              {{ exam.created_at|date:"M d, Y" }}
-            </td>
-
-            <!-- ACTIONS -->
+            <td>{{ exam.question_count }}</td>
+            <td>{{ exam.duration_seconds }} sec</td>
+            <td>{% if exam.is_published %}<span class="tag is-success">Published</span>{% else %}<span class="tag is-danger">Hidden</span>{% endif %}</td>
+            <td>{{ exam.created_at|date:"M d, Y" }}</td>
             <td class="has-text-centered">
               <div class="buttons are-small is-centered">
-
-                <a href="{% url 'quiz:admin_exam_update' exam.id %}"
-                   class="button is-info is-light"
-                   title="Edit">
-                  ✏️ Edit
-                </a>
-
-                <a href="{% url 'quiz:admin_exam_delete' exam.id %}"
-                   class="button is-danger is-light"
-                   onclick="return confirm('Delete this exam? This cannot be undone.')"
-                   title="Delete">
-                  🗑 Delete
-                </a>
-
+                <button class="button is-light" onclick="togglePublish('{{ exam.id }}', this)">Toggle Publish</button>
+                <a href="{% url 'quiz:admin_exam_update' exam.id %}" class="button is-info is-light">✏️ Edit</a>
+                <a href="{% url 'quiz:admin_exam_delete' exam.id %}" class="button is-danger is-light" onclick="return confirm('Delete this exam? This cannot be undone.')">🗑 Delete</a>
               </div>
             </td>
-
           </tr>
         {% empty %}
-          <tr>
-            <td colspan="8"
-                class="has-text-centered has-text-grey">
-              No exams created yet
-            </td>
-          </tr>
+          <tr><td colspan="7" class="has-text-centered has-text-grey">No exams created yet</td></tr>
         {% endfor %}
-
         </tbody>
       </table>
     </div>
   </div>
-
 </div>
 
 <script>
 function csrf(){
-  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  const input = document.querySelector('[name=csrfmiddlewaretoken]');
+  return input ? input.value : '';
 }
-
 function togglePublish(id, btn){
-  fetch("{% url 'quiz:toggle_exam_publish' %}",{
-    method:"POST",
-    headers:{
-      "X-CSRFToken": csrf(),
-      "Content-Type":"application/x-www-form-urlencoded"
-    },
-    body: new URLSearchParams({ exam_id:id })
-  })
-  .then(r=>r.json())
-  .then(data=>{
-    if(data.success){
-      btn.innerHTML = data.is_published
-        ? '<span class="tag is-success">Published</span>'
-        : '<span class="tag is-danger">Hidden</span>';
+  fetch("{% url 'quiz:toggle_exam_publish' %}", {
+    method: "POST",
+    headers: {"X-CSRFToken": csrf(), "Content-Type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams({exam_id: id})
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      btn.textContent = data.is_published ? "Published" : "Hidden";
+      window.location.reload();
     }
   });
 }
 </script>
-
 {% endblock %}
