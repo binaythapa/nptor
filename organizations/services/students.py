@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
 
+from accounts.models import UserProfile
 from organizations.models import ClassTeacher, OrganizationMember, OrganizationStudent
 from organizations.models.role import OrganizationRole
 
@@ -25,9 +26,8 @@ def get_student_for_teacher(*, actor, student_id, organization):
     Return any student belonging to the actor's organization.
 
     Staff/Teacher access is organization-wide for student academic
-    operations. It is not limited to students in the teacher's
-    assigned classes. Profile editing remains separately restricted
-    to the student and organization administrators.
+    operations. Profile editing remains separately restricted to
+    the student and organization administrators.
     """
     student = get_student_for_admin(student_id, organization)
     if not student:
@@ -57,11 +57,13 @@ def update_student_profile(*, actor, organization, student, data):
     forbidden = {"student_id", "admission_no", "status", "organization", "enrollments", "class_section", "roll_number", "joined_date"}
     if forbidden.intersection(data.keys()):
         raise PermissionDenied("Enrollment and administrative fields cannot be edited here.")
+
     editable = {"date_of_birth", "guardian_name", "guardian_phone", "address"}
     for field in editable:
         if field in data:
             setattr(student, field, data[field])
     student.save(update_fields=[field for field in editable if field in data] + ["updated_at"])
+
     if "first_name" in data or "last_name" in data:
         user = student.user
         if "first_name" in data:
@@ -69,4 +71,10 @@ def update_student_profile(*, actor, organization, student, data):
         if "last_name" in data:
             user.last_name = data["last_name"]
         user.save(update_fields=["first_name", "last_name"])
+
+    if "contact_phone" in data:
+        profile, _ = UserProfile.objects.get_or_create(user=student.user)
+        profile.phone = data["contact_phone"] or None
+        profile.save(update_fields=["phone", "updated_at"])
+
     return student
