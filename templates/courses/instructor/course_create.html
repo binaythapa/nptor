@@ -229,7 +229,6 @@
 </form>
 
 <script>
-
 function addSection() {
 
     const formsetDiv = document.getElementById("section-formset");
@@ -274,7 +273,11 @@ function removeSection(button) {
     totalFormsInput.value =
         document.querySelectorAll(".section-form").length;
 }
-
 </script>
+
+<script>
+window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'quiz:admin_autocomplete' %}";
+</script>
+<script src="{% static 'js/admin_exam_selector.js' %}"></script>
 
 {% endblock %}
