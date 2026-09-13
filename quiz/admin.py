@@ -124,7 +124,7 @@ class ExamAdmin(admin.ModelAdmin):
     list_display = ("title", "question_count", "duration_seconds", "is_published", "level", "passing_score")
     search_fields = ("title",)
     inlines = [ExamCategoryAllocationInline]
-    filter_horizontal = ("categories", "subscription_plans")
+    filter_horizontal = ("categories",)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
