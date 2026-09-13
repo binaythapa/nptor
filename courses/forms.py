@@ -6,7 +6,7 @@ from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 from .models import Course, CourseSection, Lesson
 from quiz.models import Category, Exam
-from quiz.forms.widgets import SearchableModelMultipleChoiceWidget
+from quiz.search_widgets import SearchableModelMultipleChoiceWidget
 from subscriptions.models import SubscriptionPlan
 
 
