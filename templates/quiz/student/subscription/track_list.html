@@ -2,17 +2,10 @@
 {% block content %}
 <div class="container">
   <div class="mb-5 is-flex is-justify-content-space-between is-align-items-center">
-    <div>
-      <h1 class="title is-4">📦 Tracks</h1>
-      <p class="subtitle is-6 has-text-grey">Sellable Track products. Each Track can contain reusable Exams and is independent of Courses.</p>
-    </div>
+    <div><h1 class="title is-4">📦 Tracks</h1><p class="subtitle is-6 has-text-grey">Sellable Track products containing reusable Exams. Tracks are independent of Courses.</p></div>
     <a href="{% url 'quiz:admin_track_create' %}" class="button is-primary">➕ Add New Track</a>
   </div>
-
-  <div class="notification is-info is-light">
-    Exams are content, not products. A Track subscription grants the Track and its included Exams. Courses are managed separately and are never implicitly added to a Track.
-  </div>
-
+  <div class="notification is-info is-light"><strong>Commerce rule:</strong> Exams are content, not products. A Track subscription grants the Track and its included Exams. Courses are managed separately.</div>
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead><tr><th>Title</th><th>Included Exams</th><th>Track Plans</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody>
@@ -20,15 +13,11 @@
       <tr>
         <td><strong>{{ t.title }}</strong>{% if t.organization %}<br><small class="has-text-grey">{{ t.organization.name }}</small>{% endif %}</td>
         <td>{{ t.track_exams.all|length }}</td>
-        <td>
-          {% for plan in t.subscription_plans.all %}<span class="tag is-link is-light mr-1">{{ plan.name }} · {{ plan.currency }} {{ plan.price }}</span>{% empty %}<span class="has-text-grey">No Track plan</span>{% endfor %}
-        </td>
+        <td>{% for plan in t.subscription_plans.all %}<span class="tag is-link is-light mr-1">{{ plan.name }} · {{ plan.currency }} {{ plan.price }}</span>{% empty %}<span class="has-text-grey">No Track plan</span>{% endfor %}</td>
         <td><span class="tag {% if t.is_active %}is-success{% else %}is-danger{% endif %}">{{ t.is_active|yesno:"Active,Inactive" }}</span></td>
-        <td><a href="{% url 'quiz:admin_track_update' t.id %}" class="button is-small is-link">Edit</a></td>
+        <td><div class="buttons are-small"><a href="{% url 'quiz:admin_track_exams' t.id %}" class="button is-info is-light">Manage Exams</a><a href="{% url 'quiz:admin_track_update' t.id %}" class="button is-link">Edit</a></div></td>
       </tr>
-    {% empty %}
-      <tr><td colspan="5" class="has-text-centered has-text-grey">No tracks created yet.</td></tr>
-    {% endfor %}
+    {% empty %}<tr><td colspan="5" class="has-text-centered has-text-grey">No tracks created yet.</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>
