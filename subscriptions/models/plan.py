@@ -35,6 +35,20 @@ class SubscriptionPlan(models.Model):
         (ACCESS_ALL, "All Access"),
     )
 
+    INTERVAL_DAY = "day"
+    INTERVAL_WEEK = "week"
+    INTERVAL_MONTH = "month"
+    INTERVAL_YEAR = "year"
+    INTERVAL_LIFETIME = "lifetime"
+
+    INTERVAL_CHOICES = (
+        (INTERVAL_DAY, "Day"),
+        (INTERVAL_WEEK, "Week"),
+        (INTERVAL_MONTH, "Month"),
+        (INTERVAL_YEAR, "Year"),
+        (INTERVAL_LIFETIME, "Lifetime"),
+    )
+
     name = models.CharField(max_length=100)
 
     code = models.SlugField(
@@ -81,10 +95,27 @@ class SubscriptionPlan(models.Model):
 
     description = models.TextField(blank=True, default="")
 
+    # Legacy duration is retained so existing records remain readable while
+    # new plans use the explicit calendar-aware billing interval below.
     duration_days = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="NULL means lifetime access.",
+        help_text="Legacy duration in days. NULL means lifetime for legacy plans.",
+    )
+
+    interval_unit = models.CharField(
+        max_length=10,
+        choices=INTERVAL_CHOICES,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Billing interval unit. Use Lifetime for one-time lifetime access.",
+    )
+
+    interval_count = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of interval units in one billing period. Not used for Lifetime.",
     )
 
     price = models.DecimalField(
@@ -107,10 +138,12 @@ class SubscriptionPlan(models.Model):
             models.Index(fields=["is_active"]),
             models.Index(fields=["scope", "is_active"]),
             models.Index(fields=["product_type", "access_mode", "is_active"]),
+            models.Index(fields=["interval_unit", "is_active"]),
         ]
 
     def clean(self):
         super().clean()
+
         if self.product_type in (self.PRODUCT_COURSE, self.PRODUCT_TRACK):
             if self.access_mode != self.ACCESS_SINGLE_RESOURCE:
                 raise ValidationError({"access_mode": "Course and Track plans must use single-resource access."})
@@ -126,8 +159,26 @@ class SubscriptionPlan(models.Model):
             else:
                 raise ValidationError({"access_mode": "Account plans must use limited_access or all_access."})
 
+        if self.interval_unit == self.INTERVAL_LIFETIME:
+            if self.interval_count is not None:
+                raise ValidationError({"interval_count": "Lifetime plans do not use an interval count."})
+        elif self.interval_unit:
+            if not self.interval_count or self.interval_count <= 0:
+                raise ValidationError({"interval_count": "A positive interval count is required for time-based plans."})
+        elif self.interval_count is not None:
+            raise ValidationError({"interval_unit": "Select an interval unit when an interval count is supplied."})
+
     def is_lifetime(self):
+        if self.interval_unit:
+            return self.interval_unit == self.INTERVAL_LIFETIME
         return self.duration_days is None
+
+    def get_billing_interval_label(self):
+        if self.is_lifetime():
+            return "Lifetime"
+        count = self.interval_count
+        unit = self.get_interval_unit_display().lower()
+        return f"{count} {unit}{'' if count == 1 else 's'}"
 
     def is_all_access(self):
         return self.product_type == self.PRODUCT_ACCOUNT and self.access_mode == self.ACCESS_ALL
