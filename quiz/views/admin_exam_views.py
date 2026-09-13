@@ -30,7 +30,7 @@ def _bind_exam_organization(form, exam):
 
 @staff_member_required
 def admin_exam_list(request):
-    exams = Exam.objects.select_related("organization", "primary_category").prefetch_related(
+    exams = Exam.objects.select_related("organization").prefetch_related(
         "categories", "track_memberships__track"
     ).order_by("-created_at")
     return render(request, "quiz/student/subscription/exam_list.html", {"exams": exams})
