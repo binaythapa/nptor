@@ -4,9 +4,9 @@
 
 **Goal:** Automatically provision an organization-specific student profile when a student is added and expose a secure profile workflow for students.
 
-**Architecture:** Reuse the existing `OrganizationStudent` model as the organization-scoped profile keyed by organization and user. Extend it with organization-specific contact/guardian fields, provision it idempotently from student membership creation, and expose the existing profile views through student-facing organization navigation while preserving organization-bound authorization.
+**Architecture:** Reuse the existing `OrganizationStudent` model as the organization-scoped profile keyed by organization and user. Keep organization-specific student/guardian data on that record, use the existing global `UserProfile.phone` for the account contact number, provision the student record idempotently from membership creation, and expose the profile through student-facing organization navigation.
 
-**Tech Stack:** Django models, migrations, ModelForms, server-rendered templates, Django TestCase.
+**Tech Stack:** Django models, ModelForms, server-rendered templates, Django TestCase.
 
 **Spec:** `docs/specs/organization-student-profile.md`
 
@@ -21,16 +21,16 @@
 
 ---
 
-### Task 1: Extend organization student profile data
+### Task 1: Confirm and reuse profile data model
 
 **Files:**
-- Modify: `organizations/models/student.py`
-- Create: `organizations/migrations/0010_organizationstudent_profile_fields.py`
+- Reuse: `organizations/models/student.py`
+- Reuse: `accounts/models/profile.py`
 - Test: `organizations/test_student_profile.py`
 
-- [ ] Add contact phone, guardian relationship, and guardian email to `OrganizationStudent`.
-- [ ] Add tests covering persistence and organization isolation.
-- [ ] Create the migration from the existing organization migration state.
+- [ ] Reuse the existing `OrganizationStudent` fields for name, DOB, guardian name, guardian phone, and address.
+- [ ] Use the existing account `UserProfile.phone` for student contact number rather than introducing duplicate phone storage.
+- [ ] Keep the existing `(organization, user)` uniqueness boundary.
 
 ### Task 2: Update profile form and service
 
@@ -39,8 +39,8 @@
 - Modify: `organizations/services/students.py`
 - Test: `organizations/test_student_profile.py`
 
-- [ ] Add the new fields to the student profile form with appropriate labels and validation.
-- [ ] Update the service allow-list so only profile fields can be changed.
+- [ ] Add contact phone to the profile form.
+- [ ] Update the service to save contact phone through `UserProfile`.
 - [ ] Preserve administrative/enrollment protections.
 - [ ] Add tests for student self-edit and forbidden administrative edits.
 
@@ -64,7 +64,7 @@
 
 - [ ] Add a student-only `My Profile` entry in the organization workspace.
 - [ ] Keep profile pages organization-branded and clearly scoped.
-- [ ] Display the new contact and guardian fields.
+- [ ] Display contact and guardian information.
 - [ ] Keep admin/teacher views separate from student editing controls.
 
 ### Task 5: Verify
