@@ -8,12 +8,11 @@ def _active_plans(plans):
 
 
 def get_default_plan(resource=None, plan_id=None):
-    """Return the default active plan for legacy/admin callers."""
+    """Return the default active plan for a legacy/admin caller."""
     if resource is not None and hasattr(resource, "subscription_plans"):
         plans = _active_plans(resource.subscription_plans)
     else:
         plans = _active_plans(SubscriptionPlan.objects.all())
-
     if plan_id:
         return get_object_or_404(plans, id=plan_id)
     return plans.first()
@@ -21,7 +20,8 @@ def get_default_plan(resource=None, plan_id=None):
 
 def get_plan_for_track(track, plan_id=None):
     plans = _active_plans(track.subscription_plans).filter(
-        scope=SubscriptionPlan.SCOPE_RESOURCE,
+        product_type=SubscriptionPlan.PRODUCT_TRACK,
+        access_mode=SubscriptionPlan.ACCESS_SINGLE_RESOURCE,
     )
     if plan_id:
         return get_object_or_404(plans, id=plan_id)
@@ -29,36 +29,37 @@ def get_plan_for_track(track, plan_id=None):
 
 
 def get_plan_for_course(course, plan_id=None):
-    """Return the canonical active resource plan attached to a course."""
     plans = _active_plans(course.subscription_plans).filter(
-        scope=SubscriptionPlan.SCOPE_RESOURCE,
+        product_type=SubscriptionPlan.PRODUCT_COURSE,
+        access_mode=SubscriptionPlan.ACCESS_SINGLE_RESOURCE,
     )
     if plan_id:
         return get_object_or_404(plans, id=plan_id)
     return plans.first()
 
 
-def get_plan_for_exam(exam, plan_id=None):
-    """Legacy helper retained for historical data; new checkout does not expose exams."""
-    plans = _active_plans(exam.subscription_plans).filter(
-        scope=SubscriptionPlan.SCOPE_RESOURCE,
+def get_account_plans():
+    return _active_plans(
+        SubscriptionPlan.objects.filter(
+            product_type=SubscriptionPlan.PRODUCT_ACCOUNT,
+            access_mode__in=(
+                SubscriptionPlan.ACCESS_LIMITED,
+                SubscriptionPlan.ACCESS_ALL,
+            ),
+        )
     )
-    if plan_id:
-        return get_object_or_404(plans, id=plan_id)
-    return plans.first()
 
 
 def get_all_access_plans():
-    """Return active plans that grant platform-wide access."""
     return _active_plans(
         SubscriptionPlan.objects.filter(
-            scope=SubscriptionPlan.SCOPE_ALL_ACCESS,
+            product_type=SubscriptionPlan.PRODUCT_ACCOUNT,
+            access_mode=SubscriptionPlan.ACCESS_ALL,
         )
     )
 
 
 def get_all_access_plan(plan_id=None):
-    """Return a selected/default active platform-wide plan."""
     plans = get_all_access_plans()
     if plan_id:
         return get_object_or_404(plans, id=plan_id)
