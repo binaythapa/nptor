@@ -1,10 +1,10 @@
 {% extends "layouts/admin/base_admin.html" %}
-{% load widget_tweaks %}
+{% load widget_tweaks static %}
 
 {% block title %}Manage Track Exams – Admin{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:900px;margin:0 auto;">
+<div class="container" style="max-width:1100px;margin:0 auto;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:16px;">
     <div>
       <h1 class="title is-4">Manage Track Exams</h1>
@@ -14,23 +14,62 @@
   </div>
 
   <div class="notification is-info is-light">
-    <strong>Reusable exam model:</strong> the same Exam may belong to multiple Tracks and Courses. Selecting exams here changes only this Track; it does not create a Course relationship or a standalone exam product.
+    <strong>Track progression:</strong> add the Exams included in this Track, set their order and required status, and optionally select prerequisite Exams. A prerequisite must also be included in this Track and must be passed before the dependent Exam becomes available.
   </div>
 
-  <div class="box">
-    <form method="post">
-      {% csrf_token %}
-      {% if form.non_field_errors %}<div class="notification is-danger is-light">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="field">
-        <label class="label" for="{{ form.exams.id_for_label }}">{{ form.exams.label }}</label>
-        <div class="control">{% render_field form.exams %}</div>
-        {% if form.exams.help_text %}<p class="help">{{ form.exams.help_text }}</p>{% endif %}
-        {% for error in form.exams.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+  <form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}
+      <div class="notification is-danger is-light">{{ formset.non_form_errors }}</div>
+    {% endif %}
+
+    {% for form in formset %}
+      <div class="box" style="margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <strong>Track Exam {{ forloop.counter }}</strong>
+          {% if form.instance.pk %}
+            <label class="checkbox">{% render_field form.DELETE %} Remove</label>
+          {% endif %}
+        </div>
+
+        {{ form.id }}
+        <div class="columns is-multiline">
+          <div class="column is-5">
+            <label class="label" for="{{ form.exam.id_for_label }}">Exam</label>
+            {% render_field form.exam class+="input" %}
+            {% for error in form.exam.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="column is-2">
+            <label class="label" for="{{ form.order.id_for_label }}">Order</label>
+            {% render_field form.order class+="input" %}
+            {% for error in form.order.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="column is-2">
+            <label class="label" for="{{ form.is_required.id_for_label }}">Required</label>
+            <label class="checkbox">{% render_field form.is_required %} Required</label>
+            {% for error in form.is_required.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="column is-12">
+            <label class="label" for="{{ form.prerequisite_exams.id_for_label }}">Prerequisite Exams</label>
+            {% render_field form.prerequisite_exams %}
+            {% if form.prerequisite_exams.help_text %}<p class="help">{{ form.prerequisite_exams.help_text }}</p>{% endif %}
+            {% for error in form.prerequisite_exams.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
       </div>
-      <div style="margin-top:20px;">
-        <button type="submit" class="button is-primary">Save Included Exams</button>
-      </div>
-    </form>
-  </div>
+    {% empty %}
+      <div class="notification is-warning is-light">No Track Exam rows are available yet. Add an exam below.</div>
+    {% endfor %}
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;">
+      <button type="submit" class="button is-primary">Save Exams &amp; Prerequisites</button>
+      <a href="{% url 'quiz:admin_track_update' track.id %}" class="button is-light">Cancel</a>
+    </div>
+  </form>
 </div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{% static 'js/admin_exam_selector.js' %}"></script>
 {% endblock %}
