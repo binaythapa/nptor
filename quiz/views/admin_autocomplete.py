@@ -27,6 +27,14 @@ def _result(item_id, label, subtitle=""):
     return {"id": item_id, "label": label, "subtitle": subtitle}
 
 
+def _tenant_queryset(queryset, request):
+    """Scope searchable content to one tenant; no tenant means platform content."""
+    organization_id = (request.GET.get("organization") or "").strip()
+    if organization_id:
+        return queryset.filter(organization_id=organization_id)
+    return queryset.filter(organization__isnull=True)
+
+
 @staff_member_required
 @require_GET
 def admin_autocomplete(request):
@@ -50,20 +58,19 @@ def admin_autocomplete(request):
         )
         results = [_result(u.id, u.username, u.email or u.get_full_name()) for u in qs]
     elif scope == "courses":
-        qs = Course.objects.filter(title__istartswith=query).order_by("title")[:SEARCH_LIMIT]
+        qs = _tenant_queryset(Course.objects.filter(title__istartswith=query), request).filter(
+            owner_type=Course.OWNER_PLATFORM
+        ).order_by("title")[:SEARCH_LIMIT]
         results = [_result(item.id, item.title) for item in qs]
     elif scope == "tracks":
-        qs = ExamTrack.objects.filter(title__istartswith=query).order_by("title")[:SEARCH_LIMIT]
+        qs = _tenant_queryset(ExamTrack.objects.filter(title__istartswith=query), request).order_by("title")[:SEARCH_LIMIT]
         results = [_result(item.id, item.title) for item in qs]
     elif scope == "exams":
-        qs = Exam.objects.filter(title__istartswith=query).order_by("title")[:SEARCH_LIMIT]
+        qs = _tenant_queryset(Exam.objects.filter(title__istartswith=query), request).order_by("title")[:SEARCH_LIMIT]
         results = [_result(item.id, item.title) for item in qs]
     elif scope == "questions":
         qs = Question.objects.filter(text__istartswith=query).order_by("id")[:SEARCH_LIMIT]
-        results = [
-            _result(item.id, strip_tags(item.text or "").strip()[:160])
-            for item in qs
-        ]
+        results = [_result(item.id, strip_tags(item.text or "").strip()[:160]) for item in qs]
     elif scope == "categories":
         qs = Category.objects.filter(is_active=True, name__istartswith=query).order_by("name")[:SEARCH_LIMIT]
         results = [_result(item.id, item.name) for item in qs]
