@@ -37,17 +37,11 @@
                 <div class="admin-exam-section-heading">
                     <div>
                         <h2 class="admin-exam-section-title">Classification</h2>
-                        <p class="admin-exam-help">Only categories belonging to this organization are available.</p>
+                        <p class="admin-exam-help">Only categories belonging to this organization are available. Category allocations below define the exam blueprint.</p>
                     </div>
                 </div>
                 <div class="admin-exam-grid admin-exam-grid-2">
-                    <div class="admin-exam-field">
-                        <label class="admin-exam-label" for="{{ form.primary_category.id_for_label }}">Primary Category</label>
-                        <div class="admin-exam-control">{% render_field form.primary_category %}</div>
-                        {% if form.primary_category.help_text %}<p class="admin-exam-help">{{ form.primary_category.help_text }}</p>{% endif %}
-                        {% for error in form.primary_category.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
-                    </div>
-                    <div class="admin-exam-field admin-exam-field-wide">
+                    <div class="admin-exam-field admin-exam-field-wide" style="grid-column: 1 / -1;">
                         <label class="admin-exam-label" for="{{ form.categories.id_for_label }}">Categories</label>
                         <div class="admin-exam-control">{% render_field form.categories %}</div>
                         {% if form.categories.help_text %}<p class="admin-exam-help">{{ form.categories.help_text }}</p>{% endif %}
@@ -139,6 +133,5 @@
 {% if user.is_authenticated %}
 <script>window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'quiz:admin_autocomplete' %}";</script>
 <script src="{% static 'js/admin_exam_selector.js' %}"></script>
-<script src="{% static 'js/admin_single_exam_selector.js' %}"></script>
 <script src="{% static 'js/admin_exam_allocation_formset.js' %}"></script>
 {% endif %}
