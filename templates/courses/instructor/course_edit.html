@@ -1,4 +1,5 @@
 {% extends "courses/base.html" %}
+{% load static %}
 
 {% block title %}Edit Course{% endblock %}
 
@@ -183,6 +184,13 @@
         {{ form.subscription_plans.label_tag }}
         {{ form.subscription_plans }}
 
+        <div class="exam-selector-help">
+            <label for="{{ form.exams.id_for_label }}">{{ form.exams.label }}</label>
+            {{ form.exams }}
+            {% if form.exams.help_text %}<p style="margin:6px 0 0;color:#6b7280;font-size:13px;">{{ form.exams.help_text }}</p>{% endif %}
+            {% for error in form.exams.errors %}<p style="margin:6px 0;color:#b91c1c;font-size:13px;">{{ error }}</p>{% endfor %}
+        </div>
+
         <div class="delete-checkbox">
             {{ form.is_public }}
             <label for="{{ form.is_public.id_for_label }}">
@@ -277,5 +285,10 @@ function addSection() {
     totalFormsInput.value = formIndex + 1;
 }
 </script>
+
+<script>
+window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'quiz:admin_autocomplete' %}";
+</script>
+<script src="{% static 'js/admin_exam_selector.js' %}"></script>
 
 {% endblock %}
