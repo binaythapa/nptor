@@ -3,73 +3,108 @@
 
 {% block title %}Manage Track Exams{% endblock %}
 
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container py-5" style="max-width:1100px;">
-  <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
+<div class="admin-exam-page">
+  <div class="admin-exam-header">
     <div>
-      <h1 class="title is-3">📚 Track Exams</h1>
-      <p class="subtitle is-6">{{ track.title }}</p>
+      <h1 class="admin-exam-title"><span class="admin-exam-title-icon" aria-hidden="true">📚</span> Manage Track Exams</h1>
+      <p class="admin-exam-subtitle">Configure the exam progression for <strong>{{ track.title }}</strong>.</p>
     </div>
-    <a href="{% url 'organizations_admin:org_track_list' slug=org.slug %}" class="button is-light">← Back to Tracks</a>
+    <a href="{% url 'organizations_admin:org_track_list' slug=org.slug %}" class="admin-exam-button admin-exam-button-secondary">← Back to Tracks</a>
   </div>
 
-  <div class="notification is-info is-light">
-    <strong>Prerequisites:</strong> select Exams included in this Track, set their order and required status, and optionally choose other included Exams that must be passed first.
-  </div>
+  <div class="admin-exam-card">
+    <section class="admin-exam-section track-progression-section">
+      <div class="admin-exam-section-heading">
+        <div>
+          <h2 class="admin-exam-section-title">Track progression</h2>
+          <p class="admin-exam-help">Add the Exams included in this Track, define their order and required status, and optionally add prerequisites.</p>
+        </div>
+        <span class="track-progression-badge">Organization Track</span>
+      </div>
 
-  <form method="post">
-    {% csrf_token %}
-    {{ formset.management_form }}
-    {% if formset.non_form_errors %}<div class="notification is-danger is-light">{{ formset.non_form_errors }}</div>{% endif %}
+      <div class="track-progression-guide">
+        <div class="track-guide-item"><strong>1. Add exams</strong><span>Choose published Exams from your organization.</span></div>
+        <div class="track-guide-item"><strong>2. Set order</strong><span>Control the sequence students follow.</span></div>
+        <div class="track-guide-item"><strong>3. Add prerequisites</strong><span>Require another included Exam to be passed first.</span></div>
+      </div>
 
-    {% for form in formset %}
-      <div class="card mb-5">
-        <header class="card-header">
-          <p class="card-header-title">Track Exam {{ forloop.counter }}</p>
-          {% if form.instance.pk %}
-          <div class="card-header-icon">
-            <label class="checkbox">{% render_field form.DELETE %} Remove</label>
-          </div>
-          {% endif %}
-        </header>
-        <div class="card-content">
-          {{ form.id }}
-          <div class="columns is-multiline">
-            <div class="column is-6">
-              <label class="label" for="{{ form.exam.id_for_label }}">Exam</label>
-              {{ form.exam }}
-              {% for error in form.exam.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+      <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+
+        {% if formset.non_form_errors %}
+          <div class="admin-exam-errors">{{ formset.non_form_errors }}</div>
+        {% endif %}
+
+        <div class="track-progression-list">
+          {% for form in formset %}
+            <div class="track-exam-row{% if form.DELETE.value %} is-deleted{% endif %}">
+              {{ form.id }}
+
+              <div class="track-exam-field track-exam-main-field">
+                <label class="admin-exam-label" for="{{ form.exam.id_for_label }}">Exam</label>
+                {{ form.exam }}
+                {% for error in form.exam.errors %}<p class="track-exam-errors">{{ error }}</p>{% endfor %}
+              </div>
+
+              <div class="track-exam-field track-order-field">
+                <label class="admin-exam-label" for="{{ form.order.id_for_label }}">Order</label>
+                {% render_field form.order class+="input" %}
+                {% for error in form.order.errors %}<p class="track-exam-errors">{{ error }}</p>{% endfor %}
+              </div>
+
+              <div class="track-exam-field track-required-field">
+                <label class="admin-exam-check">
+                  {% render_field form.is_required %}
+                  <span>Required</span>
+                </label>
+                {% for error in form.is_required.errors %}<p class="track-exam-errors">{{ error }}</p>{% endfor %}
+              </div>
+
+              <div class="track-exam-field track-prerequisite-field">
+                <label class="admin-exam-label" for="{{ form.prerequisite_exams.id_for_label }}">Prerequisite Exams</label>
+                {{ form.prerequisite_exams }}
+                {% if form.prerequisite_exams.help_text %}<p class="track-field-hint">{{ form.prerequisite_exams.help_text }}</p>{% endif %}
+                {% for error in form.prerequisite_exams.errors %}<p class="track-exam-errors">{{ error }}</p>{% endfor %}
+              </div>
+
+              <div class="track-exam-action">
+                {% if form.instance.pk %}
+                  <label class="track-remove-row">
+                    {% render_field form.DELETE %}
+                    <span>Remove</span>
+                  </label>
+                {% endif %}
+              </div>
             </div>
-            <div class="column is-2">
-              <label class="label" for="{{ form.order.id_for_label }}">Order</label>
-              {% render_field form.order class+="input" %}
-              {% for error in form.order.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+          {% empty %}
+            <div class="track-empty-state">
+              <div class="track-empty-icon" aria-hidden="true">+</div>
+              <div><strong>No exams have been added yet.</strong><p>Add an exam using the first available row, then save the Track.</p></div>
             </div>
-            <div class="column is-4">
-              <label class="label">Completion</label>
-              <label class="checkbox">{% render_field form.is_required %} Required exam</label>
-              {% for error in form.is_required.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
-            </div>
-            <div class="column is-12">
-              <label class="label" for="{{ form.prerequisite_exams.id_for_label }}">Prerequisite Exams</label>
-              {% render_field form.prerequisite_exams %}
-              {% if form.prerequisite_exams.help_text %}<p class="help">{{ form.prerequisite_exams.help_text }}</p>{% endif %}
-              {% for error in form.prerequisite_exams.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
-            </div>
+          {% endfor %}
+        </div>
+
+        <div class="track-progression-actions">
+          <p class="admin-exam-help">Prerequisites must also be included in this Track.</p>
+          <div class="is-flex" style="gap:10px;">
+            <a href="{% url 'organizations_admin:org_track_list' slug=org.slug %}" class="admin-exam-button admin-exam-button-secondary">Cancel</a>
+            <button type="submit" class="admin-exam-button admin-exam-button-primary">Save Exams &amp; Prerequisites</button>
           </div>
         </div>
-      </div>
-    {% endfor %}
-
-    <div class="is-flex is-justify-content-space-between">
-      <a href="{% url 'organizations_admin:org_track_list' slug=org.slug %}" class="button is-light">Cancel</a>
-      <button type="submit" class="button is-primary">Save Exams &amp; Prerequisites</button>
-    </div>
-  </form>
+      </form>
+    </section>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts_extra %}
+<script>window.NPTOR_ADMIN_AUTOCOMPLETE_URL = "{% url 'quiz:admin_autocomplete' %}";</script>
 <script src="{% static 'js/admin_exam_selector.js' %}"></script>
 <script src="{% static 'js/admin_single_exam_selector.js' %}"></script>
 {% endblock %}
