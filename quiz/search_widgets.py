@@ -94,7 +94,7 @@ class SearchableModelChoiceWidget(Select):
         input_id = "{}_search".format(final_attrs.get("id", name))
         placeholder = final_attrs.get("data-search-placeholder", "Search exam...")
         return mark_safe(
-            '<div class="admin-search-select-single" data-admin-search-select-single-ui="true">'
+            '<div class="admin-search-select admin-search-select-single" data-admin-search-select-single-ui="true">'
             '<input type="text" id="{}" class="admin-search-select-input" placeholder="{}" autocomplete="off" aria-label="Search exam">'
             '<div class="admin-search-select-selected" role="list" aria-live="polite"></div>'
             '<div class="admin-search-select-menu" role="listbox"></div>'
