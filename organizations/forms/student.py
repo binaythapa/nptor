@@ -1,5 +1,6 @@
 from django import forms
 
+from accounts.models import UserProfile
 from organizations.models import OrganizationStudent
 
 
@@ -45,4 +46,7 @@ class OrganizationStudentProfileForm(forms.ModelForm):
         if commit:
             instance.user.save(update_fields=["first_name", "last_name"])
             instance.save()
+            profile, _ = UserProfile.objects.get_or_create(user=instance.user)
+            profile.phone = self.cleaned_data.get("contact_phone") or None
+            profile.save(update_fields=["phone", "updated_at"])
         return instance
