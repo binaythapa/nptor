@@ -116,10 +116,11 @@ def admin_autocomplete(request):
         qs = Question.objects.filter(text__istartswith=query).order_by("id")[:SEARCH_LIMIT]
         results = [_result(item.id, strip_tags(item.text or "").strip()[:160]) for item in qs]
     elif scope == "categories":
+        organization_only = (request.GET.get("organization_only") or "").strip().lower() in {"1", "true", "yes"}
         qs = _tenant_queryset(
             Category.objects.filter(is_active=True, name__istartswith=query),
             request,
-            include_global=True,
+            include_global=not organization_only,
         ).select_related("domain", "parent").order_by("name")[:SEARCH_LIMIT]
         results = [
             _result(
