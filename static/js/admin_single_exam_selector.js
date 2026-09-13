@@ -102,10 +102,22 @@
         renderSelected();
     }
 
-    function init() {
-        document.querySelectorAll("[data-admin-search-select-single-ui='true']").forEach(attach);
+    function init(root) {
+        (root || document).querySelectorAll("[data-admin-search-select-single-ui='true']").forEach(attach);
     }
 
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-    else init();
+    function start() {
+        init(document);
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) init(node);
+                });
+            });
+        });
+        observer.observe(document.body, {childList: true, subtree: true});
+    }
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+    else start();
 })();
