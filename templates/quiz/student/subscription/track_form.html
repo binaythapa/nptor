@@ -3,13 +3,8 @@
 
 {% block title %}{% if mode == "edit" %}Edit Track{% else %}Create Track{% endif %} – Admin{% endblock %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">
-{% endblock %}
-
-{% block head_extra %}
-<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">
-{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{% static 'css/admin_exam_form.css' %}">{% endblock %}
 
 {% block content %}
 <div class="admin-exam-page">
@@ -25,19 +20,14 @@
 
     <form method="post">
         {% csrf_token %}
-        {% if form.non_field_errors %}
-        <div class="admin-exam-errors">{{ form.non_field_errors }}</div>
-        {% endif %}
-
+        {% if form.non_field_errors %}<div class="admin-exam-errors">{{ form.non_field_errors }}</div>{% endif %}
         <div class="admin-exam-card">
             <div class="admin-exam-section">
                 {% for field in form %}
-                    {% if field.name == "title" or field.name == "slug" or field.name == "description" or field.name == "organization" %}
+                    {% if field.name != "subscription_scope" and field.name != "subscription_plans" and field.name != "pricing_type" and field.name != "monthly_price" and field.name != "lifetime_price" and field.name != "trial_days" %}
                     <div class="admin-exam-field">
                         <label class="admin-exam-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        <div class="admin-exam-control">
-                            {% render_field field class+="input" %}
-                        </div>
+                        <div class="admin-exam-control">{% render_field field class+="input" %}</div>
                         {% if field.help_text %}<p class="admin-exam-subtitle" style="margin-top:6px;font-size:.78rem;">{{ field.help_text }}</p>{% endif %}
                         {% for error in field.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
                     </div>
@@ -47,70 +37,37 @@
 
             <div class="admin-exam-section">
                 <div class="admin-exam-field">
-                    <label class="admin-exam-label" for="{{ form.exams.id_for_label }}">Included Exams</label>
-                    <div class="admin-exam-control">
-                        {% render_field form.exams class+="admin-exam-select" size="10" %}
+                    <label class="admin-exam-label">Included Exams</label>
+                    <div class="admin-exam-control" style="padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f8fafc;">
+                        {% for membership in form.instance.track_exams.all %}
+                            <span class="tag is-link is-light" style="margin:2px;">{{ membership.exam.title }}</span>
+                        {% empty %}
+                            <span class="admin-exam-subtitle">No exams are currently included in this Track.</span>
+                        {% endfor %}
                     </div>
-                    <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;line-height:1.55;">
-                        Select the reusable exams included in this Track. Use Ctrl/Cmd to select multiple exams. Exams are not independently purchasable.
-                    </p>
-                    {% for error in form.exams.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
+                    <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;">Exams are reusable content and are not sold separately. Existing Track membership is shown here; Course membership is independent.</p>
                 </div>
 
                 <div class="admin-exam-field">
                     <label class="admin-exam-label" for="{{ form.subscription_plans.id_for_label }}">Track Subscription Plans</label>
-                    <div class="admin-exam-control">
-                        {% render_field form.subscription_plans class+="admin-exam-select" size="8" %}
-                    </div>
-                    <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;line-height:1.55;">
-                        Only plans whose product type is <strong>Track</strong> are shown here. Buying a Track grants the Track and its included Exams.
-                    </p>
+                    <div class="admin-exam-control">{% render_field form.subscription_plans class+="admin-exam-select" size="8" %}</div>
+                    <p class="admin-exam-subtitle" style="margin-top:8px;font-size:.78rem;">Only Track product plans should be selected. Buying a Track grants this Track and its included Exams.</p>
                     {% for error in form.subscription_plans.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
                 </div>
             </div>
 
             <div class="admin-exam-section">
-                <p class="admin-exam-subtitle" style="margin:0 0 14px;font-size:.8rem;line-height:1.55;">
-                    Legacy pricing is retained only for existing records. New Track commerce should use Track Subscription Plans above.
-                </p>
+                <p class="admin-exam-subtitle" style="margin:0 0 14px;font-size:.8rem;line-height:1.55;"><strong>Legacy pricing.</strong> These fields remain only for existing records. New Track commerce should use Track Subscription Plans.</p>
                 <div class="admin-exam-grid admin-exam-grid-2">
-                    <div class="admin-exam-field">
-                        <label class="admin-exam-label" for="{{ form.pricing_type.id_for_label }}">Legacy Pricing Type</label>
-                        <div class="admin-exam-control">{% render_field form.pricing_type %}</div>
-                        {% for error in form.pricing_type.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
-                    </div>
-                    <div class="admin-exam-field">
-                        <label class="admin-exam-label" for="{{ form.currency.id_for_label }}">Currency</label>
-                        <div class="admin-exam-control">{% render_field form.currency class+="input" %}</div>
-                        {% for error in form.currency.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
-                    </div>
-                </div>
-                <div class="admin-exam-grid admin-exam-grid-2">
-                    <div class="admin-exam-field">
-                        <label class="admin-exam-label" for="{{ form.monthly_price.id_for_label }}">Legacy Monthly Price</label>
-                        <div class="admin-exam-control">{% render_field form.monthly_price class+="input" %}</div>
-                        {% for error in form.monthly_price.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
-                    </div>
-                    <div class="admin-exam-field">
-                        <label class="admin-exam-label" for="{{ form.lifetime_price.id_for_label }}">Legacy Lifetime Price</label>
-                        <div class="admin-exam-control">{% render_field form.lifetime_price class+="input" %}</div>
-                        {% for error in form.lifetime_price.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
-                    </div>
-                </div>
-                <div class="admin-exam-grid admin-exam-grid-2">
-                    <div class="admin-exam-field">
-                        <label class="admin-exam-label" for="{{ form.trial_days.id_for_label }}">Legacy Trial Days</label>
-                        <div class="admin-exam-control">{% render_field form.trial_days class+="input" %}</div>
-                        {% for error in form.trial_days.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
-                    </div>
-                    <div class="admin-exam-field">
-                        <label class="admin-exam-check">{% render_field form.is_active %}<span>Active</span></label>
-                        {% for error in form.is_active.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}
-                    </div>
+                    <div class="admin-exam-field"><label class="admin-exam-label" for="{{ form.pricing_type.id_for_label }}">Legacy Pricing Type</label><div class="admin-exam-control">{% render_field form.pricing_type %}</div>{% for error in form.pricing_type.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}</div>
+                    <div class="admin-exam-field"><label class="admin-exam-label" for="{{ form.currency.id_for_label }}">Currency</label><div class="admin-exam-control">{% render_field form.currency class+="input" %}</div>{% for error in form.currency.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}</div>
+                    <div class="admin-exam-field"><label class="admin-exam-label" for="{{ form.monthly_price.id_for_label }}">Legacy Monthly Price</label><div class="admin-exam-control">{% render_field form.monthly_price class+="input" %}</div>{% for error in form.monthly_price.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}</div>
+                    <div class="admin-exam-field"><label class="admin-exam-label" for="{{ form.lifetime_price.id_for_label }}">Legacy Lifetime Price</label><div class="admin-exam-control">{% render_field form.lifetime_price class+="input" %}</div>{% for error in form.lifetime_price.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}</div>
+                    <div class="admin-exam-field"><label class="admin-exam-label" for="{{ form.trial_days.id_for_label }}">Legacy Trial Days</label><div class="admin-exam-control">{% render_field form.trial_days class+="input" %}</div>{% for error in form.trial_days.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}</div>
+                    <div class="admin-exam-field"><label class="admin-exam-check">{% render_field form.is_active %}<span>Active</span></label>{% for error in form.is_active.errors %}<p class="admin-exam-field-error">{{ error }}</p>{% endfor %}</div>
                 </div>
             </div>
         </div>
-
         <div class="admin-exam-actions">
             <a href="{% url 'quiz:admin_track_list' %}" class="admin-exam-button admin-exam-button-secondary">Cancel</a>
             <button class="admin-exam-button admin-exam-button-primary" type="submit">Save Track</button>
