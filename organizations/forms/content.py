@@ -1,6 +1,7 @@
 from django import forms
 from django.db.models import Q
 
+from courses.forms import save_course_exams
 from courses.models import Course
 from quiz.models import Category, Exam, ExamTrack
 from quiz.search_widgets import SearchableModelMultipleChoiceWidget
@@ -53,7 +54,10 @@ class OrganizationCourseForm(forms.ModelForm):
         if organization is not None:
             self.fields["exams"].widget.attrs["data-autocomplete-organization"] = str(organization.pk)
         if self.instance.pk:
-            self.fields["exams"].initial = self.instance.exams.all()
+            self.fields["exams"].initial = self.instance.course_exams.values_list(
+                "exam_id",
+                flat=True,
+            )
 
     def clean(self):
         cleaned = super().clean()
@@ -76,6 +80,10 @@ class OrganizationCourseForm(forms.ModelForm):
         if commit:
             course.save()
             self.save_m2m()
+            save_course_exams(
+                course,
+                self.cleaned_data.get("exams") or [],
+            )
         return course
 
 
