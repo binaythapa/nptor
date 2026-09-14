@@ -3,6 +3,7 @@ from .access_service import AccessService as _ResourceAccessService
 from .account_access_service import AccountAccessService
 from .global_access import has_all_access_subscription
 from organizations.models import ResourceAccess
+from django.utils import timezone
 
 
 class AccessService(_ResourceAccessService):
@@ -39,6 +40,7 @@ class AccessService(_ResourceAccessService):
                 assignment__student=student,
                 assignment__organization=organization,
                 assignment__is_active=True,
+                assignment__starts_at__lte=timezone.now(),
                 **{resource_field: resource},
             )
             .order_by("-granted_at")
