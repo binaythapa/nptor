@@ -13,7 +13,7 @@ User = get_user_model()
 
 
 class OrganizationAssignmentAdminViewTests(TestCase):
-    def test_assignment_list_renders_without_invalid_related_lookup(self):
+    def _create_staff_and_student(self):
         organization = Organization.objects.create(
             name="Test School",
             slug="test-school",
@@ -40,6 +40,10 @@ class OrganizationAssignmentAdminViewTests(TestCase):
             organization=organization,
             role=OrganizationRole.STUDENT,
         )
+        return organization, staff, student
+
+    def test_assignment_list_renders_without_invalid_related_lookup(self):
+        organization, staff, student = self._create_staff_and_student()
         course = Course.objects.create(title="Test Course")
         ResourceAssignment.objects.create(
             organization=organization,
@@ -62,3 +66,39 @@ class OrganizationAssignmentAdminViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Test Course")
+
+    def test_assignment_list_filters_by_search_query(self):
+        organization, staff, student = self._create_staff_and_student()
+        matching_course = Course.objects.create(title="Accounting Basics")
+        other_course = Course.objects.create(title="Physics Fundamentals")
+        ResourceAssignment.objects.create(
+            organization=organization,
+            student=student,
+            assigned_by=staff,
+            resource_type=ResourceAssignment.RESOURCE_COURSE,
+            course=matching_course,
+        )
+        ResourceAssignment.objects.create(
+            organization=organization,
+            student=student,
+            assigned_by=staff,
+            resource_type=ResourceAssignment.RESOURCE_COURSE,
+            course=other_course,
+        )
+
+        request = RequestFactory().get(
+            f"/org/{organization.slug}/admin/assignments/",
+            {"q": "Accounting"},
+        )
+        request.user = staff
+        request.organization = organization
+
+        response = org_assignments.__wrapped__(
+            request,
+            organization.slug,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Accounting Basics")
+        self.assertNotContains(response, "Physics Fundamentals")
+        self.assertContains(response, "value=\"Accounting\"")
