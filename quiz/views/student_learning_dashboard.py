@@ -24,20 +24,85 @@ from quiz.services.learning_catalog import _public_courses, _public_exams, _publ
 
 
 def _valid_accesses(queryset):
-    """Return currently usable access records without exposing expired access."""
+    """Return currently usable access records without exposing invalid access."""
     return [access for access in queryset if access.is_valid()]
+
+
+def _dashboard_accesses(user):
+    """Return active learning access, including scheduled org assignments."""
+    accesses = ResourceAccess.objects.filter(
+        user=user,
+        is_active=True,
+    ).select_related(
+        "course", "track", "exam", "subscription", "organization", "assignment"
+    ).order_by("-granted_at")
+
+    result = []
+    for access in accesses:
+        assignment = access.assignment if access.source == ResourceAccess.SOURCE_ORGANIZATION else None
+        if assignment is not None:
+            if not assignment.is_active or assignment.status in {
+                "revoked", "cancelled"
+            }:
+                continue
+            # Keep scheduled and recently expired assignments visible so the
+            # dashboard can explain when access starts or ended.
+            result.append(access)
+            continue
+        if access.is_valid():
+            result.append(access)
+    return result
+
+
+def _assignment_timeline(assignment, now=None):
+    """Return the student-facing state and date metadata for an assignment."""
+    now = now or timezone.now()
+    starts_at = getattr(assignment, "starts_at", None)
+    due_at = getattr(assignment, "due_at", None)
+    expires_at = getattr(assignment, "expires_at", None)
+
+    if expires_at and expires_at <= now:
+        return {
+            "state": "expired",
+            "label": "Access expired",
+            "can_access": False,
+            "starts_at": starts_at,
+            "due_at": due_at,
+            "expires_at": expires_at,
+        }
+    if starts_at and starts_at > now:
+        return {
+            "state": "not_started",
+            "label": "Available soon",
+            "can_access": False,
+            "starts_at": starts_at,
+            "due_at": due_at,
+            "expires_at": expires_at,
+        }
+    if due_at and due_at < now:
+        return {
+            "state": "overdue",
+            "label": "Overdue",
+            "can_access": True,
+            "starts_at": starts_at,
+            "due_at": due_at,
+            "expires_at": expires_at,
+        }
+    return {
+        "state": "active",
+        "label": "In progress",
+        "can_access": True,
+        "starts_at": starts_at,
+        "due_at": due_at,
+        "expires_at": expires_at,
+    }
 
 
 def _shortlist_items(user):
     rows = list(
         LearningShortlist.objects
         .filter(user=user)
-        .select_related(
-            "course",
-            "course__category",
-            "track",
-            "exam",
-        )
+        .select_related("course", "course__category", "track", "exam")
     )
     valid_courses = {course.id: course for course in _public_courses().filter(id__in=[row.course_id for row in rows if row.course_id])}
     valid_tracks = {track.id: track for track in _public_tracks().filter(id__in=[row.track_id for row in rows if row.track_id])}
@@ -97,12 +162,7 @@ def student_dashboard(request):
         .first()
     )
 
-    accesses = _valid_accesses(
-        ResourceAccess.objects
-        .filter(user=user, is_active=True)
-        .select_related("course", "track", "exam", "subscription", "organization")
-        .order_by("-granted_at")
-    )
+    accesses = _dashboard_accesses(user)
 
     course_access = {}
     track_access = {}
@@ -150,12 +210,15 @@ def student_dashboard(request):
         completed = completed_by_course.get(course.id, 0)
         total = course.total_lessons or 0
         progress = min(100, int((completed / total) * 100)) if total else 0
+        access = course_access[course.id]
+        timeline = _assignment_timeline(access.assignment) if access and access.assignment_id else None
         courses_data.append({
             "course": course,
             "completed": completed,
             "total": total,
             "progress": progress,
-            "source": course_access[course.id].source if course_access[course.id] else "individual",
+            "source": access.source if access else "individual",
+            "assignment_timeline": timeline,
             "last_activity": last_activity_by_course.get(course.id) or course.created_at,
         })
 
@@ -179,12 +242,15 @@ def student_dashboard(request):
         exams = track_exams.get(track.id, [])
         track_attempts = [attempt for exam in exams for attempt in attempts_by_exam.get(exam.id, [])]
         passed = sum(1 for exam in exams if any(attempt.passed is True for attempt in attempts_by_exam.get(exam.id, [])))
+        access = track_access[track.id]
+        timeline = _assignment_timeline(access.assignment) if access.assignment_id else None
         tracks_data.append({
             "track": track,
             "exam_count": len(exams),
             "passed": passed,
             "completed": passed == len(exams) and bool(exams),
-            "source": track_access[track.id].source,
+            "source": access.source,
+            "assignment_timeline": timeline,
             "last_activity": max((attempt.submitted_at for attempt in track_attempts if attempt.submitted_at), default=track.created_at),
         })
 
@@ -193,17 +259,17 @@ def student_dashboard(request):
     for exam in accessed_exams:
         attempts = attempts_by_exam.get(exam.id, [])
         last = attempts[0] if attempts else None
+        access = exam_access[exam.id]
+        timeline = _assignment_timeline(access.assignment) if access.assignment_id else None
         exams_data.append({
             "exam": exam,
             "attempts": len(attempts),
             "last_score": last.score if last else None,
             "passed": any(attempt.passed is True for attempt in attempts),
-            "source": exam_access[exam.id].source,
+            "source": access.source,
+            "assignment_timeline": timeline,
         })
 
-    # Exams belonging to a Track are already represented by the Track card.
-    # They should not appear as separate learning resources unless the exam
-    # itself has been explicitly assigned to the student.
     exams_data.sort(key=lambda item: item["exam"].title.lower())
     shortlist_items = _shortlist_items(user)
 
