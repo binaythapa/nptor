@@ -37,7 +37,6 @@ def _shortlist_items(user):
             "course__category",
             "track",
             "exam",
-            "exam__primary_category",
         )
     )
     valid_courses = {course.id: course for course in _public_courses().filter(id__in=[row.course_id for row in rows if row.course_id])}
@@ -189,7 +188,7 @@ def student_dashboard(request):
             "last_activity": max((attempt.submitted_at for attempt in track_attempts if attempt.submitted_at), default=track.created_at),
         })
 
-    accessed_exams = Exam.objects.filter(id__in=list(exam_access), is_published=True).select_related("organization", "primary_category").order_by("title")
+    accessed_exams = Exam.objects.filter(id__in=list(exam_access), is_published=True).select_related("organization").order_by("title")
     exams_data = []
     for exam in accessed_exams:
         attempts = attempts_by_exam.get(exam.id, [])
