@@ -1,77 +1,89 @@
 {% extends "organizations/admin/base.html" %}
 
-{% block content %}
+{% block title %}Exam Tracks{% endblock %}
 
+{% block content %}
 {% with org_slug=request.organization.slug %}
 
-<h2 class="title is-4">📚 Exam Tracks</h2>
+<div class="admin-page-header">
+  <div>
+    <h1>📚 Exam Tracks</h1>
+    <p class="admin-muted">Create and manage reusable exam progression tracks for {{ org.name }}.</p>
+  </div>
+  <div class="buttons">
+    <a href="{% url 'organizations_admin:org_track_create' slug=org_slug %}" class="button is-primary">
+      <span class="icon is-small"><i class="fa fa-plus"></i></span>
+      <span>Create Track</span>
+    </a>
+  </div>
+</div>
 
-<a href="{% url 'organizations_admin:org_track_create' slug=org_slug %}"
-   class="button is-primary mb-4">
-   ➕ Create Track
-</a>
+<div class="admin-panel">
+  <div class="admin-panel-header">
+    <div>
+      <h2>Organization Exam Tracks</h2>
+      <p>Manage the exams and prerequisites that make up each learning progression.</p>
+    </div>
+    <span class="tag is-light">{{ tracks|length }} track{{ tracks|length|pluralize }}</span>
+  </div>
 
-<table class="table is-fullwidth is-striped is-hoverable">
-
-<thead>
-<tr>
-<th>Track</th>
-<th>Included Exams</th>
-<th>Created</th>
-<th style="width:280px;">Actions</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for track in tracks %}
-<tr>
-
-<td>
-<strong>{{ track.title }}</strong>
-</td>
-
-<td>
-{{ track.track_exams.all|length }}
-</td>
-
-<td>
-{{ track.created_at|date:"d M Y" }}
-</td>
-
-<td>
-<a href="{% url 'organizations_admin:org_track_exams' slug=org_slug pk=track.id %}"
-   class="button is-small is-link">
-   📚 Exams &amp; Prerequisites
-</a>
-
-<a href="{% url 'organizations_admin:org_track_edit' slug=org_slug pk=track.id %}"
-   class="button is-small is-info">
-   ✏ Edit
-</a>
-
-<a href="{% url 'organizations_admin:org_track_delete' slug=org_slug pk=track.id %}"
-   class="button is-small is-danger"
-   onclick="return confirm('Delete this track?')">
-   🗑 Delete
-</a>
-
-</td>
-
-</tr>
-
-{% empty %}
-
-<tr>
-<td colspan="4">No tracks created.</td>
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
+  <div class="table-container">
+    <table class="table is-fullwidth is-hoverable admin-table">
+      <thead>
+        <tr>
+          <th>Track</th>
+          <th>Included Exams</th>
+          <th>Created</th>
+          <th class="has-text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for track in tracks %}
+        <tr>
+          <td>
+            <div class="has-text-weight-semibold">{{ track.title }}</div>
+            {% if track.description %}
+              <div class="admin-muted is-size-7 mt-1">{{ track.description|striptags|truncatechars:90 }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <span class="tag is-info is-light">{{ track.track_exams.all|length }}</span>
+          </td>
+          <td>{{ track.created_at|date:"d M Y" }}</td>
+          <td>
+            <div class="buttons is-justify-content-flex-end are-small">
+              <a href="{% url 'organizations_admin:org_track_exams' slug=org_slug pk=track.id %}" class="button is-link is-light" title="Manage exams and prerequisites">
+                <span class="icon is-small"><i class="fa fa-list-check"></i></span>
+                <span>Exams &amp; Prerequisites</span>
+              </a>
+              <a href="{% url 'organizations_admin:org_track_edit' slug=org_slug pk=track.id %}" class="button is-info is-light" title="Edit track">
+                <span class="icon is-small"><i class="fa fa-pen"></i></span>
+                <span>Edit</span>
+              </a>
+              <a href="{% url 'organizations_admin:org_track_delete' slug=org_slug pk=track.id %}" class="button is-danger is-light" title="Delete track" onclick="return confirm('Delete this track?')">
+                <span class="icon is-small"><i class="fa fa-trash"></i></span>
+                <span>Delete</span>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">
+            <div class="admin-empty">
+              <p class="mb-3">No exam tracks created yet.</p>
+              <a href="{% url 'organizations_admin:org_track_create' slug=org_slug %}" class="button is-primary is-light">
+                <span class="icon is-small"><i class="fa fa-plus"></i></span>
+                <span>Create your first track</span>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
 {% endwith %}
-
 {% endblock %}
