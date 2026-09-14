@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from courses.models import Course, CourseExam
+from organizations.models import Organization, ResourceAccess, ResourceAssignment
 from quiz.models import Exam, ExamTrack, TrackExam
 from subscriptions.models import SubscriptionPlan
 from subscriptions.services import AccessService
@@ -18,6 +19,19 @@ class ProductAccessArchitectureTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="product-access-user", password="test-pass")
         self.other = User.objects.create_user(username="product-access-other", password="test-pass")
+        self.organization = Organization.objects.create(
+            name="Organization A",
+            slug="organization-a",
+            org_type=Organization.TYPE_SCHOOL,
+        )
+        self.org_course = Course.objects.create(
+            title="Organization Course",
+            description="Organization-owned course",
+            level="beginner",
+            is_published=True,
+            owner_type=Course.OWNER_ORGANIZATION,
+            organization=self.organization,
+        )
         self.course_a = Course.objects.create(title="Course A", description="A", level="beginner", is_published=True)
         self.course_b = Course.objects.create(title="Course B", description="B", level="beginner", is_published=True)
         self.track = ExamTrack.objects.create(title="Track B", slug="track-b", is_active=True)
@@ -111,3 +125,38 @@ class ProductAccessArchitectureTests(TestCase):
 
         self.assertTrue(AccessService.has_course_access(self.user, self.course_a))
         self.assertFalse(AccessService.has_course_access(self.other, self.course_a))
+
+    def test_organization_course_is_not_unlocked_by_public_account_subscription(self):
+        plan = self._plan(
+            code="organization-boundary-account",
+            product_type=SubscriptionPlan.PRODUCT_ACCOUNT,
+            access_mode=SubscriptionPlan.ACCESS_ALL,
+        )
+        SubscriptionService.create_subscription(
+            plan=plan,
+            user=self.user,
+            payment_status="not_required",
+        )
+
+        self.assertFalse(AccessService.has_course_access(self.user, self.org_course))
+
+    def test_organization_assignment_grants_access_without_student_subscription(self):
+        assignment = ResourceAssignment.objects.create(
+            student=self.user,
+            organization=self.organization,
+            resource_type=ResourceAssignment.RESOURCE_COURSE,
+            course=self.org_course,
+            status=ResourceAssignment.STATUS_ASSIGNED,
+            is_active=True,
+        )
+        ResourceAccess.objects.create(
+            user=self.user,
+            resource_type=ResourceAccess.RESOURCE_COURSE,
+            course=self.org_course,
+            source=ResourceAccess.SOURCE_ORGANIZATION,
+            organization=self.organization,
+            assignment=assignment,
+            is_active=True,
+        )
+
+        self.assertTrue(AccessService.has_course_access(self.user, self.org_course))
