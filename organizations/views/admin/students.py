@@ -138,21 +138,28 @@ def org_student_update_role(request, slug, member_id):
     member.role = new_role
     member.save(update_fields=["role"])
 
-    student, created = OrganizationStudent.objects.get_or_create(
-        organization=org,
-        user=member.user,
-        defaults={
-            "status": OrganizationStudent.STATUS_ACTIVE,
-            "joined_date": timezone.localdate(),
-        },
-    )
     if new_role == OrganizationRole.STUDENT and member.is_active:
+        student, created = OrganizationStudent.objects.get_or_create(
+            organization=org,
+            user=member.user,
+            defaults={
+                "status": OrganizationStudent.STATUS_ACTIVE,
+                "joined_date": timezone.localdate(),
+            },
+        )
         if not created and student.status != OrganizationStudent.STATUS_ACTIVE:
             student.status = OrganizationStudent.STATUS_ACTIVE
             student.save(update_fields=["status", "updated_at"])
-    elif new_role == OrganizationRole.STAFF and not created:
-        student.status = OrganizationStudent.STATUS_INACTIVE
-        student.save(update_fields=["status", "updated_at"])
+    elif new_role == OrganizationRole.STAFF:
+        # Do not create a profile for a staff member. If this member used to
+        # be a student, preserve that record as history but deactivate it.
+        OrganizationStudent.objects.filter(
+            organization=org,
+            user=member.user,
+        ).update(
+            status=OrganizationStudent.STATUS_INACTIVE,
+            updated_at=timezone.now(),
+        )
 
     messages.success(request, "Role updated successfully.")
     return redirect("organizations_admin:students", slug=slug)
