@@ -50,3 +50,36 @@ class OrganizationStudentProfileForm(forms.ModelForm):
             profile.phone = self.cleaned_data.get("contact_phone") or None
             profile.save(update_fields=["phone", "updated_at"])
         return instance
+
+
+class OrganizationStudentAdminProfileForm(OrganizationStudentProfileForm):
+    """Organization-scoped profile form for owners and administrators."""
+
+    student_id = forms.CharField(max_length=100, required=False, label="Student ID")
+    admission_no = forms.CharField(max_length=100, required=False, label="Admission No.")
+    status = forms.ChoiceField(choices=OrganizationStudent.STATUS_CHOICES, label="Student status")
+    joined_date = forms.DateField(required=False, label="Joined date", widget=forms.DateInput(attrs={"type": "date"}))
+
+    class Meta(OrganizationStudentProfileForm.Meta):
+        fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "contact_phone",
+            "student_id",
+            "admission_no",
+            "status",
+            "joined_date",
+            "date_of_birth",
+            "guardian_name",
+            "guardian_phone",
+            "address",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["student_id"].initial = self.instance.student_id
+            self.fields["admission_no"].initial = self.instance.admission_no
+            self.fields["status"].initial = self.instance.status
+            self.fields["joined_date"].initial = self.instance.joined_date
