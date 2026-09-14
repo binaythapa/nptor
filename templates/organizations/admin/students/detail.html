@@ -15,7 +15,7 @@
         <span class="icon"><i class="fas fa-arrow-left"></i></span>
         <span>Back to Students</span>
       </a>
-      <a class="button is-primary" href="{% url 'organizations_public:student_profile_admin_edit' slug=org.slug student_id=student.id %}">
+      <a class="button is-primary" href="{% url 'organizations_admin:student_detail_edit' slug=org.slug student_id=student.id %}">
         <span class="icon"><i class="fas fa-pen"></i></span>
         <span>Edit Student</span>
       </a>
