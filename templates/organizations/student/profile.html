@@ -59,6 +59,10 @@
                 <dd class="student-detail-value"><span class="student-profile-status">{{ student.get_status_display }}</span></dd>
               </div>
               <div class="student-detail-row">
+                <dt class="student-detail-label">Joined date</dt>
+                <dd class="student-detail-value">{{ student.joined_date|default:"—" }}</dd>
+              </div>
+              <div class="student-detail-row">
                 <dt class="student-detail-label">Date of birth</dt>
                 <dd class="student-detail-value">{{ student.date_of_birth|default:"—" }}</dd>
               </div>
