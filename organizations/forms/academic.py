@@ -1,6 +1,39 @@
 from django import forms
 
-from organizations.models import AcademicYear, ClassSection, StudentEnrollment
+from organizations.models import AcademicYear, ClassSection, OrganizationClass, StudentEnrollment
+
+
+class AcademicYearForm(forms.ModelForm):
+    class Meta:
+        model = AcademicYear
+        fields = ["name", "start_date", "end_date", "is_current"]
+        widgets = {"name": forms.TextInput(attrs={"class": "input"}), "start_date": forms.DateInput(attrs={"class": "input", "type": "date"}), "end_date": forms.DateInput(attrs={"class": "input", "type": "date"}), "is_current": forms.CheckboxInput(attrs={"class": "checkbox"})}
+
+
+class OrganizationClassForm(forms.ModelForm):
+    class Meta:
+        model = OrganizationClass
+        fields = ["name", "code", "description", "is_active"]
+        widgets = {"name": forms.TextInput(attrs={"class": "input"}), "code": forms.TextInput(attrs={"class": "input"}), "description": forms.Textarea(attrs={"class": "textarea", "rows": 3}), "is_active": forms.CheckboxInput(attrs={"class": "checkbox"})}
+
+
+class ClassSectionForm(forms.ModelForm):
+    class Meta:
+        model = ClassSection
+        fields = ["academic_year", "class_group", "name", "capacity", "is_active"]
+        widgets = {"academic_year": forms.Select(attrs={"class": "input"}), "class_group": forms.Select(attrs={"class": "input"}), "name": forms.TextInput(attrs={"class": "input"}), "capacity": forms.NumberInput(attrs={"class": "input", "min": 1}), "is_active": forms.CheckboxInput(attrs={"class": "checkbox"})}
+
+    def __init__(self, *args, organization=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["academic_year"].queryset = AcademicYear.objects.filter(organization=organization).order_by("-start_date")
+        self.fields["class_group"].queryset = OrganizationClass.objects.filter(organization=organization).order_by("name")
+
+    def clean(self):
+        cleaned = super().clean()
+        year, klass = cleaned.get("academic_year"), cleaned.get("class_group")
+        if year and klass and year.organization_id != klass.organization_id:
+            self.add_error("class_group", "Academic year and class must belong to the same organization.")
+        return cleaned
 
 
 class StudentEnrollmentForm(forms.Form):
@@ -13,15 +46,12 @@ class StudentEnrollmentForm(forms.Form):
         self.fields["academic_year"].queryset = AcademicYear.objects.filter(organization=organization).order_by("-start_date")
         self.fields["class_section"].queryset = ClassSection.objects.filter(organization=organization, is_active=True).select_related("academic_year", "class_group")
         self.fields["class_section"].label_from_instance = lambda obj: f"{obj.class_group.name} - {obj.name} ({obj.academic_year.name})"
-        for field in self.fields.values():
-            field.widget.attrs["class"] = "input"
+        for field in self.fields.values(): field.widget.attrs["class"] = "input"
 
     def clean(self):
         cleaned = super().clean()
-        year = cleaned.get("academic_year")
-        section = cleaned.get("class_section")
-        if year and section and section.academic_year_id != year.id:
-            self.add_error("class_section", "The selected section belongs to a different academic year.")
+        year, section = cleaned.get("academic_year"), cleaned.get("class_section")
+        if year and section and section.academic_year_id != year.id: self.add_error("class_section", "The selected section belongs to a different academic year.")
         return cleaned
 
 
