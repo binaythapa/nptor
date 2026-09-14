@@ -4,143 +4,123 @@
 
 {% block head_extra %}
 {{ form.media }}
+<style>
+  .question-form .category-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: .75rem;
+    padding: .75rem;
+    border: 1px solid #dbdbdb;
+    border-radius: 6px;
+    background: #fafafa;
+  }
+  .question-form .category-checkboxes > div {
+    margin: 0;
+  }
+  .question-form .category-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .55rem .65rem;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .question-form .category-checkboxes label:hover {
+    background: #f0f2f5;
+  }
+  .question-form .category-checkboxes input[type="checkbox"] {
+    width: auto;
+    height: auto;
+    margin: 0;
+  }
+</style>
 {% endblock %}
 
 {% block title %}Edit Question{% endblock %}
 
 {% block content %}
-
-{% with org_slug=request.organization.slug %}
-
-<div class="container py-5">
-
+<div class="container py-5 question-form">
   <div class="mb-6">
     <h1 class="title is-3">✏️ Edit Question</h1>
-    <p class="subtitle is-6 has-text-grey">
-      Update question details and choices
-    </p>
+    <p class="subtitle is-6 has-text-grey">Update question details and choices</p>
   </div>
 
   <form method="post">
     {% csrf_token %}
 
-    <!-- ================= QUESTION DETAILS ================= -->
     <div class="card mb-5">
-
       <header class="card-header">
         <p class="card-header-title">Question Details</p>
       </header>
-
       <div class="card-content">
-
         {% for field in form %}
-        <div class="field mb-4">
+          <div class="field mb-5">
+            <label class="label" for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}<span class="has-text-danger">*</span>{% endif %}
+            </label>
 
-          <label class="label">
-            {{ field.label }}
-
-            {% if field.field.required %}
-              <span class="has-text-danger">*</span>
-            {% endif %}
-          </label>
-
-          <div class="control">
-
-            {% if field.name == "text" or field.name == "explanation" %}
-              {{ field }}
+            {% if field.name == "categories" %}
+              <div class="category-checkboxes">
+                {{ field }}
+              </div>
+              {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+            {% elif field.name == "text" or field.name == "explanation" %}
+              <div class="control">{{ field }}</div>
+              {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+            {% elif field.field.widget.input_type == "select" or field.field.widget.allow_multiple_selected %}
+              <div class="select is-fullwidth">
+                {{ field }}
+              </div>
+              {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
             {% else %}
-              {% render_field field class+="input" %}
+              <div class="control">{% render_field field class+="input" %}</div>
+              {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
             {% endif %}
 
+            {% if field.errors %}
+              <p class="help is-danger">{{ field.errors.0 }}</p>
+            {% endif %}
           </div>
-
-          {% if field.errors %}
-            <p class="help is-danger">{{ field.errors.0 }}</p>
-          {% endif %}
-
-        </div>
         {% endfor %}
-
       </div>
-
     </div>
 
-
-    <!-- ================= CHOICES ================= -->
     <div class="card mb-5">
-
       <header class="card-header">
         <p class="card-header-title">Answer Choices</p>
       </header>
-
       <div class="card-content">
-
         {{ choice_formset.management_form }}
-
-        <table class="table is-fullwidth is-hoverable">
-
-          <thead>
-            <tr>
-              <th>Choice</th>
-              <th class="has-text-centered">Correct</th>
-              <th class="has-text-centered">Order</th>
-              <th class="has-text-centered">Delete</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {% for cform in choice_formset %}
-            <tr>
-
-              <td>
-                {% render_field cform.text class+="input is-small" %}
-                {{ cform.id }}
-              </td>
-
-              <td class="has-text-centered">
-                {{ cform.is_correct }}
-              </td>
-
-              <td class="has-text-centered">
-                {% render_field cform.order class+="input is-small has-text-centered" style="width:80px;" %}
-              </td>
-
-              <td class="has-text-centered">
-                {{ cform.DELETE }}
-              </td>
-
-            </tr>
-            {% endfor %}
-
-          </tbody>
-
-        </table>
-
+        <div class="table-container">
+          <table class="table is-fullwidth is-hoverable">
+            <thead>
+              <tr>
+                <th>Choice</th>
+                <th class="has-text-centered">Correct</th>
+                <th class="has-text-centered">Order</th>
+                <th class="has-text-centered">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cform in choice_formset %}
+              <tr>
+                <td>{% render_field cform.text class+="input is-small" %}{{ cform.id }}</td>
+                <td class="has-text-centered">{{ cform.is_correct }}</td>
+                <td class="has-text-centered">{% render_field cform.order class+="input is-small has-text-centered" style="width:80px;" %}</td>
+                <td class="has-text-centered">{{ cform.DELETE }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
-
     </div>
 
-
-    <!-- ================= ACTIONS ================= -->
     <div class="field is-grouped is-grouped-centered">
-
-      <a href="{% url 'organizations_admin:questions' slug=org_slug %}"
-         class="button is-light">
-        Cancel
-      </a>
-
-      <button type="submit"
-              class="button is-primary">
-        Update Question
-      </button>
-
+      <a href="{% url 'organizations_admin:questions' slug=request.organization.slug %}" class="button is-light">Cancel</a>
+      <button type="submit" class="button is-primary">Update Question</button>
     </div>
-
   </form>
-
 </div>
-
-{% endwith %}
-
 {% endblock %}
