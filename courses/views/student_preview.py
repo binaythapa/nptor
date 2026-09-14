@@ -3,7 +3,6 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import Http404
 
 from courses.models import Course
-from organizations.models import ResourceAccess
 from subscriptions.services import AccessService
 from subscriptions.services.plan_service import get_plan_for_course
 
