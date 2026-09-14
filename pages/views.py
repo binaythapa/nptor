@@ -35,7 +35,7 @@ def home(request):
 
     latest_exams = Exam.objects.filter(
         is_published=True,
-    ).select_related("organization", "primary_category").order_by("-created_at")
+    ).select_related("organization").order_by("-created_at")
 
     context = {
         "testimonials": testimonials,
