@@ -36,7 +36,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--no-assignments",
             action="store_true",
-            help="Do not create sample course/track/exam assignments.",
+            help="Do not create sample course/track assignments.",
         )
 
     @transaction.atomic
@@ -56,7 +56,7 @@ class Command(BaseCommand):
         questions = self._create_questions(organization, users["teacher"], categories)
 
         if not options["no_assignments"]:
-            self._create_assignments(organization, users["teacher"], students, courses, tracks, exams)
+            self._create_assignments(organization, users["teacher"], students, courses, tracks)
 
         self.stdout.write(self.style.SUCCESS("Demo dataset created/updated successfully."))
         self.stdout.write("")
@@ -79,7 +79,7 @@ class Command(BaseCommand):
         if options["no_assignments"]:
             self.stdout.write("Sample assignments were skipped (--no-assignments).")
         else:
-            self.stdout.write("Sample course/track/exam assignments were created/reused.")
+            self.stdout.write("Sample course/track assignments were created/reused.")
 
     def _user(self, username, email, first_name, last_name, password, *, staff=False, superuser=False):
         user, _ = User.objects.get_or_create(
@@ -352,11 +352,10 @@ class Command(BaseCommand):
             questions.append(question)
         return questions
 
-    def _create_assignments(self, organization, teacher, students, courses, tracks, exams):
+    def _create_assignments(self, organization, teacher, students, courses, tracks):
         resource_sets = [
             ("course", courses[0]),
             ("track", tracks[0]),
-            ("exam", exams[0]),
         ]
         for student in students:
             for resource_type, resource in resource_sets:
