@@ -3,6 +3,7 @@
 """Organization assignment administration views."""
 
 from django.contrib import messages
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from organizations.permissions import org_teacher_required
@@ -67,19 +68,44 @@ def _parse_datetime(value):
     return timezone.make_aware(parsed) if timezone.is_naive(parsed) else parsed
 
 
+def _filter_assignments(assignments, query):
+    """Filter organization assignments by student, resource, type, or status."""
+    if not query:
+        return assignments
+
+    return assignments.filter(
+        Q(student__first_name__icontains=query)
+        | Q(student__last_name__icontains=query)
+        | Q(student__username__icontains=query)
+        | Q(student__email__icontains=query)
+        | Q(course__title__icontains=query)
+        | Q(track__title__icontains=query)
+        | Q(exam__title__icontains=query)
+        | Q(resource_type__icontains=query)
+        | Q(status__icontains=query)
+    )
+
+
 @org_teacher_required
 def org_assignments(request, slug):
     organization = request.organization
+    search_query = (request.GET.get("q") or "").strip()
     assignments = (
         ResourceAssignment.objects
         .filter(organization=organization)
         .select_related("student", "assigned_by", "revoked_by", "course", "track", "exam")
         .order_by("-assigned_at")
     )
+    assignments = _filter_assignments(assignments, search_query)
+
     return render(
         request,
         "organizations/admin/assignments/list.html",
-        {"assignments": assignments, "org": organization},
+        {
+            "assignments": assignments,
+            "org": organization,
+            "search_query": search_query,
+        },
     )
 
 
