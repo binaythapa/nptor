@@ -15,6 +15,13 @@ def _course_requires_paid_access(course):
 
 
 def _user_has_course_access(user, course):
+    # Organization-owned courses are authorized by assignment, never by
+    # student payment/subscription. Import the unified service lazily to avoid
+    # an import cycle while keeping the legacy public-course path unchanged.
+    if getattr(course, "organization_id", None) is not None:
+        from subscriptions.services import AccessService as UnifiedAccessService
+        return UnifiedAccessService.has_course_access(user, course)
+
     if not _course_requires_paid_access(course):
         return True
 
@@ -26,7 +33,7 @@ def _user_has_course_access(user, course):
 
 
 def course_detail_access_required(view_func):
-    """Allow public courses or authorized course previews only."""
+    """Allow public courses or authorized organization/student previews."""
 
     @wraps(view_func)
     def _wrapped(request, slug, *args, **kwargs):
@@ -40,7 +47,13 @@ def course_detail_access_required(view_func):
             and course.is_public
         )
 
-        if is_publicly_available or can_preview_course(request.user, course):
+        if is_publicly_available:
+            return view_func(request, slug, *args, **kwargs)
+
+        if getattr(course, "organization_id", None) is not None and _user_has_course_access(request.user, course):
+            return view_func(request, slug, *args, **kwargs)
+
+        if can_preview_course(request.user, course):
             return view_func(request, slug, *args, **kwargs)
 
         raise Http404("Course not found.")
@@ -49,7 +62,7 @@ def course_detail_access_required(view_func):
 
 
 def course_learning_access_required(view_func):
-    """Enforce access to course learning content, including public previews."""
+    """Enforce access to course learning content, including organization assignments."""
 
     @wraps(view_func)
     def _wrapped(request, slug, *args, **kwargs):
@@ -71,6 +84,11 @@ def course_learning_access_required(view_func):
                 from courses.views.free_preview import course_free_preview
                 return course_free_preview(request, slug, *args, **kwargs)
 
+        if getattr(course, "organization_id", None) is not None:
+            if not _user_has_course_access(request.user, course):
+                raise Http404("Course not found.")
+            return view_func(request, slug, *args, **kwargs)
+
         if not is_publicly_available:
             raise Http404("Course not found.")
 
@@ -90,6 +108,11 @@ def course_entitlement_required(view_func):
         course = Course.objects.filter(slug=slug).first()
         if course is None:
             raise Http404("Course not found.")
+
+        if getattr(course, "organization_id", None) is not None:
+            if not _user_has_course_access(request.user, course):
+                raise PermissionDenied("You do not have access to this course.")
+            return view_func(request, slug, *args, **kwargs)
 
         if not (
             course.approval_status == Course.APPROVAL_APPROVED
@@ -119,6 +142,11 @@ def lesson_course_access_required(view_func):
             raise Http404("Lesson not found.")
 
         course = lesson.section.course
+
+        if getattr(course, "organization_id", None) is not None:
+            if not _user_has_course_access(request.user, course):
+                raise PermissionDenied("You do not have access to this course.")
+            return view_func(request, slug, lesson_id, *args, **kwargs)
 
         if not (
             course.approval_status == Course.APPROVAL_APPROVED
@@ -155,6 +183,11 @@ def video_progress_access_required(view_func):
             return view_func(request, *args, **kwargs)
 
         course = lesson.section.course
+
+        if getattr(course, "organization_id", None) is not None:
+            if not _user_has_course_access(request.user, course):
+                raise PermissionDenied("You do not have access to this course.")
+            return view_func(request, *args, **kwargs)
 
         if not (
             course.approval_status == Course.APPROVAL_APPROVED
