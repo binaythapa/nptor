@@ -1,0 +1,105 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+<div class="level mb-5">
+  <div class="level-left">
+    <div>
+      <p class="is-size-7 has-text-grey is-uppercase has-text-weight-semibold mb-1">Student Management</p>
+      <h1 class="title is-3 mb-2">{{ student.user.get_full_name|default:student.user.username }}</h1>
+      <p class="has-text-grey">Organization Admin · Student profile</p>
+    </div>
+  </div>
+  <div class="level-right">
+    <div class="buttons">
+      <a class="button" href="{% url 'organizations_admin:students' slug=org.slug %}">
+        <span class="icon"><i class="fas fa-arrow-left"></i></span>
+        <span>Back to Students</span>
+      </a>
+      <a class="button is-primary" href="{% url 'organizations_public:student_profile_admin_edit' slug=org.slug student_id=student.id %}">
+        <span class="icon"><i class="fas fa-pen"></i></span>
+        <span>Edit Student</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="columns is-multiline">
+  <div class="column is-8">
+    <div class="box">
+      <h2 class="title is-5 mb-4">Student Information</h2>
+      <div class="columns is-multiline">
+        <div class="column is-half">
+          <p class="heading">Student ID</p>
+          <p class="has-text-weight-semibold">{{ student.student_id|default:"—" }}</p>
+        </div>
+        <div class="column is-half">
+          <p class="heading">Admission No.</p>
+          <p class="has-text-weight-semibold">{{ student.admission_no|default:"—" }}</p>
+        </div>
+        <div class="column is-half">
+          <p class="heading">Status</p>
+          <p><span class="tag {% if student.status == 'active' %}is-success{% elif student.status == 'graduated' %}is-info{% else %}is-warning{% endif %} is-light">{{ student.get_status_display }}</span></p>
+        </div>
+        <div class="column is-half">
+          <p class="heading">Joined Date</p>
+          <p class="has-text-weight-semibold">{{ student.joined_date|date:"M d, Y"|default:"—" }}</p>
+        </div>
+        <div class="column is-half">
+          <p class="heading">Date of Birth</p>
+          <p class="has-text-weight-semibold">{{ student.date_of_birth|date:"M d, Y"|default:"—" }}</p>
+        </div>
+        <div class="column is-half">
+          <p class="heading">Organization</p>
+          <p class="has-text-weight-semibold">{{ org.name }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2 class="title is-5 mb-4">Academic & Enrollment</h2>
+      <div class="notification is-light">
+        <p class="has-text-grey">No enrollment records are available for this student yet.</p>
+        <p class="is-size-7 has-text-grey mt-2">Academic year, class, section and roll number will appear here once enrollment is created.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="column is-4">
+    <div class="box">
+      <h2 class="title is-5 mb-4">Account</h2>
+      <p class="heading">Name</p>
+      <p class="mb-4 has-text-weight-semibold">{{ student.user.get_full_name|default:student.user.username }}</p>
+
+      <p class="heading">Email</p>
+      <p class="mb-4">{{ student.user.email|default:"—" }}</p>
+
+      <p class="heading">Username</p>
+      <p class="mb-4">{{ student.user.username }}</p>
+
+      <p class="heading">Account Status</p>
+      <p>
+        {% if student.user.is_active %}
+          <span class="tag is-success is-light">Active</span>
+        {% else %}
+          <span class="tag is-danger is-light">Inactive</span>
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="box">
+      <h2 class="title is-5 mb-4">Contact & Guardian</h2>
+      <p class="heading">Contact Number</p>
+      <p class="mb-4">{{ student.user.profile.phone|default:"—" }}</p>
+
+      <p class="heading">Guardian</p>
+      <p class="mb-4">{{ student.guardian_name|default:"—" }}</p>
+
+      <p class="heading">Guardian Phone</p>
+      <p class="mb-4">{{ student.guardian_phone|default:"—" }}</p>
+
+      <p class="heading">Address</p>
+      <p>{{ student.address|default:"—" }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
