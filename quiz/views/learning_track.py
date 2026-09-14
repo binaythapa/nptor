@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 
 from quiz.models import ExamTrack
@@ -11,7 +12,8 @@ def learning_track(request, slug):
     track = get_object_or_404(
         ExamTrack.objects.filter(
             is_active=True,
-            organization__isnull=True,
+        ).select_related(
+            "organization",
         ).prefetch_related(
             "track_exams__exam",
             "track_exams__exam__primary_category",
@@ -20,12 +22,19 @@ def learning_track(request, slug):
         slug=slug,
     )
 
-    progress = build_track_progress(request.user, track)
     has_access = AccessService.has_access(
         student=request.user,
         resource_type=AccessService.RESOURCE_TRACK,
         resource=track,
     )
+
+    # Organization-owned tracks are private learning resources. They are
+    # available only to students explicitly assigned by that organization.
+    # Public subscription/payment logic must never unlock them.
+    if track.organization_id is not None and not has_access:
+        raise Http404("Track not found.")
+
+    progress = build_track_progress(request.user, track)
 
     return render(
         request,
