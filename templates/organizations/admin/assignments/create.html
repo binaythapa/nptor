@@ -217,6 +217,7 @@
   function selectStudent(student) {
     hiddenInput.value = student.id;
     searchInput.value = student.name;
+    searchInput.readOnly = true;
     searchInput.classList.add("is-success");
     searchInput.setAttribute("aria-expanded", "false");
     results.innerHTML = "";
@@ -228,6 +229,7 @@
   function clearStudent() {
     hiddenInput.value = "";
     searchInput.value = "";
+    searchInput.readOnly = false;
     searchInput.classList.remove("is-success");
     selected.classList.add("is-hidden");
     results.innerHTML = "";
