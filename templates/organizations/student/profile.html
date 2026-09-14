@@ -1,43 +1,137 @@
 {% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}{{ student.display_name }} · {{ organization.name }}{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/pages/student-profile.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h1>{{ student.display_name }}</h1>
-      <p class="text-muted mb-0">{{ organization.name }} · Organization Student Profile</p>
+<section class="section student-profile-page">
+  <div class="student-profile-shell">
+    <header class="student-profile-header">
+      <div class="student-profile-identity">
+        <div class="student-profile-avatar" aria-hidden="true">
+          {{ student.user.first_name|first|upper }}{{ student.user.last_name|first|upper }}
+        </div>
+        <div>
+          <h1 class="student-profile-title">{{ student.display_name }}</h1>
+          <p class="student-profile-subtitle">{{ organization.name }} · Organization Student Profile</p>
+        </div>
+      </div>
+
+      <div class="student-profile-actions">
+        {% if not admin_view %}
+          <a class="button is-primary" href="{% url 'organizations_public:student_profile_edit' slug=organization.slug %}">
+            <span class="icon"><i class="fas fa-pen"></i></span>
+            <span>Edit My Profile</span>
+          </a>
+        {% endif %}
+        {% if admin_view %}
+          <a class="button is-primary" href="{% url 'organizations_public:student_profile_admin_edit' slug=organization.slug student_id=student.id %}">
+            <span class="icon"><i class="fas fa-pen"></i></span>
+            <span>Edit Profile</span>
+          </a>
+        {% endif %}
+      </div>
+    </header>
+
+    <div class="columns is-multiline">
+      <div class="column is-half">
+        <article class="student-profile-card box">
+          <div class="student-profile-card-header">
+            <span class="student-profile-card-icon" aria-hidden="true"><i class="fas fa-id-card"></i></span>
+            <h2 class="student-profile-card-title">Student Information</h2>
+          </div>
+          <div class="student-profile-card-body">
+            <dl class="student-detail-list">
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Student ID</dt>
+                <dd class="student-detail-value">{{ student.student_id|default:"—" }}</dd>
+              </div>
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Admission No.</dt>
+                <dd class="student-detail-value">{{ student.admission_no|default:"—" }}</dd>
+              </div>
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Status</dt>
+                <dd class="student-detail-value"><span class="student-profile-status">{{ student.get_status_display }}</span></dd>
+              </div>
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Date of birth</dt>
+                <dd class="student-detail-value">{{ student.date_of_birth|default:"—" }}</dd>
+              </div>
+            </dl>
+          </div>
+        </article>
+      </div>
+
+      <div class="column is-half">
+        <article class="student-profile-card box">
+          <div class="student-profile-card-header">
+            <span class="student-profile-card-icon" aria-hidden="true"><i class="fas fa-address-book"></i></span>
+            <h2 class="student-profile-card-title">Contact &amp; Guardian</h2>
+          </div>
+          <div class="student-profile-card-body">
+            <dl class="student-detail-list">
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Email</dt>
+                <dd class="student-detail-value">{{ student.user.email|default:"—" }}</dd>
+              </div>
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Contact number</dt>
+                <dd class="student-detail-value">{{ student.user.profile.phone|default:"—" }}</dd>
+              </div>
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Guardian</dt>
+                <dd class="student-detail-value">{{ student.guardian_name|default:"—" }}</dd>
+              </div>
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Guardian phone</dt>
+                <dd class="student-detail-value">{{ student.guardian_phone|default:"—" }}</dd>
+              </div>
+              <div class="student-detail-row">
+                <dt class="student-detail-label">Address</dt>
+                <dd class="student-detail-value">{{ student.address|default:"—" }}</dd>
+              </div>
+            </dl>
+          </div>
+        </article>
+      </div>
     </div>
-    {% if not admin_view %}<a class="btn btn-primary" href="{% url 'organizations_public:student_profile_edit' slug=organization.slug %}">Edit My Profile</a>{% endif %}
-    {% if admin_view %}<a class="btn btn-primary" href="{% url 'organizations_public:student_profile_admin_edit' slug=organization.slug student_id=student.id %}">Edit Profile</a>{% endif %}
+
+    <section class="student-profile-section" aria-labelledby="enrollment-history-heading">
+      <h2 class="student-profile-section-heading" id="enrollment-history-heading">Enrollment History</h2>
+      <div class="student-profile-table-card">
+        <div class="student-profile-table-wrapper">
+          <table class="table is-fullwidth is-hoverable student-profile-table">
+            <thead>
+              <tr>
+                <th>Academic Year</th>
+                <th>Class</th>
+                <th>Roll</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for enrollment in student.enrollments.all %}
+                <tr>
+                  <td>{{ enrollment.academic_year.name }}</td>
+                  <td>{{ enrollment.class_section }}</td>
+                  <td>{{ enrollment.roll_number|default:"—" }}</td>
+                  <td>{{ enrollment.get_status_display }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="student-profile-empty">No enrollment records yet.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </div>
-  <div class="row g-3">
-    <div class="col-md-6"><div class="card h-100"><div class="card-body">
-      <h5>Student Information</h5>
-      <dl class="row mb-0">
-        <dt class="col-sm-5">Student ID</dt><dd class="col-sm-7">{{ student.student_id|default:"—" }}</dd>
-        <dt class="col-sm-5">Admission No.</dt><dd class="col-sm-7">{{ student.admission_no|default:"—" }}</dd>
-        <dt class="col-sm-5">Status</dt><dd class="col-sm-7">{{ student.get_status_display }}</dd>
-        <dt class="col-sm-5">Date of birth</dt><dd class="col-sm-7">{{ student.date_of_birth|default:"—" }}</dd>
-      </dl>
-    </div></div></div>
-    <div class="col-md-6"><div class="card h-100"><div class="card-body">
-      <h5>Contact & Guardian</h5>
-      <dl class="row mb-0">
-        <dt class="col-sm-5">Email</dt><dd class="col-sm-7">{{ student.user.email|default:"—" }}</dd>
-        <dt class="col-sm-5">Contact number</dt><dd class="col-sm-7">{{ student.user.profile.phone|default:"—" }}</dd>
-        <dt class="col-sm-5">Guardian</dt><dd class="col-sm-7">{{ student.guardian_name|default:"—" }}</dd>
-        <dt class="col-sm-5">Guardian phone</dt><dd class="col-sm-7">{{ student.guardian_phone|default:"—" }}</dd>
-        <dt class="col-sm-5">Address</dt><dd class="col-sm-7">{{ student.address|default:"—" }}</dd>
-      </dl>
-    </div></div></div>
-  </div>
-  {% if student.enrollments.all %}
-  <div class="card mt-4"><div class="card-body">
-    <h5>Enrollment History</h5>
-    <div class="table-responsive"><table class="table"><thead><tr><th>Academic Year</th><th>Class</th><th>Roll</th><th>Status</th></tr></thead><tbody>
-    {% for enrollment in student.enrollments.all %}<tr><td>{{ enrollment.academic_year.name }}</td><td>{{ enrollment.class_section }}</td><td>{{ enrollment.roll_number|default:"—" }}</td><td>{{ enrollment.get_status_display }}</td></tr>{% empty %}<tr><td colspan="4">No enrollment records yet.</td></tr>{% endfor %}
-    </tbody></table></div>
-  </div></div>
-  {% endif %}
-</div>
+</section>
 {% endblock %}
