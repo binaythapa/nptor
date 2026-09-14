@@ -15,7 +15,7 @@ from accounts.views.register import (
     registration_success_view,
     check_email_availability,
 )
-from accounts.views.monitoring import user_monitoring
+from accounts.views.monitoring import user_monitoring, user_monitoring_detail
 from accounts.views.organization_requests import (
     organization_requests,
     organization_request_detail,
@@ -51,6 +51,7 @@ urlpatterns = [
     path("register/verify/", verify_registration_otp_view, name="verify-registration-otp"),
     path("register/success/", registration_success_view, name="registration-success"),
     path("admin/users/", user_monitoring, name="user_monitoring"),
+    path("admin/users/<int:user_id>/", user_monitoring_detail, name="user_monitoring_detail"),
 
     # Platform administration: organization service access requests.
     path("admin/organization-requests/", organization_requests, name="organization_requests"),

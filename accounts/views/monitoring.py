@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.core.paginator import Paginator
 from django.db.models import (
     Q,
@@ -15,9 +15,11 @@ from django.db.models import (
     Case,
     When,
     Value,
+    Prefetch,
 )
 from django.utils.timezone import now
 
+from organizations.models import OrganizationMember
 from quiz.models import UserExam
 
 from subscriptions.models import (
@@ -28,6 +30,38 @@ from subscriptions.models import (
 
 def is_admin(user):
     return user.is_staff
+
+
+def active_subscription_queryset(current_time):
+    return (
+        Subscription.objects.filter(
+            status=Subscription.STATUS_ACTIVE,
+            starts_at__lte=current_time,
+        )
+        .filter(
+            Q(expires_at__isnull=True)
+            | Q(expires_at__gt=current_time)
+        )
+        .select_related("plan", "organization")
+    )
+
+
+def organization_membership_prefetch(current_time):
+    return Prefetch(
+        "organization_memberships",
+        queryset=(
+            OrganizationMember.objects.filter(is_active=True)
+            .select_related("organization")
+            .prefetch_related(
+                Prefetch(
+                    "organization__subscriptions",
+                    queryset=active_subscription_queryset(current_time),
+                    to_attr="active_subscriptions",
+                )
+            )
+        ),
+        to_attr="active_memberships",
+    )
 
 
 @user_passes_test(is_admin)
@@ -44,8 +78,6 @@ def user_monitoring(request):
 
     users = User.objects.select_related("profile")
 
-    # Public users have no active organization membership.
-    # Organization users have at least one active membership.
     if user_scope == "organization":
         users = users.filter(
             organization_memberships__is_active=True
@@ -104,15 +136,8 @@ def user_monitoring(request):
     )
 
     active_user_subscription = (
-        Subscription.objects.filter(
-            user=OuterRef("pk"),
-            status=Subscription.STATUS_ACTIVE,
-            starts_at__lte=current_time,
-        )
-        .filter(
-            Q(expires_at__isnull=True)
-            | Q(expires_at__gt=current_time)
-        )
+        active_subscription_queryset(current_time)
+        .filter(user=OuterRef("pk"))
     )
 
     active_course_entitlement = (
@@ -162,6 +187,13 @@ def user_monitoring(request):
         has_exam_subscription=Exists(active_exam_entitlement),
         has_track_subscription=Exists(active_track_entitlement),
         has_course_subscription=Exists(active_course_entitlement),
+    ).prefetch_related(
+        Prefetch(
+            "subscriptions",
+            queryset=active_subscription_queryset(current_time),
+            to_attr="active_subscriptions",
+        ),
+        organization_membership_prefetch(current_time),
     )
 
     allowed_sort_fields = {
@@ -222,6 +254,30 @@ def user_monitoring(request):
     paginator = Paginator(users, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
+    for managed_user in page_obj.object_list:
+        managed_user.primary_membership = (
+            managed_user.active_memberships[0]
+            if managed_user.active_memberships
+            else None
+        )
+        managed_user.primary_subscription = (
+            managed_user.active_subscriptions[0]
+            if managed_user.active_subscriptions
+            else None
+        )
+        managed_user.primary_organization_subscription = None
+        for membership in managed_user.active_memberships:
+            organization_subscriptions = getattr(
+                membership.organization,
+                "active_subscriptions",
+                [],
+            )
+            if organization_subscriptions:
+                managed_user.primary_organization_subscription = (
+                    organization_subscriptions[0]
+                )
+                break
+
     context = {
         "page_obj": page_obj,
         "search_query": search_query,
@@ -239,5 +295,95 @@ def user_monitoring(request):
     return render(
         request,
         "accounts/admin/user_monitoring.html",
+        context,
+    )
+
+
+@user_passes_test(is_admin)
+def user_monitoring_detail(request, user_id):
+    current_time = now()
+    user = get_object_or_404(
+        User.objects.select_related("profile"),
+        pk=user_id,
+    )
+
+    memberships = list(
+        OrganizationMember.objects.filter(user=user)
+        .select_related("organization")
+        .order_by("-is_active", "organization__name")
+    )
+    organization_ids = [membership.organization_id for membership in memberships]
+
+    entitlement_queryset = SubscriptionEntitlement.objects.select_related(
+        "course",
+        "track",
+        "exam",
+    )
+
+    direct_subscriptions = (
+        Subscription.objects.filter(user=user)
+        .select_related("plan", "granted_by")
+        .prefetch_related(
+            Prefetch(
+                "entitlements",
+                queryset=entitlement_queryset,
+                to_attr="loaded_entitlements",
+            )
+        )
+    )
+
+    organization_subscriptions = (
+        Subscription.objects.filter(organization_id__in=organization_ids)
+        .select_related("organization", "plan", "granted_by")
+        .prefetch_related(
+            Prefetch(
+                "entitlements",
+                queryset=entitlement_queryset,
+                to_attr="loaded_entitlements",
+            )
+        )
+    )
+
+    attempts = UserExam.objects.filter(user=user).select_related("exam").order_by(
+        "-submitted_at",
+        "-started_at",
+    )
+    attempt_stats = attempts.aggregate(
+        total=Count("id"),
+        average=Avg("score"),
+        passed=Count("id", filter=Q(passed=True)),
+        last=Max("submitted_at"),
+    )
+
+    valid_direct_subscriptions = [
+        subscription
+        for subscription in direct_subscriptions
+        if subscription.is_valid()
+    ]
+    valid_organization_subscriptions = [
+        subscription
+        for subscription in organization_subscriptions
+        if subscription.is_valid()
+    ]
+
+    context = {
+        "managed_user": user,
+        "memberships": memberships,
+        "direct_subscriptions": direct_subscriptions,
+        "organization_subscriptions": organization_subscriptions,
+        "valid_direct_subscriptions": valid_direct_subscriptions,
+        "valid_organization_subscriptions": valid_organization_subscriptions,
+        "active_subscription_count": (
+            len(valid_direct_subscriptions)
+            + len(valid_organization_subscriptions)
+        ),
+        "attempt_stats": attempt_stats,
+        "recent_attempts": attempts[:10],
+        "current_time": current_time,
+    }
+
+    return render(
+        request,
+        "accounts/admin/user_monitoring_detail.html",
         context,
     )

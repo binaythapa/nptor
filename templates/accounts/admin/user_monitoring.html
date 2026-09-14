@@ -1,12 +1,12 @@
 {% extends "layouts/admin/base_admin.html" %}
 
-{% block title %}User Monitoring – Admin{% endblock %}
+{% block title %}User Management – Admin{% endblock %}
 
 {% block content %}
 <div class="admin-page-header">
     <div>
-        <h1>👥 User Monitoring</h1>
-        <p class="admin-muted">Monitor platform users, subscriptions, activity and performance.</p>
+        <h1>👥 User Management</h1>
+        <p class="admin-muted">Manage platform users, organization memberships, subscriptions and activity.</p>
     </div>
     <span class="admin-page-count">{{ page_obj.paginator.count }} users</span>
 </div>
@@ -41,31 +41,63 @@
     <div class="admin-panel-header admin-table-header">
         <div>
             <h2>User directory</h2>
-            <p>Platform-wide user activity and subscription overview.</p>
+            <p>Identity, organization role, subscription access and recent activity.</p>
         </div>
     </div>
     <div class="admin-table-scroll">
         <table class="table is-fullwidth is-hoverable admin-table admin-user-table">
             <thead><tr>
-                <th>Username</th><th>Full Name</th><th>Email</th><th>Role</th><th>Exam Sub</th><th>Track Sub</th>
-                <th>Course Subs</th><th>Attempts</th><th>Avg Score</th><th>Last Attempt</th><th>Active</th><th>Joined</th>
+                <th>User</th><th>Organization / Role</th><th>Platform Role</th><th>Subscription</th>
+                <th>Activity</th><th>Account</th><th>Joined</th><th>Action</th>
             </tr></thead>
             <tbody>
             {% for user in page_obj %}
                 <tr>
-                    <td><strong>{{ user.username }}</strong></td>
-                    <td>{% if user.get_full_name %}{{ user.get_full_name }}{% else %}—{% endif %}</td>
-                    <td>{{ user.email|default:"—" }}</td>
-                    <td>{% if user.is_superuser %}<span class="admin-badge admin-badge-red">Admin</span>{% elif user.is_staff %}<span class="admin-badge admin-badge-yellow">Instructor</span>{% else %}<span class="admin-badge admin-badge-neutral">Student</span>{% endif %}</td>
-                    <td>{% if user.has_exam_subscription %}<span class="admin-badge admin-badge-green">Active</span>{% else %}—{% endif %}</td>
-                    <td>{% if user.has_track_subscription %}<span class="admin-badge admin-badge-green">Active</span>{% else %}—{% endif %}</td>
-                    <td>{{ user.total_course_subs }}</td><td>{{ user.total_attempts }}</td>
-                    <td>{% if user.avg_score %}{{ user.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
-                    <td>{% if user.last_attempt %}{{ user.last_attempt|date:"Y-m-d H:i" }}{% else %}—{% endif %}</td>
-                    <td>{% if user.is_active %}<span class="admin-badge admin-badge-green">Yes</span>{% else %}<span class="admin-badge admin-badge-red">No</span>{% endif %}</td>
+                    <td>
+                        <strong>{{ user.username }}</strong>
+                        <div class="admin-muted">{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.email|default:"No email" }}{% endif %}</div>
+                    </td>
+                    <td>
+                        {% if user.active_memberships %}
+                            {% for membership in user.active_memberships|slice:":2" %}
+                                <div><strong>{{ membership.organization.name }}</strong></div>
+                                <div class="admin-muted">{{ membership.get_role_display }}</div>
+                            {% endfor %}
+                            {% if user.active_memberships|length > 2 %}<span class="admin-muted">+{{ user.active_memberships|length|add:"-2" }} more</span>{% endif %}
+                        {% else %}
+                            <span class="admin-badge admin-badge-neutral">Public User</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_superuser %}<span class="admin-badge admin-badge-red">Global Admin</span>
+                        {% elif user.is_staff %}<span class="admin-badge admin-badge-yellow">Staff</span>
+                        {% else %}<span class="admin-badge admin-badge-neutral">User</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if user.primary_subscription %}
+                            <span class="admin-badge admin-badge-green">{{ user.primary_subscription.get_status_display }}</span>
+                            <div><strong>{{ user.primary_subscription.plan.name }}</strong></div>
+                            {% if user.primary_subscription.expires_at %}<div class="admin-muted">Expires {{ user.primary_subscription.expires_at|date:"Y-m-d" }}</div>{% else %}<div class="admin-muted">No expiry</div>{% endif %}
+                        {% elif user.primary_organization_subscription %}
+                            <span class="admin-badge admin-badge-green">Org Access</span>
+                            <div><strong>{{ user.primary_organization_subscription.plan.name }}</strong></div>
+                            <div class="admin-muted">{{ user.primary_organization_subscription.organization.name }}</div>
+                        {% else %}
+                            <span class="admin-muted">No active subscription</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ user.total_attempts }}</strong> attempts
+                        <div class="admin-muted">{% if user.avg_score %}{{ user.avg_score|floatformat:1 }}% avg{% else %}No scores{% endif %}</div>
+                    </td>
+                    <td>
+                        {% if user.is_active %}<span class="admin-badge admin-badge-green">Active</span>{% else %}<span class="admin-badge admin-badge-red">Inactive</span>{% endif %}
+                        {% if user.last_login %}<div class="admin-muted">Login {{ user.last_login|date:"Y-m-d" }}</div>{% endif %}
+                    </td>
                     <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+                    <td><a class="button is-small is-link is-light" href="{% url 'accounts:user_monitoring_detail' user.id %}">View</a></td>
                 </tr>
-            {% empty %}<tr><td colspan="12" class="admin-empty">No users found.</td></tr>{% endfor %}
+            {% empty %}<tr><td colspan="8" class="admin-empty">No users found.</td></tr>{% endfor %}
             </tbody>
         </table>
     </div>

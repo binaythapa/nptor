@@ -1,0 +1,160 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}User 360 – Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div>
+        <p><a href="{% url 'accounts:user_monitoring' %}">← Back to User Management</a></p>
+        <h1>👤 User 360</h1>
+        <p class="admin-muted">Complete account, organization, subscription and activity view for this user.</p>
+    </div>
+    <div>
+        {% if managed_user.is_active %}<span class="admin-badge admin-badge-green">Account Active</span>{% else %}<span class="admin-badge admin-badge-red">Account Inactive</span>{% endif %}
+    </div>
+</div>
+
+<div class="admin-kpi-grid admin-kpi-grid-4">
+    <div class="admin-kpi-card"><span class="admin-kpi-label">Organizations</span><strong class="admin-kpi-value">{{ memberships|length }}</strong></div>
+    <div class="admin-kpi-card"><span class="admin-kpi-label">Active Subscriptions</span><strong class="admin-kpi-value">{{ active_subscription_count }}</strong></div>
+    <div class="admin-kpi-card"><span class="admin-kpi-label">Exam Attempts</span><strong class="admin-kpi-value">{{ attempt_stats.total }}</strong></div>
+    <div class="admin-kpi-card"><span class="admin-kpi-label">Average Score</span><strong class="admin-kpi-value">{% if attempt_stats.average %}{{ attempt_stats.average|floatformat:1 }}%{% else %}—{% endif %}</strong></div>
+</div>
+
+<div class="admin-panel">
+    <div class="admin-panel-header">
+        <div>
+            <h2>{{ managed_user.get_full_name|default:managed_user.username }}</h2>
+            <p>{{ managed_user.email|default:"No email address" }} · Joined {{ managed_user.date_joined|date:"Y-m-d" }}</p>
+        </div>
+        <div>
+            {% if managed_user.is_superuser %}<span class="admin-badge admin-badge-red">Global Admin</span>
+            {% elif managed_user.is_staff %}<span class="admin-badge admin-badge-yellow">Platform Staff</span>
+            {% else %}<span class="admin-badge admin-badge-neutral">Platform User</span>{% endif %}
+        </div>
+    </div>
+    <div class="admin-kpi-grid admin-kpi-grid-4">
+        <div><span class="admin-kpi-label">Username</span><strong>{{ managed_user.username }}</strong></div>
+        <div><span class="admin-kpi-label">Last Login</span><strong>{% if managed_user.last_login %}{{ managed_user.last_login|date:"Y-m-d H:i" }}{% else %}Never{% endif %}</strong></div>
+        <div><span class="admin-kpi-label">Passed Attempts</span><strong>{{ attempt_stats.passed }}</strong></div>
+        <div><span class="admin-kpi-label">Last Attempt</span><strong>{% if attempt_stats.last %}{{ attempt_stats.last|date:"Y-m-d H:i" }}{% else %}Never{% endif %}</strong></div>
+    </div>
+</div>
+
+<div class="admin-panel admin-table-panel">
+    <div class="admin-panel-header">
+        <div><h2>Organization Memberships</h2><p>The user's organization-level identity and access role.</p></div>
+    </div>
+    <div class="admin-table-scroll">
+        <table class="table is-fullwidth admin-table">
+            <thead><tr><th>Organization</th><th>Type</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+            <tbody>
+            {% for membership in memberships %}
+                <tr>
+                    <td><strong>{{ membership.organization.name }}</strong></td>
+                    <td>{{ membership.organization.get_org_type_display }}</td>
+                    <td><span class="admin-badge admin-badge-neutral">Organization {{ membership.get_role_display }}</span></td>
+                    <td>{% if membership.is_active %}<span class="admin-badge admin-badge-green">Active</span>{% else %}<span class="admin-badge admin-badge-red">Inactive</span>{% endif %}</td>
+                    <td>{{ membership.joined_at|date:"Y-m-d" }}</td>
+                </tr>
+            {% empty %}<tr><td colspan="5" class="admin-empty">This user does not belong to an organization.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-panel admin-table-panel">
+    <div class="admin-panel-header">
+        <div><h2>Subscriptions</h2><p>Direct subscriptions and organization-provided subscription access.</p></div>
+    </div>
+    <div class="admin-table-scroll">
+        <table class="table is-fullwidth admin-table">
+            <thead><tr><th>Owner / Source</th><th>Plan</th><th>Status</th><th>Billing</th><th>Period</th><th>Payment</th></tr></thead>
+            <tbody>
+            {% for subscription in direct_subscriptions %}
+                <tr>
+                    <td><span class="admin-badge admin-badge-neutral">Direct User</span></td>
+                    <td><strong>{{ subscription.plan.name }}</strong></td>
+                    <td><span class="admin-badge {% if subscription.status == 'active' %}admin-badge-green{% elif subscription.status == 'cancelled' or subscription.status == 'expired' %}admin-badge-red{% else %}admin-badge-yellow{% endif %}">{{ subscription.get_status_display }}</span></td>
+                    <td>{{ subscription.amount|floatformat:2 }} {{ subscription.currency }}</td>
+                    <td>{{ subscription.starts_at|date:"Y-m-d" }} → {% if subscription.expires_at %}{{ subscription.expires_at|date:"Y-m-d" }}{% else %}No expiry{% endif %}</td>
+                    <td>{{ subscription.get_payment_status_display }}</td>
+                </tr>
+            {% endfor %}
+            {% for subscription in organization_subscriptions %}
+                <tr>
+                    <td><span class="admin-badge admin-badge-neutral">{{ subscription.organization.name }}</span></td>
+                    <td><strong>{{ subscription.plan.name }}</strong></td>
+                    <td><span class="admin-badge {% if subscription.status == 'active' %}admin-badge-green{% elif subscription.status == 'cancelled' or subscription.status == 'expired' %}admin-badge-red{% else %}admin-badge-yellow{% endif %}">{{ subscription.get_status_display }}</span></td>
+                    <td>{{ subscription.amount|floatformat:2 }} {{ subscription.currency }}</td>
+                    <td>{{ subscription.starts_at|date:"Y-m-d" }} → {% if subscription.expires_at %}{{ subscription.expires_at|date:"Y-m-d" }}{% else %}No expiry{% endif %}</td>
+                    <td>{{ subscription.get_payment_status_display }}</td>
+                </tr>
+            {% empty %}
+                {% if not direct_subscriptions %}<tr><td colspan="6" class="admin-empty">No subscriptions found.</td></tr>{% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-panel admin-table-panel">
+    <div class="admin-panel-header">
+        <div><h2>Current Entitlements</h2><p>Resources currently available through active direct or organization subscriptions.</p></div>
+    </div>
+    <div class="admin-table-scroll">
+        <table class="table is-fullwidth admin-table">
+            <thead><tr><th>Source</th><th>Resource Type</th><th>Resource</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for subscription in direct_subscriptions %}
+                {% for entitlement in subscription.loaded_entitlements %}
+                    {% if subscription in valid_direct_subscriptions and entitlement.is_active %}
+                    <tr>
+                        <td>Direct User</td>
+                        <td>{{ entitlement.get_resource_type_display }}</td>
+                        <td>{% if entitlement.course %}{{ entitlement.course }}{% elif entitlement.track %}{{ entitlement.track }}{% elif entitlement.exam %}{{ entitlement.exam }}{% else %}—{% endif %}</td>
+                        <td><span class="admin-badge admin-badge-green">Active</span></td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            {% for subscription in organization_subscriptions %}
+                {% for entitlement in subscription.loaded_entitlements %}
+                    {% if subscription in valid_organization_subscriptions and entitlement.is_active %}
+                    <tr>
+                        <td>{{ subscription.organization.name }}</td>
+                        <td>{{ entitlement.get_resource_type_display }}</td>
+                        <td>{% if entitlement.course %}{{ entitlement.course }}{% elif entitlement.track %}{{ entitlement.track }}{% elif entitlement.exam %}{{ entitlement.exam }}{% else %}—{% endif %}</td>
+                        <td><span class="admin-badge admin-badge-green">Active</span></td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-panel admin-table-panel">
+    <div class="admin-panel-header">
+        <div><h2>Recent Exam Activity</h2><p>Latest attempts and performance for this account.</p></div>
+    </div>
+    <div class="admin-table-scroll">
+        <table class="table is-fullwidth admin-table">
+            <thead><tr><th>Exam</th><th>Status</th><th>Score</th><th>Passed</th><th>Started</th><th>Submitted</th></tr></thead>
+            <tbody>
+            {% for attempt in recent_attempts %}
+                <tr>
+                    <td><strong>{{ attempt.exam }}</strong></td>
+                    <td>{{ attempt.get_status_display }}</td>
+                    <td>{% if attempt.score != None %}{{ attempt.score|floatformat:1 }}%{% else %}—{% endif %}</td>
+                    <td>{% if attempt.passed %}<span class="admin-badge admin-badge-green">Yes</span>{% elif attempt.passed == False %}<span class="admin-badge admin-badge-red">No</span>{% else %}—{% endif %}</td>
+                    <td>{{ attempt.started_at|date:"Y-m-d H:i" }}</td>
+                    <td>{% if attempt.submitted_at %}{{ attempt.submitted_at|date:"Y-m-d H:i" }}{% else %}—{% endif %}</td>
+                </tr>
+            {% empty %}<tr><td colspan="6" class="admin-empty">No exam attempts found.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
