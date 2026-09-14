@@ -1,44 +1,122 @@
 /* Student learning hub additions kept separate from the shared dashboard shell. */
-.learning-hub-page .dashboard-learning-activity-table {
-  width: 100%;
-  border-collapse: collapse;
+
+.learning-hub-page .dashboard-learning-activity { width: 100%; }
+.learning-hub-page .dashboard-learning-activity-heading { align-items: center; }
+
+.dashboard-learning-activity-count {
+  flex: 0 0 auto; padding: 5px 10px; border: 1px solid var(--nptor-border,#e2e8f0);
+  border-radius: 999px; background: var(--nptor-surface,#fff); color: var(--nptor-text-muted,#64748b);
+  font-size: 12px; font-weight: 600;
 }
 
-.learning-hub-page .dashboard-learning-activity-table th,
-.learning-hub-page .dashboard-learning-activity-table td {
-  padding: 10px 12px;
-  text-align: left;
-  vertical-align: middle;
+.dashboard-learning-activity-toolbar {
+  display: grid; grid-template-columns: minmax(0,1fr) 180px auto; align-items: center;
+  gap: 10px; margin-bottom: 14px;
 }
-
-.learning-hub-page .dashboard-learning-activity-table tbody tr {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+.dashboard-learning-activity-search,.dashboard-learning-activity-filter {
+  position: relative; display: flex; align-items: center; min-width: 0;
 }
+.dashboard-learning-activity-search > i {
+  position: absolute; left: 14px; z-index: 1; color: var(--nptor-text-muted,#64748b); pointer-events: none;
+}
+.dashboard-learning-activity-search input,.dashboard-learning-activity-filter select {
+  width: 100%; min-height: 42px; margin: 0; padding: 9px 12px;
+  border: 1px solid var(--nptor-border,#cbd5e1); border-radius: 9px;
+  background: var(--nptor-surface,#fff); color: var(--nptor-text,#0f172a); font: inherit; outline: none; box-sizing: border-box;
+}
+.dashboard-learning-activity-search input { padding-left: 40px; }
+.dashboard-learning-activity-search input:focus,.dashboard-learning-activity-filter select:focus {
+  border-color: var(--nptor-primary,#2563eb); box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+}
+.dashboard-learning-activity-filter select { cursor: pointer; }
+.dashboard-learning-activity-search-button {
+  min-height: 42px; padding: 9px 16px; border: 1px solid var(--nptor-primary,#2563eb); border-radius: 9px;
+  background: var(--nptor-primary,#2563eb); color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.dashboard-learning-activity-search-button:hover { background: var(--nptor-primary-hover,#1d4ed8); }
 
+.dashboard-learning-activity-table {
+  width: 100%; overflow: hidden; border: 1px solid var(--nptor-border,#e2e8f0); border-radius: 12px;
+  background: var(--nptor-surface,#fff); box-shadow: 0 2px 8px rgba(15,23,42,.04);
+}
+.dashboard-learning-activity-row {
+  display: grid; grid-template-columns: 86px minmax(220px,1.8fr) minmax(145px,1fr) 90px 105px minmax(120px,.9fr);
+  align-items: center; min-width: 0;
+}
+.dashboard-learning-activity-header {
+  min-height: 46px; border-bottom: 1px solid var(--nptor-border,#e2e8f0); background: #f8fafc;
+  color: var(--nptor-text-muted,#64748b); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+}
+.dashboard-learning-activity-row:not(.dashboard-learning-activity-header) {
+  min-height: 76px; border-bottom: 1px solid var(--nptor-border,#eef2f7); color: var(--nptor-text,#0f172a); font-size: 13px;
+}
+.dashboard-learning-activity-row:last-child { border-bottom: 0; }
+.dashboard-learning-activity-row > div { min-width: 0; padding: 12px 14px; }
+.dashboard-learning-activity-header > div { padding: 11px 14px; }
+.dashboard-learning-activity-action-cell { text-align: right; }
+.dashboard-learning-activity-resource { display: flex; align-items: center; gap: 10px; }
+.dashboard-learning-activity-icon {
+  width: 34px; height: 34px; flex: 0 0 34px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9px; background: #eff6ff; color: #2563eb;
+}
+.dashboard-learning-activity-icon.type-exam { background: #f5f3ff; color: #7c3aed; }
+.dashboard-learning-activity-icon.type-track { background: #ecfdf5; color: #16a34a; }
+.dashboard-learning-activity-name {
+  min-width: 0; overflow: hidden; color: var(--nptor-text,#0f172a); font-weight: 650; line-height: 1.4;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.dashboard-learning-activity-date { color: var(--nptor-text-muted,#64748b); white-space: nowrap; }
+.dashboard-learning-activity-progress { color: var(--nptor-text,#0f172a); font-weight: 650; }
+.dashboard-learning-activity-type,.dashboard-learning-activity-status {
+  display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; line-height: 1.2; white-space: nowrap;
+}
+.dashboard-learning-activity-type.type-course { background: #eff6ff; color: #2563eb; }
+.dashboard-learning-activity-type.type-exam { background: #f5f3ff; color: #7c3aed; }
+.dashboard-learning-activity-type.type-track { background: #ecfdf5; color: #15803d; }
+.dashboard-learning-activity-status.status-completed,.dashboard-learning-activity-status.status-passed { background: #ecfdf5; color: #15803d; }
+.dashboard-learning-activity-status.status-inprogress { background: #eff6ff; color: #2563eb; }
+.dashboard-learning-activity-status.status-failed { background: #fef2f2; color: #dc2626; }
+.dashboard-learning-activity-actions {
+  display: inline-flex; align-items: center; justify-content: flex-end; gap: 9px; max-width: 100%;
+}
+.dashboard-learning-activity-action {
+  display: inline-flex; align-items: center; gap: 6px; color: var(--nptor-primary,#2563eb); font-size: 12px; font-weight: 650;
+  text-decoration: none; white-space: nowrap;
+}
+.dashboard-learning-activity-action:hover { color: var(--nptor-primary-hover,#1d4ed8); text-decoration: none; }
+.dashboard-learning-activity-remove-form { margin: 0; }
+.dashboard-learning-activity-remove {
+  width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  border: 1px solid var(--nptor-border,#e2e8f0); border-radius: 7px; background: var(--nptor-surface,#fff);
+  color: var(--nptor-text-muted,#64748b); cursor: pointer;
+}
+.dashboard-learning-activity-remove:hover { border-color: #fecaca; background: #fef2f2; color: #dc2626; }
+.dashboard-no-results {
+  display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 110px; padding: 20px;
+  color: var(--nptor-text-muted,#64748b); font-size: 13px;
+}
 .dashboard-learning-activity-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px;
 }
-
-.dashboard-learning-activity-pagination .page-links {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+.dashboard-learning-activity-page-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.dashboard-learning-activity-page {
+  min-width: 34px; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 9px;
+  border: 1px solid var(--nptor-border,#e2e8f0); border-radius: 7px; background: var(--nptor-surface,#fff);
+  color: var(--nptor-primary,#2563eb); font-size: 12px; font-weight: 600; text-decoration: none; box-sizing: border-box;
 }
+.dashboard-learning-activity-page:hover { border-color: rgba(37,99,235,.35); background: #eff6ff; color: var(--nptor-primary-hover,#1d4ed8); text-decoration: none; }
+.dashboard-learning-activity-page.is-current { border-color: var(--nptor-primary,#2563eb); background: var(--nptor-primary,#2563eb); color: #fff; }
+.dashboard-learning-activity-page.is-ellipsis { border-color: transparent; background: transparent; color: var(--nptor-text-muted,#64748b); }
 
-@media (max-width: 760px) {
-  .learning-hub-page .dashboard-learning-activity-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  .dashboard-learning-activity-pagination {
-    align-items: stretch;
-    flex-direction: column;
-  }
+@media (max-width:1100px) {
+  .dashboard-learning-activity-row { grid-template-columns: 76px minmax(190px,1.5fr) minmax(135px,1fr) 72px 96px minmax(105px,.8fr); }
+  .dashboard-learning-activity-row > div,.dashboard-learning-activity-header > div { padding-left: 10px; padding-right: 10px; }
+}
+@media (max-width:760px) {
+  .dashboard-learning-activity-toolbar { grid-template-columns: 1fr; }
+  .dashboard-learning-activity-table { overflow-x: auto; }
+  .dashboard-learning-activity-row { min-width: 760px; }
+  .dashboard-learning-activity-pagination { align-items: stretch; flex-direction: column; }
+  .dashboard-learning-activity-page-list { justify-content: center; }
 }
