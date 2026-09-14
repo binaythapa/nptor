@@ -1,0 +1,81 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+<div class="level mb-5">
+  <div class="level-left">
+    <div>
+      <p class="is-size-7 has-text-grey is-uppercase has-text-weight-semibold mb-1">Student Management</p>
+      <h1 class="title is-3 mb-2">Edit Student</h1>
+      <p class="has-text-grey">{{ student.user.get_full_name|default:student.user.username }}</p>
+    </div>
+  </div>
+  <div class="level-right">
+    <a class="button" href="{% url 'organizations_admin:student_detail' slug=org.slug student_id=student.id %}">
+      <span class="icon"><i class="fas fa-arrow-left"></i></span>
+      <span>Back to Student</span>
+    </a>
+  </div>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="notification is-danger is-light">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="columns is-multiline">
+    <div class="column is-8">
+      <div class="box">
+        <h2 class="title is-5">Account & Student Information</h2>
+
+        <div class="columns is-multiline">
+          {% for field in form %}
+            {% if field.name == "first_name" or field.name == "last_name" or field.name == "email" or field.name == "contact_phone" or field.name == "student_id" or field.name == "admission_no" or field.name == "status" or field.name == "joined_date" %}
+              <div class="column {% if field.name == 'email' or field.name == 'student_id' or field.name == 'admission_no' or field.name == 'status' or field.name == 'joined_date' %}is-half{% else %}is-half{% endif %}">
+                <div class="field">
+                  <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  <div class="control">{{ field }}</div>
+                  {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+                  {% for error in field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="box">
+        <h2 class="title is-5">Date of Birth & Guardian</h2>
+        <div class="columns is-multiline">
+          {% for field in form %}
+            {% if field.name == "date_of_birth" or field.name == "guardian_name" or field.name == "guardian_phone" or field.name == "address" %}
+              <div class="column {% if field.name == 'address' %}is-full{% else %}is-half{% endif %}">
+                <div class="field">
+                  <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  <div class="control">{{ field }}</div>
+                  {% for error in field.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="column is-4">
+      <div class="box">
+        <h2 class="title is-5">Save Changes</h2>
+        <p class="has-text-grey mb-5">These changes apply to this student's profile within <strong>{{ org.name }}</strong>.</p>
+        <div class="buttons">
+          <button type="submit" class="button is-primary is-fullwidth">
+            <span class="icon"><i class="fas fa-save"></i></span>
+            <span>Save Student</span>
+          </button>
+          <a class="button is-light is-fullwidth" href="{% url 'organizations_admin:student_detail' slug=org.slug student_id=student.id %}">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
