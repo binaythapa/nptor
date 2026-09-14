@@ -47,32 +47,62 @@ def _dashboard_accesses(user):
 
 
 def _assignment_timeline(assignment, now=None):
-    """Return the student-facing state and date metadata for an assignment."""
+    """Return student-facing assignment state using local calendar dates."""
     now = now or timezone.now()
     starts_at = getattr(assignment, "starts_at", None)
     due_at = getattr(assignment, "due_at", None)
     expires_at = getattr(assignment, "expires_at", None)
 
-    if expires_at and expires_at <= now:
-        return {"state": "expired", "label": "Access expired", "can_access": False, "starts_at": starts_at, "due_at": due_at, "expires_at": expires_at}
-    if starts_at and starts_at > now:
-        return {"state": "not_started", "label": "Available soon", "can_access": False, "starts_at": starts_at, "due_at": due_at, "expires_at": expires_at}
-    if due_at and due_at < now:
-        return {"state": "overdue", "label": "Overdue", "can_access": True, "starts_at": starts_at, "due_at": due_at, "expires_at": expires_at}
-    return {"state": "active", "label": "In progress", "can_access": True, "starts_at": starts_at, "due_at": due_at, "expires_at": expires_at}
+    today = timezone.localdate(now)
+    start_date = timezone.localtime(starts_at).date() if starts_at else None
+    due_date = timezone.localtime(due_at).date() if due_at else None
+    expires_date = timezone.localtime(expires_at).date() if expires_at else None
+
+    # Assignment dates are student-facing calendar dates. This prevents a
+    # UTC/local-time boundary from locking a resource on its configured start
+    # date or showing a different date in the status text.
+    if expires_date and today > expires_date:
+        state = "expired"
+        label = "Access expired"
+        can_access = False
+    elif start_date and today < start_date:
+        state = "not_started"
+        label = "Available soon"
+        can_access = False
+    elif due_date and today > due_date:
+        state = "overdue"
+        label = "Overdue"
+        can_access = True
+    else:
+        state = "active"
+        label = "In progress"
+        can_access = True
+
+    return {
+        "state": state,
+        "label": label,
+        "can_access": can_access,
+        "starts_at": starts_at,
+        "due_at": due_at,
+        "expires_at": expires_at,
+    }
 
 
 def _assignment_status_text(timeline):
     if not timeline:
         return None
     if timeline["state"] == "not_started" and timeline["starts_at"]:
-        return f"Available {timeline['starts_at']:%b} {timeline['starts_at'].day}, {timeline['starts_at']:%Y}"
+        value = timezone.localtime(timeline["starts_at"])
+        return f"Available {value:%b} {value.day}, {value:%Y}"
     if timeline["state"] == "overdue" and timeline["due_at"]:
-        return f"Overdue · Due {timeline['due_at']:%b} {timeline['due_at'].day}, {timeline['due_at']:%Y}"
+        value = timezone.localtime(timeline["due_at"])
+        return f"Overdue · Due {value:%b} {value.day}, {value:%Y}"
     if timeline["state"] == "expired" and timeline["expires_at"]:
-        return f"Access expired · {timeline['expires_at']:%b} {timeline['expires_at'].day}, {timeline['expires_at']:%Y}"
+        value = timezone.localtime(timeline["expires_at"])
+        return f"Access expired · {value:%b} {value.day}, {value:%Y}"
     if timeline["due_at"]:
-        return f"Due {timeline['due_at']:%b} {timeline['due_at'].day}, {timeline['due_at']:%Y}"
+        value = timezone.localtime(timeline["due_at"])
+        return f"Due {value:%b} {value.day}, {value:%Y}"
     return timeline["label"]
 
 
