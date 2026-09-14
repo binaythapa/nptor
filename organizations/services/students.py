@@ -1,4 +1,5 @@
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.utils import timezone
 
 from accounts.models import UserProfile
@@ -13,7 +14,7 @@ def get_organization_student(user, organization):
 
     # Provision the organization-scoped profile lazily as a safe fallback for
     # student memberships created before automatic profile provisioning.
-    student, _ = OrganizationStudent.objects.get_or_create(
+    student, created = OrganizationStudent.objects.get_or_create(
         user=user,
         organization=organization,
         defaults={
@@ -21,6 +22,9 @@ def get_organization_student(user, organization):
             "joined_date": timezone.localdate(),
         },
     )
+    if not created and student.status != OrganizationStudent.STATUS_ACTIVE:
+        student.status = OrganizationStudent.STATUS_ACTIVE
+        student.save(update_fields=["status", "updated_at"])
     if student.status != OrganizationStudent.STATUS_ACTIVE:
         raise PermissionDenied("Student enrollment is required for this organization.")
     return student
@@ -86,4 +90,47 @@ def update_student_profile(*, actor, organization, student, data):
         profile.phone = data["contact_phone"] or None
         profile.save(update_fields=["phone", "updated_at"])
 
+    return student
+
+
+@transaction.atomic
+def update_student_admin_profile(*, actor, organization, student, data):
+    """Update organization-owned student identity and profile fields."""
+    if student.organization_id != organization.id:
+        raise PermissionDenied("Student belongs to another organization.")
+
+    membership = OrganizationMember.objects.filter(
+        user=actor,
+        organization=organization,
+        is_active=True,
+    ).first()
+    if not membership or membership.role not in OrganizationRole.administrative_roles():
+        raise PermissionDenied("Organization administrator access is required.")
+
+    user = student.user
+    if "first_name" in data:
+        user.first_name = data["first_name"]
+    if "last_name" in data:
+        user.last_name = data["last_name"]
+    user.save(update_fields=["first_name", "last_name"])
+
+    if "contact_phone" in data:
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.phone = data["contact_phone"] or None
+        profile.save(update_fields=["phone", "updated_at"])
+
+    editable = {
+        "student_id",
+        "admission_no",
+        "status",
+        "joined_date",
+        "date_of_birth",
+        "guardian_name",
+        "guardian_phone",
+        "address",
+    }
+    for field in editable:
+        if field in data:
+            setattr(student, field, data[field])
+    student.save(update_fields=[field for field in editable if field in data] + ["updated_at"])
     return student
