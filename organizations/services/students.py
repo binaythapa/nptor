@@ -31,12 +31,23 @@ def get_organization_student(user, organization):
 
 
 def get_student_for_admin(student_id, organization):
-    return OrganizationStudent.objects.filter(id=student_id, organization=organization).select_related("user", "organization").first()
+    return (
+        OrganizationStudent.objects
+        .filter(
+            id=student_id,
+            organization=organization,
+            user__organization_memberships__organization=organization,
+            user__organization_memberships__role=OrganizationRole.STUDENT,
+            user__organization_memberships__is_active=True,
+        )
+        .select_related("user", "organization")
+        .first()
+    )
 
 
 def get_student_for_teacher(*, actor, student_id, organization):
     """
-    Return any student belonging to the actor's organization.
+    Return an active student belonging to the actor's organization.
 
     Staff/Teacher access is organization-wide for student academic
     operations. Profile editing remains separately restricted to
@@ -106,6 +117,15 @@ def update_student_admin_profile(*, actor, organization, student, data):
     ).first()
     if not membership or membership.role not in OrganizationRole.administrative_roles():
         raise PermissionDenied("Organization administrator access is required.")
+
+    student_membership = OrganizationMember.objects.filter(
+        user=student.user,
+        organization=organization,
+        role=OrganizationRole.STUDENT,
+        is_active=True,
+    ).exists()
+    if not student_membership:
+        raise PermissionDenied("An active student membership is required.")
 
     user = student.user
     if "first_name" in data:
