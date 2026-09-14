@@ -21,10 +21,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const name = card.dataset.learningName || "";
             const typeMatches = active === "all" || type === active.slice(0, -1);
             const searchMatches = !query || name.includes(query);
-            card.hidden = !(typeMatches && searchMatches);
-            if (typeMatches && searchMatches) visible += 1;
+            const matches = typeMatches && searchMatches;
+            card.hidden = !matches;
+            card.style.display = matches ? "" : "none";
+            if (matches) visible += 1;
         });
-        if (empty) empty.hidden = visible !== 0;
+        if (empty) {
+            const hasResults = visible !== 0;
+            empty.hidden = hasResults;
+            empty.style.display = hasResults ? "none" : "flex";
+        }
     }
 
     filters.forEach(function (button) {
