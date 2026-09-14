@@ -100,7 +100,7 @@
             {% elif item.activity_type == "course" %}
               <a href="{% url 'courses:course_learn' item.resource.slug %}" class="dashboard-learning-activity-action">Continue <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
             {% else %}
-              <a href="{% url 'quiz:exam_list' %}" class="dashboard-learning-activity-action">Open Track <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+              <a href="{% url 'quiz:learning_track' item.resource.slug %}" class="dashboard-learning-activity-action">Start Track <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
             {% endif %}
             <form method="post" action="{% url 'quiz:remove_learning_activity' item.activity_type item.resource.id %}" class="dashboard-learning-activity-remove-form" onsubmit="return confirm('Remove this item from your Learning Activity? Your course, exam, track, purchases, and access will not be deleted.');">
               {% csrf_token %}
@@ -167,7 +167,7 @@
         <div class="shortlist-card-body"><span class="learning-card-type">{{ item.type|title }}</span><h3>{{ item.resource.title }}</h3><p>{% if item.type == 'course' %}Course{% elif item.type == 'exam' %}Exam{% else %}Certification track{% endif %}</p></div>
         <div class="shortlist-card-actions">
           <form method="post" action="{% url 'quiz:learning_shortlist_toggle' item.type item.resource.id %}" data-shortlist-form>{% csrf_token %}<button type="submit" class="shortlist-remove" title="Remove from shortlist"><i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="sr-only">Remove {{ item.resource.title }} from shortlist</span></button></form>
-          {% if item.type == 'course' %}<a href="{% url 'courses:course_learn' item.resource.slug %}" aria-label="Open {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% elif item.type == 'exam' %}{% if item.resource.is_free %}<a href="{% url 'quiz:exam_start' item.resource.id %}" aria-label="Try {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% else %}<a href="{% url 'quiz:exam_preview' item.resource.id %}" aria-label="Preview {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% endif %}{% else %}<a href="{% url 'quiz:exam_list' %}" aria-label="Explore {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
+          {% if item.type == 'course' %}<a href="{% url 'courses:course_learn' item.resource.slug %}" aria-label="Open {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% elif item.type == 'exam' %}{% if item.resource.is_free %}<a href="{% url 'quiz:exam_start' item.resource.id %}" aria-label="Try {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% else %}<a href="{% url 'quiz:exam_preview' item.resource.id %}" aria-label="Preview {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% endif %}{% else %}<a href="{% url 'quiz:learning_track' item.resource.slug %}" aria-label="Start {{ item.resource.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% endif %}
         </div>
       </article>
       {% endfor %}
@@ -208,7 +208,7 @@
       <article class="dashboard-learning-card" data-learning-card data-learning-type="track" data-learning-name="{{ item.track.title|lower }}">
         <div class="learning-card-icon learning-card-icon-track"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
         <div class="learning-card-body"><div class="learning-card-topline"><span class="learning-card-type">Exam Track</span><span class="learning-source">{% if item.source == 'organization' %}Assigned{% else %}Subscribed{% endif %}</span></div><h3>{{ item.track.title }}</h3><p>{{ item.exam_count }} exams · {{ item.passed }} passed</p>{% if item.completed %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Track complete</span>{% else %}<span class="learning-result">In progress</span>{% endif %}</div>
-        <a href="{% url 'quiz:exam_list' %}" class="learning-card-action" aria-label="Open {{ item.track.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        <a href="{% url 'quiz:learning_track' item.track.slug %}" class="learning-card-action" aria-label="Start {{ item.track.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
       </article>
       {% endfor %}
     </div>
