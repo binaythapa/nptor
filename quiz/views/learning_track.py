@@ -16,7 +16,7 @@ def learning_track(request, slug):
             "organization",
         ).prefetch_related(
             "track_exams__exam",
-            "track_exams__exam__primary_category",
+            "track_exams__exam__categories",
             "track_exams__prerequisite_exams",
         ),
         slug=slug,
