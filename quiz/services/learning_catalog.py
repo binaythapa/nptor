@@ -49,7 +49,6 @@ def _public_exams():
             domain__is_active=True,
             domain__organization__isnull=True,
         ).select_related("domain")),
-        Prefetch("subscription_plans", queryset=SubscriptionPlan.objects.filter(is_active=True)),
     ).distinct()
 
 
