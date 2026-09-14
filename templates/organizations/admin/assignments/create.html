@@ -11,23 +11,40 @@
     <p class="subtitle is-6 has-text-grey">Assign an organization Course or Track directly to a student. No purchase or subscription is involved.</p>
   </div>
 
-  <form method="post">
+  <form method="post" id="assignment-form">
     {% csrf_token %}
     <div class="card mb-5">
       <header class="card-header"><p class="card-header-title">Student &amp; Resource</p></header>
       <div class="card-content">
         <div class="field">
-          <label class="label">Student <span class="has-text-danger">*</span></label>
-          <div class="select is-fullwidth">
-            <select name="student_id" required>
-              <option value="">Select student</option>
-              {% for s in students %}
-                <option value="{{ s.id }}">{{ s.user.get_full_name|default:s.user.email }}{% if s.student_id %} — {{ s.student_id }}{% endif %}</option>
-              {% empty %}
-                <option value="" disabled>No active students found</option>
-              {% endfor %}
-            </select>
+          <label class="label" for="student_search">Student <span class="has-text-danger">*</span></label>
+          <div class="control has-icons-left">
+            <input
+              class="input"
+              type="search"
+              id="student_search"
+              autocomplete="off"
+              placeholder="Type a name or username to search..."
+              aria-controls="student_results"
+              aria-autocomplete="list"
+              aria-describedby="student_help student_selected"
+            >
+            <span class="icon is-small is-left"><i class="fa fa-search"></i></span>
           </div>
+          <p class="help" id="student_help">Start typing to find active students by name, username, Student ID, or admission number.</p>
+          <input type="hidden" name="student_id" id="student_id" required>
+
+          <div id="student_selected" class="notification is-link is-light mt-3 is-hidden" aria-live="polite">
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+              <div>
+                <strong id="selected_student_name"></strong>
+                <div class="is-size-7" id="selected_student_meta"></div>
+              </div>
+              <button type="button" class="button is-small is-light" id="clear_student">Change</button>
+            </div>
+          </div>
+
+          <div id="student_results" class="student-search-results mt-2" role="listbox" aria-label="Student search results"></div>
         </div>
 
         <div class="field">
@@ -81,7 +98,161 @@
     </div>
   </form>
 </div>
+
+<style>
+.student-search-results {
+  border: 1px solid #dbdbdb;
+  border-radius: 6px;
+  background: #fff;
+  max-height: 320px;
+  overflow-y: auto;
+  box-shadow: 0 8px 18px rgba(10, 10, 10, 0.08);
+}
+.student-search-results:empty {
+  display: none;
+}
+.student-search-result {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+.student-search-result:last-child {
+  border-bottom: 0;
+}
+.student-search-result:hover,
+.student-search-result:focus {
+  background: #f5f7ff;
+  outline: none;
+}
+.student-search-result-name {
+  font-weight: 600;
+  color: #363636;
+}
+.student-search-result-meta {
+  margin-top: 0.2rem;
+  color: #7a7a7a;
+  font-size: 0.82rem;
+}
+.student-search-empty {
+  padding: 0.9rem 1rem;
+  color: #7a7a7a;
+}
+</style>
+
 <script>
+(function () {
+  const searchInput = document.getElementById("student_search");
+  const results = document.getElementById("student_results");
+  const hiddenInput = document.getElementById("student_id");
+  const selected = document.getElementById("student_selected");
+  const selectedName = document.getElementById("selected_student_name");
+  const selectedMeta = document.getElementById("selected_student_meta");
+  const clearButton = document.getElementById("clear_student");
+
+  const students = [
+    {% for s in students %}
+    {
+      id: "{{ s.id|escapejs }}",
+      name: "{{ s.user.get_full_name|default:s.user.username|escapejs }}",
+      username: "{{ s.user.username|escapejs }}",
+      email: "{{ s.user.email|escapejs }}",
+      studentId: "{{ s.student_id|default:''|escapejs }}",
+      admissionNo: "{{ s.admission_no|default:''|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  function metaText(student) {
+    const parts = [];
+    if (student.username) parts.push("@" + student.username);
+    if (student.studentId) parts.push("Student ID: " + student.studentId);
+    if (student.admissionNo) parts.push("Admission: " + student.admissionNo);
+    if (!student.studentId && !student.admissionNo && student.email) parts.push(student.email);
+    return parts.join(" · ");
+  }
+
+  function matches(student, query) {
+    const normalized = query.toLowerCase().trim();
+    if (!normalized) return false;
+    const nameParts = student.name.toLowerCase().split(/\s+/).filter(Boolean);
+    return (
+      nameParts.some(part => part.startsWith(normalized)) ||
+      student.username.toLowerCase().startsWith(normalized) ||
+      student.studentId.toLowerCase().startsWith(normalized) ||
+      student.admissionNo.toLowerCase().startsWith(normalized)
+    );
+  }
+
+  function renderResults() {
+    const query = searchInput.value.trim();
+    results.innerHTML = "";
+    if (!query || hiddenInput.value) return;
+
+    const matchesFound = students.filter(student => matches(student, query));
+    if (!matchesFound.length) {
+      results.innerHTML = '<div class="student-search-empty">No active students match <strong>' + escapeHtml(query) + '</strong>.</div>';
+      return;
+    }
+
+    matchesFound.forEach(student => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "student-search-result";
+      button.setAttribute("role", "option");
+      button.dataset.studentId = student.id;
+      button.innerHTML = '<div class="student-search-result-name">' + escapeHtml(student.name) + '</div>' +
+        '<div class="student-search-result-meta">' + escapeHtml(metaText(student)) + '</div>';
+      button.addEventListener("click", function () {
+        selectStudent(student);
+      });
+      results.appendChild(button);
+    });
+  }
+
+  function selectStudent(student) {
+    hiddenInput.value = student.id;
+    searchInput.value = student.name;
+    searchInput.classList.add("is-success");
+    searchInput.setAttribute("aria-expanded", "false");
+    results.innerHTML = "";
+    selectedName.textContent = student.name;
+    selectedMeta.textContent = metaText(student);
+    selected.classList.remove("is-hidden");
+  }
+
+  function clearStudent() {
+    hiddenInput.value = "";
+    searchInput.value = "";
+    searchInput.classList.remove("is-success");
+    selected.classList.add("is-hidden");
+    results.innerHTML = "";
+    searchInput.focus();
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value;
+    return div.innerHTML;
+  }
+
+  searchInput.addEventListener("input", renderResults);
+  searchInput.addEventListener("focus", function () {
+    if (!hiddenInput.value) renderResults();
+  });
+  clearButton.addEventListener("click", clearStudent);
+
+  document.addEventListener("click", function (event) {
+    if (!event.target.closest("#student_search") && !event.target.closest("#student_results")) {
+      results.innerHTML = "";
+    }
+  });
+})();
+
 function toggleResource() {
   const type = document.getElementById("resource_type").value;
   const courseField = document.getElementById("course_field");
