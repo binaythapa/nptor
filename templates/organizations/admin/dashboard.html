@@ -5,7 +5,7 @@
     <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
         <div>
             <h2 class="title is-4 mb-1">Organization Dashboard</h2>
-            <p class="has-text-grey">Manage your organization content and learning products.</p>
+            <p class="has-text-grey">Manage your organization content, learning products, and academic structure.</p>
         </div>
     </div>
 
@@ -36,6 +36,34 @@
                 <p class="heading">Reusable Exams</p>
                 <p class="title is-3">{{ stats.exams }}</p>
                 <a class="button is-small is-link is-light" href="{% url 'organizations_admin:exams' slug=org.slug %}">Manage Exams</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="box mb-5">
+        <div class="is-flex is-justify-content-space-between is-align-items-center">
+            <div>
+                <p class="heading mb-1">Academic Management</p>
+                <h3 class="title is-5 mb-2">Academic Structure</h3>
+                <p class="has-text-grey is-size-7">Manage academic years, classes, sections, and organization-specific student enrollment.</p>
+            </div>
+            <a class="button is-primary" href="{% url 'organizations_admin:academic' slug=org.slug %}">
+                <span class="icon"><i class="fa fa-school"></i></span>
+                <span>Open Academic Management</span>
+            </a>
+        </div>
+        <div class="columns mt-3">
+            <div class="column">
+                <p class="heading">Academic Years</p>
+                <p class="title is-5">{{ academic_year_count }}</p>
+            </div>
+            <div class="column">
+                <p class="heading">Classes</p>
+                <p class="title is-5">{{ academic_class_count }}</p>
+            </div>
+            <div class="column">
+                <p class="heading">Sections</p>
+                <p class="title is-5">{{ academic_section_count }}</p>
             </div>
         </div>
     </div>
