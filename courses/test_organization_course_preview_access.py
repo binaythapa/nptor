@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from courses.models import Course
+from courses.models import Course, CourseEnrollment
 from organizations.models import Organization, ResourceAccess, ResourceAssignment
 
 
@@ -60,6 +60,25 @@ class OrganizationCoursePreviewAccessTests(TestCase):
         self.assertRedirects(
             response,
             reverse("courses:course_detail", kwargs={"slug": self.course.slug}),
+        )
+
+    def test_assigned_organization_course_can_use_enroll_endpoint(self):
+        self._assign_course()
+
+        response = self.client.post(
+            reverse("courses:enroll_free_course", kwargs={"slug": self.course.slug})
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("courses:course_learn", kwargs={"slug": self.course.slug}),
+        )
+        self.assertTrue(
+            CourseEnrollment.objects.filter(
+                user=self.user,
+                course=self.course,
+                is_active=True,
+            ).exists()
         )
 
     def test_unassigned_organization_course_is_not_exposed_by_preview(self):
