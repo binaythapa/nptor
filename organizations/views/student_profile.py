@@ -50,26 +50,9 @@ def organization_student_profile_admin(request, slug, student_id):
 
 @org_admin_required
 def organization_student_profile_admin_edit(request, slug, student_id):
-    student = get_object_or_404(
-        OrganizationStudent.objects.select_related("user", "organization"),
-        id=student_id,
-        organization=request.organization,
-    )
-    if request.method == "POST":
-        form = OrganizationStudentAdminProfileForm(request.POST, instance=student)
-        if form.is_valid():
-            update_student_admin_profile(
-                actor=request.user,
-                organization=request.organization,
-                student=student,
-                data=form.cleaned_data,
-            )
-            messages.success(request, "Student profile updated.")
-            return redirect("organizations_public:student_profile_admin", slug=slug, student_id=student.id)
-    else:
-        form = OrganizationStudentAdminProfileForm(instance=student)
-    return render(
-        request,
-        "organizations/student/profile_edit.html",
-        {"organization": request.organization, "student": student, "form": form, "admin_view": True},
+    """Compatibility endpoint: keep legacy admin edit URLs inside the admin UI."""
+    return redirect(
+        "organizations_admin:student_detail_edit",
+        slug=slug,
+        student_id=student_id,
     )
