@@ -90,11 +90,10 @@ def org_student_add(request, slug):
         member.is_active = True
         member.save(update_fields=["role", "is_active"])
 
-    # Every active student membership gets an organization-scoped profile.
-    # get_or_create keeps this safe when the student is re-added or already
-    # has a profile from an earlier membership.
+    # Every active student membership gets an active organization-scoped profile.
+    # Re-adding a previously removed student also reactivates the existing profile.
     if member.role == OrganizationRole.STUDENT and member.is_active:
-        OrganizationStudent.objects.get_or_create(
+        student, created = OrganizationStudent.objects.get_or_create(
             organization=org,
             user=user,
             defaults={
@@ -102,6 +101,13 @@ def org_student_add(request, slug):
                 "joined_date": timezone.localdate(),
             },
         )
+        if not created and student.status != OrganizationStudent.STATUS_ACTIVE:
+            student.status = OrganizationStudent.STATUS_ACTIVE
+            if not student.joined_date:
+                student.joined_date = timezone.localdate()
+                student.save(update_fields=["status", "joined_date", "updated_at"])
+            else:
+                student.save(update_fields=["status", "updated_at"])
 
     messages.success(request, f"{user.email} added to organization.")
     return redirect("organizations_admin:students", slug=slug)
@@ -133,7 +139,7 @@ def org_student_update_role(request, slug, member_id):
     member.save(update_fields=["role"])
 
     if new_role == OrganizationRole.STUDENT and member.is_active:
-        OrganizationStudent.objects.get_or_create(
+        student, created = OrganizationStudent.objects.get_or_create(
             organization=org,
             user=member.user,
             defaults={
@@ -141,6 +147,9 @@ def org_student_update_role(request, slug, member_id):
                 "joined_date": timezone.localdate(),
             },
         )
+        if not created and student.status != OrganizationStudent.STATUS_ACTIVE:
+            student.status = OrganizationStudent.STATUS_ACTIVE
+            student.save(update_fields=["status", "updated_at"])
 
     messages.success(request, "Role updated successfully.")
     return redirect("organizations_admin:students", slug=slug)
@@ -190,6 +199,18 @@ def org_student_remove(request, slug, member_id):
         is_active=False,
         revoked_at=now,
     )
+
+    # Preserve the organization-scoped profile as historical data while
+    # deactivating it. This keeps IDs/admission history available if the
+    # student is later re-added to the organization.
+    if member.role == OrganizationRole.STUDENT:
+        OrganizationStudent.objects.filter(
+            organization=org,
+            user=member.user,
+        ).update(
+            status=OrganizationStudent.STATUS_INACTIVE,
+            updated_at=now,
+        )
 
     member.delete()
     messages.success(request, "Student removed from organization.")
