@@ -201,20 +201,9 @@ def student_dashboard(request):
             "source": exam_access[exam.id].source,
         })
 
-    for track in tracks_data:
-        for exam in track_exams.get(track["track"].id, []):
-            if exam.id in exam_access:
-                continue
-            attempts = attempts_by_exam.get(exam.id, [])
-            last = attempts[0] if attempts else None
-            exams_data.append({
-                "exam": exam,
-                "attempts": len(attempts),
-                "last_score": last.score if last else None,
-                "passed": any(attempt.passed is True for attempt in attempts),
-                "source": "track",
-            })
-
+    # Exams belonging to a Track are already represented by the Track card.
+    # They should not appear as separate learning resources unless the exam
+    # itself has been explicitly assigned to the student.
     exams_data.sort(key=lambda item: item["exam"].title.lower())
     shortlist_items = _shortlist_items(user)
 
