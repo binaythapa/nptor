@@ -109,6 +109,49 @@
 .dashboard-learning-activity-page.is-current { border-color: var(--nptor-primary,#2563eb); background: var(--nptor-primary,#2563eb); color: #fff; }
 .dashboard-learning-activity-page.is-ellipsis { border-color: transparent; background: transparent; color: var(--nptor-text-muted,#64748b); }
 
+/* Resource-source badges */
+.learning-card-topline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.learning-source {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  padding: 3px 8px;
+  border: 1px solid var(--nptor-border,#e2e8f0);
+  border-radius: 999px;
+  background: var(--nptor-surface-soft,#f8fafc);
+  color: var(--nptor-text-muted,#64748b);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.learning-source-organization {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #047857;
+  letter-spacing: .01em;
+}
+.learning-source-organization::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: currentColor;
+  box-shadow: 0 -3px 0 -1px currentColor;
+}
+
+html[data-theme="dark"] .learning-source-organization {
+  border-color: rgba(52,211,153,.35);
+  background: rgba(16,185,129,.14);
+  color: #6ee7b7;
+}
+
 @media (max-width:1100px) {
   .dashboard-learning-activity-row { grid-template-columns: 76px minmax(190px,1.5fr) minmax(135px,1fr) 72px 96px minmax(105px,.8fr); }
   .dashboard-learning-activity-row > div,.dashboard-learning-activity-header > div { padding-left: 10px; padding-right: 10px; }
