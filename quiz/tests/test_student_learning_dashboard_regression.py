@@ -1,5 +1,8 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from quiz.models import Category, Domain, Exam
@@ -44,3 +47,14 @@ class StudentLearningDashboardRegressionTests(TestCase):
         catalog = build_learning_catalog(user=user, resource_type="all")
 
         self.assertTrue(any(item["resource"].id == exam.id for item in catalog["resources"]))
+
+
+class StudentLearningDashboardStylesTests(SimpleTestCase):
+    def test_learning_activity_css_defines_grid_layout_for_div_rows(self):
+        css_path = Path(settings.BASE_DIR) / "static" / "css" / "dashboard_learning_hub.css"
+        css = css_path.read_text(encoding="utf-8")
+
+        self.assertIn(".dashboard-learning-activity-row", css)
+        self.assertIn("display: grid", css)
+        self.assertIn(".dashboard-learning-activity-search", css)
+        self.assertIn(".dashboard-learning-activity-action-cell", css)
