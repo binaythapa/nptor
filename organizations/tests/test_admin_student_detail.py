@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import User
+from organizations.forms.student import OrganizationStudentAdminProfileForm
 from organizations.models import Organization, OrganizationMember, OrganizationStudent
 from organizations.models.role import OrganizationRole
 
@@ -76,3 +77,23 @@ class OrganizationAdminStudentDetailTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_admin_student_form_uses_bulma_form_widgets(self):
+        form = OrganizationStudentAdminProfileForm(instance=self.student)
+
+        for field_name in (
+            "first_name",
+            "last_name",
+            "email",
+            "contact_phone",
+            "student_id",
+            "admission_no",
+            "joined_date",
+            "date_of_birth",
+            "guardian_name",
+            "guardian_phone",
+        ):
+            self.assertIn("input", form.fields[field_name].widget.attrs.get("class", ""))
+
+        self.assertEqual(form.fields["status"].widget.attrs.get("class"), "bulma-select")
+        self.assertEqual(form.fields["address"].widget.attrs.get("class"), "textarea")
