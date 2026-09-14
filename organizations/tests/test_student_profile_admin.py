@@ -108,3 +108,30 @@ class OrganizationAdminStudentProfileTests(TestCase):
             )
         )
         self.assertEqual(response.status_code, 403)
+
+    def test_role_change_to_staff_deactivates_student_profile(self):
+        self.client.force_login(self.admin)
+        member = OrganizationMember.objects.get(
+            user=self.student_user,
+            organization=self.organization,
+        )
+        response = self.client.post(
+            reverse(
+                "organizations_admin:student_role",
+                kwargs={"slug": self.organization.slug, "member_id": member.id},
+            ),
+            data={"role": OrganizationRole.STAFF},
+        )
+        self.assertRedirects(
+            response,
+            reverse("organizations_admin:students", kwargs={"slug": self.organization.slug}),
+        )
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.status, OrganizationStudent.STATUS_INACTIVE)
+
+    def test_profile_form_contains_admin_owned_student_fields(self):
+        from organizations.forms.student import OrganizationStudentAdminProfileForm
+
+        form = OrganizationStudentAdminProfileForm(instance=self.student)
+        for field in ("student_id", "admission_no", "status", "joined_date"):
+            self.assertIn(field, form.fields)
