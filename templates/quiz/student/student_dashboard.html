@@ -7,6 +7,18 @@
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">
 <link rel="stylesheet" href="{% static 'css/dashboard_learning_hub.css' %}">
+<style>
+  .learning-assignment-dates { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; color:var(--nptor-text-muted,#64748b); font-size:11px; line-height:1.4; }
+  .learning-assignment-date { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+  .learning-assignment-date i { font-size:10px; opacity:.8; }
+  .learning-assignment-date strong { color:var(--nptor-text,#0f172a); font-weight:650; }
+  .learning-assignment-status { margin-top:8px; }
+  .learning-assignment-status.status-not-started { color:#b45309; }
+  .learning-assignment-status.status-overdue { color:#dc2626; }
+  .learning-assignment-status.status-expired { color:#64748b; }
+  .learning-card-action.is-disabled { opacity:.45; pointer-events:none; cursor:not-allowed; }
+  @media (max-width:760px) { .learning-assignment-dates { gap:5px 10px; } }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -191,24 +203,63 @@
       {% for item in courses %}
       <article class="dashboard-learning-card" data-learning-card data-learning-type="course" data-learning-name="{{ item.course.title|lower }}">
         <div class="learning-card-icon learning-card-icon-course"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></div>
-        <div class="learning-card-body"><div class="learning-card-topline"><span class="learning-card-type">Course</span>{% if item.source == 'organization' %}<span class="learning-source">Assigned</span>{% else %}<span class="learning-source">Purchased</span>{% endif %}</div><h3>{{ item.course.title }}</h3><p>{{ item.completed }}/{{ item.total }} lessons · {{ item.progress }}% complete</p><progress class="dashboard-progress" value="{{ item.progress }}" max="100">{{ item.progress }}%</progress></div>
-        <a href="{% url 'courses:course_learn' item.course.slug %}" class="learning-card-action" aria-label="Open {{ item.course.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        <div class="learning-card-body">
+          <div class="learning-card-topline"><span class="learning-card-type">Course</span>{% if item.source == 'organization' %}<span class="learning-source">Assigned</span>{% else %}<span class="learning-source">Purchased</span>{% endif %}</div>
+          <h3>{{ item.course.title }}</h3>
+          <p>{{ item.completed }}/{{ item.total }} lessons · {{ item.progress }}% complete</p>
+          <progress class="dashboard-progress" value="{{ item.progress }}" max="100">{{ item.progress }}%</progress>
+          {% if item.assignment_timeline %}
+          <div class="learning-assignment-dates" aria-label="Assignment dates">
+            {% if item.assignment_timeline.starts_at %}<span class="learning-assignment-date"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> Available <strong>{{ item.assignment_timeline.starts_at|date:"M j, Y" }}</strong></span>{% endif %}
+            {% if item.assignment_timeline.due_at %}<span class="learning-assignment-date"><i class="fa-solid fa-flag" aria-hidden="true"></i> Due <strong>{{ item.assignment_timeline.due_at|date:"M j, Y" }}</strong></span>{% endif %}
+            {% if item.assignment_timeline.expires_at %}<span class="learning-assignment-date"><i class="fa-solid fa-lock" aria-hidden="true"></i> Access until <strong>{{ item.assignment_timeline.expires_at|date:"M j, Y" }}</strong></span>{% endif %}
+          </div>
+          <div class="learning-result learning-assignment-status status-{{ item.assignment_timeline.state }}">{{ item.assignment_status }}</div>
+          {% endif %}
+        </div>
+        {% if not item.assignment_timeline or item.assignment_timeline.can_access %}<a href="{% url 'courses:course_learn' item.course.slug %}" class="learning-card-action" aria-label="Open {{ item.course.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% else %}<span class="learning-card-action is-disabled" aria-label="{{ item.assignment_status }}"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>{% endif %}
       </article>
       {% endfor %}
 
       {% for item in exams %}
       <article class="dashboard-learning-card" data-learning-card data-learning-type="exam" data-learning-name="{{ item.exam.title|lower }}">
         <div class="learning-card-icon learning-card-icon-exam"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div>
-        <div class="learning-card-body"><div class="learning-card-topline"><span class="learning-card-type">Exam</span><span class="learning-source">{% if item.source == 'organization' %}Assigned{% elif item.source == 'track' %}Track{% else %}Purchased{% endif %}</span></div><h3>{{ item.exam.title }}</h3><p>{{ item.exam.question_count }} questions · {% if item.exam.duration_seconds %}{% widthratio item.exam.duration_seconds 60 1 %} min{% else %}Timed{% endif %}</p>{% if item.passed %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Passed{% if item.last_score is not None %} · {{ item.last_score }}%{% endif %}</span>{% elif item.last_score is not None %}<span class="learning-result learning-result-danger"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Last score · {{ item.last_score }}%</span>{% else %}<span class="learning-result">Not attempted</span>{% endif %}</div>
-        <a href="{% url 'quiz:exam_start' item.exam.id %}" class="learning-card-action" aria-label="Start {{ item.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        <div class="learning-card-body">
+          <div class="learning-card-topline"><span class="learning-card-type">Exam</span><span class="learning-source">{% if item.source == 'organization' %}Assigned{% elif item.source == 'track' %}Track{% else %}Purchased{% endif %}</span></div>
+          <h3>{{ item.exam.title }}</h3>
+          <p>{{ item.exam.question_count }} questions · {% if item.exam.duration_seconds %}{% widthratio item.exam.duration_seconds 60 1 %} min{% else %}Timed{% endif %}</p>
+          {% if item.passed %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Passed{% if item.last_score is not None %} · {{ item.last_score }}%{% endif %}</span>{% elif item.last_score is not None %}<span class="learning-result learning-result-danger"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Last score · {{ item.last_score }}%</span>{% else %}<span class="learning-result">Not attempted</span>{% endif %}
+          {% if item.assignment_timeline %}
+          <div class="learning-assignment-dates" aria-label="Assignment dates">
+            {% if item.assignment_timeline.starts_at %}<span class="learning-assignment-date"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> Available <strong>{{ item.assignment_timeline.starts_at|date:"M j, Y" }}</strong></span>{% endif %}
+            {% if item.assignment_timeline.due_at %}<span class="learning-assignment-date"><i class="fa-solid fa-flag" aria-hidden="true"></i> Due <strong>{{ item.assignment_timeline.due_at|date:"M j, Y" }}</strong></span>{% endif %}
+            {% if item.assignment_timeline.expires_at %}<span class="learning-assignment-date"><i class="fa-solid fa-lock" aria-hidden="true"></i> Access until <strong>{{ item.assignment_timeline.expires_at|date:"M j, Y" }}</strong></span>{% endif %}
+          </div>
+          <div class="learning-result learning-assignment-status status-{{ item.assignment_timeline.state }}">{{ item.assignment_status }}</div>
+          {% endif %}
+        </div>
+        {% if not item.assignment_timeline or item.assignment_timeline.can_access %}<a href="{% url 'quiz:exam_start' item.exam.id %}" class="learning-card-action" aria-label="Start {{ item.exam.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% else %}<span class="learning-card-action is-disabled" aria-label="{{ item.assignment_status }}"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>{% endif %}
       </article>
       {% endfor %}
 
       {% for item in tracks %}
       <article class="dashboard-learning-card" data-learning-card data-learning-type="track" data-learning-name="{{ item.track.title|lower }}">
         <div class="learning-card-icon learning-card-icon-track"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
-        <div class="learning-card-body"><div class="learning-card-topline"><span class="learning-card-type">Exam Track</span><span class="learning-source">{% if item.source == 'organization' %}Assigned{% else %}Subscribed{% endif %}</span></div><h3>{{ item.track.title }}</h3><p>{{ item.exam_count }} exams · {{ item.passed }} passed</p>{% if item.completed %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Track complete</span>{% else %}<span class="learning-result">In progress</span>{% endif %}</div>
-        <a href="{% url 'quiz:learning_track' item.track.slug %}" class="learning-card-action" aria-label="Start {{ item.track.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        <div class="learning-card-body">
+          <div class="learning-card-topline"><span class="learning-card-type">Exam Track</span><span class="learning-source">{% if item.source == 'organization' %}Assigned{% else %}Subscribed{% endif %}</span></div>
+          <h3>{{ item.track.title }}</h3>
+          <p>{{ item.exam_count }} exams · {{ item.passed }} passed</p>
+          {% if item.completed %}<span class="learning-result learning-result-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Track complete</span>{% else %}<span class="learning-result">In progress</span>{% endif %}
+          {% if item.assignment_timeline %}
+          <div class="learning-assignment-dates" aria-label="Assignment dates">
+            {% if item.assignment_timeline.starts_at %}<span class="learning-assignment-date"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> Available <strong>{{ item.assignment_timeline.starts_at|date:"M j, Y" }}</strong></span>{% endif %}
+            {% if item.assignment_timeline.due_at %}<span class="learning-assignment-date"><i class="fa-solid fa-flag" aria-hidden="true"></i> Due <strong>{{ item.assignment_timeline.due_at|date:"M j, Y" }}</strong></span>{% endif %}
+            {% if item.assignment_timeline.expires_at %}<span class="learning-assignment-date"><i class="fa-solid fa-lock" aria-hidden="true"></i> Access until <strong>{{ item.assignment_timeline.expires_at|date:"M j, Y" }}</strong></span>{% endif %}
+          </div>
+          <div class="learning-result learning-assignment-status status-{{ item.assignment_timeline.state }}">{{ item.assignment_status }}</div>
+          {% endif %}
+        </div>
+        {% if not item.assignment_timeline or item.assignment_timeline.can_access %}<a href="{% url 'quiz:learning_track' item.track.slug %}" class="learning-card-action" aria-label="Start {{ item.track.title }}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>{% else %}<span class="learning-card-action is-disabled" aria-label="{{ item.assignment_status }}"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>{% endif %}
       </article>
       {% endfor %}
     </div>
