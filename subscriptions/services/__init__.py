@@ -17,10 +17,6 @@ class AccessService(_ResourceAccessService):
     @staticmethod
     def _has_organization_assignment_access(student, resource_type, resource):
         """Return assigned organization access without evaluating payment."""
-        organization = getattr(resource, "organization", None)
-        if organization is None:
-            return None
-
         resource_field = {
             _ResourceAccessService.RESOURCE_COURSE: "course",
             _ResourceAccessService.RESOURCE_TRACK: "track",
@@ -29,8 +25,7 @@ class AccessService(_ResourceAccessService):
         if not resource_field:
             return False
 
-        now = timezone.now()
-        today = timezone.localdate(now)
+        resource_organization = getattr(resource, "organization", None)
         accesses = (
             ResourceAccess.objects
             .select_related("assignment", "organization")
@@ -38,30 +33,37 @@ class AccessService(_ResourceAccessService):
                 user=student,
                 resource_type=resource_type,
                 source=ResourceAccess.SOURCE_ORGANIZATION,
-                organization=organization,
                 is_active=True,
                 assignment__student=student,
-                assignment__organization=organization,
                 assignment__is_active=True,
                 **{resource_field: resource},
             )
             .order_by("-granted_at")
         )
 
+        # A course may be platform-created and have no organization of its
+        # own, while still being assigned by an organization. In that case
+        # the assignment/access record is the source of truth for ownership.
+        has_assignment = False
+        now = timezone.now()
+        today = timezone.localdate(now)
+
         for access in accesses:
-            if access.revoked_at or not access.organization.is_active:
+            assignment = access.assignment
+            organization = access.organization or assignment.organization
+            if organization is None or not organization.is_active:
+                continue
+            if resource_organization is not None and resource_organization != organization:
+                continue
+            if access.revoked_at:
                 continue
 
-            assignment = access.assignment
+            has_assignment = True
             starts_at = getattr(assignment, "starts_at", None)
             expires_at = getattr(assignment, "expires_at", None)
             start_date = timezone.localtime(starts_at).date() if starts_at else None
             expires_date = timezone.localtime(expires_at).date() if expires_at else None
 
-            # Organization assignment dates are calendar dates. This keeps
-            # access aligned with the dates shown to the student and avoids
-            # locking an assignment because the server is still on the prior
-            # UTC calendar day.
             if start_date and today < start_date:
                 continue
             if expires_date and today > expires_date:
@@ -69,7 +71,9 @@ class AccessService(_ResourceAccessService):
 
             return True
 
-        return False
+        if resource_organization is not None:
+            return False
+        return False if has_assignment else None
 
     @staticmethod
     def has_course_access(student, course):
