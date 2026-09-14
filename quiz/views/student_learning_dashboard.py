@@ -66,13 +66,13 @@ def _assignment_status_text(timeline):
     if not timeline:
         return None
     if timeline["state"] == "not_started" and timeline["starts_at"]:
-        return f"Available {timeline['starts_at']:%b %-d, %Y}"
+        return f"Available {timeline['starts_at']:%b} {timeline['starts_at'].day}, {timeline['starts_at']:%Y}"
     if timeline["state"] == "overdue" and timeline["due_at"]:
-        return f"Overdue · Due {timeline['due_at']:%b %-d, %Y}"
+        return f"Overdue · Due {timeline['due_at']:%b} {timeline['due_at'].day}, {timeline['due_at']:%Y}"
     if timeline["state"] == "expired" and timeline["expires_at"]:
-        return f"Access expired · {timeline['expires_at']:%b %-d, %Y}"
+        return f"Access expired · {timeline['expires_at']:%b} {timeline['expires_at'].day}, {timeline['expires_at']:%Y}"
     if timeline["due_at"]:
-        return f"Due {timeline['due_at']:%b %-d, %Y}"
+        return f"Due {timeline['due_at']:%b} {timeline['due_at'].day}, {timeline['due_at']:%Y}"
     return timeline["label"]
 
 
