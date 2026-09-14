@@ -1,7 +1,10 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
+from django.http import Http404
 
 from courses.models import Course
+from organizations.models import ResourceAccess
+from subscriptions.services import AccessService
 from subscriptions.services.plan_service import get_plan_for_course
 
 
@@ -13,19 +16,34 @@ def is_course_free(course):
 
 @login_required
 def course_preview(request, slug):
+    """Show the public preview or route assigned organization students to learning."""
     course = get_object_or_404(
-        Course.objects.filter(
-            approval_status=Course.APPROVAL_APPROVED,
-            is_published=True,
-            is_public=True,
-            organization__isnull=True,
-            category__is_active=True,
-            category__organization__isnull=True,
-            category__domain__is_active=True,
-            category__domain__organization__isnull=True,
-        ).prefetch_related("sections__lessons"),
+        Course.objects.select_related("organization").prefetch_related("sections__lessons"),
         slug=slug,
     )
+
+    # Organization-owned courses are never public marketplace products.
+    # An assigned student should enter the course directly; payment/subscription
+    # checks must not be involved in this path.
+    if course.organization_id is not None:
+        has_access = AccessService.has_course_access(request.user, course)
+        if not has_access:
+            raise Http404("Course not found.")
+        return redirect("courses:course_detail", slug=course.slug)
+
+    # Public course preview remains restricted to the public catalog contract.
+    if not (
+        course.approval_status == Course.APPROVAL_APPROVED
+        and course.is_published
+        and course.is_public
+        and course.category_id is not None
+        and course.category.is_active
+        and course.category.organization_id is None
+        and course.category.domain_id is not None
+        and course.category.domain.is_active
+        and course.category.domain.organization_id is None
+    ):
+        raise Http404("Course not found.")
 
     sections = list(course.sections.all())
     first_lesson = next(
