@@ -34,17 +34,23 @@ def _public_courses():
 
 
 def _public_exams():
+    """Return published platform exams with at least one valid category."""
     return Exam.objects.filter(
         is_published=True,
         organization__isnull=True,
-        primary_category__is_active=True,
-        primary_category__organization__isnull=True,
-        primary_category__domain__is_active=True,
-        primary_category__domain__organization__isnull=True,
-    ).select_related("primary_category", "primary_category__domain").prefetch_related(
+        categories__is_active=True,
+        categories__organization__isnull=True,
+        categories__domain__is_active=True,
+        categories__domain__organization__isnull=True,
+    ).prefetch_related(
+        Prefetch("categories", queryset=Category.objects.filter(
+            is_active=True,
+            organization__isnull=True,
+            domain__is_active=True,
+            domain__organization__isnull=True,
+        ).select_related("domain")),
         Prefetch("subscription_plans", queryset=SubscriptionPlan.objects.filter(is_active=True)),
-        "categories",
-    )
+    ).distinct()
 
 
 def _public_tracks():
@@ -53,15 +59,29 @@ def _public_tracks():
         organization__isnull=True,
         track_exams__exam__is_published=True,
         track_exams__exam__organization__isnull=True,
-        track_exams__exam__primary_category__is_active=True,
-        track_exams__exam__primary_category__organization__isnull=True,
-        track_exams__exam__primary_category__domain__is_active=True,
-        track_exams__exam__primary_category__domain__organization__isnull=True,
+        track_exams__exam__categories__is_active=True,
+        track_exams__exam__categories__organization__isnull=True,
+        track_exams__exam__categories__domain__is_active=True,
+        track_exams__exam__categories__domain__organization__isnull=True,
     ).prefetch_related(
         "track_exams__exam",
-        "track_exams__exam__primary_category__domain",
+        "track_exams__exam__categories",
+        "track_exams__exam__categories__domain",
         Prefetch("subscription_plans", queryset=SubscriptionPlan.objects.filter(is_active=True)),
     ).distinct()
+
+
+def _exam_categories(exam):
+    categories = getattr(exam, "_prefetched_objects_cache", {}).get("categories")
+    if categories is None:
+        return list(exam.categories.all())
+    return list(categories)
+
+
+def _exam_category(exam):
+    """Return a deterministic representative category for legacy primary-category semantics."""
+    categories = _exam_categories(exam)
+    return sorted(categories, key=lambda category: (category.name.lower(), category.id))[0] if categories else None
 
 
 def _track_exams(track):
@@ -83,7 +103,7 @@ def _domain_for_track(track):
         exam = membership.exam
         if not exam.is_published or exam.organization_id is not None:
             continue
-        category = exam.primary_category
+        category = _exam_category(exam)
         if category and category.domain and category.domain.is_active and category.domain.organization_id is None:
             domains.append(category.domain)
     if not domains:
@@ -99,7 +119,7 @@ def _matches_vertical(domain, catalog_vertical):
 
 def _domain_summary(domain, courses, exams, tracks):
     course_ids = [course.id for course in courses if course.category and course.category.domain_id == domain.id]
-    exam_ids = [exam.id for exam in exams if exam.primary_category and exam.primary_category.domain_id == domain.id]
+    exam_ids = [exam.id for exam in exams if (_exam_category(exam) and _exam_category(exam).domain_id == domain.id)]
     track_ids = [track.id for track in tracks if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)]
     return {"domain": domain, "course_count": len(course_ids), "exam_count": len(exam_ids), "track_count": len(track_ids), "course_ids": course_ids, "exam_ids": exam_ids, "track_ids": track_ids}
 
@@ -113,8 +133,7 @@ def _matches_query(resource, resource_type, needle):
         category = getattr(resource, "category", None)
         return bool(category and needle in category.name.lower())
     if resource_type == "exam":
-        category = getattr(resource, "primary_category", None)
-        return bool(category and needle in category.name.lower())
+        return any(needle in category.name.lower() for category in _exam_categories(resource))
     return any(needle in exam.title.lower() for exam in _track_exams(resource) if exam.is_published)
 
 
@@ -169,10 +188,7 @@ def _resource_item(resource_type, resource):
         item["pricing_label"] = "Free" if getattr(resource, "is_free", False) else "Premium"
         item["description_label"] = "Practice exam"
     elif resource_type == "track":
-        published_exams = [
-            exam for exam in _track_exams(resource)
-            if getattr(exam, "is_published", False) and getattr(exam, "organization_id", None) is None
-        ]
+        published_exams = [exam for exam in _track_exams(resource) if getattr(exam, "is_published", False) and getattr(exam, "organization_id", None) is None]
         domain = _domain_for_track(resource)
         item["domain_slug"] = domain.slug if domain else ""
         item["exam_count"] = len(published_exams)
@@ -236,7 +252,7 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
     courses = [item for item in courses if _matches_vertical(getattr(item.category, "domain", None), catalog_vertical)]
-    exams = [item for item in exams if _matches_vertical(getattr(item.primary_category, "domain", None), catalog_vertical)]
+    exams = [item for item in exams if _matches_vertical(_exam_category(item).domain if _exam_category(item) else None, catalog_vertical)]
     tracks = [item for item in tracks if _matches_vertical(_domain_for_track(item), catalog_vertical)]
     active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).select_related("content_vertical").order_by("name"))
     active_domains = [item for item in active_domains if _matches_vertical(item, catalog_vertical)]
@@ -248,12 +264,12 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
         selected_domain = None
     if selected_domain is not None:
         courses = [item for item in courses if item.category and item.category.domain_id == selected_domain.id]
-        exams = [item for item in exams if item.primary_category and item.primary_category.domain_id == selected_domain.id]
+        exams = [item for item in exams if (_exam_category(item) and _exam_category(item).domain_id == selected_domain.id)]
         tracks = [item for item in tracks if (_domain_for_track(item) and _domain_for_track(item).id == selected_domain.id)]
     if category is not None:
         category_ids = set(category.get_descendants_include_self())
         courses = [item for item in courses if item.category_id in category_ids]
-        exams = [item for item in exams if item.primary_category_id in category_ids or any(cat.id in category_ids for cat in item.categories.all())]
+        exams = [item for item in exams if any(cat.id in category_ids for cat in _exam_categories(item))]
     if resource_type not in VALID_RESOURCE_TYPES:
         resource_type = "all"
     if access not in VALID_ACCESS_FILTERS:
