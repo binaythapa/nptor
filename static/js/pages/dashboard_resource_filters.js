@@ -4,6 +4,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const cards = document.querySelectorAll("[data-dashboard-grid] [data-learning-card]");
     const empty = document.querySelector("[data-dashboard-empty]");
 
+    document.querySelectorAll("[data-dashboard-grid] .learning-source").forEach(function (badge) {
+        if (badge.textContent.trim().toLowerCase() === "assigned") {
+            badge.classList.add("learning-source-organization");
+            badge.textContent = "Assigned by Organization";
+            badge.setAttribute("title", "This resource was assigned to you by your organization.");
+        }
+    });
+
     function applyFilters() {
         const active = document.querySelector("[data-dashboard-filter].is-active")?.dataset.dashboardFilter || "all";
         const query = (search?.value || "").trim().toLowerCase();
