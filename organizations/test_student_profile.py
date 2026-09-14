@@ -108,3 +108,14 @@ class StudentProfileTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "My Profile")
         self.assertContains(response, f"/org/{self.org.slug}/student-profile/")
+
+    def test_global_profile_surfaces_organization_account(self):
+        self.client.force_login(self.student_user)
+        response = self.client.get("/quiz/profile/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Organization Accounts")
+        self.assertContains(response, self.org.name)
+        self.assertContains(response, "Student")
+        self.assertContains(response, self.student.student_id)
+        self.assertContains(response, f"/org/{self.org.slug}/student-profile/")

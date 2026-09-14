@@ -1,8 +1,11 @@
 {% extends 'layouts/student/base.html' %}
 {% block content %}
 <h1 class="title">Profile</h1>
+
 <div class="box">
-  <form method="post">{% csrf_token %}
+  <h2 class="subtitle">Personal Account</h2>
+  <form method="post">
+    {% csrf_token %}
     <div class="field">
       <label class="label">Username</label>
       <div class="control"><input class="input" name="username" value="{{ user.username }}"></div>
@@ -15,5 +18,89 @@
       <button class="button is-primary" type="submit">Save</button>
     </div>
   </form>
+</div>
+
+<div class="box">
+  <div class="level mb-4">
+    <div class="level-left">
+      <div>
+        <h2 class="subtitle mb-1">Organization Accounts</h2>
+        <p class="has-text-grey">Your organization memberships and organization-specific profile information.</p>
+      </div>
+    </div>
+    <div class="level-right">
+      <span class="tag is-info is-light">{{ memberships|length }} organization{{ memberships|length|pluralize }}</span>
+    </div>
+  </div>
+
+  {% if memberships %}
+    {% for membership in memberships %}
+      <article class="box mb-4" style="border: 1px solid #e5e7eb; box-shadow: none;">
+        <div class="level mb-3">
+          <div class="level-left">
+            <div>
+              <h3 class="title is-5 mb-1">{{ membership.organization.name }}</h3>
+              <p class="has-text-grey is-size-7">{{ membership.organization.get_org_type_display }}</p>
+            </div>
+          </div>
+          <div class="level-right">
+            {% if membership.is_active and membership.organization.is_active %}
+              <span class="tag is-success is-light">Active</span>
+            {% else %}
+              <span class="tag is-light">Inactive</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="columns is-multiline">
+          <div class="column is-half">
+            <p class="heading">Organization Role</p>
+            <p>{{ membership.get_role_display }}</p>
+          </div>
+          <div class="column is-half">
+            <p class="heading">Member Since</p>
+            <p>{{ membership.joined_at|date:"M d, Y" }}</p>
+          </div>
+        </div>
+
+        {% if membership.student_profile %}
+          <hr>
+          <h4 class="title is-6">Student Profile</h4>
+          <div class="columns is-multiline">
+            <div class="column is-half">
+              <p class="heading">Student ID</p>
+              <p>{{ membership.student_profile.student_id|default:"Not set" }}</p>
+            </div>
+            <div class="column is-half">
+              <p class="heading">Admission No.</p>
+              <p>{{ membership.student_profile.admission_no|default:"Not set" }}</p>
+            </div>
+            <div class="column is-half">
+              <p class="heading">Profile Status</p>
+              <p>{{ membership.student_profile.get_status_display }}</p>
+            </div>
+            <div class="column is-half">
+              <p class="heading">Joined Date</p>
+              <p>{{ membership.student_profile.joined_date|date:"M d, Y"|default:"Not set" }}</p>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if membership.is_active and membership.organization.is_active %}
+          <div class="buttons mt-3">
+            {% if membership.role == 'student' and membership.student_profile %}
+              <a class="button is-link is-light" href="{% url 'organizations_public:student_profile' slug=membership.organization.slug %}">View Student Profile</a>
+            {% else %}
+              <a class="button is-link is-light" href="{% url 'organizations_public:workspace' slug=membership.organization.slug %}">Open Organization Workspace</a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </article>
+    {% endfor %}
+  {% else %}
+    <div class="notification is-light">
+      You are not currently a member of any organization.
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

@@ -51,6 +51,7 @@ from quiz.services.grading import grade_exam
 from quiz.services.pricing import apply_coupon
 
 from quiz.utils import get_leaf_category_name
+from organizations.models import OrganizationMember, OrganizationStudent
 
 # Re-assign User in case a custom user model is used (overrides the imported User if needed)
 User = get_user_model()
@@ -175,7 +176,6 @@ class CustomerRegisterView(CreateView):
 
 
 
-
 def register(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
@@ -195,7 +195,6 @@ def register(request):
 
 
 
-
 # -------------------------
 # Profile / users
 # -------------------------
@@ -207,8 +206,30 @@ def profile(request):
             request.user.username = new_username
             request.user.save()
             messages.success(request, 'Profile updated.')
-    return render(request, 'quiz/student/profile.html', {'user': request.user})
 
+    memberships = list(
+        OrganizationMember.objects
+        .filter(user=request.user)
+        .select_related("organization")
+        .order_by("organization__name")
+    )
+    student_profiles = {
+        student.organization_id: student
+        for student in OrganizationStudent.objects
+        .filter(user=request.user)
+        .select_related("organization")
+    }
+    for membership in memberships:
+        membership.student_profile = student_profiles.get(membership.organization_id)
+
+    return render(
+        request,
+        'quiz/student/profile.html',
+        {
+            'user': request.user,
+            'memberships': memberships,
+        },
+    )
 
 
 
