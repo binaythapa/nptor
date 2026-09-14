@@ -55,6 +55,11 @@
       <li><a href="{% url 'organizations_admin:students' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Students</span></a></li>
     </ul>
 
+    <p class="menu-label">Academic</p>
+    <ul class="menu-list">
+      <li><a href="{% url 'organizations_admin:academic' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-school"></i></span><span class="menu-text">Academic Management</span></a></li>
+    </ul>
+
     <p class="menu-label">Learning</p>
     <ul class="menu-list">
       {% if request.organization_member.is_administrator %}
