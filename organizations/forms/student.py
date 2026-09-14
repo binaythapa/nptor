@@ -78,6 +78,22 @@ class OrganizationStudentAdminProfileForm(OrganizationStudentProfileForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field_name in (
+            "first_name",
+            "last_name",
+            "email",
+            "contact_phone",
+            "student_id",
+            "admission_no",
+            "joined_date",
+            "date_of_birth",
+            "guardian_name",
+            "guardian_phone",
+        ):
+            self.fields[field_name].widget.attrs["class"] = "input"
+        self.fields["status"].widget.attrs["class"] = "bulma-select"
+        self.fields["address"].widget.attrs["class"] = "textarea"
+
         if self.instance and self.instance.pk:
             self.fields["student_id"].initial = self.instance.student_id
             self.fields["admission_no"].initial = self.instance.admission_no
