@@ -8,30 +8,54 @@
   .question-form .category-checkboxes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: .75rem;
+    gap: .5rem .75rem;
     padding: .75rem;
     border: 1px solid #dbdbdb;
     border-radius: 6px;
     background: #fafafa;
   }
+
   .question-form .category-checkboxes > div {
     margin: 0;
   }
+
   .question-form .category-checkboxes label {
     display: flex;
     align-items: center;
-    gap: .5rem;
-    padding: .55rem .65rem;
+    gap: .55rem;
+    min-height: 2.25rem;
+    margin: 0;
+    padding: .45rem .6rem;
     border-radius: 5px;
     cursor: pointer;
+    font-weight: 400;
   }
+
   .question-form .category-checkboxes label:hover {
     background: #f0f2f5;
   }
+
+  /* Override Bulma's generic input rules for Django checkbox widgets. */
   .question-form .category-checkboxes input[type="checkbox"] {
-    width: auto;
-    height: auto;
-    margin: 0;
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+    width: 1rem !important;
+    min-width: 1rem !important;
+    max-width: 1rem !important;
+    height: 1rem !important;
+    min-height: 1rem !important;
+    max-height: 1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 2px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    flex: 0 0 1rem;
+  }
+
+  .question-form .category-checkboxes input[type="checkbox"]:focus {
+    box-shadow: none !important;
   }
 </style>
 {% endblock %}
@@ -68,7 +92,7 @@
             {% elif field.name == "text" or field.name == "explanation" %}
               <div class="control">{{ field }}</div>
               {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
-            {% elif field.field.widget.input_type == "select" or field.field.widget.allow_multiple_selected %}
+            {% elif field.name == "primary_category" or field.name == "difficulty" or field.name == "question_type" %}
               <div class="select is-fullwidth">
                 {{ field }}
               </div>
