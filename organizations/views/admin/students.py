@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from organizations.forms.student import OrganizationStudentAdminProfileForm
 from organizations.permissions import org_admin_required, org_teacher_required
 from organizations.models import OrganizationStudent
 from organizations.models.access import ResourceAccess
@@ -48,7 +49,7 @@ def org_student_detail(request, slug, student_id):
     org = request.organization
 
     student = get_object_or_404(
-        OrganizationStudent.objects.select_related("user"),
+        OrganizationStudent.objects.select_related("user", "user__profile"),
         id=student_id,
         organization=org,
         status=OrganizationStudent.STATUS_ACTIVE,
@@ -65,7 +66,51 @@ def org_student_detail(request, slug, student_id):
     return render(
         request,
         "organizations/admin/students/detail.html",
-        {"org": org, "student": student},
+        {
+            "org": org,
+            "student": student,
+            "profile": getattr(student.user, "profile", None),
+        },
+    )
+
+
+@org_admin_required
+def org_student_detail_edit(request, slug, student_id):
+    """Allow organization administrators to edit organization-scoped student data."""
+    org = request.organization
+
+    student = get_object_or_404(
+        OrganizationStudent.objects.select_related("user"),
+        id=student_id,
+        organization=org,
+        status=OrganizationStudent.STATUS_ACTIVE,
+    )
+
+    get_object_or_404(
+        OrganizationMember,
+        organization=org,
+        user=student.user,
+        role=OrganizationRole.STUDENT,
+        is_active=True,
+    )
+
+    if request.method == "POST":
+        form = OrganizationStudentAdminProfileForm(request.POST, instance=student)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Student profile updated successfully.")
+            return redirect(
+                "organizations_admin:student_detail",
+                slug=slug,
+                student_id=student.id,
+            )
+    else:
+        form = OrganizationStudentAdminProfileForm(instance=student)
+
+    return render(
+        request,
+        "organizations/admin/students/edit.html",
+        {"org": org, "student": student, "form": form},
     )
 
 
