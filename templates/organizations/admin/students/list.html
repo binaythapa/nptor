@@ -25,10 +25,8 @@
       <tr>
         <th>Name</th>
         <th>Email</th>
-        <th>Student ID</th>
-        <th>Admission No.</th>
         <th>Role</th>
-        <th>Profile</th>
+        <th>Student Profile</th>
         <th class="has-text-right">Actions</th>
       </tr>
     </thead>
@@ -47,20 +45,6 @@
         </td>
         <td>{{ m.user.email }}</td>
         <td>
-          {% if m.role == "student" and m.student_profile_id %}
-            {{ m.student_profile.student_id|default:"—" }}
-          {% else %}
-            —
-          {% endif %}
-        </td>
-        <td>
-          {% if m.role == "student" and m.student_profile_id %}
-            {{ m.student_profile.admission_no|default:"—" }}
-          {% else %}
-            —
-          {% endif %}
-        </td>
-        <td>
           {% if request.organization_member.role == "staff" %}
             {{ m.get_role_display }}
           {% else %}
@@ -78,9 +62,9 @@
         </td>
         <td>
           {% if m.role == "student" and m.student_profile_id %}
-            <span class="tag is-success is-light">Enabled</span>
+            <span class="tag is-success is-light">Profile enabled</span>
           {% elif m.role == "student" %}
-            <span class="tag is-warning is-light">Pending</span>
+            <span class="tag is-warning is-light">Profile pending</span>
           {% else %}
             <span class="has-text-grey-light">—</span>
           {% endif %}
@@ -95,7 +79,7 @@
               </a>
               {% if request.organization_member.is_administrator %}
                 <a class="button is-primary is-light"
-                   href="{% url 'organizations_public:student_profile_admin_edit' slug=org_slug student_id=m.student_profile_id %}">
+                   href="{% url 'organizations_admin:student_detail_edit' slug=org_slug student_id=m.student_profile_id %}">
                   <span class="icon"><i class="fas fa-pen"></i></span>
                   <span>Edit</span>
                 </a>
@@ -117,7 +101,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="7" class="has-text-centered has-text-grey py-6">
+        <td colspan="5" class="has-text-centered has-text-grey py-6">
           No students found.
         </td>
       </tr>
