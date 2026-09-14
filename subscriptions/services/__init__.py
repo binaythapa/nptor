@@ -1,4 +1,3 @@
-from django.db.models import Q
 from django.utils import timezone
 
 from .subscription_service import SubscriptionService
@@ -30,7 +29,9 @@ class AccessService(_ResourceAccessService):
         if not resource_field:
             return False
 
-        access = (
+        now = timezone.now()
+        today = timezone.localdate(now)
+        accesses = (
             ResourceAccess.objects
             .select_related("assignment", "organization")
             .filter(
@@ -44,18 +45,31 @@ class AccessService(_ResourceAccessService):
                 assignment__is_active=True,
                 **{resource_field: resource},
             )
-            .filter(
-                Q(assignment__starts_at__isnull=True)
-                | Q(assignment__starts_at__lte=timezone.now())
-            )
             .order_by("-granted_at")
-            .first()
         )
 
-        if not access:
-            return False
+        for access in accesses:
+            if access.revoked_at or not access.organization.is_active:
+                continue
 
-        return access.is_valid()
+            assignment = access.assignment
+            starts_at = getattr(assignment, "starts_at", None)
+            expires_at = getattr(assignment, "expires_at", None)
+            start_date = timezone.localtime(starts_at).date() if starts_at else None
+            expires_date = timezone.localtime(expires_at).date() if expires_at else None
+
+            # Organization assignment dates are calendar dates. This keeps
+            # access aligned with the dates shown to the student and avoids
+            # locking an assignment because the server is still on the prior
+            # UTC calendar day.
+            if start_date and today < start_date:
+                continue
+            if expires_date and today > expires_date:
+                continue
+
+            return True
+
+        return False
 
     @staticmethod
     def has_course_access(student, course):
