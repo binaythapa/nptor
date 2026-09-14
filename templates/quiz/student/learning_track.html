@@ -55,7 +55,7 @@
           <div class="track-exam-body">
             <div class="track-exam-topline"><span class="track-exam-type">EXAM {{ item.index }}</span>{% if item.is_completed %}<span class="track-exam-status completed">Completed</span>{% elif not item.is_unlocked %}<span class="track-exam-status locked">Locked</span>{% else %}<span class="track-exam-status ready">Ready</span>{% endif %}</div>
             <h3>{{ item.exam.title }}</h3>
-            {% if item.exam.primary_category %}<p class="track-exam-category">{{ item.exam.primary_category.name }}</p>{% endif %}
+            {% with category=item.exam.categories.all|first %}{% if category %}<p class="track-exam-category">{{ category.name }}</p>{% endif %}{% endwith %}
             <div class="track-exam-metrics">
               <span>{{ item.question_count }} questions</span><span>{{ item.duration_minutes }} min</span><span>Pass {{ item.passing_score|floatformat:0 }}%</span>
             </div>
