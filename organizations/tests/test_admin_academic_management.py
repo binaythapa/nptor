@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from organizations.models import AcademicYear, ClassSection, Organization, OrganizationClass, OrganizationMember
 from organizations.models.role import OrganizationRole
+from quiz.models import Category, Question
 
 
 class AdminAcademicManagementTests(TestCase):
@@ -45,3 +46,24 @@ class AdminAcademicManagementTests(TestCase):
         self.assertRedirects(response, reverse("organizations_admin:academic", kwargs={"slug": self.org.slug}))
         self.section.refresh_from_db()
         self.assertFalse(self.section.is_active)
+
+    def test_question_edit_renders_selects_and_plain_category_checkboxes(self):
+        category = Category.objects.create(organization=self.org, name="SQL", slug="sql")
+        question = Question.objects.create(
+            organization=self.org,
+            primary_category=category,
+            question_type=Question.SINGLE,
+            difficulty=Question.MEDIUM,
+            text="What is SQL?",
+            created_by=self.user,
+            updated_by=self.user,
+        )
+        response = self.client.get(
+            reverse("organizations_admin:question_edit", kwargs={"slug": self.org.slug, "pk": question.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<select name="primary_category"', html=False)
+        self.assertContains(response, '<select name="difficulty"', html=False)
+        self.assertContains(response, '<select name="question_type"', html=False)
+        self.assertContains(response, 'type="checkbox"', html=False)
+        self.assertNotContains(response, 'type="checkbox" class="input"', html=False)
