@@ -30,23 +30,15 @@ def _valid_accesses(queryset):
 
 def _dashboard_accesses(user):
     """Return active learning access, including scheduled org assignments."""
-    accesses = ResourceAccess.objects.filter(
-        user=user,
-        is_active=True,
-    ).select_related(
+    accesses = ResourceAccess.objects.filter(user=user, is_active=True).select_related(
         "course", "track", "exam", "subscription", "organization", "assignment"
     ).order_by("-granted_at")
-
     result = []
     for access in accesses:
         assignment = access.assignment if access.source == ResourceAccess.SOURCE_ORGANIZATION else None
         if assignment is not None:
-            if not assignment.is_active or assignment.status in {
-                "revoked", "cancelled"
-            }:
+            if not assignment.is_active or assignment.status in {"revoked", "cancelled"}:
                 continue
-            # Keep scheduled and recently expired assignments visible so the
-            # dashboard can explain when access starts or ended.
             result.append(access)
             continue
         if access.is_valid():
@@ -62,52 +54,33 @@ def _assignment_timeline(assignment, now=None):
     expires_at = getattr(assignment, "expires_at", None)
 
     if expires_at and expires_at <= now:
-        return {
-            "state": "expired",
-            "label": "Access expired",
-            "can_access": False,
-            "starts_at": starts_at,
-            "due_at": due_at,
-            "expires_at": expires_at,
-        }
+        return {"state": "expired", "label": "Access expired", "can_access": False, "starts_at": starts_at, "due_at": due_at, "expires_at": expires_at}
     if starts_at and starts_at > now:
-        return {
-            "state": "not_started",
-            "label": "Available soon",
-            "can_access": False,
-            "starts_at": starts_at,
-            "due_at": due_at,
-            "expires_at": expires_at,
-        }
+        return {"state": "not_started", "label": "Available soon", "can_access": False, "starts_at": starts_at, "due_at": due_at, "expires_at": expires_at}
     if due_at and due_at < now:
-        return {
-            "state": "overdue",
-            "label": "Overdue",
-            "can_access": True,
-            "starts_at": starts_at,
-            "due_at": due_at,
-            "expires_at": expires_at,
-        }
-    return {
-        "state": "active",
-        "label": "In progress",
-        "can_access": True,
-        "starts_at": starts_at,
-        "due_at": due_at,
-        "expires_at": expires_at,
-    }
+        return {"state": "overdue", "label": "Overdue", "can_access": True, "starts_at": starts_at, "due_at": due_at, "expires_at": expires_at}
+    return {"state": "active", "label": "In progress", "can_access": True, "starts_at": starts_at, "due_at": due_at, "expires_at": expires_at}
+
+
+def _assignment_status_text(timeline):
+    if not timeline:
+        return None
+    if timeline["state"] == "not_started" and timeline["starts_at"]:
+        return f"Available {timeline['starts_at']:%b %-d, %Y}"
+    if timeline["state"] == "overdue" and timeline["due_at"]:
+        return f"Overdue · Due {timeline['due_at']:%b %-d, %Y}"
+    if timeline["state"] == "expired" and timeline["expires_at"]:
+        return f"Access expired · {timeline['expires_at']:%b %-d, %Y}"
+    if timeline["due_at"]:
+        return f"Due {timeline['due_at']:%b %-d, %Y}"
+    return timeline["label"]
 
 
 def _shortlist_items(user):
-    rows = list(
-        LearningShortlist.objects
-        .filter(user=user)
-        .select_related("course", "course__category", "track", "exam")
-    )
+    rows = list(LearningShortlist.objects.filter(user=user).select_related("course", "course__category", "track", "exam"))
     valid_courses = {course.id: course for course in _public_courses().filter(id__in=[row.course_id for row in rows if row.course_id])}
     valid_tracks = {track.id: track for track in _public_tracks().filter(id__in=[row.track_id for row in rows if row.track_id])}
     valid_exams = {exam.id: exam for exam in _public_exams().filter(id__in=[row.exam_id for row in rows if row.exam_id])}
-
     items = []
     for row in rows:
         resource = None
@@ -127,19 +100,10 @@ def _shortlist_items(user):
 @require_POST
 def remove_learning_activity(request, resource_type, resource_id):
     """Hide one learning resource from this student's Learning Activity list."""
-    if resource_type not in {
-        LearningActivityDismissal.RESOURCE_COURSE,
-        LearningActivityDismissal.RESOURCE_EXAM,
-        LearningActivityDismissal.RESOURCE_TRACK,
-    }:
+    if resource_type not in {LearningActivityDismissal.RESOURCE_COURSE, LearningActivityDismissal.RESOURCE_EXAM, LearningActivityDismissal.RESOURCE_TRACK}:
         messages.error(request, "Invalid learning activity resource.")
         return redirect("quiz:student_dashboard")
-
-    LearningActivityDismissal.objects.get_or_create(
-        user=request.user,
-        resource_type=resource_type,
-        resource_id=resource_id,
-    )
+    LearningActivityDismissal.objects.get_or_create(user=request.user, resource_type=resource_type, resource_id=resource_id)
     messages.success(request, "The selected item was removed from Learning Activity.")
     return redirect("quiz:student_dashboard")
 
@@ -147,26 +111,11 @@ def remove_learning_activity(request, resource_type, resource_id):
 @login_required
 def student_dashboard(request):
     user = request.user
-
-    submitted_attempts = list(
-        UserExam.objects
-        .filter(user=user, submitted_at__isnull=False)
-        .select_related("exam")
-        .order_by("-submitted_at")
-    )
-    active_attempt = (
-        UserExam.objects
-        .filter(user=user, submitted_at__isnull=True)
-        .select_related("exam")
-        .order_by("-started_at")
-        .first()
-    )
-
+    submitted_attempts = list(UserExam.objects.filter(user=user, submitted_at__isnull=False).select_related("exam").order_by("-submitted_at"))
+    active_attempt = UserExam.objects.filter(user=user, submitted_at__isnull=True).select_related("exam").order_by("-started_at").first()
     accesses = _dashboard_accesses(user)
 
-    course_access = {}
-    track_access = {}
-    exam_access = {}
+    course_access, track_access, exam_access = {}, {}, {}
     for access in accesses:
         if access.resource_type == ResourceAccess.RESOURCE_COURSE and access.course_id:
             course_access.setdefault(access.course_id, access)
@@ -180,29 +129,13 @@ def student_dashboard(request):
             course_access[subscription.course_id] = None
 
     course_ids = list(course_access)
-    courses = (
-        Course.objects
-        .filter(id__in=course_ids, is_published=True)
-        .annotate(total_lessons=Count("sections__lessons", distinct=True))
-        .order_by("title")
-    )
-
+    courses = Course.objects.filter(id__in=course_ids, is_published=True).annotate(total_lessons=Count("sections__lessons", distinct=True)).order_by("title")
     completed_by_course = defaultdict(int)
     last_activity_by_course = {}
     if course_ids:
-        completed_rows = (
-            LessonProgress.objects
-            .filter(user=user, completed=True, lesson__section__course_id__in=course_ids)
-            .values("lesson__section__course_id")
-            .annotate(total=Count("id"))
-        )
+        completed_rows = LessonProgress.objects.filter(user=user, completed=True, lesson__section__course_id__in=course_ids).values("lesson__section__course_id").annotate(total=Count("id"))
         completed_by_course.update({row["lesson__section__course_id"]: row["total"] for row in completed_rows})
-        last_activity_rows = (
-            LessonProgress.objects
-            .filter(user=user, lesson__section__course_id__in=course_ids)
-            .values("lesson__section__course_id")
-            .annotate(last_activity=Max("completed_at"))
-        )
+        last_activity_rows = LessonProgress.objects.filter(user=user, lesson__section__course_id__in=course_ids).values("lesson__section__course_id").annotate(last_activity=Max("completed_at"))
         last_activity_by_course.update({row["lesson__section__course_id"]: row["last_activity"] for row in last_activity_rows})
 
     courses_data = []
@@ -212,25 +145,12 @@ def student_dashboard(request):
         progress = min(100, int((completed / total) * 100)) if total else 0
         access = course_access[course.id]
         timeline = _assignment_timeline(access.assignment) if access and access.assignment_id else None
-        courses_data.append({
-            "course": course,
-            "completed": completed,
-            "total": total,
-            "progress": progress,
-            "source": access.source if access else "individual",
-            "assignment_timeline": timeline,
-            "last_activity": last_activity_by_course.get(course.id) or course.created_at,
-        })
+        courses_data.append({"course": course, "completed": completed, "total": total, "progress": progress, "source": access.source if access else "individual", "assignment_timeline": timeline, "assignment_status": _assignment_status_text(timeline), "last_activity": last_activity_by_course.get(course.id) or course.created_at})
 
     tracks = ExamTrack.objects.filter(id__in=list(track_access), is_active=True).order_by("title")
     track_exams = defaultdict(list)
     if tracks:
-        for membership in (
-            TrackExam.objects
-            .filter(track_id__in=list(track_access), exam__is_published=True)
-            .select_related("track", "exam")
-            .order_by("track_id", "exam__level", "exam_id")
-        ):
+        for membership in TrackExam.objects.filter(track_id__in=list(track_access), exam__is_published=True).select_related("track", "exam").order_by("track_id", "exam__level", "exam_id"):
             track_exams[membership.track_id].append(membership.exam)
 
     attempts_by_exam = defaultdict(list)
@@ -244,15 +164,7 @@ def student_dashboard(request):
         passed = sum(1 for exam in exams if any(attempt.passed is True for attempt in attempts_by_exam.get(exam.id, [])))
         access = track_access[track.id]
         timeline = _assignment_timeline(access.assignment) if access.assignment_id else None
-        tracks_data.append({
-            "track": track,
-            "exam_count": len(exams),
-            "passed": passed,
-            "completed": passed == len(exams) and bool(exams),
-            "source": access.source,
-            "assignment_timeline": timeline,
-            "last_activity": max((attempt.submitted_at for attempt in track_attempts if attempt.submitted_at), default=track.created_at),
-        })
+        tracks_data.append({"track": track, "exam_count": len(exams), "passed": passed, "completed": passed == len(exams) and bool(exams), "source": access.source, "assignment_timeline": timeline, "assignment_status": _assignment_status_text(timeline), "last_activity": max((attempt.submitted_at for attempt in track_attempts if attempt.submitted_at), default=track.created_at)})
 
     accessed_exams = Exam.objects.filter(id__in=list(exam_access), is_published=True).select_related("organization").order_by("title")
     exams_data = []
@@ -261,57 +173,25 @@ def student_dashboard(request):
         last = attempts[0] if attempts else None
         access = exam_access[exam.id]
         timeline = _assignment_timeline(access.assignment) if access.assignment_id else None
-        exams_data.append({
-            "exam": exam,
-            "attempts": len(attempts),
-            "last_score": last.score if last else None,
-            "passed": any(attempt.passed is True for attempt in attempts),
-            "source": access.source,
-            "assignment_timeline": timeline,
-        })
+        exams_data.append({"exam": exam, "attempts": len(attempts), "last_score": last.score if last else None, "passed": any(attempt.passed is True for attempt in attempts), "source": access.source, "assignment_timeline": timeline, "assignment_status": _assignment_status_text(timeline)})
 
     exams_data.sort(key=lambda item: item["exam"].title.lower())
     shortlist_items = _shortlist_items(user)
-
-    dismissed = set(
-        LearningActivityDismissal.objects
-        .filter(user=user)
-        .values_list("resource_type", "resource_id")
-    )
+    dismissed = set(LearningActivityDismissal.objects.filter(user=user).values_list("resource_type", "resource_id"))
 
     learning_activity = []
     for item in courses_data:
         if (LearningActivityDismissal.RESOURCE_COURSE, item["course"].id) in dismissed:
             continue
-        learning_activity.append({
-            "activity_type": "course",
-            "resource": item["course"],
-            "activity_date": item["last_activity"],
-            "progress": item["progress"],
-            "status": "Completed" if item["progress"] >= 100 else ("In Progress" if item["progress"] else "Not Started"),
-        })
+        learning_activity.append({"activity_type": "course", "resource": item["course"], "activity_date": item["last_activity"], "progress": item["progress"], "status": item["assignment_status"] or ("Completed" if item["progress"] >= 100 else ("In Progress" if item["progress"] else "Not Started"))})
     for attempt in submitted_attempts:
         if (LearningActivityDismissal.RESOURCE_EXAM, attempt.exam_id) in dismissed:
             continue
-        learning_activity.append({
-            "activity_type": "exam",
-            "resource": attempt.exam,
-            "activity_date": attempt.submitted_at,
-            "progress": attempt.score,
-            "status": "Passed" if attempt.passed else "Failed",
-            "attempt": attempt,
-        })
+        learning_activity.append({"activity_type": "exam", "resource": attempt.exam, "activity_date": attempt.submitted_at, "progress": attempt.score, "status": "Passed" if attempt.passed else "Failed", "attempt": attempt})
     for item in tracks_data:
         if (LearningActivityDismissal.RESOURCE_TRACK, item["track"].id) in dismissed:
             continue
-        learning_activity.append({
-            "activity_type": "track",
-            "resource": item["track"],
-            "activity_date": item["last_activity"],
-            "progress": item["passed"],
-            "total": item["exam_count"],
-            "status": "Completed" if item["completed"] else "In Progress",
-        })
+        learning_activity.append({"activity_type": "track", "resource": item["track"], "activity_date": item["last_activity"], "progress": item["passed"], "total": item["exam_count"], "status": item["assignment_status"] or ("Completed" if item["completed"] else "In Progress")})
 
     learning_activity.sort(key=lambda item: item["activity_date"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
     activity_search = request.GET.get("activity_search", "").strip()
@@ -321,27 +201,22 @@ def student_dashboard(request):
     if activity_search:
         query = activity_search.casefold()
         learning_activity = [item for item in learning_activity if query in item["resource"].title.casefold()]
-
     learning_activity_page = Paginator(learning_activity, 5).get_page(request.GET.get("activity_page", 1))
 
-    return render(
-        request,
-        "quiz/student/student_dashboard.html",
-        {
-            "active_attempt": active_attempt,
-            "submitted_attempts": submitted_attempts,
-            "total_attempts": len(submitted_attempts),
-            "passed_count": sum(1 for attempt in submitted_attempts if attempt.passed is True),
-            "failed_count": sum(1 for attempt in submitted_attempts if attempt.passed is False),
-            "learning_activity_page": learning_activity_page,
-            "activity_search": activity_search,
-            "activity_type": activity_type,
-            "courses": courses_data,
-            "tracks": tracks_data,
-            "exams": exams_data,
-            "shortlist_items": shortlist_items,
-            "shortlist_count": len(shortlist_items),
-            "learning_count": len(courses_data) + len(tracks_data) + len(exams_data),
-            "generated_at": timezone.now(),
-        },
-    )
+    return render(request, "quiz/student/student_dashboard.html", {
+        "active_attempt": active_attempt,
+        "submitted_attempts": submitted_attempts,
+        "total_attempts": len(submitted_attempts),
+        "passed_count": sum(1 for attempt in submitted_attempts if attempt.passed is True),
+        "failed_count": sum(1 for attempt in submitted_attempts if attempt.passed is False),
+        "learning_activity_page": learning_activity_page,
+        "activity_search": activity_search,
+        "activity_type": activity_type,
+        "courses": courses_data,
+        "tracks": tracks_data,
+        "exams": exams_data,
+        "shortlist_items": shortlist_items,
+        "shortlist_count": len(shortlist_items),
+        "learning_count": len(courses_data) + len(tracks_data) + len(exams_data),
+        "generated_at": timezone.now(),
+    })
