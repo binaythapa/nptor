@@ -42,6 +42,33 @@ def org_students(request, slug):
     )
 
 
+@org_admin_required
+def org_student_detail(request, slug, student_id):
+    """Render an organization-admin-only view of one student's profile."""
+    org = request.organization
+
+    student = get_object_or_404(
+        OrganizationStudent.objects.select_related("user"),
+        id=student_id,
+        organization=org,
+        status=OrganizationStudent.STATUS_ACTIVE,
+    )
+
+    get_object_or_404(
+        OrganizationMember,
+        organization=org,
+        user=student.user,
+        role=OrganizationRole.STUDENT,
+        is_active=True,
+    )
+
+    return render(
+        request,
+        "organizations/admin/students/detail.html",
+        {"org": org, "student": student},
+    )
+
+
 @org_teacher_required
 def org_student_add(request, slug):
     org = request.organization
