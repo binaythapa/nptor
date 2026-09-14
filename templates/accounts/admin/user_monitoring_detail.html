@@ -3,6 +3,65 @@
 {% block title %}User 360 – Admin{% endblock %}
 
 {% block content %}
+<style>
+    .user360-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    .user360-meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+        padding: 1.25rem;
+        border-top: 1px solid #edf0f5;
+    }
+    .user360-meta-item {
+        min-width: 0;
+    }
+    .user360-meta-label {
+        display: block;
+        margin-bottom: .35rem;
+        color: #667085;
+        font-size: .75rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+    .user360-meta-value {
+        display: block;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+        line-height: 1.45;
+    }
+    .user360-table {
+        min-width: 760px;
+    }
+    .user360-table th {
+        white-space: nowrap;
+    }
+    .user360-table td {
+        vertical-align: middle;
+    }
+    .user360-actions {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+    @media (max-width: 1100px) {
+        .user360-summary,
+        .user360-meta {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 640px) {
+        .user360-summary,
+        .user360-meta {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
 <div class="admin-page-header">
     <div>
         <p><a href="{% url 'accounts:user_monitoring' %}">← Back to User Management</a></p>
@@ -14,7 +73,7 @@
     </div>
 </div>
 
-<div class="admin-kpi-grid admin-kpi-grid-4">
+<div class="admin-kpi-grid admin-kpi-grid-4 user360-summary">
     <div class="admin-kpi-card"><span class="admin-kpi-label">Organizations</span><strong class="admin-kpi-value">{{ memberships|length }}</strong></div>
     <div class="admin-kpi-card"><span class="admin-kpi-label">Active Subscriptions</span><strong class="admin-kpi-value">{{ active_subscription_count }}</strong></div>
     <div class="admin-kpi-card"><span class="admin-kpi-label">Exam Attempts</span><strong class="admin-kpi-value">{{ attempt_stats.total }}</strong></div>
@@ -33,11 +92,11 @@
             {% else %}<span class="admin-badge admin-badge-neutral">Platform User</span>{% endif %}
         </div>
     </div>
-    <div class="admin-kpi-grid admin-kpi-grid-4">
-        <div><span class="admin-kpi-label">Username</span><strong>{{ managed_user.username }}</strong></div>
-        <div><span class="admin-kpi-label">Last Login</span><strong>{% if managed_user.last_login %}{{ managed_user.last_login|date:"Y-m-d H:i" }}{% else %}Never{% endif %}</strong></div>
-        <div><span class="admin-kpi-label">Passed Attempts</span><strong>{{ attempt_stats.passed }}</strong></div>
-        <div><span class="admin-kpi-label">Last Attempt</span><strong>{% if attempt_stats.last %}{{ attempt_stats.last|date:"Y-m-d H:i" }}{% else %}Never{% endif %}</strong></div>
+    <div class="user360-meta">
+        <div class="user360-meta-item"><span class="user360-meta-label">Username</span><span class="user360-meta-value">{{ managed_user.username }}</span></div>
+        <div class="user360-meta-item"><span class="user360-meta-label">Last Login</span><span class="user360-meta-value">{% if managed_user.last_login %}{{ managed_user.last_login|date:"Y-m-d H:i" }}{% else %}Never{% endif %}</span></div>
+        <div class="user360-meta-item"><span class="user360-meta-label">Passed Attempts</span><span class="user360-meta-value">{{ attempt_stats.passed }}</span></div>
+        <div class="user360-meta-item"><span class="user360-meta-label">Last Attempt</span><span class="user360-meta-value">{% if attempt_stats.last %}{{ attempt_stats.last|date:"Y-m-d H:i" }}{% else %}Never{% endif %}</span></div>
     </div>
 </div>
 
@@ -46,7 +105,7 @@
         <div><h2>Organization Memberships</h2><p>The user's organization-level identity and access role.</p></div>
     </div>
     <div class="admin-table-scroll">
-        <table class="table is-fullwidth admin-table">
+        <table class="table is-fullwidth admin-table user360-table">
             <thead><tr><th>Organization</th><th>Type</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
             <tbody>
             {% for membership in memberships %}
@@ -68,7 +127,7 @@
         <div><h2>Subscriptions</h2><p>Direct subscriptions and organization-provided subscription access.</p></div>
     </div>
     <div class="admin-table-scroll">
-        <table class="table is-fullwidth admin-table">
+        <table class="table is-fullwidth admin-table user360-table">
             <thead><tr><th>Owner / Source</th><th>Plan</th><th>Status</th><th>Billing</th><th>Period</th><th>Payment</th></tr></thead>
             <tbody>
             {% for subscription in direct_subscriptions %}
@@ -103,15 +162,14 @@
         <div><h2>Current Entitlements</h2><p>Resources currently available through active direct or organization subscriptions.</p></div>
     </div>
     <div class="admin-table-scroll">
-        <table class="table is-fullwidth admin-table">
+        <table class="table is-fullwidth admin-table user360-table">
             <thead><tr><th>Source</th><th>Resource Type</th><th>Resource</th><th>Status</th></tr></thead>
             <tbody>
             {% for subscription in direct_subscriptions %}
                 {% for entitlement in subscription.loaded_entitlements %}
                     {% if subscription in valid_direct_subscriptions and entitlement.is_active %}
                     <tr>
-                        <td>Direct User</td>
-                        <td>{{ entitlement.get_resource_type_display }}</td>
+                        <td>Direct User</td><td>{{ entitlement.get_resource_type_display }}</td>
                         <td>{% if entitlement.course %}{{ entitlement.course }}{% elif entitlement.track %}{{ entitlement.track }}{% elif entitlement.exam %}{{ entitlement.exam }}{% else %}—{% endif %}</td>
                         <td><span class="admin-badge admin-badge-green">Active</span></td>
                     </tr>
@@ -122,8 +180,7 @@
                 {% for entitlement in subscription.loaded_entitlements %}
                     {% if subscription in valid_organization_subscriptions and entitlement.is_active %}
                     <tr>
-                        <td>{{ subscription.organization.name }}</td>
-                        <td>{{ entitlement.get_resource_type_display }}</td>
+                        <td>{{ subscription.organization.name }}</td><td>{{ entitlement.get_resource_type_display }}</td>
                         <td>{% if entitlement.course %}{{ entitlement.course }}{% elif entitlement.track %}{{ entitlement.track }}{% elif entitlement.exam %}{{ entitlement.exam }}{% else %}—{% endif %}</td>
                         <td><span class="admin-badge admin-badge-green">Active</span></td>
                     </tr>
@@ -140,13 +197,12 @@
         <div><h2>Recent Exam Activity</h2><p>Latest attempts and performance for this account.</p></div>
     </div>
     <div class="admin-table-scroll">
-        <table class="table is-fullwidth admin-table">
+        <table class="table is-fullwidth admin-table user360-table">
             <thead><tr><th>Exam</th><th>Status</th><th>Score</th><th>Passed</th><th>Started</th><th>Submitted</th></tr></thead>
             <tbody>
             {% for attempt in recent_attempts %}
                 <tr>
-                    <td><strong>{{ attempt.exam }}</strong></td>
-                    <td>{{ attempt.get_status_display }}</td>
+                    <td><strong>{{ attempt.exam }}</strong></td><td>{{ attempt.get_status_display }}</td>
                     <td>{% if attempt.score != None %}{{ attempt.score|floatformat:1 }}%{% else %}—{% endif %}</td>
                     <td>{% if attempt.passed %}<span class="admin-badge admin-badge-green">Yes</span>{% elif attempt.passed == False %}<span class="admin-badge admin-badge-red">No</span>{% else %}—{% endif %}</td>
                     <td>{{ attempt.started_at|date:"Y-m-d H:i" }}</td>
