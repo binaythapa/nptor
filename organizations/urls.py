@@ -3,7 +3,7 @@ from organizations.views.admin.dashboard import org_dashboard
 from organizations.views.admin.portfolio import org_portfolio
 from organizations.views.admin.tenant_domains import organization_domains, organization_domain_verify, organization_domain_primary
 from organizations.views.admin.courses import *
-from organizations.views.admin.payment import organization_payment_checkout
+from organizations.views.admin.payment import organization_payment_checkout, organization_public_resource_checkout_start
 from organizations.views.admin.students import org_students, org_student_add, org_student_update_role, org_student_remove, org_student_detail, org_student_detail_edit, org_student_enroll, org_student_enrollment_edit, org_student_enrollment_transfer
 from organizations.views.admin.assignments import org_assignments, org_assignment_create, org_assignment_remove
 from organizations.views.admin.settings import org_settings
@@ -26,6 +26,7 @@ admin_patterns = [
     path("courses/", org_courses, name="courses"),
     path("courses/public/subscribe/<int:course_id>/", org_public_course_subscribe, name="public_course_subscribe"),
     path("tracks/public/subscribe/<int:track_id>/", org_public_track_subscribe, name="public_track_subscribe"),
+    path("public-resource/checkout/<str:resource_type>/<int:resource_id>/", organization_public_resource_checkout_start, name="public_resource_checkout_start"),
     path("payment-checkout/<int:payment_id>/", organization_payment_checkout, name="organization_payment_checkout"),
     path("courses/attach/<int:course_id>/", org_course_attach, name="course_attach"), path("courses/detach/<int:course_id>/", org_course_detach, name="course_detach"), path("courses/manage/", org_course_list, name="org_course_list"), path("courses/add/", org_course_create, name="org_course_create"), path("courses/<int:pk>/edit/", org_course_edit, name="org_course_edit"), path("courses/<int:pk>/delete/", org_course_delete, name="org_course_delete"),
     path("students/", org_students, name="students"), path("students/add/", org_student_add, name="student_add"), path("students/<int:student_id>/", org_student_detail, name="student_detail"), path("students/<int:student_id>/edit/", org_student_detail_edit, name="student_detail_edit"), path("students/<int:student_id>/enroll/", org_student_enroll, name="student_enroll"), path("students/<int:student_id>/enrollment/<int:enrollment_id>/edit/", org_student_enrollment_edit, name="student_enrollment_edit"), path("students/<int:student_id>/enrollment/<int:enrollment_id>/transfer/", org_student_enrollment_transfer, name="student_enrollment_transfer"), path("students/<int:member_id>/role/", org_student_update_role, name="student_role"), path("students/<int:member_id>/remove/", org_student_remove, name="student_remove"),
@@ -35,7 +36,7 @@ admin_patterns = [
     path("tracks/", org_track_list, name="org_track_list"), path("tracks/add/", org_track_create, name="org_track_create"), path("tracks/<int:pk>/edit/", org_track_edit, name="org_track_edit"), path("tracks/<int:pk>/exams/", org_track_exams, name="org_track_exams"), path("tracks/<int:pk>/delete/", org_track_delete, name="org_track_delete"), path("tracks/attach/<int:pk>/", org_track_attach, name="track_attach"), path("tracks/detach/<int:pk>/", org_track_detach, name="track_detach"),
     path("exams/", org_exam_list, name="exams"), path("exams/add/", org_exam_create, name="exam_create"), path("exams/<int:pk>/edit/", org_exam_update, name="exam_update"), path("exams/<int:pk>/delete/", org_exam_delete, name="exam_delete"),
     path("settings/", org_settings, name="settings"), path("domains/", org_domain_list, name="domain_list"), path("domains/add/", org_domain_create, name="domain_create"), path("domains/<int:pk>/edit/", org_domain_edit, name="domain_edit"), path("domains/<int:pk>/delete/", org_domain_delete, name="domain_delete"),
-    path("categories/", org_category_list, name="category_list"), path("categories/add/", org_category_create, name="category_add"), path("categories/<int:pk>/edit/", org_category_edit, name="category_edit"), path("categories/<int:pk>/delete/", org_category_delete, name="category_delete"),
+    path("categories/", org_category_list, name="category_list"), path("categories/add/", org_category_create, name="category_create"), path("categories/<int:pk>/edit/", org_category_edit, name="category_edit"), path("categories/<int:pk>/delete/", org_category_delete, name="category_delete"),
 ]
 public_patterns = [
     path("workspace/", organization_workspace, name="workspace"), path("my-courses/", my_courses, name="my_courses"), path("learning/", organization_learning, name="learning"), path("student-profile/", organization_student_profile, name="student_profile"), path("student-profile/edit/", organization_student_profile_edit, name="student_profile_edit"), path("student-profile/<int:student_id>/", organization_student_profile_admin, name="student_profile_admin"), path("student-profile/<int:student_id>/edit/", organization_student_profile_admin_edit, name="student_profile_admin_edit"), path("", org_public_page, name="public_page"),
