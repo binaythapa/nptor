@@ -41,7 +41,7 @@ def get_student_for_admin(student_id, organization):
 
 
 def get_student_for_teacher(*, actor, student_id, organization):
-    """Return a student only when the teacher is assigned to that student's class."""
+    """Return an organization student within the teacher's permitted scope."""
     student = get_student_for_admin(student_id, organization)
     if not student:
         return None
@@ -51,6 +51,18 @@ def get_student_for_teacher(*, actor, student_id, organization):
         raise PermissionDenied("Active organization membership is required.")
     if membership.role not in OrganizationRole.teaching_roles():
         raise PermissionDenied("Teacher access is required.")
+
+    if membership.role in OrganizationRole.administrative_roles():
+        return student
+
+    # Staff may manage organization students generally. Once a student has
+    # an active class enrollment, profile/progress access is narrowed to the
+    # classes explicitly assigned to that staff member. Students without an
+    # active class assignment remain visible so they can be operationally
+    # assigned to a class.
+    has_active_enrollment = student.enrollments.filter(status="active").exists()
+    if not has_active_enrollment:
+        return student
 
     assigned = student.enrollments.filter(
         status="active",
