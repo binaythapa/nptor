@@ -1,5 +1,3 @@
-# organizations/services/assignments.py
-
 from datetime import datetime
 from typing import Optional
 from dataclasses import dataclass
@@ -12,6 +10,8 @@ from organizations.models.assignment import ResourceAssignment
 from organizations.models.membership import OrganizationMember
 from courses.models import Course
 from quiz.models import Exam, ExamTrack
+from subscriptions.models import SubscriptionEntitlement
+from subscriptions.services.access_service import AccessService
 
 
 class AssignmentError(Exception):
@@ -82,23 +82,70 @@ def _resource_filter(*, resource_type, resource):
     raise InvalidAssignmentError("Unsupported resource type.")
 
 
+def _resource_has_public_subscription(*, organization, resource_type, resource):
+    """Return whether an organization owns a public resource entitlement."""
+    return AccessService.organization_has_resource(
+        organization=organization,
+        resource_type=resource_type,
+        resource=resource,
+    )
+
+
 def _get_resource(*, resource_type, resource_id, organization):
     if not resource_id:
         raise InvalidAssignmentError("A resource ID is required.")
+
     if resource_type == ResourceAssignment.RESOURCE_COURSE:
         resource = Course.objects.filter(pk=resource_id).first()
         if not resource:
             raise ResourceNotAvailableError("Course not found.")
-        if resource.organization_id is not None and resource.organization_id != organization.id:
+
+        if resource.organization_id == organization.id:
+            return resource
+
+        if resource.organization_id is not None:
             raise ResourceNotAvailableError("This course is not available to this organization.")
+
+        if not resource.is_publicly_available():
+            raise ResourceNotAvailableError("This public course is not currently available.")
+
+        if not _resource_has_public_subscription(
+            organization=organization,
+            resource_type=ResourceAssignment.RESOURCE_COURSE,
+            resource=resource,
+        ):
+            raise ResourceNotAvailableError(
+                "The organization must subscribe to this public course before assigning it."
+            )
         return resource
+
     if resource_type == ResourceAssignment.RESOURCE_TRACK:
-        resource = ExamTrack.objects.filter(pk=resource_id, organization=organization).first()
+        resource = ExamTrack.objects.filter(pk=resource_id).first()
         if not resource:
-            raise ResourceNotAvailableError("Exam track not found or is not available to this organization.")
+            raise ResourceNotAvailableError("Exam track not found.")
+
+        if resource.organization_id == organization.id:
+            return resource
+
+        if resource.organization_id is not None:
+            raise ResourceNotAvailableError("This track is not available to this organization.")
+
+        if not resource.is_active:
+            raise ResourceNotAvailableError("This public track is not currently available.")
+
+        if not _resource_has_public_subscription(
+            organization=organization,
+            resource_type=ResourceAssignment.RESOURCE_TRACK,
+            resource=resource,
+        ):
+            raise ResourceNotAvailableError(
+                "The organization must subscribe to this public track before assigning it."
+            )
         return resource
+
     if resource_type == ResourceAssignment.RESOURCE_EXAM:
         raise InvalidAssignmentError("Exams cannot be assigned directly. Assign the Course or Track containing the Exam.")
+
     raise InvalidAssignmentError("Unsupported resource type.")
 
 
