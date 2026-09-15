@@ -37,10 +37,17 @@ ChoiceFormSet = inlineformset_factory(
 
 
 def _question_choice_formset(data=None, *, instance=None):
-    """Keep choices optional for the lightweight question-create/edit contract."""
+    """Keep choices optional when the submitted form contains no choice data."""
     prefix = "choices"
     if data is not None and f"{prefix}-TOTAL_FORMS" in data:
-        return ChoiceFormSet(data, instance=instance, prefix=prefix), True
+        has_choice_values = any(
+            data.get(f"{prefix}-{index}-text", "").strip()
+            or data.get(f"{prefix}-{index}-order", "").strip()
+            or data.get(f"{prefix}-{index}-is_correct")
+            for index in range(int(data.get(f"{prefix}-TOTAL_FORMS", 0) or 0))
+        )
+        if has_choice_values:
+            return ChoiceFormSet(data, instance=instance, prefix=prefix), True
     return ChoiceFormSet(instance=instance, prefix=prefix), False
 
 
