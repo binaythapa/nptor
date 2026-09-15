@@ -14,7 +14,7 @@
         <div>
             <h3 class="title is-5 mb-2">🛒 Public NPTOR Subscriptions</h3>
             <p class="is-size-7 has-text-grey">
-                Subscribe the organization to public Courses or Exam Tracks. A subscription belongs to this organization; it does not automatically give every student access. After subscribing, assign the resource to selected students from Assignments.
+                Subscribe the organization to public Courses or Exam Tracks. A subscription belongs to this organization; it does not automatically give every student access. After payment, assign the resource to selected students from Assignments.
             </p>
         </div>
         {% if organization_subscription %}
@@ -52,7 +52,7 @@
                     </td>
                     <td class="has-text-right">
                         {% if not item.subscribed %}
-                        <form method="post" action="{% url 'organizations_admin:public_course_subscribe' slug=org_slug course_id=item.course.id %}" class="is-flex is-justify-content-flex-end">
+                        <form method="post" action="{% url 'organizations_admin:public_resource_checkout_start' slug=org_slug resource_type='course' resource_id=item.course.id %}" class="is-flex is-justify-content-flex-end">
                             {% csrf_token %}
                             <div class="select is-small mr-2">
                                 <select name="plan_id" required>
@@ -64,7 +64,7 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <button type="submit" class="button is-primary is-small">Subscribe</button>
+                            <button type="submit" class="button is-primary is-small">Checkout</button>
                         </form>
                         {% else %}
                             <span class="has-text-grey">Available for assignment</span>
@@ -104,7 +104,7 @@
                     </td>
                     <td class="has-text-right">
                         {% if not item.subscribed %}
-                        <form method="post" action="{% url 'organizations_admin:public_track_subscribe' slug=org_slug track_id=item.track.id %}" class="is-flex is-justify-content-flex-end">
+                        <form method="post" action="{% url 'organizations_admin:public_resource_checkout_start' slug=org_slug resource_type='track' resource_id=item.track.id %}" class="is-flex is-justify-content-flex-end">
                             {% csrf_token %}
                             <div class="select is-small mr-2">
                                 <select name="plan_id" required>
@@ -116,7 +116,7 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <button type="submit" class="button is-primary is-small">Subscribe</button>
+                            <button type="submit" class="button is-primary is-small">Checkout</button>
                         </form>
                         {% else %}
                             <span class="has-text-grey">Available for assignment</span>
@@ -131,7 +131,7 @@
     </div>
 
     <div class="notification is-warning is-light mt-5">
-        <strong>Next step:</strong> after subscribing, open <a href="{% url 'organizations_admin:assignments' slug=org_slug %}">Assignments</a> to allocate the subscribed resource to specific students.
+        <strong>Next step:</strong> after successful payment, open <a href="{% url 'organizations_admin:assignments' slug=org_slug %}">Assignments</a> to allocate the subscribed resource to specific students.
     </div>
 </div>
 
