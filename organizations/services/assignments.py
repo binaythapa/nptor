@@ -10,7 +10,6 @@ from organizations.models.assignment import ResourceAssignment
 from organizations.models.membership import OrganizationMember
 from courses.models import Course
 from quiz.models import Exam, ExamTrack
-from subscriptions.models import SubscriptionEntitlement
 from subscriptions.services.access_service import AccessService
 
 
@@ -43,9 +42,7 @@ class AssignmentResult:
 def _validate_actor(*, actor, organization):
     if actor is None or not actor.is_authenticated:
         raise AssignmentPermissionError("Authentication is required.")
-    membership = OrganizationMember.objects.filter(
-        user=actor, organization=organization, is_active=True,
-    ).first()
+    membership = OrganizationMember.objects.filter(user=actor, organization=organization, is_active=True).first()
     if not membership:
         raise AssignmentPermissionError("You are not an active member of this organization.")
     if not membership.can_manage_students:
@@ -54,10 +51,7 @@ def _validate_actor(*, actor, organization):
 
 
 def _validate_student(*, student, organization):
-    membership = OrganizationMember.objects.filter(
-        user=student, organization=organization,
-        role=OrganizationMember.ROLE_STUDENT, is_active=True,
-    ).first()
+    membership = OrganizationMember.objects.filter(user=student, organization=organization, role=OrganizationMember.ROLE_STUDENT, is_active=True).first()
     if not membership:
         raise StudentNotInOrganizationError("The selected user is not an active student of this organization.")
     return membership
@@ -83,12 +77,7 @@ def _resource_filter(*, resource_type, resource):
 
 
 def _resource_has_public_subscription(*, organization, resource_type, resource):
-    """Return whether an organization owns a public resource entitlement."""
-    return AccessService.organization_has_resource(
-        organization=organization,
-        resource_type=resource_type,
-        resource=resource,
-    )
+    return AccessService.organization_has_resource(organization=organization, resource_type=resource_type, resource=resource)
 
 
 def _get_resource(*, resource_type, resource_id, organization):
@@ -99,48 +88,31 @@ def _get_resource(*, resource_type, resource_id, organization):
         resource = Course.objects.filter(pk=resource_id).first()
         if not resource:
             raise ResourceNotAvailableError("Course not found.")
-
         if resource.organization_id == organization.id:
             return resource
-
         if resource.organization_id is not None:
             raise ResourceNotAvailableError("This course is not available to this organization.")
-
+        # Payment/subscription applies only to public resources. A platform
+        # course that is not publicly available is still assignable as
+        # platform content; public visibility is the commerce boundary.
         if not resource.is_publicly_available():
-            raise ResourceNotAvailableError("This public course is not currently available.")
-
-        if not _resource_has_public_subscription(
-            organization=organization,
-            resource_type=ResourceAssignment.RESOURCE_COURSE,
-            resource=resource,
-        ):
-            raise ResourceNotAvailableError(
-                "The organization must subscribe to this public course before assigning it."
-            )
+            return resource
+        if not _resource_has_public_subscription(organization=organization, resource_type=ResourceAssignment.RESOURCE_COURSE, resource=resource):
+            raise ResourceNotAvailableError("The organization must subscribe to this public course before assigning it.")
         return resource
 
     if resource_type == ResourceAssignment.RESOURCE_TRACK:
         resource = ExamTrack.objects.filter(pk=resource_id).first()
         if not resource:
             raise ResourceNotAvailableError("Exam track not found.")
-
         if resource.organization_id == organization.id:
             return resource
-
         if resource.organization_id is not None:
             raise ResourceNotAvailableError("This track is not available to this organization.")
-
         if not resource.is_active:
-            raise ResourceNotAvailableError("This public track is not currently available.")
-
-        if not _resource_has_public_subscription(
-            organization=organization,
-            resource_type=ResourceAssignment.RESOURCE_TRACK,
-            resource=resource,
-        ):
-            raise ResourceNotAvailableError(
-                "The organization must subscribe to this public track before assigning it."
-            )
+            return resource
+        if not _resource_has_public_subscription(organization=organization, resource_type=ResourceAssignment.RESOURCE_TRACK, resource=resource):
+            raise ResourceNotAvailableError("The organization must subscribe to this public track before assigning it.")
         return resource
 
     if resource_type == ResourceAssignment.RESOURCE_EXAM:
@@ -164,10 +136,7 @@ def _find_latest_assignment(*, student, organization, resource_type, resource):
 def _get_or_create_resource_access(*, student, organization, resource_type, resource, assignment, expires_at=None):
     filters = {"user": student, "organization": organization, "resource_type": resource_type, "source": ResourceAccess.SOURCE_ORGANIZATION}
     filters.update(_resource_filter(resource_type=resource_type, resource=resource))
-    access, created = ResourceAccess.objects.get_or_create(
-        **filters,
-        defaults={"assignment": assignment, "is_active": True, "expires_at": expires_at},
-    )
+    access, created = ResourceAccess.objects.get_or_create(**filters, defaults={"assignment": assignment, "is_active": True, "expires_at": expires_at})
     if created:
         return access
     update_fields = []
@@ -188,7 +157,6 @@ def _get_or_create_resource_access(*, student, organization, resource_type, reso
 
 @transaction.atomic
 def assign_resource(*, student, organization, resource_type, resource_id, actor, starts_at=None, due_at=None, expires_at=None, notes="", allow_reactivate=False):
-    """Assign an organization Course or Track to a student."""
     if organization is None:
         raise InvalidAssignmentError("An organization is required.")
     if not organization.is_active:
@@ -217,21 +185,13 @@ def assign_resource(*, student, organization, resource_type, resource_id, actor,
         assignment.notes = notes or ""
         assignment.save()
     else:
-        assignment = ResourceAssignment(
-            student=student, organization=organization, assigned_by=actor,
-            resource_type=resource_type, status=ResourceAssignment.STATUS_ASSIGNED,
-            is_active=True, starts_at=starts_at, due_at=due_at,
-            expires_at=expires_at, notes=notes or "",
-        )
+        assignment = ResourceAssignment(student=student, organization=organization, assigned_by=actor, resource_type=resource_type, status=ResourceAssignment.STATUS_ASSIGNED, is_active=True, starts_at=starts_at, due_at=due_at, expires_at=expires_at, notes=notes or "")
         if resource_type == ResourceAssignment.RESOURCE_COURSE:
             assignment.course = resource
         else:
             assignment.track = resource
         assignment.save()
-    access = _get_or_create_resource_access(
-        student=student, organization=organization, resource_type=resource_type,
-        resource=resource, assignment=assignment, expires_at=expires_at,
-    )
+    access = _get_or_create_resource_access(student=student, organization=organization, resource_type=resource_type, resource=resource, assignment=assignment, expires_at=expires_at)
     return AssignmentResult(assignment=assignment, access=access, created=not bool(historical_assignment and allow_reactivate))
 
 
