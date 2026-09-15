@@ -1,0 +1,38 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block content %}
+<div class="columns is-centered">
+    <div class="column is-6">
+        <div class="box">
+            <h2 class="title is-4">Payment Checkout</h2>
+            <p class="has-text-grey mb-5">
+                This is the NPTOR development payment gateway. No real money is charged.
+            </p>
+
+            <div class="notification is-light">
+                <p><strong>Plan:</strong> {{ subscription.plan.name }}</p>
+                <p><strong>Amount:</strong> {{ payment.currency }} {{ payment.amount }}</p>
+                <p><strong>Organization:</strong> {{ organization.name }}</p>
+                <p><strong>Reference:</strong> {{ reference }}</p>
+            </div>
+
+            {% if payment.status == 'pending' %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="reference" value="{{ reference }}">
+                <button type="submit" class="button is-primary is-fullwidth">
+                    Simulate Successful Payment
+                </button>
+            </form>
+            {% else %}
+                <div class="notification is-success is-light">
+                    This payment has already been completed.
+                </div>
+                <a href="{% url 'organizations_admin:courses' slug=organization.slug %}" class="button is-link is-fullwidth">
+                    Back to Resources
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
