@@ -7,8 +7,7 @@ from organizations.permissions import org_staff_required
 
 
 @org_staff_required
-def organization_workspace(request, slug):
-    """Operational organization workspace for staff/teachers."""
+def _staff_workspace(request, slug):
     organization = request.organization
     return render(
         request,
@@ -20,28 +19,34 @@ def organization_workspace(request, slug):
     )
 
 
-def student_workspace(request, slug):
-    """Student workspace for an active, provisioned organization student."""
+def organization_workspace(request, slug):
+    """Organization workspace for staff/teachers and provisioned students."""
     organization = request.organization
     if not request.user.is_authenticated:
         raise PermissionDenied("Authentication is required.")
+
     membership = OrganizationMember.objects.filter(
         user=request.user,
         organization=organization,
-        role=OrganizationRole.STUDENT,
         is_active=True,
     ).first()
-    if not membership or not OrganizationStudent.objects.filter(
-        user=request.user,
-        organization=organization,
-        status=OrganizationStudent.STATUS_ACTIVE,
-    ).exists():
-        raise PermissionDenied("An active student profile is required.")
-    return render(
-        request,
-        "organizations/member/workspace.html",
-        {
-            "organization": organization,
-            "membership": membership,
-        },
-    )
+    if not membership:
+        raise PermissionDenied("Active organization membership is required.")
+
+    if membership.role == OrganizationRole.STUDENT:
+        student_exists = OrganizationStudent.objects.filter(
+            user=request.user,
+            organization=organization,
+            status=OrganizationStudent.STATUS_ACTIVE,
+        ).exists()
+        if not student_exists:
+            raise PermissionDenied("An active student profile is required.")
+        return render(
+            request,
+            "organizations/member/workspace.html",
+            {"organization": organization, "membership": membership},
+        )
+
+    if membership.role not in OrganizationRole.teaching_roles():
+        raise PermissionDenied("Organization workspace access is required.")
+    return _staff_workspace(request, slug)
