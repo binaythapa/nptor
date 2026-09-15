@@ -24,12 +24,23 @@ class ActiveOrganizationMiddleware:
             request.active_org = host_org
             request.tenant_source = "domain"
 
-            # The custom host is authoritative. Prevent /org/<other-slug>/
-            # paths from switching the tenant underneath that host.
             path = request.path_info or "/"
             if not path.startswith(f"/org/{host_org.slug}/"):
                 request.path_info = f"/org/{host_org.slug}{path}"
                 request.path = request.path_info
+        else:
+            # Resolve explicit /org/<slug>/ routes so views receive the same
+            # organization context as custom-domain requests. This is
+            # intentionally limited to active tenants.
+            path = request.path_info or ""
+            if path.startswith("/org/"):
+                parts = path.split("/")
+                if len(parts) > 2 and parts[2]:
+                    path_org = TenantResolver.by_slug(parts[2])
+                    if path_org:
+                        request.organization = path_org
+                        request.active_org = path_org
+                        request.tenant_source = "path"
 
         if request.user.is_authenticated:
             memberships = (
@@ -40,10 +51,6 @@ class ActiveOrganizationMiddleware:
             if request.organization is not None:
                 membership = memberships.filter(organization=request.organization).first()
             else:
-                # Prefer an organization where the user has administration
-                # capability when no tenant was explicitly resolved. This
-                # makes the global dashboard's organization entry predictable
-                # for users who belong to multiple organizations.
                 admin_membership = memberships.filter(
                     role__in=OrganizationRole.administrative_roles()
                 ).first()
