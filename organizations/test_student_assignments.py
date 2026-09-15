@@ -1,13 +1,13 @@
 from unittest.mock import patch
 
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from organizations.models.assignment import ResourceAssignment
 from organizations.services.assignments import InvalidAssignmentError, assign_resource
 from organizations.views.admin.assignments import _assignment_form_context
 
 
-class OrganizationStudentAssignmentContractTests(SimpleTestCase):
+class OrganizationStudentAssignmentContractTests(TestCase):
     def test_student_assignment_resource_types_are_course_and_track(self):
         self.assertEqual(
             {ResourceAssignment.RESOURCE_COURSE, ResourceAssignment.RESOURCE_TRACK},
