@@ -3,7 +3,7 @@ from django.db import transaction
 from django.utils.text import slugify
 
 from courses.models import Course
-from quiz.models import Domain, Category, ExamTrack
+from quiz.models import Category, Domain, Exam, ExamTrack, TrackExam
 
 
 PREFIX = "[PUBLIC DEMO]"
@@ -61,6 +61,36 @@ TRACKS = [
     },
 ]
 
+ASSESSMENTS = [
+    {
+        "slug": "public-python-assessment-track",
+        "track_slug": "public-python-assessment-track",
+        "category": "Python Programming",
+        "titles": [
+            "Python Fundamentals Assessment",
+            "Python Problem Solving Assessment",
+        ],
+    },
+    {
+        "slug": "public-data-analytics-assessment-track",
+        "track_slug": "public-data-analytics-assessment-track",
+        "category": "Data Analysis",
+        "titles": [
+            "Data Analysis Fundamentals Assessment",
+            "Python Data Analysis Assessment",
+        ],
+    },
+    {
+        "slug": "public-sql-assessment-track",
+        "track_slug": "public-sql-assessment-track",
+        "category": "SQL & Databases",
+        "titles": [
+            "SQL Fundamentals Assessment",
+            "SQL Querying Assessment",
+        ],
+    },
+]
+
 
 class Command(BaseCommand):
     help = "Seed a small, repeatable set of public platform courses and assessment tracks."
@@ -77,12 +107,14 @@ class Command(BaseCommand):
         if options["reset"]:
             self._reset()
 
-        created_courses = self._seed_courses()
+        self._seed_courses()
+        created_exams = self._seed_exams()
         created_tracks = self._seed_tracks()
+        self._attach_exams_to_tracks()
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Public catalog seeded: {len(created_courses)} courses, {len(created_tracks)} tracks."
+                f"Public catalog seeded: {len(COURSES)} courses, {len(created_exams)} exams, {len(created_tracks)} tracks."
             )
         )
         self.stdout.write("All seeded resources are platform-owned and publicly available.")
@@ -94,6 +126,14 @@ class Command(BaseCommand):
         Course.objects.filter(slug__in=[item["slug"] for item in COURSES]).delete()
         ExamTrack.objects.filter(
             slug__in=[item["slug"] for item in TRACKS],
+            organization=None,
+        ).delete()
+        Exam.objects.filter(
+            title__in=[
+                f"{PREFIX} {title}"
+                for item in ASSESSMENTS
+                for title in item["titles"]
+            ],
             organization=None,
         ).delete()
 
@@ -134,6 +174,33 @@ class Command(BaseCommand):
             courses.append(course)
         return courses
 
+    def _seed_exams(self):
+        exams = []
+        categories = {
+            item["category"]: self._category_for_name(item["category"])
+            for item in COURSES
+        }
+        for assessment in ASSESSMENTS:
+            category = categories[assessment["category"]]
+            for title in assessment["titles"]:
+                exam, _ = Exam.objects.update_or_create(
+                    title=f"{PREFIX} {title}",
+                    organization=None,
+                    defaults={
+                        "question_count": 10,
+                        "duration_seconds": 1800,
+                        "level": 1,
+                        "passing_score": 50.0,
+                        "is_published": True,
+                        "max_mock_attempts": 3,
+                        "allow_review": True,
+                        "created_by": None,
+                    },
+                )
+                exam.categories.set([category])
+                exams.append(exam)
+        return exams
+
     def _seed_tracks(self):
         tracks = []
         for item in TRACKS:
@@ -154,6 +221,28 @@ class Command(BaseCommand):
             )
             tracks.append(track)
         return tracks
+
+    def _attach_exams_to_tracks(self):
+        exams_by_track = {}
+        for assessment in ASSESSMENTS:
+            exams_by_track[assessment["track_slug"]] = list(
+                Exam.objects.filter(
+                    organization=None,
+                    title__in=[f"{PREFIX} {title}" for title in assessment["titles"]],
+                    is_published=True,
+                ).order_by("id")
+            )
+
+        for track in ExamTrack.objects.filter(
+            slug__in=exams_by_track,
+            organization=None,
+        ):
+            for order, exam in enumerate(exams_by_track[track.slug], start=1):
+                TrackExam.objects.update_or_create(
+                    track=track,
+                    exam=exam,
+                    defaults={"order": order, "is_required": True},
+                )
 
     def _domain(self, name):
         domain, _ = Domain.objects.update_or_create(
@@ -178,3 +267,15 @@ class Command(BaseCommand):
             },
         )
         return category
+
+    def _category_for_name(self, name):
+        item = next(course for course in COURSES if course["category"] == name)
+        domain = Domain.objects.get(
+            slug=slugify(f"public-{item['domain']}"),
+            organization=None,
+        )
+        return Category.objects.get(
+            slug=slugify(f"public-{name}"),
+            organization=None,
+            domain=domain,
+        )
