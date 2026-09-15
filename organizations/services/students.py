@@ -12,15 +12,10 @@ def get_organization_student(user, organization):
     if not membership or membership.role != OrganizationRole.STUDENT:
         raise PermissionDenied("An active student membership is required.")
 
-    # Provision the organization-scoped profile lazily as a safe fallback for
-    # student memberships created before automatic profile provisioning.
     student, created = OrganizationStudent.objects.get_or_create(
         user=user,
         organization=organization,
-        defaults={
-            "status": OrganizationStudent.STATUS_ACTIVE,
-            "joined_date": timezone.localdate(),
-        },
+        defaults={"status": OrganizationStudent.STATUS_ACTIVE, "joined_date": timezone.localdate()},
     )
     if not created and student.status != OrganizationStudent.STATUS_ACTIVE:
         student.status = OrganizationStudent.STATUS_ACTIVE
@@ -46,29 +41,26 @@ def get_student_for_admin(student_id, organization):
 
 
 def get_student_for_teacher(*, actor, student_id, organization):
-    """
-    Return an active student belonging to the actor's organization.
-
-    Staff/Teacher access is organization-wide for student academic
-    operations. Profile editing remains separately restricted to
-    the student and organization administrators.
-    """
+    """Return a student only when the teacher is assigned to that student's class."""
     student = get_student_for_admin(student_id, organization)
     if not student:
         return None
 
-    membership = OrganizationMember.objects.filter(
-        user=actor,
-        organization=organization,
-        is_active=True,
-    ).first()
+    membership = OrganizationMember.objects.filter(user=actor, organization=organization, is_active=True).first()
     if not membership:
         raise PermissionDenied("Active organization membership is required.")
+    if membership.role not in OrganizationRole.teaching_roles():
+        raise PermissionDenied("Teacher access is required.")
 
-    if membership.role in OrganizationRole.teaching_roles():
-        return student
-
-    raise PermissionDenied("Teacher access is required.")
+    assigned = student.enrollments.filter(
+        status="active",
+        class_section__teacher_assignments__teacher=actor,
+        class_section__teacher_assignments__organization=organization,
+        class_section__teacher_assignments__is_active=True,
+    ).exists()
+    if not assigned:
+        raise PermissionDenied("You can only access students in classes assigned to you.")
+    return student
 
 
 def update_student_profile(*, actor, organization, student, data):
@@ -100,7 +92,6 @@ def update_student_profile(*, actor, organization, student, data):
         profile, _ = UserProfile.objects.get_or_create(user=student.user)
         profile.phone = data["contact_phone"] or None
         profile.save(update_fields=["phone", "updated_at"])
-
     return student
 
 
@@ -109,21 +100,10 @@ def update_student_admin_profile(*, actor, organization, student, data):
     """Update organization-owned student identity and profile fields."""
     if student.organization_id != organization.id:
         raise PermissionDenied("Student belongs to another organization.")
-
-    membership = OrganizationMember.objects.filter(
-        user=actor,
-        organization=organization,
-        is_active=True,
-    ).first()
+    membership = OrganizationMember.objects.filter(user=actor, organization=organization, is_active=True).first()
     if not membership or membership.role not in OrganizationRole.administrative_roles():
         raise PermissionDenied("Organization administrator access is required.")
-
-    student_membership = OrganizationMember.objects.filter(
-        user=student.user,
-        organization=organization,
-        role=OrganizationRole.STUDENT,
-        is_active=True,
-    ).exists()
+    student_membership = OrganizationMember.objects.filter(user=student.user, organization=organization, role=OrganizationRole.STUDENT, is_active=True).exists()
     if not student_membership:
         raise PermissionDenied("An active student membership is required.")
 
@@ -139,16 +119,7 @@ def update_student_admin_profile(*, actor, organization, student, data):
         profile.phone = data["contact_phone"] or None
         profile.save(update_fields=["phone", "updated_at"])
 
-    editable = {
-        "student_id",
-        "admission_no",
-        "status",
-        "joined_date",
-        "date_of_birth",
-        "guardian_name",
-        "guardian_phone",
-        "address",
-    }
+    editable = {"student_id", "admission_no", "status", "joined_date", "date_of_birth", "guardian_name", "guardian_phone", "address"}
     for field in editable:
         if field in data:
             setattr(student, field, data[field])
