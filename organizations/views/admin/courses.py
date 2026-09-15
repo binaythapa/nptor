@@ -302,25 +302,37 @@ def org_course_list(request, slug):
     return render(request, "organizations/admin/courses/crud_list.html", {"courses": courses, "org": org})
 
 
+def _course_section_formset(data=None, *, instance=None):
+    """Keep course sections optional for the lightweight course form contract."""
+    prefix = "sections"
+    has_management_form = data is not None and f"{prefix}-TOTAL_FORMS" in data
+    if has_management_form:
+        return CourseSectionFormSet(data, instance=instance, prefix=prefix), True
+    return CourseSectionFormSet(instance=instance, prefix=prefix), False
+
+
 @org_teacher_required
 def org_course_create(request, slug):
     """Create private organization-owned course content without commerce fields."""
     org = request.organization
     form = OrganizationCourseForm(request.POST or None, request.FILES or None, organization=org)
-    formset = CourseSectionFormSet(request.POST or None, prefix="sections")
+    formset, has_section_payload = _course_section_formset(
+        request.POST if request.method == "POST" else None,
+    )
 
-    if request.method == "POST" and form.is_valid() and formset.is_valid():
+    if request.method == "POST" and form.is_valid() and (not has_section_payload or formset.is_valid()):
         with transaction.atomic():
             course = form.save(commit=False)
             course.created_by = request.user
             course.save()
             form.save_m2m()
-            sections = formset.save(commit=False)
-            for index, section in enumerate(sections, start=1):
-                section.course = course
-                if not section.order:
-                    section.order = index
-                section.save()
+            if has_section_payload:
+                sections = formset.save(commit=False)
+                for index, section in enumerate(sections, start=1):
+                    section.course = course
+                    if not section.order:
+                        section.order = index
+                    section.save()
         messages.success(request, f'Course "{course.title}" created for {org.name}.')
         return redirect("organizations_admin:org_course_list", slug=slug)
 
@@ -336,20 +348,24 @@ def org_course_edit(request, slug, pk):
         raise PermissionDenied("You can only modify courses you created.")
 
     form = OrganizationCourseForm(request.POST or None, request.FILES or None, instance=course, organization=org)
-    formset = CourseSectionFormSet(request.POST or None, instance=course, queryset=course.sections.order_by("order"), prefix="sections")
+    formset, has_section_payload = _course_section_formset(
+        request.POST if request.method == "POST" else None,
+        instance=course,
+    )
 
-    if request.method == "POST" and form.is_valid() and formset.is_valid():
+    if request.method == "POST" and form.is_valid() and (not has_section_payload or formset.is_valid()):
         with transaction.atomic():
             course = form.save(commit=False)
             course.created_by = course.created_by or request.user
             course.save()
             form.save_m2m()
-            sections = formset.save(commit=False)
-            for section in sections:
-                section.course = course
-                section.save()
-            for obj in formset.deleted_objects:
-                obj.delete()
+            if has_section_payload:
+                sections = formset.save(commit=False)
+                for section in sections:
+                    section.course = course
+                    section.save()
+                for obj in formset.deleted_objects:
+                    obj.delete()
         messages.success(request, f'Course "{course.title}" updated.')
         return redirect("organizations_admin:org_course_list", slug=slug)
 
