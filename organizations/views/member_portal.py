@@ -3,27 +3,15 @@ from django.shortcuts import render
 
 from organizations.models import OrganizationMember, OrganizationStudent
 from organizations.models.role import OrganizationRole
-from organizations.permissions import org_teacher_required
-
-
-@org_teacher_required
-def _staff_workspace(request, slug):
-    organization = request.organization
-    return render(
-        request,
-        "organizations/member/workspace.html",
-        {
-            "organization": organization,
-            "membership": request.organization_member,
-        },
-    )
 
 
 def organization_workspace(request, slug):
     """Organization workspace for teaching staff and provisioned students."""
-    organization = request.organization
+    organization = getattr(request, "organization", None)
     if not request.user.is_authenticated:
         raise PermissionDenied("Authentication is required.")
+    if organization is None:
+        raise PermissionDenied("Organization context is required.")
 
     membership = OrganizationMember.objects.filter(
         user=request.user,
@@ -41,12 +29,11 @@ def organization_workspace(request, slug):
         ).exists()
         if not student_exists:
             raise PermissionDenied("An active student profile is required.")
-        return render(
-            request,
-            "organizations/member/workspace.html",
-            {"organization": organization, "membership": membership},
-        )
-
-    if membership.role not in OrganizationRole.teaching_roles():
+    elif membership.role not in OrganizationRole.teaching_roles():
         raise PermissionDenied("Organization workspace access is required.")
-    return _staff_workspace(request, slug)
+
+    return render(
+        request,
+        "organizations/member/workspace.html",
+        {"organization": organization, "membership": membership},
+    )
