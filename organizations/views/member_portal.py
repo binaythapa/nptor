@@ -1,11 +1,11 @@
 from django.shortcuts import render
 
-from organizations.permissions import org_teacher_required
+from organizations.permissions import organization_required
 
 
-@org_teacher_required
+@organization_required
 def organization_workspace(request, slug):
-    """Authenticated organization workspace for teaching members."""
+    """Authenticated organization workspace for active organization members."""
     organization = request.organization
     return render(
         request,
