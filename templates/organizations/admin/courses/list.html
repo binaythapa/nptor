@@ -6,36 +6,18 @@
 
 <h2 class="title is-4 mb-5">📦 Organization Resources</h2>
 <p class="has-text-grey mb-5">
-    Courses and Exam Tracks are organization-level products. Exams are reusable content and are never sold separately.
+    Resources created by this organization are managed here. NPTOR public/platform resources are not part of the organization workspace.
 </p>
 
 <div class="box mb-6">
     <div class="is-flex is-justify-content-space-between is-align-items-center">
         <div>
-            <h3 class="title is-5 mb-2">💳 Organization Subscription</h3>
-            {% if organization_subscription %}
-                <p class="mb-2">
-                    <strong>{{ organization_subscription.plan.name }}</strong>
-                    <span class="tag is-success ml-2">Active</span>
-                </p>
-                <p class="is-size-7 has-text-grey">
-                    Started: {{ organization_subscription.starts_at|date:"M d, Y" }}
-                    {% if organization_subscription.expires_at %}
-                        &nbsp;|&nbsp; Expires: {{ organization_subscription.expires_at|date:"M d, Y" }}
-                    {% else %}
-                        &nbsp;|&nbsp; Lifetime Access
-                    {% endif %}
-                </p>
-            {% else %}
-                <p class="mb-2"><span class="tag is-warning">No Active Subscription</span></p>
-                <p class="is-size-7 has-text-grey">
-                    An active subscription is required to attach Courses or Exam Tracks to the organization.
-                </p>
-            {% endif %}
+            <h3 class="title is-5 mb-2">🔐 Organization Resources</h3>
+            <p class="is-size-7 has-text-grey">
+                Organization-owned Courses and Exam Tracks are assigned directly to students. Student payment or public-resource subscriptions are not required for these assignments.
+            </p>
         </div>
-        {% if not organization_subscription %}
-            <span class="button is-warning is-small is-static">Subscription Required</span>
-        {% endif %}
+        <span class="tag is-success is-medium">Organization Access</span>
     </div>
 </div>
 
@@ -43,7 +25,7 @@
     <div class="is-flex is-justify-content-space-between mb-4">
         <div>
             <h3 class="title is-5 mb-1">📚 Courses</h3>
-            <p class="is-size-7 has-text-grey">Sellable learning products that can contain reusable exams.</p>
+            <p class="is-size-7 has-text-grey">Courses owned and managed by this organization.</p>
         </div>
         <div>
             <a href="{% url 'organizations_admin:org_course_create' slug=org_slug %}" class="button is-primary is-small">➕ Add Course</a>
@@ -53,42 +35,21 @@
 
     <div class="table-container">
         <table class="table is-fullwidth is-striped">
-            <thead><tr><th>Course</th><th>Product Access</th><th class="has-text-right">Actions</th></tr></thead>
+            <thead><tr><th>Course</th><th>Access</th><th class="has-text-right">Actions</th></tr></thead>
             <tbody>
                 {% for item in courses %}
                 <tr>
                     <td>
                         <strong>{{ item.course.title }}</strong>
-                        {% if item.course.organization == org %}
-                            <span class="tag is-info is-light ml-2">Organization Course</span>
-                        {% else %}
-                            <span class="tag is-light ml-2">Platform Course</span>
-                        {% endif %}
+                        <span class="tag is-info is-light ml-2">Organization Course</span>
                     </td>
-                    <td>
-                        {% if item.is_attached %}<span class="tag is-success">Attached</span>{% else %}<span class="tag is-light">Not Attached</span>{% endif %}
-                    </td>
+                    <td><span class="tag is-success is-light">Organization Owned</span></td>
                     <td class="has-text-right">
-                        {% if item.is_attached %}
-                            <form method="post" action="{% url 'organizations_admin:course_detach' slug=org_slug course_id=item.course.id %}" style="display:inline-block">
-                                {% csrf_token %}
-                                <button type="submit" class="button is-danger is-small">Detach</button>
-                            </form>
-                        {% elif organization_subscription %}
-                            <form method="post" action="{% url 'organizations_admin:course_attach' slug=org_slug course_id=item.course.id %}" style="display:inline-block">
-                                {% csrf_token %}
-                                <button type="submit" class="button is-primary is-small">Attach</button>
-                            </form>
-                        {% else %}
-                            <button type="button" class="button is-light is-small" disabled>Attach</button>
-                        {% endif %}
-                        {% if item.can_edit %}
-                            <a href="{% url 'organizations_admin:org_course_edit' slug=org_slug pk=item.course.id %}" class="button is-warning is-small">Edit</a>
-                        {% endif %}
+                        <a href="{% url 'organizations_admin:org_course_edit' slug=org_slug pk=item.course.id %}" class="button is-warning is-small">Edit</a>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="3" class="has-text-centered">No courses available.</td></tr>
+                <tr><td colspan="3" class="has-text-centered">No organization courses available.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -99,7 +60,7 @@
     <div class="is-flex is-justify-content-space-between mb-4">
         <div>
             <h3 class="title is-5 mb-1">🧭 Exam Tracks</h3>
-            <p class="is-size-7 has-text-grey">Sellable products that compose reusable exams into a progression.</p>
+            <p class="is-size-7 has-text-grey">Tracks owned and managed by this organization.</p>
         </div>
         <div>
             <a href="{% url 'organizations_admin:org_track_create' slug=org_slug %}" class="button is-primary is-small">➕ Add Track</a>
@@ -109,37 +70,22 @@
 
     <div class="table-container">
         <table class="table is-fullwidth is-striped">
-            <thead><tr><th>Track</th><th>Included Exams</th><th>Product Access</th><th class="has-text-right">Actions</th></tr></thead>
+            <thead><tr><th>Track</th><th>Included Exams</th><th>Access</th><th class="has-text-right">Actions</th></tr></thead>
             <tbody>
                 {% for item in tracks %}
                 <tr>
                     <td>
                         <strong>{{ item.track.title }}</strong>
-                        {% if item.track.organization == org %}<span class="tag is-info is-light ml-2">Organization Track</span>{% else %}<span class="tag is-light ml-2">Platform Track</span>{% endif %}
+                        <span class="tag is-info is-light ml-2">Organization Track</span>
                     </td>
                     <td>{{ item.track.track_exams.count }}</td>
-                    <td>{% if item.is_attached %}<span class="tag is-success">Attached</span>{% else %}<span class="tag is-light">Not Attached</span>{% endif %}</td>
+                    <td><span class="tag is-success is-light">Organization Owned</span></td>
                     <td class="has-text-right">
-                        {% if item.is_attached %}
-                            <form method="post" action="{% url 'organizations_admin:track_detach' slug=org_slug pk=item.track.id %}" style="display:inline-block">
-                                {% csrf_token %}
-                                <button type="submit" class="button is-danger is-small">Detach</button>
-                            </form>
-                        {% elif organization_subscription %}
-                            <form method="post" action="{% url 'organizations_admin:track_attach' slug=org_slug pk=item.track.id %}" style="display:inline-block">
-                                {% csrf_token %}
-                                <button type="submit" class="button is-primary is-small">Attach</button>
-                            </form>
-                        {% else %}
-                            <button type="button" class="button is-light is-small" disabled>Attach</button>
-                        {% endif %}
-                        {% if item.can_edit %}
-                            <a href="{% url 'organizations_admin:org_track_edit' slug=org_slug pk=item.track.id %}" class="button is-info is-small">Edit</a>
-                        {% endif %}
+                        <a href="{% url 'organizations_admin:org_track_edit' slug=org_slug pk=item.track.id %}" class="button is-info is-small">Edit</a>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="has-text-centered">No exam tracks available.</td></tr>
+                <tr><td colspan="4" class="has-text-centered">No organization tracks available.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -150,7 +96,7 @@
     <div class="is-flex is-justify-content-space-between mb-4">
         <div>
             <h3 class="title is-5 mb-1">📝 Reusable Exams</h3>
-            <p class="is-size-7 has-text-grey">Exam content can be reused in Courses and Exam Tracks. There is no individual exam subscription or attach/detach action.</p>
+            <p class="is-size-7 has-text-grey">Exams created by this organization can be reused in its Courses and Exam Tracks. Exams are not sold separately.</p>
         </div>
         <a href="{% url 'organizations_admin:exam_create' slug=org_slug %}" class="button is-primary is-small">➕ Add Exam</a>
     </div>
@@ -163,20 +109,16 @@
                 <tr>
                     <td>
                         <strong>{{ item.exam.title }}</strong>
-                        {% if item.exam.organization == org %}<span class="tag is-info is-light ml-2">Organization Exam</span>{% else %}<span class="tag is-light ml-2">Platform Exam</span>{% endif %}
+                        <span class="tag is-info is-light ml-2">Organization Exam</span>
                     </td>
                     <td>{% if item.exam.is_published %}<span class="tag is-success">Published</span>{% else %}<span class="tag is-light">Draft</span>{% endif %}</td>
-                    <td>
-                        {% if item.exam.track %}Track: {{ item.exam.track.title }}{% else %}<span class="has-text-grey">Reusable content</span>{% endif %}
-                    </td>
+                    <td><span class="has-text-grey">Reusable content</span></td>
                     <td class="has-text-right">
-                        {% if item.can_edit %}
-                            <a href="{% url 'organizations_admin:exam_update' slug=org_slug pk=item.exam.id %}" class="button is-info is-small">Edit</a>
-                        {% endif %}
+                        <a href="{% url 'organizations_admin:exam_update' slug=org_slug pk=item.exam.id %}" class="button is-info is-small">Edit</a>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="has-text-centered">No reusable exams available.</td></tr>
+                <tr><td colspan="4" class="has-text-centered">No organization exams available.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
