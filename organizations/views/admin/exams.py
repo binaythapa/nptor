@@ -48,7 +48,10 @@ def _organization_allocation_categories(organization):
 
 def _exam_category_formset(data=None, *, instance=None, category_queryset):
     """Keep category allocation optional for the lightweight exam form contract."""
-    if data is not None and "form-TOTAL_FORMS" in data:
+    has_management_form = data is not None and any(
+        key.endswith("-TOTAL_FORMS") for key in data.keys()
+    )
+    if has_management_form:
         return ExamCategoryAllocationFormSet(
             data,
             instance=instance,
