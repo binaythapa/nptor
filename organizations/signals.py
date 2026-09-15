@@ -24,6 +24,12 @@ def create_organization_portal_defaults(sender, instance, created, **kwargs):
         defaults={
             "primary_color": instance.primary_color or "",
             "hero_title": instance.name,
+            "show_courses": True,
+            "show_tracks": True,
+            "show_exams": True,
+            "show_about": True,
+            "show_testimonials": True,
+            "show_contact": True,
             "is_published": False,
         },
     )
