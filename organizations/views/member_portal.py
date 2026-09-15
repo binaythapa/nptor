@@ -3,10 +3,10 @@ from django.shortcuts import render
 
 from organizations.models import OrganizationMember, OrganizationStudent
 from organizations.models.role import OrganizationRole
-from organizations.permissions import org_staff_required
+from organizations.permissions import org_teacher_required
 
 
-@org_staff_required
+@org_teacher_required
 def _staff_workspace(request, slug):
     organization = request.organization
     return render(
@@ -20,7 +20,7 @@ def _staff_workspace(request, slug):
 
 
 def organization_workspace(request, slug):
-    """Organization workspace for staff/teachers and provisioned students."""
+    """Organization workspace for teaching staff and provisioned students."""
     organization = request.organization
     if not request.user.is_authenticated:
         raise PermissionDenied("Authentication is required.")
