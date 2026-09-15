@@ -28,12 +28,8 @@ class StudentProfileTests(TestCase):
 
     def test_student_can_view_and_update_own_profile(self):
         self.assertEqual(get_organization_student(self.student_user, self.org), self.student)
-        update_student_profile(
-            actor=self.student_user,
-            organization=self.org,
-            student=self.student,
-            data={"first_name": "New", "guardian_name": "Parent", "contact_phone": "+977-9800000000"},
-        )
+        update_student_profile(actor=self.student_user, organization=self.org, student=self.student,
+                               data={"first_name": "New", "guardian_name": "Parent", "contact_phone": "+977-9800000000"})
         self.student.refresh_from_db()
         self.student_user.refresh_from_db()
         self.assertEqual(self.student.guardian_name, "Parent")
@@ -49,13 +45,12 @@ class StudentProfileTests(TestCase):
         self.student.refresh_from_db()
         self.assertEqual(self.student.address, "New address")
 
-    def test_teacher_can_view_only_students_in_assigned_class(self):
+    def test_staff_can_view_organization_students(self):
         self.assertEqual(get_student_for_teacher(actor=self.teacher, student_id=self.student.id, organization=self.org), self.student)
         other = User.objects.create_user(username="outside-student", password="password")
         OrganizationMember.objects.create(user=other, organization=self.org, role=OrganizationRole.STUDENT)
         other_student = OrganizationStudent.objects.create(organization=self.org, user=other)
-        with self.assertRaises(PermissionDenied):
-            get_student_for_teacher(actor=self.teacher, student_id=other_student.id, organization=self.org)
+        self.assertEqual(get_student_for_teacher(actor=self.teacher, student_id=other_student.id, organization=self.org), other_student)
 
     def test_student_cannot_view_profile_from_another_organization(self):
         with self.assertRaises(PermissionDenied):
@@ -63,22 +58,14 @@ class StudentProfileTests(TestCase):
 
     def test_student_profile_is_organization_specific(self):
         OrganizationMember.objects.create(user=self.student_user, organization=self.other_org, role=OrganizationRole.STUDENT)
-        other_profile = OrganizationStudent.objects.create(
-            organization=self.other_org,
-            user=self.student_user,
-            student_id="OTHER-001",
-            guardian_name="Other Guardian",
-        )
+        other_profile = OrganizationStudent.objects.create(organization=self.other_org, user=self.student_user, student_id="OTHER-001", guardian_name="Other Guardian")
         self.assertEqual(get_organization_student(self.student_user, self.org), self.student)
         self.assertEqual(get_organization_student(self.student_user, self.other_org), other_profile)
 
     def test_adding_student_membership_provisions_profile(self):
         new_student = User.objects.create_user(username="new-student", email="new.student@example.com", password="password")
         self.client.force_login(self.admin)
-        response = self.client.post(
-            f"/org/{self.org.slug}/admin/students/add/",
-            {"email": new_student.email, "role": OrganizationRole.STUDENT},
-        )
+        response = self.client.post(f"/org/{self.org.slug}/admin/students/add/", {"email": new_student.email, "role": OrganizationRole.STUDENT})
         self.assertEqual(response.status_code, 302)
         profile = OrganizationStudent.objects.get(organization=self.org, user=new_student)
         self.assertEqual(profile.status, OrganizationStudent.STATUS_ACTIVE)
@@ -86,10 +73,7 @@ class StudentProfileTests(TestCase):
 
     def test_readding_student_does_not_replace_existing_profile(self):
         self.client.force_login(self.admin)
-        self.client.post(
-            f"/org/{self.org.slug}/admin/students/add/",
-            {"email": self.student_user.email, "role": OrganizationRole.STUDENT},
-        )
+        self.client.post(f"/org/{self.org.slug}/admin/students/add/", {"email": self.student_user.email, "role": OrganizationRole.STUDENT})
         self.student.refresh_from_db()
         self.assertEqual(self.student.student_id, "S001")
 
@@ -112,7 +96,6 @@ class StudentProfileTests(TestCase):
     def test_global_profile_surfaces_organization_account(self):
         self.client.force_login(self.student_user)
         response = self.client.get("/quiz/profile/")
-
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Organization Accounts")
         self.assertContains(response, self.org.name)

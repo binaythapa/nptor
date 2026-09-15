@@ -46,6 +46,23 @@ def _organization_allocation_categories(organization):
     )
 
 
+def _exam_category_formset(data=None, *, instance=None, category_queryset):
+    """Keep category allocation optional for the lightweight exam form contract."""
+    has_management_form = data is not None and any(
+        key.endswith("-TOTAL_FORMS") for key in data.keys()
+    )
+    if has_management_form:
+        return ExamCategoryAllocationFormSet(
+            data,
+            instance=instance,
+            category_queryset=category_queryset,
+        ), True
+    return ExamCategoryAllocationFormSet(
+        instance=instance,
+        category_queryset=category_queryset,
+    ), False
+
+
 # ============================================================
 # EXAM LIST
 # ============================================================
@@ -87,24 +104,30 @@ def org_exam_create(request, slug):
 
     org = request.organization
 
-    form = OrganizationExamForm(request.POST or None, organization=org)
+    form_data = request.POST.copy() if request.method == "POST" else None
+    if form_data is not None:
+        # Organization ownership is server-controlled; do not depend on a
+        # hidden field being submitted by the browser.
+        form_data["organization"] = str(org.pk)
+
+    form = OrganizationExamForm(form_data, organization=org)
     form.instance.organization = org
-    formset = ExamCategoryAllocationFormSet(
-        request.POST or None,
+    formset, has_allocation_payload = _exam_category_formset(
+        request.POST if request.method == "POST" else None,
         instance=form.instance,
         category_queryset=_organization_allocation_categories(org),
     )
 
-    if request.method == "POST" and form.is_valid() and formset.is_valid():
+    if request.method == "POST" and form.is_valid() and (not has_allocation_payload or formset.is_valid()):
         exam = form.save(commit=False)
         exam.organization = org
         exam.created_by = request.user
-        # Organization teaching members cannot publish directly.
         exam.is_published = False
         exam.save()
         form.save_m2m()
-        formset.instance = exam
-        formset.save()
+        if has_allocation_payload:
+            formset.instance = exam
+            formset.save()
 
         messages.success(request, "Exam created successfully.")
         return redirect("organizations_admin:exams", slug=slug)
@@ -155,19 +178,20 @@ def org_exam_update(request, slug, pk):
         instance=exam,
         organization=org,
     )
-    formset = ExamCategoryAllocationFormSet(
-        request.POST or None,
+    formset, has_allocation_payload = _exam_category_formset(
+        request.POST if request.method == "POST" else None,
         instance=exam,
         category_queryset=_organization_allocation_categories(org),
     )
 
-    if request.method == "POST" and form.is_valid() and formset.is_valid():
+    if request.method == "POST" and form.is_valid() and (not has_allocation_payload or formset.is_valid()):
         exam = form.save(commit=False)
         exam.organization = org
         exam.is_published = False
         exam.save()
         form.save_m2m()
-        formset.save()
+        if has_allocation_payload:
+            formset.save()
 
         messages.success(request, "Exam updated successfully.")
         return redirect("organizations_admin:exams", slug=slug)

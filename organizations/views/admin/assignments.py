@@ -1,10 +1,9 @@
-# organizations/views/admin/assignments.py
-
 """Organization assignment administration views."""
 
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from organizations.permissions import org_teacher_required
 from organizations.models.assignment import ResourceAssignment
@@ -21,10 +20,18 @@ from organizations.services.assignments import (
 )
 from courses.models import Course
 from quiz.models import ExamTrack
+from subscriptions.models import Subscription, SubscriptionEntitlement
+
+
+def _active_subscription_filter():
+    now = timezone.now()
+    return Q(subscription__status=Subscription.STATUS_ACTIVE, subscription__starts_at__lte=now) & (
+        Q(subscription__expires_at__isnull=True) | Q(subscription__expires_at__gt=now)
+    )
 
 
 def _assignment_form_context(organization):
-    """Return only resources that can be assigned to organization students."""
+    """Return organization-owned plus subscribed public resources only."""
     students = (
         OrganizationMember.objects
         .filter(
@@ -36,17 +43,30 @@ def _assignment_form_context(organization):
         .order_by("user__first_name", "user__last_name", "user__username")
     )
 
-    # Organization-owned courses are internal resources and do not require
-    # an organization subscription. Platform courses remain assignable when
-    # they are explicitly attached to the organization.
     organization_courses = Course.objects.filter(organization=organization)
-    attached_platform_courses = Course.objects.filter(
-        organization_subscriptions__organization=organization,
-        organization_subscriptions__is_active=True,
+    subscribed_course_ids = SubscriptionEntitlement.objects.filter(
+        subscription__organization=organization,
+        resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
+        is_active=True,
+    ).filter(_active_subscription_filter()).values_list("course_id", flat=True)
+    subscribed_public_courses = Course.objects.filter(
+        pk__in=subscribed_course_ids,
+        organization__isnull=True,
     )
-    courses = (organization_courses | attached_platform_courses).distinct().order_by("title")
+    courses = (organization_courses | subscribed_public_courses).distinct().order_by("title")
 
-    tracks = ExamTrack.objects.filter(organization=organization).order_by("title")
+    organization_tracks = ExamTrack.objects.filter(organization=organization)
+    subscribed_track_ids = SubscriptionEntitlement.objects.filter(
+        subscription__organization=organization,
+        resource_type=SubscriptionEntitlement.RESOURCE_TRACK,
+        is_active=True,
+    ).filter(_active_subscription_filter()).values_list("track_id", flat=True)
+    subscribed_public_tracks = ExamTrack.objects.filter(
+        pk__in=subscribed_track_ids,
+        organization__isnull=True,
+        is_active=True,
+    )
+    tracks = (organization_tracks | subscribed_public_tracks).distinct().order_by("title")
 
     return {
         "students": students,
@@ -60,7 +80,6 @@ def _parse_datetime(value):
     if not value:
         return None
     from datetime import datetime
-    from django.utils import timezone
     try:
         parsed = datetime.fromisoformat(value)
     except (TypeError, ValueError):
@@ -101,11 +120,7 @@ def org_assignments(request, slug):
     return render(
         request,
         "organizations/admin/assignments/list.html",
-        {
-            "assignments": assignments,
-            "org": organization,
-            "search_query": search_query,
-        },
+        {"assignments": assignments, "org": organization, "search_query": search_query},
     )
 
 
@@ -122,10 +137,7 @@ def org_assignment_create(request, slug):
     if not student_id:
         messages.error(request, "Please select a student.")
         return render(request, "organizations/admin/assignments/create.html", context)
-    if resource_type not in {
-        ResourceAssignment.RESOURCE_COURSE,
-        ResourceAssignment.RESOURCE_TRACK,
-    }:
+    if resource_type not in {ResourceAssignment.RESOURCE_COURSE, ResourceAssignment.RESOURCE_TRACK}:
         messages.error(request, "Please select a Course or Track.")
         return render(request, "organizations/admin/assignments/create.html", context)
 
@@ -178,11 +190,7 @@ def org_assignment_create(request, slug):
 
 @org_teacher_required
 def org_assignment_remove(request, slug, assignment_id):
-    assignment = get_object_or_404(
-        ResourceAssignment,
-        id=assignment_id,
-        organization=request.organization,
-    )
+    assignment = get_object_or_404(ResourceAssignment, id=assignment_id, organization=request.organization)
     if request.method != "POST":
         messages.error(request, "Invalid request method.")
         return redirect("organizations_admin:assignments", slug=slug)

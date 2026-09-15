@@ -18,7 +18,10 @@
 <header class="admin-header org-admin-header">
   <div class="admin-header-inner">
     <div class="admin-header-left">
-      <button id="admin-sidebar-toggle" class="button is-white is-small mr-3" type="button" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation">
+      <button id="orgMobileMenuButton" class="org-mobile-menu-btn" type="button" aria-controls="orgAdminSidebar" aria-expanded="false" aria-label="Open navigation">
+        <i class="fa fa-bars" aria-hidden="true"></i>
+      </button>
+      <button id="admin-sidebar-toggle" class="button is-white is-small mr-3" type="button" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation" style="display:none;">
         <i class="fa fa-bars" aria-hidden="true"></i>
       </button>
       {% if request.organization_member.is_administrator %}
@@ -33,33 +36,24 @@
     <div class="admin-header-right">
       <span class="admin-user is-hidden-mobile"><strong>{{ request.organization_member.get_role_display }}</strong></span>
       <a href="{% url 'quiz:dashboard' %}" class="button is-light is-small">Back to Platform</a>
-      <a href="#logout" class="button is-light is-small" aria-label="Log out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-        <i class="fa fa-right-from-bracket" aria-hidden="true"></i>
-      </a>
+      <a href="#logout" class="button is-light is-small" aria-label="Log out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa fa-right-from-bracket" aria-hidden="true"></i></a>
       <button id="theme-toggle" class="button is-white is-small" type="button" aria-label="Toggle theme"><i class="fa fa-moon"></i></button>
     </div>
   </div>
 </header>
 
+<div id="orgAdminBackdrop" class="admin-sidebar-overlay" aria-hidden="true"></div>
 <div class="admin-layout org-admin-layout">
   <aside id="admin-sidebar" class="admin-sidebar" aria-label="Organization admin navigation">
+    <div id="orgAdminSidebar" class="org-admin-sidebar-hook" aria-hidden="true"></div>
     {% if request.organization_member.is_administrator %}
       <p class="menu-label">Overview</p>
-      <ul class="menu-list">
-        <li><a href="{% url 'organizations_admin:dashboard' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-chart-line"></i></span><span class="menu-text">Dashboard</span></a></li>
-      </ul>
+      <ul class="menu-list"><li><a href="{% url 'organizations_admin:dashboard' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-chart-line"></i></span><span class="menu-text">Dashboard</span></a></li></ul>
     {% endif %}
-
     <p class="menu-label">People</p>
-    <ul class="menu-list">
-      <li><a href="{% url 'organizations_admin:students' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Students</span></a></li>
-    </ul>
-
+    <ul class="menu-list"><li><a href="{% url 'organizations_admin:students' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Students</span></a></li></ul>
     <p class="menu-label">Academic</p>
-    <ul class="menu-list">
-      <li><a href="{% url 'organizations_admin:academic' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-school"></i></span><span class="menu-text">Academic Management</span></a></li>
-    </ul>
-
+    <ul class="menu-list"><li><a href="{% url 'organizations_admin:academic' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-school"></i></span><span class="menu-text">Academic Management</span></a></li></ul>
     <p class="menu-label">Learning</p>
     <ul class="menu-list">
       {% if request.organization_member.is_administrator %}
@@ -71,46 +65,39 @@
       <li><a href="{% url 'organizations_admin:exams' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-file-alt"></i></span><span class="menu-text">Exams</span></a></li>
       <li><a href="{% url 'organizations_admin:questions' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-question-circle"></i></span><span class="menu-text">Questions</span></a></li>
     </ul>
-
     {% if request.organization_member.is_administrator %}
       <p class="menu-label">Classification</p>
-      <ul class="menu-list">
-        <li><a href="{% url 'organizations_admin:domain_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-layer-group"></i></span><span class="menu-text">Domains</span></a></li>
-        <li><a href="{% url 'organizations_admin:category_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-sitemap"></i></span><span class="menu-text">Categories</span></a></li>
-      </ul>
+      <ul class="menu-list"><li><a href="{% url 'organizations_admin:domain_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-layer-group"></i></span><span class="menu-text">Domains</span></a></li><li><a href="{% url 'organizations_admin:category_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-sitemap"></i></span><span class="menu-text">Categories</span></a></li></ul>
     {% endif %}
-
     <p class="menu-label">Operations</p>
-    <ul class="menu-list">
-      <li><a href="{% url 'organizations_admin:assignments' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-tasks"></i></span><span class="menu-text">Assignments</span></a></li>
-    </ul>
-
+    <ul class="menu-list"><li><a href="{% url 'organizations_admin:assignments' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-tasks"></i></span><span class="menu-text">Assignments</span></a></li></ul>
     {% if request.organization_member.is_administrator %}
-      <p class="menu-label">Portfolio & Settings</p>
-      <ul class="menu-list">
-        <li><a href="{% url 'organizations_admin:portfolio' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-briefcase"></i></span><span class="menu-text">Portfolio</span></a></li>
-        <li><a href="{% url 'organizations_admin:settings' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-cog"></i></span><span class="menu-text">Settings</span></a></li>
-      </ul>
+      <p class="menu-label">Portfolio &amp; Settings</p>
+      <ul class="menu-list"><li><a href="{% url 'organizations_admin:portfolio' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-briefcase"></i></span><span class="menu-text">Portfolio</span></a></li><li><a href="{% url 'organizations_admin:settings' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-cog"></i></span><span class="menu-text">Settings</span></a></li></ul>
     {% endif %}
   </aside>
-
   <main id="admin-main" class="org-admin-content" tabindex="-1">
-    <section class="section pt-4 org-admin-shell">
-      <div class="container is-fluid">
-        {% block content %}{% endblock %}
-      </div>
-    </section>
+    <section class="section pt-4 org-admin-shell"><div class="container is-fluid">{% block content %}{% endblock %}</div></section>
   </main>
 </div>
 {% endwith %}
-
-<div class="admin-footer">
-  {% include "layouts/student/footer.html" %}
-</div>
+<div class="admin-footer">{% include "layouts/student/footer.html" %}</div>
 <form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">{% csrf_token %}</form>
-{% if user.is_authenticated %}
-<script src="{% static 'js/admin_navigation.js' %}"></script>
-{% block scripts_extra %}{% endblock %}
-{% endif %}
+{% if user.is_authenticated %}<script src="{% static 'js/admin_navigation.js' %}"></script><script>
+(function () {
+  const button = document.getElementById('orgMobileMenuButton');
+  const sidebar = document.getElementById('admin-sidebar');
+  const backdrop = document.getElementById('orgAdminBackdrop');
+  if (!button || !sidebar) return;
+  function setOpen(open) {
+    sidebar.classList.toggle('is-active', open);
+    if (backdrop) backdrop.classList.toggle('is-active', open);
+    button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  button.addEventListener('click', function () { setOpen(!sidebar.classList.contains('is-active')); });
+  if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+  document.addEventListener('keydown', function (event) { if (event.key === 'Escape') setOpen(false); });
+})();
+</script>{% block scripts_extra %}{% endblock %}{% endif %}
 </body>
 </html>

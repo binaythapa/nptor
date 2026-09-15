@@ -21,7 +21,7 @@ class Course(models.Model):
     owner_type = models.CharField(max_length=20, choices=OWNER_CHOICES, default=OWNER_PLATFORM, db_index=True)
     organization = models.ForeignKey("organizations.Organization", null=True, blank=True, on_delete=models.SET_NULL, related_name="courses")
 
-    is_public = models.BooleanField(default=False, help_text="If enabled, an approved and published platform course may be visible publicly.")
+    is_public = models.BooleanField(default=False, help_text="If enabled, an approved and published course may be visible on its organization's public portal or, for platform courses, the public platform catalog.")
     is_published = models.BooleanField(default=False, db_index=True)
 
     APPROVAL_DRAFT = "draft"
@@ -75,11 +75,6 @@ class Course(models.Model):
                 unique_slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = unique_slug
-        # Organization-owned courses are tenant content and can never enter
-        # the public platform catalog, even if a form or legacy record sets
-        # is_public=True.
-        if self.owner_type == self.OWNER_ORGANIZATION or self.organization_id is not None:
-            self.is_public = False
         super().save(*args, **kwargs)
 
     def is_platform_course(self):

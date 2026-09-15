@@ -17,7 +17,16 @@ class OrganizationPortalService:
     def config(organization):
         config, _ = OrganizationPortalConfig.objects.get_or_create(
             organization=organization,
-            defaults={"primary_color": organization.primary_color or "", "hero_title": organization.name},
+            defaults={
+                "primary_color": organization.primary_color or "",
+                "hero_title": organization.name,
+                "show_courses": True,
+                "show_tracks": True,
+                "show_exams": True,
+                "show_about": True,
+                "show_testimonials": True,
+                "show_contact": True,
+            },
         )
         return config
 
@@ -32,7 +41,13 @@ class OrganizationPortalService:
             is_published=True,
             approval_status=Course.APPROVAL_APPROVED,
         ).order_by("title")
-        return {"organization": organization, "profile": profile, "config": config, "sections": sections, "courses": courses}
+        return {
+            "organization": organization,
+            "profile": profile,
+            "config": config,
+            "sections": sections,
+            "courses": courses,
+        }
 
     @classmethod
     def is_published(cls, organization):

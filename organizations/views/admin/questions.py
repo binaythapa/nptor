@@ -36,24 +36,40 @@ ChoiceFormSet = inlineformset_factory(
 )
 
 
+def _question_choice_formset(data=None, *, instance=None):
+    """Keep choices optional when the submitted form contains no choice data."""
+    prefix = "choices"
+    if data is not None and f"{prefix}-TOTAL_FORMS" in data:
+        has_choice_values = any(
+            data.get(f"{prefix}-{index}-text", "").strip()
+            or data.get(f"{prefix}-{index}-order", "").strip()
+            or data.get(f"{prefix}-{index}-is_correct")
+            for index in range(int(data.get(f"{prefix}-TOTAL_FORMS", 0) or 0))
+        )
+        if has_choice_values:
+            return ChoiceFormSet(data, instance=instance, prefix=prefix), True
+    return ChoiceFormSet(instance=instance, prefix=prefix), False
+
+
 @org_teacher_required
 def org_add_question(request, slug):
     org = request.organization
     if request.method == "POST":
         form = QuestionForm(request.POST, organization=org)
-        formset = ChoiceFormSet(request.POST, prefix="choices")
-        if form.is_valid() and formset.is_valid():
+        formset, has_choice_payload = _question_choice_formset(request.POST)
+        if form.is_valid() and (not has_choice_payload or formset.is_valid()):
             question = form.save(commit=False)
             question.organization = org
             question.created_by = request.user
             question.updated_by = request.user
             question.save()
-            formset.instance = question
-            formset.save()
+            if has_choice_payload:
+                formset.instance = question
+                formset.save()
             return redirect("organizations_admin:questions", slug=slug)
     else:
         form = QuestionForm(organization=org)
-        formset = ChoiceFormSet(prefix="choices")
+        formset, _ = _question_choice_formset()
     return render(
         request,
         "organizations/admin/questions/add.html",
@@ -82,17 +98,18 @@ def org_edit_question(request, slug, pk):
             instance=question,
             organization=org,
         )
-        formset = ChoiceFormSet(request.POST, instance=question, prefix="choices")
-        if form.is_valid() and formset.is_valid():
+        formset, has_choice_payload = _question_choice_formset(request.POST, instance=question)
+        if form.is_valid() and (not has_choice_payload or formset.is_valid()):
             updated = form.save(commit=False)
             updated.updated_by = request.user
             updated.organization = org
             updated.save()
-            formset.save()
+            if has_choice_payload:
+                formset.save()
             return redirect("organizations_admin:questions", slug=slug)
     else:
         form = QuestionForm(instance=question, organization=org)
-        formset = ChoiceFormSet(instance=question, prefix="choices")
+        formset, _ = _question_choice_formset(instance=question)
     return render(
         request,
         "organizations/admin/questions/edit.html",
