@@ -104,7 +104,13 @@ def org_exam_create(request, slug):
 
     org = request.organization
 
-    form = OrganizationExamForm(request.POST or None, organization=org)
+    form_data = request.POST.copy() if request.method == "POST" else None
+    if form_data is not None:
+        # Organization ownership is server-controlled; do not depend on a
+        # hidden field being submitted by the browser.
+        form_data["organization"] = str(org.pk)
+
+    form = OrganizationExamForm(form_data, organization=org)
     form.instance.organization = org
     formset, has_allocation_payload = _exam_category_formset(
         request.POST if request.method == "POST" else None,
