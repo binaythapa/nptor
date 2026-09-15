@@ -133,69 +133,40 @@ def _mutable_course_state(course):
 
 @org_admin_required
 def org_courses(request, slug):
+    """Show only resources owned by this organization.
+
+    Platform/public NPTOR resources are intentionally excluded from the
+    organization administration workspace. Organization resources are created,
+    managed, and assigned by the organization itself; public-resource commerce
+    is handled outside this dashboard.
+    """
     org = request.organization
     organization_courses = Course.objects.filter(organization=org)
-    platform_courses = Course.objects.filter(
-        owner_type=Course.OWNER_PLATFORM,
-        is_published=True,
-    )
-    active_subscription = get_active_organization_subscription(org)
+    organization_tracks = ExamTrack.objects.filter(organization=org).order_by("title")
+    organization_exams = Exam.objects.filter(organization=org).order_by("title")
 
-    subscribed_course_ids = set()
-    if active_subscription:
-        subscribed_course_ids = set(
-            SubscriptionEntitlement.objects.filter(
-                subscription=active_subscription,
-                resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
-                is_active=True,
-                course__isnull=False,
-            ).values_list("course_id", flat=True)
-        )
-
-    subscribed_courses = Course.objects.filter(id__in=subscribed_course_ids)
-    visible_courses = (
-        organization_courses | platform_courses | subscribed_courses
-    ).distinct().order_by("title")
     courses = [
         {
             "course": course,
-            "is_attached": course.id in subscribed_course_ids,
-            "can_edit": course.organization_id == org.id,
+            "is_attached": False,
+            "can_edit": True,
         }
-        for course in visible_courses
+        for course in organization_courses.order_by("title")
     ]
-
-    visible_tracks = ExamTrack.objects.filter(
-        Q(organization=org) | Q(organization__isnull=True)
-    ).order_by("title")
-    subscribed_track_ids = set()
-    if active_subscription:
-        subscribed_track_ids = set(
-            SubscriptionEntitlement.objects.filter(
-                subscription=active_subscription,
-                resource_type=SubscriptionEntitlement.RESOURCE_TRACK,
-                is_active=True,
-                track__isnull=False,
-            ).values_list("track_id", flat=True)
-        )
     tracks = [
         {
             "track": track,
-            "is_attached": track.id in subscribed_track_ids,
-            "can_edit": track.organization_id == org.id,
+            "is_attached": False,
+            "can_edit": True,
         }
-        for track in visible_tracks
+        for track in organization_tracks
     ]
-
-    visible_exams = Exam.objects.filter(
-        Q(organization=org) | Q(organization__isnull=True)
-    ).order_by("title")
     exams = [
         {
             "exam": exam,
-            "can_edit": exam.organization_id == org.id,
+            "can_edit": True,
         }
-        for exam in visible_exams
+        for exam in organization_exams
     ]
 
     return render(
@@ -206,7 +177,7 @@ def org_courses(request, slug):
             "tracks": tracks,
             "exams": exams,
             "org": org,
-            "organization_subscription": active_subscription,
+            "organization_subscription": None,
         },
     )
 
@@ -216,22 +187,10 @@ def org_courses(request, slug):
 def org_course_attach(request, slug, course_id):
     org = request.organization
     course = get_object_or_404(Course, id=course_id, is_published=True)
-    if not _platform_or_organization_resource(course, org):
-        messages.error(request, "You cannot attach a resource owned by another organization.")
+    if course.organization_id != org.id:
+        messages.error(request, "Public/platform courses cannot be attached from the organization workspace.")
         return redirect("organizations_admin:courses", slug=slug)
-    try:
-        _, created = create_resource_entitlement(
-            organization=org,
-            resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
-            resource=course,
-        )
-    except ValueError as exc:
-        messages.error(request, str(exc))
-        return redirect("organizations_admin:courses", slug=slug)
-    if created:
-        messages.success(request, f"{course.title} attached to organization.")
-    else:
-        messages.info(request, f"{course.title} is already attached.")
+    messages.info(request, "Organization-owned courses do not require a product attachment.")
     return redirect("organizations_admin:courses", slug=slug)
 
 
@@ -239,15 +198,10 @@ def org_course_attach(request, slug, course_id):
 @org_admin_required
 def org_course_detach(request, slug, course_id):
     course = get_object_or_404(Course, id=course_id)
-    if not _platform_or_organization_resource(course, request.organization):
-        messages.error(request, "You cannot detach a resource owned by another organization.")
+    if course.organization_id != request.organization.id:
+        messages.error(request, "Public/platform courses cannot be managed from the organization workspace.")
         return redirect("organizations_admin:courses", slug=slug)
-    success = deactivate_resource_entitlement(
-        organization=request.organization,
-        resource_type=SubscriptionEntitlement.RESOURCE_COURSE,
-        resource_id=course_id,
-    )
-    messages.success(request, "Course detached successfully.") if success else messages.info(request, "Course was not attached.")
+    messages.info(request, "Organization-owned courses are managed directly by the organization.")
     return redirect("organizations_admin:courses", slug=slug)
 
 
@@ -359,15 +313,10 @@ def org_course_delete(request, slug, pk):
 def org_track_attach(request, slug, pk):
     org = request.organization
     track = get_object_or_404(ExamTrack, pk=pk)
-    if not _platform_or_organization_resource(track, org):
-        messages.error(request, "You cannot attach a resource owned by another organization.")
+    if track.organization_id != org.id:
+        messages.error(request, "Public/platform tracks cannot be attached from the organization workspace.")
         return redirect("organizations_admin:courses", slug=slug)
-    try:
-        _, created = create_resource_entitlement(org, SubscriptionEntitlement.RESOURCE_TRACK, track)
-    except ValueError as exc:
-        messages.error(request, str(exc))
-        return redirect("organizations_admin:courses", slug=slug)
-    messages.success(request, "Track attached successfully.") if created else messages.info(request, "Track is already attached.")
+    messages.info(request, "Organization-owned tracks do not require a product attachment.")
     return redirect("organizations_admin:courses", slug=slug)
 
 
@@ -375,9 +324,8 @@ def org_track_attach(request, slug, pk):
 @org_admin_required
 def org_track_detach(request, slug, pk):
     track = get_object_or_404(ExamTrack, pk=pk)
-    if not _platform_or_organization_resource(track, request.organization):
-        messages.error(request, "You cannot detach a resource owned by another organization.")
+    if track.organization_id != request.organization.id:
+        messages.error(request, "Public/platform tracks cannot be managed from the organization workspace.")
         return redirect("organizations_admin:courses", slug=slug)
-    success = deactivate_resource_entitlement(request.organization, SubscriptionEntitlement.RESOURCE_TRACK, pk)
-    messages.success(request, "Track detached successfully.") if success else messages.info(request, "Track was not attached.")
+    messages.info(request, "Organization-owned tracks are managed directly by the organization.")
     return redirect("organizations_admin:courses", slug=slug)
