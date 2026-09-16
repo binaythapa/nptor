@@ -114,7 +114,6 @@ class CustomerRegisterView(CreateView):
         last_name = cleaned.get('last_name')
 
         try:
-            # 1️⃣ Create user
             user = User.objects.create_user(
                 username=username,
                 email=email,
@@ -123,12 +122,10 @@ class CustomerRegisterView(CreateView):
                 last_name=last_name
             )
 
-            # 2️⃣ Create client profile
             client = form.save(commit=False)
             client.user = user
             client.save()
 
-            # 3️⃣ Send welcome email (SAFE)
             try:
                 send_mail(
                     subject="Welcome to nptor.com - Your Learning Journey Starts Now!",
@@ -142,12 +139,11 @@ class CustomerRegisterView(CreateView):
                     ),
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[email],
-                    fail_silently=True,   # ✅ NEVER break registration
+                    fail_silently=True,
                 )
             except Exception:
                 pass
 
-            # 4️⃣ Auto login
             user = authenticate(username=username, password=password)
             if user:
                 login(self.request, user)
@@ -181,10 +177,7 @@ def register(request):
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            
-            # THIS IS THE ONLY LINE THAT MATTERS IN DJANGO 6.0
             login(request, user, backend='quiz.auth_backends.EmailOrUsernameModelBackend')
-            
             messages.success(request, "Welcome!")
             return redirect("quiz:dashboard")
     else:
@@ -249,3 +242,8 @@ def users_list(request):
         'users': users_qs,
     })
 
+
+# The profile implementation with organization-account request state lives in
+# accounts.views.profile so the account conversion workflow remains in the
+# accounts domain while the existing quiz URL remains unchanged.
+from accounts.views.profile import profile
