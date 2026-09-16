@@ -116,7 +116,7 @@
       {% if organization_request.review_notes %}<p class="mt-2">{{ organization_request.review_notes|linebreaksbr }}</p>{% endif %}
       <div class="mt-3"><a class="button is-link is-light" href="{% url 'accounts:organization-account-request' %}">Submit New Request</a></div>
     </div>
-  {% elif not memberships and not organization_request %}
+  {% elif can_request_organization and not organization_request %}
     <div class="buttons mt-4">
       <a class="button is-primary" href="{% url 'accounts:organization-account-request' %}">Request Organization Account</a>
     </div>
