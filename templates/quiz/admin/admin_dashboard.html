@@ -24,7 +24,8 @@
     <div class="column is-7">
         <section class="admin-panel">
             <div class="admin-panel-header"><div><h2>Needs attention</h2><p class="admin-muted">Work that may require an administrator.</p></div></div>
-            <a class="admin-attention-row" href="{% url 'accounts:organization_requests' %}"><span><strong>Organization access requests</strong><small>Users waiting for approval</small></span><span class="admin-attention-count">{{ pending_organization_requests|default:0 }}</span></a>
+            <a class="admin-attention-row" href="{% url 'accounts:organization-account-requests' %}"><span><strong>Organization account requests</strong><small>Users waiting for organization account approval</small></span><span class="admin-attention-count">Review</span></a>
+            <a class="admin-attention-row" href="{% url 'accounts:organization_requests' %}"><span><strong>Organization access requests</strong><small>Users waiting for access to an existing organization</small></span><span class="admin-attention-count">Review</span></a>
             <a class="admin-attention-row" href="{% url 'courses:admin-pending-courses' %}"><span><strong>Course reviews</strong><small>Courses waiting for moderation</small></span><span class="admin-attention-count">{{ pending_course_reviews }}</span></a>
         </section>
 
