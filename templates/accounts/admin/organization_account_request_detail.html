@@ -3,53 +3,149 @@
 {% block content %}
 <div class="admin-page-header">
   <div>
-    <h1 class="title is-4 mb-1">Organization Account Request</h1>
+    <div class="is-flex is-align-items-center is-flex-wrap-wrap" style="gap: .75rem;">
+      <h1 class="title is-4 mb-1">Organization Account Request</h1>
+      {% if access_request.status == 'PENDING' %}
+        <span class="tag is-warning is-light request-status-badge">Pending Review</span>
+      {% elif access_request.status == 'APPROVED' %}
+        <span class="tag is-success is-light request-status-badge">Approved</span>
+      {% elif access_request.status == 'REJECTED' %}
+        <span class="tag is-danger is-light request-status-badge">Rejected</span>
+      {% else %}
+        <span class="tag is-light request-status-badge">{{ access_request.get_status_display }}</span>
+      {% endif %}
+    </div>
     <p class="admin-muted">Review the submitted organization information before approving account creation.</p>
   </div>
   <a class="button is-light" href="{% url 'accounts:organization-account-requests' %}">Back to requests</a>
 </div>
 
-<div class="columns is-variable is-4">
-  <div class="column is-7">
-    <section class="admin-panel">
-      <h2 class="title is-5">Organization Information</h2>
-      <div class="columns is-multiline">
-        <div class="column is-half"><p class="heading">Organization</p><p>{{ access_request.organization_name }}</p></div>
-        <div class="column is-half"><p class="heading">Type</p><p>{{ access_request.get_org_type_display }}</p></div>
-        <div class="column is-half"><p class="heading">Website</p><p>{{ access_request.website|default:"Not provided" }}</p></div>
-        <div class="column is-half"><p class="heading">Contact email</p><p>{{ access_request.contact_email }}</p></div>
-        <div class="column is-half"><p class="heading">Contact phone</p><p>{{ access_request.contact_phone|default:"Not provided" }}</p></div>
-        <div class="column is-half"><p class="heading">City / Country</p><p>{{ access_request.city|default:"—" }}{% if access_request.country %}, {{ access_request.country }}{% endif %}</p></div>
-        <div class="column is-full"><p class="heading">Address</p><p>{{ access_request.address|default:"Not provided"|linebreaksbr }}</p></div>
-        <div class="column is-full"><p class="heading">Description</p><p>{{ access_request.description|default:"Not provided"|linebreaksbr }}</p></div>
-        <div class="column is-full"><p class="heading">Reason</p><p>{{ access_request.reason|default:"Not provided"|linebreaksbr }}</p></div>
+<div class="columns is-variable is-5">
+  <div class="column is-8">
+    <section class="admin-panel request-organization-summary">
+      <div class="is-flex is-justify-content-space-between is-align-items-flex-start is-flex-wrap-wrap" style="gap: 1rem;">
+        <div>
+          <p class="heading mb-2">Organization</p>
+          <h2 class="title is-4 mb-2">{{ access_request.organization_name }}</h2>
+          <span class="tag is-info is-light">{{ access_request.get_org_type_display }}</span>
+        </div>
+        <div class="has-text-right">
+          <p class="heading mb-1">Submitted</p>
+          <p class="has-text-weight-semibold">{{ access_request.created_at|date:"M d, Y" }}</p>
+          <p class="is-size-7 has-text-grey">{{ access_request.created_at|date:"H:i" }}</p>
+        </div>
+      </div>
+
+      <hr>
+
+      <h3 class="title is-6 mb-4">Contact &amp; Location</h3>
+      <div class="columns is-multiline request-contact-grid">
+        <div class="column is-half">
+          <p class="heading mb-1">Contact email</p>
+          <p class="is-size-6">
+            <a href="mailto:{{ access_request.contact_email }}">{{ access_request.contact_email }}</a>
+          </p>
+        </div>
+        <div class="column is-half">
+          <p class="heading mb-1">Contact phone</p>
+          <p class="is-size-6">
+            {% if access_request.contact_phone %}
+              <a href="tel:{{ access_request.contact_phone }}">{{ access_request.contact_phone }}</a>
+            {% else %}
+              <span class="has-text-grey">Not provided</span>
+            {% endif %}
+          </p>
+        </div>
+        <div class="column is-half">
+          <p class="heading mb-1">City / Country</p>
+          <p class="is-size-6">
+            {% if access_request.city or access_request.country %}
+              {{ access_request.city|default:"" }}{% if access_request.city and access_request.country %}, {% endif %}{{ access_request.country|default:"" }}
+            {% else %}
+              <span class="has-text-grey">Not provided</span>
+            {% endif %}
+          </p>
+        </div>
+        <div class="column is-half">
+          <p class="heading mb-1">Website</p>
+          {% if access_request.website %}
+            <a href="{{ access_request.website }}" target="_blank" rel="noopener noreferrer">Visit website ↗</a>
+          {% else %}
+            <span class="has-text-grey">Not provided</span>
+          {% endif %}
+        </div>
+        <div class="column is-full">
+          <p class="heading mb-1">Address</p>
+          <p>{{ access_request.address|default:"Not provided"|linebreaksbr }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-panel mt-5">
+      <h2 class="title is-5 mb-5">Request details</h2>
+
+      <div class="mb-5">
+        <p class="heading mb-2">Description</p>
+        <div class="content">
+          {% if access_request.description %}
+            {{ access_request.description|linebreaksbr }}
+          {% else %}
+            <p class="has-text-grey">Not provided</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div>
+        <p class="heading mb-2">Reason for request</p>
+        <div class="content">
+          {% if access_request.reason %}
+            {{ access_request.reason|linebreaksbr }}
+          {% else %}
+            <p class="has-text-grey">Not provided</p>
+          {% endif %}
+        </div>
       </div>
     </section>
   </div>
 
-  <div class="column is-5">
+  <div class="column is-4">
     <section class="admin-panel">
-      <h2 class="title is-5">Requester</h2>
-      <p><strong>{{ access_request.user.get_username }}</strong></p>
-      <p class="has-text-grey">{{ access_request.user.email }}</p>
-      <hr>
-      <p class="heading">Submitted</p>
-      <p>{{ access_request.created_at|date:"M d, Y H:i" }}</p>
-      <p class="heading mt-4">Status</p>
-      <p>{{ access_request.get_status_display }}</p>
+      <p class="heading mb-2">Requester</p>
+      <p class="title is-6 mb-1">{{ access_request.user.get_username }}</p>
+      <p class="is-size-7 has-text-grey">{{ access_request.user.email }}</p>
+
+      {% if access_request.reviewed_by %}
+        <hr>
+        <p class="heading mb-1">Reviewed by</p>
+        <p class="has-text-weight-semibold">{{ access_request.reviewed_by.get_username }}</p>
+        {% if access_request.reviewed_at %}
+          <p class="is-size-7 has-text-grey">{{ access_request.reviewed_at|date:"M d, Y H:i" }}</p>
+        {% endif %}
+      {% endif %}
+
+      {% if access_request.review_notes and access_request.status != 'PENDING' %}
+        <hr>
+        <p class="heading mb-2">Review notes</p>
+        <div class="content is-size-7">{{ access_request.review_notes|linebreaksbr }}</div>
+      {% endif %}
     </section>
 
     {% if access_request.status == 'PENDING' %}
       <section class="admin-panel mt-4">
+        <h2 class="title is-5">Review request</h2>
+        <p class="is-size-7 has-text-grey mb-5">Choose an action after reviewing the submitted information.</p>
+
         <form method="post" action="{% url 'accounts:organization-account-request-approve' pk=access_request.pk %}">
           {% csrf_token %}
           <div class="field">
-            <label class="label">Review notes</label>
-            <textarea class="textarea" name="review_notes" rows="3" placeholder="Optional approval notes"></textarea>
+            <label class="label">Approval notes <span class="has-text-weight-normal has-text-grey">(optional)</span></label>
+            <textarea class="textarea" name="review_notes" rows="3" placeholder="Add notes for the approval record"></textarea>
           </div>
-          <button class="button is-success is-fullwidth" type="submit">Approve & Create Organization</button>
+          <button class="button is-success is-fullwidth" type="submit">Approve &amp; Create Organization</button>
         </form>
+
         <hr>
+
         <form method="post" action="{% url 'accounts:organization-account-request-reject' pk=access_request.pk %}">
           {% csrf_token %}
           <div class="field">
@@ -58,11 +154,6 @@
           </div>
           <button class="button is-danger is-light is-fullwidth" type="submit">Reject Request</button>
         </form>
-      </section>
-    {% elif access_request.review_notes %}
-      <section class="admin-panel mt-4">
-        <p class="heading">Review notes</p>
-        <p>{{ access_request.review_notes|linebreaksbr }}</p>
       </section>
     {% endif %}
   </div>
