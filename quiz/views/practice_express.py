@@ -34,55 +34,22 @@ from django.utils.formats import get_format
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
-# Project-specific imports
 from quiz.forms import *
-from quiz.models import (
-    Exam,
-    ExamTrack,
-    UserExam,
-    Coupon,
-)
+from quiz.models import Exam, ExamTrack, UserExam, Coupon
 from quiz.services.access import can_access_exam
 from quiz.services.pricing import apply_coupon
-
 from quiz.utils import get_leaf_category_name
-
-# Re-assign User in case a custom user model is used (overrides the imported User if needed)
-User = get_user_model()
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.db.models import Sum
-from quiz.models import (
-    Question,
-    Category,
-    Domain,
-    QuestionDiscussion,
-)
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.db.models import Sum
-from django.http import JsonResponse
+from quiz.models import Question, Category, Domain, QuestionDiscussion
 from courses.services.context import get_course_context
 from courses.services.practice_completion import track_practice_completion
-
-import logging
 from core.utils.memory import get_memory_usage_mb
 
+User = get_user_model()
 logger = logging.getLogger("django")
 
-
-
-from django.http import JsonResponse
 from django.template.loader import render_to_string
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
 
 
-
-# =====================================================
-# AJAX: LOAD CATEGORIES BY DOMAIN
-# =====================================================
 @require_GET
 def ajax_categories_by_domain(request):
     domain_id = request.GET.get("domain")
@@ -92,47 +59,37 @@ def ajax_categories_by_domain(request):
 
     categories = Category.objects.filter(
         domain_id=domain_id,
-        is_active=True
+        domain__organization__isnull=True,
+        is_active=True,
     ).values("id", "name", "parent_id")
 
-    return JsonResponse({
-        "categories": list(categories)
-    })
+    return JsonResponse({"categories": list(categories)})
 
 
 # =====================================================
 # PRACTICE EXPRESS – PAGE
 # =====================================================
 def practice_express(request):
-
-    # SAFE HARD RESET (only express keys)
     if request.GET.get("reset") == "1":
         for key in [
-            "pe_seen",
-            "pe_qid",
-            "pe_filters",
-            "pe_total",
-            "pe_progress",
+            "pe_seen", "pe_qid", "pe_filters", "pe_total", "pe_progress",
         ]:
             request.session.pop(key, None)
-
         request.session.modified = True
         return redirect("quiz:practice_express")
 
     return render(request, "quiz/student/practice_express/practice_express.html", {
-        "domains": Domain.objects.filter(is_active=True),
+        "domains": Domain.objects.filter(
+            organization__isnull=True,
+            is_active=True,
+        ),
         "categories": Category.objects.none(),
         "difficulty_choices": Question.DIFFICULTY_CHOICES,
     })
 
 
-
 @require_GET
 def practice_express_next(request):
-
-    # -------------------------------
-    # READ FILTERS
-    # -------------------------------
     domain_id = request.GET.get("domain")
     category_id = request.GET.get("category")
     difficulty = request.GET.get("difficulty")
@@ -146,34 +103,38 @@ def practice_express_next(request):
         "category": category_id,
         "difficulty": difficulty,
     }
-
     last_filters = request.session.get("pe_filters")
 
-    # -------------------------------
-    # BASE QUERYSET
-    # -------------------------------
     qs = Question.objects.filter(
         is_active=True,
         is_deleted=False,
     ).prefetch_related("choices")
 
-    # -------------------------------
-    # DOMAIN FILTER
-    # -------------------------------
+    selected_domain = None
     if domain_id:
+        selected_domain = Domain.objects.filter(
+            id=domain_id,
+            organization__isnull=True,
+            is_active=True,
+        ).first()
+
+        if not selected_domain:
+            return JsonResponse({
+                "no_questions": True,
+                "progress_done": 0,
+                "progress_total": 0,
+            })
+
         qs = qs.filter(
-            Q(primary_category__domain_id=domain_id)
-            | Q(categories__domain_id=domain_id)
+            Q(primary_category__domain=selected_domain)
+            | Q(categories__domain=selected_domain)
         ).distinct()
 
-    # -------------------------------
-    # CATEGORY FILTER (DESCENDANTS)
-    # -------------------------------
-    if category_id:
+    if category_id and selected_domain:
         cat = Category.objects.filter(
             id=category_id,
-            domain_id=domain_id,
-            is_active=True
+            domain=selected_domain,
+            is_active=True,
         ).first()
         if cat:
             category_ids = cat.get_descendants_include_self()
@@ -182,15 +143,9 @@ def practice_express_next(request):
                 | Q(categories__id__in=category_ids)
             ).distinct()
 
-    # -------------------------------
-    # DIFFICULTY FILTER
-    # -------------------------------
     if difficulty:
         qs = qs.filter(difficulty=difficulty)
 
-    # -------------------------------
-    # RESET WHEN FILTERS CHANGE
-    # -------------------------------
     if current_filters != last_filters:
         request.session["pe_filters"] = current_filters
         request.session["pe_seen_qids"] = []
@@ -201,9 +156,6 @@ def practice_express_next(request):
     total_questions = request.session.get("pe_total", qs.count())
     anon_attempted = request.session.get("pe_anon_attempted", 0)
 
-    # -------------------------------
-    # NO QUESTIONS
-    # -------------------------------
     if total_questions == 0:
         return JsonResponse({
             "no_questions": True,
@@ -211,16 +163,8 @@ def practice_express_next(request):
             "progress_total": 0,
         })
 
-
-
-
-
-    # -------------------------------
-    # 🔒 ANON LIMIT (SETTINGS)
-    # -------------------------------
     if not request.user.is_authenticated:
         limit = getattr(settings, "EXPRESS_ANON_LIMIT", 0)
-
         if anon_attempted >= limit:
             return JsonResponse({
                 "limit_reached": True,
@@ -229,14 +173,7 @@ def practice_express_next(request):
                 "progress_total": limit,
             })
 
-    # -------------------------------
-    # REMAINING QUESTIONS
-    # -------------------------------
     remaining = qs.exclude(id__in=seen_qids)
-
-    # -------------------------------
-    # COMPLETED
-    # -------------------------------
     if not remaining.exists():
         request.session["pe_seen_qids"] = []
         return JsonResponse({
@@ -245,21 +182,14 @@ def practice_express_next(request):
             "progress_total": total_questions,
         })
 
-    # -------------------------------
-    # PICK NEXT QUESTION
-    # -------------------------------
     question = remaining.order_by("?").first()
     correct_choices = question.choices.filter(is_correct=True)
 
     seen_qids.append(question.id)
     request.session["pe_seen_qids"] = seen_qids
-
     if not request.user.is_authenticated:
         request.session["pe_anon_attempted"] = anon_attempted + 1
 
-    # -------------------------------
-    # RESPONSE (🔥 SUPPORTS ALL TYPES)
-    # -------------------------------
     return JsonResponse({
         "id": question.id,
         "text": question.text,
@@ -275,9 +205,6 @@ def practice_express_next(request):
     })
 
 
-# =====================================================
-# PRACTICE EXPRESS – SAVE RESULT (AJAX, LOGIN ONLY)
-# =====================================================
 @require_POST
 @login_required
 def practice_express_save(request):
@@ -289,10 +216,9 @@ def practice_express_save(request):
 
     stat, _ = PracticeStat.objects.get_or_create(
         user=request.user,
-        category=question.category
+        category=question.category,
     )
 
-    # streak logic
     if stat.last_practice_date == today:
         pass
     elif stat.last_practice_date == today - timezone.timedelta(days=1):
@@ -304,17 +230,11 @@ def practice_express_save(request):
     stat.total_attempted += 1
     if is_correct:
         stat.total_correct += 1
-
     stat.save()
 
     return JsonResponse({
         "total": stat.total_attempted,
         "correct": stat.total_correct,
         "accuracy": stat.accuracy(),
-        "streak": stat.streak
+        "streak": stat.streak,
     })
-
-
-
-
-
