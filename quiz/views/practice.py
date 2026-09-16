@@ -207,7 +207,8 @@ def practice(request):
     if domain_id and str(domain_id).isdigit():
         selected_domain = Domain.objects.filter(
             id=domain_id,
-            is_active=True
+            organization__isnull=True,
+            is_active=True,
         ).first()
 
         if selected_domain:
@@ -251,7 +252,10 @@ def practice(request):
             return render(request, "quiz/student/practice/practice.html", {
                 "anon_limit_reached": True,
                 "anon_limit": settings.BASICS_ANON_LIMIT,
-                "domains": Domain.objects.filter(is_active=True),
+                "domains": Domain.objects.filter(
+                organization__isnull=True,
+                is_active=True,
+            ),
                 "categories": Category.objects.none(),
                 "difficulty_choices": Question.DIFFICULTY_CHOICES,
             })
@@ -264,7 +268,10 @@ def practice(request):
             "completed": True,
             "progress_done": total,
             "progress_total": total,
-            "domains": Domain.objects.filter(is_active=True),
+            "domains": Domain.objects.filter(
+                organization__isnull=True,
+                is_active=True,
+            ),
             "categories": Category.objects.none(),
             "difficulty_choices": Question.DIFFICULTY_CHOICES,
         })
@@ -385,7 +392,10 @@ def practice(request):
         "show_next": show_next,
         "explanation": question.explanation,
         "discussions": discussions,
-        "domains": Domain.objects.filter(is_active=True),
+        "domains": Domain.objects.filter(
+                organization__isnull=True,
+                is_active=True,
+            ),
         "categories": categories,
         "domain_id": domain_id,
         "category_id": category_id,
@@ -775,7 +785,8 @@ def practice_next_ajax(request):
             Domain.objects
             .filter(
                 id=domain_id,
-                is_active=True
+                organization__isnull=True,
+                is_active=True,
             )
             .first()
         )
@@ -1154,6 +1165,7 @@ def practice_skip_ajax(request):
             Domain.objects
             .filter(
                 id=domain_id,
+                organization__isnull=True,
                 is_active=True,
             )
             .first()

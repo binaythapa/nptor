@@ -465,7 +465,11 @@ def create_study_plan(request):
 
         domain = None
         if domain_id:
-            domain = Domain.objects.filter(id=domain_id, is_active=True).first()
+            domain = Domain.objects.filter(
+                id=domain_id,
+                organization__isnull=True,
+                is_active=True,
+            ).first()
 
         try:
             generate_study_plan(
@@ -479,7 +483,10 @@ def create_study_plan(request):
         except Exception as e:
             messages.error(request, str(e))
 
-    domains = Domain.objects.filter(is_active=True)
+    domains = Domain.objects.filter(
+        organization__isnull=True,
+        is_active=True,
+    )
 
     return render(request, "quiz/study_plan/create_plan.html", {
         "domains": domains
@@ -625,7 +632,10 @@ def study_plan_leaderboard(request):
         "quiz/study_plan/leaderboard.html",
         {
             "leaderboard": leaderboard,
-            "domains": Domain.objects.filter(is_active=True),
+            "domains": Domain.objects.filter(
+                organization__isnull=True,
+                is_active=True,
+            ),
             "selected_domain": domain_id,
             "monthly_mode": month_filter,
         }
