@@ -2,7 +2,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from organizations.models import OrganizationAccountRequest, OrganizationMember, OrganizationStudent
+from organizations.models import (
+    OrganizationAccountRequest,
+    OrganizationMember,
+    OrganizationRole,
+    OrganizationStudent,
+)
 
 
 @login_required
@@ -32,6 +37,11 @@ def profile(request):
     organization_request = OrganizationAccountRequest.objects.filter(
         user=request.user
     ).order_by("-created_at").first()
+    can_request_organization = not any(
+        membership.is_active
+        and membership.role in OrganizationRole.administrative_roles()
+        for membership in memberships
+    )
 
     return render(
         request,
@@ -40,5 +50,6 @@ def profile(request):
             "user": request.user,
             "memberships": memberships,
             "organization_request": organization_request,
+            "can_request_organization": can_request_organization,
         },
     )
