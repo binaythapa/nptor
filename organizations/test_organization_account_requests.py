@@ -27,7 +27,7 @@ class OrganizationAccountRequestWorkflowTests(TestCase):
 
     def request_payload(self, **overrides):
         payload = {
-            "name": "Acme Learning Institute",
+            "organization_name": "Acme Learning Institute",
             "org_type": Organization.TYPE_INSTITUTE,
             "website": "https://example.com",
             "contact_email": "admin@example.com",
@@ -43,12 +43,10 @@ class OrganizationAccountRequestWorkflowTests(TestCase):
 
     def test_user_can_submit_one_pending_organization_account_request(self):
         self.client.force_login(self.user)
-
         response = self.client.post(
             reverse("accounts:organization-account-request"),
             self.request_payload(),
         )
-
         self.assertEqual(response.status_code, 302)
         request = OrganizationAccountRequest.objects.get(user=self.user)
         self.assertEqual(request.status, OrganizationAccountRequest.STATUS_PENDING)
@@ -65,9 +63,7 @@ class OrganizationAccountRequestWorkflowTests(TestCase):
             reason="Need an organization workspace.",
         )
         self.client.force_login(self.user)
-
         response = self.client.get(reverse("quiz:profile"))
-
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Organization Account Request")
         self.assertContains(response, "Pending Review")
@@ -88,18 +84,15 @@ class OrganizationAccountRequestWorkflowTests(TestCase):
             reason="Need an organization workspace.",
         )
         self.client.force_login(self.admin)
-
         response = self.client.post(
-            reverse("accounts:organization-account-request_approve", kwargs={"pk": request.pk}),
+            reverse("accounts:organization-account-request-approve", kwargs={"pk": request.pk}),
             {"review_notes": "Approved."},
         )
-
         self.assertEqual(response.status_code, 302)
         request.refresh_from_db()
         self.assertEqual(request.status, OrganizationAccountRequest.STATUS_APPROVED)
         self.assertEqual(request.reviewed_by, self.admin)
         self.assertIsNotNone(request.reviewed_at)
-
         organization = Organization.objects.get(name="Acme Learning Institute")
         self.assertTrue(organization.is_active)
         self.assertEqual(organization.org_type, Organization.TYPE_INSTITUTE)
@@ -116,12 +109,10 @@ class OrganizationAccountRequestWorkflowTests(TestCase):
             reason="Need an organization workspace.",
         )
         self.client.force_login(self.admin)
-
         response = self.client.post(
-            reverse("accounts:organization-account-request_reject", kwargs={"pk": request.pk}),
+            reverse("accounts:organization-account-request-reject", kwargs={"pk": request.pk}),
             {"review_notes": "Please provide more information."},
         )
-
         self.assertEqual(response.status_code, 302)
         request.refresh_from_db()
         self.assertEqual(request.status, OrganizationAccountRequest.STATUS_REJECTED)
@@ -135,11 +126,9 @@ class OrganizationAccountRequestWorkflowTests(TestCase):
             contact_email="admin@example.com",
         )
         self.client.force_login(self.user)
-
         response = self.client.post(
-            reverse("accounts:organization-account-request_approve", kwargs={"pk": request.pk}),
+            reverse("accounts:organization-account-request-approve", kwargs={"pk": request.pk}),
         )
-
         self.assertIn(response.status_code, (302, 403))
         request.refresh_from_db()
         self.assertEqual(request.status, OrganizationAccountRequest.STATUS_PENDING)
