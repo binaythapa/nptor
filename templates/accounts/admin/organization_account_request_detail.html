@@ -41,7 +41,7 @@
 
     {% if access_request.status == 'PENDING' %}
       <section class="admin-panel mt-4">
-        <form method="post" action="{% url 'accounts:organization-account-request_approve' pk=access_request.pk %}">
+        <form method="post" action="{% url 'accounts:organization-account-request-approve' pk=access_request.pk %}">
           {% csrf_token %}
           <div class="field">
             <label class="label">Review notes</label>
@@ -50,7 +50,7 @@
           <button class="button is-success is-fullwidth" type="submit">Approve & Create Organization</button>
         </form>
         <hr>
-        <form method="post" action="{% url 'accounts:organization-account-request_reject' pk=access_request.pk %}">
+        <form method="post" action="{% url 'accounts:organization-account-request-reject' pk=access_request.pk %}">
           {% csrf_token %}
           <div class="field">
             <label class="label">Rejection notes</label>
