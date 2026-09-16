@@ -102,5 +102,24 @@
       You are not currently a member of any organization.
     </div>
   {% endif %}
+
+  {% if organization_request and organization_request.status == 'PENDING' %}
+    <div class="notification is-warning is-light mt-4">
+      <strong>Organization Account Request</strong>
+      <p class="mt-2">Your request for <strong>{{ organization_request.organization_name }}</strong> is <strong>Pending Review</strong>.</p>
+      <p class="is-size-7 mt-1">Submitted {{ organization_request.created_at|date:"M d, Y" }}. An administrator will review your request.</p>
+    </div>
+  {% elif organization_request and organization_request.status == 'REJECTED' %}
+    <div class="notification is-danger is-light mt-4">
+      <strong>Organization Account Request Rejected</strong>
+      <p class="mt-2">Your request for <strong>{{ organization_request.organization_name }}</strong> was not approved.</p>
+      {% if organization_request.review_notes %}<p class="mt-2">{{ organization_request.review_notes|linebreaksbr }}</p>{% endif %}
+      <div class="mt-3"><a class="button is-link is-light" href="{% url 'accounts:organization-account-request' %}">Submit New Request</a></div>
+    </div>
+  {% elif can_request_organization and not organization_request %}
+    <div class="buttons mt-4">
+      <a class="button is-primary" href="{% url 'accounts:organization-account-request' %}">Request Organization Account</a>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

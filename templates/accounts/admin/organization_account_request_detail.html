@@ -1,0 +1,70 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block content %}
+<div class="admin-page-header">
+  <div>
+    <h1 class="title is-4 mb-1">Organization Account Request</h1>
+    <p class="admin-muted">Review the submitted organization information before approving account creation.</p>
+  </div>
+  <a class="button is-light" href="{% url 'accounts:organization-account-requests' %}">Back to requests</a>
+</div>
+
+<div class="columns is-variable is-4">
+  <div class="column is-7">
+    <section class="admin-panel">
+      <h2 class="title is-5">Organization Information</h2>
+      <div class="columns is-multiline">
+        <div class="column is-half"><p class="heading">Organization</p><p>{{ access_request.organization_name }}</p></div>
+        <div class="column is-half"><p class="heading">Type</p><p>{{ access_request.get_org_type_display }}</p></div>
+        <div class="column is-half"><p class="heading">Website</p><p>{{ access_request.website|default:"Not provided" }}</p></div>
+        <div class="column is-half"><p class="heading">Contact email</p><p>{{ access_request.contact_email }}</p></div>
+        <div class="column is-half"><p class="heading">Contact phone</p><p>{{ access_request.contact_phone|default:"Not provided" }}</p></div>
+        <div class="column is-half"><p class="heading">City / Country</p><p>{{ access_request.city|default:"—" }}{% if access_request.country %}, {{ access_request.country }}{% endif %}</p></div>
+        <div class="column is-full"><p class="heading">Address</p><p>{{ access_request.address|default:"Not provided"|linebreaksbr }}</p></div>
+        <div class="column is-full"><p class="heading">Description</p><p>{{ access_request.description|default:"Not provided"|linebreaksbr }}</p></div>
+        <div class="column is-full"><p class="heading">Reason</p><p>{{ access_request.reason|default:"Not provided"|linebreaksbr }}</p></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="column is-5">
+    <section class="admin-panel">
+      <h2 class="title is-5">Requester</h2>
+      <p><strong>{{ access_request.user.get_username }}</strong></p>
+      <p class="has-text-grey">{{ access_request.user.email }}</p>
+      <hr>
+      <p class="heading">Submitted</p>
+      <p>{{ access_request.created_at|date:"M d, Y H:i" }}</p>
+      <p class="heading mt-4">Status</p>
+      <p>{{ access_request.get_status_display }}</p>
+    </section>
+
+    {% if access_request.status == 'PENDING' %}
+      <section class="admin-panel mt-4">
+        <form method="post" action="{% url 'accounts:organization-account-request-approve' pk=access_request.pk %}">
+          {% csrf_token %}
+          <div class="field">
+            <label class="label">Review notes</label>
+            <textarea class="textarea" name="review_notes" rows="3" placeholder="Optional approval notes"></textarea>
+          </div>
+          <button class="button is-success is-fullwidth" type="submit">Approve & Create Organization</button>
+        </form>
+        <hr>
+        <form method="post" action="{% url 'accounts:organization-account-request-reject' pk=access_request.pk %}">
+          {% csrf_token %}
+          <div class="field">
+            <label class="label">Rejection notes</label>
+            <textarea class="textarea" name="review_notes" rows="3" placeholder="Explain what needs attention"></textarea>
+          </div>
+          <button class="button is-danger is-light is-fullwidth" type="submit">Reject Request</button>
+        </form>
+      </section>
+    {% elif access_request.review_notes %}
+      <section class="admin-panel mt-4">
+        <p class="heading">Review notes</p>
+        <p>{{ access_request.review_notes|linebreaksbr }}</p>
+      </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

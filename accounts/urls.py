@@ -22,6 +22,13 @@ from accounts.views.organization_requests import (
     organization_request_approve,
     organization_request_reject,
 )
+from accounts.views.organization_account_requests import (
+    organization_account_request,
+    organization_account_requests,
+    organization_account_request_detail,
+    organization_account_request_approve,
+    organization_account_request_reject,
+)
 
 app_name = "accounts"
 
@@ -65,5 +72,20 @@ urlpatterns = [
         "admin/organization-requests/<int:pk>/reject/",
         organization_request_reject,
         name="organization_request_reject",
+    ),
+
+    # Platform administration: requests to create an organization account.
+    path("organization-account-request/", organization_account_request, name="organization-account-request"),
+    path("admin/organization-account-requests/", organization_account_requests, name="organization-account-requests"),
+    path("admin/organization-account-requests/<int:pk>/", organization_account_request_detail, name="organization-account-request-detail"),
+    path(
+        "admin/organization-account-requests/<int:pk>/approve/",
+        organization_account_request_approve,
+        name="organization-account-request-approve",
+    ),
+    path(
+        "admin/organization-account-requests/<int:pk>/reject/",
+        organization_account_request_reject,
+        name="organization-account-request-reject",
     ),
 ]
