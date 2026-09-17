@@ -37,13 +37,13 @@ class OrganizationCourseForm(forms.ModelForm):
         self.organization = organization
         super().__init__(*args, **kwargs)
 
-        organization_scope = Q(organization=organization) | Q(organization__isnull=True)
         category_qs = Category.objects.filter(
-            organization_scope,
+            organization=organization,
             is_active=True,
         ).select_related("domain", "parent").order_by(
             "domain__name", "parent__name", "name"
         )
+        organization_scope = Q(organization=organization) | Q(organization__isnull=True)
         exam_qs = Exam.objects.filter(
             organization_scope,
             is_published=True,
@@ -67,8 +67,8 @@ class OrganizationCourseForm(forms.ModelForm):
         if invalid:
             self.add_error("exams", "Course exams must belong to this organization or be global exams.")
         category = cleaned.get("category")
-        if category and category.organization_id not in (None, organization_id):
-            self.add_error("category", "Course category must belong to this organization or be global.")
+        if category and category.organization_id != organization_id:
+            self.add_error("category", "Course category must belong to this organization.")
         return cleaned
 
     def save(self, commit=True):
