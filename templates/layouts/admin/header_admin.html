@@ -3,8 +3,12 @@
 <header class="admin-header">
   <div class="admin-header-inner">
     <div class="admin-header-left">
-      <button id="admin-sidebar-toggle" class="button is-white is-small mr-3" type="button" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation">
-        <i class="fa fa-bars" aria-hidden="true"></i>
+      <button id="admin-sidebar-toggle" class="button is-white is-small mr-3" type="button" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation" title="Open navigation">
+        <svg class="admin-sidebar-toggle-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
       </button>
 
       <a class="admin-brand" href="{% url 'quiz:dashboard' %}">
