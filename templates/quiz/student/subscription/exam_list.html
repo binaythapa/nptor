@@ -1,6 +1,41 @@
 {% extends "layouts/admin/base_admin.html" %}
 
 {% block content %}
+<style>
+  .exam-actions-cell {
+    min-width: 320px;
+    white-space: nowrap;
+  }
+
+  .exam-actions {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  .exam-actions .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 900px) {
+    .exam-actions-cell {
+      min-width: 0;
+    }
+
+    .exam-actions {
+      flex-wrap: wrap;
+    }
+  }
+</style>
+
 <div class="container">
   <div class="mb-5 is-flex is-justify-content-space-between is-align-items-center">
     <div>
@@ -46,11 +81,11 @@
             <td>{{ exam.duration_seconds }} sec</td>
             <td>{% if exam.is_published %}<span class="tag is-success">Published</span>{% else %}<span class="tag is-danger">Hidden</span>{% endif %}</td>
             <td>{{ exam.created_at|date:"M d, Y" }}</td>
-            <td class="has-text-centered">
-              <div class="buttons are-small is-centered">
-                <button class="button is-light" onclick="togglePublish('{{ exam.id }}', this)">Toggle Publish</button>
-                <a href="{% url 'quiz:admin_exam_update' exam.id %}" class="button is-info is-light">✏️ Edit</a>
-                <a href="{% url 'quiz:admin_exam_delete' exam.id %}" class="button is-danger is-light" onclick="return confirm('Delete this exam? This cannot be undone.')">🗑 Delete</a>
+            <td class="has-text-centered exam-actions-cell">
+              <div class="exam-actions">
+                <button class="button is-light is-small" onclick="togglePublish('{{ exam.id }}', this)"><span aria-hidden="true">↔</span><span>Toggle Publish</span></button>
+                <a href="{% url 'quiz:admin_exam_update' exam.id %}" class="button is-info is-light is-small"><span aria-hidden="true">✏️</span><span>Edit</span></a>
+                <a href="{% url 'quiz:admin_exam_delete' exam.id %}" class="button is-danger is-light is-small" onclick="return confirm('Delete this exam? This cannot be undone.')"><span aria-hidden="true">🗑</span><span>Delete</span></a>
               </div>
             </td>
           </tr>
