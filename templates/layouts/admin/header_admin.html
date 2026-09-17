@@ -29,11 +29,15 @@
         <strong>{{ user.first_name|default:user.username }}</strong>
       </span>
 
-      <a href="#logout" class="button is-light is-small" aria-label="Log out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-        <i class="fa fa-right-from-bracket" aria-hidden="true"></i>
+      <a href="#logout" class="button is-light is-small" aria-label="Log out" title="Log out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M10 17l5-5-5-5"></path>
+          <path d="M15 12H3"></path>
+          <path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"></path>
+        </svg>
       </a>
 
-      <button id="theme-toggle" class="button is-white is-small" type="button" aria-label="Toggle theme">
+      <button id="theme-toggle" class="button is-white is-small" type="button" aria-label="Toggle theme" title="Toggle theme">
         <i class="fa fa-moon" aria-hidden="true"></i>
       </button>
     </div>
