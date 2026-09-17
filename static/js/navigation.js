@@ -1,560 +1,182 @@
-/* =========================================================
-   NPTOR NAVIGATION MANAGER
-   static/js/navigation.js
-
-   Responsibilities:
-   - Mobile sidebar
-   - Sidebar overlay
-   - Escape key handling
-   - Track accordion
-   - Responsive sidebar cleanup
-   - Accessible navigation state
-
-   NOTE:
-   - No backend logic here.
-   - No URL handling here.
-   - No theme handling here.
-   - No practice statistics here.
-   ========================================================= */
-
+/* NPTOR navigation: responsive mobile drawer and collapsible desktop sidebar. */
 (function () {
     "use strict";
 
-
-    /* =====================================================
-       CONFIGURATION
-       ===================================================== */
-
     const MOBILE_BREAKPOINT = 1023;
-
-    const SELECTORS = {
-        sidebar: "#site-sidebar",
-        sidebarToggle: "#sidebar-toggle",
-        overlay: ".sidebar-overlay",
-        trackHeader: ".track-header",
-        trackAccordion: ".track-accordion"
-    };
-
-
-    /* =====================================================
-       SIDEBAR STATE
-       ===================================================== */
-
-    let sidebarInitialized = false;
-
+    const sidebarSelector = "#site-sidebar";
+    const toggleSelector = "#sidebar-toggle";
     let sidebar = null;
-    let sidebarToggle = null;
+    let toggle = null;
     let overlay = null;
+    let initialized = false;
 
-
-    /* =====================================================
-       CREATE OVERLAY
-       ===================================================== */
-
-    function getOrCreateOverlay() {
-
-        overlay = document.querySelector(
-            SELECTORS.overlay
-        );
-
-        if (!overlay) {
-
-            overlay = document.createElement("div");
-
-            overlay.className =
-                "sidebar-overlay";
-
-            overlay.setAttribute(
-                "aria-hidden",
-                "true"
-            );
-
-            document.body.appendChild(
-                overlay
-            );
-        }
-
-        return overlay;
+    function isMobile() {
+        return window.innerWidth <= MOBILE_BREAKPOINT;
     }
 
-
-    /* =====================================================
-       OPEN SIDEBAR
-       ===================================================== */
-
-    function openSidebar() {
-
-        if (!sidebar || !sidebarToggle || !overlay) {
-            return;
+    function getOverlay() {
+        let element = document.querySelector(".sidebar-overlay");
+        if (!element) {
+            element = document.createElement("div");
+            element.className = "sidebar-overlay";
+            element.setAttribute("aria-hidden", "true");
+            document.body.appendChild(element);
         }
-
-        sidebar.classList.add(
-            "is-active"
-        );
-
-        overlay.classList.add(
-            "is-active"
-        );
-
-        overlay.setAttribute(
-            "aria-hidden",
-            "false"
-        );
-
-        document.body.classList.add(
-            "sidebar-open"
-        );
-
-        sidebarToggle.setAttribute(
-            "aria-expanded",
-            "true"
-        );
-
-        sidebarToggle.setAttribute(
-            "aria-label",
-            "Close navigation"
-        );
+        return element;
     }
 
-
-    /* =====================================================
-       CLOSE SIDEBAR
-       ===================================================== */
-
-    function closeSidebar() {
-
-        if (!sidebar || !sidebarToggle || !overlay) {
-            return;
-        }
-
-        sidebar.classList.remove(
-            "is-active"
-        );
-
-        overlay.classList.remove(
-            "is-active"
-        );
-
-        overlay.setAttribute(
-            "aria-hidden",
-            "true"
-        );
-
-        document.body.classList.remove(
-            "sidebar-open"
-        );
-
-        sidebarToggle.setAttribute(
-            "aria-expanded",
-            "false"
-        );
-
-        sidebarToggle.setAttribute(
-            "aria-label",
-            "Open navigation"
-        );
+    function updateToggleIcon() {
+        if (!toggle) return;
+        const icon = toggle.querySelector("i");
+        if (!icon) return;
+        icon.className = isMobile()
+            ? (sidebar.classList.contains("is-active") ? "fa fa-xmark" : "fa fa-bars")
+            : (document.body.classList.contains("sidebar-collapsed") ? "fa fa-angles-right" : "fa fa-angles-left");
     }
 
+    function updateToggleState(label, expanded) {
+        if (!toggle) return;
+        toggle.setAttribute("aria-label", label);
+        toggle.setAttribute("title", label);
+        toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+        updateToggleIcon();
+    }
 
-    /* =====================================================
-       TOGGLE SIDEBAR
-       ===================================================== */
+    function closeMobileSidebar() {
+        if (!sidebar || !overlay) return;
+        sidebar.classList.remove("is-active");
+        overlay.classList.remove("is-active");
+        overlay.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("sidebar-open");
+        if (isMobile()) updateToggleState("Open navigation", false);
+    }
+
+    function openMobileSidebar() {
+        if (!sidebar || !overlay) return;
+        sidebar.classList.add("is-active");
+        overlay.classList.add("is-active");
+        overlay.setAttribute("aria-hidden", "false");
+        document.body.classList.add("sidebar-open");
+        updateToggleState("Close navigation", true);
+    }
+
+    function setDesktopCollapsed(collapsed, persist) {
+        document.body.classList.toggle("sidebar-collapsed", collapsed);
+        if (persist) {
+            try {
+                window.localStorage.setItem("nptor-sidebar-collapsed", collapsed ? "1" : "0");
+            } catch (error) {
+                /* Storage may be unavailable; the UI still works. */
+            }
+        }
+        updateToggleState(collapsed ? "Expand navigation" : "Collapse navigation", !collapsed);
+    }
 
     function toggleSidebar(event) {
+        if (event) event.preventDefault();
+        if (!sidebar || !toggle) return;
 
-        if (event) {
-            event.preventDefault();
-        }
-
-        if (!sidebar) {
+        if (isMobile()) {
+            if (sidebar.classList.contains("is-active")) {
+                closeMobileSidebar();
+            } else {
+                openMobileSidebar();
+            }
             return;
         }
 
-        if (
-            sidebar.classList.contains(
-                "is-active"
-            )
-        ) {
-            closeSidebar();
-        } else {
-            openSidebar();
-        }
+        setDesktopCollapsed(!document.body.classList.contains("sidebar-collapsed"), true);
     }
-
-
-    /* =====================================================
-       INITIALIZE SIDEBAR
-       ===================================================== */
 
     function initSidebar() {
+        sidebar = document.querySelector(sidebarSelector);
+        toggle = document.querySelector(toggleSelector);
+        if (!sidebar || !toggle || initialized) return;
+        initialized = true;
+        overlay = getOverlay();
 
-        sidebar =
-            document.querySelector(
-                SELECTORS.sidebar
-            );
-
-        sidebarToggle =
-            document.querySelector(
-                SELECTORS.sidebarToggle
-            );
-
-        /*
-         * Some pages may not contain the student
-         * sidebar. In that case there is nothing to do.
-         */
-        if (!sidebar || !sidebarToggle) {
-            return;
+        let collapsed = false;
+        try {
+            collapsed = window.localStorage.getItem("nptor-sidebar-collapsed") === "1";
+        } catch (error) {
+            collapsed = false;
+        }
+        if (!isMobile()) {
+            setDesktopCollapsed(collapsed, false);
+        } else {
+            updateToggleState("Open navigation", false);
         }
 
-        /*
-         * Prevent duplicate event listeners if
-         * initialization happens more than once.
-         */
-        if (sidebarInitialized) {
-            return;
-        }
+        toggle.addEventListener("click", toggleSidebar);
+        overlay.addEventListener("click", closeMobileSidebar);
 
-        sidebarInitialized = true;
-
-        overlay = getOrCreateOverlay();
-
-
-        /* -------------------------------------------------
-           INITIAL ACCESSIBILITY STATE
-           ------------------------------------------------- */
-
-        if (
-            !sidebarToggle.hasAttribute(
-                "aria-expanded"
-            )
-        ) {
-            sidebarToggle.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-        }
-
-        if (
-            !sidebarToggle.hasAttribute(
-                "aria-label"
-            )
-        ) {
-            sidebarToggle.setAttribute(
-                "aria-label",
-                "Open navigation"
-            );
-        }
-
-
-        /* -------------------------------------------------
-           TOGGLE BUTTON
-           ------------------------------------------------- */
-
-        sidebarToggle.addEventListener(
-            "click",
-            toggleSidebar
-        );
-
-
-        /* -------------------------------------------------
-           OVERLAY
-           ------------------------------------------------- */
-
-        overlay.addEventListener(
-            "click",
-            function () {
-                closeSidebar();
+        sidebar.addEventListener("click", function (event) {
+            const link = event.target.closest("a");
+            if (link && !link.classList.contains("is-disabled") && isMobile()) {
+                closeMobileSidebar();
             }
-        );
+        });
 
-
-        /* -------------------------------------------------
-           SIDEBAR LINKS
-           ------------------------------------------------- */
-
-        sidebar.addEventListener(
-            "click",
-            function (event) {
-
-                const link =
-                    event.target.closest("a");
-
-                if (!link) {
-                    return;
-                }
-
-                /*
-                 * Keep disabled navigation items
-                 * from accidentally closing the sidebar.
-                 */
-                if (
-                    link.classList.contains(
-                        "is-disabled"
-                    )
-                ) {
-                    return;
-                }
-
-                /*
-                 * Only close on mobile.
-                 */
-                if (
-                    window.innerWidth <=
-                    MOBILE_BREAKPOINT
-                ) {
-                    closeSidebar();
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                if (isMobile() && sidebar.classList.contains("is-active")) {
+                    closeMobileSidebar();
                 }
             }
-        );
+        });
 
-
-        /* -------------------------------------------------
-           ESCAPE KEY
-           ------------------------------------------------- */
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (
-                    event.key !== "Escape"
-                ) {
-                    return;
-                }
-
-                if (
-                    sidebar.classList.contains(
-                        "is-active"
-                    )
-                ) {
-                    closeSidebar();
-                }
+        window.addEventListener("resize", function () {
+            if (isMobile()) {
+                document.body.classList.remove("sidebar-collapsed");
+                closeMobileSidebar();
+            } else {
+                closeMobileSidebar();
+                setDesktopCollapsed(document.body.classList.contains("sidebar-collapsed"), false);
             }
-        );
-
-
-        /* -------------------------------------------------
-           RESPONSIVE CLEANUP
-           ------------------------------------------------- */
-
-        window.addEventListener(
-            "resize",
-            function () {
-
-                if (
-                    window.innerWidth >
-                    MOBILE_BREAKPOINT
-                ) {
-                    closeSidebar();
-                }
-            }
-        );
+        });
     }
-
-
-    /* =====================================================
-       TRACK ACCORDION
-       ===================================================== */
 
     function initTrackAccordions() {
+        document.querySelectorAll(".track-header").forEach(function (header) {
+            if (header.dataset.navigationInitialized === "true") return;
+            const accordion = header.closest(".track-accordion");
+            if (!accordion) return;
+            header.dataset.navigationInitialized = "true";
+            header.setAttribute("role", "button");
+            header.setAttribute("tabindex", "0");
+            header.setAttribute("aria-expanded", accordion.classList.contains("is-open") ? "true" : "false");
 
-        const headers =
-            document.querySelectorAll(
-                SELECTORS.trackHeader
-            );
-
-        headers.forEach(
-            function (header) {
-
-                /*
-                 * Prevent duplicate initialization.
-                 */
-                if (
-                    header.dataset.navigationInitialized ===
-                    "true"
-                ) {
-                    return;
-                }
-
-                header.dataset.navigationInitialized =
-                    "true";
-
-
-                /* -----------------------------------------
-                   ACCESSIBILITY
-                   ----------------------------------------- */
-
-                const accordion =
-                    header.closest(
-                        SELECTORS.trackAccordion
-                    );
-
-                if (!accordion) {
-                    return;
-                }
-
-                const initiallyExpanded =
-                    accordion.classList.contains(
-                        "is-open"
-                    );
-
-                header.setAttribute(
-                    "role",
-                    "button"
-                );
-
-                header.setAttribute(
-                    "tabindex",
-                    "0"
-                );
-
-                header.setAttribute(
-                    "aria-expanded",
-                    initiallyExpanded
-                        ? "true"
-                        : "false"
-                );
-
-
-                /* -----------------------------------------
-                   TOGGLE
-                   ----------------------------------------- */
-
-                function toggleAccordion() {
-
-                    accordion.classList.toggle(
-                        "is-open"
-                    );
-
-                    const expanded =
-                        accordion.classList.contains(
-                            "is-open"
-                        );
-
-                    header.setAttribute(
-                        "aria-expanded",
-                        expanded
-                            ? "true"
-                            : "false"
-                    );
-                }
-
-
-                /* -----------------------------------------
-                   MOUSE
-                   ----------------------------------------- */
-
-                header.addEventListener(
-                    "click",
-                    function () {
-                        toggleAccordion();
-                    }
-                );
-
-
-                /* -----------------------------------------
-                   KEYBOARD
-                   ----------------------------------------- */
-
-                header.addEventListener(
-                    "keydown",
-                    function (event) {
-
-                        if (
-                            event.key === "Enter" ||
-                            event.key === " "
-                        ) {
-
-                            event.preventDefault();
-
-                            toggleAccordion();
-                        }
-                    }
-                );
+            function toggleAccordion() {
+                accordion.classList.toggle("is-open");
+                header.setAttribute("aria-expanded", accordion.classList.contains("is-open") ? "true" : "false");
             }
-        );
-    }
-
-
-    /* =====================================================
-       CLOSE SIDEBAR ON PAGE VISIBILITY CHANGE
-       ===================================================== */
-
-    function initVisibilityHandling() {
-
-        document.addEventListener(
-            "visibilitychange",
-            function () {
-
-                /*
-                 * If the browser/tab becomes hidden,
-                 * clean up any open mobile navigation.
-                 */
-                if (
-                    document.hidden
-                ) {
-                    closeSidebar();
+            header.addEventListener("click", toggleAccordion);
+            header.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    toggleAccordion();
                 }
-            }
-        );
+            });
+        });
     }
-
-
-    /* =====================================================
-       GLOBAL INIT
-       ===================================================== */
 
     function init() {
-
         initSidebar();
-
         initTrackAccordions();
-
-        initVisibilityHandling();
     }
 
-
-    /* =====================================================
-       DOM READY
-       ===================================================== */
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            init,
-            {
-                once: true
-            }
-        );
-
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init, { once: true });
     } else {
-
         init();
     }
 
-
-    /* =====================================================
-       PUBLIC API
-       ===================================================== */
-
     window.NPTORNavigation = {
-
         init: init,
-
-        openSidebar: openSidebar,
-
-        closeSidebar: closeSidebar,
-
+        openSidebar: openMobileSidebar,
+        closeSidebar: closeMobileSidebar,
         toggleSidebar: toggleSidebar,
-
         initSidebar: initSidebar,
-
-        initTrackAccordions:
-            initTrackAccordions
+        initTrackAccordions: initTrackAccordions
     };
-
 })();
