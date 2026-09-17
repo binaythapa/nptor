@@ -24,6 +24,7 @@ urlpatterns = [
     path("health/", health_check, name="health-check"),
     path("ckeditor/", include("ckeditor_uploader.urls")),
     path("accounts/", include("accounts.urls")),
+    path("social/", include("allauth.urls")),
     path("quiz/", include("quiz.urls")),
     path("courses/", include("courses.urls")),
     path("cv/", include("cv.urls")),
