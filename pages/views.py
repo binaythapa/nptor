@@ -15,31 +15,15 @@ HOMEPAGE_LIMIT = 6
 
 
 def home(request):
+    """Render the public homepage or route authenticated users to their dashboard."""
+    if request.user.is_authenticated:
+        return redirect("quiz:dashboard")
+
     total_questions = Question.objects.active().count()
     total_exams = Exam.objects.filter(is_published=True).count()
     total_tracks = ExamTrack.objects.filter(is_active=True).count()
     total_students = User.objects.count()
     total_study_plans = StudyPlan.objects.count()
-
-    if request.user.is_authenticated:
-        context = {
-            "total_questions": total_questions,
-            "total_exams": total_exams,
-            "total_tracks": total_tracks,
-            "total_students": total_students,
-            "total_study_plans": total_study_plans,
-            "featured_courses": Course.objects.filter(
-                is_published=True,
-                is_public=True,
-            ).order_by("-created_at")[:HOMEPAGE_LIMIT],
-            "featured_tracks": ExamTrack.objects.filter(
-                is_active=True,
-            ).order_by("-created_at")[:HOMEPAGE_LIMIT],
-            "latest_exams": Exam.objects.filter(
-                is_published=True,
-            ).select_related("organization").order_by("-created_at")[:HOMEPAGE_LIMIT],
-        }
-        return render(request, "pages/home_authenticated.html", context)
 
     context = {
         "testimonials": Testimonial.objects.filter(
