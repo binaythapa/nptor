@@ -11,6 +11,18 @@ def _org_domain_ids(org):
     return Domain.objects.filter(organization=org).values_list("id", flat=True)
 
 
+def _organization_category_form(*, organization, data=None, instance=None):
+    """Build a category form restricted to the current organization's data."""
+    form = CategoryForm(data=data, instance=instance)
+    form.fields["domain"].queryset = Domain.objects.filter(
+        organization=organization
+    ).order_by("name")
+    form.fields["parent"].queryset = Category.objects.filter(
+        organization=organization
+    ).select_related("domain", "parent").order_by("name")
+    return form
+
+
 @org_admin_required
 def org_category_list(request, slug):
     org = request.organization
@@ -30,20 +42,20 @@ def org_category_list(request, slug):
 @org_admin_required
 def org_category_create(request, slug):
     org = request.organization
-    if request.method == "POST":
-        form = CategoryForm(request.POST)
-        if form.is_valid():
-            category = form.save(commit=False)
-            category.organization = org
-            if category.domain_id and category.domain_id not in set(_org_domain_ids(org)):
-                messages.error(request, "Category domain must belong to this organization.")
-            elif category.parent_id and category.parent and category.parent.organization_id != org.id:
-                messages.error(request, "Category parent must belong to this organization.")
-            else:
-                category.save()
-                return redirect("organizations_admin:category_list", slug=slug)
-    else:
-        form = CategoryForm()
+    form = _organization_category_form(
+        organization=org,
+        data=request.POST or None,
+    )
+    if request.method == "POST" and form.is_valid():
+        category = form.save(commit=False)
+        category.organization = org
+        if category.domain_id and category.domain_id not in set(_org_domain_ids(org)):
+            messages.error(request, "Category domain must belong to this organization.")
+        elif category.parent_id and category.parent and category.parent.organization_id != org.id:
+            messages.error(request, "Category parent must belong to this organization.")
+        else:
+            category.save()
+            return redirect("organizations_admin:category_list", slug=slug)
     return render(
         request,
         "organizations/admin/categories/create.html",
@@ -55,20 +67,21 @@ def org_category_create(request, slug):
 def org_category_edit(request, slug, pk):
     org = request.organization
     category = get_object_or_404(Category, pk=pk, organization=org)
-    if request.method == "POST":
-        form = CategoryForm(request.POST, instance=category)
-        if form.is_valid():
-            updated = form.save(commit=False)
-            if updated.domain_id and updated.domain.organization_id != org.id:
-                messages.error(request, "Category domain must belong to this organization.")
-            elif updated.parent_id and updated.parent.organization_id != org.id:
-                messages.error(request, "Category parent must belong to this organization.")
-            else:
-                updated.organization = org
-                updated.save()
-                return redirect("organizations_admin:category_list", slug=slug)
-    else:
-        form = CategoryForm(instance=category)
+    form = _organization_category_form(
+        organization=org,
+        data=request.POST or None,
+        instance=category,
+    )
+    if request.method == "POST" and form.is_valid():
+        updated = form.save(commit=False)
+        if updated.domain_id and updated.domain.organization_id != org.id:
+            messages.error(request, "Category domain must belong to this organization.")
+        elif updated.parent_id and updated.parent.organization_id != org.id:
+            messages.error(request, "Category parent must belong to this organization.")
+        else:
+            updated.organization = org
+            updated.save()
+            return redirect("organizations_admin:category_list", slug=slug)
     return render(
         request,
         "organizations/admin/categories/edit.html",
