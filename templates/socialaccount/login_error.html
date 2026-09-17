@@ -1,0 +1,31 @@
+{% extends "layouts/student/base.html" %}
+
+{% block content %}
+<section class="section" style="min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem;">
+    <div class="card-surface" style="width: 100%; max-width: 560px; padding: 2.5rem 2rem; text-align: center; border-radius: 16px;">
+        <div aria-hidden="true" style="width: 72px; height: 72px; margin: 0 auto 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--color-danger-soft, #fff1f2); color: var(--color-danger, #dc2626); font-size: 2rem; font-weight: 700;">
+            !
+        </div>
+
+        <h1 class="title is-3 mb-3">Google Sign-In Failed</h1>
+        <p class="has-text-grey mb-5" style="line-height: 1.7;">
+            We couldn't sign you in with your Google account. Please try again or use another sign-in method.
+        </p>
+
+        {% if exception %}
+            <p class="is-size-7 has-text-grey mb-5" style="overflow-wrap: anywhere;">
+                {{ exception }}
+            </p>
+        {% endif %}
+
+        <div class="buttons is-centered" style="gap: 0.75rem;">
+            <a class="button is-primary" href="{% url 'accounts:request-login-otp' %}">
+                Try Again
+            </a>
+            <a class="button is-light" href="{% url 'quiz:dashboard' %}">
+                Back to Home
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
