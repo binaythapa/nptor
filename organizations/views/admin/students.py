@@ -36,15 +36,65 @@ def _get_active_org_student(request, student_id):
     return student
 
 
+def _role_options_for(actor_member, target_member):
+    """Return role choices the actor may assign to this target."""
+    if not actor_member or not actor_member.is_active:
+        return []
+
+    if actor_member.id == target_member.id:
+        return []
+
+    if target_member.role == OrganizationRole.ORG_OWNER:
+        return []
+
+    if actor_member.role == OrganizationRole.ORG_OWNER:
+        return [
+            (OrganizationRole.STUDENT, OrganizationRole.STUDENT.label),
+            (OrganizationRole.STAFF, OrganizationRole.STAFF.label),
+            (OrganizationRole.ORG_ADMIN, OrganizationRole.ORG_ADMIN.label),
+        ]
+
+    if actor_member.role == OrganizationRole.ORG_ADMIN:
+        if target_member.role in OrganizationRole.administrative_roles():
+            return []
+        return [
+            (OrganizationRole.STUDENT, OrganizationRole.STUDENT.label),
+            (OrganizationRole.STAFF, OrganizationRole.STAFF.label),
+        ]
+
+    return []
+
+
+def _can_change_role(actor_member, target_member, new_role):
+    """Enforce role transitions independently of the template/UI."""
+    allowed_values = {value for value, _label in _role_options_for(actor_member, target_member)}
+    return new_role in allowed_values
+
+
 @org_teacher_required
 def org_students(request, slug):
     org = request.organization
-    members = list(OrganizationMember.objects.filter(organization=org).select_related("user").order_by("role", "user__username"))
-    student_profiles = OrganizationStudent.objects.filter(organization=org, user_id__in=[member.user_id for member in members], status=OrganizationStudent.STATUS_ACTIVE).values_list("user_id", "id")
+    members = list(
+        OrganizationMember.objects.filter(organization=org)
+        .select_related("user")
+        .order_by("role", "user__username")
+    )
+    student_profiles = OrganizationStudent.objects.filter(
+        organization=org,
+        user_id__in=[member.user_id for member in members],
+        status=OrganizationStudent.STATUS_ACTIVE,
+    ).values_list("user_id", "id")
     profile_ids = dict(student_profiles)
+    actor_member = request.organization_member
     for member in members:
         member.student_profile_id = profile_ids.get(member.user_id)
-    return render(request, "organizations/admin/students/list.html", {"members": members, "org": org})
+        member.role_options = _role_options_for(actor_member, member)
+        member.can_edit_role = bool(member.role_options)
+    return render(
+        request,
+        "organizations/admin/students/list.html",
+        {"members": members, "org": org},
+    )
 
 
 @org_admin_required
@@ -158,22 +208,22 @@ def org_student_add(request, slug):
 @require_POST
 def org_student_update_role(request, slug, member_id):
     org = request.organization
+    actor_member = request.organization_member
     member = get_object_or_404(OrganizationMember, id=member_id, organization=org)
     new_role = request.POST.get("role")
-    if new_role not in {OrganizationRole.STUDENT, OrganizationRole.STAFF}:
-        messages.error(request, "Invalid organization role.")
+
+    if not _can_change_role(actor_member, member, new_role):
+        messages.error(request, "You are not authorized to assign this role to this member.")
         return redirect("organizations_admin:students", slug=slug)
-    if member.role in OrganizationRole.administrative_roles():
-        messages.error(request, "Organization administrators must be managed separately.")
-        return redirect("organizations_admin:students", slug=slug)
+
     member.role = new_role
-    member.save(update_fields=["role"])
+    member.save(update_fields=["role", "updated_at"])
     if new_role == OrganizationRole.STUDENT and member.is_active:
         student, created = OrganizationStudent.objects.get_or_create(organization=org, user=member.user, defaults={"status": OrganizationStudent.STATUS_ACTIVE, "joined_date": timezone.localdate()})
         if not created and student.status != OrganizationStudent.STATUS_ACTIVE:
             student.status = OrganizationStudent.STATUS_ACTIVE
             student.save(update_fields=["status", "updated_at"])
-    elif new_role == OrganizationRole.STAFF:
+    elif new_role in {OrganizationRole.STAFF, OrganizationRole.ORG_ADMIN}:
         OrganizationStudent.objects.filter(organization=org, user=member.user).update(status=OrganizationStudent.STATUS_INACTIVE, updated_at=timezone.now())
     messages.success(request, "Role updated successfully.")
     return redirect("organizations_admin:students", slug=slug)
