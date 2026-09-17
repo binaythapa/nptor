@@ -31,7 +31,7 @@
     </ul>
     {% if user.is_authenticated %}
     <p class="menu-label">Career</p>
-    <ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'cv:dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-file-lines"></i></span><span class="nav-label">CV Builder</span><span class="nav-badge primary">Create</span></a></li></ul>
+    <ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'cv:dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-file-lines"></i></span><span class="nav-label">Create CV</span><span class="nav-badge primary">AI</span></a></li></ul>
     <p class="menu-label">Account</p>
     <ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'quiz:profile' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-user"></i></span><span class="nav-label">Profile</span></a></li></ul>
     {% endif %}
