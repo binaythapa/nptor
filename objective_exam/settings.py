@@ -3,9 +3,6 @@ import os
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
-# ============================================================
-# BASE DIRECTORY
-# ============================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 try:
@@ -46,6 +43,10 @@ INSTALLED_APPS = [
     "ckeditor",
     "ckeditor_uploader",
     "django_ratelimit",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
     "quiz.apps.QuizConfig",
     "courses",
     "accounts",
@@ -63,6 +64,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "organizations.middleware.ActiveOrganizationMiddleware",
@@ -84,6 +86,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "quiz.context_processors.unread_notifications_count",
                 "pages.context_processors.site_globals",
+                "accounts.context_processors.social_login_config",
             ],
         },
     },
@@ -150,7 +153,27 @@ LOGOUT_REDIRECT_URL = "accounts:request-login-otp"
 AUTHENTICATION_BACKENDS = [
     "quiz.auth_backends.EmailOrUsernameModelBackend",
     "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
+
+# Google OAuth credentials must be supplied through environment variables.
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "").strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": GOOGLE_OAUTH_CLIENT_ID,
+            "secret": GOOGLE_OAUTH_CLIENT_SECRET,
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+    }
+}
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
