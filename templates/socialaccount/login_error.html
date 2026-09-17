@@ -19,11 +19,11 @@
         {% endif %}
 
         <div class="buttons is-centered" style="gap: 0.75rem;">
-            <a class="button is-primary" href="{% url 'accounts:request-login-otp' %}">
+            <a class="button is-primary" href="{% url 'accounts:login' %}">
                 Try Again
             </a>
-            <a class="button is-light" href="{% url 'quiz:dashboard' %}">
-                Back to Home
+            <a class="button is-light" href="{% url 'accounts:login' %}">
+                Back to Sign In
             </a>
         </div>
     </div>
