@@ -1,16 +1,18 @@
 /* =========================================================
    NPTOR ADMIN NAVIGATION
-   Accessible mobile sidebar with keyboard and focus support.
+   Responsive sidebar with desktop collapse and mobile overlay.
    ========================================================= */
 
 (function () {
     "use strict";
 
     const BREAKPOINT = 650;
+    const STORAGE_KEY = "nptor-admin-sidebar-collapsed";
     const sidebar = document.getElementById("admin-sidebar");
+    const layout = document.querySelector(".admin-layout");
     const toggle = document.getElementById("admin-sidebar-toggle");
 
-    if (!sidebar || !toggle) {
+    if (!sidebar || !layout || !toggle) {
         return;
     }
 
@@ -30,16 +32,43 @@
         return window.innerWidth <= BREAKPOINT;
     }
 
-    function setOpen(open) {
-        if (!isMobile() && open) {
-            return;
+    function updateToggleState(expanded, label) {
+        toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+        toggle.setAttribute("aria-label", label);
+        toggle.setAttribute("title", label);
+    }
+
+    function setDesktopCollapsed(collapsed, persist) {
+        layout.classList.toggle("collapsed", collapsed);
+
+        if (persist) {
+            try {
+                window.localStorage.setItem(STORAGE_KEY, collapsed ? "true" : "false");
+            } catch (error) {
+                // Ignore storage restrictions; the sidebar remains functional.
+            }
         }
 
+        updateToggleState(!collapsed, collapsed ? "Expand navigation" : "Collapse navigation");
+    }
+
+    function restoreDesktopState() {
+        let collapsed = false;
+
+        try {
+            collapsed = window.localStorage.getItem(STORAGE_KEY) === "true";
+        } catch (error) {
+            // Use the expanded default when storage is unavailable.
+        }
+
+        setDesktopCollapsed(collapsed, false);
+    }
+
+    function setMobileOpen(open) {
         sidebar.classList.toggle("is-active", open);
         overlay.classList.toggle("is-active", open);
         document.body.classList.toggle("admin-sidebar-open", open);
-        toggle.setAttribute("aria-expanded", open ? "true" : "false");
-        toggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+        updateToggleState(open, open ? "Close navigation" : "Open navigation");
 
         if (open) {
             lastFocused = document.activeElement;
@@ -57,35 +86,59 @@
         if (event) {
             event.preventDefault();
         }
-        setOpen(!sidebar.classList.contains("is-active"));
+
+        if (isMobile()) {
+            setMobileOpen(!sidebar.classList.contains("is-active"));
+            return;
+        }
+
+        setDesktopCollapsed(!layout.classList.contains("collapsed"), true);
     }
 
+    restoreDesktopState();
     toggle.addEventListener("click", toggleSidebar);
+
     overlay.addEventListener("click", function () {
-        setOpen(false);
+        setMobileOpen(false);
     });
 
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape" && sidebar.classList.contains("is-active")) {
-            setOpen(false);
+            setMobileOpen(false);
         }
     });
 
     sidebar.addEventListener("click", function (event) {
         if (event.target.closest("a") && isMobile()) {
-            setOpen(false);
+            setMobileOpen(false);
         }
     });
 
     window.addEventListener("resize", function () {
-        if (!isMobile()) {
-            setOpen(false);
+        if (isMobile()) {
+            layout.classList.remove("collapsed");
+            updateToggleState(false, "Open navigation");
+        } else {
+            setMobileOpen(false);
+            restoreDesktopState();
         }
     });
 
     window.NPTORAdminNavigation = {
-        open: function () { setOpen(true); },
-        close: function () { setOpen(false); },
+        open: function () {
+            if (isMobile()) {
+                setMobileOpen(true);
+            } else {
+                setDesktopCollapsed(false, true);
+            }
+        },
+        close: function () {
+            if (isMobile()) {
+                setMobileOpen(false);
+            } else {
+                setDesktopCollapsed(true, true);
+            }
+        },
         toggle: toggleSidebar,
     };
 })();
