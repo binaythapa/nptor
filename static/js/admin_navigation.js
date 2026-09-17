@@ -32,10 +32,23 @@
         return window.innerWidth <= BREAKPOINT;
     }
 
+    function updateToggleIcon(label) {
+        let icon = "☰";
+
+        if (label === "Collapse navigation") {
+            icon = "«";
+        } else if (label === "Expand navigation") {
+            icon = "»";
+        }
+
+        toggle.innerHTML = '<span aria-hidden="true" style="font-size:1.45rem;line-height:1;">' + icon + '</span>';
+    }
+
     function updateToggleState(expanded, label) {
         toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
         toggle.setAttribute("aria-label", label);
         toggle.setAttribute("title", label);
+        updateToggleIcon(label);
     }
 
     function setDesktopCollapsed(collapsed, persist) {
