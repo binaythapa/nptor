@@ -1,77 +1,167 @@
 {% extends "layouts/student/base.html" %}
 
-{% block title %}{{ site_name }} – Your Smarter Path to Exam Success{% endblock %}
+{% block title %}{{ site_name }} – Learning, Training, and Assessment{% endblock %}
 
 {% block content %}
 <style>
-  .home-shell { color: var(--text-color, #1f2937); }
-  .home-section { padding: 4.5rem 1.25rem; }
-  .home-container { max-width: 1180px; margin: 0 auto; }
-  .home-hero { background: linear-gradient(135deg, #eefaf8, #f5f7ff); border-radius: 1.5rem; padding: 5rem 2rem; }
-  .home-eyebrow { display: inline-block; padding: .4rem .8rem; border-radius: 999px; background: #d8f4ee; color: #087f6b; font-weight: 700; font-size: .85rem; }
-  .home-hero h1 { font-size: clamp(2.2rem, 5vw, 4rem); line-height: 1.1; font-weight: 800; max-width: 760px; margin: 1rem auto; }
-  .home-hero p { max-width: 700px; margin: 0 auto; font-size: 1.1rem; }
-  .home-grid { display: grid; gap: 1.4rem; }
-  .home-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .home-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .home-card { height: 100%; border: 1px solid rgba(125, 125, 125, .15); border-radius: 1rem; padding: 1.6rem; box-shadow: 0 8px 24px rgba(30, 41, 59, .06); background: var(--card-background, #fff); }
-  .home-card h3 { margin-top: .8rem; font-weight: 750; }
-  .home-icon { width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; border-radius: .9rem; background: #e1f7f2; color: #087f6b; font-size: 1.35rem; }
-  .home-step { text-align: center; }
-  .home-step-number { width: 2.8rem; height: 2.8rem; margin: 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #087f6b; color: white; font-weight: 800; }
-  .home-stat { text-align: center; padding: 1rem; }
-  .home-stat strong { display: block; font-size: 2rem; font-weight: 800; }
-  .home-cta { border-radius: 1.4rem; background: linear-gradient(135deg, #087f6b, #155e75); color: white; padding: 3.5rem 2rem; }
-  @media (max-width: 900px) { .home-grid-4, .home-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 600px) { .home-section { padding: 3rem 1rem; } .home-hero { padding: 3rem 1.2rem; } .home-grid-4, .home-grid-3 { grid-template-columns: 1fr; } }
+  .nptor-home { color: var(--text-color, #1f2937); }
+  .nptor-section { padding: 4.5rem 1.25rem; }
+  .nptor-container { max-width: 1180px; margin: 0 auto; }
+  .nptor-hero { border-radius: 1.5rem; padding: 4.5rem 2rem; background: linear-gradient(135deg, #eefaf8 0%, #f4f6ff 100%); overflow: hidden; }
+  .nptor-eyebrow { display: inline-block; padding: .4rem .85rem; border-radius: 999px; background: #d8f4ee; color: #087f6b; font-size: .82rem; font-weight: 800; letter-spacing: .02em; }
+  .nptor-hero h1 { max-width: 820px; margin: 1rem auto; font-size: clamp(2.25rem, 5vw, 4.25rem); line-height: 1.08; font-weight: 850; }
+  .nptor-hero p { max-width: 760px; margin: 0 auto; font-size: 1.12rem; line-height: 1.75; }
+  .nptor-grid { display: grid; gap: 1.35rem; }
+  .nptor-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nptor-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .nptor-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .nptor-card { height: 100%; padding: 1.6rem; border: 1px solid rgba(125,125,125,.16); border-radius: 1rem; background: var(--card-background, #fff); box-shadow: 0 8px 26px rgba(30,41,59,.06); }
+  .nptor-card h3 { margin-top: .8rem; font-weight: 800; }
+  .nptor-icon { display: inline-flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; border-radius: .9rem; background: #e1f7f2; color: #087f6b; font-size: 1.3rem; }
+  .nptor-audience { transition: transform .2s ease, box-shadow .2s ease; }
+  .nptor-audience:hover { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(30,41,59,.1); }
+  .nptor-checklist { padding-left: 1.2rem; }
+  .nptor-checklist li { margin: .7rem 0; }
+  .nptor-checklist li::marker { color: #087f6b; }
+  .nptor-step { text-align: center; }
+  .nptor-step-number { display: flex; align-items: center; justify-content: center; width: 2.8rem; height: 2.8rem; margin: 0 auto; border-radius: 50%; background: #087f6b; color: #fff; font-weight: 850; }
+  .nptor-compare { width: 100%; border-collapse: collapse; background: var(--card-background, #fff); border-radius: 1rem; overflow: hidden; }
+  .nptor-compare th, .nptor-compare td { padding: 1rem; border-bottom: 1px solid rgba(125,125,125,.16); text-align: left; }
+  .nptor-compare th { font-weight: 800; }
+  .nptor-cta { padding: 3.5rem 2rem; border-radius: 1.4rem; color: #fff; background: linear-gradient(135deg, #087f6b, #155e75); }
+  @media (max-width: 900px) { .nptor-grid-4, .nptor-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 650px) { .nptor-section { padding: 3rem 1rem; } .nptor-hero { padding: 3rem 1.2rem; } .nptor-grid-2, .nptor-grid-3, .nptor-grid-4 { grid-template-columns: 1fr; } .nptor-compare { font-size: .9rem; } .nptor-compare th, .nptor-compare td { padding: .75rem .55rem; } }
 </style>
 
-<div class="home-shell">
-  <section class="home-section">
-    <div class="home-container home-hero has-text-centered">
-      <span class="home-eyebrow">Learn smarter. Practice better. Achieve more.</span>
-      <h1>Your Smarter Path to Exam Success Starts Here.</h1>
-      <p>Prepare for certifications, government exams, academic entrance tests, and professional assessments with focused practice, realistic mock exams, and clear learning guidance.</p>
+<div class="nptor-home">
+  <section class="nptor-section">
+    <div class="nptor-container nptor-hero has-text-centered">
+      <span class="nptor-eyebrow">LEARNING • TRAINING • ASSESSMENT</span>
+      <h1>One platform for smarter learning and better outcomes.</h1>
+      <p>Help learners prepare with confidence and give organizations the tools to manage courses, assignments, assessments, and student progress in one structured learning environment.</p>
       <div class="buttons is-centered mt-5">
-        <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">Explore Resources</a>
-        <a href="{% url 'accounts:request-login-otp' %}" class="button is-light is-medium">Create Free Account</a>
+        <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">Start Learning</a>
+        <a href="#organizations" class="button is-light is-medium">For Organizations</a>
       </div>
     </div>
   </section>
 
-  <section class="home-section has-background-light">
-    <div class="home-container">
-      <div class="has-text-centered mb-6"><p class="home-eyebrow">Why {{ site_name }}?</p><h2 class="title is-2 mt-3">Everything you need to prepare with confidence</h2><p class="subtitle is-5">A focused learning experience built around your goals, your pace, and your progress.</p></div>
-      <div class="home-grid home-grid-4">
-        <div class="home-card"><span class="home-icon"><i class="fa fa-pen"></i></span><h3 class="title is-5">Practice Questions</h3><p>Strengthen concepts with carefully organized questions and instant feedback.</p></div>
-        <div class="home-card"><span class="home-icon"><i class="fa fa-clock"></i></span><h3 class="title is-5">Mock Exams</h3><p>Experience timed exams that help you build confidence and improve speed.</p></div>
-        <div class="home-card"><span class="home-icon"><i class="fa fa-chart-line"></i></span><h3 class="title is-5">Track Progress</h3><p>Understand your performance, identify weak areas, and measure improvement.</p></div>
-        <div class="home-card"><span class="home-icon"><i class="fa fa-book-open"></i></span><h3 class="title is-5">Study Guidance</h3><p>Follow practical preparation tips, study strategies, and revision guidance.</p></div>
+  <section class="nptor-section has-background-light" id="audiences">
+    <div class="nptor-container">
+      <div class="has-text-centered mb-6">
+        <span class="nptor-eyebrow">BUILT FOR YOUR GOALS</span>
+        <h2 class="title is-2 mt-3">A focused experience for every type of learner</h2>
+        <p class="subtitle is-5">Choose the path that matches what you want to accomplish.</p>
+      </div>
+      <div class="nptor-grid nptor-grid-2">
+        <div class="nptor-card nptor-audience">
+          <span class="nptor-icon"><i class="fa fa-user-graduate"></i></span>
+          <h3 class="title is-4">For Learners</h3>
+          <p>Prepare for certifications, government exams, academic entrance tests, and professional assessments at your own pace.</p>
+          <ul class="nptor-checklist">
+            <li>Explore public learning resources</li>
+            <li>Practice topic-based questions</li>
+            <li>Take timed mock exams</li>
+            <li>Review results and improve weak areas</li>
+          </ul>
+          <a href="{% url 'quiz:practice' %}" class="button is-primary is-light mt-3">Explore Learning Resources</a>
+        </div>
+        <div class="nptor-card nptor-audience" id="organizations">
+          <span class="nptor-icon"><i class="fa fa-building-columns"></i></span>
+          <h3 class="title is-4">For Organizations</h3>
+          <p>Bring your institution’s learning, training, and assessment activities into one manageable workspace.</p>
+          <ul class="nptor-checklist">
+            <li>Manage staff and student members</li>
+            <li>Build and organize learning programs</li>
+            <li>Assign private resources to students</li>
+            <li>Monitor participation and progress</li>
+          </ul>
+          <a href="#organization-capabilities" class="button is-primary is-light mt-3">Explore Organization Features</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="home-section"><div class="home-container"><div class="has-text-centered mb-6"><p class="home-eyebrow">Simple process</p><h2 class="title is-2 mt-3">How it works</h2></div><div class="home-grid home-grid-4">
-    <div class="home-card home-step"><div class="home-step-number">1</div><h3 class="title is-5">Choose your goal</h3><p>Find the certification, exam, or subject you want to prepare for.</p></div>
-    <div class="home-card home-step"><div class="home-step-number">2</div><h3 class="title is-5">Practice regularly</h3><p>Build knowledge and confidence through targeted questions.</p></div>
-    <div class="home-card home-step"><div class="home-step-number">3</div><h3 class="title is-5">Test yourself</h3><p>Take mock exams under realistic time constraints.</p></div>
-    <div class="home-card home-step"><div class="home-step-number">4</div><h3 class="title is-5">Improve and repeat</h3><p>Review results, focus on weak areas, and keep progressing.</p></div>
-  </div></div></section>
+  <section class="nptor-section" id="organization-capabilities">
+    <div class="nptor-container">
+      <div class="has-text-centered mb-6">
+        <span class="nptor-eyebrow">ONE ORGANIZATION WORKSPACE</span>
+        <h2 class="title is-2 mt-3">Everything your organization needs to manage learning</h2>
+        <p class="subtitle is-5">Create a more structured experience for administrators, instructors, and students.</p>
+      </div>
+      <div class="nptor-grid nptor-grid-3">
+        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-building"></i></span><h3 class="title is-5">Manage Your Institution</h3><p>Organize your institution’s members, responsibilities, and learning activities from a central workspace.</p></div>
+        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-layer-group"></i></span><h3 class="title is-5">Build Learning Programs</h3><p>Structure courses into sections and lessons so learners can follow a clear learning path.</p></div>
+        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-user-lock"></i></span><h3 class="title is-5">Assign Private Resources</h3><p>Share organization-specific courses and learning resources with selected students.</p></div>
+        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-clipboard-check"></i></span><h3 class="title is-5">Create Assessments</h3><p>Use practice activities and exams to evaluate understanding and reinforce learning.</p></div>
+        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-chart-line"></i></span><h3 class="title is-5">Track Student Progress</h3><p>Understand learner activity, completion, performance, and areas that need attention.</p></div>
+        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-people-group"></i></span><h3 class="title is-5">Deliver Structured Training</h3><p>Give staff and students a consistent, measurable, and repeatable training experience.</p></div>
+      </div>
+    </div>
+  </section>
 
-  <section class="home-section has-background-light"><div class="home-container"><div class="has-text-centered mb-6"><p class="home-eyebrow">Preparation guidance</p><h2 class="title is-2 mt-3">Prepare with a clear strategy</h2><p class="subtitle is-5">Make every study session more effective.</p></div><div class="home-grid home-grid-3">
-    <div class="home-card"><h3 class="title is-5">Create a realistic study plan</h3><p>Break your syllabus into manageable topics and set achievable daily targets.</p></div>
-    <div class="home-card"><h3 class="title is-5">Practice under exam conditions</h3><p>Use timed practice and mock exams to improve accuracy, pace, and confidence.</p></div>
-    <div class="home-card"><h3 class="title is-5">Review mistakes thoughtfully</h3><p>Turn incorrect answers into learning opportunities by revisiting the underlying concepts.</p></div>
-  </div></div></section>
+  <section class="nptor-section has-background-light">
+    <div class="nptor-container">
+      <div class="has-text-centered mb-6">
+        <span class="nptor-eyebrow">A SIMPLE WORKFLOW</span>
+        <h2 class="title is-2 mt-3">From setup to measurable progress</h2>
+      </div>
+      <div class="nptor-grid nptor-grid-4">
+        <div class="nptor-card nptor-step"><div class="nptor-step-number">1</div><h3 class="title is-5">Create your organization</h3><p>Set up your institution and define its learning environment.</p></div>
+        <div class="nptor-card nptor-step"><div class="nptor-step-number">2</div><h3 class="title is-5">Add your people</h3><p>Bring staff, instructors, and students into the workspace.</p></div>
+        <div class="nptor-card nptor-step"><div class="nptor-step-number">3</div><h3 class="title is-5">Assign and assess</h3><p>Provide courses, lessons, practice activities, and assessments.</p></div>
+        <div class="nptor-card nptor-step"><div class="nptor-step-number">4</div><h3 class="title is-5">Monitor outcomes</h3><p>Review progress and use performance insights to guide learners.</p></div>
+      </div>
+    </div>
+  </section>
 
-  <section class="home-section"><div class="home-container"><div class="home-grid home-grid-4">
-    <div class="home-stat"><strong>{{ total_students|default:0 }}+</strong><span>Learners</span></div><div class="home-stat"><strong>{{ total_questions|default:0 }}+</strong><span>Practice Questions</span></div><div class="home-stat"><strong>{{ total_exams|default:0 }}+</strong><span>Mock Exams</span></div><div class="home-stat"><strong>{{ total_tracks|default:0 }}+</strong><span>Exam Tracks</span></div>
-  </div></div></section>
+  <section class="nptor-section">
+    <div class="nptor-container">
+      <div class="has-text-centered mb-6">
+        <span class="nptor-eyebrow">FLEXIBLE ACCESS</span>
+        <h2 class="title is-2 mt-3">Public learning and private organization resources</h2>
+        <p class="subtitle is-5">Support open learning while keeping institution-specific resources controlled.</p>
+      </div>
+      <div class="table-container">
+        <table class="nptor-compare">
+          <thead><tr><th>Capability</th><th>Public resources</th><th>Organization resources</th></tr></thead>
+          <tbody>
+            <tr><td>Who can access?</td><td>Eligible learners using public content</td><td>Students assigned by an organization</td></tr>
+            <tr><td>Primary purpose</td><td>Independent preparation and practice</td><td>Institution-led learning and training</td></tr>
+            <tr><td>Resource control</td><td>Available through the public catalog</td><td>Managed by the organization</td></tr>
+            <tr><td>Progress visibility</td><td>Learner-focused progress and results</td><td>Organization-level oversight of assigned learners</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
-  {% if testimonials %}<section class="home-section has-background-light"><div class="home-container"><div class="has-text-centered mb-6"><p class="home-eyebrow">Learner experiences</p><h2 class="title is-2 mt-3">What learners say</h2></div><div class="home-grid home-grid-3">
-    {% for testimonial in testimonials|slice:":3" %}<div class="home-card"><div class="mb-3">{% for i in "12345" %}{% if forloop.counter <= testimonial.rating %}<span style="color:#f5b50a">★</span>{% else %}<span style="color:#ddd">★</span>{% endif %}{% endfor %}</div><p>“{{ testimonial.message|truncatewords:20 }}”</p><p class="has-text-weight-semibold mt-4">{{ testimonial.name }}</p>{% if testimonial.role %}<p class="is-size-7 has-text-grey">{{ testimonial.role }}</p>{% endif %}</div>{% endfor %}
-  </div></div></section>{% endif %}
+  <section class="nptor-section has-background-light">
+    <div class="nptor-container">
+      <div class="has-text-centered mb-6">
+        <span class="nptor-eyebrow">WHY NPTOR?</span>
+        <h2 class="title is-2 mt-3">Designed to make learning easier to manage</h2>
+      </div>
+      <div class="nptor-grid nptor-grid-3">
+        <div class="nptor-card"><h3 class="title is-5">Centralized management</h3><p>Keep people, courses, assignments, and assessments connected in one place.</p></div>
+        <div class="nptor-card"><h3 class="title is-5">Less manual administration</h3><p>Reduce scattered processes with a structured digital learning workflow.</p></div>
+        <div class="nptor-card"><h3 class="title is-5">Measurable outcomes</h3><p>Use progress and assessment information to support better learning decisions.</p></div>
+        <div class="nptor-card"><h3 class="title is-5">Flexible course management</h3><p>Organize content into meaningful courses, sections, and lessons.</p></div>
+        <div class="nptor-card"><h3 class="title is-5">Learner-centered practice</h3><p>Help learners strengthen knowledge through repetition, feedback, and review.</p></div>
+        <div class="nptor-card"><h3 class="title is-5">One connected platform</h3><p>Bring learning, training, and assessment activities into a consistent experience.</p></div>
+      </div>
+    </div>
+  </section>
 
-  <section class="home-section"><div class="home-container home-cta has-text-centered"><h2 class="title is-2 has-text-white">Ready to prepare with confidence?</h2><p class="mb-5">Explore your learning options and take the next step toward your exam goals.</p><div class="buttons is-centered"><a href="{% url 'quiz:practice' %}" class="button is-light is-medium">Explore Resources</a><a href="{% url 'accounts:request-login-otp' %}" class="button is-outlined is-light is-medium">Join for Free</a></div></div></section>
+  <section class="nptor-section">
+    <div class="nptor-container nptor-cta has-text-centered">
+      <h2 class="title is-2 has-text-white">Build a better learning experience</h2>
+      <p class="mb-5">Start exploring resources today or discover how NPTOR can support your organization’s learning journey.</p>
+      <div class="buttons is-centered">
+        <a href="{% url 'quiz:practice' %}" class="button is-light is-medium">Start Learning</a>
+        <a href="{% url 'accounts:request-login-otp' %}" class="button is-outlined is-light is-medium">Create Free Account</a>
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}
