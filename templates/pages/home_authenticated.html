@@ -1,0 +1,52 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}{{ site_name }} – Dashboard{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="level mb-5">
+      <div>
+        <h1 class="title is-3">Welcome back{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}!</h1>
+        <p class="subtitle is-6">Continue your preparation and explore new learning resources.</p>
+      </div>
+      <div class="buttons">
+        <a class="button is-primary" href="{% url 'quiz:practice' %}">Start Practicing</a>
+      </div>
+    </div>
+
+    <div class="columns has-text-centered mb-5">
+      <div class="column box mx-2"><p class="title is-4">{{ total_questions }}</p><p>Practice Questions</p></div>
+      <div class="column box mx-2"><p class="title is-4">{{ total_exams }}</p><p>Mock Exams</p></div>
+      <div class="column box mx-2"><p class="title is-4">{{ total_tracks }}</p><p>Certification Tracks</p></div>
+    </div>
+
+    <section class="mb-6">
+      <div class="level"><h2 class="title is-4">Featured Courses</h2><a href="{% url 'quiz:practice' %}">View all</a></div>
+      <div class="columns is-multiline">
+        {% for course in featured_courses %}
+          <div class="column is-4"><div class="box"><h3 class="title is-6">{{ course.title }}</h3><p>{{ course.description|truncatewords:18 }}</p></div></div>
+        {% empty %}<div class="column"><p class="has-text-grey">No courses are available yet.</p></div>{% endfor %}
+      </div>
+    </section>
+
+    <section class="mb-6">
+      <div class="level"><h2 class="title is-4">Certification Tracks</h2><a href="{% url 'quiz:practice' %}">View all</a></div>
+      <div class="columns is-multiline">
+        {% for track in featured_tracks %}
+          <div class="column is-4"><div class="box"><h3 class="title is-6">{{ track.title }}</h3><p>{{ track.description|truncatewords:18 }}</p></div></div>
+        {% empty %}<div class="column"><p class="has-text-grey">No certification tracks are available yet.</p></div>{% endfor %}
+      </div>
+    </section>
+
+    <section>
+      <div class="level"><h2 class="title is-4">Latest Mock Exams</h2><a href="{% url 'quiz:practice' %}">View all</a></div>
+      <div class="columns is-multiline">
+        {% for exam in latest_exams %}
+          <div class="column is-4"><div class="box"><h3 class="title is-6">{{ exam.title }}</h3><p>{{ exam.question_count }} questions</p><p>{{ exam.duration_seconds }} seconds</p></div></div>
+        {% empty %}<div class="column"><p class="has-text-grey">No mock exams are available yet.</p></div>{% endfor %}
+      </div>
+    </section>
+  </div>
+</section>
+{% endblock %}
