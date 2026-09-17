@@ -1,11 +1,9 @@
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 
 from quiz.models import Category, Domain
 from quiz.services.learning_catalog import build_learning_catalog
 
 
-@login_required
 def learning_marketplace(request, catalog_vertical=None):
     query = request.GET.get("q", "").strip()
     resource_type = request.GET.get("type", "all").strip().lower()
@@ -33,7 +31,6 @@ def learning_marketplace(request, catalog_vertical=None):
     return render(request, "quiz/student/learning_marketplace.html", catalog)
 
 
-@login_required
 def learning_domain(request, slug):
     domain = get_object_or_404(
         Domain.objects.filter(is_active=True, organization__isnull=True),
