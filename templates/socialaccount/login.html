@@ -37,7 +37,7 @@
             </button>
         </form>
 
-        <a class="social-login-cancel" href="{% url 'accounts:login' %}">
+        <a class="social-login-cancel" href="{% url 'accounts:request-login-otp' %}">
             Cancel and return to sign in
         </a>
     </div>
@@ -46,83 +46,17 @@
 
 {% block page_css %}
 <style>
-    .social-login-page {
-        min-height: 70vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 3rem 1rem;
-    }
-
-    .social-login-card {
-        width: 100%;
-        max-width: 480px;
-        padding: 2.75rem 2.25rem;
-        text-align: center;
-        border-radius: 20px;
-        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10);
-    }
-
-    .social-login-icon {
-        width: 68px;
-        height: 68px;
-        margin: 0 auto 1.25rem;
-        display: grid;
-        place-items: center;
-        border: 1px solid var(--border-color, #e5e7eb);
-        border-radius: 50%;
-        background: var(--surface-elevated, #fff);
-    }
-
-    .social-login-icon svg {
-        width: 34px;
-        height: 34px;
-    }
-
-    .social-login-eyebrow {
-        margin-bottom: .5rem;
-        color: var(--text-muted, #6b7280);
-        font-size: .75rem;
-        font-weight: 700;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-    }
-
-    .social-login-title {
-        margin-bottom: .9rem !important;
-    }
-
-    .social-login-description {
-        max-width: 360px;
-        margin: 0 auto 1.75rem;
-        color: var(--text-muted, #6b7280);
-        line-height: 1.7;
-    }
-
-    .social-login-form {
-        margin-bottom: 1.25rem;
-    }
-
-    .social-login-continue {
-        min-height: 48px;
-        border-radius: 10px;
-        font-weight: 700;
-    }
-
-    .social-login-cancel {
-        color: var(--text-muted, #6b7280);
-        font-size: .9rem;
-        text-decoration: none;
-    }
-
-    .social-login-cancel:hover {
-        text-decoration: underline;
-    }
-
-    @media (max-width: 480px) {
-        .social-login-card {
-            padding: 2rem 1.25rem;
-        }
-    }
+    .social-login-page { min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem; }
+    .social-login-card { width: 100%; max-width: 480px; padding: 2.75rem 2.25rem; text-align: center; border-radius: 20px; box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10); }
+    .social-login-icon { width: 68px; height: 68px; margin: 0 auto 1.25rem; display: grid; place-items: center; border: 1px solid var(--border-color, #e5e7eb); border-radius: 50%; background: var(--surface-elevated, #fff); }
+    .social-login-icon svg { width: 34px; height: 34px; }
+    .social-login-eyebrow { margin-bottom: .5rem; color: var(--text-muted, #6b7280); font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .social-login-title { margin-bottom: .9rem !important; }
+    .social-login-description { max-width: 360px; margin: 0 auto 1.75rem; color: var(--text-muted, #6b7280); line-height: 1.7; }
+    .social-login-form { margin-bottom: 1.25rem; }
+    .social-login-continue { min-height: 48px; border-radius: 10px; font-weight: 700; }
+    .social-login-cancel { color: var(--text-muted, #6b7280); font-size: .9rem; text-decoration: none; }
+    .social-login-cancel:hover { text-decoration: underline; }
+    @media (max-width: 480px) { .social-login-card { padding: 2rem 1.25rem; } }
 </style>
 {% endblock %}
