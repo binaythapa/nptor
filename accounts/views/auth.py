@@ -37,25 +37,14 @@ def verify_login_otp_view(request):
           ↓
         Django login
           ↓
-        Dashboard
+        Role-based dashboard
     """
 
-    # --------------------------------------------------------
-    # GET
-    #
-    # Show OTP page and remaining countdown.
-    # --------------------------------------------------------
-
     if request.method == "GET":
-
-        user_id = request.session.get(
-            "otp_user_id"
-        )
-
+        user_id = request.session.get("otp_user_id")
         expires_in = None
 
         if user_id:
-
             otp = (
                 EmailOTP.objects
                 .filter(
@@ -68,116 +57,49 @@ def verify_login_otp_view(request):
             )
 
             if otp and otp.expires_at:
-
-                expires_in = int(
-                    (
-                        otp.expires_at
-                        - timezone.now()
-                    ).total_seconds()
-                )
-
                 expires_in = max(
-                    expires_in,
+                    int((otp.expires_at - timezone.now()).total_seconds()),
                     0,
                 )
 
         return render(
             request,
             "accounts/auth/verify_otp.html",
-            {
-                "expires_in": expires_in,
-            },
+            {"expires_in": expires_in},
         )
 
-    # --------------------------------------------------------
-    # POST
-    # --------------------------------------------------------
-
-    otp_code = (
-        request.POST.get(
-            "otp",
-            "",
-        )
-        .strip()
-    )
-
-    user_id = request.session.get(
-        "otp_user_id"
-    )
-
-    # --------------------------------------------------------
-    # SESSION VALIDATION
-    # --------------------------------------------------------
+    otp_code = request.POST.get("otp", "").strip()
+    user_id = request.session.get("otp_user_id")
 
     if not otp_code or not user_id:
-
-        request.session.pop(
-            "otp_user_id",
-            None,
-        )
-
+        request.session.pop("otp_user_id", None)
         return render(
             request,
             "accounts/auth/verify_otp.html",
-            {
-                "error": "OTP session expired.",
-                "expires_in": 0,
-            },
+            {"error": "OTP session expired.", "expires_in": 0},
         )
-
-    # --------------------------------------------------------
-    # LOAD USER
-    # --------------------------------------------------------
 
     try:
-
-        user = User.objects.get(
-            id=user_id,
-            is_active=True,
-        )
-
+        user = User.objects.get(id=user_id, is_active=True)
     except User.DoesNotExist:
-
-        request.session.pop(
-            "otp_user_id",
-            None,
-        )
-
+        request.session.pop("otp_user_id", None)
         return render(
             request,
             "accounts/auth/verify_otp.html",
-            {
-                "error": "Invalid login session.",
-                "expires_in": 0,
-            },
+            {"error": "Invalid login session.", "expires_in": 0},
         )
 
-    # --------------------------------------------------------
-    # ACCOUNT LOCK
-    # --------------------------------------------------------
-
-    lock, _ = AccountLock.objects.get_or_create(
-        user=user
-    )
+    lock, _ = AccountLock.objects.get_or_create(user=user)
 
     if lock.is_locked():
-
         return render(
             request,
             "accounts/auth/verify_otp.html",
             {
-                "error": (
-                    "Your account is temporarily locked."
-                ),
+                "error": "Your account is temporarily locked.",
                 "expires_in": 0,
             },
         )
-
-    # --------------------------------------------------------
-    # GET CURRENT OTP
-    #
-    # Used to preserve countdown after invalid attempts.
-    # --------------------------------------------------------
 
     otp_obj = (
         EmailOTP.objects
@@ -191,39 +113,18 @@ def verify_login_otp_view(request):
     )
 
     expires_in = 0
-
     if otp_obj and otp_obj.expires_at:
-
-        expires_in = int(
-            (
-                otp_obj.expires_at
-                - timezone.now()
-            ).total_seconds()
-        )
-
         expires_in = max(
-            expires_in,
+            int((otp_obj.expires_at - timezone.now()).total_seconds()),
             0,
         )
 
-    # --------------------------------------------------------
-    # SERVER-SIDE EXPIRATION CHECK
-    # --------------------------------------------------------
-
     if not otp_obj or expires_in <= 0:
-
         return render(
             request,
             "accounts/auth/verify_otp.html",
-            {
-                "error": "OTP has expired.",
-                "expires_in": 0,
-            },
+            {"error": "OTP has expired.", "expires_in": 0},
         )
-
-    # --------------------------------------------------------
-    # VERIFY OTP
-    # --------------------------------------------------------
 
     is_valid = verify_otp(
         user=user,
@@ -232,10 +133,7 @@ def verify_login_otp_view(request):
     )
 
     if not is_valid:
-
-        # Register failed attempt
         lock.register_failure()
-
         return render(
             request,
             "accounts/auth/verify_otp.html",
@@ -245,37 +143,16 @@ def verify_login_otp_view(request):
             },
         )
 
-    # --------------------------------------------------------
-    # SUCCESS
-    # --------------------------------------------------------
-
     lock.reset()
-
-    # --------------------------------------------------------
-    # DJANGO LOGIN
-    # --------------------------------------------------------
-
     login(
         request,
         user,
-        backend=(
-            "django.contrib.auth.backends.ModelBackend"
-        ),
+        backend="django.contrib.auth.backends.ModelBackend",
     )
+    request.session.pop("otp_user_id", None)
 
-    # --------------------------------------------------------
-    # CLEAR LOGIN OTP SESSION
-    # --------------------------------------------------------
+    # Platform administrators use the platform administration dashboard.
+    if user.is_staff or user.is_superuser:
+        return redirect("quiz:admin_dashboard")
 
-    request.session.pop(
-        "otp_user_id",
-        None,
-    )
-
-    # --------------------------------------------------------
-    # DASHBOARD
-    # --------------------------------------------------------
-
-    return redirect(
-        "quiz:dashboard"
-    )
+    return redirect("quiz:student_dashboard")
