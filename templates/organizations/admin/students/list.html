@@ -45,19 +45,20 @@
         </td>
         <td>{{ m.user.email }}</td>
         <td>
-          {% if request.organization_member.role == "staff" %}
-            {{ m.get_role_display }}
-          {% else %}
+          {% if m.can_edit_role %}
             <form method="post"
                   action="{% url 'organizations_admin:student_role' slug=org_slug member_id=m.id %}">
               {% csrf_token %}
               <div class="select is-small">
                 <select name="role" onchange="this.form.submit()">
-                  <option value="student" {% if m.role == "student" %}selected{% endif %}>Student</option>
-                  <option value="staff" {% if m.role == "staff" %}selected{% endif %}>Staff</option>
+                  {% for value, label in m.role_options %}
+                    <option value="{{ value }}" {% if m.role == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
                 </select>
               </div>
             </form>
+          {% else %}
+            {{ m.get_role_display }}
           {% endif %}
         </td>
         <td>
