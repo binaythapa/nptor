@@ -1,0 +1,101 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}
+All Courses | Admin
+{% endblock %}
+
+{% block content %}
+<div class="admin-toolbar mb-5">
+    <div>
+        <h1 class="title is-4 mb-2">All Courses</h1>
+        <p class="has-text-grey">Browse and manage courses across the platform.</p>
+    </div>
+    <a class="button is-light" href="{% url 'courses:admin-course-dashboard' %}">
+        Back to Dashboard
+    </a>
+</div>
+
+<div class="admin-filter-bar mb-5" aria-label="Course status filters">
+    <a class="admin-filter{% if not current_status %} is-active{% endif %}"
+       href="{% url 'courses:admin-all-courses' %}">All</a>
+    <a class="admin-filter{% if current_status == 'draft' %} is-active{% endif %}"
+       href="{% url 'courses:admin-all-courses' %}?status=draft">Draft</a>
+    <a class="admin-filter{% if current_status == 'pending' %} is-active{% endif %}"
+       href="{% url 'courses:admin-all-courses' %}?status=pending">Pending</a>
+    <a class="admin-filter{% if current_status == 'approved' %} is-active{% endif %}"
+       href="{% url 'courses:admin-all-courses' %}?status=approved">Approved</a>
+    <a class="admin-filter{% if current_status == 'changes_required' %} is-active{% endif %}"
+       href="{% url 'courses:admin-all-courses' %}?status=changes_required">Changes Required</a>
+    <a class="admin-filter{% if current_status == 'rejected' %} is-active{% endif %}"
+       href="{% url 'courses:admin-all-courses' %}?status=rejected">Rejected</a>
+</div>
+
+<div class="box admin-table-panel">
+    <div class="admin-table-scroll">
+        <table class="table is-fullwidth is-hoverable admin-table">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Creator</th>
+                    <th>Organization</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Lessons</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                <tr>
+                    <td>
+                        <strong>{{ course.title }}</strong>
+                        <span class="admin-table-subtext">{{ course.slug }}</span>
+                    </td>
+                    <td>{{ course.created_by|default:"—" }}</td>
+                    <td>
+                        {% if course.organization %}
+                            {{ course.organization }}
+                        {% else %}
+                            Platform
+                        {% endif %}
+                    </td>
+                    <td>{{ course.category|default:"—" }}</td>
+                    <td>
+                        {% if course.approval_status == 'draft' %}
+                            <span class="tag">Draft</span>
+                        {% elif course.approval_status == 'pending' %}
+                            <span class="tag is-warning">Pending</span>
+                        {% elif course.approval_status == 'approved' %}
+                            <span class="tag is-info">Approved</span>
+                        {% elif course.approval_status == 'changes_required' %}
+                            <span class="tag is-warning">Changes Required</span>
+                        {% elif course.approval_status == 'rejected' %}
+                            <span class="tag is-danger">Rejected</span>
+                        {% else %}
+                            <span class="tag">{{ course.get_approval_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ course.total_lessons }}</td>
+                    <td>{{ course.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <a class="button is-small is-link is-light"
+                           href="{% url 'courses:admin-review-course' course.slug %}">
+                            Manage
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="has-text-centered has-text-grey py-6">
+                            No courses found for this filter.
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
