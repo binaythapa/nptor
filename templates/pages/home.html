@@ -1,129 +1,77 @@
 {% extends "layouts/student/base.html" %}
 
-{% block title %}{{ site_name }} – Practice Exams, Mock Tests & Certification Prep{% endblock %}
+{% block title %}{{ site_name }} – Your Smarter Path to Exam Success{% endblock %}
 
 {% block content %}
 <style>
-  .homepage-section { padding: 3.5rem 1.25rem; }
-  .homepage-container { max-width: 1200px; margin: 0 auto; }
-  .homepage-grid { display: grid; gap: 1.5rem; align-items: stretch; }
-  .homepage-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .homepage-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .homepage-card { height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
-  .homepage-card__body { flex: 1; display: flex; flex-direction: column; }
-  .homepage-card__description { flex: 1; }
-  .homepage-card__action { margin-top: 1.25rem; }
-  .homepage-feature-card { min-height: 210px; text-align: center; justify-content: flex-start; }
-  .homepage-feature-card .icon { display: block; margin-bottom: 1rem; }
-  .homepage-feature-card p { margin-top: auto; }
-  .homepage-course-card, .homepage-track-card { min-height: 250px; }
-  .homepage-exam-card { min-height: 220px; }
-  @media (max-width: 1023px) {
-    .homepage-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .homepage-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-  @media (max-width: 640px) {
-    .homepage-section { padding: 2.5rem 1rem; }
-    .homepage-grid--3, .homepage-grid--4 { grid-template-columns: minmax(0, 1fr); }
-  }
+  .home-shell { color: var(--text-color, #1f2937); }
+  .home-section { padding: 4.5rem 1.25rem; }
+  .home-container { max-width: 1180px; margin: 0 auto; }
+  .home-hero { background: linear-gradient(135deg, #eefaf8, #f5f7ff); border-radius: 1.5rem; padding: 5rem 2rem; }
+  .home-eyebrow { display: inline-block; padding: .4rem .8rem; border-radius: 999px; background: #d8f4ee; color: #087f6b; font-weight: 700; font-size: .85rem; }
+  .home-hero h1 { font-size: clamp(2.2rem, 5vw, 4rem); line-height: 1.1; font-weight: 800; max-width: 760px; margin: 1rem auto; }
+  .home-hero p { max-width: 700px; margin: 0 auto; font-size: 1.1rem; }
+  .home-grid { display: grid; gap: 1.4rem; }
+  .home-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .home-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .home-card { height: 100%; border: 1px solid rgba(125, 125, 125, .15); border-radius: 1rem; padding: 1.6rem; box-shadow: 0 8px 24px rgba(30, 41, 59, .06); background: var(--card-background, #fff); }
+  .home-card h3 { margin-top: .8rem; font-weight: 750; }
+  .home-icon { width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; border-radius: .9rem; background: #e1f7f2; color: #087f6b; font-size: 1.35rem; }
+  .home-step { text-align: center; }
+  .home-step-number { width: 2.8rem; height: 2.8rem; margin: 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #087f6b; color: white; font-weight: 800; }
+  .home-stat { text-align: center; padding: 1rem; }
+  .home-stat strong { display: block; font-size: 2rem; font-weight: 800; }
+  .home-cta { border-radius: 1.4rem; background: linear-gradient(135deg, #087f6b, #155e75); color: white; padding: 3.5rem 2rem; }
+  @media (max-width: 900px) { .home-grid-4, .home-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 600px) { .home-section { padding: 3rem 1rem; } .home-hero { padding: 3rem 1.2rem; } .home-grid-4, .home-grid-3 { grid-template-columns: 1fr; } }
 </style>
 
-<section class="homepage-section">
-  <div class="homepage-container has-text-centered">
-    <h1 class="title is-2">Prepare Smarter with {{ site_name }}</h1>
-    <p class="subtitle is-5 mt-3">Practice real exam questions, simulate mock exams, and track your progress.</p>
-    <div class="buttons is-centered mt-5">
-      <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">Start Practicing</a>
-      <a href="{% url 'accounts:request-login-otp' %}" class="button is-light is-medium">Login / Sign up</a>
+<div class="home-shell">
+  <section class="home-section">
+    <div class="home-container home-hero has-text-centered">
+      <span class="home-eyebrow">Learn smarter. Practice better. Achieve more.</span>
+      <h1>Your Smarter Path to Exam Success Starts Here.</h1>
+      <p>Prepare for certifications, government exams, academic entrance tests, and professional assessments with focused practice, realistic mock exams, and clear learning guidance.</p>
+      <div class="buttons is-centered mt-5">
+        <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">Explore Resources</a>
+        <a href="{% url 'accounts:request-login-otp' %}" class="button is-light is-medium">Create Free Account</a>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="homepage-section has-background-light">
-  <div class="homepage-container">
-    <div class="columns has-text-centered">
-      <div class="column"><p class="title is-3">{{ total_students|default:0 }}+</p><p>Students</p></div>
-      <div class="column"><p class="title is-3">{{ total_questions|default:0 }}+</p><p>Practice Questions</p></div>
-      <div class="column"><p class="title is-3">{{ total_exams|default:0 }}+</p><p>Mock Exams</p></div>
-      <div class="column"><p class="title is-3">{{ total_tracks|default:0 }}+</p><p>Exam Tracks</p></div>
+  <section class="home-section has-background-light">
+    <div class="home-container">
+      <div class="has-text-centered mb-6"><p class="home-eyebrow">Why {{ site_name }}?</p><h2 class="title is-2 mt-3">Everything you need to prepare with confidence</h2><p class="subtitle is-5">A focused learning experience built around your goals, your pace, and your progress.</p></div>
+      <div class="home-grid home-grid-4">
+        <div class="home-card"><span class="home-icon"><i class="fa fa-pen"></i></span><h3 class="title is-5">Practice Questions</h3><p>Strengthen concepts with carefully organized questions and instant feedback.</p></div>
+        <div class="home-card"><span class="home-icon"><i class="fa fa-clock"></i></span><h3 class="title is-5">Mock Exams</h3><p>Experience timed exams that help you build confidence and improve speed.</p></div>
+        <div class="home-card"><span class="home-icon"><i class="fa fa-chart-line"></i></span><h3 class="title is-5">Track Progress</h3><p>Understand your performance, identify weak areas, and measure improvement.</p></div>
+        <div class="home-card"><span class="home-icon"><i class="fa fa-book-open"></i></span><h3 class="title is-5">Study Guidance</h3><p>Follow practical preparation tips, study strategies, and revision guidance.</p></div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="homepage-section">
-  <div class="homepage-container">
-    <div class="homepage-grid homepage-grid--4">
-      <div class="box homepage-card homepage-feature-card"><span class="icon is-large"><i class="fa fa-pen fa-2x"></i></span><h3 class="title is-5">Practice Questions</h3><p>Access {{ total_questions|default:0 }}+ curated questions designed for real exams.</p></div>
-      <div class="box homepage-card homepage-feature-card"><span class="icon is-large"><i class="fa fa-clock fa-2x"></i></span><h3 class="title is-5">Mock Exams</h3><p>Take {{ total_exams|default:0 }} realistic exams to test your readiness.</p></div>
-      <div class="box homepage-card homepage-feature-card"><span class="icon is-large"><i class="fa fa-chart-line fa-2x"></i></span><h3 class="title is-5">Track Progress</h3><p>Monitor performance and identify weak areas instantly.</p></div>
-      <div class="box homepage-card homepage-feature-card"><span class="icon is-large"><i class="fa fa-user-graduate fa-2x"></i></span><h3 class="title is-5">Structured Learning</h3><p>Follow guided study plans designed for certification success.</p></div>
-    </div>
-  </div>
-</section>
+  <section class="home-section"><div class="home-container"><div class="has-text-centered mb-6"><p class="home-eyebrow">Simple process</p><h2 class="title is-2 mt-3">How it works</h2></div><div class="home-grid home-grid-4">
+    <div class="home-card home-step"><div class="home-step-number">1</div><h3 class="title is-5">Choose your goal</h3><p>Find the certification, exam, or subject you want to prepare for.</p></div>
+    <div class="home-card home-step"><div class="home-step-number">2</div><h3 class="title is-5">Practice regularly</h3><p>Build knowledge and confidence through targeted questions.</p></div>
+    <div class="home-card home-step"><div class="home-step-number">3</div><h3 class="title is-5">Test yourself</h3><p>Take mock exams under realistic time constraints.</p></div>
+    <div class="home-card home-step"><div class="home-step-number">4</div><h3 class="title is-5">Improve and repeat</h3><p>Review results, focus on weak areas, and keep progressing.</p></div>
+  </div></div></section>
 
-<section class="homepage-section has-background-light">
-  <div class="homepage-container">
-    <h2 class="title is-3 has-text-centered mb-6">Featured Courses</h2>
-    {% if courses %}
-      <div class="homepage-grid homepage-grid--3">
-        {% for course in courses %}
-          <div class="box homepage-card homepage-course-card">
-            <div class="homepage-card__body">
-              <h3 class="title is-5">{{ course.title }}</h3>
-              <p class="mb-3">Level: {{ course.level|title }}</p>
-              <p class="homepage-card__description">{{ course.description|truncatewords:20 }}</p>
-              <a href="{% url 'accounts:request-login-otp' %}" class="button is-primary is-fullwidth homepage-card__action">Login to Start</a>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}<div class="notification is-light has-text-centered">📚 Courses will be available soon.</div>{% endif %}
-  </div>
-</section>
+  <section class="home-section has-background-light"><div class="home-container"><div class="has-text-centered mb-6"><p class="home-eyebrow">Preparation guidance</p><h2 class="title is-2 mt-3">Prepare with a clear strategy</h2><p class="subtitle is-5">Make every study session more effective.</p></div><div class="home-grid home-grid-3">
+    <div class="home-card"><h3 class="title is-5">Create a realistic study plan</h3><p>Break your syllabus into manageable topics and set achievable daily targets.</p></div>
+    <div class="home-card"><h3 class="title is-5">Practice under exam conditions</h3><p>Use timed practice and mock exams to improve accuracy, pace, and confidence.</p></div>
+    <div class="home-card"><h3 class="title is-5">Review mistakes thoughtfully</h3><p>Turn incorrect answers into learning opportunities by revisiting the underlying concepts.</p></div>
+  </div></div></section>
 
-<section class="homepage-section">
-  <div class="homepage-container">
-    <h2 class="title is-3 has-text-centered mb-6">Certification Tracks</h2>
-    {% if exam_tracks %}
-      <div class="homepage-grid homepage-grid--3">
-        {% for track in exam_tracks %}
-          <div class="box homepage-card homepage-track-card"><div class="homepage-card__body"><h3 class="title is-5">{{ track.title }}</h3><p class="homepage-card__description">{{ track.description|truncatewords:20 }}</p><a href="{% url 'accounts:request-login-otp' %}" class="button is-link is-fullwidth homepage-card__action">Login to Explore</a></div></div>
-        {% endfor %}
-      </div>
-    {% else %}<div class="notification is-light has-text-centered">🚀 Certification tracks will appear here soon.</div>{% endif %}
-  </div>
-</section>
+  <section class="home-section"><div class="home-container"><div class="home-grid home-grid-4">
+    <div class="home-stat"><strong>{{ total_students|default:0 }}+</strong><span>Learners</span></div><div class="home-stat"><strong>{{ total_questions|default:0 }}+</strong><span>Practice Questions</span></div><div class="home-stat"><strong>{{ total_exams|default:0 }}+</strong><span>Mock Exams</span></div><div class="home-stat"><strong>{{ total_tracks|default:0 }}+</strong><span>Exam Tracks</span></div>
+  </div></div></section>
 
-<section class="homepage-section has-background-light">
-  <div class="homepage-container">
-    <h2 class="title is-3 has-text-centered mb-6">Latest Mock Exams</h2>
-    {% if latest_exams %}
-      <div class="homepage-grid homepage-grid--3">
-        {% for exam in latest_exams %}
-          <div class="box homepage-card homepage-exam-card"><div class="homepage-card__body"><h3 class="title is-5">{{ exam.title }}</h3><p>{{ exam.question_count }} Questions</p><p>{{ exam.duration_seconds }} Seconds</p><a href="{% url 'accounts:request-login-otp' %}" class="button is-primary is-fullwidth homepage-card__action">Login to Attempt</a></div></div>
-        {% endfor %}
-      </div>
-    {% else %}<div class="notification is-light has-text-centered">📝 Mock exams will be available soon.</div>{% endif %}
-  </div>
-</section>
+  {% if testimonials %}<section class="home-section has-background-light"><div class="home-container"><div class="has-text-centered mb-6"><p class="home-eyebrow">Learner experiences</p><h2 class="title is-2 mt-3">What learners say</h2></div><div class="home-grid home-grid-3">
+    {% for testimonial in testimonials|slice:":3" %}<div class="home-card"><div class="mb-3">{% for i in "12345" %}{% if forloop.counter <= testimonial.rating %}<span style="color:#f5b50a">★</span>{% else %}<span style="color:#ddd">★</span>{% endif %}{% endfor %}</div><p>“{{ testimonial.message|truncatewords:20 }}”</p><p class="has-text-weight-semibold mt-4">{{ testimonial.name }}</p>{% if testimonial.role %}<p class="is-size-7 has-text-grey">{{ testimonial.role }}</p>{% endif %}</div>{% endfor %}
+  </div></div></section>{% endif %}
 
-<section class="homepage-section">
-  <div class="homepage-container">
-    <h2 class="title is-3 has-text-centered mb-6">What Our Students Say</h2>
-    {% if testimonials %}
-      <div class="homepage-grid homepage-grid--3">
-        {% for testimonial in testimonials|slice:":6" %}
-          <div class="box homepage-card"><div class="mb-2">{% for i in "12345" %}{% if forloop.counter <= testimonial.rating %}<span style="color:#f5b50a">★</span>{% else %}<span style="color:#ddd">★</span>{% endif %}{% endfor %}</div><p class="homepage-card__description">“{{ testimonial.message|truncatewords:20 }}”</p><p class="has-text-weight-semibold">{{ testimonial.name }}</p>{% if testimonial.role %}<p class="is-size-7 has-text-grey">{{ testimonial.role }}</p>{% endif %}</div>
-        {% endfor %}
-      </div>
-    {% else %}<div class="notification is-light has-text-centered">⭐ Student testimonials will appear here once available.</div>{% endif %}
-  </div>
-</section>
-
-<section class="homepage-section has-background-light">
-  <div class="homepage-container has-text-centered">
-    <h2 class="title is-3">Start Practicing Today — It's Free</h2>
-    <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium mt-4">Practice Now</a>
-  </div>
-</section>
+  <section class="home-section"><div class="home-container home-cta has-text-centered"><h2 class="title is-2 has-text-white">Ready to prepare with confidence?</h2><p class="mb-5">Explore your learning options and take the next step toward your exam goals.</p><div class="buttons is-centered"><a href="{% url 'quiz:practice' %}" class="button is-light is-medium">Explore Resources</a><a href="{% url 'accounts:request-login-otp' %}" class="button is-outlined is-light is-medium">Join for Free</a></div></div></section>
+</div>
 {% endblock %}
