@@ -7,8 +7,22 @@ from django.views.decorators.http import require_POST
 from organizations.permissions import org_teacher_required
 from organizations.models.role import OrganizationRole
 from organizations.services.content_permissions import user_can_manage_owned_content
-from quiz.models import Question, Choice
+from quiz.models import Question, Choice, Category
 from quiz.forms import QuestionForm
+
+
+def _organization_question_form(*, organization, data=None, instance=None):
+    """Build a question form restricted to categories owned by this organization."""
+    form = QuestionForm(data=data, instance=instance, organization=organization)
+    category_qs = Category.objects.filter(
+        organization=organization,
+        is_active=True,
+    ).select_related("domain", "parent").order_by(
+        "domain__name", "parent__name", "name"
+    )
+    form.fields["primary_category"].queryset = category_qs
+    form.fields["categories"].queryset = category_qs
+    return form
 
 
 @org_teacher_required
@@ -55,7 +69,10 @@ def _question_choice_formset(data=None, *, instance=None):
 def org_add_question(request, slug):
     org = request.organization
     if request.method == "POST":
-        form = QuestionForm(request.POST, organization=org)
+        form = _organization_question_form(
+            organization=org,
+            data=request.POST,
+        )
         formset, has_choice_payload = _question_choice_formset(request.POST)
         if form.is_valid() and (not has_choice_payload or formset.is_valid()):
             question = form.save(commit=False)
@@ -68,7 +85,7 @@ def org_add_question(request, slug):
                 formset.save()
             return redirect("organizations_admin:questions", slug=slug)
     else:
-        form = QuestionForm(organization=org)
+        form = _organization_question_form(organization=org)
         formset, _ = _question_choice_formset()
     return render(
         request,
@@ -93,10 +110,10 @@ def org_edit_question(request, slug, pk):
     )
     _ensure_question_mutation_access(request, question)
     if request.method == "POST":
-        form = QuestionForm(
-            request.POST,
-            instance=question,
+        form = _organization_question_form(
             organization=org,
+            data=request.POST,
+            instance=question,
         )
         formset, has_choice_payload = _question_choice_formset(request.POST, instance=question)
         if form.is_valid() and (not has_choice_payload or formset.is_valid()):
@@ -108,7 +125,10 @@ def org_edit_question(request, slug, pk):
                 formset.save()
             return redirect("organizations_admin:questions", slug=slug)
     else:
-        form = QuestionForm(instance=question, organization=org)
+        form = _organization_question_form(
+            organization=org,
+            instance=question,
+        )
         formset, _ = _question_choice_formset(instance=question)
     return render(
         request,
