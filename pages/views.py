@@ -10,45 +10,58 @@ from .forms import TestimonialForm
 
 User = get_user_model()
 
+# Keep homepage payloads bounded regardless of catalogue size.
+HOMEPAGE_LIMIT = 6
+
 
 def home(request):
-    if request.user.is_authenticated:
-        return redirect("quiz:dashboard")
-
     total_questions = Question.objects.active().count()
     total_exams = Exam.objects.filter(is_published=True).count()
     total_tracks = ExamTrack.objects.filter(is_active=True).count()
     total_students = User.objects.count()
     total_study_plans = StudyPlan.objects.count()
 
-    courses = Course.objects.filter(
-        is_published=True,
-        is_public=True,
-    ).order_by("-created_at")
-
-    testimonials = Testimonial.objects.filter(
-        is_approved=True,
-        is_featured=True,
-    ).order_by("-created_at")[:6]
-
-    exam_tracks = ExamTrack.objects.filter(is_active=True).order_by("-created_at")
-
-    latest_exams = Exam.objects.filter(
-        is_published=True,
-    ).select_related("organization").order_by("-created_at")
+    if request.user.is_authenticated:
+        context = {
+            "total_questions": total_questions,
+            "total_exams": total_exams,
+            "total_tracks": total_tracks,
+            "total_students": total_students,
+            "total_study_plans": total_study_plans,
+            "featured_courses": Course.objects.filter(
+                is_published=True,
+                is_public=True,
+            ).order_by("-created_at")[:HOMEPAGE_LIMIT],
+            "featured_tracks": ExamTrack.objects.filter(
+                is_active=True,
+            ).order_by("-created_at")[:HOMEPAGE_LIMIT],
+            "latest_exams": Exam.objects.filter(
+                is_published=True,
+            ).select_related("organization").order_by("-created_at")[:HOMEPAGE_LIMIT],
+        }
+        return render(request, "pages/home_authenticated.html", context)
 
     context = {
-        "testimonials": testimonials,
+        "testimonials": Testimonial.objects.filter(
+            is_approved=True,
+            is_featured=True,
+        ).order_by("-created_at")[:6],
         "total_questions": total_questions,
         "total_exams": total_exams,
         "total_tracks": total_tracks,
         "total_students": total_students,
         "total_study_plans": total_study_plans,
-        "courses": courses,
-        "exam_tracks": exam_tracks,
-        "latest_exams": latest_exams,
+        "courses": Course.objects.filter(
+            is_published=True,
+            is_public=True,
+        ).order_by("-created_at")[:HOMEPAGE_LIMIT],
+        "exam_tracks": ExamTrack.objects.filter(
+            is_active=True,
+        ).order_by("-created_at")[:HOMEPAGE_LIMIT],
+        "latest_exams": Exam.objects.filter(
+            is_published=True,
+        ).select_related("organization").order_by("-created_at")[:HOMEPAGE_LIMIT],
     }
-
     return render(request, "pages/home.html", context)
 
 
@@ -66,11 +79,6 @@ def terms(request):
 
 def contact(request):
     return render(request, "pages/contact.html")
-
-
-@login_required
-def feedback(request):
-    return render(request, "pages/feedback.html")
 
 
 @login_required
