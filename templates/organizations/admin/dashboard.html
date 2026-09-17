@@ -2,45 +2,121 @@
 
 {% block content %}
 <div class="org-dashboard">
-    <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
-        <div>
-            <h2 class="title is-4 mb-1">Organization Dashboard</h2>
-            <p class="has-text-grey">Manage your organization content, learning products, and academic structure.</p>
-        </div>
+    <div class="mb-5">
+        <p class="heading mb-2">{{ org.name }}</p>
+        <h2 class="title is-3 mb-2">Organization Dashboard</h2>
+        <p class="has-text-grey">A quick overview of your organization and its learning activity.</p>
     </div>
 
-    <div class="org-stat-grid">
-        <div class="box has-text-centered org-stat-card"><p class="heading">Students</p><p class="title is-3">{{ stats.students }}</p><a class="button is-small is-link is-light" href="{% url 'organizations_admin:students' slug=org.slug %}">Manage Students</a></div>
-        <div class="box has-text-centered org-stat-card"><p class="heading">Courses</p><p class="title is-3">{{ stats.courses }}</p><a class="button is-small is-link is-light" href="{% url 'organizations_admin:courses' slug=org.slug %}">Manage Courses</a></div>
-        <div class="box has-text-centered org-stat-card"><p class="heading">Exam Tracks</p><p class="title is-3">{{ stats.tracks }}</p><a class="button is-small is-link is-light" href="{% url 'organizations_admin:org_track_list' slug=org.slug %}">Manage Tracks</a></div>
-        <div class="box has-text-centered org-stat-card"><p class="heading">Reusable Exams</p><p class="title is-3">{{ stats.exams }}</p><a class="button is-small is-link is-light" href="{% url 'organizations_admin:exams' slug=org.slug %}">Manage Exams</a></div>
+    <div class="org-stat-grid mb-5">
+        <div class="box org-stat-card">
+            <p class="heading">Students</p>
+            <p class="title is-3">{{ stats.students }}</p>
+            <a class="button is-small is-link is-light" href="{% url 'organizations_admin:students' slug=org.slug %}">Manage Students</a>
+        </div>
+        <div class="box org-stat-card">
+            <p class="heading">Courses</p>
+            <p class="title is-3">{{ stats.courses }}</p>
+            <a class="button is-small is-link is-light" href="{% url 'organizations_admin:courses' slug=org.slug %}">Manage Courses</a>
+        </div>
+        <div class="box org-stat-card">
+            <p class="heading">Exam Tracks</p>
+            <p class="title is-3">{{ stats.tracks }}</p>
+            <a class="button is-small is-link is-light" href="{% url 'organizations_admin:org_track_list' slug=org.slug %}">Manage Tracks</a>
+        </div>
+        <div class="box org-stat-card">
+            <p class="heading">Exams</p>
+            <p class="title is-3">{{ stats.exams }}</p>
+            <a class="button is-small is-link is-light" href="{% url 'organizations_admin:exams' slug=org.slug %}">Manage Exams</a>
+        </div>
     </div>
 
     <div class="box mb-5">
-        <div class="is-flex is-justify-content-space-between is-align-items-center">
-            <div><p class="heading mb-1">Academic Management</p><h3 class="title is-5 mb-2">Academic Structure</h3><p class="has-text-grey is-size-7">Manage academic years, classes, sections, and organization-specific student enrollment.</p></div>
-            <a class="button is-primary" href="{% url 'organizations_admin:academic' slug=org.slug %}"><span class="icon"><i class="fa fa-school"></i></span><span>Open Academic Management</span></a>
+        <div class="mb-4">
+            <h3 class="title is-5 mb-1">Quick actions</h3>
+            <p class="has-text-grey is-size-7">Open the area you need to manage.</p>
         </div>
-        <div class="columns mt-3">
-            <div class="column"><p class="heading">Academic Years</p><p class="title is-5">{{ academic_year_count }}</p></div>
-            <div class="column"><p class="heading">Classes</p><p class="title is-5">{{ academic_class_count }}</p></div>
-            <div class="column"><p class="heading">Sections</p><p class="title is-5">{{ academic_section_count }}</p></div>
+        <div class="columns is-multiline">
+            <div class="column is-4">
+                <a class="button is-link is-light is-fullwidth" href="{% url 'organizations_admin:assignments' slug=org.slug %}">Manage Assignments</a>
+            </div>
+            <div class="column is-4">
+                <a class="button is-link is-light is-fullwidth" href="{% url 'organizations_admin:academic' slug=org.slug %}">Academic Management</a>
+            </div>
+            <div class="column is-4">
+                <a class="button is-link is-light is-fullwidth" href="{% url 'organizations_admin:domain_list' slug=org.slug %}">Manage Domains</a>
+            </div>
+            <div class="column is-4">
+                <a class="button is-link is-light is-fullwidth" href="{% url 'organizations_admin:category_list' slug=org.slug %}">Manage Categories</a>
+            </div>
+            <div class="column is-4">
+                <a class="button is-link is-light is-fullwidth" href="{% url 'organizations_admin:questions' slug=org.slug %}">Manage Questions</a>
+            </div>
+            <div class="column is-4">
+                <a class="button is-primary is-light is-fullwidth" href="{% url 'organizations_admin:portfolio' slug=org.slug %}">Manage Portfolio</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="box mb-5">
+        <div class="mb-4">
+            <h3 class="title is-5 mb-1">Assignment overview</h3>
+            <p class="has-text-grey is-size-7">Track the current state of organization assignments.</p>
+        </div>
+        <div class="columns is-mobile is-multiline">
+            <div class="column is-3-desktop is-6-mobile">
+                <p class="heading">Active assignments</p>
+                <p class="title is-4">{{ stats.assignments }}</p>
+            </div>
+            <div class="column is-3-desktop is-6-mobile">
+                <p class="heading">Assigned exams</p>
+                <p class="title is-4">{{ stats.assigned_exams }}</p>
+            </div>
+            <div class="column is-3-desktop is-6-mobile">
+                <p class="heading">Overdue</p>
+                <p class="title is-4">{{ stats.overdue_assignments }}</p>
+            </div>
+            <div class="column is-3-desktop is-6-mobile">
+                <p class="heading">Not started</p>
+                <p class="title is-4">{{ stats.not_started }}</p>
+            </div>
         </div>
     </div>
 
     <div class="box">
-        <div class="is-flex is-justify-content-space-between is-align-items-center mb-4"><div><h3 class="title is-5 mb-1">Content &amp; Products</h3><p class="has-text-grey is-size-7">Exams are reusable content. Courses and exam tracks are the organization-level products.</p></div><a class="button is-primary is-small" href="{% url 'organizations_admin:courses' slug=org.slug %}">Open Resource Manager</a></div>
-        <div class="columns"><div class="column"><strong>Courses</strong><p class="is-size-7 has-text-grey mt-2">Build courses from lessons and reusable exams. Course subscription plans remain at the course level.</p></div><div class="column"><strong>Exam Tracks</strong><p class="is-size-7 has-text-grey mt-2">Compose reusable exams into an ordered progression. Track access is managed at the track level.</p></div><div class="column"><strong>Exams</strong><p class="is-size-7 has-text-grey mt-2">Create and maintain exam content here. Exams are not independently sold or attached to subscription plans.</p></div></div>
-    </div>
-
-    <div class="box"><h3 class="title is-5">Assignment Attention</h3><div class="columns"><div class="column"><strong>{{ stats.assignments }}</strong><br>Active assignments</div><div class="column"><strong>{{ stats.assigned_exams }}</strong><br>Assigned exams</div><div class="column"><strong>{{ stats.overdue_assignments }}</strong><br>Overdue</div><div class="column"><strong>{{ stats.not_started }}</strong><br>Not started</div></div></div>
-
-    <div class="box"><h3 class="title is-5">Recent Assignments</h3><div class="table-container"><table class="table is-fullwidth is-striped"><thead><tr><th>Student</th><th>Resource</th><th>Status</th><th>Due</th></tr></thead><tbody>{% for assignment in stats.recent_assignments %}<tr><td>{{ assignment.student }}</td><td>{{ assignment.resource_name }}</td><td>{{ assignment.get_status_display }}</td><td>{{ assignment.due_at|default:'—' }}</td></tr>{% empty %}<tr><td colspan="4">No assignments yet.</td></tr>{% endfor %}</tbody></table></div></div>
-
-    <div class="columns is-multiline">
-        <div class="column is-4"><div class="box"><strong>Question Structure</strong><a class="button is-link is-light is-fullwidth mt-3" href="{% url 'organizations_admin:domain_list' slug=org.slug %}">Manage Domains</a><a class="button is-link is-light is-fullwidth mt-2" href="{% url 'organizations_admin:category_list' slug=org.slug %}">Manage Categories</a><a class="button is-link is-light is-fullwidth mt-2" href="{% url 'organizations_admin:questions' slug=org.slug %}">Manage Questions</a></div></div>
-        <div class="column is-4"><div class="box"><strong>Learning Products</strong><a class="button is-link is-light is-fullwidth mt-3" href="{% url 'organizations_admin:courses' slug=org.slug %}">Courses &amp; Resources</a><a class="button is-link is-light is-fullwidth mt-2" href="{% url 'organizations_admin:org_track_list' slug=org.slug %}">Exam Tracks</a><a class="button is-link is-light is-fullwidth mt-2" href="{% url 'organizations_admin:exams' slug=org.slug %}">Reusable Exams</a></div></div>
-        <div class="column is-4"><div class="box"><strong>Portfolio</strong><a class="button is-primary is-fullwidth mt-3" href="{% url 'organizations_admin:portfolio' slug=org.slug %}">Manage Portfolio</a><a class="button is-link is-light is-fullwidth mt-2" href="{% url 'organizations_admin:tenant_domains' slug=org.slug %}">Custom Domains</a></div></div>
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+            <div>
+                <h3 class="title is-5 mb-1">Recent assignments</h3>
+                <p class="has-text-grey is-size-7">The latest resources assigned to students.</p>
+            </div>
+            <a class="button is-small is-link is-light" href="{% url 'organizations_admin:assignments' slug=org.slug %}">View all</a>
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-striped">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Resource</th>
+                        <th>Status</th>
+                        <th>Due</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in stats.recent_assignments %}
+                    <tr>
+                        <td>{{ assignment.student }}</td>
+                        <td>{{ assignment.resource_name }}</td>
+                        <td>{{ assignment.get_status_display }}</td>
+                        <td>{{ assignment.due_at|default:'—' }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">No assignments yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
