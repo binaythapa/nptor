@@ -1,4 +1,3 @@
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 
 from courses.models import Course
@@ -13,7 +12,6 @@ from quiz.models import (
 )
 
 
-@login_required
 def government_catalog(request):
     countries = (
         Country.objects.filter(is_active=True)
@@ -27,7 +25,6 @@ def government_catalog(request):
     )
 
 
-@login_required
 def government_country(request, country_slug):
     country = get_object_or_404(Country, slug=country_slug, is_active=True)
     bodies = (
@@ -47,7 +44,6 @@ def government_country(request, country_slug):
     )
 
 
-@login_required
 def government_body(request, country_slug, body_slug):
     country = get_object_or_404(Country, slug=country_slug, is_active=True)
     body = get_object_or_404(
@@ -73,7 +69,6 @@ def government_body(request, country_slug, body_slug):
     )
 
 
-@login_required
 def government_program(request, country_slug, body_slug, program_slug):
     country = get_object_or_404(Country, slug=country_slug, is_active=True)
     body = get_object_or_404(
