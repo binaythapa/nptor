@@ -10,9 +10,15 @@ All Courses | Admin
         <h1 class="title is-4 mb-2">All Courses</h1>
         <p class="has-text-grey">Browse and manage courses across the platform.</p>
     </div>
-    <a class="button is-light" href="{% url 'courses:admin-course-dashboard' %}">
-        Back to Dashboard
-    </a>
+    <div class="buttons">
+        <a class="button is-primary" href="{% url 'courses:course_create' %}">
+            <span class="icon"><i class="fa fa-plus"></i></span>
+            <span>Add New Course</span>
+        </a>
+        <a class="button is-light" href="{% url 'courses:admin-course-dashboard' %}">
+            Back to Dashboard
+        </a>
+    </div>
 </div>
 
 <div class="admin-filter-bar mb-5" aria-label="Course status filters">
