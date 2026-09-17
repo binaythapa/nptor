@@ -1,21 +1,67 @@
 /* =========================================================
    STUDENT NAVIGATION POLISH
-   Keeps labels readable and badges aligned on desktop.
    ========================================================= */
 
 @media (min-width: 981px) {
     .container.main-area {
         grid-template-columns: 300px minmax(0, 1fr);
+        transition: grid-template-columns .2s ease;
     }
 
     .site-sidebar {
         width: 300px;
+        transition: width .2s ease, padding .2s ease;
     }
 
     .student-navigation .nav-label {
         overflow: visible;
         text-overflow: clip;
     }
+
+    body.sidebar-collapsed .container.main-area {
+        grid-template-columns: 76px minmax(0, 1fr);
+    }
+
+    body.sidebar-collapsed .site-sidebar {
+        width: 76px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    body.sidebar-collapsed .student-navigation .menu-label,
+    body.sidebar-collapsed .student-navigation .nav-label,
+    body.sidebar-collapsed .student-navigation .nav-badge {
+        display: none;
+    }
+
+    body.sidebar-collapsed .student-navigation .menu-list a {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    body.sidebar-collapsed .student-navigation .nav-icon {
+        width: 28px;
+        min-width: 28px;
+    }
+
+    body.sidebar-collapsed .student-navigation .menu-list a:hover::after {
+        content: attr(aria-label);
+        position: absolute;
+        left: 86px;
+        z-index: 1200;
+        padding: 6px 9px;
+        border-radius: 6px;
+        background: var(--nptor-text);
+        color: var(--nptor-surface);
+        white-space: nowrap;
+        font-size: 12px;
+    }
+}
+
+.sidebar-toggle-button {
+    flex: 0 0 auto;
 }
 
 .student-navigation .menu-list a {
@@ -33,4 +79,10 @@
 
 .student-navigation .nav-badge {
     white-space: nowrap;
+}
+
+@media (max-width: 1023px) {
+    .sidebar-toggle-button {
+        display: inline-flex !important;
+    }
 }
