@@ -9,11 +9,61 @@
         </div>
     </div>
 
-    <div class="org-stat-grid">
-        <div class="box has-text-centered org-stat-card"><p class="heading">Students</p><p class="title is-3">{{ stats.students }}</p><a class="button is-small is-link is-light" href="{% url 'organizations_admin:students' slug=org.slug %}">Manage Students</a></div>
-        <div class="box has-text-centered org-stat-card"><p class="heading">Courses</p><p class="title is-3">{{ stats.courses }}</p><a class="button is-small is-link is-light" href="{% url 'organizations_admin:courses' slug=org.slug %}">Manage Courses</a></div>
-        <div class="box has-text-centered org-stat-card"><p class="heading">Exam Tracks</p><p class="title is-3">{{ stats.tracks }}</p><a class="button is-small is-link is-light" href="{% url 'organizations_admin:org_track_list' slug=org.slug %}">Manage Tracks</a></div>
-        <div class="box has-text-centered org-stat-card"><p class="heading">Reusable Exams</p><p class="title is-3">{{ stats.exams }}</p><a class="button is-small is-link is-light" href="{% url 'organizations_admin:exams' slug=org.slug %}">Manage Exams</a></div>
+    <div class="box mb-5">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+            <div>
+                <h3 class="title is-5 mb-1">Organization Overview</h3>
+                <p class="has-text-grey is-size-7">A compact summary of your organization’s resources and members.</p>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable is-vcentered mb-0">
+                <thead>
+                    <tr>
+                        <th>Resource</th>
+                        <th class="has-text-right">Count</th>
+                        <th class="has-text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Domains</td>
+                        <td class="has-text-right"><strong>{{ stats.domains }}</strong></td>
+                        <td class="has-text-right"><a class="button is-small is-link is-light" href="{% url 'organizations_admin:domain_list' slug=org.slug %}">Manage Domains</a></td>
+                    </tr>
+                    <tr>
+                        <td>Categories</td>
+                        <td class="has-text-right"><strong>{{ stats.categories }}</strong></td>
+                        <td class="has-text-right"><a class="button is-small is-link is-light" href="{% url 'organizations_admin:category_list' slug=org.slug %}">Manage Categories</a></td>
+                    </tr>
+                    <tr>
+                        <td>Questions</td>
+                        <td class="has-text-right"><strong>{{ stats.questions }}</strong></td>
+                        <td class="has-text-right"><a class="button is-small is-link is-light" href="{% url 'organizations_admin:questions' slug=org.slug %}">Manage Questions</a></td>
+                    </tr>
+                    <tr>
+                        <td>Exam Tracks</td>
+                        <td class="has-text-right"><strong>{{ stats.tracks }}</strong></td>
+                        <td class="has-text-right"><a class="button is-small is-link is-light" href="{% url 'organizations_admin:org_track_list' slug=org.slug %}">Manage Tracks</a></td>
+                    </tr>
+                    <tr>
+                        <td>Courses</td>
+                        <td class="has-text-right"><strong>{{ stats.courses }}</strong></td>
+                        <td class="has-text-right"><a class="button is-small is-link is-light" href="{% url 'organizations_admin:courses' slug=org.slug %}">Manage Courses</a></td>
+                    </tr>
+                    <tr>
+                        <td>Students</td>
+                        <td class="has-text-right"><strong>{{ stats.students }}</strong></td>
+                        <td class="has-text-right"><a class="button is-small is-link is-light" href="{% url 'organizations_admin:students' slug=org.slug %}">Manage Students</a></td>
+                    </tr>
+                    <tr>
+                        <td>Reusable Exams</td>
+                        <td class="has-text-right"><strong>{{ stats.exams }}</strong></td>
+                        <td class="has-text-right"><a class="button is-small is-link is-light" href="{% url 'organizations_admin:exams' slug=org.slug %}">Manage Exams</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="box mb-5">
