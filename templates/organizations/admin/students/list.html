@@ -7,109 +7,110 @@
 <div class="level mb-4">
   <div class="level-left">
     <div>
-      <h2 class="title is-4 mb-1">👩‍🎓 Students</h2>
-      <p class="has-text-grey">Manage organization student profiles and memberships.</p>
+      <h2 class="title is-4 mb-1">👥 Organization Members</h2>
+      <p class="has-text-grey">Manage organization members, roles, and student profiles.</p>
     </div>
   </div>
   <div class="level-right">
     <a href="{% url 'organizations_admin:student_add' slug=org_slug %}" class="button is-primary">
       <span class="icon"><i class="fas fa-user-plus"></i></span>
-      <span>Add Student</span>
+      <span>Add Member</span>
     </a>
   </div>
 </div>
 
-<div class="table-container">
-  <table class="table is-fullwidth is-striped is-hoverable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Student Profile</th>
-        <th class="has-text-right">Actions</th>
-      </tr>
-    </thead>
+{% for group in role_groups %}
+<section class="mb-5">
+  <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+    <h3 class="title is-5 mb-0">{{ group.icon }} {{ group.label }}</h3>
+    <span class="tag is-info is-light">{{ group.count }} member{{ group.count|pluralize }}</span>
+  </div>
 
-    <tbody>
-      {% for m in members %}
-      <tr>
-        <td>
-          {% if m.role == "student" and m.student_profile_id %}
-            <a href="{% url 'organizations_admin:student_detail' slug=org_slug student_id=m.student_profile_id %}">
-              <strong>{{ m.user.get_full_name|default:m.user.username }}</strong>
-            </a>
-          {% else %}
-            {{ m.user.get_full_name|default:m.user.username }}
-          {% endif %}
-        </td>
-        <td>{{ m.user.email }}</td>
-        <td>
-          {% if m.can_edit_role %}
-            <form method="post"
-                  action="{% url 'organizations_admin:student_role' slug=org_slug member_id=m.id %}">
-              {% csrf_token %}
-              <div class="select is-small">
-                <select name="role" onchange="this.form.submit()">
-                  {% for value, label in m.role_options %}
-                    <option value="{{ value }}" {% if m.role == value %}selected{% endif %}>{{ label }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </form>
-          {% else %}
-            {{ m.get_role_display }}
-          {% endif %}
-        </td>
-        <td>
-          {% if m.role == "student" and m.student_profile_id %}
-            <span class="tag is-success is-light">Profile enabled</span>
-          {% elif m.role == "student" %}
-            <span class="tag is-warning is-light">Profile pending</span>
-          {% else %}
-            <span class="has-text-grey-light">—</span>
-          {% endif %}
-        </td>
-        <td class="has-text-right">
-          <div class="buttons is-right are-small">
+  <div class="table-container">
+    <table class="table is-fullwidth is-striped is-hoverable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Student Profile</th>
+          <th class="has-text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in group.members %}
+        <tr>
+          <td>
             {% if m.role == "student" and m.student_profile_id %}
-              <a class="button is-link is-light"
-                 href="{% url 'organizations_admin:student_detail' slug=org_slug student_id=m.student_profile_id %}">
-                <span class="icon"><i class="fas fa-eye"></i></span>
-                <span>View</span>
+              <a href="{% url 'organizations_admin:student_detail' slug=org_slug student_id=m.student_profile_id %}">
+                <strong>{{ m.user.get_full_name|default:m.user.username }}</strong>
               </a>
-              {% if request.organization_member.is_administrator %}
-                <a class="button is-primary is-light"
-                   href="{% url 'organizations_admin:student_detail_edit' slug=org_slug student_id=m.student_profile_id %}">
-                  <span class="icon"><i class="fas fa-pen"></i></span>
-                  <span>Edit</span>
-                </a>
-              {% endif %}
+            {% else %}
+              {{ m.user.get_full_name|default:m.user.username }}
             {% endif %}
-
-            {% if request.organization_member.is_administrator or m.role == "student" %}
-              <form method="post"
-                    action="{% url 'organizations_admin:student_remove' slug=org_slug member_id=m.id %}"
-                    onsubmit="return confirm('Remove this member from the organization?')">
+          </td>
+          <td>{{ m.user.email }}</td>
+          <td>
+            {% if m.can_edit_role %}
+              <form method="post" action="{% url 'organizations_admin:student_role' slug=org_slug member_id=m.id %}">
                 {% csrf_token %}
-                <button type="submit" class="button is-danger is-light">
-                  Remove
-                </button>
+                <div class="select is-small">
+                  <select name="role" onchange="this.form.submit()">
+                    {% for value, label in m.role_options %}
+                      <option value="{{ value }}" {% if m.role == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
               </form>
+            {% else %}
+              {{ m.get_role_display }}
             {% endif %}
-          </div>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="5" class="has-text-centered has-text-grey py-6">
-          No students found.
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+          </td>
+          <td>
+            {% if m.role == "student" and m.student_profile_id %}
+              <span class="tag is-success is-light">Profile enabled</span>
+            {% elif m.role == "student" %}
+              <span class="tag is-warning is-light">Profile pending</span>
+            {% else %}
+              <span class="has-text-grey-light">—</span>
+            {% endif %}
+          </td>
+          <td class="has-text-right">
+            <div class="buttons is-right are-small">
+              {% if m.role == "student" and m.student_profile_id %}
+                <a class="button is-link is-light" href="{% url 'organizations_admin:student_detail' slug=org_slug student_id=m.student_profile_id %}">
+                  <span class="icon"><i class="fas fa-eye"></i></span>
+                  <span>View</span>
+                </a>
+                {% if request.organization_member.is_administrator %}
+                  <a class="button is-primary is-light" href="{% url 'organizations_admin:student_detail_edit' slug=org_slug student_id=m.student_profile_id %}">
+                    <span class="icon"><i class="fas fa-pen"></i></span>
+                    <span>Edit</span>
+                  </a>
+                {% endif %}
+              {% endif %}
+
+              {% if request.organization_member.is_administrator or m.role == "student" %}
+                <form method="post" action="{% url 'organizations_admin:student_remove' slug=org_slug member_id=m.id %}" onsubmit="return confirm('Remove this member from the organization?')">
+                  {% csrf_token %}
+                  <button type="submit" class="button is-danger is-light">Remove</button>
+                </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="has-text-centered has-text-grey py-5">
+            No members in this role group.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endfor %}
 
 {% endwith %}
 
