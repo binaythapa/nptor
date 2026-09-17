@@ -4,29 +4,79 @@
 
 {% block head_extra %}
 {{ form.media }}
+<style>
+  .question-form .category-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: .5rem .75rem;
+    padding: .75rem;
+    border: 1px solid #dbdbdb;
+    border-radius: 6px;
+    background: #fafafa;
+  }
+
+  .question-form .category-checkboxes > div {
+    margin: 0;
+  }
+
+  .question-form .category-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 2.25rem;
+    margin: 0;
+    padding: .45rem .6rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 400;
+  }
+
+  .question-form .category-checkboxes label:hover {
+    background: #f0f2f5;
+  }
+
+  .question-form .category-checkboxes input[type="checkbox"] {
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+    width: 1rem !important;
+    min-width: 1rem !important;
+    max-width: 1rem !important;
+    height: 1rem !important;
+    min-height: 1rem !important;
+    max-height: 1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 2px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    flex: 0 0 1rem;
+  }
+
+  .question-form .category-checkboxes input[type="checkbox"]:focus {
+    box-shadow: none !important;
+  }
+</style>
 {% endblock %}
 
+{% block title %}Add Question{% endblock %}
+
 {% block content %}
-
 {% with org_slug=request.organization.slug %}
-
-<div class="container py-5">
-
-  <!-- HEADER -->
+<div class="container py-5 question-form">
   <div class="mb-6">
     <nav class="breadcrumb">
       <ul>
-        <li>
-          <a href="{% url 'organizations_admin:questions' slug=org_slug %}">
-            Dashboard
-          </a>
-        </li>
+        <li><a href="{% url 'organizations_admin:questions' slug=org_slug %}">Dashboard</a></li>
         <li class="is-active"><a href="#">Add Question</a></li>
       </ul>
     </nav>
 
     <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
-      <h1 class="title is-3">➕ Add New Question</h1>
+      <div>
+        <h1 class="title is-3">➕ Add New Question</h1>
+        <p class="subtitle is-6 has-text-grey">Create and configure a multiple-choice question.</p>
+      </div>
       <span class="tag is-info is-light">Multiple Choice</span>
     </div>
   </div>
@@ -34,56 +84,45 @@
   <form method="post" id="question-form">
     {% csrf_token %}
 
-    <!-- ================= QUESTION CARD ================= -->
+    {% if form.non_field_errors %}
+      <div class="notification is-danger is-light">{{ form.non_field_errors }}</div>
+    {% endif %}
+
     <div class="card mb-5">
       <header class="card-header">
         <p class="card-header-title">Question Details</p>
       </header>
-
       <div class="card-content">
-
         {% for field in form %}
-        <div class="field mb-4">
+          <div class="field mb-5">
+            <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
 
-          <label class="label">{{ field.label }}</label>
-
-          <div class="control">
-
-            {% if field.name == "text" or field.name == "explanation" %}
-              {{ field }}
+            {% if field.name == "categories" %}
+              <div class="category-checkboxes">
+                {{ field }}
+              </div>
+            {% elif field.name == "text" or field.name == "explanation" %}
+              <div class="control">{{ field }}</div>
+            {% elif field.name == "primary_category" or field.name == "difficulty" or field.name == "question_type" %}
+              <div class="select is-fullwidth">{{ field }}</div>
             {% else %}
-              {% render_field field class+="input" %}
+              <div class="control">{% render_field field class+="input" %}</div>
             {% endif %}
 
+            {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<p class="help is-danger">{{ field.errors.0 }}</p>{% endif %}
           </div>
-
-          {% if field.errors %}
-            <p class="help is-danger">{{ field.errors.0 }}</p>
-          {% endif %}
-
-        </div>
         {% endfor %}
-
       </div>
     </div>
 
-    <!-- ================= CHOICES CARD ================= -->
     <div class="card mb-5">
-
       <header class="card-header">
         <p class="card-header-title">Answer Choices</p>
-
-        <button type="button"
-                class="card-header-icon"
-                id="add-choice-btn">
-          ➕
-        </button>
+        <button type="button" class="card-header-icon" id="add-choice-btn" aria-label="Add answer choice">➕</button>
       </header>
-
       <div class="card-content">
-
         {{ choice_formset.management_form }}
-
         <table class="table is-fullwidth is-hoverable" id="choices-table">
           <thead>
             <tr>
@@ -93,148 +132,77 @@
               <th class="has-text-centered">Delete</th>
             </tr>
           </thead>
-
           <tbody>
-
             {% for cform in choice_formset %}
             <tr class="choice-row" data-index="{{ forloop.counter0 }}">
-
-              <td>
-                {% render_field cform.text class+="input is-small" %}
-                {{ cform.id }}
-              </td>
-
-              <td class="has-text-centered">
-                {{ cform.is_correct }}
-              </td>
-
-              <td class="has-text-centered">
-                {% render_field cform.order class+="input is-small has-text-centered" style="width:80px;" %}
-              </td>
-
-              <td class="has-text-centered">
-                {{ cform.DELETE }}
-              </td>
-
+              <td>{% render_field cform.text class+="input is-small" %}{{ cform.id }}</td>
+              <td class="has-text-centered">{{ cform.is_correct }}</td>
+              <td class="has-text-centered">{% render_field cform.order class+="input is-small has-text-centered" style="width:80px;" %}</td>
+              <td class="has-text-centered">{{ cform.DELETE }}</td>
             </tr>
             {% endfor %}
-
           </tbody>
         </table>
 
-        <div class="notification is-warning is-light mt-4 is-hidden"
-             id="no-correct-warning">
+        <div class="notification is-warning is-light mt-4 is-hidden" id="no-correct-warning">
           At least one correct answer is required.
         </div>
-
       </div>
     </div>
 
-    <!-- ================= ACTION BUTTONS ================= -->
     <div class="field is-grouped is-grouped-centered">
-
       <div class="control">
-        <a href="{% url 'organizations_admin:questions' slug=org_slug %}"
-           class="button is-light">
-          Cancel
-        </a>
+        <a href="{% url 'organizations_admin:questions' slug=org_slug %}" class="button is-light">Cancel</a>
       </div>
-
       <div class="control">
-        <button type="submit" class="button is-primary">
-          Save Question
-        </button>
+        <button type="submit" class="button is-primary">Save Question</button>
       </div>
-
     </div>
-
   </form>
-
 </div>
-
 {% endwith %}
-
 {% endblock %}
 
 {% block scripts_extra %}
-
 <script>
-
 document.addEventListener("DOMContentLoaded", function() {
-
+  const form = document.getElementById("question-form");
   const addBtn = document.getElementById("add-choice-btn");
   const tableBody = document.querySelector("#choices-table tbody");
   const totalForms = document.getElementById("id_choices-TOTAL_FORMS");
   const warning = document.getElementById("no-correct-warning");
 
   function validateCorrectAnswers() {
-
     const checkboxes = document.querySelectorAll("input[name$='-is_correct']");
-    let valid = false;
-
-    checkboxes.forEach(cb => {
-      if (cb.checked) valid = true;
-    });
-
+    const valid = Array.from(checkboxes).some(cb => cb.checked);
     warning.classList.toggle("is-hidden", valid);
-
     return valid;
   }
 
-  document.getElementById("question-form")
-    .addEventListener("submit", function(e) {
-
-      if (!validateCorrectAnswers()) {
-        e.preventDefault();
-        warning.scrollIntoView({behavior:"smooth"});
-      }
-
+  form.addEventListener("submit", function(e) {
+    if (!validateCorrectAnswers()) {
+      e.preventDefault();
+      warning.scrollIntoView({behavior: "smooth", block: "center"});
+    }
   });
 
   addBtn.addEventListener("click", function() {
-
-    const index = parseInt(totalForms.value);
-
+    const index = parseInt(totalForms.value, 10);
     const row = `
       <tr class="choice-row" data-index="${index}">
-
         <td>
-          <input type="text"
-                 name="choices-${index}-text"
-                 class="input is-small">
-
-          <input type="hidden"
-                 name="choices-${index}-id">
+          <input type="text" name="choices-${index}-text" class="input is-small">
+          <input type="hidden" name="choices-${index}-id">
         </td>
-
+        <td class="has-text-centered"><input type="checkbox" name="choices-${index}-is_correct"></td>
         <td class="has-text-centered">
-          <input type="checkbox"
-                 name="choices-${index}-is_correct">
+          <input type="number" name="choices-${index}-order" value="${index + 1}" class="input is-small has-text-centered" style="width:80px;">
         </td>
-
-        <td class="has-text-centered">
-          <input type="number"
-                 name="choices-${index}-order"
-                 value="${index + 1}"
-                 class="input is-small has-text-centered"
-                 style="width:80px;">
-        </td>
-
-        <td class="has-text-centered">
-          <input type="checkbox"
-                 name="choices-${index}-DELETE">
-        </td>
-
-      </tr>
-    `;
-
+        <td class="has-text-centered"><input type="checkbox" name="choices-${index}-DELETE"></td>
+      </tr>`;
     tableBody.insertAdjacentHTML("beforeend", row);
     totalForms.value = index + 1;
-
   });
-
 });
-
 </script>
-
 {% endblock %}
