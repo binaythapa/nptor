@@ -47,7 +47,7 @@
       </ul>
       {% endif %}
     {% endif %}
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and request.active_org and request.can_manage_organization or user.is_authenticated and request.active_org and request.org_role == 'staff' %}
     <p class="menu-label">Instructor</p><ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'courses:instructor_dashboard' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-chalkboard-teacher"></i></span><span class="nav-label">Course Dashboard</span><span class="nav-badge info">Manage</span></a></li></ul>
     {% endif %}
   </nav>
