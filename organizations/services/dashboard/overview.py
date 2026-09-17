@@ -2,7 +2,7 @@ from django.utils import timezone
 
 from courses.models import Course
 from organizations.models import OrganizationMember, ResourceAssignment
-from quiz.models import Exam, ExamTrack
+from quiz.models import Category, Domain, Exam, ExamTrack, Question
 
 
 def get_overview(organization):
@@ -20,11 +20,24 @@ def get_overview(organization):
 
     return {
         "students": students.count(),
+        "domains": Domain.objects.filter(
+            organization=organization,
+            is_active=True,
+        ).count(),
+        "categories": Category.objects.filter(
+            organization=organization,
+            is_active=True,
+        ).count(),
+        "questions": Question.objects.filter(
+            organization=organization,
+            is_active=True,
+            is_deleted=False,
+        ).count(),
+        "tracks": ExamTrack.objects.filter(organization=organization).count(),
         "courses": Course.objects.filter(
             organization=organization,
             is_published=True,
         ).count(),
-        "tracks": ExamTrack.objects.filter(organization=organization).count(),
         "exams": Exam.objects.filter(organization=organization).count(),
         "assignments": assignments.count(),
         "assigned_exams": assignments.filter(
