@@ -1,240 +1,89 @@
 {% extends "layouts/student/base.html" %}
+{% load socialaccount %}
 
 {% block content %}
 
-<section
-    style="
-        max-width: 520px;
-        margin: 40px auto;
-        padding: 0 15px;
-    "
->
-
-    <div
-        class="card-surface"
-        style="
-            padding: 35px 30px;
-        "
-    >
-
-        <!-- =====================================================
-             HEADER
-        ====================================================== -->
-
+<section style="max-width: 520px; margin: 40px auto; padding: 0 15px;">
+    <div class="card-surface" style="padding: 35px 30px;">
         <div class="has-text-centered mb-5">
-
-            <h1 class="title is-3 mb-2">
-                Sign in
-            </h1>
-
-            <p class="has-text-grey">
-                Sign in to continue your learning journey.
-            </p>
-
+            <h1 class="title is-3 mb-2">Sign in</h1>
+            <p class="has-text-grey">Sign in to continue your learning journey.</p>
         </div>
-
-
-        <!-- =====================================================
-             ERROR
-        ====================================================== -->
 
         {% if error %}
-
-            <div class="notification is-danger">
-
-                {{ error }}
-
-            </div>
-
+            <div class="notification is-danger">{{ error }}</div>
         {% endif %}
-
-
-        <!-- =====================================================
-             MESSAGE
-        ====================================================== -->
 
         {% if message %}
-
-            <div class="notification is-info">
-
-                {{ message }}
-
-            </div>
-
+            <div class="notification is-info">{{ message }}</div>
         {% endif %}
-
-
-        <!-- =====================================================
-             OTP COUNTDOWN
-        ====================================================== -->
 
         {% if expires_in is not None %}
-
-            <p
-                id="otp-timer"
-                class="has-text-grey mb-4"
-            >
-
-                Existing OTP expires in
-                <strong></strong>
-
+            <p id="otp-timer" class="has-text-grey mb-4">
+                Existing OTP expires in <strong></strong>
             </p>
-
         {% else %}
-
             <p class="has-text-grey mb-4">
-
-                Enter your email address and we'll
-                send you a secure login OTP.
-
+                Enter your email address and we'll send you a secure login OTP.
             </p>
-
         {% endif %}
 
-
-        <!-- =====================================================
-             LOGIN FORM
-        ====================================================== -->
-
-        <form
-            method="post"
-            action="{% url 'accounts:request-login-otp' %}"
-        >
-
+        <form method="post" action="{% url 'accounts:request-login-otp' %}">
             {% csrf_token %}
-
-
-            <!-- EMAIL -->
-
             <div class="field">
-
-                <label
-                    class="label"
-                    for="login-email"
-                >
-                    Email Address
-                </label>
-
+                <label class="label" for="login-email">Email Address</label>
                 <div class="control">
-
-                    <input
-                        type="email"
-                        id="login-email"
-                        name="email"
-                        class="input"
-                        placeholder="Enter your email"
-                        autocomplete="email"
-                        required
-                        autofocus
-                    >
-
+                    <input type="email" id="login-email" name="email" class="input"
+                           placeholder="Enter your email" autocomplete="email" required autofocus>
                 </div>
-
             </div>
-
-
-            <!-- SEND OTP -->
 
             <div class="field mt-5">
-
-                <button
-                    class="button is-primary is-fullwidth"
-                    type="submit"
-                >
-                    Send OTP
-                </button>
-
+                <button class="button is-primary is-fullwidth" type="submit">Send OTP</button>
             </div>
-
         </form>
 
+        {% if google_oauth_enabled %}
+            <div class="my-5 is-flex is-align-items-center" style="gap: 12px;">
+                <hr style="flex: 1;">
+                <span class="has-text-grey is-size-7">OR</span>
+                <hr style="flex: 1;">
+            </div>
 
-        <!-- =====================================================
-             PASSWORD RESET
-        ====================================================== -->
-
-        
-
-
-        <!-- =====================================================
-             REGISTRATION
-        ====================================================== -->
-
-        <div
-            class="has-text-centered small-muted"
-            style="margin-top: 25px;"
-        >
-
-            Don't have an account?
-
-            <a
-                href="{% url 'accounts:register' %}"
-            >
-                Create one
+            <a class="button is-light is-fullwidth"
+               href="{% provider_login_url 'google' process='login' %}">
+                Continue with Google
             </a>
+        {% endif %}
 
+        <div class="has-text-centered small-muted" style="margin-top: 25px;">
+            Don't have an account?
+            <a href="{% url 'accounts:register' %}">Create one</a>
         </div>
-
     </div>
-
 </section>
 
-
-<!-- ============================================================
-     OTP COUNTDOWN
-============================================================= -->
-
 {% if expires_in is not None %}
-
 <script>
-
 (function () {
-
     let remaining = {{ expires_in|default:0 }};
-
     const timer = document.getElementById("otp-timer");
-
-    if (!timer) {
-        return;
-    }
-
+    if (!timer) return;
     const strong = timer.querySelector("strong");
-
     function updateTimer() {
-
         if (remaining <= 0) {
-
             strong.textContent = "Expired";
-
             return;
         }
-
-        const minutes = Math.floor(
-            remaining / 60
-        );
-
+        const minutes = Math.floor(remaining / 60);
         const seconds = remaining % 60;
-
-        strong.textContent =
-            minutes +
-            ":" +
-            String(seconds).padStart(2, "0");
-
+        strong.textContent = minutes + ":" + String(seconds).padStart(2, "0");
         remaining--;
-
     }
-
     updateTimer();
-
-    setInterval(
-        updateTimer,
-        1000
-    );
-
+    setInterval(updateTimer, 1000);
 })();
-
 </script>
-
 {% endif %}
 
 {% endblock %}
