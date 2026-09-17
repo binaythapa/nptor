@@ -90,10 +90,31 @@ def org_students(request, slug):
         member.student_profile_id = profile_ids.get(member.user_id)
         member.role_options = _role_options_for(actor_member, member)
         member.can_edit_role = bool(member.role_options)
+
+    role_group_specs = (
+        (OrganizationRole.ORG_OWNER, "Organization Owners", "👑"),
+        (OrganizationRole.ORG_ADMIN, "Organization Administrators", "🛡️"),
+        (OrganizationRole.STAFF, "Staff / Teachers", "👨‍🏫"),
+        (OrganizationRole.STUDENT, "Students", "🎓"),
+    )
+    members_by_role = {role: [] for role, _label, _icon in role_group_specs}
+    for member in members:
+        members_by_role.setdefault(member.role, []).append(member)
+    role_groups = [
+        {
+            "role": role,
+            "label": label,
+            "icon": icon,
+            "members": members_by_role[role],
+            "count": len(members_by_role[role]),
+        }
+        for role, label, icon in role_group_specs
+    ]
+
     return render(
         request,
         "organizations/admin/students/list.html",
-        {"members": members, "org": org},
+        {"members": members, "role_groups": role_groups, "org": org},
     )
 
 
