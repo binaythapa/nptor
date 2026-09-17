@@ -54,21 +54,23 @@
     <ul class="menu-list"><li><a href="{% url 'organizations_admin:students' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Students</span></a></li></ul>
     <p class="menu-label">Academic</p>
     <ul class="menu-list"><li><a href="{% url 'organizations_admin:academic' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-school"></i></span><span class="menu-text">Academic Management</span></a></li></ul>
-    <p class="menu-label">Learning</p>
-    <ul class="menu-list">
-      {% if request.organization_member.is_administrator %}
-        <li><a href="{% url 'organizations_admin:courses' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span class="menu-text">Courses</span></a></li>
-        <li><a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-road"></i></span><span class="menu-text">Learning Tracks</span></a></li>
-      {% else %}
-        <li><a href="{% url 'organizations_admin:org_course_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span class="menu-text">My Courses</span></a></li>
-      {% endif %}
-      <li><a href="{% url 'organizations_admin:exams' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-file-alt"></i></span><span class="menu-text">Exams</span></a></li>
-      <li><a href="{% url 'organizations_admin:questions' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-question-circle"></i></span><span class="menu-text">Questions</span></a></li>
-    </ul>
     {% if request.organization_member.is_administrator %}
       <p class="menu-label">Classification</p>
       <ul class="menu-list"><li><a href="{% url 'organizations_admin:domain_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-layer-group"></i></span><span class="menu-text">Domains</span></a></li><li><a href="{% url 'organizations_admin:category_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-sitemap"></i></span><span class="menu-text">Categories</span></a></li></ul>
     {% endif %}
+    <p class="menu-label">Learning</p>
+    <ul class="menu-list">
+      {% if request.organization_member.is_administrator %}
+        <li><a href="{% url 'organizations_admin:questions' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-question-circle"></i></span><span class="menu-text">Questions</span></a></li>
+        <li><a href="{% url 'organizations_admin:exams' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-file-alt"></i></span><span class="menu-text">Exams</span></a></li>
+        <li><a href="{% url 'organizations_admin:org_track_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-road"></i></span><span class="menu-text">Learning Tracks</span></a></li>
+        <li><a href="{% url 'organizations_admin:courses' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span class="menu-text">Courses</span></a></li>
+      {% else %}
+        <li><a href="{% url 'organizations_admin:org_course_list' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span class="menu-text">My Courses</span></a></li>
+        <li><a href="{% url 'organizations_admin:exams' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-file-alt"></i></span><span class="menu-text">Exams</span></a></li>
+        <li><a href="{% url 'organizations_admin:questions' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-question-circle"></i></span><span class="menu-text">Questions</span></a></li>
+      {% endif %}
+    </ul>
     <p class="menu-label">Operations</p>
     <ul class="menu-list"><li><a href="{% url 'organizations_admin:assignments' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-tasks"></i></span><span class="menu-text">Assignments</span></a></li></ul>
     {% if request.organization_member.is_administrator %}
