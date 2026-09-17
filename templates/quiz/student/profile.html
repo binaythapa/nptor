@@ -87,13 +87,35 @@
         {% endif %}
 
         {% if membership.is_active and membership.organization.is_active %}
-          <div class="buttons mt-3">
-            {% if membership.role == 'student' and membership.student_profile %}
+          {% if membership.can_manage_organization %}
+            <hr>
+            <h4 class="title is-6">Organization Profile</h4>
+            <div class="media">
+              {% if membership.organization.logo %}
+                <div class="media-left">
+                  <figure class="image is-64x64">
+                    <img src="{{ membership.organization.logo.url }}" alt="{{ membership.organization.name }} logo" style="object-fit: contain;">
+                  </figure>
+                </div>
+              {% endif %}
+              <div class="media-content">
+                <p class="mb-2"><strong>{{ membership.organization.name }}</strong></p>
+                <p class="has-text-grey">Type: {{ membership.organization.get_org_type_display }}</p>
+                <p class="has-text-grey">Status: {% if membership.organization.is_active %}Active{% else %}Inactive{% endif %}</p>
+                {% if membership.organization.primary_color %}
+                  <p class="has-text-grey">Primary color: {{ membership.organization.primary_color }}</p>
+                {% endif %}
+              </div>
+            </div>
+          {% elif membership.role == 'student' and membership.student_profile %}
+            <div class="buttons mt-3">
               <a class="button is-link is-light" href="{% url 'organizations_public:student_profile' slug=membership.organization.slug %}">View Student Profile</a>
-            {% else %}
+            </div>
+          {% else %}
+            <div class="buttons mt-3">
               <a class="button is-link is-light" href="{% url 'organizations_public:workspace' slug=membership.organization.slug %}">Open Organization Workspace</a>
-            {% endif %}
-          </div>
+            </div>
+          {% endif %}
         {% endif %}
       </article>
     {% endfor %}
