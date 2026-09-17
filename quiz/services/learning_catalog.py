@@ -34,7 +34,6 @@ def _public_courses():
 
 
 def _public_exams():
-    """Return published platform exams with at least one valid category."""
     return Exam.objects.filter(
         is_published=True,
         organization__isnull=True,
@@ -78,7 +77,6 @@ def _exam_categories(exam):
 
 
 def _exam_category(exam):
-    """Return a deterministic representative category for legacy primary-category semantics."""
     categories = _exam_categories(exam)
     return sorted(categories, key=lambda category: (category.name.lower(), category.id))[0] if categories else None
 
@@ -212,6 +210,12 @@ def _resource_item(resource_type, resource):
 
 
 def _add_user_state(user, items):
+    if not getattr(user, "is_authenticated", False):
+        for item in items:
+            item["has_access"] = False
+            item["access_label"] = "Premium" if item["pricing_label"] == "Premium" else "Free"
+        return items
+
     shortlist_rows = LearningShortlist.objects.filter(user=user)
     shortlisted = {(row.resource_type, row.course_id or row.track_id or row.exam_id) for row in shortlist_rows}
     for item in items:
