@@ -18,7 +18,7 @@
     <div>
       <span class="gov-kicker">GOVERNMENT EXAM DASHBOARD</span>
       <h1>{{ program.name }}</h1>
-      <p>{{ program.description|default:'Your preparation hub for courses, practice, mock exams and progress.' }}</p>
+      <p>{{ program.description|default:'Your preparation hub for courses and authorized preparation tracks.' }}</p>
       <div class="gov-meta"><span>{{ country.name }}</span><span>{{ body.name }}</span></div>
     </div>
     <div class="gov-progress-ring" aria-label="{{ stats.overall_progress }} percent course progress">
@@ -26,15 +26,36 @@
     </div>
   </header>
 
-  <section class="gov-kpi-grid" aria-label="Preparation summary">
-    <article class="gov-kpi"><span>COURSES</span><strong>{{ stats.course_count }}</strong><small>Mapped preparation courses</small></article>
-    <article class="gov-kpi"><span>MOCK EXAMS</span><strong>{{ stats.exam_count }}</strong><small>{{ stats.attempted_exams }} attempted</small></article>
-    <article class="gov-kpi"><span>PASSED</span><strong>{{ stats.passed_exams }}</strong><small>Mapped exams passed</small></article>
-    <article class="gov-kpi"><span>AVERAGE SCORE</span><strong>{% if stats.average_score != None %}{{ stats.average_score }}%{% else %}—{% endif %}</strong><small>{{ stats.total_attempts }} completed attempts</small></article>
+  <section class="gov-section">
+    <div class="gov-section-head">
+      <div>
+        <h2>Preparation tracks</h2>
+        <p>Follow the mapped preparation tracks through authorized learning resources.</p>
+      </div>
+    </div>
+    <div class="gov-stage-list">
+      {% for stage in stages %}
+      <article class="gov-stage">
+        <span>{{ stage.order }}</span>
+        <div>
+          <h3>{{ stage.name }}</h3>
+          <p>{{ stage.description|default:'Preparation track' }}</p>
+        </div>
+        <span class="gov-muted-note">Access through an authorized course or track</span>
+      </article>
+      {% empty %}
+      <div class="gov-empty">No active preparation tracks have been mapped yet.</div>
+      {% endfor %}
+    </div>
   </section>
 
   <section class="gov-section">
-    <div class="gov-section-head"><div><h2>Continue learning</h2><p>Track lesson completion across courses mapped to this program.</p></div></div>
+    <div class="gov-section-head">
+      <div>
+        <h2>Preparation courses</h2>
+        <p>Published NPTOR courses connected directly to this government program.</p>
+      </div>
+    </div>
     <div class="gov-resource-grid">
       {% for item in courses %}
       <article class="gov-dashboard-card">
@@ -47,15 +68,6 @@
       {% empty %}
       <div class="gov-empty">No published preparation courses are mapped to this program yet.</div>
       {% endfor %}
-    </div>
-  </section>
-
-  <section class="gov-section">
-    <div class="gov-section-head"><div><h2>Preparation stages</h2><p>Assessment stages currently mapped in NPTOR. Open assessments through their authorized course or exam track.</p></div></div>
-    <div class="gov-stage-list">
-      {% for stage in stages %}
-      <article class="gov-stage"><span>{{ stage.order }}</span><div><h3>{{ stage.name }}</h3><p>{{ stage.description|default:'Assessment stage' }}</p></div><span class="gov-muted-note">Access through the authorized course or exam track</span></article>
-      {% empty %}<div class="gov-empty">No active preparation stages have been mapped yet.</div>{% endfor %}
     </div>
   </section>
 
