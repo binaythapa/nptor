@@ -35,12 +35,12 @@ def _public_resource_queryset(resource_type):
         return model.objects.filter(
             is_active=True,
             organization__isnull=True,
-            exams__is_published=True,
-            exams__organization__isnull=True,
-            exams__primary_category__is_active=True,
-            exams__primary_category__organization__isnull=True,
-            exams__primary_category__domain__is_active=True,
-            exams__primary_category__domain__organization__isnull=True,
+            track_exams__exam__is_published=True,
+            track_exams__exam__organization__isnull=True,
+            track_exams__exam__categories__is_active=True,
+            track_exams__exam__categories__organization__isnull=True,
+            track_exams__exam__categories__domain__is_active=True,
+            track_exams__exam__categories__domain__organization__isnull=True,
         ).distinct()
 
     return model.objects.filter(
