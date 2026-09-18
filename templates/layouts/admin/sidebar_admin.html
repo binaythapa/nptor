@@ -4,6 +4,7 @@
     <li><a href="{% url 'accounts:user_monitoring' %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Users</span></a></li>
     <li><a href="{% url 'accounts:organization_requests' %}"><span class="icon is-small"><i class="fa fa-building"></i></span><span class="menu-text">Requests</span></a></li>
 </ul>
+
 <p class="menu-label">Content</p>
 <ul class="menu-list">
     <li><a href="{% url 'courses:admin-course-dashboard' %}"><span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span class="menu-text">Courses</span></a></li>
@@ -11,16 +12,33 @@
     <li><a href="{% url 'quiz:question_dashboard' %}"><span class="icon is-small"><i class="fa fa-question-circle"></i></span><span class="menu-text">Questions</span></a></li>
     <li><a href="{% url 'quiz:admin_track_list' %}"><span class="icon is-small"><i class="fa fa-road"></i></span><span class="menu-text">Tracks</span></a></li>
 </ul>
-<p class="menu-label">Classification</p>
+
+<p class="menu-label">Government</p>
 <ul class="menu-list">
+    <li><a href="{% url 'admin:quiz_preparationprogram_changelist' %}"><span class="icon is-small"><i class="fa fa-book-reader"></i></span><span class="menu-text">Preparation Programs</span></a></li>
+    <li><a href="{% url 'admin:quiz_country_changelist' %}"><span class="icon is-small"><i class="fa fa-globe"></i></span><span class="menu-text">Countries</span></a></li>
+    <li><a href="{% url 'admin:quiz_governmentbody_changelist' %}"><span class="icon is-small"><i class="fa fa-landmark"></i></span><span class="menu-text">Government Bodies</span></a></li>
+    <li><a href="{% url 'admin:quiz_governmentjob_changelist' %}"><span class="icon is-small"><i class="fa fa-briefcase"></i></span><span class="menu-text">Government Jobs</span></a></li>
+    <li><a href="{% url 'admin:quiz_governmentexamprogram_changelist' %}"><span class="icon is-small"><i class="fa fa-clipboard-list"></i></span><span class="menu-text">Exam Programs</span></a></li>
+    <li><a href="{% url 'admin:quiz_governmentexamversion_changelist' %}"><span class="icon is-small"><i class="fa fa-code-branch"></i></span><span class="menu-text">Exam Versions</span></a></li>
+    <li><a href="{% url 'admin:quiz_governmentexamstage_changelist' %}"><span class="icon is-small"><i class="fa fa-list-ol"></i></span><span class="menu-text">Exam Stages</span></a></li>
+</ul>
+
+<p class="menu-label">Academic</p>
+<ul class="menu-list">
+    <li><a href="{% url 'courses:admin-course-dashboard' %}"><span class="icon is-small"><i class="fa fa-university"></i></span><span class="menu-text">Academic Courses</span></a></li>
+    <li><a href="{% url 'quiz:admin_exam_list' %}"><span class="icon is-small"><i class="fa fa-file-alt"></i></span><span class="menu-text">Academic Exams</span></a></li>
+    <li><a href="{% url 'quiz:admin_track_list' %}"><span class="icon is-small"><i class="fa fa-road"></i></span><span class="menu-text">Academic Tracks</span></a></li>
     <li><a href="{% url 'quiz:admin_domain_list' %}"><span class="icon is-small"><i class="fa fa-layer-group"></i></span><span class="menu-text">Domains</span></a></li>
     <li><a href="{% url 'quiz:admin_category_list' %}"><span class="icon is-small"><i class="fa fa-sitemap"></i></span><span class="menu-text">Categories</span></a></li>
 </ul>
+
 <p class="menu-label">Business</p>
 <ul class="menu-list">
     <li><a href="{% url 'quiz:subscription_admin_panel' %}"><span class="icon is-small"><i class="fa fa-credit-card"></i></span><span class="menu-text">Subscriptions</span></a></li>
     <li><a href="{% url 'quiz:admin_payment_list' %}"><span class="icon is-small"><i class="fa fa-rupee-sign"></i></span><span class="menu-text">Payments</span></a></li>
 </ul>
+
 <p class="menu-label">System</p>
 <ul class="menu-list">
     <li><a href="{% url 'quiz:notifications_list' %}"><span class="icon is-small"><i class="fa fa-bell"></i></span><span class="menu-text">Notifications</span></a></li>
