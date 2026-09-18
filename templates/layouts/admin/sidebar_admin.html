@@ -39,7 +39,9 @@
 
 <p class="menu-label">Business</p>
 <ul class="menu-list">
-    <li><a href="{% url 'quiz:subscription_admin_panel' %}"><span class="icon is-small"><i class="fa fa-credit-card"></i></span><span class="menu-text">Subscriptions</span></a></li>
+    <li><a href="{% url 'admin:subscriptions_subscriptionplan_changelist' %}"><span class="icon is-small"><i class="fa fa-credit-card"></i></span><span class="menu-text">Subscription Plans</span></a></li>
+    <li><a href="{% url 'admin:subscriptions_subscription_changelist' %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Subscriptions</span></a></li>
+    <li><a href="{% url 'admin:subscriptions_subscriptionentitlement_changelist' %}"><span class="icon is-small"><i class="fa fa-key"></i></span><span class="menu-text">Subscription Entitlements</span></a></li>
     <li><a href="{% url 'quiz:admin_payment_list' %}"><span class="icon is-small"><i class="fa fa-rupee-sign"></i></span><span class="menu-text">Payments</span></a></li>
 </ul>
 
