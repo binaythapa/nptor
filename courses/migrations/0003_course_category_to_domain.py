@@ -2,7 +2,17 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
-def migrate_course_categories_to_domains(apps, schema_editor):
+def copy_categories_to_legacy_column(apps, schema_editor):
+    Course = apps.get_model("courses", "Course")
+    Course.objects.update(legacy_category_id=models.F("category_id"))
+
+
+def restore_categories_from_legacy_column(apps, schema_editor):
+    Course = apps.get_model("courses", "Course")
+    Course.objects.update(category_id=models.F("legacy_category_id"))
+
+
+def migrate_categories_to_domains(apps, schema_editor):
     Course = apps.get_model("courses", "Course")
     Category = apps.get_model("quiz", "Category")
 
@@ -10,14 +20,15 @@ def migrate_course_categories_to_domains(apps, schema_editor):
         Category.objects.exclude(domain_id=None).values_list("id", "domain_id")
     )
 
-    for course in Course.objects.exclude(category_id=None).only("id", "category_id"):
-        domain_id = category_domains.get(course.category_id)
-        Course.objects.filter(pk=course.pk).update(category_id=domain_id)
+    for course in Course.objects.exclude(legacy_category_id=None).only(
+        "id", "legacy_category_id"
+    ):
+        Course.objects.filter(pk=course.pk).update(
+            category_id=category_domains.get(course.legacy_category_id)
+        )
 
 
-def reverse_domains_to_categories(apps, schema_editor):
-    # A Domain cannot be reliably converted back to a single Category because
-    # a domain may contain multiple categories. Clear the relationship on reverse.
+def clear_domain_values_before_reverse(apps, schema_editor):
     Course = apps.get_model("courses", "Course")
     Course.objects.update(category_id=None)
 
@@ -30,11 +41,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            migrate_course_categories_to_domains,
-            reverse_code=reverse_domains_to_categories,
+        migrations.AddField(
+            model_name="course",
+            name="legacy_category_id",
+            field=models.IntegerField(null=True, blank=True),
         ),
-        migrations.AlterField(
+        migrations.RunPython(
+            copy_categories_to_legacy_column,
+            reverse_code=restore_categories_from_legacy_column,
+        ),
+        migrations.RemoveField(
+            model_name="course",
+            name="category",
+        ),
+        migrations.AddField(
             model_name="course",
             name="category",
             field=models.ForeignKey(
@@ -45,5 +65,13 @@ class Migration(migrations.Migration):
                 to="quiz.domain",
                 help_text="The broad subject/domain covered by this course.",
             ),
+        ),
+        migrations.RunPython(
+            migrate_categories_to_domains,
+            reverse_code=clear_domain_values_before_reverse,
+        ),
+        migrations.RemoveField(
+            model_name="course",
+            name="legacy_category_id",
         ),
     ]
