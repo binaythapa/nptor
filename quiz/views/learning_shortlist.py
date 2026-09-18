@@ -27,8 +27,6 @@ def _public_resource_queryset(resource_type):
             organization__isnull=True,
             category__is_active=True,
             category__organization__isnull=True,
-            category__domain__is_active=True,
-            category__domain__organization__isnull=True,
         )
 
     if resource_type == LearningShortlist.RESOURCE_TRACK:
