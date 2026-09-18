@@ -26,9 +26,7 @@ def _public_courses():
         organization__isnull=True,
         category__is_active=True,
         category__organization__isnull=True,
-        category__domain__is_active=True,
-        category__domain__organization__isnull=True,
-    ).select_related("category", "category__domain").prefetch_related(
+    ).select_related("category").prefetch_related(
         Prefetch("subscription_plans", queryset=SubscriptionPlan.objects.filter(is_active=True))
     )
 
@@ -115,7 +113,7 @@ def _matches_vertical(domain, catalog_vertical):
 
 
 def _domain_summary(domain, courses, exams, tracks):
-    course_ids = [course.id for course in courses if course.category and course.category.domain_id == domain.id]
+    course_ids = [course.id for course in courses if course.category_id == domain.id]
     exam_ids = [exam.id for exam in exams if (_exam_category(exam) and _exam_category(exam).domain_id == domain.id)]
     track_ids = [track.id for track in tracks if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)]
     return {"domain": domain, "course_count": len(course_ids), "exam_count": len(exam_ids), "track_count": len(track_ids), "course_ids": course_ids, "exam_ids": exam_ids, "track_ids": track_ids}
@@ -254,7 +252,7 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     courses = list(_public_courses().order_by("title"))
     exams = list(_public_exams().order_by("title"))
     tracks = list(_public_tracks().order_by("title"))
-    courses = [item for item in courses if _matches_vertical(getattr(item.category, "domain", None), catalog_vertical)]
+    courses = [item for item in courses if _matches_vertical(item.category, catalog_vertical)]
     exams = [item for item in exams if _matches_vertical(_exam_category(item).domain if _exam_category(item) else None, catalog_vertical)]
     tracks = [item for item in tracks if _matches_vertical(_domain_for_track(item), catalog_vertical)]
     active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).select_related("content_vertical").order_by("name"))
@@ -266,7 +264,7 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     if selected_domain is not None and catalog_vertical and not _matches_vertical(selected_domain, catalog_vertical):
         selected_domain = None
     if selected_domain is not None:
-        courses = [item for item in courses if item.category and item.category.domain_id == selected_domain.id]
+        courses = [item for item in courses if item.category_id == selected_domain.id]
         exams = [item for item in exams if (_exam_category(item) and _exam_category(item).domain_id == selected_domain.id)]
         tracks = [item for item in tracks if (_domain_for_track(item) and _domain_for_track(item).id == selected_domain.id)]
     if category is not None:
