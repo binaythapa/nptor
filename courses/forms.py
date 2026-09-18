@@ -6,7 +6,7 @@ from django.db.models import Q
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 from .models import Course, CourseSection, Lesson, CourseExam
-from quiz.models import Category, Exam
+from quiz.models import Domain, Exam
 from quiz.search_widgets import SearchableModelMultipleChoiceWidget
 from subscriptions.models import SubscriptionPlan
 
@@ -82,7 +82,7 @@ class CourseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if organization is not None:
-            self.fields["category"].queryset = Category.objects.filter(
+            self.fields["category"].queryset = Domain.objects.filter(
                 Q(organization=organization) | Q(organization__isnull=True),
                 is_active=True,
             ).order_by("name")
@@ -92,9 +92,15 @@ class CourseForm(forms.ModelForm):
             ).order_by("title")
             self.fields["exams"].widget.attrs["data-autocomplete-organization"] = str(organization.pk)
         else:
+            self.fields["category"].queryset = Domain.objects.filter(
+                is_active=True,
+            ).order_by("name")
             self.fields["exams"].queryset = Exam.objects.filter(
                 is_published=True
             ).order_by("title")
+
+        self.fields["category"].label = "Subject / Domain"
+        self.fields["category"].help_text = "Select the broad subject or domain covered by this course."
 
         self.fields["subscription_plans"].queryset = SubscriptionPlan.objects.filter(
             is_active=True,
