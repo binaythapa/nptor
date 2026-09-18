@@ -2,12 +2,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
 
 from courses.models import Course, Lesson
 from quiz.models import Exam, ExamTrack, UserExam, UserAnswer
 from quiz.services.exam_question_allocator import allocate_questions_for_exam
-from quiz.services.access import can_access_exam
 from quiz.services.track_progress import build_track_progress
 from subscriptions.services import AccessService
 from subscriptions.services.plan_service import get_plan_for_course
@@ -118,18 +116,12 @@ def course_exam_start(request, exam_id):
         exam_id=exam_id,
     )
 
+    # The validated course + quiz lesson is the authorization boundary for
+    # course launches. A CourseExam join row is optional because lessons can
+    # directly reference reusable exams.
     if not _course_access_allows_quiz(request.user, course):
         messages.info(request, "You do not have access to this course.")
         return redirect("courses:course_detail", slug=course.slug)
-
-    allowed, reason = can_access_exam(request.user, lesson.exam)
-    if not allowed and reason != "Subscription required":
-        messages.info(request, reason or "This exam is currently unavailable.")
-        locked_url = reverse("quiz:exam_locked", args=[lesson.exam.id])
-        if reason:
-            from urllib.parse import urlencode
-            locked_url = f"{locked_url}?{urlencode({'reason': reason})}"
-        return redirect(locked_url)
 
     attempts = UserExam.objects.filter(
         user=request.user,
