@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.utils.text import slugify
 
 from quiz.models import (
     Category,
@@ -20,12 +19,7 @@ from quiz.models import (
 QUESTIONS = [
     {
         "text": "नेपालको संविधान कहिले जारी भयो?",
-        "choices": [
-            ("२०७२ असोज ३", True),
-            ("२०७१ असोज ३", False),
-            ("२०७३ असोज ३", False),
-            ("२०७४ असोज ३", False),
-        ],
+        "choices": [("२०७२ असोज ३", True), ("२०७१ असोज ३", False), ("२०७३ असोज ३", False), ("२०७४ असोज ३", False)],
         "explanation": "नेपालको संविधान २०७२ असोज ३ गते जारी भएको हो।",
     },
     {
@@ -56,27 +50,15 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        country, _ = Country.objects.get_or_create(
-            code="NPL",
-            defaults={"name": "Nepal", "slug": "nepal", "is_active": True},
-        )
+        country, _ = Country.objects.get_or_create(code="NPL", defaults={"name": "Nepal", "slug": "nepal", "is_active": True})
         vertical, _ = ContentVertical.objects.get_or_create(
             vertical_type=ContentVertical.GOVERNMENT_EXAM,
-            defaults={
-                "name": "Government / Competitive Exam",
-                "code": "government-exam",
-                "is_active": True,
-            },
+            defaults={"name": "Government / Competitive Exam", "code": "government-exam", "is_active": True},
         )
         body, _ = GovernmentBody.objects.get_or_create(
             country=country,
             code="psc-nepal",
-            defaults={
-                "name": "लोक सेवा आयोग",
-                "slug": "lok-sewa-aayog",
-                "official_website": "https://psc.gov.np/",
-                "is_active": True,
-            },
+            defaults={"name": "लोक सेवा आयोग", "slug": "lok-sewa-aayog", "official_website": "https://psc.gov.np/", "is_active": True},
         )
         program, _ = GovernmentExamProgram.objects.get_or_create(
             government_body=body,
@@ -94,13 +76,8 @@ class Command(BaseCommand):
         version, _ = GovernmentExamVersion.objects.get_or_create(
             program=program,
             version="sample-2026",
-            defaults={
-                "slug": "sample-2026",
-                "status": GovernmentExamVersion.ACTIVE,
-                "notes": "NPTOR starter seed; verify against the latest official syllabus before production use.",
-            },
+            defaults={"slug": "sample-2026", "status": GovernmentExamVersion.ACTIVE, "notes": "NPTOR starter seed; verify against the latest official syllabus before production use."},
         )
-
         domain, _ = Domain.objects.get_or_create(
             organization=None,
             slug="nepal-government-exams",
@@ -109,55 +86,24 @@ class Command(BaseCommand):
         category, _ = Category.objects.get_or_create(
             organization=None,
             slug="nayab-subba-general-knowledge",
-            defaults={
-                "domain": domain,
-                "name": "नायब सुब्बा – सामान्य ज्ञान",
-                "is_active": True,
-            },
+            defaults={"domain": domain, "name": "नायब सुब्बा – सामान्य ज्ञान", "is_active": True},
         )
-
-        exam, created = Exam.objects.get_or_create(
+        exam, _ = Exam.objects.get_or_create(
             title="लोक सेवा आयोग – नायब सुब्बा नमुना परीक्षा",
             organization=None,
-            defaults={
-                "question_count": len(QUESTIONS),
-                "duration_seconds": 45 * 60,
-                "level": 1,
-                "passing_score": 45.0,
-                "is_published": False,
-                "max_mock_attempts": 3,
-                "allow_review": True,
-            },
+            defaults={"question_count": len(QUESTIONS), "duration_seconds": 45 * 60, "level": 1, "passing_score": 45.0, "is_published": False, "max_mock_attempts": 3, "allow_review": True},
         )
         exam.categories.add(category)
-        ExamCategoryAllocation.objects.get_or_create(
-            exam=exam,
-            category=category,
-            defaults={"fixed_count": len(QUESTIONS), "include_descendants": True},
-        )
+        ExamCategoryAllocation.objects.get_or_create(exam=exam, category=category, defaults={"fixed_count": len(QUESTIONS), "include_descendants": True})
 
         for item in QUESTIONS:
             question, _ = Question.objects.get_or_create(
                 primary_category=category,
                 text=item["text"],
-                defaults={
-                    "question_type": Question.SINGLE,
-                    "difficulty": Question.MEDIUM,
-                    "is_active": True,
-                    "is_deleted": False,
-                    "explanation": item["explanation"],
-                },
+                defaults={"question_type": Question.SINGLE, "difficulty": Question.MEDIUM, "is_active": True, "is_deleted": False, "explanation": item["explanation"]},
             )
             question.categories.add(category)
             for order, (choice_text, is_correct) in enumerate(item["choices"], start=1):
-                Choice.objects.get_or_create(
-                    question=question,
-                    text=choice_text,
-                    defaults={"is_correct": is_correct, "order": order},
-                )
+                Choice.objects.get_or_create(question=question, text=choice_text, defaults={"is_correct": is_correct, "order": order})
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Seeded: {program.name}; version={version.version}; exam_id={exam.id}; questions={len(QUESTIONS)}"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"Seeded: {program.name}; version={version.version}; exam_id={exam.id}; questions={len(QUESTIONS)}"))
