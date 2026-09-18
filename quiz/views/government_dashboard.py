@@ -81,7 +81,6 @@ def government_program_dashboard(request, country_slug, body_slug, program_slug)
     exam_ids = list(dict.fromkeys(stage.exam_id for stage in stages))
     exams = list(
         Exam.objects.filter(id__in=exam_ids, is_published=True)
-        .select_related("primary_category")
         .order_by("title")
     )
     attempts = list(
