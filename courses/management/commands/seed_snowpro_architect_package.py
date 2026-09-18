@@ -133,7 +133,7 @@ class Command(BaseCommand):
         exam.categories.set(categories.values())
         ExamCategoryAllocation.objects.filter(exam=exam).delete()
         questions_by_category = {slug: 0 for slug in categories}
-        for slug, text, choices, correct, category_slug in QUESTION_BANK:
+        for text, choices, correct, category_slug in QUESTION_BANK:
             question, _ = Question.objects.update_or_create(
                 text=f"{PREFIX}{text}",
                 defaults={
