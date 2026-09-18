@@ -36,7 +36,7 @@
   {% if latest_attempt %}
   <section class="gov-next-card">
     <div><span class="gov-kicker">LATEST PERFORMANCE</span><h2>{{ latest_attempt.exam.title }}</h2><p>Latest score: <strong>{{ latest_attempt.score|default:0 }}%</strong> · {% if latest_attempt.passed %}Passed{% else %}Keep practicing{% endif %}</p></div>
-    <a class="gov-primary-btn" href="{% url 'quiz:exam_detail' latest_attempt.exam.id %}">Open exam →</a>
+    <span class="gov-muted-note">Access through the mapped course or exam track</span>
   </section>
   {% endif %}
 
@@ -58,7 +58,7 @@
   </section>
 
   <section class="gov-section">
-    <div class="gov-section-head"><div><h2>Practice & mock exams</h2><p>Use your mapped NPTOR assessments to measure readiness.</p></div></div>
+    <div class="gov-section-head"><div><h2>Practice & mock exams</h2><p>Use your mapped NPTOR assessments to measure readiness. Exams must be opened through their authorized course or track.</p></div></div>
     <div class="gov-resource-grid">
       {% for item in exams %}
       <article class="gov-dashboard-card">
@@ -66,7 +66,7 @@
         <h3>{{ item.exam.title }}</h3>
         <p>{{ item.exam.question_count }} questions · {{ item.exam.passing_score }}% passing score.</p>
         {% if item.attempts %}<small>{{ item.attempts }} completed attempt{{ item.attempts|pluralize }}{% if item.latest_score != None %} · Latest {{ item.latest_score }}%{% endif %}</small>{% else %}<small>Not attempted yet</small>{% endif %}
-        <a href="{% url 'quiz:exam_detail' item.exam.id %}">{% if item.attempts %}Practice again{% else %}Start practice{% endif %} →</a>
+        <small class="gov-muted-note">Open from the authorized course or exam track.</small>
       </article>
       {% empty %}
       <div class="gov-empty">No published mock exams are mapped to this program yet.</div>
@@ -78,7 +78,7 @@
     <div class="gov-section-head"><div><h2>Preparation stages</h2><p>Assessment stages currently mapped in NPTOR.</p></div></div>
     <div class="gov-stage-list">
       {% for stage in stages %}
-      <article class="gov-stage"><span>{{ stage.order }}</span><div><h3>{{ stage.name }}</h3><p>{{ stage.description|default:'Assessment stage' }}</p></div><a href="{% url 'quiz:exam_detail' stage.exam.id %}">View →</a></article>
+      <article class="gov-stage"><span>{{ stage.order }}</span><div><h3>{{ stage.name }}</h3><p>{{ stage.description|default:'Assessment stage' }}</p></div><span class="gov-muted-note">Access through the authorized course or exam track</span></article>
       {% empty %}<div class="gov-empty">No active preparation stages have been mapped yet.</div>{% endfor %}
     </div>
   </section>
