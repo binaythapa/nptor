@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
 
-from quiz.models import Category
+from quiz.models import Domain
 from subscriptions.models import SubscriptionPlan
 
 
@@ -11,7 +11,14 @@ class Course(models.Model):
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField()
     thumbnail = models.ImageField(upload_to="courses/", null=True, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name="courses")
+    category = models.ForeignKey(
+        Domain,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="courses",
+        help_text="The broad subject/domain covered by this course.",
+    )
     level = models.CharField(max_length=20, choices=[("beginner", "Beginner"), ("intermediate", "Intermediate"), ("advanced", "Advanced")])
 
     OWNER_PLATFORM = "platform"
