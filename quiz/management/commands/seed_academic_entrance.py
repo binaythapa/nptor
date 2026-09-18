@@ -9,6 +9,7 @@ from quiz.models import (
     Country,
     Domain,
     Exam,
+    ExamCategoryAllocation,
     ExamTrack,
     PreparationProgram,
     Question,
@@ -106,6 +107,22 @@ class Command(BaseCommand):
         exam.allow_review = True
         exam.categories.add(category)
         exam.save()
+
+        # The allocator selects questions through an exam category blueprint.
+        # Without this allocation, the allocator falls back to legacy fields
+        # that are not part of the current Exam model.
+        allocation, _ = ExamCategoryAllocation.objects.get_or_create(
+            exam=exam,
+            category=category,
+            defaults={
+                "fixed_count": len(QUESTIONS),
+                "include_descendants": False,
+            },
+        )
+        allocation.fixed_count = len(QUESTIONS)
+        allocation.percentage = None
+        allocation.include_descendants = False
+        allocation.save(update_fields=["fixed_count", "percentage", "include_descendants"])
 
         for index, (text, choices) in enumerate(QUESTIONS, start=1):
             question, _ = Question.objects.get_or_create(
