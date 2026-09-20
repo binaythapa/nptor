@@ -77,7 +77,7 @@ def _prepare_track_context(request, exam):
 
 
 def _start_track_exam_attempt(request, exam):
-    """Create or resume an attempt after track access has been validated."""
+    """Create or resume a valid attempt after track access has been validated."""
     with transaction.atomic():
         existing = (
             UserExam.objects
@@ -91,7 +91,18 @@ def _start_track_exam_attempt(request, exam):
         )
 
         if existing:
-            return redirect("quiz:exam_take", user_exam_id=existing.id)
+            # Finalize stale attempts; otherwise the first question immediately
+            # sends the student away because the timer has already expired.
+            if existing.is_expired():
+                logger.info(
+                    "Finalizing expired track attempt | user=%s | exam=%s | user_exam=%s",
+                    request.user.id,
+                    exam.id,
+                    existing.id,
+                )
+                existing.mark_expired()
+            else:
+                return redirect("quiz:exam_take", user_exam_id=existing.id)
 
         user_exam = UserExam.objects.create(
             user=request.user,
@@ -175,9 +186,6 @@ def course_exam_start(request, exam_id):
         exam_id=exam_id,
     )
 
-    # The validated course + quiz lesson is the authorization boundary for
-    # course launches. A CourseExam join row is optional because lessons can
-    # directly reference reusable exams.
     if not _course_access_allows_quiz(request.user, course):
         messages.info(request, "You do not have access to this course.")
         return redirect("courses:course_detail", slug=course.slug)
@@ -218,10 +226,13 @@ def course_exam_start(request, exam_id):
             )
 
             if existing:
-                return redirect(
-                    "quiz:exam_take",
-                    user_exam_id=existing.id,
-                )
+                if existing.is_expired():
+                    existing.mark_expired()
+                else:
+                    return redirect(
+                        "quiz:exam_take",
+                        user_exam_id=existing.id,
+                    )
 
             ue = UserExam.objects.create(
                 user=request.user,
