@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -9,6 +11,8 @@ from quiz.services.exam_question_allocator import allocate_questions_for_exam
 from quiz.services.track_progress import build_track_progress
 from subscriptions.services import AccessService
 from subscriptions.services.plan_service import get_plan_for_course
+
+logger = logging.getLogger("django")
 
 
 def _course_access_allows_quiz(user, course):
@@ -72,6 +76,50 @@ def _prepare_track_context(request, exam):
     return True
 
 
+def _start_track_exam_attempt(request, exam):
+    """Create or resume an attempt after track access has been validated."""
+    with transaction.atomic():
+        existing = (
+            UserExam.objects
+            .select_for_update()
+            .filter(
+                user=request.user,
+                exam=exam,
+                submitted_at__isnull=True,
+            )
+            .first()
+        )
+
+        if existing:
+            return redirect("quiz:exam_take", user_exam_id=existing.id)
+
+        user_exam = UserExam.objects.create(
+            user=request.user,
+            exam=exam,
+        )
+
+        questions = allocate_questions_for_exam(exam, seed=user_exam.id)
+        if not questions:
+            raise ValueError("No questions were allocated for this exam.")
+
+        user_exam.question_order = [question.id for question in questions]
+        user_exam.current_index = 0
+        user_exam.save(update_fields=["question_order", "current_index"])
+
+        UserAnswer.objects.bulk_create(
+            [
+                UserAnswer(user_exam=user_exam, question=question)
+                for question in questions
+            ]
+        )
+
+    return redirect(
+        "quiz:exam_question",
+        user_exam_id=user_exam.id,
+        index=0,
+    )
+
+
 @login_required
 def course_exam_start(request, exam_id):
     """
@@ -97,8 +145,19 @@ def course_exam_start(request, exam_id):
         if not _prepare_track_context(request, exam):
             return redirect("quiz:learning_track", slug=request.GET.get("track"))
 
-        from quiz.views.exams import exam_start as standard_exam_start
-        return standard_exam_start(request, exam_id)
+        try:
+            return _start_track_exam_attempt(request, exam)
+        except Exception:
+            logger.exception(
+                "TRACK EXAM START FAILED | user=%s | exam=%s",
+                request.user.id,
+                exam.id,
+            )
+            messages.error(
+                request,
+                "This exam is not properly configured. Please contact support.",
+            )
+            return redirect("quiz:student_dashboard")
 
     course = get_object_or_404(
         Course,
