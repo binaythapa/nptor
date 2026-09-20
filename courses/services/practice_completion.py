@@ -1,7 +1,7 @@
 """Reliable completion handling for course practice lessons.
 
 Practice questions are currently tracked through the practice session's ``p_seen``
-list.  This service keeps that existing contract, but makes completion depend on
+list. This service keeps that existing contract, but makes completion depend on
 what is actually available for the lesson instead of requiring a threshold that
 may be larger than the question pool.
 """
@@ -80,8 +80,8 @@ def is_practice_complete(request, lesson, seen=None):
     This prevents a lesson from becoming impossible to complete when, for
     example, its threshold is 10 but only 4 matching questions exist.
 
-    A lesson with no eligible questions is deliberately *not* auto-completed;
-    that is a content/configuration issue that needs administrator attention.
+    A lesson with no eligible questions is deliberately not auto-completed;
+    that is a content/configuration issue requiring administrator attention.
     """
     if not lesson or not getattr(request.user, "is_authenticated", False):
         return False
@@ -89,8 +89,18 @@ def is_practice_complete(request, lesson, seen=None):
     if seen is None:
         seen = request.session.get("p_seen", [])
 
-    # Normalize IDs and remove duplicates before evaluating progress.
-    seen_ids = {int(value) for value in seen if str(value).isdigit()}
+    # Include the currently displayed question. The standard POST flow calls
+    # this service before it appends the current question to p_seen, while the
+    # AJAX flow appends it first. Supporting both makes completion consistent.
+    seen_ids = {
+        int(value)
+        for value in seen
+        if str(value).isdigit()
+    }
+    current_question_id = request.session.get("p_qid")
+    if current_question_id and str(current_question_id).isdigit():
+        seen_ids.add(int(current_question_id))
+
     available_count = get_practice_question_queryset(lesson).count()
     if available_count <= 0:
         return False
@@ -105,8 +115,8 @@ def track_practice_completion(request, lesson):
     """Record one completed/left question and update lesson progress.
 
     The function retains its historical integer return value for existing
-    callers.  When completion is reached, the returned value is promoted to
-    the configured threshold so existing redirect checks continue to work.
+    callers. When completion is reached, the returned value is promoted to the
+    configured threshold so existing redirect checks continue to work.
     """
     key = f"practice_seen_lesson_{lesson.id}"
     count = request.session.get(key, 0) + 1
