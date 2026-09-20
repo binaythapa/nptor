@@ -19,6 +19,7 @@ from courses.views.certificate import certificate_verify, certificate_download
 from courses.views.instructor_dashboard_view import instructor_dashboard
 from courses.views.instructor_views import update_order
 from courses.views.practice_restart import restart_course_practice
+from courses.views.practice_categories import practice_categories
 from courses.permissions import (
     course_detail_access_required,
     course_learning_access_required,
@@ -43,6 +44,7 @@ urlpatterns = [
     path("completed/", completed_courses, name="completed_courses"),
     path("<slug:slug>/enroll-free/", enroll_free_course, name="enroll_free_course"),
     path("practice/restart/<slug:course_slug>/<int:lesson_id>/", restart_course_practice, name="restart_course_practice"),
+    path("practice/categories/", practice_categories, name="practice_categories"),
     path("<slug:slug>/preview/", course_preview, name="course_preview"),
     path("<slug:slug>/learn/", course_learning_access_required(student_views.course_learn), name="course_learn"),
     path("<slug:slug>/learn/<int:lesson_id>/", course_learning_access_required(student_views.course_learn), name="course_learn_lesson"),
@@ -65,7 +67,7 @@ urlpatterns = [
     path("admin/courses/pending/", admin_views.pending_courses, name="admin-pending-courses"),
     path("admin/course/<slug:slug>/review/", admin_views.review_course, name="admin-review-course"),
     path("admin/course/<slug:slug>/approve/", admin_views.approve_course_view, name="admin-approve-course"),
-    path("admin/course/<slug:slug>/request-changes/", admin_views.request_course_changes_view, name="admin-request-course-changes"),
+    path("admin/course/<slug:slug>/request-changes/", admin_views.request_changes_course_view, name="admin-request-course-changes"),
     path("admin/course/<slug:slug>/reject/", admin_views.reject_course_view, name="admin-reject-course"),
     path("admin/course/<slug:slug>/publish/", admin_views.publish_course_view, name="admin-publish-course"),
     path("admin/course/<slug:slug>/unpublish/", admin_views.unpublish_course_view, name="admin-unpublish-course"),
