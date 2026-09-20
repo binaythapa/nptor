@@ -6,7 +6,7 @@ from django.db.models import Q
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 from .models import Course, CourseSection, Lesson, CourseExam
-from quiz.models import Domain, Exam
+from quiz.models import Category, Domain, Exam
 from quiz.search_widgets import SearchableModelMultipleChoiceWidget
 from subscriptions.models import SubscriptionPlan
 
@@ -117,6 +117,7 @@ class CourseForm(forms.ModelForm):
                 flat=True,
             )
 
+
     def save(self, commit=True):
         course = super().save(commit=commit)
         if commit:
@@ -155,3 +156,48 @@ class LessonForm(forms.ModelForm):
             "created_at",
             "updated_at",
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Practice domains are restricted to active domains.
+        self.fields["practice_domain"].queryset = (
+            Domain.objects.filter(is_active=True).order_by("name")
+        )
+
+        # Resolve the domain from submitted form data when the form is
+        # bound; otherwise use the lesson's currently saved domain.
+        domain_id = None
+        if self.is_bound:
+            domain_id = self.data.get("practice_domain")
+        elif self.instance.pk:
+            domain_id = self.instance.practice_domain_id
+
+        category_queryset = Category.objects.filter(
+            is_active=True,
+        ).select_related("domain").order_by("name")
+
+        if domain_id:
+            category_queryset = category_queryset.filter(domain_id=domain_id)
+        else:
+            category_queryset = category_queryset.none()
+
+        self.fields["practice_category"].queryset = category_queryset
+        self.fields["practice_category"].help_text = (
+            "Only categories belonging to the selected practice domain are shown."
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        domain = cleaned_data.get("practice_domain")
+        category = cleaned_data.get("practice_category")
+        lesson_type = cleaned_data.get("lesson_type")
+
+        if lesson_type == Lesson.TYPE_PRACTICE and domain and category:
+            if category.domain_id != domain.id:
+                self.add_error(
+                    "practice_category",
+                    "The selected category must belong to the selected practice domain.",
+                )
+
+        return cleaned_data
