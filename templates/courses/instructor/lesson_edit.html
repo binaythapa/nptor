@@ -232,6 +232,68 @@ function toggleSections() {
         document.getElementById("quiz-group")?.classList.add("active");
 }
 
+async function refreshPracticeCategories(preserveCategoryId = null) {
+    const domainSelect = document.getElementById("id_practice_domain");
+    const categorySelect = document.getElementById("id_practice_category");
+
+    if (!domainSelect || !categorySelect) return;
+
+    const domainId = domainSelect.value;
+    categorySelect.innerHTML = "";
+    categorySelect.disabled = true;
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = domainId ? "Loading categories..." : "---------";
+    categorySelect.appendChild(placeholder);
+
+    if (!domainId) {
+        categorySelect.disabled = false;
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            "{% url 'courses:practice_categories' %}?domain_id=" + encodeURIComponent(domainId),
+            {
+                headers: {"X-Requested-With": "XMLHttpRequest"},
+                credentials: "same-origin"
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Unable to load categories");
+        }
+
+        const payload = await response.json();
+        categorySelect.innerHTML = "";
+
+        const emptyOption = document.createElement("option");
+        emptyOption.value = "";
+        emptyOption.textContent = "---------";
+        categorySelect.appendChild(emptyOption);
+
+        payload.categories.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category.id;
+            option.textContent = category.name;
+            if (preserveCategoryId !== null && String(category.id) === String(preserveCategoryId)) {
+                option.selected = true;
+            }
+            categorySelect.appendChild(option);
+        });
+    } catch (error) {
+        categorySelect.innerHTML = "";
+        const errorOption = document.createElement("option");
+        errorOption.value = "";
+        errorOption.textContent = "Unable to load categories";
+        categorySelect.appendChild(errorOption);
+        console.error(error);
+    } finally {
+        categorySelect.disabled = false;
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
 
     toggleSections();
@@ -239,6 +301,14 @@ document.addEventListener("DOMContentLoaded", function() {
     const typeSelect = document.getElementById("id_lesson_type");
     if (typeSelect) {
         typeSelect.addEventListener("change", toggleSections);
+    }
+
+    const domainSelect = document.getElementById("id_practice_domain");
+    const categorySelect = document.getElementById("id_practice_category");
+    if (domainSelect && categorySelect) {
+        domainSelect.addEventListener("change", function() {
+            refreshPracticeCategories();
+        });
     }
 
 });
