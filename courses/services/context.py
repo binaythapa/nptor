@@ -2,11 +2,11 @@ from courses.models import Lesson
 
 
 def get_course_context(request):
-    """Resolve course-practice context from the request or active session.
+    """Resolve course-practice context from request parameters or session.
 
-    AJAX requests commonly POST to an endpoint without carrying the original
-    ``course`` and ``lesson`` query parameters. The practice view stores this
-    context in the session, so completion checks must use the same context.
+    AJAX requests may omit the original query string. In that case, recover
+    the active lesson from the session and derive its course slug directly
+    from the database.
     """
     course_slug = request.GET.get("course") or request.session.get(
         "course_practice_course_slug"
@@ -15,14 +15,18 @@ def get_course_context(request):
         "course_practice_lesson_id"
     )
 
-    if not course_slug or not lesson_id:
+    if not lesson_id:
         return None, None, None
 
     try:
         lesson = Lesson.objects.select_related(
             "section__course"
-        ).get(id=lesson_id, section__course__slug=course_slug)
+        ).get(id=lesson_id)
     except (Lesson.DoesNotExist, TypeError, ValueError):
         return None, None, None
 
-    return course_slug, lesson, lesson.practice_threshold
+    resolved_course_slug = lesson.section.course.slug
+    if course_slug and course_slug != resolved_course_slug:
+        return None, None, None
+
+    return resolved_course_slug, lesson, lesson.practice_threshold
