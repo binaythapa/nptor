@@ -72,30 +72,35 @@
         background: #1e293b;
         color: #fff;
         cursor: pointer;
-        font-size: 18px;
+        font-size: 0;
         line-height: 1;
+    }
+
+    /* Use a directional chevron rather than a hamburger for collapse/expand. */
+    .course-player-page .mobile-menu-btn::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-left: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(45deg);
+        transition: transform .16s ease;
+    }
+
+    .course-player-page.sidebar-open .mobile-menu-btn::before {
+        transform: rotate(225deg);
     }
 
     .course-player-page.sidebar-open .course-player-layout {
         grid-template-columns: 76px minmax(0, 1fr);
     }
 
-    .course-player-page.sidebar-open .course-curriculum {
-        overflow-x: hidden;
-    }
-
-    .course-player-page.sidebar-open .curriculum-header {
-        padding: 18px 8px;
-        text-align: center;
-    }
-
+    .course-player-page.sidebar-open .course-curriculum { overflow-x: hidden; }
+    .course-player-page.sidebar-open .curriculum-header { padding: 18px 8px; text-align: center; }
     .course-player-page.sidebar-open .curriculum-header > div,
     .course-player-page.sidebar-open .course-progress,
     .course-player-page.sidebar-open .curriculum-section h3,
-    .course-player-page.sidebar-open .lesson-link-text {
-        display: none;
-    }
-
+    .course-player-page.sidebar-open .lesson-link-text { display: none; }
     .course-player-page.sidebar-open .curriculum-list { padding: 0 7px 20px; }
     .course-player-page.sidebar-open .lesson-list { gap: 5px; }
     .course-player-page.sidebar-open .lesson-link { justify-content: center; gap: 0; min-height: 48px; padding: 8px 4px; border-left-width: 3px; }
