@@ -1,0 +1,266 @@
+/* Compact presentation for the My Learning hub. */
+.learning-hub-page {
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.learning-hub-page .dashboard-header {
+  padding-top: 0;
+}
+
+.learning-hub-page .dashboard-title {
+  font-size: clamp(1.65rem, 2.6vw, 2.15rem);
+  letter-spacing: -0.03em;
+}
+
+.learning-hub-page .dashboard-eyebrow,
+.learning-hub-page .section-eyebrow {
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.learning-hub-page .dashboard-subtitle {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.learning-hub-page .dashboard-header-actions {
+  gap: 8px;
+}
+
+.learning-hub-page .dashboard-header-actions a,
+.learning-hub-page .dashboard-primary-action,
+.learning-hub-page .dashboard-secondary-action,
+.learning-hub-page .dashboard-warning-action {
+  min-height: 34px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.learning-hub-page .dashboard-stats {
+  gap: 10px;
+}
+
+.learning-hub-page .dashboard-stat-card {
+  min-height: 76px;
+  padding: 12px;
+  gap: 9px;
+  border-radius: 12px;
+}
+
+.learning-hub-page .stat-icon {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.learning-hub-page .stat-label {
+  font-size: 10px;
+}
+
+.learning-hub-page .stat-value {
+  font-size: 21px;
+}
+
+.learning-hub-page .dashboard-active-exam,
+.learning-hub-page .dashboard-continue {
+  padding: 12px 14px;
+  border-radius: 12px;
+  gap: 12px;
+}
+
+.learning-hub-page .active-exam-label,
+.learning-hub-page .active-exam-content p,
+.learning-hub-page .dashboard-continue-copy p {
+  font-size: 11px;
+}
+
+.learning-hub-page .active-exam-content h2,
+.learning-hub-page .dashboard-continue-copy h2 {
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.learning-hub-page .dashboard-continue-copy .dashboard-progress {
+  margin-top: 8px;
+}
+
+.learning-hub-page .dashboard-learning-heading,
+.learning-hub-page .dashboard-shortlist-section .section-heading {
+  margin-bottom: 10px;
+}
+
+.learning-hub-page .dashboard-learning-heading h2,
+.learning-hub-page .dashboard-shortlist-section h2,
+.learning-hub-page .dashboard-learning-activity-heading h2 {
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+
+.learning-hub-page .dashboard-shortlist-grid,
+.learning-hub-page .dashboard-learning-grid {
+  gap: 10px;
+}
+
+.learning-hub-page .dashboard-shortlist-card {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.learning-hub-page .shortlist-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.learning-hub-page .shortlist-card-body h3 {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.learning-hub-page .shortlist-card-body p {
+  margin-top: 3px;
+  font-size: 10px;
+}
+
+.learning-hub-page .shortlist-card-actions a,
+.learning-hub-page .shortlist-remove {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.learning-hub-page .learning-card-type,
+.learning-hub-page .learning-source {
+  font-size: 9px;
+}
+
+.learning-hub-page .learning-source {
+  min-height: 18px;
+  padding: 2px 6px;
+}
+
+.learning-hub-page .dashboard-learning-toolbar {
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 4px;
+  border-radius: 11px;
+}
+
+.learning-hub-page .dashboard-filter-tabs {
+  gap: 2px;
+}
+
+.learning-hub-page .dashboard-filter {
+  min-height: 31px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.learning-hub-page .dashboard-search {
+  min-width: 170px;
+}
+
+.learning-hub-page .dashboard-search input {
+  min-height: 32px;
+  padding: 7px 9px 7px 31px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.learning-hub-page .dashboard-search > i {
+  left: 10px;
+}
+
+.learning-hub-page .dashboard-learning-card {
+  grid-template-columns: 40px minmax(0, 1fr) 32px;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.learning-hub-page .learning-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  font-size: 16px;
+}
+
+.learning-hub-page .learning-card-topline {
+  gap: 5px;
+  margin-bottom: 3px;
+}
+
+.learning-hub-page .learning-card-body h3 {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.learning-hub-page .learning-card-body > p {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.learning-hub-page .learning-card-body .dashboard-progress {
+  margin-top: 7px;
+}
+
+.learning-hub-page .learning-result {
+  margin-top: 6px;
+  font-size: 10px;
+}
+
+.learning-hub-page .learning-card-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+
+.learning-hub-page .learning-assignment-dates {
+  gap: 4px 9px;
+  margin-top: 7px;
+  font-size: 10px;
+}
+
+.learning-hub-page .learning-assignment-date {
+  gap: 4px;
+}
+
+@media (max-width: 900px) {
+  .learning-hub-page .dashboard-learning-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .learning-hub-page .dashboard-search {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .learning-hub-page .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .learning-hub-page .dashboard-header-content {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .learning-hub-page .dashboard-learning-grid {
+    grid-template-columns: 1fr;
+  }
+}
