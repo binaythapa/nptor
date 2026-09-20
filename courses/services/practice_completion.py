@@ -112,17 +112,28 @@ def is_practice_complete(request, lesson, seen=None):
 
 
 def track_practice_completion(request, lesson):
-    """Record one completed/left question and update lesson progress.
+    """Record progress from the current run and update lesson progress.
 
-    The function retains its historical integer return value for existing
-    callers. When completion is reached, the returned value is promoted to the
-    configured threshold so existing redirect checks continue to work.
+    The count is derived from the current run's unique ``p_seen`` question IDs
+    rather than an accumulated lifetime/session counter. This prevents a retry
+    from inheriting the previous run's count and completing prematurely.
     """
-    key = f"practice_seen_lesson_{lesson.id}"
-    count = request.session.get(key, 0) + 1
-    request.session[key] = count
-
     seen = request.session.get("p_seen", [])
+    seen_ids = {
+        int(value)
+        for value in seen
+        if str(value).isdigit()
+    }
+    current_question_id = request.session.get("p_qid")
+    if current_question_id and str(current_question_id).isdigit():
+        seen_ids.add(int(current_question_id))
+
+    count = len(seen_ids)
+
+    # Keep the historical key synchronized for compatibility with any older
+    # code, but never use its previous value to calculate this run's progress.
+    request.session[f"practice_seen_lesson_{lesson.id}"] = count
+
     if is_practice_complete(request, lesson, seen=seen):
         _mark_lesson_completed(request.user, lesson)
         request.session[f"practice_done_{lesson.id}"] = True
