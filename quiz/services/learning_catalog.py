@@ -1,7 +1,8 @@
 from django.core.paginator import Paginator
 from django.db.models import Prefetch
 
-from courses.models import Course
+from courses.models import Course, CourseEnrollment
+from organizations.models.access import ResourceAccess
 from quiz.models import Category, ContentVertical, Domain, Exam, ExamTrack, LearningShortlist
 from subscriptions.models.plan import SubscriptionPlan
 from subscriptions.services import AccessService
@@ -144,7 +145,41 @@ def _matches_level(resource, resource_type, level):
 
 
 def _has_access(user, resource_type, resource):
-    return AccessService.has_access(student=user, resource_type=resource_type, resource=resource)
+    """Return marketplace ownership, not merely public content availability."""
+    if not getattr(user, "is_authenticated", False):
+        return False
+
+    resource_fields = {
+        "course": {"course": resource},
+        "track": {"track": resource},
+        "exam": {"exam": resource},
+    }.get(resource_type)
+    if not resource_fields:
+        return False
+
+    # Free-course enrollment is represented by CourseEnrollment and its
+    # companion SOURCE_PUBLIC access row. Public access alone is not ownership.
+    if resource_type == AccessService.RESOURCE_COURSE and CourseEnrollment.objects.filter(
+        user=user, course=resource, is_active=True
+    ).exists():
+        return True
+
+    # Ignore SOURCE_PUBLIC rows when deciding whether a resource belongs in
+    # the user's purchased/assigned learning collection.
+    has_non_public_access = ResourceAccess.objects.filter(
+        user=user,
+        resource_type=resource_type,
+        is_active=True,
+        **resource_fields,
+    ).exclude(source=ResourceAccess.SOURCE_PUBLIC).exists()
+    if not has_non_public_access:
+        return False
+
+    return AccessService.has_access(
+        student=user,
+        resource_type=resource_type,
+        resource=resource,
+    )
 
 
 def _active_plans(resource):
