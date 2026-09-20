@@ -157,15 +157,27 @@ def _has_access(user, resource_type, resource):
     if not resource_fields:
         return False
 
-    # Free-course enrollment is represented by CourseEnrollment and its
-    # companion SOURCE_PUBLIC access row. Public access alone is not ownership.
+    # Free-course enrollment has its own explicit enrollment relationship.
     if resource_type == AccessService.RESOURCE_COURSE and CourseEnrollment.objects.filter(
         user=user, course=resource, is_active=True
     ).exists():
         return True
 
-    # Ignore SOURCE_PUBLIC rows when deciding whether a resource belongs in
-    # the user's purchased/assigned learning collection.
+    # A free-track subscription is recorded as an active SOURCE_PUBLIC track
+    # access row by the explicit track checkout/enrollment endpoint. Unlike
+    # implicit public availability, this row is user-specific and therefore
+    # represents ownership for the marketplace state.
+    if resource_type == AccessService.RESOURCE_TRACK and ResourceAccess.objects.filter(
+        user=user,
+        resource_type=resource_type,
+        is_active=True,
+        **resource_fields,
+        source=ResourceAccess.SOURCE_PUBLIC,
+    ).exists():
+        return True
+
+    # For other access types, ignore SOURCE_PUBLIC rows so that public
+    # availability alone is never treated as purchased or enrolled.
     has_non_public_access = ResourceAccess.objects.filter(
         user=user,
         resource_type=resource_type,
