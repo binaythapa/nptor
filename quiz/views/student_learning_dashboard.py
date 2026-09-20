@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from courses.models import Course, LessonProgress
+from courses.models.enrollment import CourseEnrollment
 from courses.models.subscription import CourseSubscription
 from organizations.models.access import ResourceAccess
 from quiz.models import (
@@ -154,6 +155,13 @@ def student_dashboard(request):
     for subscription in CourseSubscription.objects.filter(user=user, is_active=True).select_related("course"):
         if subscription.course_id and subscription.course_id not in course_access:
             course_access[subscription.course_id] = None
+
+    # Free-course enrollment is the learning relationship for public courses.
+    # It may use a SOURCE_PUBLIC ResourceAccess row, so include the enrollment
+    # explicitly rather than relying only on ResourceAccess.
+    for enrollment in CourseEnrollment.objects.filter(user=user, is_active=True).select_related("course"):
+        if enrollment.course_id and enrollment.course_id not in course_access:
+            course_access[enrollment.course_id] = None
 
     course_ids = list(course_access)
     courses = Course.objects.filter(id__in=course_ids, is_published=True).annotate(total_lessons=Count("sections__lessons", distinct=True)).order_by("title")
