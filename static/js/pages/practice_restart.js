@@ -1,16 +1,33 @@
 /*
- * Course-practice restart handling.
+ * Restart practice with a clean session.
  *
- * The existing reset endpoint clears the practice session and redirects to
- * the generic practice page. For course practice, perform that reset through
- * fetch first, then explicitly return to the original course/lesson context.
+ * Course-practice completion markup may come from either the dedicated
+ * completion partial or the inline completion block. Support both forms:
+ * explicit data attributes and a completion-card link while the current URL
+ * contains course/lesson context.
  */
 (function () {
     "use strict";
 
     document.addEventListener("click", async function (event) {
-        const link = event.target.closest("[data-practice-restart]");
+        const link = event.target.closest("a.practice-btn-secondary, [data-practice-restart]");
         if (!link) {
+            return;
+        }
+
+        const completionCard = link.closest(".practice-completed-card");
+        const isRestartLink = link.matches("[data-practice-restart]") ||
+            (completionCard && /practice again/i.test(link.textContent || ""));
+
+        if (!isRestartLink) {
+            return;
+        }
+
+        const currentUrl = new URL(window.location.href);
+        const course = link.dataset.course || currentUrl.searchParams.get("course") || "";
+        const lesson = link.dataset.lesson || currentUrl.searchParams.get("lesson") || "";
+
+        if (!course || !lesson) {
             return;
         }
 
@@ -20,20 +37,16 @@
             return;
         }
 
-        const course = link.dataset.course || "";
-        const lesson = link.dataset.lesson || "";
-        const resetUrl = link.href;
-
-        if (!course || !lesson || !resetUrl) {
-            window.location.assign(link.href);
-            return;
-        }
+        const resetUrl = new URL(link.href || "/quiz/practice/", window.location.origin);
+        resetUrl.searchParams.set("reset", "1");
+        resetUrl.searchParams.set("course", course);
+        resetUrl.searchParams.set("lesson", lesson);
 
         link.dataset.restarting = "1";
         link.setAttribute("aria-disabled", "true");
 
         try {
-            const response = await fetch(resetUrl, {
+            const response = await fetch(resetUrl.toString(), {
                 method: "GET",
                 credentials: "same-origin",
                 redirect: "manual",
@@ -42,9 +55,6 @@
                 }
             });
 
-            // The reset view normally returns a redirect. A same-origin
-            // response is sufficient evidence that the session was reset;
-            // the destination is intentionally controlled below.
             if (response.type === "opaqueredirect" || response.status === 302 || response.ok) {
                 const target = new URL("/quiz/practice/", window.location.origin);
                 target.searchParams.set("course", course);
