@@ -4,6 +4,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const cards = document.querySelectorAll("[data-dashboard-grid] [data-learning-card]");
     const empty = document.querySelector("[data-dashboard-empty]");
 
+    // Exams are not individually subscribable resources. Keep them out of
+    // the My Learning resource filters even if older markup contains the tab.
+    const examFilter = document.querySelector('[data-dashboard-filter="exams"]');
+    if (examFilter && !document.querySelector('[data-dashboard-grid] [data-learning-card][data-learning-type="exam"]')) {
+        examFilter.hidden = true;
+        examFilter.setAttribute("aria-hidden", "true");
+    }
+
     document.querySelectorAll("[data-dashboard-grid] .learning-source").forEach(function (badge) {
         if (badge.textContent.trim().toLowerCase() === "assigned") {
             badge.classList.add("learning-source-organization");
