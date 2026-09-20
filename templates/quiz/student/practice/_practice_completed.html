@@ -31,8 +31,13 @@
 
 
         <a
-            href="{% url 'quiz:practice' %}?reset=1"
-            class="practice-btn practice-btn-secondary">
+            href="{% url 'quiz:practice' %}?reset=1{% if request.GET.course %}&amp;course={{ request.GET.course|urlencode }}{% endif %}{% if request.GET.lesson %}&amp;lesson={{ request.GET.lesson|urlencode }}{% endif %}"
+            class="practice-btn practice-btn-secondary"
+            {% if request.GET.course and request.GET.lesson %}
+            data-practice-restart="1"
+            data-course="{{ request.GET.course|escape }}"
+            data-lesson="{{ request.GET.lesson|escape }}"
+            {% endif %}>
 
             Practice Again
 
