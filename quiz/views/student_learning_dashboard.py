@@ -58,9 +58,6 @@ def _assignment_timeline(assignment, now=None):
     due_date = timezone.localtime(due_at).date() if due_at else None
     expires_date = timezone.localtime(expires_at).date() if expires_at else None
 
-    # Assignment dates are student-facing calendar dates. This prevents a
-    # UTC/local-time boundary from locking a resource on its configured start
-    # date or showing a different date in the status text.
     if expires_date and today > expires_date:
         state = "expired"
         label = "Access expired"
@@ -244,9 +241,9 @@ def student_dashboard(request):
         "activity_type": activity_type,
         "courses": courses_data,
         "tracks": tracks_data,
-        "exams": exams_data,
+        "exams": [],
         "shortlist_items": shortlist_items,
         "shortlist_count": len(shortlist_items),
-        "learning_count": len(courses_data) + len(tracks_data) + len(exams_data),
+        "learning_count": len(courses_data) + len(tracks_data),
         "generated_at": timezone.now(),
     })
