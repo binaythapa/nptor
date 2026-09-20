@@ -14,6 +14,7 @@ _PRACTICE_SESSION_KEYS = (
     "course_practice_initialized",
     "course_practice_count",
     "course_practice_lesson_id",
+    "course_practice_course_slug",
 )
 
 
@@ -23,6 +24,13 @@ def restart_course_practice(request, course_slug, lesson_id):
     """Start a clean practice attempt for a specific course lesson."""
     for key in _PRACTICE_SESSION_KEYS:
         request.session.pop(key, None)
+
+    # Remove any per-lesson completion counters left by older sessions.
+    for key in list(request.session.keys()):
+        if key.startswith("practice_seen_lesson_"):
+            request.session.pop(key, None)
+        elif key.startswith("practice_done_"):
+            request.session.pop(key, None)
 
     query = urlencode({
         "course": course_slug,
