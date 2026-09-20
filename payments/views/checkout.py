@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from courses.models import Course
+from organizations.models import ResourceAccess
 from quiz.models import ExamTrack
 from payments.models import PaymentOrder
 from payments.services import OrderService, PaymentService
@@ -77,15 +78,44 @@ def course_checkout(request, course_id):
 @login_required
 def track_checkout(request, track_id):
     track = get_object_or_404(ExamTrack, pk=track_id, is_active=True)
-    if AccessService.has_access(student=request.user, resource_type=AccessService.RESOURCE_TRACK, resource=track):
+
+    # Public/free tracks require an explicit enrollment record. Public
+    # availability alone must not be treated as existing ownership.
+    non_public_access = ResourceAccess.objects.filter(
+        user=request.user,
+        resource_type=ResourceAccess.RESOURCE_TRACK,
+        track=track,
+        is_active=True,
+    ).exclude(source=ResourceAccess.SOURCE_PUBLIC).exists()
+    if non_public_access and AccessService.has_access(
+        student=request.user,
+        resource_type=AccessService.RESOURCE_TRACK,
+        resource=track,
+    ):
         messages.info(request, "You already have access to this track.")
-        return redirect("quiz:exam_list")
+        return redirect("quiz:learning_track", slug=track.slug)
+
+    if track.is_free():
+        access, _ = ResourceAccess.objects.get_or_create(
+            user=request.user,
+            resource_type=ResourceAccess.RESOURCE_TRACK,
+            track=track,
+            source=ResourceAccess.SOURCE_PUBLIC,
+            defaults={"is_active": True},
+        )
+        if not access.is_active or access.revoked_at:
+            access.is_active = True
+            access.revoked_at = None
+            access.save(update_fields=["is_active", "revoked_at", "updated_at"])
+        messages.success(request, "You have subscribed to this free track.")
+        return redirect("quiz:learning_track", slug=track.slug)
+
     plan = get_plan_for_track(track)
     if not plan:
         messages.error(request, "No subscription plan is available for this track.")
         return redirect("quiz:exam_list")
     if plan.price == 0:
-        messages.info(request, "This track is free.")
+        messages.error(request, "This track is configured as paid but has no payable price.")
         return redirect("quiz:exam_list")
     return _start_payment(request=request, resource_type=PaymentOrder.RESOURCE_TRACK, resource=track, amount=plan.price, currency=plan.currency, return_to=request.GET.get("next"))
 
