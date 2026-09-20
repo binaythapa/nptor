@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from courses.models import Course
-from organizations.models import ResourceAccess
+from organizations.models.access import ResourceAccess
 from quiz.models import ExamTrack
 from payments.models import PaymentOrder
 from payments.services import OrderService, PaymentService
