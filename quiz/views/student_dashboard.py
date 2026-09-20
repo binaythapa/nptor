@@ -1,14 +1,17 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg
+from django.db.models import Avg, Q
 from django.shortcuts import render
+from django.utils import timezone
 
-from courses.models import Course
+from courses.models import Course, CourseEnrollment
+from courses.models.subscription import CourseSubscription
 from organizations.models.access import ResourceAccess
 from quiz.models import UserExam
 
 
 @login_required
 def student_dashboard(request):
+    """Render the student overview without treating public access as ownership."""
     user = request.user
 
     submitted_attempts = list(
@@ -25,27 +28,56 @@ def student_dashboard(request):
         .first()
     )
 
-    total_attempts = UserExam.objects.filter(
+    completed_attempts = UserExam.objects.filter(
         user=user,
         submitted_at__isnull=False,
-    ).count()
-    passed_attempts = UserExam.objects.filter(
-        user=user,
-        submitted_at__isnull=False,
-        passed=True,
-    ).count()
-    average_score = UserExam.objects.filter(
-        user=user,
-        submitted_at__isnull=False,
-    ).aggregate(value=Avg("score"))["value"]
+    )
+    total_attempts = completed_attempts.count()
+    passed_attempts = completed_attempts.filter(passed=True).count()
+    average_score = completed_attempts.aggregate(value=Avg("score"))["value"]
 
-    learning_courses = ResourceAccess.objects.filter(
-        user=user,
-        is_active=True,
-        resource_type=ResourceAccess.RESOURCE_COURSE,
-        course__isnull=False,
-        course__is_published=True,
-    ).values("course_id").distinct().count()
+    # Dashboard statistics must represent explicit ownership only. Public
+    # availability is intentionally excluded. Organization assignments,
+    # administrator grants, individual purchases, course enrollments, and
+    # course subscriptions are all included.
+    now = timezone.now()
+    owned_course_ids = set(
+        CourseEnrollment.objects.filter(
+            user=user,
+            is_active=True,
+        ).values_list("course_id", flat=True)
+    )
+    owned_course_ids.update(
+        CourseSubscription.objects.filter(
+            user=user,
+            is_active=True,
+        ).values_list("course_id", flat=True)
+    )
+    owned_course_ids.update(
+        ResourceAccess.objects.filter(
+            user=user,
+            resource_type=ResourceAccess.RESOURCE_COURSE,
+            course__isnull=False,
+            is_active=True,
+            revoked_at__isnull=True,
+            expires_at__isnull=True,
+        ).exclude(source=ResourceAccess.SOURCE_PUBLIC).values_list("course_id", flat=True)
+    )
+    owned_course_ids.update(
+        ResourceAccess.objects.filter(
+            user=user,
+            resource_type=ResourceAccess.RESOURCE_COURSE,
+            course__isnull=False,
+            is_active=True,
+            revoked_at__isnull=True,
+            expires_at__gt=now,
+        ).exclude(source=ResourceAccess.SOURCE_PUBLIC).values_list("course_id", flat=True)
+    )
+
+    learning_courses = Course.objects.filter(
+        id__in=owned_course_ids,
+        is_published=True,
+    ).count()
 
     recent_results = [
         {
