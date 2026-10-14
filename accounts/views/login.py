@@ -1,37 +1,84 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate
-from django.views.decorators.csrf import csrf_protect
-from django.utils import timezone
-
-from accounts.services.otp_service import create_login_otp
-from accounts.models import EmailOTP
+# accounts/views/login.py
 
 import logging
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_protect
+
+from accounts.models import EmailOTP
+from accounts.services.otp_service import create_login_otp
+
 from core.utils.memory import get_memory_usage_mb
+
+
+# ============================================================
+# USER MODEL
+# ============================================================
+
+User = get_user_model()
+
+
+# ============================================================
+# LOGGER
+# ============================================================
 
 logger = logging.getLogger("django")
 
 
+# ============================================================
+# LOGIN - REQUEST OTP
+# ============================================================
+
 @csrf_protect
 def request_login_otp_view(request):
-    # ---- lightweight memory telemetry ----
-   
+    """
+    Step 1 of login:
+
+        Email
+          ↓
+        Find active user
+          ↓
+        Create OTP
+          ↓
+        Send OTP email
+          ↓
+        Store user ID in session
+          ↓
+        Redirect to OTP verification
+    """
+
+    # --------------------------------------------------------
+    # MEMORY TELEMETRY
+    # --------------------------------------------------------
+
     mem = get_memory_usage_mb()
+
     if mem is not None:
-        logger.info(f"Login OTP view memory usage: {mem} MB")
+        logger.info(
+            "Login OTP view memory usage: %s MB",
+            mem,
+        )
 
-    """
-    Step 1: Username + password → send OTP
-    """
+    # --------------------------------------------------------
+    # GET
+    #
+    # Show login page.
+    # If an OTP already exists, show remaining time.
+    # --------------------------------------------------------
 
-    # ======================
-    # GET → show login form (+ countdown if OTP exists)
-    # ======================
     if request.method == "GET":
-        user_id = request.session.get("otp_user_id")
+
+        user_id = request.session.get(
+            "otp_user_id"
+        )
+
         expires_in = None
 
         if user_id:
+
             otp = (
                 EmailOTP.objects
                 .filter(
@@ -44,67 +91,155 @@ def request_login_otp_view(request):
             )
 
             if otp and otp.expires_at:
+
                 expires_in = int(
-                    (otp.expires_at - timezone.now()).total_seconds()
+                    (
+                        otp.expires_at
+                        - timezone.now()
+                    ).total_seconds()
                 )
-                expires_in = max(expires_in, 0)
+
+                expires_in = max(
+                    expires_in,
+                    0,
+                )
 
         return render(
             request,
             "accounts/auth/login.html",
-            {"expires_in": expires_in},
+            {
+                "expires_in": expires_in,
+            },
         )
 
-    # ======================
-    # POST → validate credentials & create OTP
-    # ======================
-    username = request.POST.get("username")
-    password = request.POST.get("password")
+    # --------------------------------------------------------
+    # POST
+    # --------------------------------------------------------
 
-    if not username or not password:
+    email = (
+        request.POST.get(
+            "email",
+            "",
+        )
+        .strip()
+        .lower()
+    )
+
+    # --------------------------------------------------------
+    # VALIDATE EMAIL
+    # --------------------------------------------------------
+
+    if not email:
+
         return render(
             request,
             "accounts/auth/login.html",
-            {"error": "Username and password required"},
+            {
+                "error": "Email address is required.",
+            },
         )
 
-    user = authenticate(request, username=username, password=password)
+    # --------------------------------------------------------
+    # FIND ACTIVE USER
+    #
+    # We deliberately don't reveal whether the email exists.
+    # --------------------------------------------------------
+
+    user = (
+        User.objects
+        .filter(
+            email__iexact=email,
+            is_active=True,
+        )
+        .order_by("id")
+        .first()
+    )
 
     if not user:
+
         return render(
             request,
             "accounts/auth/login.html",
-            {"error": "Invalid credentials"},
+            {
+                "message": (
+                    "If an account exists with this email, "
+                    "a login OTP will be sent."
+                ),
+            },
         )
+
+    # --------------------------------------------------------
+    # EMAIL REQUIRED
+    # --------------------------------------------------------
 
     if not user.email:
+
         return render(
             request,
             "accounts/auth/login.html",
-            {"error": "No email associated with this account"},
+            {
+                "message": (
+                    "If an account exists with this email, "
+                    "a login OTP will be sent."
+                ),
+            },
         )
 
-    # ---- OTP cooldown (prevents abuse & load) ----
+    # --------------------------------------------------------
+    # OTP COOLDOWN
+    #
+    # Prevent multiple OTP requests within 30 seconds.
+    # --------------------------------------------------------
+
+    cooldown_since = (
+        timezone.now()
+        - timedelta(seconds=30)
+    )
+
     recent_otp = (
         EmailOTP.objects
         .filter(
             user=user,
             purpose=EmailOTP.PURPOSE_LOGIN,
             is_used=False,
-            created_at__gte=timezone.now() - timezone.timedelta(seconds=30),
+            created_at__gte=cooldown_since,
         )
         .exists()
     )
 
     if recent_otp:
+
         return render(
             request,
             "accounts/auth/login.html",
-            {"error": "Please wait before requesting another OTP"},
+            {
+                "error": (
+                    "Please wait 30 seconds before "
+                    "requesting another OTP."
+                ),
+            },
         )
 
-    # ---- create OTP (async sending inside service) ----
-    create_login_otp(user=user)
-    request.session["otp_user_id"] = user.id
+    # --------------------------------------------------------
+    # CREATE LOGIN OTP
+    # --------------------------------------------------------
 
-    return redirect("accounts:verify-login-otp")
+    create_login_otp(
+        user=user
+    )
+
+    # --------------------------------------------------------
+    # STORE USER IN SESSION
+    # --------------------------------------------------------
+
+    request.session[
+        "otp_user_id"
+    ] = user.id
+
+    # --------------------------------------------------------
+    # REDIRECT TO OTP VERIFICATION
+    # --------------------------------------------------------
+
+    return redirect(
+        "accounts:verify-login-otp"
+    )

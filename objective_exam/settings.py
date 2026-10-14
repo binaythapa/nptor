@@ -258,7 +258,7 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "contact.nptor@gmail.com"
-EMAIL_HOST_PASSWORD = 'jvwj mfjo vyxc mowx'
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "").strip()
 DEFAULT_FROM_EMAIL = "NPTOR <contact.nptor@gmail.com>"
 
 
