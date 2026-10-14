@@ -74,8 +74,4 @@ objective_exam/__init__.py
 
 
 # Django migrations
-**/migrations/*.py
 **/migrations/*.pyc
-
-# Keep migrations package initializer
-!**/migrations/__init__.py

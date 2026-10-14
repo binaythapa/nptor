@@ -558,7 +558,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 
 from quiz.models import (
-    User,
     Exam,
     ExamTrack,
     SubscriptionPlan,

@@ -49,39 +49,50 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(EmailOTP)
 class EmailOTPAdmin(admin.ModelAdmin):
+
     list_display = (
+        "email",
         "user",
         "purpose",
-        "code",
         "is_used",
-        "expires_at",
+        "attempts",
         "created_at",
+        "expires_at",
+        "verified_at",
     )
 
     list_filter = (
         "purpose",
         "is_used",
         "created_at",
+        "expires_at",
     )
 
     search_fields = (
+        "email",
         "user__username",
         "user__email",
-        "code",
     )
 
     readonly_fields = (
+        "email",
         "user",
-        "code",
         "purpose",
+        "attempts",
+        "ip_address",
+        "user_agent",
+        "is_used",
         "created_at",
         "expires_at",
+        "verified_at",
+        "otp_hash",
     )
 
     ordering = (
         "-created_at",
     )
 
+    list_per_page = 50
 
 # ============================================================
 # NOTIFICATIONS

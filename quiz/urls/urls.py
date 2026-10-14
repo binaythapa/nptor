@@ -17,7 +17,6 @@ from quiz.views.admin import *
 from quiz.views.questions import *
 from quiz.views.views import *
 from quiz.views.practice_express import *
-from quiz.views.practice import *
 from quiz.views.auth import *
 from quiz.views.subscription import *
 from quiz.views.admin_subscriptions import *
@@ -26,6 +25,14 @@ from quiz.views.dashboards import *
 from quiz.views.mock import *
 from quiz.views.exams import *
 from quiz.views.exam_list import *
+from quiz.views.practice import (
+    practice,
+    practice_answer_ajax,
+    discussion_submit_ajax,
+    discussion_vote,
+    practice_next_ajax,
+    practice_feedback_ajax,
+)
 
 
 app_name = "quiz"
