@@ -7,12 +7,36 @@
 
 {% block content %}
 <div class="exam-question-page">
+  <!-- Sticky modern exam header -->
   <header class="exam-header">
     <div class="exam-header-inner">
-      <div class="exam-title">{{ user_exam.exam.title }}</div>
-      <div class="exam-timer" aria-live="polite">
-        <span class="timer-label">Time Remaining</span>
-        <span class="timer-value" id="timer">00:00:00</span>
+      <div class="exam-header-meta">
+        <span class="exam-eyebrow">Active Examination</span>
+        <h1 class="exam-title">{{ user_exam.exam.title }}</h1>
+        <div class="exam-subtext">
+          <span>Question {{ index|add:1 }} of {{ total }}</span>
+          {% if answered_count is not None %}
+            <span class="exam-meta-separator" aria-hidden="true">•</span>
+            <span class="exam-answered-badge">{{ answered_count }} answered</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="exam-header-controls">
+        <div class="exam-autosave-indicator" id="autosaveIndicator" aria-live="polite">
+          <i class="fa fa-circle-check" aria-hidden="true"></i>
+          <span id="autosaveText">All changes saved</span>
+        </div>
+
+        <button type="button" class="exam-palette-toggle-button" id="togglePaletteBtn" aria-expanded="false" aria-controls="questionPalette">
+          <i class="fa fa-table-cells" aria-hidden="true"></i>
+          <span>Palette</span>
+        </button>
+
+        <div class="exam-timer" aria-live="polite">
+          <span class="timer-label">Time Remaining</span>
+          <span class="timer-value" id="timer">00:00:00</span>
+        </div>
       </div>
     </div>
   </header>
@@ -21,69 +45,162 @@
     {{ progress }}%
   </progress>
 
-  <form method="post" id="examForm">
-    {% csrf_token %}
+  <div class="exam-workspace-grid">
+    <!-- Main question container -->
+    <main class="exam-main-workspace">
+      <form method="post" id="examForm" action="">
+        {% csrf_token %}
 
-    <section class="exam-question-box" aria-labelledby="question-heading">
-      <div class="question-text" id="question-heading">
-        <strong>Q{{ index|add:1 }}.</strong>
-        {{ question.text|safe }}
+        <section class="exam-question-box" aria-labelledby="question-heading">
+          <div class="exam-question-topbar">
+            <span class="question-chip question-chip-type">
+              {% if question.question_type == 'multi' %}
+                Multiple Choice (Select all that apply)
+              {% elif question.question_type == 'tf' %}
+                True / False
+              {% elif question.question_type in 'fill numeric order' %}
+                Text Answer
+              {% else %}
+                Single Choice
+              {% endif %}
+            </span>
+
+            <button type="button" class="exam-flag-button" id="flagQuestionBtn" data-qid="{{ question.id }}" aria-pressed="false" title="Flag this question to review later">
+              <i class="fa-regular fa-bookmark" aria-hidden="true"></i>
+              <span id="flagButtonLabel">Mark for Review</span>
+            </button>
+          </div>
+
+          <div class="question-text" id="question-heading">
+            <strong>Q{{ index|add:1 }}.</strong>
+            {{ question.text|safe }}
+          </div>
+
+          {% if question.question_type in 'single dropdown tf' %}
+            <div class="exam-options" role="radiogroup" aria-labelledby="question-heading">
+              {% for c in choices %}
+                <label class="option-label">
+                  <span class="option-marker">
+                    {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+                  </span>
+                  <input type="radio"
+                         name="question_{{ question.id }}"
+                         value="{{ c.id }}"
+                         {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}>
+                  <span class="option-text">{{ c.text|safe }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if question.question_type == 'multi' %}
+            <div class="exam-options" role="group" aria-labelledby="question-heading">
+              {% for c in choices %}
+                <label class="option-label">
+                  <span class="option-marker">
+                    {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+                  </span>
+                  <input type="checkbox"
+                         name="question_{{ question.id }}"
+                         value="{{ c.id }}"
+                         {% if ua.selections and c.id in ua.selections %}checked{% endif %}>
+                  <span class="option-text">{{ c.text|safe }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if question.question_type in 'fill numeric order' %}
+            <div class="exam-text-answer-wrapper">
+              <input class="input exam-text-answer"
+                     type="text"
+                     name="question_{{ question.id }}"
+                     placeholder="Type your answer here..."
+                     value="{{ ua.raw_answer|default_if_none:'' }}">
+            </div>
+          {% endif %}
+        </section>
+
+        <nav class="exam-navigation" aria-label="Exam question navigation">
+          <div class="exam-nav-left">
+            {% if index > 0 %}
+              <button type="submit" name="nav" value="prev" class="button exam-nav-button prev-btn">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i> Previous
+              </button>
+            {% else %}
+              <span class="exam-nav-placeholder"></span>
+            {% endif %}
+          </div>
+
+          <div class="exam-nav-center">
+            <a href="{% url 'quiz:exam_review' user_exam_id=user_exam.id %}" class="exam-nav-review-link">
+              <i class="fa fa-list-check" aria-hidden="true"></i> View Final Review
+            </a>
+          </div>
+
+          <div class="exam-nav-right">
+            {% if index < total|add:-1 %}
+              <button type="submit" name="nav" value="next" class="button is-primary exam-nav-button next-btn">
+                Next <i class="fa fa-arrow-right" aria-hidden="true"></i>
+              </button>
+            {% else %}
+              <button type="submit" name="nav" value="review" class="button is-warning exam-nav-button review-submit-btn">
+                Review &amp; Submit <i class="fa fa-flag-checkered" aria-hidden="true"></i>
+              </button>
+            {% endif %}
+          </div>
+        </nav>
+      </form>
+    </main>
+
+    <!-- Question Palette Navigator -->
+    <aside class="exam-palette-sidebar" id="questionPalette" aria-label="Question Navigator">
+      <div class="exam-palette-card">
+        <div class="exam-palette-header">
+          <h2 class="exam-palette-title">Question Navigator</h2>
+          <span class="exam-palette-count">{{ index|add:1 }}/{{ total }}</span>
+        </div>
+
+        <div class="exam-palette-legend">
+          <span class="legend-item"><span class="legend-dot is-current"></span> Current</span>
+          <span class="legend-item"><span class="legend-dot is-answered"></span> Answered</span>
+          <span class="legend-item"><span class="legend-dot is-flagged"></span> Flagged</span>
+          <span class="legend-item"><span class="legend-dot is-unanswered"></span> Unanswered</span>
+        </div>
+
+        <div class="exam-palette-grid">
+          {% for item in palette %}
+            <button type="submit"
+                    form="examForm"
+                    name="nav"
+                    value="goto:{{ item.index }}"
+                    class="palette-tile {% if item.is_current %}is-current{% endif %} {% if item.is_answered %}is-answered{% endif %}"
+                    data-question-tile="{{ item.question_id }}"
+                    title="Question {{ item.number }}">
+              {{ item.number }}
+            </button>
+          {% empty %}
+            {% for i in "x"|rjust:total %}
+              <button type="submit"
+                      form="examForm"
+                      name="nav"
+                      value="goto:{{ forloop.counter0 }}"
+                      class="palette-tile {% if forloop.counter0 == index %}is-current{% endif %}"
+                      title="Question {{ forloop.counter }}">
+                {{ forloop.counter }}
+              </button>
+            {% endfor %}
+          {% endfor %}
+        </div>
+
+        <div class="exam-palette-footer">
+          <button type="submit" form="examForm" name="nav" value="review" class="button is-light is-fullwidth palette-review-btn">
+            Final Review &amp; Submit
+          </button>
+        </div>
       </div>
-
-      {% if question.question_type in 'single dropdown tf' %}
-        <div class="exam-options">
-          {% for c in choices %}
-            <label class="option-label">
-              <span class="option-marker">
-                {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
-              </span>
-              <input type="radio"
-                     name="question_{{ question.id }}"
-                     value="{{ c.id }}"
-                     {% if ua.choice and ua.choice.id == c.id %}checked{% endif %}>
-              <span class="option-text">{{ c.text|safe }}</span>
-            </label>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      {% if question.question_type == 'multi' %}
-        <div class="exam-options">
-          {% for c in choices %}
-            <label class="option-label">
-              <span class="option-marker">
-                {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
-              </span>
-              <input type="checkbox"
-                     name="question_{{ question.id }}"
-                     value="{{ c.id }}"
-                     {% if ua.selections and c.id in ua.selections %}checked{% endif %}>
-              <span class="option-text">{{ c.text|safe }}</span>
-            </label>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      {% if question.question_type in 'fill numeric order' %}
-        <input class="input exam-text-answer"
-               type="text"
-               name="question_{{ question.id }}"
-               value="{{ ua.raw_answer|default_if_none:'' }}">
-      {% endif %}
-    </section>
-
-    <nav class="exam-navigation" aria-label="Exam question navigation">
-      {% if index > 0 %}
-        <button type="submit" name="nav" value="prev" class="button exam-nav-button">Previous</button>
-      {% endif %}
-
-      {% if index < total|add:-1 %}
-        <button type="submit" name="nav" value="next" class="button is-primary exam-nav-button">Next</button>
-      {% else %}
-        <button type="submit" name="nav" value="review" class="button is-warning exam-nav-button">Review &amp; Submit</button>
-      {% endif %}
-    </nav>
-  </form>
+    </aside>
+  </div>
 </div>
 
 <script>
@@ -91,6 +208,13 @@
   let remainingSeconds = Number("{{ remaining }}");
   const timerEl = document.getElementById("timer");
   const form = document.getElementById("examForm");
+  const autosaveUrl = "{% url 'quiz:exam_autosave' user_exam_id=user_exam.id %}";
+  const autosaveEl = document.getElementById("autosaveIndicator");
+  const autosaveText = document.getElementById("autosaveText");
+  const flagBtn = document.getElementById("flagQuestionBtn");
+  const flagLabel = document.getElementById("flagButtonLabel");
+  const currentQid = "{{ question.id }}";
+  const storageKey = "nptor_flags_{{ user_exam.id }}";
 
   if (!timerEl || !form || Number.isNaN(remainingSeconds)) return;
 
@@ -126,6 +250,142 @@
     timerEl.textContent = formatTime(remainingSeconds);
     updateTimerState(remainingSeconds);
   }, 1000);
+
+  // Autosave handling with request sequencing, error boundaries, and CSRF protection
+  let autosaveTimeout = null;
+  let autosaveSequence = 0;
+
+  function triggerAutosave() {
+    if (!autosaveUrl) return;
+    if (autosaveText) autosaveText.textContent = "Saving...";
+    if (autosaveEl) {
+      autosaveEl.classList.remove("is-saved", "is-error", "is-locked");
+      autosaveEl.classList.add("is-saving");
+    }
+
+    clearTimeout(autosaveTimeout);
+    autosaveTimeout = setTimeout(() => {
+      const currentSequence = ++autosaveSequence;
+      const formData = new FormData(form);
+      const csrfInput = form.querySelector('[name=csrfmiddlewaretoken]');
+      const csrfToken = csrfInput ? csrfInput.value : "";
+
+      fetch(autosaveUrl, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": csrfToken
+        }
+      })
+      .then(async (response) => {
+        // Drop response if a newer autosave request was initiated
+        if (currentSequence !== autosaveSequence) {
+          return;
+        }
+
+        if (!response.ok) {
+          if (response.status === 409) {
+            // Exam attempt was already submitted
+            if (autosaveText) autosaveText.textContent = "Exam submitted";
+            if (autosaveEl) {
+              autosaveEl.classList.remove("is-saving", "is-saved", "is-error");
+              autosaveEl.classList.add("is-locked");
+            }
+            form.querySelectorAll("input, button[type=submit]").forEach(el => el.disabled = true);
+            return;
+          }
+          throw new Error(`Autosave failed with HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (currentSequence !== autosaveSequence) return;
+
+        if (autosaveText) autosaveText.textContent = "All changes saved";
+        if (autosaveEl) {
+          autosaveEl.classList.remove("is-saving", "is-error", "is-locked");
+          autosaveEl.classList.add("is-saved");
+        }
+        // Update current tile in palette
+        const currentTile = document.querySelector(`[data-question-tile="${currentQid}"]`);
+        if (currentTile) currentTile.classList.add("is-answered");
+      })
+      .catch((err) => {
+        if (currentSequence !== autosaveSequence) return;
+        if (autosaveText) autosaveText.textContent = "Unsaved changes (connection error)";
+        if (autosaveEl) {
+          autosaveEl.classList.remove("is-saving", "is-saved", "is-locked");
+          autosaveEl.classList.add("is-error");
+        }
+      });
+    }, 400);
+  }
+
+  form.addEventListener("change", function(e) {
+    if (e.target.matches("input[type=radio], input[type=checkbox], input[type=text]")) {
+      triggerAutosave();
+    }
+  });
+
+  // Flag / Bookmark management
+  function getFlags() {
+    try {
+      return JSON.parse(sessionStorage.getItem(storageKey) || "{}");
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function setFlags(flags) {
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(flags));
+    } catch (e) {}
+  }
+
+  function applyFlags() {
+    const flags = getFlags();
+    const isFlagged = Boolean(flags[currentQid]);
+    if (flagBtn) {
+      flagBtn.setAttribute("aria-pressed", isFlagged ? "true" : "false");
+      flagBtn.classList.toggle("is-flagged", isFlagged);
+      const icon = flagBtn.querySelector("i");
+      if (icon) {
+        icon.className = isFlagged ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
+      }
+      if (flagLabel) {
+        flagLabel.textContent = isFlagged ? "Flagged for Review" : "Mark for Review";
+      }
+    }
+    // Update all tiles
+    document.querySelectorAll("[data-question-tile]").forEach(tile => {
+      const qid = tile.getAttribute("data-question-tile");
+      if (flags[qid]) {
+        tile.classList.add("is-flagged");
+      } else {
+        tile.classList.remove("is-flagged");
+      }
+    });
+  }
+
+  if (flagBtn) {
+    flagBtn.addEventListener("click", function () {
+      const flags = getFlags();
+      flags[currentQid] = !flags[currentQid];
+      setFlags(flags);
+      applyFlags();
+    });
+  }
+  applyFlags();
+
+  // Mobile Palette Toggle
+  const togglePaletteBtn = document.getElementById("togglePaletteBtn");
+  const paletteSidebar = document.getElementById("questionPalette");
+  if (togglePaletteBtn && paletteSidebar) {
+    togglePaletteBtn.addEventListener("click", function() {
+      const isOpen = paletteSidebar.classList.toggle("is-open");
+      togglePaletteBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+  }
 })();
 </script>
 {% endblock %}

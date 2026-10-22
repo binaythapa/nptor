@@ -57,8 +57,15 @@ def _infer_design_style(raw, config):
 
 
 def get_render_config(template_snapshot):
-    """Return a bounded, renderer-safe configuration from a frozen template snapshot."""
-    raw = deepcopy((template_snapshot or {}).get("config") or {})
+    """Return a bounded, renderer-safe configuration from a frozen template snapshot, model instance, or raw config."""
+    if hasattr(template_snapshot, "config"):
+        raw = deepcopy(template_snapshot.config or {})
+    elif isinstance(template_snapshot, dict) and "config" in template_snapshot:
+        raw = deepcopy(template_snapshot.get("config") or {})
+    elif isinstance(template_snapshot, dict):
+        raw = deepcopy(template_snapshot)
+    else:
+        raw = {}
     config = deepcopy(DEFAULT_RENDER_CONFIG)
 
     if raw.get("font_name") in ALLOWED_FONTS:
@@ -83,6 +90,7 @@ def get_render_config(template_snapshot):
         config["density"] = raw["density"]
 
     config["design_style"] = _infer_design_style(raw, config)
+    config["design_style_slug"] = config["design_style"].replace("_", "-")
 
     if config["density"] == "compact":
         config["section_gap"] = min(config["section_gap"], 5)

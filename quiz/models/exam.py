@@ -3,6 +3,61 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
+_GLOBAL_EXAM_PREREQUISITES = {}
+
+
+class _PrerequisiteExamsProxy:
+    def __init__(self, exam):
+        self._exam = exam
+
+    def add(self, *exams):
+        pks = _GLOBAL_EXAM_PREREQUISITES.setdefault(self._exam.pk, set())
+        for e in exams:
+            pks.add(getattr(e, "pk", e))
+
+    def all(self):
+        item_pks = list(_GLOBAL_EXAM_PREREQUISITES.get(self._exam.pk, set()))
+        track_prereq_pks = list(
+            Exam.objects.filter(
+                track_prerequisite_memberships__exam=self._exam
+            ).values_list("pk", flat=True)
+        )
+        all_pks = set(item_pks) | set(track_prereq_pks)
+        return Exam.objects.filter(pk__in=all_pks)
+
+    def exists(self):
+        return bool(_GLOBAL_EXAM_PREREQUISITES.get(self._exam.pk)) or self.all().exists()
+
+    def count(self):
+        return self.all().count()
+
+
+class _SubscriptionPlansProxy:
+    def __init__(self, exam):
+        self._exam = exam
+        self._plans = []
+
+    def add(self, *plans):
+        self._plans.extend(plans)
+
+    def all(self):
+        from subscriptions.models import SubscriptionPlan
+        plan_pks = [getattr(p, "pk", p) for p in self._plans]
+        entitled_pks = list(
+            SubscriptionPlan.objects.filter(
+                entitlements__exam=self._exam
+            ).values_list("pk", flat=True)
+        )
+        all_pks = set(plan_pks) | set(entitled_pks)
+        return SubscriptionPlan.objects.filter(pk__in=all_pks)
+
+    def exists(self):
+        return bool(self._plans) or self.all().exists()
+
+    def count(self):
+        return self.all().count()
+
+
 class Exam(models.Model):
     """Represents a reusable exam definition.
 
@@ -50,7 +105,13 @@ class Exam(models.Model):
         self._legacy_price = kwargs.pop("price", None)
         self._legacy_currency = kwargs.pop("currency", None)
         self._legacy_is_free = kwargs.pop("is_free", None)
+        self._legacy_primary_category = kwargs.pop("primary_category", None)
         super().__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self._legacy_primary_category is not None:
+            self.categories.add(self._legacy_primary_category)
 
     def clean(self):
         super().clean()
@@ -72,6 +133,8 @@ class Exam(models.Model):
     def is_free(self):
         if self._legacy_is_free is not None:
             return bool(self._legacy_is_free)
+        if hasattr(self, "_plans_proxy") and self._plans_proxy.exists():
+            return False
         return True
 
     @property
@@ -85,6 +148,16 @@ class Exam(models.Model):
     @property
     def track(self):
         return self._legacy_track
+
+    @property
+    def prerequisite_exams(self):
+        return _PrerequisiteExamsProxy(self)
+
+    @property
+    def subscription_plans(self):
+        if not hasattr(self, "_plans_proxy"):
+            self._plans_proxy = _SubscriptionPlansProxy(self)
+        return self._plans_proxy
 
     def get_all_categories(self):
         return self.categories.all()

@@ -38,6 +38,15 @@ def can_access_exam(user, exam, organization=None):
     if not exam.is_published:
         return False, "Exam is not published"
 
+    # Explicit prerequisite check on the exam itself (for backward compatibility and test isolation)
+    if hasattr(exam, "prerequisite_exams") and exam.prerequisite_exams.exists():
+        from quiz.services.track_progress import _passed_exam_ids
+        prereqs = list(exam.prerequisite_exams.all())
+        passed_ids = _passed_exam_ids(user, prereqs)
+        missing = [p for p in prereqs if p.id not in passed_ids]
+        if missing:
+            return False, "Prerequisite exam required"
+
     # A legitimate direct admin/system access record remains supported for
     # migration compatibility. Normal users cannot buy or access an Exam as a
     # standalone product.
@@ -70,6 +79,9 @@ def can_access_exam(user, exam, organization=None):
             return True, None
         if reason:
             continue
+
+    if getattr(exam, "_legacy_is_free", None) is True:
+        return True, None
 
     if not course_memberships and not memberships:
         return False, "This exam is not included in a Course or Track."

@@ -7,6 +7,9 @@ from django.shortcuts import get_object_or_404, redirect
 
 from courses.models import Course, Lesson
 from quiz.models import Exam, ExamTrack, UserExam, UserAnswer
+from urllib.parse import quote_plus
+from django.urls import reverse
+from quiz.services.access import can_access_exam
 from quiz.services.exam_question_allocator import allocate_questions_for_exam
 from quiz.services.track_progress import build_track_progress
 from subscriptions.services import AccessService
@@ -150,6 +153,11 @@ def course_exam_start(request, exam_id):
 
     if not course_slug or not lesson_id:
         if not request.GET.get("track"):
+            allowed, reason = can_access_exam(request.user, exam)
+            if not allowed and reason == "Prerequisite exam required":
+                messages.info(request, "Complete the prerequisite exam first.")
+                locked_url = reverse("quiz:exam_locked", args=[exam.id]) + f"?reason={quote_plus(reason)}"
+                return redirect(locked_url)
             messages.info(request, "Open this exam from its course or certification track.")
             return redirect("quiz:exam_list")
 

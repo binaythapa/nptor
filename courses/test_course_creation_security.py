@@ -53,7 +53,7 @@ class CourseCreationAuthorizationTests(TestCase):
         # The route is wrapped by the authorization decorator; resolve the
         # wrapped callback directly so the test does not depend on the full
         # project URL configuration.
-        callback = urls.urlpatterns[9].callback
+        callback = next(p.callback for p in urls.urlpatterns if getattr(p, "name", None) == "course_create")
         response = callback(request)
 
         self.assertEqual(response.status_code, 403)

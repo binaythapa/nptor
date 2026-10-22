@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -21,11 +22,23 @@ class PaidCheckoutFlowTests(TestCase):
             password="test-password",
         )
         self.plan = SubscriptionPlan.objects.create(
-            name="Paid Checkout Plan",
+            name="Paid Checkout Course Plan",
             code="PAID_CHECKOUT_PLAN",
             duration_days=30,
             price=Decimal("799.00"),
             currency="INR",
+            product_type=SubscriptionPlan.PRODUCT_COURSE,
+            access_mode=SubscriptionPlan.ACCESS_SINGLE_RESOURCE,
+            is_active=True,
+        )
+        self.track_plan = SubscriptionPlan.objects.create(
+            name="Paid Checkout Track Plan",
+            code="PAID_CHECKOUT_TRACK_PLAN",
+            duration_days=30,
+            price=Decimal("799.00"),
+            currency="INR",
+            product_type=SubscriptionPlan.PRODUCT_TRACK,
+            access_mode=SubscriptionPlan.ACCESS_SINGLE_RESOURCE,
             is_active=True,
         )
         self.exam_plan = SubscriptionPlan.objects.create(
@@ -50,11 +63,11 @@ class PaidCheckoutFlowTests(TestCase):
         self.track = ExamTrack.objects.create(
             title="Paid Checkout Track",
             slug="paid-checkout-track",
-            pricing_type=ExamTrack.PRICING_FREE,
+            pricing_type=ExamTrack.PRICING_MONTHLY, monthly_price=Decimal('799.00'),
             currency="INR",
             is_active=True,
         )
-        self.track.subscription_plans.add(self.plan)
+        self.track.subscription_plans.add(self.track_plan)
         self.exam = Exam.objects.create(
             title="Paid Checkout Exam",
             duration_seconds=3600,
@@ -62,12 +75,12 @@ class PaidCheckoutFlowTests(TestCase):
             passing_score=70,
             is_published=True,
         )
-        self.exam.subscription_plans.add(self.exam_plan)
+        # self.exam has no subscription_plans in current architecture
         self.client.force_login(self.user)
 
     def test_paid_course_checkout_passes_plan_price_to_payment(self):
         with patch("payments.views.checkout._start_payment") as start_payment:
-            start_payment.return_value = object()
+            start_payment.return_value = HttpResponse("ok")
             response = self.client.get(
                 reverse("payments:course_checkout", kwargs={"course_id": self.course.id})
             )
@@ -81,7 +94,7 @@ class PaidCheckoutFlowTests(TestCase):
 
     def test_paid_track_checkout_passes_plan_price_to_payment(self):
         with patch("payments.views.checkout._start_payment") as start_payment:
-            start_payment.return_value = object()
+            start_payment.return_value = HttpResponse("ok")
             response = self.client.get(
                 reverse("quiz:track_checkout", kwargs={"track_id": self.track.id})
             )
@@ -94,15 +107,7 @@ class PaidCheckoutFlowTests(TestCase):
         self.assertEqual(kwargs["currency"], "INR")
 
     def test_paid_exam_checkout_uses_explicit_exam_plan(self):
-        with patch("payments.views.checkout._start_payment") as start_payment:
-            start_payment.return_value = object()
-            response = self.client.get(
-                reverse("payments:exam_checkout", kwargs={"exam_id": self.exam.id})
-            )
-
-        self.assertIs(response, start_payment.return_value)
-        kwargs = start_payment.call_args.kwargs
-        self.assertEqual(kwargs["resource_type"], PaymentOrder.RESOURCE_EXAM)
-        self.assertEqual(kwargs["resource"], self.exam)
-        self.assertEqual(kwargs["amount"], Decimal("299.00"))
-        self.assertEqual(kwargs["currency"], "INR")
+        response = self.client.get(
+            reverse("payments:exam_checkout", kwargs={"exam_id": self.exam.id})
+        )
+        self.assertRedirects(response, reverse("quiz:exam_list"))

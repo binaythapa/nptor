@@ -73,6 +73,14 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
+    def __init__(self, *args, **kwargs):
+        category = kwargs.get("category")
+        if category is not None and not isinstance(category, Domain):
+            from quiz.models import Category
+            if isinstance(category, Category):
+                kwargs["category"] = category.domain
+        super().__init__(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         if not self.slug:
             base_slug = slugify(self.title)

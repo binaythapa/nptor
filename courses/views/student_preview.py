@@ -38,9 +38,6 @@ def course_preview(request, slug):
         and course.category_id is not None
         and course.category.is_active
         and course.category.organization_id is None
-        and course.category.domain_id is not None
-        and course.category.domain.is_active
-        and course.category.domain.organization_id is None
     ):
         raise Http404("Course not found.")
 

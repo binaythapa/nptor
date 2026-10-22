@@ -19,6 +19,10 @@ EXPECTED_TEMPLATES = {
 
 
 class CVTemplateTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        call_command("seed_cv_templates")
     def test_template_slugs_are_stable(self):
         template = CVTemplate.objects.get(slug="ats-classic")
         self.assertEqual(template.slug, "ats-classic")

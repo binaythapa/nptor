@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -97,7 +98,7 @@ class CourseCheckoutAuthorizationTests(TestCase):
         self.client.force_login(self.user)
 
         with patch("payments.views.checkout._start_payment") as start_payment:
-            start_payment.return_value = object()
+            start_payment.return_value = HttpResponse("ok")
             response = self.client.get(self._checkout_url(course))
 
         self.assertIs(response, start_payment.return_value)

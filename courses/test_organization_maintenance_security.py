@@ -3,7 +3,7 @@ from django.test import TestCase
 from courses.forms import CourseForm
 from organizations.models import Organization
 from organizations.views.admin.courses import _platform_or_organization_resource
-from quiz.models import Category
+from quiz.models import Category, Domain
 
 
 class OrganizationMaintenanceSecurityTests(TestCase):
@@ -19,16 +19,16 @@ class OrganizationMaintenanceSecurityTests(TestCase):
             slug="org-b-maintenance",
             org_type=Organization.TYPE_SCHOOL,
         )
-        cls.global_category = Category.objects.create(
+        cls.global_category = Domain.objects.create(
             name="Global",
             slug="global-maintenance",
         )
-        cls.own_category = Category.objects.create(
+        cls.own_category = Domain.objects.create(
             name="Org A Category",
             slug="org-a-category-maintenance",
             organization=cls.org,
         )
-        cls.foreign_category = Category.objects.create(
+        cls.foreign_category = Domain.objects.create(
             name="Org B Category",
             slug="org-b-category-maintenance",
             organization=cls.other_org,

@@ -53,9 +53,19 @@ def can_edit_course(user, course):
     if membership.role in OrganizationRole.administrative_roles():
         return True
 
+    created_by = getattr(course, "created_by", None)
+    creator_id = getattr(course, "created_by_id", getattr(created_by, "id", getattr(created_by, "pk", None)))
+    user_id = getattr(user, "id", getattr(user, "pk", None))
+
+    is_creator = False
+    if creator_id is not None and user_id is not None:
+        is_creator = (creator_id == user_id)
+    elif created_by is not None and created_by == user:
+        is_creator = True
+
     return (
         membership.role == OrganizationRole.STAFF
-        and course.created_by_id == user.id
+        and is_creator
     )
 
 

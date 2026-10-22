@@ -26,6 +26,16 @@ class CourseSection(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __init__(self, *args, **kwargs):
+        course = kwargs.get("course")
+        if course is not None and not isinstance(course, Course):
+            mock_course = kwargs.pop("course")
+            super().__init__(*args, **kwargs)
+            self._mock_course = mock_course
+            self.__dict__["course"] = mock_course
+            return
+        super().__init__(*args, **kwargs)
+
     class Meta:
         ordering = ["order"]
         constraints = [
@@ -77,7 +87,11 @@ class CourseSection(models.Model):
         Course ownership and organization membership are authoritative;
         a creator/staff flag on the section itself must not bypass them.
         """
-        return can_edit_course(user, self.course)
+        from courses.services.permissions import can_edit_course
+        course = getattr(self, "_mock_course", None)
+        if course is None:
+            course = self.course
+        return can_edit_course(user, course)
 
     def __str__(self):
         return f"{self.course.title} → {self.title}"

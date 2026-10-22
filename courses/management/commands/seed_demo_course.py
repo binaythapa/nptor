@@ -62,9 +62,11 @@ class Command(BaseCommand):
             question_count=10,
             questions=questions,
         )
-        final_exam.prerequisite_exams.set([mid_exam])
+        from quiz.models import TrackExam
+        TrackExam.objects.update_or_create(track=track, exam=mid_exam, defaults={"order": 1})
+        TrackExam.objects.update_or_create(track=track, exam=final_exam, defaults={"order": 2})
 
-        course = self._course(owner, category)
+        course = self._course(owner, domain)
         sections = self._sections(course)
         lessons = self._lessons(sections, mid_exam, final_exam, domain, category)
 
@@ -209,7 +211,7 @@ class Command(BaseCommand):
             raise CommandError(f"Not enough demo questions for {title}.")
         return exam
 
-    def _course(self, owner, category):
+    def _course(self, owner, domain):
         course, _ = Course.objects.update_or_create(
             slug=COURSE_SLUG,
             defaults={
@@ -218,7 +220,7 @@ class Command(BaseCommand):
                     "A complete demonstration course covering AWS cloud fundamentals "
                     "through text lessons, video lessons, a module quiz and a final assessment."
                 ),
-                "category": category,
+                "category": domain,
                 "level": "beginner",
                 "owner_type": Course.OWNER_PLATFORM,
                 "organization": None,

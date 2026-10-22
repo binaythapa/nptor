@@ -514,6 +514,14 @@ def exam_question(request, user_exam_id, index):
         elif nav == "review":
             return redirect('quiz:exam_review', ue.id)
 
+        elif nav and nav.startswith("goto:"):
+            try:
+                target_idx = int(nav.split(":", 1)[1])
+                if 0 <= target_idx < len(q_ids):
+                    return redirect('quiz:exam_question', ue.id, target_idx)
+            except (ValueError, TypeError):
+                pass
+
     # -------------------------------
     # DISPLAY QUESTION
     # -------------------------------
@@ -527,6 +535,31 @@ def exam_question(request, user_exam_id, index):
 
     progress = int(((index + 1) / len(q_ids)) * 100) if q_ids else 0
 
+    raw_answers = ue.answers.all() if hasattr(ue.answers, "all") and callable(ue.answers.all) else (ue.answers if isinstance(ue.answers, (list, tuple)) else [])
+    answers_map = {getattr(a, "question_id", None): a for a in raw_answers if getattr(a, "question_id", None) is not None}
+    palette = []
+    answered_count = 0
+    for idx, qid in enumerate(q_ids):
+        ans = answers_map.get(qid)
+        is_ans = False
+        if ans:
+            if ans.choice_id is not None:
+                is_ans = True
+            elif ans.selections:
+                is_ans = True
+            elif ans.raw_answer and ans.raw_answer.strip():
+                is_ans = True
+        if is_ans:
+            answered_count += 1
+        palette.append({
+            'index': idx,
+            'number': idx + 1,
+            'question_id': qid,
+            'is_current': idx == index,
+            'is_answered': is_ans,
+        })
+    unanswered_count = len(q_ids) - answered_count
+
     return render(request, 'quiz/student/exam/exam_question.html', {
         'user_exam': ue,
         'ua': ua,
@@ -536,6 +569,9 @@ def exam_question(request, user_exam_id, index):
         'total': len(q_ids),
         'remaining': remaining,
         'progress': progress,
+        'palette': palette,
+        'answered_count': answered_count,
+        'unanswered_count': unanswered_count,
     })
 
 

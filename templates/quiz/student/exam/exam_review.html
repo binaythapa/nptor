@@ -9,7 +9,12 @@
 <main class="exam-review-page" aria-labelledby="exam-review-title">
   <header class="exam-header exam-review-header">
     <div class="exam-header-inner">
-      <div class="exam-title">Final Review</div>
+      <div class="exam-header-meta">
+        <span class="exam-review-eyebrow">FINAL VERIFICATION</span>
+        <h1 id="exam-review-title" class="exam-review-title">Review your answers</h1>
+        <p class="exam-review-subtitle">Review and modify any answer below before final submission. Once submitted, your attempt will be locked and graded.</p>
+      </div>
+
       <div class="exam-timer" aria-live="polite">
         <span class="timer-label">Time Remaining</span>
         <span class="timer-value" id="timer">00:00:00</span>
@@ -17,118 +22,171 @@
     </div>
   </header>
 
-  <h1 id="exam-review-title" class="exam-review-title">Review your answers</h1>
+  <div class="exam-review-toolbar">
+    <div class="exam-review-summary" role="status">
+      <span class="summary-chip is-total"><strong>Total:</strong> {{ total_questions }}</span>
+      <span class="summary-chip is-success"><strong>Answered:</strong> {{ answered_count }}</span>
+      <span class="summary-chip is-danger"><strong>Unanswered:</strong> {{ unanswered_count }}</span>
+    </div>
 
-  <div class="exam-review-summary" role="status">
-    <strong>Total:</strong> {{ total_questions }} |
-    <span class="is-success"><strong>Answered:</strong> {{ answered_count }}</span> |
-    <span class="is-danger"><strong>Unanswered:</strong> {{ unanswered_count }}</span>
+    <div class="exam-review-filters" role="tablist" aria-label="Filter questions">
+      <button type="button" class="review-filter-btn is-active" data-filter="all">All ({{ total_questions }})</button>
+      <button type="button" class="review-filter-btn" data-filter="unanswered">Unanswered ({{ unanswered_count }})</button>
+      <button type="button" class="review-filter-btn" data-filter="answered">Answered ({{ answered_count }})</button>
+    </div>
   </div>
 
-  <form method="post" action="{% url 'quiz:exam_submit' user_exam.id %}">
+  <form method="post" action="{% url 'quiz:exam_submit' user_exam.id %}" id="examSubmitForm">
     {% csrf_token %}
 
-    {% for question in questions %}
-      {% with ua=user_answers|dict_get:question.id %}
-        <section class="exam-review-card
-          {% if not ua %}is-unanswered
-          {% elif question.question_type in 'single tf dropdown' and not ua.choice %}is-unanswered
-          {% elif question.question_type == 'multi' and not ua.selections %}is-unanswered
-          {% elif question.question_type in 'fill numeric order' and not ua.raw_answer %}is-unanswered
-          {% elif question.question_type == 'match' and not ua.selections %}is-unanswered
-          {% endif %}"
-          aria-labelledby="review-question-{{ question.id }}">
+    <div class="exam-review-cards-list">
+      {% for question in questions %}
+        {% with ua=user_answers|dict_get:question.id %}
+          <section class="exam-review-card
+            {% if not ua %}is-unanswered
+            {% elif question.question_type in 'single tf dropdown' and not ua.choice %}is-unanswered
+            {% elif question.question_type == 'multi' and not ua.selections %}is-unanswered
+            {% elif question.question_type in 'fill numeric order' and not ua.raw_answer %}is-unanswered
+            {% elif question.question_type == 'match' and not ua.selections %}is-unanswered
+            {% endif %}"
+            data-card-status="{% if not ua or not ua.is_answered %}unanswered{% else %}answered{% endif %}"
+            aria-labelledby="review-question-{{ question.id }}">
 
-          <p id="review-question-{{ question.id }}" class="exam-review-question">
-            <strong>Q{{ forloop.counter }}.</strong> {{ question.text|safe }}
-          </p>
-
-          {% if question.question_type in 'single tf dropdown' %}
-            <div class="exam-review-options" role="radiogroup" aria-label="Answer options for question {{ forloop.counter }}">
-              {% for c in question.choices.all %}
-                <label class="exam-review-option {% if ua and ua.choice and ua.choice.id == c.id %}is-selected{% endif %}">
-                  <input class="exam-review-option-input"
-                         type="radio"
-                         name="question_{{ question.id }}"
-                         value="{{ c.id }}"
-                         {% if ua and ua.choice and ua.choice.id == c.id %}checked{% endif %}>
-                  <span class="exam-review-option-marker">
-                    {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
-                  </span>
-                  <span class="exam-review-option-text">{{ c.text|safe }}</span>
-                </label>
-              {% endfor %}
+            <div class="exam-review-card-head">
+              <span class="exam-review-qnum">Question {{ forloop.counter }} of {{ total_questions }}</span>
+              <a href="{% url 'quiz:exam_question' user_exam.id forloop.counter0 %}" class="exam-review-jump-link">
+                <i class="fa fa-pen-to-square" aria-hidden="true"></i> Edit in Test View
+              </a>
             </div>
-          {% endif %}
 
-          {% if question.question_type == 'multi' %}
-            <div class="exam-review-options" role="group" aria-label="Answer options for question {{ forloop.counter }}">
-              {% for c in question.choices.all %}
-                <label class="exam-review-option {% if ua and ua.selections and c.id|stringformat:'s' in ua.selections|stringformat:'s' %}is-selected{% endif %}">
-                  <input class="exam-review-option-input"
-                         type="checkbox"
-                         name="question_{{ question.id }}"
-                         value="{{ c.id }}"
-                         {% if ua and ua.selections and c.id|stringformat:'s' in ua.selections|stringformat:'s' %}checked{% endif %}>
-                  <span class="exam-review-option-marker">
-                    {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
-                  </span>
-                  <span class="exam-review-option-text">{{ c.text|safe }}</span>
-                </label>
-              {% endfor %}
-            </div>
-          {% endif %}
+            <p id="review-question-{{ question.id }}" class="exam-review-question">
+              <strong>Q{{ forloop.counter }}.</strong> {{ question.text|safe }}
+            </p>
 
-          {% if question.question_type in 'fill numeric order' %}
-            <input class="input exam-review-answer"
-                   type="text"
-                   name="question_{{ question.id }}"
-                   value="{{ ua.raw_answer|default_if_none:'' }}">
-          {% endif %}
+            {% if question.question_type in 'single tf dropdown' %}
+              <div class="exam-review-options" role="radiogroup" aria-label="Answer options for question {{ forloop.counter }}">
+                {% for c in question.choices.all %}
+                  <label class="exam-review-option {% if ua and ua.choice and ua.choice.id == c.id %}is-selected{% endif %}">
+                    <input class="exam-review-option-input"
+                           type="radio"
+                           name="question_{{ question.id }}"
+                           value="{{ c.id }}"
+                           {% if ua and ua.choice and ua.choice.id == c.id %}checked{% endif %}>
+                    <span class="exam-review-option-marker">
+                      {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+                    </span>
+                    <span class="exam-review-option-text">{{ c.text|safe }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            {% endif %}
 
-          {% if question.question_type == 'match' %}
-            <div class="exam-review-match">
-              {% for pair in question.matching_pairs %}
-                {% with idx=forloop.counter0 %}
-                  <div class="exam-review-match-row">
-                    <strong>{{ pair.left }}</strong>
-                    <div class="select is-fullwidth">
-                      <select name="match_{{ question.id }}_{{ idx }}">
-                        <option value="">-- pick --</option>
-                        {% for opt in question.matching_pairs %}
-                          <option value="{{ opt.right }}"
-                            {% if ua and ua.selections and ua.selections|dict_get:idx == opt.right %}selected{% endif %}>
-                            {{ opt.right }}
-                          </option>
-                        {% endfor %}
-                      </select>
+            {% if question.question_type == 'multi' %}
+              <div class="exam-review-options" role="group" aria-label="Answer options for question {{ forloop.counter }}">
+                {% for c in question.choices.all %}
+                  <label class="exam-review-option {% if ua and ua.selections and c.id|stringformat:'s' in ua.selections|stringformat:'s' %}is-selected{% endif %}">
+                    <input class="exam-review-option-input"
+                           type="checkbox"
+                           name="question_{{ question.id }}"
+                           value="{{ c.id }}"
+                           {% if ua and ua.selections and c.id|stringformat:'s' in ua.selections|stringformat:'s' %}checked{% endif %}>
+                    <span class="exam-review-option-marker">
+                      {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}{{ forloop.counter }}{% endif %}
+                    </span>
+                    <span class="exam-review-option-text">{{ c.text|safe }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if question.question_type in 'fill numeric order' %}
+              <input class="input exam-review-answer"
+                     type="text"
+                     name="question_{{ question.id }}"
+                     placeholder="Type your answer here..."
+                     value="{{ ua.raw_answer|default_if_none:'' }}">
+            {% endif %}
+
+            {% if question.question_type == 'match' %}
+              <div class="exam-review-match">
+                {% for pair in question.matching_pairs %}
+                  {% with idx=forloop.counter0 %}
+                    <div class="exam-review-match-row">
+                      <strong>{{ pair.left }}</strong>
+                      <div class="select is-fullwidth">
+                        <select name="match_{{ question.id }}_{{ idx }}">
+                          <option value="">-- pick --</option>
+                          {% for opt in question.matching_pairs %}
+                            <option value="{{ opt.right }}"
+                              {% if ua and ua.selections and ua.selections|dict_get:idx == opt.right %}selected{% endif %}>
+                              {{ opt.right }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                {% endwith %}
-              {% endfor %}
-            </div>
-          {% endif %}
+                  {% endwith %}
+                {% endfor %}
+              </div>
+            {% endif %}
 
-          {% if not ua %}
-            <p class="exam-review-unanswered">Not Answered</p>
-          {% endif %}
-        </section>
-      {% endwith %}
-    {% endfor %}
+            {% if not ua %}
+              <p class="exam-review-unanswered">Not Answered</p>
+            {% endif %}
+          </section>
+        {% endwith %}
+      {% endfor %}
+    </div>
 
-    <div class="exam-review-actions">
-      <button type="submit" class="button is-success is-medium exam-review-submit">
-        Confirm &amp; Submit Exam
-      </button>
+    <div class="exam-review-footer-card">
+      <div class="footer-card-info">
+        <h3>Ready to complete your examination?</h3>
+        <p>Ensure all questions are reviewed. Once submitted, your answers cannot be altered.</p>
+      </div>
+      <div class="exam-review-actions">
+        <a href="{% url 'quiz:exam_question' user_exam.id 0 %}" class="button is-light">
+          Return to Questions
+        </a>
+        <button type="button" class="button is-success is-medium exam-review-submit" id="openSubmitModalBtn">
+          Confirm &amp; Submit Exam <i class="fa fa-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
   </form>
 </main>
+
+<!-- Submission Confirmation Modal -->
+<div class="modal" id="submitConfirmModal" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
+  <div class="modal-background" onclick="closeSubmitModal()"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title" id="submitModalTitle">Confirm Final Submission</p>
+      <button type="button" class="delete" aria-label="Close" onclick="closeSubmitModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      <p>Are you sure you want to submit your examination?</p>
+      {% if unanswered_count > 0 %}
+        <div class="notification is-warning is-light mt-3">
+          <i class="fa fa-triangle-exclamation" aria-hidden="true"></i>
+          You still have <strong>{{ unanswered_count }} unanswered</strong> question{{ unanswered_count|pluralize }}. Unanswered questions receive 0 marks.
+        </div>
+      {% endif %}
+      <p class="mt-2 text-muted is-size-7">Your attempt will be permanently locked and graded immediately.</p>
+    </section>
+    <footer class="modal-card-foot">
+      <button type="button" class="button is-light" onclick="closeSubmitModal()">Review More</button>
+      <button type="button" class="button is-success" id="finalSubmitBtn" onclick="document.getElementById('examSubmitForm').submit();">
+        Yes, Submit Now
+      </button>
+    </footer>
+  </div>
+</div>
 
 <script>
 (function () {
   let remainingSeconds = Number("{{ remaining }}");
   const timerEl = document.getElementById("timer");
-  const form = document.querySelector("form");
+  const form = document.getElementById("examSubmitForm");
 
   if (!timerEl || !form || Number.isNaN(remainingSeconds)) return;
 
@@ -149,16 +207,50 @@
 
   const interval = setInterval(() => {
     remainingSeconds -= 1;
-
     if (remainingSeconds <= 0) {
       clearInterval(interval);
       form.submit();
       return;
     }
-
     timerEl.textContent = formatTime(remainingSeconds);
     updateTimerState(remainingSeconds);
   }, 1000);
+
+  // Filter Buttons
+  const filterBtns = document.querySelectorAll(".review-filter-btn");
+  const cards = document.querySelectorAll(".exam-review-card");
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      const filter = btn.getAttribute("data-filter");
+
+      cards.forEach(card => {
+        const isUnanswered = card.classList.contains("is-unanswered");
+        if (filter === "all") {
+          card.style.display = "";
+        } else if (filter === "unanswered") {
+          card.style.display = isUnanswered ? "" : "none";
+        } else if (filter === "answered") {
+          card.style.display = !isUnanswered ? "" : "none";
+        }
+      });
+    });
+  });
+
+  // Modal controls
+  const openModalBtn = document.getElementById("openSubmitModalBtn");
+  const modal = document.getElementById("submitConfirmModal");
+  window.openSubmitModal = function() {
+    if (modal) modal.classList.add("is-active");
+  };
+  window.closeSubmitModal = function() {
+    if (modal) modal.classList.remove("is-active");
+  };
+  if (openModalBtn) {
+    openModalBtn.addEventListener("click", window.openSubmitModal);
+  }
 })();
 </script>
 {% endblock %}

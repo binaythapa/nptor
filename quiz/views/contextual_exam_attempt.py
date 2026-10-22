@@ -12,23 +12,62 @@ from quiz.views.exam_submission import exam_submit_dashboard as original_exam_su
 
 
 def _context_is_valid(request, user_exam):
+    # Already submitted attempts may always be reviewed or viewed by their owner
+    if user_exam.submitted_at:
+        return True
+
     course_context = request.session.get("course_exam_context")
     if course_context:
-        return Lesson.objects.filter(
+        if Lesson.objects.filter(
             id=course_context.get("lesson_id"),
             section__course__slug=course_context.get("course_slug"),
             lesson_type=Lesson.TYPE_QUIZ,
             exam_id=user_exam.exam_id,
-        ).exists()
+        ).exists():
+            return True
 
     track_context = request.session.get("track_exam_context")
     if track_context:
-        return ExamTrack.objects.filter(
+        if ExamTrack.objects.filter(
             slug=track_context.get("track_slug"),
             is_active=True,
             organization__isnull=True,
             track_exams__exam_id=user_exam.exam_id,
-        ).exists()
+        ).exists():
+            return True
+
+    # Fallback for active attempts resumed from dashboard or direct attempt flow:
+    # Check if this exam belongs to an active track or course lesson, and restore context.
+    track = ExamTrack.objects.filter(
+        track_exams__exam_id=user_exam.exam_id,
+        is_active=True,
+        organization__isnull=True,
+    ).first()
+    if track:
+        request.session["track_exam_context"] = {
+            "track_slug": track.slug,
+            "exam_id": user_exam.exam_id,
+        }
+        return True
+
+    lesson = (
+        Lesson.objects.filter(
+            lesson_type=Lesson.TYPE_QUIZ,
+            exam_id=user_exam.exam_id,
+        )
+        .select_related("section__course")
+        .first()
+    )
+    if lesson and lesson.section and lesson.section.course:
+        request.session["course_exam_context"] = {
+            "course_slug": lesson.section.course.slug,
+            "lesson_id": lesson.id,
+        }
+        return True
+
+    # If the user owns this active attempt, allow taking, answering, and submitting it
+    if user_exam.user_id == request.user.id:
+        return True
 
     return False
 

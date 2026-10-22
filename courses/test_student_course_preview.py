@@ -30,12 +30,23 @@ class StudentCoursePreviewTests(TestCase):
             title="AWS Fundamentals",
             slug="aws-fundamentals",
             description="Learn AWS fundamentals.",
-            category=category,
+            category=domain,
             level="beginner",
             is_public=True,
             is_published=True,
             approval_status=Course.APPROVAL_APPROVED,
         )
+        from subscriptions.models import SubscriptionPlan
+        plan = SubscriptionPlan.objects.create(
+            name="Paid Course Plan",
+            price=499,
+            currency="INR",
+            duration_days=30,
+            product_type=SubscriptionPlan.PRODUCT_COURSE,
+            access_mode=SubscriptionPlan.ACCESS_SINGLE_RESOURCE,
+            is_active=True,
+        )
+        self.course.subscription_plans.add(plan)
         section = CourseSection.objects.create(
             course=self.course,
             title="Getting Started",

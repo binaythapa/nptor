@@ -71,7 +71,7 @@
     </div>
     <button type="button" class="cv-template-preview-action" data-preview-button aria-label="Preview {{ template.name }}">Preview</button>
 
-    <div class="cv-mini-paper cv-mini-paper--{{ config.layout }} cv-mini-paper--{{ config.design_style }} design-{{ config.design_style }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}" style="--preview-accent: {{ config.accent_color }};">
+    <div class="cv-mini-paper cv-mini-paper--{{ config.layout }} cv-mini-paper--{{ config.design_style }} cv-mini-paper--{{ config.design_style_slug }} design-{{ config.design_style }} {{ config.header_style }} {{ config.section_style }} {{ config.density }}" style="--preview-accent: {{ config.accent_color }};">
       {% if config.design_style == 'split_label' %}
         <aside class="cv-mini-sidebar cv-mini-sidebar--left">
           <div class="cv-mini-photo-placeholder" aria-hidden="true"><span>AM</span></div>

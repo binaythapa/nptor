@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.test import TestCase
 
 from cv.models import CVTemplate
@@ -5,6 +6,10 @@ from cv.services.documents.renderer import get_render_config
 
 
 class CVTemplateConfigurationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        call_command("seed_cv_templates")
     def test_seeded_templates_have_distinct_presentation_configurations(self):
         templates = {template.slug: template for template in CVTemplate.objects.filter(is_active=True)}
         expected = {"academic", "ats-classic", "executive", "fresher", "government", "minimal", "modern-professional", "technical"}

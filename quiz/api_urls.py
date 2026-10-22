@@ -23,7 +23,8 @@ def start_exam_authorized(request, pk):
                 status=403,
             )
 
-    return api_views.start_exam(request, pk)
+    raw_request = getattr(request, "_request", request)
+    return api_views.start_exam(raw_request, pk)
 
 
 urlpatterns = [

@@ -118,6 +118,7 @@ class CourseEditAuthorizationTests(TestCase):
             organization=source_org,
             owner_type="organization",
             save=lambda: None,
+            sections=SimpleNamespace(order_by=lambda *a, **kw: []),
         )
         request.organization = active_org
         get_object_or_404.return_value = course

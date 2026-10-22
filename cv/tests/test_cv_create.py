@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 
 from cv.forms import CVForm
@@ -7,6 +8,10 @@ from cv.services.documents.renderer import get_render_config
 
 
 class CVCreateFormTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        call_command("seed_cv_templates")
     def test_create_form_hides_internal_overrides_field(self):
         form = CVForm()
 
