@@ -140,7 +140,7 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media" if DEBUG else Path("/home/nptorcom/public_html/media")
+MEDIA_ROOT = BASE_DIR / "media" if DEBUG else Path(os.environ.get("MEDIA_ROOT", "/home3/nptorcom/public_html/media"))
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 CKEDITOR_UPLOAD_PATH = "uploads/"

@@ -26,10 +26,8 @@ class SecuritySettingsSourceTests(SimpleTestCase):
     def test_email_password_is_environment_configured(self):
         self.assertNotIn("EMAIL_HOST_PASSWORD = '" , self.settings_source)
         self.assertNotIn('EMAIL_HOST_PASSWORD = "', self.settings_source)
-        self.assertIn(
-            'EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")',
-            self.settings_source,
-        )
+        self.assertIn('os.environ.get("EMAIL_HOST_PASSWORD")', self.settings_source)
+        self.assertIn('os.environ.get("GMAIL_APP_PASSWORD")', self.settings_source)
 
     def test_session_cookie_samesite_is_not_overridden_to_none(self):
         self.assertEqual(
@@ -37,3 +35,9 @@ class SecuritySettingsSourceTests(SimpleTestCase):
             1,
         )
         self.assertIn('SESSION_COOKIE_SAMESITE = "Lax"', self.settings_source)
+    def test_media_root_uses_safe_production_path_and_env_override(self):
+        self.assertIn(
+            'MEDIA_ROOT = BASE_DIR / "media" if DEBUG else Path(os.environ.get("MEDIA_ROOT", "/home3/nptorcom/public_html/media"))',
+            self.settings_source,
+        )
+
