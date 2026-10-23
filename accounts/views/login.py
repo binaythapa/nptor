@@ -224,9 +224,26 @@ def request_login_otp_view(request):
     # CREATE LOGIN OTP
     # --------------------------------------------------------
 
-    create_login_otp(
-        user=user
-    )
+    try:
+        create_login_otp(
+            user=user
+        )
+    except Exception as exc:
+        logger.exception(
+            "Failed to send login OTP to user %s: %s",
+            user.pk,
+            exc,
+        )
+        return render(
+            request,
+            "accounts/auth/login.html",
+            {
+                "error": (
+                    "Unable to send verification code. "
+                    "Please try again in a few moments."
+                ),
+            },
+        )
 
     # --------------------------------------------------------
     # STORE USER IN SESSION
