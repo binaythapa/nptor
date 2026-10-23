@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -34,7 +36,13 @@ class ProductAccessArchitectureTests(TestCase):
         )
         self.course_a = Course.objects.create(title="Course A", description="A", level="beginner", is_published=True)
         self.course_b = Course.objects.create(title="Course B", description="B", level="beginner", is_published=True)
-        self.track = ExamTrack.objects.create(title="Track B", slug="track-b", is_active=True)
+        self.track = ExamTrack.objects.create(
+            title="Track B",
+            slug="track-b",
+            is_active=True,
+            pricing_type=ExamTrack.PRICING_MONTHLY,
+            monthly_price=Decimal("100.00"),
+        )
         self.exam = Exam.objects.create(title="Reusable Exam", duration_seconds=60, question_count=1, is_published=True)
         CourseExam.objects.create(course=self.course_a, exam=self.exam)
         CourseExam.objects.create(course=self.course_b, exam=self.exam)

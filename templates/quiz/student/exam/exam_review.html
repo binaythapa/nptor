@@ -42,13 +42,7 @@
     <div class="exam-review-cards-list">
       {% for question in questions %}
         {% with ua=user_answers|dict_get:question.id %}
-          <section class="exam-review-card
-            {% if not ua %}is-unanswered
-            {% elif question.question_type in 'single tf dropdown' and not ua.choice %}is-unanswered
-            {% elif question.question_type == 'multi' and not ua.selections %}is-unanswered
-            {% elif question.question_type in 'fill numeric order' and not ua.raw_answer %}is-unanswered
-            {% elif question.question_type == 'match' and not ua.selections %}is-unanswered
-            {% endif %}"
+          <section class="exam-review-card {% if not ua or not ua.is_answered %}is-unanswered{% endif %}"
             data-card-status="{% if not ua or not ua.is_answered %}unanswered{% else %}answered{% endif %}"
             aria-labelledby="review-question-{{ question.id }}">
 

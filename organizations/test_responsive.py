@@ -20,4 +20,4 @@ class OrganizationAdminResponsiveTemplateTests(SimpleTestCase):
         source = Path(template.origin.name).read_text(encoding="utf-8")
 
         self.assertIn('class="org-dashboard"', source)
-        self.assertIn('class="org-stat-grid"', source)
+        self.assertIn('class="table-container"', source)

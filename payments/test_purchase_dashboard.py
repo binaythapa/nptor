@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -8,7 +9,7 @@ from courses.models import Course
 from organizations.models.access import ResourceAccess
 from payments.models import PaymentOrder
 from payments.views.checkout import PAYMENT_RETURN_SESSION_KEY
-from quiz.models import Exam
+from quiz.models import Domain, Exam
 from subscriptions.models import SubscriptionEntitlement, SubscriptionPlan
 from subscriptions.services import SubscriptionService
 
@@ -21,6 +22,11 @@ class PurchasedLearningDashboardTests(TestCase):
         self.user = User.objects.create_user(
             username="dashboard-purchase-user",
             password="test-password",
+        )
+        self.domain = Domain.objects.create(
+            name="Cloud",
+            slug="cloud",
+            is_active=True,
         )
         self.plan = SubscriptionPlan.objects.create(
             name="Dashboard Purchase Plan",
@@ -35,6 +41,7 @@ class PurchasedLearningDashboardTests(TestCase):
         course = Course.objects.create(
             title="Purchased AWS Course",
             description="Dashboard test course",
+            category=self.domain,
             level="beginner",
             is_public=True,
             is_published=True,
@@ -73,10 +80,14 @@ class PurchasedLearningDashboardTests(TestCase):
             is_active=True,
         )
 
-        response = self.client.get(reverse("quiz:student_dashboard"))
+        overview_response = self.client.get(reverse("quiz:student_dashboard"))
+        self.assertEqual(overview_response.status_code, 200)
+        self.assertContains(overview_response, "COURSE ACCESS")
+        self.assertContains(overview_response, "1")
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, course.title)
+        learning_response = self.client.get(reverse("quiz:learning_hub"))
+        self.assertEqual(learning_response.status_code, 200)
+        self.assertContains(learning_response, course.title)
 
     def test_individual_exam_access_appears_on_dashboard(self):
         exam = Exam.objects.create(
@@ -89,30 +100,20 @@ class PurchasedLearningDashboardTests(TestCase):
             price=Decimal("100.00"),
         )
         subscription = self._subscription("DASH-EXAM-1")
-        SubscriptionEntitlement.objects.create(
-            subscription=subscription,
-            resource_type=SubscriptionEntitlement.RESOURCE_EXAM,
-            exam=exam,
-            is_active=True,
-        )
-        ResourceAccess.objects.create(
-            user=self.user,
-            resource_type=ResourceAccess.RESOURCE_EXAM,
-            exam=exam,
-            source=ResourceAccess.SOURCE_INDIVIDUAL,
-            subscription=subscription,
-            is_active=True,
-        )
-
-        response = self.client.get(reverse("quiz:student_dashboard"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, exam.title)
+        with self.assertRaises(ValidationError) as ctx:
+            SubscriptionEntitlement.objects.create(
+                subscription=subscription,
+                resource_type=SubscriptionEntitlement.RESOURCE_EXAM,
+                exam=exam,
+                is_active=True,
+            )
+        self.assertIn("Exams are not independently purchasable", str(ctx.exception))
 
     def test_success_page_points_user_to_owned_resource(self):
         course = self._course()
         order = PaymentOrder.objects.create(
             user=self.user,
+            order_number="ORD-SUCCESS-1",
             resource_type=PaymentOrder.RESOURCE_COURSE,
             course=course,
             amount=Decimal("100.00"),
@@ -134,6 +135,7 @@ class PurchasedLearningDashboardTests(TestCase):
         course = self._course()
         order = PaymentOrder.objects.create(
             user=self.user,
+            order_number="ORD-SUCCESS-2",
             resource_type=PaymentOrder.RESOURCE_COURSE,
             course=course,
             amount=Decimal("100.00"),
@@ -159,6 +161,7 @@ class PurchasedLearningDashboardTests(TestCase):
         course = self._course()
         order = PaymentOrder.objects.create(
             user=self.user,
+            order_number="ORD-UNPAID-1",
             resource_type=PaymentOrder.RESOURCE_COURSE,
             course=course,
             amount=Decimal("100.00"),

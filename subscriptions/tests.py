@@ -2,6 +2,7 @@ from decimal import Decimal
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -211,7 +212,7 @@ class SubscriptionModelTests(TestCase):
 
 
     def test_subscription_entitlement_can_be_created_for_exam(self):
-        subscription = self.create_subscription()
+        user_subscription = self.create_subscription()
 
         exam = Exam.objects.create(
             title="Test Exam",
@@ -219,8 +220,21 @@ class SubscriptionModelTests(TestCase):
             is_published=True,
         )
 
+        with self.assertRaises(ValidationError):
+            SubscriptionEntitlement.objects.create(
+                subscription=user_subscription,
+                resource_type=SubscriptionEntitlement.RESOURCE_EXAM,
+                exam=exam,
+                is_active=True,
+            )
+
+        org_subscription = self.create_subscription(
+            user=None,
+            organization=self.organization,
+        )
+
         entitlement = SubscriptionEntitlement.objects.create(
-            subscription=subscription,
+            subscription=org_subscription,
             resource_type=SubscriptionEntitlement.RESOURCE_EXAM,
             exam=exam,
             is_active=True,

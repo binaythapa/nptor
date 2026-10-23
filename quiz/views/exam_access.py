@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 
-from quiz.models import Exam, UserExam
+from quiz.models import Exam, UserExam, Question
 from quiz.services.grading import grade_exam
 
 
@@ -70,33 +70,15 @@ def exam_review(request, user_exam_id):
     )
     answer_map = {answer.question_id: answer for answer in answers}
 
-    # Resolve questions in the exact attempt order stored on UserExam.
-    questions = []
-    for question_id in question_ids:
-        answer = answer_map.get(question_id)
-        if answer:
-            questions.append(answer.question)
-
-    def is_answered(answer):
-        if not answer:
-            return False
-        question_type = answer.question.question_type
-        if question_type in ("single", "tf", "dropdown"):
-            return answer.choice_id is not None
-        if question_type in ("multi", "match", "order"):
-            return bool(answer.selections)
-        if question_type in ("fill", "numeric"):
-            return bool((answer.raw_answer or "").strip())
-        return bool(
-            answer.choice_id
-            or answer.selections
-            or (answer.raw_answer or "").strip()
-        )
+    # Resolve all questions in the exact attempt order stored on UserExam.
+    question_qs = Question.objects.filter(id__in=question_ids).prefetch_related("choices")
+    question_map = {q.id: q for q in question_qs}
+    questions = [question_map[qid] for qid in question_ids if qid in question_map]
 
     answered_count = sum(
         1
         for question_id in question_ids
-        if is_answered(answer_map.get(question_id))
+        if getattr(answer_map.get(question_id), "is_answered", False)
     )
     total_questions = len(question_ids)
 

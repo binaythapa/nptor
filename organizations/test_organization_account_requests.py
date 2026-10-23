@@ -98,7 +98,7 @@ class OrganizationAccountRequestWorkflowTests(TestCase):
         self.assertContains(response, "request-contact-grid")
         self.assertContains(response, 'href="https://example.com"')
         self.assertContains(response, "Visit website")
-        self.assertContains(response, "Contact & Location")
+        self.assertContains(response, "Contact &amp; Location")
         self.assertContains(response, "Request details")
 
     def test_admin_approval_creates_active_organization_and_owner_membership(self):

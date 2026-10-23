@@ -56,6 +56,21 @@ class UserAnswer(models.Model):
             ),
         ]
 
+    @property
+    def is_answered(self):
+        question_type = getattr(getattr(self, "question", None), "question_type", None)
+        if question_type in ("single", "tf", "dropdown"):
+            return self.choice_id is not None
+        if question_type in ("multi", "match", "order"):
+            return bool(self.selections)
+        if question_type in ("fill", "numeric"):
+            return bool((self.raw_answer or "").strip())
+        return bool(
+            self.choice_id
+            or self.selections
+            or (self.raw_answer or "").strip()
+        )
+
     def __str__(self):
         return (
             f"UE:{self.user_exam_id} "
