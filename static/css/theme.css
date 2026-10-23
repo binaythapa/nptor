@@ -739,21 +739,240 @@ body {
 
 
 /* =====================================================
-   GLOBAL DARK BACKGROUND FIX
+   BULMA DESIGN SYSTEM HARMONIZATION
    ===================================================== */
 
-:root[data-theme='dark']{
-  --bg:#0f172a;     /* softer dark */
-  --card:#111c2e;   /* slightly lighter card */
+/* Harmonize Bulma primary buttons with NPTOR brand indigo */
+.button.is-primary {
+  background-color: var(--nptor-primary, #2563eb) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: var(--nptor-radius-md, 8px);
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
 
-/* Remove white Bulma surfaces */
+.button.is-primary:hover {
+  background-color: var(--nptor-primary-hover, #1d4ed8) !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
+}
+
+.button.is-primary:focus,
+.button.is-primary.is-focused {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28) !important;
+}
+
+.button.is-primary:active,
+.button.is-primary.is-active {
+  background-color: var(--nptor-primary-active, #1e40af) !important;
+  transform: translateY(1px);
+}
+
+/* Bulma light button */
+.button.is-light {
+  background-color: var(--nptor-surface-soft, #f1f5f9) !important;
+  border-color: var(--nptor-border, #e2e8f0) !important;
+  color: var(--nptor-text, #0f172a) !important;
+  font-weight: 600;
+  border-radius: var(--nptor-radius-md, 8px);
+}
+
+.button.is-light:hover {
+  background-color: var(--nptor-surface-hover, #e2e8f0) !important;
+  border-color: var(--nptor-border-strong, #cbd5e1) !important;
+  color: var(--nptor-text, #0f172a) !important;
+}
+
+/* Bulma input and controls focus ring */
+.input:focus,
+.textarea:focus,
+.select select:focus {
+  border-color: var(--nptor-primary, #2563eb) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
+}
+
+/* =====================================================
+   COMPREHENSIVE DARK MODE SYSTEM
+   ===================================================== */
+
+:root[data-theme='dark'],
+html[data-theme='dark'] {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --sidebar: #111827;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent-2: #10b981;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --border: #334155;
+}
+
+:root[data-theme='dark'] body,
+html[data-theme='dark'] body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme='dark'] .title,
+:root[data-theme='dark'] .subtitle,
+:root[data-theme='dark'] .label,
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2,
+:root[data-theme='dark'] h3,
+:root[data-theme='dark'] h4,
+:root[data-theme='dark'] h5,
+:root[data-theme='dark'] h6,
+:root[data-theme='dark'] strong,
+:root[data-theme='dark'] .content strong,
+html[data-theme='dark'] .title,
+html[data-theme='dark'] .subtitle,
+html[data-theme='dark'] .label,
+html[data-theme='dark'] h1,
+html[data-theme='dark'] h2,
+html[data-theme='dark'] h3,
+html[data-theme='dark'] h4,
+html[data-theme='dark'] h5,
+html[data-theme='dark'] h6,
+html[data-theme='dark'] strong,
+html[data-theme='dark'] .content strong {
+  color: var(--text) !important;
+}
+
+:root[data-theme='dark'] .has-text-grey,
+:root[data-theme='dark'] .has-text-grey-dark,
+:root[data-theme='dark'] p.subtitle,
+html[data-theme='dark'] .has-text-grey,
+html[data-theme='dark'] .has-text-grey-dark,
+html[data-theme='dark'] p.subtitle {
+  color: var(--muted) !important;
+}
+
 :root[data-theme='dark'] .box,
-:root[data-theme='dark'] .notification,
 :root[data-theme='dark'] .card,
-:root[data-theme='dark'] .page-body {
+:root[data-theme='dark'] .card-surface,
+:root[data-theme='dark'] .page-body,
+html[data-theme='dark'] .box,
+html[data-theme='dark'] .card,
+html[data-theme='dark'] .card-surface,
+html[data-theme='dark'] .page-body {
   background: var(--card) !important;
-  border-color: rgba(255,255,255,0.08);
-  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme='dark'] .has-background-light,
+html[data-theme='dark'] .has-background-light {
+  background-color: #111c2e !important;
+}
+
+:root[data-theme='dark'] .input,
+:root[data-theme='dark'] .textarea,
+:root[data-theme='dark'] .select select,
+html[data-theme='dark'] .input,
+html[data-theme='dark'] .textarea,
+html[data-theme='dark'] .select select {
+  background-color: #0b1329 !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+:root[data-theme='dark'] .input::placeholder,
+:root[data-theme='dark'] .textarea::placeholder,
+html[data-theme='dark'] .input::placeholder,
+html[data-theme='dark'] .textarea::placeholder {
+  color: #64748b !important;
+}
+
+:root[data-theme='dark'] .table,
+html[data-theme='dark'] .table {
+  background-color: var(--card) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme='dark'] .table th,
+html[data-theme='dark'] .table th {
+  color: var(--text) !important;
+  border-color: #334155 !important;
+  background-color: #111827 !important;
+}
+
+:root[data-theme='dark'] .table td,
+html[data-theme='dark'] .table td {
+  border-color: #1e293b !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme='dark'] .table tr:hover,
+html[data-theme='dark'] .table tr:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+:root[data-theme='dark'] .modal-card-head,
+:root[data-theme='dark'] .modal-card-body,
+:root[data-theme='dark'] .modal-card-foot,
+html[data-theme='dark'] .modal-card-head,
+html[data-theme='dark'] .modal-card-body,
+html[data-theme='dark'] .modal-card-foot {
+  background-color: var(--card) !important;
+  border-color: #334155 !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme='dark'] .modal-card-title,
+html[data-theme='dark'] .modal-card-title {
+  color: var(--text) !important;
+}
+
+:root[data-theme='dark'] .site-header,
+html[data-theme='dark'] .site-header {
+  background: var(--sidebar, #111827) !important;
+  border-bottom: 1px solid #1f2937 !important;
+}
+
+:root[data-theme='dark'] .site-sidebar,
+html[data-theme='dark'] .site-sidebar {
+  background-color: var(--sidebar, #111827);
+}
+
+:root[data-theme='dark'] .menu-label,
+html[data-theme='dark'] .menu-label {
+  color: var(--muted, #94a3b8) !important;
+}
+
+:root[data-theme='dark'] .menu-list a,
+html[data-theme='dark'] .menu-list a {
+  color: var(--text, #f8fafc) !important;
+}
+
+:root[data-theme='dark'] .menu-list a:hover,
+html[data-theme='dark'] .menu-list a:hover {
+  background-color: #1e293b !important;
+}
+
+:root[data-theme='dark'] .button.is-light,
+html[data-theme='dark'] .button.is-light {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+:root[data-theme='dark'] .button.is-light:hover,
+html[data-theme='dark'] .button.is-light:hover {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .user-menu,
+html[data-theme='dark'] .user-menu {
+  background: var(--card, #1e293b) !important;
+  border: 1px solid #334155 !important;
+}
+
+:root[data-theme='dark'] .user-menu a:hover,
+html[data-theme='dark'] .user-menu a:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 

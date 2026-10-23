@@ -2415,3 +2415,44 @@ html[data-theme="dark"] [data-tooltip]::after {
     }
 
 }
+
+/* =========================================================
+   24. AUTHENTICATION & DIALOG LAYOUT COMPONENTS
+   ========================================================= */
+
+.auth-page-container {
+    width: 100%;
+    max-width: 520px;
+    margin: 40px auto;
+    padding: 0 16px;
+}
+
+.auth-page-container.is-wide {
+    max-width: 600px;
+}
+
+.auth-card {
+    padding: 36px 32px;
+    background: var(--nptor-surface, #ffffff);
+    border: 1px solid var(--nptor-border, #e2e8f0);
+    border-radius: var(--nptor-radius-lg, 14px);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+}
+
+html[data-theme="dark"] .auth-card {
+    background: var(--nptor-surface, #1e293b);
+    border-color: #334155;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 480px) {
+    .auth-page-container {
+        margin: 20px auto;
+        padding: 0 12px;
+    }
+
+    .auth-card {
+        padding: 24px 18px;
+        border-radius: 12px;
+    }
+}
