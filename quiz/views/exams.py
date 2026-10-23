@@ -720,29 +720,23 @@ def exam_result(request, user_exam_id):
         q = ans.question
         ans.user_answers_display = []
         ans.correct_answers_display = []
+        choices_list = list(q.choices.all())
 
         if q.question_type in ('single', 'dropdown', 'tf'):
             if ans.choice:
                 ans.user_answers_display = [ans.choice.text]
-            correct = q.choices.filter(is_correct=True).first()
+            correct = next((c for c in choices_list if c.is_correct), None)
             if correct:
                 ans.correct_answers_display = [correct.text]
 
         elif q.question_type == 'multi':
             selected_ids = set(ans.selections or [])
-            correct_ids = set(
-                q.choices.filter(is_correct=True)
-                .values_list('id', flat=True)
-            )
+            correct_choices = [c for c in choices_list if c.is_correct]
+            correct_ids = {c.id for c in correct_choices}
+            selected_choices = [c for c in choices_list if c.id in selected_ids]
 
-            ans.user_answers_display = list(
-                q.choices.filter(id__in=selected_ids)
-                .values_list('text', flat=True)
-            )
-            ans.correct_answers_display = list(
-                q.choices.filter(is_correct=True)
-                .values_list('text', flat=True)
-            )
+            ans.user_answers_display = [c.text for c in selected_choices]
+            ans.correct_answers_display = [c.text for c in correct_choices]
 
             if selected_ids == correct_ids:
                 ans.is_correct = True
@@ -767,16 +761,15 @@ def exam_result(request, user_exam_id):
             if ans.selections:
                 choice_map = {
                     str(c.id): c.text
-                    for c in q.choices.all()
+                    for c in choices_list
                 }
                 ans.user_answers_display = [
                     choice_map.get(str(cid), str(cid))
                     for cid in ans.selections
                 ]
-            correct_order = list(
-                q.choices.order_by('order_index')
-                .values_list('text', flat=True)
-            )
+            correct_order = [
+                c.text for c in sorted(choices_list, key=lambda c: getattr(c, 'order', getattr(c, 'order_index', 0)) or 0)
+            ]
             ans.correct_answers_display = correct_order
 
     return render(request, 'quiz/student/exam/exam_result.html', {

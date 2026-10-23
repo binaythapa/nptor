@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg
+from django.db.models import Avg, Count, Q
 from django.shortcuts import render
 from django.utils import timezone
 
@@ -32,9 +32,14 @@ def student_dashboard(request):
         user=user,
         submitted_at__isnull=False,
     )
-    total_attempts = completed_attempts.count()
-    passed_attempts = completed_attempts.filter(passed=True).count()
-    average_score = completed_attempts.aggregate(value=Avg("score"))["value"]
+    stats = completed_attempts.aggregate(
+        total=Count("id"),
+        passed=Count("id", filter=Q(passed=True)),
+        avg_score=Avg("score"),
+    )
+    total_attempts = stats["total"]
+    passed_attempts = stats["passed"]
+    average_score = stats["avg_score"]
 
     # Dashboard statistics must represent explicit ownership only. Public
     # availability is intentionally excluded. Organization assignments,
@@ -55,22 +60,12 @@ def student_dashboard(request):
     )
     owned_course_ids.update(
         ResourceAccess.objects.filter(
+            Q(expires_at__isnull=True) | Q(expires_at__gt=now),
             user=user,
             resource_type=ResourceAccess.RESOURCE_COURSE,
             course__isnull=False,
             is_active=True,
             revoked_at__isnull=True,
-            expires_at__isnull=True,
-        ).exclude(source=ResourceAccess.SOURCE_PUBLIC).values_list("course_id", flat=True)
-    )
-    owned_course_ids.update(
-        ResourceAccess.objects.filter(
-            user=user,
-            resource_type=ResourceAccess.RESOURCE_COURSE,
-            course__isnull=False,
-            is_active=True,
-            revoked_at__isnull=True,
-            expires_at__gt=now,
         ).exclude(source=ResourceAccess.SOURCE_PUBLIC).values_list("course_id", flat=True)
     )
 

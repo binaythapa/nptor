@@ -1,5 +1,6 @@
 from typing import Tuple
 
+from django.db import transaction
 from django.utils import timezone
 
 from quiz.models import (
@@ -271,6 +272,74 @@ def grade_answer(
         ua.selections = None
 
     # ========================================================
+    # ORDERING
+    # ========================================================
+
+    elif q.question_type == "order":
+
+        if use_post:
+            selected = post_data.getlist(f"question_{q.id}")
+            if selected:
+                try:
+                    ua.selections = [int(x) for x in selected]
+                except (ValueError, TypeError):
+                    ua.selections = []
+
+        user_order = [int(x) for x in (ua.selections or [])]
+        correct_order = list(
+            Choice.objects.filter(question=q)
+            .order_by("order", "id")
+            .values_list("id", flat=True)
+        )
+
+        if user_order and user_order == correct_order:
+            ua.is_correct = True
+            score = 1.0
+        else:
+            ua.is_correct = False
+            score = 0.0
+
+        ua.choice = None
+        ua.raw_answer = None
+
+    # ========================================================
+    # MATCHING
+    # ========================================================
+
+    elif q.question_type == "match":
+
+        if use_post:
+            match_map = {}
+            prefix = f"match_{q.id}_"
+            for k in post_data.keys():
+                if k.startswith(prefix):
+                    li = k[len(prefix):]
+                    match_map[li] = post_data.get(k)
+            if match_map:
+                ua.selections = match_map
+
+        user_matches = ua.selections or {}
+        expected = q.matching_pairs or {}
+
+        if isinstance(expected, dict) and user_matches:
+            matches_correct = all(
+                str(user_matches.get(str(k), "")) == str(v)
+                for k, v in expected.items()
+            )
+            if matches_correct and len(user_matches) == len(expected):
+                ua.is_correct = True
+                score = 1.0
+            else:
+                ua.is_correct = False
+                score = 0.0
+        else:
+            ua.is_correct = False
+            score = 0.0
+
+        ua.choice = None
+        ua.raw_answer = None
+
+    # ========================================================
     # SAVE ANSWER
     # ========================================================
 
@@ -289,100 +358,107 @@ def grade_exam(
     *,
     is_mock: bool = False,
 ) -> Tuple[float, bool]:
+    with transaction.atomic():
+        locked_ue = UserExam.objects.select_for_update().get(pk=ue.pk)
+        if locked_ue.submitted_at:
+            ue.score = locked_ue.score
+            ue.passed = locked_ue.passed
+            ue.submitted_at = locked_ue.submitted_at
+            ue.status = locked_ue.status
+            return locked_ue.score or 0.0, locked_ue.passed
 
-    # ========================================================
-    # QUESTION ORDER
-    # ========================================================
+        # ========================================================
+        # QUESTION ORDER
+        # ========================================================
 
-    if ue.question_order:
+        if ue.question_order:
 
-        qids = [
-            int(x)
-            for x in ue.question_order
-        ]
+            qids = [
+                int(x)
+                for x in ue.question_order
+            ]
 
-    else:
+        else:
 
-        qids = list(
-            ue.answers.values_list(
-                "question_id",
-                flat=True,
+            qids = list(
+                ue.answers.values_list(
+                    "question_id",
+                    flat=True,
+                )
+            )
+
+        # ========================================================
+        # GRADE ALL QUESTIONS
+        # ========================================================
+
+        total = 0
+        score_acc = 0.0
+
+        for qid in qids:
+
+            ua, _ = (
+                UserAnswer.objects.get_or_create(
+                    user_exam=ue,
+                    question_id=qid,
+                )
+            )
+
+            total += 1
+
+            score_acc += grade_answer(
+                ua,
+                post_data,
+            )
+
+        # ========================================================
+        # CALCULATE SCORE
+        # ========================================================
+
+        score_percent = (
+            round(
+                (score_acc / total) * 100,
+                2,
+            )
+            if total
+            else 0.0
+        )
+
+        # ========================================================
+        # PASS / FAIL
+        # ========================================================
+
+        passed = (
+            None
+            if is_mock
+            else (
+                score_percent
+                >= (
+                    ue.exam.passing_score
+                    or 0
+                )
             )
         )
 
-    # ========================================================
-    # GRADE ALL QUESTIONS
-    # ========================================================
+        # ========================================================
+        # FINALIZE EXAM
+        # ========================================================
 
-    total = 0
-    score_acc = 0.0
-
-    for qid in qids:
-
-        ua, _ = (
-            UserAnswer.objects.get_or_create(
-                user_exam=ue,
-                question_id=qid,
-            )
+        now_time = timezone.now()
+        locked_ue.score = score_percent
+        locked_ue.passed = passed
+        locked_ue.submitted_at = now_time
+        locked_ue.status = UserExam.STATUS_SUBMITTED
+        locked_ue.save(
+            update_fields=[
+                "score",
+                "passed",
+                "submitted_at",
+                "status",
+            ]
         )
+        ue.score = locked_ue.score
+        ue.passed = locked_ue.passed
+        ue.submitted_at = locked_ue.submitted_at
+        ue.status = locked_ue.status
 
-        total += 1
-
-        score_acc += grade_answer(
-            ua,
-            post_data,
-        )
-
-    # ========================================================
-    # CALCULATE SCORE
-    # ========================================================
-
-    score_percent = (
-        round(
-            (score_acc / total) * 100,
-            2,
-        )
-        if total
-        else 0.0
-    )
-
-    # ========================================================
-    # PASS / FAIL
-    # ========================================================
-
-    passed = (
-        None
-        if is_mock
-        else (
-            score_percent
-            >= (
-                ue.exam.passing_score
-                or 0
-            )
-        )
-    )
-
-    # ========================================================
-    # FINALIZE EXAM
-    # ========================================================
-
-    ue.score = score_percent
-
-    ue.passed = passed
-
-    ue.submitted_at = timezone.now()
-
-    # ⭐ IMPORTANT FIX
-    # The previous code forgot this.
-    ue.status = UserExam.STATUS_SUBMITTED
-
-    ue.save(
-        update_fields=[
-            "score",
-            "passed",
-            "submitted_at",
-            "status",
-        ]
-    )
-
-    return score_percent, passed
+        return score_percent, passed

@@ -7,15 +7,6 @@ from django.db import models
 from django.utils import timezone
 
 
-from datetime import timedelta
-import hashlib
-import secrets
-
-from django.conf import settings
-from django.db import models
-from django.utils import timezone
-
-
 class EmailOTP(models.Model):
 
     PURPOSE_LOGIN = "login"
@@ -172,7 +163,6 @@ class EmailOTP(models.Model):
         )
 
 
-from django.db import models
 from django.contrib.auth.models import User
 
 

@@ -19,6 +19,10 @@ def autosave_answers(
     - Supports all question types including match/order
     """
 
+    # Do not accept autosave updates if attempt is already submitted or expired
+    if ue.submitted_at is not None or ue.is_expired():
+        return
+
     # Build posted map: key -> list(values)
     posted = {}
     for k in post_data.keys():
@@ -49,6 +53,9 @@ def autosave_answers(
         )
 
         with transaction.atomic():
+            ue_locked = UserExam.objects.select_for_update().get(pk=ue.pk)
+            if ue_locked.submitted_at is not None or ue_locked.is_expired():
+                return
             ua = UserAnswer.objects.select_for_update().get(pk=ua.pk)
             vals = posted.get(qkey) or []
 
@@ -133,6 +140,9 @@ def autosave_answers(
             )
 
             with transaction.atomic():
+                ue_locked = UserExam.objects.select_for_update().get(pk=ue.pk)
+                if ue_locked.submitted_at is not None or ue_locked.is_expired():
+                    return
                 ua = UserAnswer.objects.select_for_update().get(pk=ua.pk)
 
                 user_map = ua.selections or {}

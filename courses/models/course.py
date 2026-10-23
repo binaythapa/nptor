@@ -28,7 +28,10 @@ class Course(models.Model):
     owner_type = models.CharField(max_length=20, choices=OWNER_CHOICES, default=OWNER_PLATFORM, db_index=True)
     organization = models.ForeignKey("organizations.Organization", null=True, blank=True, on_delete=models.SET_NULL, related_name="courses")
 
-    is_public = models.BooleanField(default=False, help_text="If enabled, an approved and published course may be visible on its organization's public portal or, for platform courses, the public platform catalog.")
+    is_public = models.BooleanField(
+        default=False,
+        help_text="If enabled, an approved and published platform course may be visible publicly.",
+    )
     is_published = models.BooleanField(default=False, db_index=True)
 
     APPROVAL_DRAFT = "draft"

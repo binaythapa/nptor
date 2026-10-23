@@ -60,8 +60,8 @@ class OrganizationAccountRequest(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["status", "created_at"]),
-            models.Index(fields=["user", "status"]),
+            models.Index(fields=["status", "created_at"], name="org_accreq_status_created_idx"),
+            models.Index(fields=["user", "status"], name="org_accreq_user_status_idx"),
         ]
 
     def __str__(self):
