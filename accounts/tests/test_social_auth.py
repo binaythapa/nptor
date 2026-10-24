@@ -308,3 +308,93 @@ class GoogleSocialAuthTests(TestCase):
             ).first()
             self.assertIsNotNone(otp)
             self.assertTrue(bool(otp.otp_hash))
+
+    def test_google_adapter_id_token_decoding_without_pyjwt(self):
+        """
+        Verify GoogleOAuth2Adapter decodes id_token cleanly without requiring
+        PyJWT to be installed, preventing HTTP 500 in OAuth callback.
+        """
+        import base64
+        import json
+        import time
+        from unittest.mock import MagicMock
+        from allauth.socialaccount.models import SocialApp, SocialToken
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+
+        client_id = "test-google-client-id.apps.googleusercontent.com"
+        app = SocialApp(provider="google", client_id=client_id, secret="secret")
+
+        # Construct valid JWT with claims
+        header = base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode()).decode().rstrip("=")
+        payload = {
+            "iss": "https://accounts.google.com",
+            "sub": "google-sub-998877",
+            "aud": client_id,
+            "email": "fresh.user@example.com",
+            "email_verified": True,
+            "name": "Fresh User",
+            "picture": "https://example.com/avatar.jpg",
+            "exp": int(time.time()) + 3600,
+        }
+        pld = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+        dummy_id_token = f"{header}.{pld}.dummy-signature"
+
+        adapter = GoogleOAuth2Adapter(self.rf.get("/"))
+        adapter.did_fetch_access_token = True
+
+        # Ensure _decode_id_token decodes without ModuleNotFoundError
+        decoded = adapter._decode_id_token(app, dummy_id_token)
+        self.assertIsNotNone(decoded)
+        self.assertEqual(decoded["email"], "fresh.user@example.com")
+        self.assertEqual(decoded["sub"], "google-sub-998877")
+
+        # Test complete_login
+        token = SocialToken(token="valid-oauth-access-token", app=app)
+        req = self._prepare_request(self.rf.get("/"))
+        sociallogin = adapter.complete_login(
+            req,
+            app,
+            token,
+            response={"access_token": "valid-oauth-access-token", "id_token": dummy_id_token},
+        )
+        self.assertIsNotNone(sociallogin)
+        self.assertEqual(sociallogin.account.uid, "google-sub-998877")
+        self.assertEqual(sociallogin.user.email, "fresh.user@example.com")
+        self.assertTrue(sociallogin.email_addresses[0].verified)
+
+    def test_google_adapter_complete_login_fallback_to_userinfo(self):
+        """
+        When id_token is missing or fails decoding, complete_login seamlessly
+        falls back to _fetch_user_info without raising HTTP 500.
+        """
+        from unittest.mock import MagicMock
+        from allauth.socialaccount.models import SocialApp, SocialToken
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+
+        client_id = "test-google-client-id.apps.googleusercontent.com"
+        app = SocialApp(provider="google", client_id=client_id, secret="secret")
+        token = SocialToken(token="oauth-token-fallback", app=app)
+
+        adapter = GoogleOAuth2Adapter(self.rf.get("/"))
+        adapter._fetch_user_info = MagicMock(return_value={
+            "id": "userinfo-id-12345",
+            "email": "userinfo.fallback@example.com",
+            "verified_email": True,
+            "name": "Fallback User",
+            "picture": "https://example.com/fallback.jpg",
+        })
+
+        req = self._prepare_request(self.rf.get("/"))
+        # Pass a corrupted id_token that cannot be decoded
+        sociallogin = adapter.complete_login(
+            req,
+            app,
+            token,
+            response={"access_token": "oauth-token-fallback", "id_token": "corrupted.token.value"},
+        )
+        self.assertIsNotNone(sociallogin)
+        self.assertEqual(sociallogin.account.uid, "userinfo-id-12345")
+        self.assertEqual(sociallogin.user.email, "userinfo.fallback@example.com")
+        self.assertTrue(sociallogin.email_addresses[0].verified)
+        adapter._fetch_user_info.assert_called_once_with("oauth-token-fallback")
+

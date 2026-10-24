@@ -6,6 +6,9 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 
 from accounts.models import UserProfile
+from accounts.social_patch import patch_google_adapter
+
+patch_google_adapter()
 
 User = get_user_model()
 
