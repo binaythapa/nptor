@@ -1,7 +1,7 @@
 {% extends "layouts/student/base.html" %}
 {% load static %}
 
-{% block title %}{{ site_name }} – Learning, Training, and Assessment{% endblock %}
+{% block title %}NPTOR – Everything you need to move forward{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/pages/home.css' %}">
@@ -9,132 +9,173 @@
 
 {% block content %}
 <div class="nptor-home">
-  <section class="nptor-section">
+  <!-- 1. Compact Hero Section -->
+  <section class="nptor-section nptor-hero-section">
     <div class="nptor-container nptor-hero has-text-centered">
-      <span class="nptor-eyebrow">LEARNING • TRAINING • ASSESSMENT</span>
-      <h1>One platform for smarter learning and better outcomes.</h1>
-      <p>Help learners prepare with confidence and give organizations the tools to manage courses, assignments, assessments, and student progress in one structured learning environment.</p>
+      <span class="nptor-eyebrow">LEARNING • EXAMS • COURSES • CAREER</span>
+      <h1 class="nptor-hero-title">Everything you need to move forward.</h1>
+      <p class="nptor-hero-subtitle">Practice skills, prepare for exams, explore courses, and build your career with NPTOR.</p>
       <div class="buttons is-centered mt-5">
-        <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">Start Learning</a>
-        <a href="#organizations" class="button is-light is-medium">For Organizations</a>
+        <a href="{% url 'quiz:practice' %}" class="button is-primary is-medium">
+          <span class="icon"><i class="fa fa-pen-to-square"></i></span>
+          <span>Start Practicing</span>
+        </a>
+        <a href="#services" class="button is-light is-medium">
+          <span class="icon"><i class="fa fa-compass"></i></span>
+          <span>Explore Services</span>
+        </a>
       </div>
     </div>
   </section>
 
-  <section class="nptor-section has-background-light" id="audiences">
+  <!-- 2. Main Service Grid Section -->
+  <section class="nptor-section" id="services">
     <div class="nptor-container">
-      <div class="has-text-centered mb-6">
-        <span class="nptor-eyebrow">BUILT FOR YOUR GOALS</span>
-        <h2 class="title is-2 mt-3">A focused experience for every type of learner</h2>
-        <p class="subtitle is-5">Choose the path that matches what you want to accomplish.</p>
+      <div class="has-text-centered mb-5">
+        <span class="nptor-eyebrow">OUR SERVICES</span>
+        <h2 class="title is-2 mt-2">What would you like to do?</h2>
+        <p class="subtitle is-6 has-text-grey">Choose a service to start learning, preparing, or advancing your career.</p>
       </div>
-      <div class="nptor-grid nptor-grid-2">
-        <div class="nptor-card nptor-audience">
-          <span class="nptor-icon"><i class="fa fa-user-graduate"></i></span>
-          <h3 class="title is-4">For Learners</h3>
-          <p>Prepare for certifications, government exams, academic entrance tests, and professional assessments at your own pace.</p>
-          <ul class="nptor-checklist">
-            <li>Explore public learning resources</li>
-            <li>Practice topic-based questions</li>
-            <li>Take timed mock exams</li>
-            <li>Review results and improve weak areas</li>
-          </ul>
-          <a href="{% url 'quiz:practice' %}" class="button is-primary is-light mt-3">Explore Learning Resources</a>
-        </div>
-        <div class="nptor-card nptor-audience" id="organizations">
-          <span class="nptor-icon"><i class="fa fa-building-columns"></i></span>
-          <h3 class="title is-4">For Organizations</h3>
-          <p>Bring your institution’s learning, training, and assessment activities into one manageable workspace.</p>
-          <ul class="nptor-checklist">
-            <li>Manage staff and student members</li>
-            <li>Build and organize learning programs</li>
-            <li>Assign private resources to students</li>
-            <li>Monitor participation and progress</li>
-          </ul>
-          <a href="#organization-capabilities" class="button is-primary is-light mt-3">Explore Organization Features</a>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <section class="nptor-section" id="organization-capabilities">
-    <div class="nptor-container">
-      <div class="has-text-centered mb-6">
-        <span class="nptor-eyebrow">ONE ORGANIZATION WORKSPACE</span>
-        <h2 class="title is-2 mt-3">Everything your organization needs to manage learning</h2>
-        <p class="subtitle is-5">Create a more structured experience for administrators, instructors, and students.</p>
-      </div>
       <div class="nptor-grid nptor-grid-3">
-        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-building"></i></span><h3 class="title is-5">Manage Your Institution</h3><p>Organize your institution’s members, responsibilities, and learning activities from a central workspace.</p></div>
-        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-layer-group"></i></span><h3 class="title is-5">Build Learning Programs</h3><p>Structure courses into sections and lessons so learners can follow a clear learning path.</p></div>
-        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-user-lock"></i></span><h3 class="title is-5">Assign Private Resources</h3><p>Share organization-specific courses and learning resources with selected students.</p></div>
-        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-clipboard-check"></i></span><h3 class="title is-5">Create Assessments</h3><p>Use practice activities and exams to evaluate understanding and reinforce learning.</p></div>
-        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-chart-line"></i></span><h3 class="title is-5">Track Student Progress</h3><p>Understand learner activity, completion, performance, and areas that need attention.</p></div>
-        <div class="nptor-card"><span class="nptor-icon"><i class="fa fa-people-group"></i></span><h3 class="title is-5">Deliver Structured Training</h3><p>Give staff and students a consistent, measurable, and repeatable training experience.</p></div>
+        <!-- 1. Practice & Learn -->
+        <div class="nptor-card nptor-service-card">
+          <div class="nptor-service-icon">
+            <i class="fa fa-pen-to-square"></i>
+          </div>
+          <h3 class="title is-4 mb-2">Practice &amp; Learn</h3>
+          <p class="mb-4">Question practice and learning tools with instant answer feedback, skip options, and detailed explanations.</p>
+          <div class="mt-auto">
+            <a href="{% url 'quiz:practice' %}" class="button is-primary is-light is-fullwidth">
+              <span>Start Practicing</span>
+              <span class="icon is-small ml-1"><i class="fa fa-arrow-right"></i></span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 2. Certification Prep -->
+        <div class="nptor-card nptor-service-card">
+          <div class="nptor-service-icon">
+            <i class="fa fa-award"></i>
+          </div>
+          <h3 class="title is-4 mb-2">Certification Prep</h3>
+          <p class="mb-4">Professional certification preparation with structured syllabus tracks, mock exams, and performance tracking.</p>
+          <div class="mt-auto">
+            <a href="{% url 'quiz:certifications' %}" class="button is-primary is-light is-fullwidth">
+              <span>Explore Certifications</span>
+              <span class="icon is-small ml-1"><i class="fa fa-arrow-right"></i></span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 3. Government Exams -->
+        <div class="nptor-card nptor-service-card">
+          <div class="nptor-service-icon">
+            <i class="fa fa-landmark"></i>
+          </div>
+          <h3 class="title is-4 mb-2">Government Exams</h3>
+          <p class="mb-4">Government examination preparation with structured country, body, and program curriculum catalogs.</p>
+          <div class="mt-auto">
+            <a href="{% url 'quiz:government_catalog' %}" class="button is-primary is-light is-fullwidth">
+              <span>View Government Exams</span>
+              <span class="icon is-small ml-1"><i class="fa fa-arrow-right"></i></span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 4. Academic & Entrance -->
+        <div class="nptor-card nptor-service-card">
+          <div class="nptor-service-icon">
+            <i class="fa fa-graduation-cap"></i>
+          </div>
+          <h3 class="title is-4 mb-2">Academic &amp; Entrance</h3>
+          <p class="mb-4">Academic and entrance exam preparation designed to strengthen core subject knowledge and exam readiness.</p>
+          <div class="mt-auto">
+            <a href="{% url 'quiz:academic_entrance' %}" class="button is-primary is-light is-fullwidth">
+              <span>Explore Entrance Tests</span>
+              <span class="icon is-small ml-1"><i class="fa fa-arrow-right"></i></span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 5. Courses & Organizations -->
+        <div class="nptor-card nptor-service-card">
+          <div class="nptor-service-icon">
+            <i class="fa fa-chalkboard-user"></i>
+          </div>
+          <h3 class="title is-4 mb-2">Courses &amp; Organizations</h3>
+          <p class="mb-4">Course access and organization learning tools to manage structured lessons, assignments, and student cohorts.</p>
+          <div class="mt-auto">
+            <a href="{% url 'courses:course_list' %}" class="button is-primary is-light is-fullwidth">
+              <span>Browse Courses</span>
+              <span class="icon is-small ml-1"><i class="fa fa-arrow-right"></i></span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 6. AI CV Builder -->
+        <div class="nptor-card nptor-service-card">
+          <div class="nptor-service-icon">
+            <i class="fa fa-file-lines"></i>
+          </div>
+          <h3 class="title is-4 mb-2">AI CV Builder</h3>
+          <p class="mb-4">CV creation powered by intelligent writing assistance, professional template rendering, and ATS optimization.</p>
+          <div class="mt-auto">
+            <a href="{% url 'cv:dashboard' %}" class="button is-primary is-light is-fullwidth">
+              <span>Build Your CV</span>
+              <span class="icon is-small ml-1"><i class="fa fa-arrow-right"></i></span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="nptor-section has-background-light">
+  <!-- 3. Store Visibility Section -->
+  <section class="nptor-section pt-0">
     <div class="nptor-container">
-      <div class="has-text-centered mb-6">
-        <span class="nptor-eyebrow">A SIMPLE WORKFLOW</span>
-        <h2 class="title is-2 mt-3">From setup to measurable progress</h2>
-      </div>
-      <div class="nptor-grid nptor-grid-4">
-        <div class="nptor-card nptor-step"><div class="nptor-step-number">1</div><h3 class="title is-5">Create your organization</h3><p>Set up your institution and define its learning environment.</p></div>
-        <div class="nptor-card nptor-step"><div class="nptor-step-number">2</div><h3 class="title is-5">Add your people</h3><p>Bring staff, instructors, and students into the workspace.</p></div>
-        <div class="nptor-card nptor-step"><div class="nptor-step-number">3</div><h3 class="title is-5">Assign and assess</h3><p>Provide courses, lessons, practice activities, and assessments.</p></div>
-        <div class="nptor-card nptor-step"><div class="nptor-step-number">4</div><h3 class="title is-5">Monitor outcomes</h3><p>Review progress and use performance insights to guide learners.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="nptor-section">
-    <div class="nptor-container">
-      <div class="has-text-centered mb-6">
-        <span class="nptor-eyebrow">FLEXIBLE ACCESS</span>
-        <h2 class="title is-2 mt-3">Public learning and private organization resources</h2>
-        <p class="subtitle is-5">Support open learning while keeping institution-specific resources controlled.</p>
-      </div>
-      <div class="table-container">
-        <table class="nptor-compare">
-          <thead><tr><th>Capability</th><th>Public resources</th><th>Organization resources</th></tr></thead>
-          <tbody>
-            <tr><td>Who can access?</td><td>Eligible learners using public content</td><td>Students assigned by an organization</td></tr>
-            <tr><td>Primary purpose</td><td>Independent preparation and practice</td><td>Institution-led learning and training</td></tr>
-            <tr><td>Resource control</td><td>Available through the public catalog</td><td>Managed by the organization</td></tr>
-            <tr><td>Progress visibility</td><td>Learner-focused progress and results</td><td>Organization-level oversight of assigned learners</td></tr>
-          </tbody>
-        </table>
+      <div class="nptor-store-banner">
+        <div class="nptor-store-content">
+          <div class="nptor-store-badge">
+            <span class="icon is-small"><i class="fa fa-star"></i></span>
+            <span>Educational Marketplace</span>
+          </div>
+          <div class="nptor-store-header">
+            <span class="nptor-store-icon">
+              <i class="fa fa-bag-shopping"></i>
+            </span>
+            <div>
+              <h3 class="title is-3 mb-1">NPTOR Store</h3>
+              <p class="is-size-5 nptor-store-desc">Browse educational products and study essentials.</p>
+            </div>
+          </div>
+          <p class="nptor-store-subtext">Find preparation textbooks, student notebooks, stationery essentials, and study organizers delivered across Nepal with Cash on Delivery.</p>
+        </div>
+        <div class="nptor-store-action">
+          <a href="{% url 'store:product_list' %}" class="button is-primary is-medium">
+            <span class="icon"><i class="fa fa-bag-shopping"></i></span>
+            <span>Visit Store Catalog</span>
+            <span class="icon is-small ml-1"><i class="fa fa-arrow-right"></i></span>
+          </a>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="nptor-section has-background-light">
-    <div class="nptor-container">
-      <div class="has-text-centered mb-6">
-        <span class="nptor-eyebrow">WHY NPTOR?</span>
-        <h2 class="title is-2 mt-3">Designed to make learning easier to manage</h2>
-      </div>
-      <div class="nptor-grid nptor-grid-3">
-        <div class="nptor-card"><h3 class="title is-5">Centralized management</h3><p>Keep people, courses, assignments, and assessments connected in one place.</p></div>
-        <div class="nptor-card"><h3 class="title is-5">Less manual administration</h3><p>Reduce scattered processes with a structured digital learning workflow.</p></div>
-        <div class="nptor-card"><h3 class="title is-5">Measurable outcomes</h3><p>Use progress and assessment information to support better learning decisions.</p></div>
-        <div class="nptor-card"><h3 class="title is-5">Flexible course management</h3><p>Organize content into meaningful courses, sections, and lessons.</p></div>
-        <div class="nptor-card"><h3 class="title is-5">Learner-centered practice</h3><p>Help learners strengthen knowledge through repetition, feedback, and review.</p></div>
-        <div class="nptor-card"><h3 class="title is-5">One connected platform</h3><p>Bring learning, training, and assessment activities into a consistent experience.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="nptor-section">
+  <!-- 4. Bottom CTA Section -->
+  <section class="nptor-section pt-0">
     <div class="nptor-container nptor-cta has-text-centered">
-      <h2 class="title is-2 has-text-white">Build a better learning experience</h2>
-      <p class="mb-5">Start exploring resources today or discover how NPTOR can support your organization’s learning journey.</p>
+      <h2 class="title is-3 has-text-white mb-2">Ready to start learning?</h2>
+      <p class="mb-4">Create your free account to track your progress, take exams, and save your practice history.</p>
       <div class="buttons is-centered">
-        <a href="{% url 'quiz:practice' %}" class="button is-light is-medium">Start Learning</a>
-        <a href="{% url 'accounts:request-login-otp' %}" class="button is-outlined is-light is-medium">Create Free Account</a>
+        <a href="{% url 'quiz:practice' %}" class="button is-light is-medium">
+          <span class="icon"><i class="fa fa-pen-to-square"></i></span>
+          <span>Start Practicing Free</span>
+        </a>
+        <a href="{% url 'accounts:request-login-otp' %}" class="button is-outlined is-light is-medium">
+          <span class="icon"><i class="fa fa-user-plus"></i></span>
+          <span>Create Free Account</span>
+        </a>
       </div>
     </div>
   </section>

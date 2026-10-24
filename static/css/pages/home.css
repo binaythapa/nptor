@@ -6,7 +6,12 @@
 }
 
 .nptor-section {
-  padding: 4.5rem 1.25rem;
+  padding: 3.5rem 1.25rem;
+}
+
+.nptor-hero-section {
+  padding-top: 2.5rem;
+  padding-bottom: 2rem;
 }
 
 .nptor-container {
@@ -14,10 +19,11 @@
   margin: 0 auto;
 }
 
+/* 1. Compact Hero */
 .nptor-hero {
-  border-radius: 1.5rem;
-  padding: 4.5rem 2rem;
-  background: linear-gradient(135deg, var(--nptor-surface, #ffffff) 0%, var(--nptor-surface-soft, #f1f5f9) 100%);
+  border-radius: 1.25rem;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, var(--nptor-surface, #ffffff) 0%, var(--nptor-surface-soft, #f8fafc) 100%);
   overflow: hidden;
   border: 1px solid var(--nptor-border, #e2e8f0);
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
@@ -25,36 +31,37 @@
 
 .nptor-eyebrow {
   display: inline-block;
-  padding: 0.4rem 0.85rem;
+  padding: 0.35rem 0.85rem;
   border-radius: 999px;
   background: rgba(37, 99, 235, 0.08);
   color: var(--nptor-primary, #2563eb);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
-.nptor-hero h1 {
-  max-width: 820px;
-  margin: 1rem auto;
-  font-size: clamp(2.25rem, 5vw, 3.75rem);
-  line-height: 1.1;
+.nptor-hero-title {
+  max-width: 780px;
+  margin: 0.85rem auto;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  line-height: 1.15;
   font-weight: 850;
   color: var(--nptor-text, #0f172a);
 }
 
-.nptor-hero p {
-  max-width: 760px;
+.nptor-hero-subtitle {
+  max-width: 680px;
   margin: 0 auto;
-  font-size: 1.12rem;
-  line-height: 1.75;
+  font-size: 1.15rem;
+  line-height: 1.65;
   color: var(--nptor-text-muted, #64748b);
 }
 
+/* 2. Responsive Grid */
 .nptor-grid {
   display: grid;
-  gap: 1.35rem;
+  gap: 1.5rem;
 }
 
 .nptor-grid-2 {
@@ -71,7 +78,7 @@
 
 .nptor-card {
   height: 100%;
-  padding: 1.8rem;
+  padding: 1.75rem;
   border: 1px solid var(--nptor-border, #e2e8f0);
   border-radius: 1rem;
   background: var(--nptor-surface, #ffffff);
@@ -79,99 +86,127 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.nptor-card h3 {
-  margin-top: 0.8rem;
-  font-weight: 800;
-  color: var(--nptor-text, #0f172a);
-}
-
-.nptor-card p {
-  color: var(--nptor-text-muted, #64748b);
-  line-height: 1.6;
-}
-
-.nptor-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.9rem;
-  background: rgba(37, 99, 235, 0.08);
-  color: var(--nptor-primary, #2563eb);
-  font-size: 1.3rem;
-}
-
-.nptor-audience:hover {
+.nptor-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
   border-color: #cbd5e1;
 }
 
-.nptor-checklist {
-  padding-left: 1.2rem;
-  margin: 1rem 0;
-  color: var(--nptor-text-secondary, #475569);
-}
-
-.nptor-checklist li {
-  margin: 0.7rem 0;
-}
-
-.nptor-checklist li::marker {
-  color: var(--nptor-primary, #2563eb);
-}
-
-.nptor-step {
-  text-align: center;
-}
-
-.nptor-step-number {
+/* Service Card Styles */
+.nptor-service-card {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.8rem;
-  height: 2.8rem;
-  margin: 0 auto;
-  border-radius: 50%;
-  background: var(--nptor-primary, #2563eb);
-  color: #ffffff;
-  font-weight: 850;
-  font-size: 1.1rem;
+  flex-direction: column;
 }
 
-.nptor-compare {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--nptor-surface, #ffffff);
-  border: 1px solid var(--nptor-border, #e2e8f0);
-  border-radius: 1rem;
-  overflow: hidden;
-}
-
-.nptor-compare th,
-.nptor-compare td {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--nptor-border, #e2e8f0);
-  text-align: left;
-}
-
-.nptor-compare th {
+.nptor-service-card h3 {
   font-weight: 800;
   color: var(--nptor-text, #0f172a);
-  background: var(--nptor-surface-soft, #f8fafc);
 }
 
-.nptor-compare td {
-  color: var(--nptor-text-secondary, #475569);
+.nptor-service-card p {
+  color: var(--nptor-text-muted, #64748b);
+  line-height: 1.6;
+  font-size: 0.95rem;
 }
 
+.nptor-service-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.85rem;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--nptor-primary, #2563eb);
+  font-size: 1.35rem;
+  margin-bottom: 1.25rem;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.nptor-service-card:hover .nptor-service-icon {
+  background: var(--nptor-primary, #2563eb);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* 3. NPTOR Store Banner */
+.nptor-store-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2.25rem 2.5rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(59, 130, 246, 0.12) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.06);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nptor-store-banner:hover {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.12);
+}
+
+.nptor-store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--nptor-primary, #2563eb);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+
+.nptor-store-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 0.65rem;
+}
+
+.nptor-store-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background: var(--nptor-primary, #2563eb);
+  color: #ffffff;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.nptor-store-desc {
+  font-weight: 600;
+  color: var(--nptor-text, #0f172a);
+}
+
+.nptor-store-subtext {
+  color: var(--nptor-text-muted, #64748b);
+  line-height: 1.6;
+  max-width: 680px;
+  font-size: 0.95rem;
+}
+
+.nptor-store-action {
+  flex-shrink: 0;
+}
+
+/* 4. Bottom CTA */
 .nptor-cta {
-  padding: 3.5rem 2rem;
-  border-radius: 1.4rem;
+  padding: 3rem 2rem;
+  border-radius: 1.25rem;
   color: #ffffff;
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.22);
 }
 
 .nptor-cta h2,
@@ -180,7 +215,8 @@
 }
 
 .nptor-cta p {
-  opacity: 0.94;
+  opacity: 0.95;
+  font-size: 1.05rem;
 }
 
 /* =====================================================
@@ -194,13 +230,13 @@ html[data-theme="dark"] .nptor-hero,
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-html[data-theme="dark"] .nptor-hero h1,
-:root[data-theme="dark"] .nptor-hero h1 {
+html[data-theme="dark"] .nptor-hero-title,
+:root[data-theme="dark"] .nptor-hero-title {
   color: #f8fafc;
 }
 
-html[data-theme="dark"] .nptor-hero p,
-:root[data-theme="dark"] .nptor-hero p {
+html[data-theme="dark"] .nptor-hero-subtitle,
+:root[data-theme="dark"] .nptor-hero-subtitle {
   color: #94a3b8;
 }
 
@@ -217,44 +253,54 @@ html[data-theme="dark"] .nptor-card,
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-html[data-theme="dark"] .nptor-card h3,
-:root[data-theme="dark"] .nptor-card h3 {
+html[data-theme="dark"] .nptor-card:hover,
+:root[data-theme="dark"] .nptor-card:hover {
+  border-color: #475569;
+}
+
+html[data-theme="dark"] .nptor-service-card h3,
+:root[data-theme="dark"] .nptor-service-card h3 {
   color: #f8fafc;
 }
 
-html[data-theme="dark"] .nptor-card p,
-:root[data-theme="dark"] .nptor-card p {
+html[data-theme="dark"] .nptor-service-card p,
+:root[data-theme="dark"] .nptor-service-card p {
   color: #94a3b8;
 }
 
-html[data-theme="dark"] .nptor-icon,
-:root[data-theme="dark"] .nptor-icon {
+html[data-theme="dark"] .nptor-service-icon,
+:root[data-theme="dark"] .nptor-service-icon {
   background: rgba(59, 130, 246, 0.16);
   color: #60a5fa;
 }
 
-html[data-theme="dark"] .nptor-checklist,
-:root[data-theme="dark"] .nptor-checklist {
-  color: #cbd5e1;
+html[data-theme="dark"] .nptor-service-card:hover .nptor-service-icon,
+:root[data-theme="dark"] .nptor-service-card:hover .nptor-service-icon {
+  background: #2563eb;
+  color: #ffffff;
 }
 
-html[data-theme="dark"] .nptor-compare,
-:root[data-theme="dark"] .nptor-compare {
-  background: #1e293b;
+html[data-theme="dark"] .nptor-store-banner,
+:root[data-theme="dark"] .nptor-store-banner {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
   border-color: #334155;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
 }
 
-html[data-theme="dark"] .nptor-compare th,
-:root[data-theme="dark"] .nptor-compare th {
-  background: #111827;
+html[data-theme="dark"] .nptor-store-badge,
+:root[data-theme="dark"] .nptor-store-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .nptor-store-desc,
+:root[data-theme="dark"] .nptor-store-desc {
   color: #f8fafc;
-  border-bottom-color: #334155;
 }
 
-html[data-theme="dark"] .nptor-compare td,
-:root[data-theme="dark"] .nptor-compare td {
-  border-bottom-color: #334155;
-  color: #cbd5e1;
+html[data-theme="dark"] .nptor-store-subtext,
+:root[data-theme="dark"] .nptor-store-subtext {
+  color: #94a3b8;
 }
 
 /* =====================================================
@@ -262,29 +308,46 @@ html[data-theme="dark"] .nptor-compare td,
    ===================================================== */
 
 @media (max-width: 900px) {
-  .nptor-grid-4,
   .nptor-grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nptor-store-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nptor-store-action {
+    width: 100%;
+  }
+
+  .nptor-store-action .button {
+    width: 100%;
   }
 }
 
 @media (max-width: 650px) {
   .nptor-section {
-    padding: 3rem 1rem;
+    padding: 2.5rem 1rem;
   }
+
   .nptor-hero {
-    padding: 3rem 1.2rem;
+    padding: 2.25rem 1.25rem;
   }
+
   .nptor-grid-2,
   .nptor-grid-3,
   .nptor-grid-4 {
     grid-template-columns: 1fr;
   }
-  .nptor-compare {
-    font-size: 0.9rem;
+
+  .nptor-store-banner {
+    padding: 1.75rem 1.25rem;
   }
-  .nptor-compare th,
-  .nptor-compare td {
-    padding: 0.75rem 0.55rem;
+
+  .nptor-store-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
 }
