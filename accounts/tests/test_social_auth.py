@@ -311,21 +311,19 @@ class GoogleSocialAuthTests(TestCase):
 
     def test_google_adapter_id_token_decoding_without_pyjwt(self):
         """
-        Verify GoogleOAuth2Adapter decodes id_token cleanly without requiring
-        PyJWT to be installed, preventing HTTP 500 in OAuth callback.
+        Verify GoogleOAuth2Adapter invokes cryptographic verify_oauth2_token cleanly
+        without requiring PyJWT to be installed, preventing HTTP 500 in OAuth callback.
         """
         import base64
         import json
         import time
-        from unittest.mock import MagicMock
+        from unittest.mock import patch, MagicMock
         from allauth.socialaccount.models import SocialApp, SocialToken
         from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 
         client_id = "test-google-client-id.apps.googleusercontent.com"
         app = SocialApp(provider="google", client_id=client_id, secret="secret")
 
-        # Construct valid JWT with claims
-        header = base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode()).decode().rstrip("=")
         payload = {
             "iss": "https://accounts.google.com",
             "sub": "google-sub-998877",
@@ -336,31 +334,31 @@ class GoogleSocialAuthTests(TestCase):
             "picture": "https://example.com/avatar.jpg",
             "exp": int(time.time()) + 3600,
         }
-        pld = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-        dummy_id_token = f"{header}.{pld}.dummy-signature"
 
         adapter = GoogleOAuth2Adapter(self.rf.get("/"))
-        adapter.did_fetch_access_token = True
 
-        # Ensure _decode_id_token decodes without ModuleNotFoundError
-        decoded = adapter._decode_id_token(app, dummy_id_token)
-        self.assertIsNotNone(decoded)
-        self.assertEqual(decoded["email"], "fresh.user@example.com")
-        self.assertEqual(decoded["sub"], "google-sub-998877")
+        with patch("google.oauth2.id_token.verify_oauth2_token", return_value=payload) as mock_verify:
+            # Ensure _decode_id_token decodes and delegates to verify_oauth2_token
+            decoded = adapter._decode_id_token(app, "valid.jwt.token")
+            self.assertIsNotNone(decoded)
+            self.assertEqual(decoded["email"], "fresh.user@example.com")
+            self.assertEqual(decoded["sub"], "google-sub-998877")
+            mock_verify.assert_called_once()
+            self.assertEqual(mock_verify.call_args[1]["audience"], client_id)
 
-        # Test complete_login
-        token = SocialToken(token="valid-oauth-access-token", app=app)
-        req = self._prepare_request(self.rf.get("/"))
-        sociallogin = adapter.complete_login(
-            req,
-            app,
-            token,
-            response={"access_token": "valid-oauth-access-token", "id_token": dummy_id_token},
-        )
-        self.assertIsNotNone(sociallogin)
-        self.assertEqual(sociallogin.account.uid, "google-sub-998877")
-        self.assertEqual(sociallogin.user.email, "fresh.user@example.com")
-        self.assertTrue(sociallogin.email_addresses[0].verified)
+            # Test complete_login
+            token = SocialToken(token="valid-oauth-access-token", app=app)
+            req = self._prepare_request(self.rf.get("/"))
+            sociallogin = adapter.complete_login(
+                req,
+                app,
+                token,
+                response={"access_token": "valid-oauth-access-token", "id_token": "valid.jwt.token"},
+            )
+            self.assertIsNotNone(sociallogin)
+            self.assertEqual(sociallogin.account.uid, "google-sub-998877")
+            self.assertEqual(sociallogin.user.email, "fresh.user@example.com")
+            self.assertTrue(sociallogin.email_addresses[0].verified)
 
     def test_google_adapter_complete_login_fallback_to_userinfo(self):
         """
@@ -385,16 +383,171 @@ class GoogleSocialAuthTests(TestCase):
         })
 
         req = self._prepare_request(self.rf.get("/"))
-        # Pass a corrupted id_token that cannot be decoded
+        # When id_token is not provided, complete_login uses authenticated HTTPS userinfo
         sociallogin = adapter.complete_login(
             req,
             app,
             token,
-            response={"access_token": "oauth-token-fallback", "id_token": "corrupted.token.value"},
+            response={"access_token": "oauth-token-fallback"},
         )
         self.assertIsNotNone(sociallogin)
         self.assertEqual(sociallogin.account.uid, "userinfo-id-12345")
         self.assertEqual(sociallogin.user.email, "userinfo.fallback@example.com")
         self.assertTrue(sociallogin.email_addresses[0].verified)
         adapter._fetch_user_info.assert_called_once_with("oauth-token-fallback")
+
+    def test_invalid_token_signature_rejected(self):
+        """
+        An ID token with an invalid/forged signature MUST be rejected and never
+        accepted based solely on unverified decoded claims.
+        """
+        from allauth.socialaccount.models import SocialApp
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+        from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+
+        client_id = "test-google-client-id.apps.googleusercontent.com"
+        app = SocialApp(provider="google", client_id=client_id, secret="secret")
+        adapter = GoogleOAuth2Adapter(self.rf.get("/"))
+
+        # A token with an invalid signature or fake kid
+        fake_jwt = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImZha2UifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMjM0NSIsImF1ZCI6InRlc3QtZ29vZ2xlLWNsaWVudC1pZC5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImVtYWlsIjoidmljdGltQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV4cCI6OTk5OTk5OTk5OX0.invalidsignaturehere"
+
+        with self.assertRaises(OAuth2Error):
+            adapter._decode_id_token(app, fake_jwt)
+
+    def test_wrong_audience_rejected(self):
+        """
+        An ID token issued for a different client ID must be rejected.
+        """
+        from unittest.mock import patch
+        from allauth.socialaccount.models import SocialApp
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+        from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+
+        client_id = "our-real-client-id.apps.googleusercontent.com"
+        app = SocialApp(provider="google", client_id=client_id, secret="secret")
+        adapter = GoogleOAuth2Adapter(self.rf.get("/"))
+
+        # Mock verify_oauth2_token returning token with mismatched audience
+        with patch("google.oauth2.id_token.verify_oauth2_token") as mock_verify:
+            from google.auth.exceptions import InvalidValue
+            mock_verify.side_effect = InvalidValue("Token has wrong audience")
+
+            with self.assertRaises(OAuth2Error):
+                adapter._decode_id_token(app, "valid.token.format")
+
+    def test_expired_token_rejected(self):
+        """
+        An expired ID token must be rejected.
+        """
+        from unittest.mock import patch
+        from allauth.socialaccount.models import SocialApp
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+        from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+
+        client_id = "our-real-client-id.apps.googleusercontent.com"
+        app = SocialApp(provider="google", client_id=client_id, secret="secret")
+        adapter = GoogleOAuth2Adapter(self.rf.get("/"))
+
+        with patch("google.oauth2.id_token.verify_oauth2_token") as mock_verify:
+            from google.auth.exceptions import InvalidValue
+            mock_verify.side_effect = InvalidValue("Token used after exp")
+
+            with self.assertRaises(OAuth2Error):
+                adapter._decode_id_token(app, "expired.token.format")
+
+    def test_nonce_mismatch_rejected(self):
+        """
+        If a nonce was established in the session, a mismatched nonce in the ID token must be rejected.
+        """
+        from unittest.mock import MagicMock
+        from allauth.socialaccount.models import SocialApp, SocialToken
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+        from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+
+        client_id = "test-google-client-id.apps.googleusercontent.com"
+        app = SocialApp(provider="google", client_id=client_id, secret="secret")
+        token = SocialToken(token="oauth-token", app=app)
+        adapter = GoogleOAuth2Adapter(self.rf.get("/"))
+
+        adapter._decode_id_token = MagicMock(return_value={
+            "sub": "google-user-123",
+            "email": "user@example.com",
+            "email_verified": True,
+            "nonce": "tampered-nonce-value",
+        })
+
+        req = self._prepare_request(self.rf.get("/"))
+        req.session["socialaccount_state"] = {"nonce": "expected-secure-nonce"}
+        req.session.save()
+
+        with self.assertRaises(OAuth2Error) as cm:
+            adapter.complete_login(
+                req,
+                app,
+                token,
+                response={"access_token": "oauth-token", "id_token": "valid.token.string"},
+            )
+        self.assertIn("nonce", str(cm.exception).lower())
+
+    def test_userinfo_fallback_rejects_unverified_email(self):
+        """
+        User-info fallback must strictly reject profiles where Google marks email as unverified.
+        """
+        from unittest.mock import MagicMock
+        from allauth.socialaccount.models import SocialApp, SocialToken
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+        from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+
+        client_id = "test-google-client-id.apps.googleusercontent.com"
+        app = SocialApp(provider="google", client_id=client_id, secret="secret")
+        token = SocialToken(token="oauth-token", app=app)
+        adapter = GoogleOAuth2Adapter(self.rf.get("/"))
+
+        adapter._fetch_user_info = MagicMock(return_value={
+            "id": "google-user-999",
+            "email": "unverified@gmail.com",
+            "verified_email": False,
+            "name": "Unverified User",
+        })
+
+        req = self._prepare_request(self.rf.get("/"))
+        with self.assertRaises(OAuth2Error) as cm:
+            adapter.complete_login(
+                req,
+                app,
+                token,
+                response={"access_token": "oauth-token"},
+            )
+        self.assertIn("unverified email", str(cm.exception).lower())
+
+    def test_userinfo_fallback_rejects_missing_subject(self):
+        """
+        User-info fallback must reject profiles missing a stable subject identifier.
+        """
+        from unittest.mock import MagicMock
+        from allauth.socialaccount.models import SocialApp, SocialToken
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+        from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+
+        client_id = "test-google-client-id.apps.googleusercontent.com"
+        app = SocialApp(provider="google", client_id=client_id, secret="secret")
+        token = SocialToken(token="oauth-token", app=app)
+        adapter = GoogleOAuth2Adapter(self.rf.get("/"))
+
+        adapter._fetch_user_info = MagicMock(return_value={
+            "email": "test@gmail.com",
+            "verified_email": True,
+        })
+
+        req = self._prepare_request(self.rf.get("/"))
+        with self.assertRaises(OAuth2Error) as cm:
+            adapter.complete_login(
+                req,
+                app,
+                token,
+                response={"access_token": "oauth-token"},
+            )
+        self.assertIn("subject identifier", str(cm.exception).lower())
+
 

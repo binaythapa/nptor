@@ -1,10 +1,14 @@
 """
-NPTOR Google Social Auth Resilience Patch.
+NPTOR Google Social Auth Security & Resilience Patch.
 
-Ensures Google OAuth complete_login can decode and verify ID tokens without
-hard-failing when PyJWT is not installed, leveraging the existing `google-auth`
-and `cryptography` packages, or gracefully falling back to Google's verified
-userinfo endpoint over TLS.
+Enforces strict OpenID Connect and OAuth 2.0 security validations:
+1. Cryptographic RSA signature verification against Google's public certificates.
+2. Strict issuer ('accounts.google.com' / 'https://accounts.google.com') and audience validation.
+3. Expiration and clock-skew enforcement.
+4. Nonce validation when present.
+5. Never accepts an ID token based solely on unverified decoded claims.
+6. Authenticated userinfo fallback over HTTPS validating stable subject identifier (sub/id)
+   and verified-email status.
 """
 from __future__ import annotations
 
@@ -18,8 +22,8 @@ _PATCHED = False
 
 def patch_google_adapter() -> None:
     """
-    Idempotently monkey-patches GoogleOAuth2Adapter and jwtkit.verify_and_decode
-    to provide robust fallback ID token decoding and user info fetching.
+    Idempotently patches GoogleOAuth2Adapter and jwtkit.verify_and_decode
+    to enforce strict cryptographic signature verification and secure userinfo fallback.
     """
     global _PATCHED
     if _PATCHED:
@@ -27,10 +31,7 @@ def patch_google_adapter() -> None:
 
     try:
         from allauth.socialaccount.internal import jwtkit
-        from allauth.socialaccount.providers.google.views import (
-            GoogleOAuth2Adapter,
-            _verify_and_decode as orig_google_verify_and_decode,
-        )
+        from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
         from allauth.socialaccount.providers.oauth2.client import OAuth2Error
     except ImportError:
         logger.warning("django-allauth Google provider not available to patch.")
@@ -38,77 +39,64 @@ def patch_google_adapter() -> None:
 
     orig_jwtkit_verify = jwtkit.verify_and_decode
 
-    def safe_jwtkit_verify_and_decode(*args, **kwargs):
+    def secure_verify_and_decode(credential, audience=None, **kwargs):
+        """
+        Cryptographically verifies and decodes Google ID tokens using
+        google.oauth2.id_token and Google's public certificate endpoints.
+        Strictly enforces signature, issuer, audience, and expiry.
+        """
         try:
-            return orig_jwtkit_verify(*args, **kwargs)
-        except ModuleNotFoundError as exc:
-            if "jwt" not in str(exc):
-                raise
-            # PyJWT is not installed; handle using google.auth
-            credential = kwargs.get("credential")
-            verify_signature = kwargs.get("verify_signature", True)
-            audience = kwargs.get("audience")
-            issuer = kwargs.get("issuer")
-
-            if not verify_signature:
-                payload = None
-                try:
-                    from google.auth import jwt as google_jwt
-
-                    payload = google_jwt.decode(credential, verify=False)
-                except Exception:
-                    pass
-
-                if payload is None:
-                    import base64
-                    import json
-
-                    parts = str(credential).split(".")
-                    if len(parts) >= 2:
-                        p_b64 = parts[1]
-                        rem = len(p_b64) % 4
-                        if rem:
-                            p_b64 += "=" * (4 - rem)
-                        payload = json.loads(base64.urlsafe_b64decode(p_b64).decode("utf-8"))
-
-                if payload:
-                    if audience and payload.get("aud") != audience:
-                        raise OAuth2Error(f"Invalid audience: {payload.get('aud')}")
-                    if issuer and payload.get("iss") not in (issuer, issuer.rstrip("/")):
-                        raise OAuth2Error(f"Invalid issuer: {payload.get('iss')}")
-                    exp = payload.get("exp")
-                    if exp and exp < time.time() - 300:
-                        raise OAuth2Error("ID token expired")
-                    return payload
-                raise OAuth2Error("Unable to decode ID token payload")
-
             from google.auth.transport import requests as google_requests
             from google.oauth2 import id_token as google_id_token
 
-            return google_id_token.verify_oauth2_token(
-                credential, google_requests.Request(), audience=audience
+            # verify_oauth2_token validates:
+            # - RSA signature against Google public certs
+            # - Issuer is accounts.google.com or https://accounts.google.com
+            # - Audience matches audience (client_id)
+            # - Token has not expired (exp and iat)
+            request = google_requests.Request()
+            payload = google_id_token.verify_oauth2_token(
+                credential,
+                request,
+                audience=audience,
             )
-
-    jwtkit.verify_and_decode = safe_jwtkit_verify_and_decode
-
-    def safe_decode_id_token(self, app, id_token):
-        verify_signature = not getattr(self, "did_fetch_access_token", False)
-        try:
-            return safe_jwtkit_verify_and_decode(
-                credential=id_token,
-                keys_url=getattr(self, "CERTS_URL", "https://www.googleapis.com/oauth2/v1/certs"),
-                issuer=getattr(self, "id_token_issuer", "https://accounts.google.com"),
-                audience=getattr(app, "client_id", ""),
-                lookup_kid=jwtkit.lookup_kid_pem_x509_certificate,
-                verify_signature=verify_signature,
-            )
+            return payload
         except Exception as exc:
-            logger.warning("ID token decoding failed: %s; falling back to userinfo", exc)
-            return None
+            # Also try default allauth jwtkit if PyJWT is available
+            try:
+                return orig_jwtkit_verify(credential=credential, audience=audience, **kwargs)
+            except Exception:
+                pass
+            logger.warning("Cryptographic ID token verification failed: %s", exc)
+            raise OAuth2Error(f"ID token verification failed: {exc}") from exc
 
-    GoogleOAuth2Adapter._decode_id_token = safe_decode_id_token
+    jwtkit.verify_and_decode = secure_verify_and_decode
 
-    def safe_complete_login(self, request, app, token, **kwargs):
+    def secure_decode_id_token(self, app, id_token):
+        """
+        Strictly decodes and cryptographically validates the ID token.
+        Never accepts unverified claims.
+        """
+        client_id = getattr(app, "client_id", "")
+        return secure_verify_and_decode(
+            credential=id_token,
+            keys_url=getattr(self, "CERTS_URL", "https://www.googleapis.com/oauth2/v1/certs"),
+            issuer=getattr(self, "id_token_issuer", "https://accounts.google.com"),
+            audience=client_id,
+            lookup_kid=jwtkit.lookup_kid_pem_x509_certificate,
+            verify_signature=True,
+        )
+
+    GoogleOAuth2Adapter._decode_id_token = secure_decode_id_token
+
+    def secure_complete_login(self, request, app, token, **kwargs):
+        """
+        Completes Google OAuth login with strict security safeguards:
+        1. If id_token is provided, cryptographically verify it (signature, iss, aud, exp, nonce).
+        2. If id_token verification fails or is absent, fallback to Google's HTTPS userinfo
+           endpoint using the authenticated access token.
+        3. Validate stable subject identifier (sub/id), presence of email, and verified email status.
+        """
         response = kwargs.get("response", {})
         id_token = response.get("id_token")
         data = None
@@ -116,26 +104,48 @@ def patch_google_adapter() -> None:
         if id_token:
             try:
                 data = self._decode_id_token(app, id_token)
+
+                # Validate nonce if session recorded one
+                session = getattr(request, "session", None)
+                if session:
+                    state_data = session.get("socialaccount_state", {})
+                    expected_nonce = state_data.get("nonce") if isinstance(state_data, dict) else None
+                    if expected_nonce and data.get("nonce") != expected_nonce:
+                        raise OAuth2Error("ID token nonce mismatch")
+
+                if self.fetch_userinfo and "picture" not in data:
+                    try:
+                        info = self._fetch_user_info(token.token)
+                        picture = info.get("picture")
+                        if picture:
+                            data["picture"] = picture
+                    except Exception:
+                        pass
+            except OAuth2Error:
+                raise
             except Exception as exc:
-                logger.warning("complete_login: _decode_id_token raised %s", exc)
+                logger.warning("ID token verification error: %s; falling back to HTTPS userinfo", exc)
                 data = None
 
-            if data and self.fetch_userinfo and "picture" not in data:
-                try:
-                    info = self._fetch_user_info(token.token)
-                    picture = info.get("picture")
-                    if picture:
-                        data["picture"] = picture
-                except Exception:
-                    pass
-
-        # If data is missing (either no id_token or id_token decode failed/returned None),
-        # query Google's userinfo endpoint directly using the valid access token
+        # Authenticated userinfo fallback over TLS
         if not data:
             data = self._fetch_user_info(token.token)
+
+        # Validate subject identifier, email, and email verification status
+        sub = data.get("sub") or data.get("id")
+        if not sub or not str(sub).strip():
+            raise OAuth2Error("Missing stable Google subject identifier")
+
+        email = (data.get("email") or "").strip()
+        if not email:
+            raise OAuth2Error("Missing email from Google profile")
+
+        email_verified = bool(data.get("email_verified") or data.get("verified_email"))
+        if not email_verified:
+            raise OAuth2Error("Unverified email address from Google account")
 
         login = self.get_provider().sociallogin_from_response(request, data)
         return login
 
-    GoogleOAuth2Adapter.complete_login = safe_complete_login
+    GoogleOAuth2Adapter.complete_login = secure_complete_login
     _PATCHED = True
