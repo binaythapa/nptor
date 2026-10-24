@@ -102,3 +102,21 @@ def render_markdown(value):
         output_lines.append("</ul>")
 
     return mark_safe("\n".join(output_lines))
+
+@register.filter(name="get_item")
+def get_item(dictionary, key):
+    """Safe dictionary lookup in templates."""
+    if isinstance(dictionary, dict):
+        return dictionary.get(key, 0)
+    return 0
+
+
+@register.filter(name="star_range")
+def star_range(rating):
+    """Returns a list of 5 booleans indicating filled stars."""
+    try:
+        val = int(round(float(rating)))
+    except (ValueError, TypeError):
+        val = 0
+    return [i < val for i in range(5)]
+

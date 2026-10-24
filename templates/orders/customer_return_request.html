@@ -1,0 +1,76 @@
+{% extends "layouts/store/base.html" %}
+
+{% block title %}Return Request - Package {{ suborder.suborder_number }}{% endblock %}
+
+{% block content %}
+<div class="store-page-content py-4" style="max-width: 650px; margin: 0 auto;">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb is-small mb-4 store-breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="{% url 'store:product_list' %}">Store</a></li>
+            <li><a href="{% url 'orders:customer_order_detail' suborder.master_order.order_number %}">Order #{{ suborder.master_order.order_number }}</a></li>
+            <li class="is-active"><a href="#" aria-current="page">Return Request</a></li>
+        </ul>
+    </nav>
+
+    <div class="card">
+        <div class="card-content">
+            <h1 class="title is-4 mb-2">
+                <i class="fas fa-undo has-text-danger mr-2"></i> Request Return or Replacement
+            </h1>
+            <p class="subtitle is-6 has-text-grey mb-4">
+                Package: <strong>{{ suborder.suborder_number }}</strong> (Sold by {{ suborder.vendor.store_name|default:"NPTOR Official" }})
+            </p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="notification is-{{ message.tags|default:'info' }} is-light py-2 px-3 mb-3">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="notification is-light mb-4 is-size-7">
+                <p class="has-text-weight-semibold mb-1"><i class="fas fa-info-circle mr-1"></i> Return Policy Guidelines:</p>
+                <ul style="list-style-type: disc; margin-left: 20px;">
+                    <li>Items must be in original condition with intact tags and packaging.</li>
+                    <li>Return requests are reviewed by merchant support within 24-48 business hours.</li>
+                    <li>Refunds are processed after package pickup and physical inspection.</li>
+                </ul>
+            </div>
+
+            <form method="post" action="">
+                {% csrf_token %}
+                <div class="field mb-3">
+                    <label class="label is-small">Reason for Return:</label>
+                    <div class="control">
+                        <div class="select is-fullwidth is-small">
+                            <select name="reason" required>
+                                {% for r_code, r_label in reasons %}
+                                    <option value="{{ r_code }}">{{ r_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field mb-4">
+                    <label class="label is-small">Detailed Explanation:</label>
+                    <div class="control">
+                        <textarea class="textarea is-small" name="explanation" rows="4" placeholder="Please describe the condition of the product and the issue observed..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button type="submit" class="button is-danger is-small">
+                        <i class="fas fa-paper-plane mr-1"></i> Submit Return Request
+                    </button>
+                    <a href="{% url 'orders:customer_order_detail' suborder.master_order.order_number %}" class="button is-light is-small">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

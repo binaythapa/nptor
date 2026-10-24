@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from orders.models import DigitalDelivery, Order, SubOrder
+from orders.models import DigitalDelivery, Order, SubOrder, OrderReturnRequest
 from orders.services.order_workflow_service import OrderWorkflowService
 from vendors.permissions import get_vendor_profile
 
@@ -140,3 +140,58 @@ def admin_order_list(request):
             "status_choices": Order.ORDER_STATUS_CHOICES,
         },
     )
+
+@login_required
+def customer_order_list(request):
+    """Customer order history overview showing past orders with fulfillment timelines."""
+    orders = (
+        Order.objects
+        .filter(user=request.user)
+        .select_related("shipping_address")
+        .prefetch_related("suborders", "suborders__items", "suborders__vendor")
+        .order_by("-created_at")
+    )
+    return render(
+        request,
+        "orders/customer_order_list.html",
+        {"orders": orders},
+    )
+
+
+@login_required
+def customer_return_request(request, suborder_number):
+    """Customer initiates a return request for a delivered suborder package."""
+    suborder = get_object_or_404(
+        SubOrder.objects.select_related("master_order", "vendor"),
+        suborder_number=suborder_number,
+        master_order__user=request.user,
+    )
+
+    if suborder.fulfillment_status != SubOrder.FULFILLMENT_DELIVERED:
+        messages.warning(request, "Return requests can only be submitted for delivered packages.")
+        return redirect("orders:customer_order_detail", order_number=suborder.master_order.order_number)
+
+    if request.method == "POST":
+        reason = request.POST.get("reason", OrderReturnRequest.REASON_DEFECTIVE)
+        explanation = request.POST.get("explanation", "").strip()
+        if not explanation:
+            messages.error(request, "Please provide an explanation describing the reason for return.")
+        else:
+            OrderReturnRequest.objects.create(
+                suborder=suborder,
+                user=request.user,
+                reason=reason,
+                explanation=explanation,
+            )
+            messages.success(request, f"Return request for Package {suborder.suborder_number} submitted successfully.")
+            return redirect("orders:customer_order_detail", order_number=suborder.master_order.order_number)
+
+    return render(
+        request,
+        "orders/customer_return_request.html",
+        {
+            "suborder": suborder,
+            "reasons": OrderReturnRequest.REASON_CHOICES,
+        },
+    )
+

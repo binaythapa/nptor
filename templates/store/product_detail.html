@@ -16,48 +16,105 @@
     <nav class="breadcrumb is-small mb-4 store-breadcrumb" aria-label="breadcrumbs">
         <ul>
             <li><a href="{% url 'store:product_list' %}"><i class="fas fa-store mr-1"></i> Store</a></li>
+            {% if product.category.parent %}
+                <li><a href="{% url 'store:product_list' %}?category={{ product.category.parent.slug }}">{{ product.category.parent.name }}</a></li>
+            {% endif %}
             <li><a href="{% url 'store:product_list' %}?category={{ product.category.slug }}">{{ product.category.name }}</a></li>
             <li class="is-active"><a href="#" aria-current="page">{{ product.title|truncatechars:45 }}</a></li>
         </ul>
     </nav>
 
     <div class="columns is-variable is-6">
-        <!-- Left Column: Gallery / Product Media -->
+        <!-- Left Column: Media Gallery (Images & Video) -->
         <div class="column is-5-desktop is-12-tablet">
             <div class="store-gallery-card">
-                {% if product.primary_image %}
-                    <div class="store-main-image-wrap">
-                        <img id="mainProductImage" src="{{ product.primary_image.image.url }}" alt="{{ product.title }}" class="store-main-image">
-                    </div>
-                    {% if product.images.all|length > 1 %}
-                        <div class="store-thumbnails-row mt-3">
-                            {% for img in product.images.all %}
-                                <button type="button" class="store-thumbnail-btn {% if forloop.first %}is-active{% endif %}" onclick="document.getElementById('mainProductImage').src='{{ img.image.url }}'; document.querySelectorAll('.store-thumbnail-btn').forEach(b => b.classList.remove('is-active')); this.classList.add('is-active');">
-                                    <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}">
-                                </button>
-                            {% endfor %}
+                <!-- Main Media Viewport -->
+                <div class="store-main-media-wrap" id="mainMediaWrap">
+                    {% if product.videos.all %}
+                        <div id="videoContainer" class="store-video-container" style="display: none;">
+                            {% with v=product.videos.first %}
+                                <video id="productVideoPlayer" controls class="store-video-player" poster="{% if v.poster_image %}{{ v.poster_image.url }}{% elif product.primary_image %}{{ product.primary_image.image.url }}{% endif %}">
+                                    <source src="{% if v.video_file %}{{ v.video_file.url }}{% else %}{{ v.video_url }}{% endif %}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            {% endwith %}
                         </div>
                     {% endif %}
-                {% else %}
-                    <div class="store-image-fallback">
-                        <div class="store-fallback-icon-wrap">
-                            <i class="fas {{ product.category.name|category_icon|default:'fa-box-open' }} fa-5x"></i>
+
+                    {% if product.primary_image %}
+                        <div id="imageContainer" class="store-main-image-wrap" onclick="openLightbox(document.getElementById('mainProductImage').src)">
+                            <img id="mainProductImage" src="{{ product.primary_image.image.url }}" alt="{{ product.title }}" class="store-main-image">
+                            <span class="store-zoom-hint"><i class="fas fa-search-plus mr-1"></i> Click to zoom</span>
                         </div>
-                        <span class="tag is-light is-rounded mt-3 store-fallback-badge">
-                            <i class="fas fa-tag mr-1"></i> {{ product.category.name|default:'General Product' }}
-                        </span>
-                        <p class="is-size-7 has-text-grey mt-2">Genuine product photo coming soon</p>
-                    </div>
-                {% endif %}
+                    {% else %}
+                        <div id="imageContainer" class="store-image-fallback">
+                            <div class="store-fallback-icon-wrap">
+                                <i class="fas {{ product.category.name|category_icon|default:'fa-box-open' }} fa-5x"></i>
+                            </div>
+                            <span class="tag is-light is-rounded mt-3 store-fallback-badge">
+                                <i class="fas fa-tag mr-1"></i> {{ product.category.name|default:'General Product' }}
+                            </span>
+                            <p class="is-size-7 has-text-grey mt-2">Genuine product photo coming soon</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Thumbnails Row -->
+                <div class="store-thumbnails-row mt-3">
+                    {% for img in product.images.all %}
+                        <button type="button" class="store-thumbnail-btn {% if forloop.first %}is-active{% endif %}" onclick="showImageThumbnail('{{ img.image.url }}', this)">
+                            <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}">
+                        </button>
+                    {% endfor %}
+
+                    {% if product.videos.all %}
+                        {% for vid in product.videos.all %}
+                            <button type="button" class="store-thumbnail-btn store-video-thumb-btn" onclick="showVideoThumbnail(this)" title="Play Product Video">
+                                <span class="video-play-icon"><i class="fas fa-play"></i></span>
+                                {% if vid.poster_image %}
+                                    <img src="{{ vid.poster_image.url }}" alt="Video thumbnail">
+                                {% elif product.primary_image %}
+                                    <img src="{{ product.primary_image.image.url }}" alt="Video thumbnail">
+                                {% else %}
+                                    <div class="video-placeholder-thumb"><i class="fas fa-film"></i></div>
+                                {% endif %}
+                            </button>
+                        {% endfor %}
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <!-- Right Column: Product Title, Seller, Badges, Buy Box, Description -->
+        <!-- Right Column: Product Info, Variants, Buy Box -->
         <div class="column is-7-desktop is-12-tablet">
-            <!-- Product Title & Seller Info (No Overlap) -->
             <div class="store-title-seller-group mb-3">
+                <div class="level is-mobile mb-1">
+                    <div class="level-left">
+                        {% if product.brand_name %}
+                            <span class="tag is-light is-rounded has-text-weight-bold has-text-grey-dark">
+                                <i class="fas fa-certificate mr-1 has-text-primary"></i> {{ product.brand_name }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="level-right">
+                        <!-- Wishlist Toggle -->
+                        {% if request.user.is_authenticated %}
+                            <a href="{% url 'store:wishlist_toggle' product.id %}" class="button is-small is-rounded store-wishlist-btn {% if is_wishlisted %}is-danger is-light{% else %}is-light{% endif %}" id="wishlistToggleBtn" title="{% if is_wishlisted %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
+                                <span class="icon"><i class="{% if is_wishlisted %}fas fa-heart has-text-danger{% else %}far fa-heart{% endif %}"></i></span>
+                                <span>{% if is_wishlisted %}Saved to Wishlist{% else %}Add to Wishlist{% endif %}</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'accounts:request-login-otp' %}?next={{ request.get_full_path }}" class="button is-small is-rounded is-light store-wishlist-btn" title="Sign in to save to Wishlist">
+                                <span class="icon"><i class="far fa-heart"></i></span>
+                                <span>Wishlist</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <h1 class="title is-3 is-spaced mb-2 store-product-detail-title">{{ product.title }}</h1>
-                <div class="store-product-seller-line is-size-6">
+
+                <div class="store-product-seller-line is-size-6 mb-2">
                     <span class="has-text-grey">Sold by:</span>
                     <strong class="has-text-weight-bold ml-1">
                         {% if product.vendor %}{{ product.vendor.store_name }}{% else %}NPTOR Official{% endif %}
@@ -66,19 +123,36 @@
                         <i class="fas fa-check-circle mr-1"></i> Verified Merchant
                     </span>
                 </div>
+
+                <!-- Rating Snippet -->
+                <div class="store-rating-snippet is-size-7 mb-2">
+                    {% if product.average_rating %}
+                        <span class="store-stars mr-1">
+                            {% for filled in product.average_rating|star_range %}
+                                <i class="{% if filled %}fas fa-star has-text-warning{% else %}far fa-star has-text-grey-lighter{% endif %}"></i>
+                            {% endfor %}
+                        </span>
+                        <strong class="has-text-weight-bold mr-1">{{ product.average_rating }}</strong>
+                        <a href="#reviews" class="has-text-grey">({{ product.review_count }} customer review{{ product.review_count|pluralize }})</a>
+                    {% else %}
+                        <span class="has-text-grey">
+                            <i class="far fa-star mr-1"></i> No reviews yet. <a href="#reviews" class="has-text-primary ml-1">Be the first to review!</a>
+                        </span>
+                    {% endif %}
+                </div>
             </div>
 
             {% if product.is_demo %}
                 <div class="notification is-info is-light p-3 mb-4 store-demo-notice">
                     <p class="is-size-7 mb-0">
                         <i class="fas fa-info-circle mr-1"></i>
-                        <strong>Demonstration Showcase:</strong> This listing and demonstration stock are displayed for marketplace showcase purposes.
+                        <strong>Demonstration Showcase:</strong> This listing and demonstration stock are displayed for marketplace showcase purposes. Checkout for demonstration stock is simulated/restricted.
                     </p>
                 </div>
             {% endif %}
 
-            <!-- Tags & Badges -->
-            <div class="tags store-product-tags mb-4">
+            <!-- Category & Features Badges -->
+            <div class="tags store-product-tags mb-3">
                 <span class="tag is-info is-light">{{ product.get_product_type_display }}</span>
                 {% if product.is_cod_eligible %}
                     <span class="tag is-success is-light"><i class="fas fa-money-bill-wave mr-1"></i> Cash on Delivery Available</span>
@@ -92,6 +166,27 @@
                 {% endif %}
             </div>
 
+            <!-- Configurable Variant Selectors (Attributes like Size, Color) -->
+            {% if attributes_map %}
+                <div class="store-variant-selectors mb-4" id="variantSelectorsWrap">
+                    {% for attr_name, attr_values in attributes_map.items %}
+                        <div class="store-attribute-group mb-3" data-attribute-group="{{ attr_name|lower }}">
+                            <div class="store-attribute-header mb-1">
+                                <span class="has-text-weight-semibold is-size-7 text-uppercase">{{ attr_name }}:</span>
+                                <strong class="is-size-7 ml-1" id="selectedAttrLabel_{{ attr_name|lower }}">{{ attr_values.0 }}</strong>
+                            </div>
+                            <div class="buttons are-small mb-0">
+                                {% for val in attr_values %}
+                                    <button type="button" class="button is-rounded store-attr-pill {% if forloop.first %}is-primary is-active{% else %}is-light{% endif %}" data-attribute-name="{{ attr_name|lower }}" data-attribute-value="{{ val }}" onclick="selectAttribute('{{ attr_name|lower }}', '{{ val }}', this)">
+                                        {{ val }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <!-- Buy Box Card -->
             <div class="card store-buy-box mb-5">
                 <div class="card-content">
@@ -99,84 +194,69 @@
                         <div class="level-left">
                             <div>
                                 <span class="heading mb-1 has-text-grey">Price</span>
-                                <span class="title is-3 store-price-tag">
+                                <span class="title is-3 store-price-tag" id="displayedPrice">
                                     {% if primary_variant %}
                                         {{ primary_variant.currency }} {{ primary_variant.price }}
                                     {% else %}
                                         N/A
                                     {% endif %}
                                 </span>
+                                {% if primary_variant.compare_at_price %}
+                                    <span class="store-compare-price is-size-6 has-text-grey ml-2" id="displayedComparePrice" style="text-decoration: line-through;">
+                                        {{ primary_variant.currency }} {{ primary_variant.compare_at_price }}
+                                    </span>
+                                {% endif %}
+                                <div class="is-size-7 has-text-grey mt-1">
+                                    SKU: <span id="displayedSKU" class="has-text-weight-semibold">{% if primary_variant %}{{ primary_variant.sku }}{% else %}N/A{% endif %}</span>
+                                </div>
                             </div>
                         </div>
                         <div class="level-right">
-                            {% if primary_variant and primary_variant.inventory %}
-                                {% if primary_variant.inventory.available_quantity > 0 %}
-                                    <span class="tag is-success is-medium is-rounded"><i class="fas fa-check mr-1"></i> In Stock ({{ primary_variant.inventory.available_quantity }})</span>
-                                {% else %}
-                                    <span class="tag is-danger is-medium is-rounded"><i class="fas fa-times mr-1"></i> Out of Stock</span>
+                            <div id="displayedStockTag">
+                                {% if primary_variant and primary_variant.inventory %}
+                                    {% if primary_variant.inventory.available_quantity > 0 %}
+                                        <span class="tag is-success is-medium is-rounded"><i class="fas fa-check mr-1"></i> In Stock ({{ primary_variant.inventory.available_quantity }})</span>
+                                    {% else %}
+                                        <span class="tag is-danger is-medium is-rounded"><i class="fas fa-times mr-1"></i> Out of Stock</span>
+                                    {% endif %}
                                 {% endif %}
-                            {% endif %}
+                            </div>
                         </div>
                     </div>
 
-                    {% if primary_variant %}
-                        {% if product.product_type == 'digital' %}
-                            <div class="notification is-info is-light mt-3 p-3">
-                                <p class="is-size-7 mb-0">
-                                    <i class="fas fa-info-circle mr-1"></i>
-                                    <strong>Digital Preview:</strong> Downloadable resources are currently in preview mode. Digital purchases will be enabled when the online payment gateway is activated.
-                                </p>
-                            </div>
-                            {% if request.user.is_staff %}
-                                <form method="post" action="{% url 'cart:add' primary_variant.id %}" class="mt-3">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <div class="field has-addons">
-                                        <div class="control" style="width: 80px;">
-                                            <input class="input" type="number" name="quantity" value="1" min="1" max="99" aria-label="Quantity">
-                                        </div>
-                                        <div class="control is-expanded">
-                                            <button class="button is-warning is-fullwidth" type="submit">
-                                                <span class="icon"><i class="fas fa-flask"></i></span>
-                                                <span>Add to Cart (Staff Test)</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            {% endif %}
-                        {% elif not primary_variant.inventory or primary_variant.inventory.available_quantity > 0 %}
-                            <form method="post" action="{% url 'cart:add' primary_variant.id %}" class="mt-3">
-                                {% csrf_token %}
-                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <div class="field has-addons">
-                                    <div class="control" style="width: 80px;">
-                                        <input class="input" type="number" name="quantity" value="1" min="1" max="99" aria-label="Quantity">
-                                    </div>
-                                    <div class="control is-expanded">
-                                        <button class="button is-primary is-fullwidth" type="submit">
-                                            <span class="icon"><i class="fas fa-cart-plus"></i></span>
-                                            <span>Add to Cart</span>
-                                        </button>
-                                    </div>
+                    <!-- Add to Cart Form -->
+                    {% if primary_variant and primary_variant.inventory and primary_variant.inventory.available_quantity <= 0 %}
+                        <div class="buttons mt-3">
+                            <button class="button is-danger is-light is-fullwidth" id="addToCartBtn" disabled>
+                                <span class="icon"><i class="fas fa-times-circle"></i></span>
+                                <span>Currently Out of Stock</span>
+                            </button>
+                        </div>
+                    {% elif primary_variant %}
+                        <form method="post" id="addToCartForm" action="{% url 'cart:add' primary_variant.id %}" class="mt-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <div class="field has-addons">
+                                <div class="control" style="width: 80px;">
+                                    <input class="input" type="number" name="quantity" value="1" min="1" max="99" aria-label="Quantity">
                                 </div>
-                            </form>
-                        {% else %}
-                            <div class="buttons mt-3">
-                                <button class="button is-danger is-light is-fullwidth" disabled>
-                                    <span class="icon"><i class="fas fa-times-circle"></i></span>
-                                    <span>Currently Out of Stock</span>
-                                </button>
+                                <div class="control is-expanded">
+                                    <button class="button is-primary is-fullwidth" type="submit" id="addToCartBtn">
+                                        <span class="icon"><i class="fas fa-cart-plus"></i></span>
+                                        <span>Add to Cart</span>
+                                    </button>
+                                </div>
                             </div>
-                        {% endif %}
+                        </form>
                     {% else %}
                         <div class="buttons mt-3">
                             <button class="button is-light is-fullwidth" disabled>
-                                <span>Unavailable</span>
+                                <span>Currently Unavailable</span>
                             </button>
                         </div>
                     {% endif %}
 
-                    <!-- Trust Checklist -->
+                    <!-- Trust Perks -->
                     <div class="store-trust-grid mt-4 pt-3">
                         <div class="store-trust-item">
                             <i class="fas fa-shield-alt has-text-primary mr-1"></i> 100% Genuine
@@ -185,7 +265,7 @@
                             <i class="fas fa-truck has-text-primary mr-1"></i> Fast Dispatch
                         </div>
                         <div class="store-trust-item">
-                            <i class="fas fa-undo-alt has-text-primary mr-1"></i> Easy Return Policy
+                            <i class="fas fa-undo-alt has-text-primary mr-1"></i> 7-Day Easy Return
                         </div>
                         <div class="store-trust-item">
                             <i class="fas fa-lock has-text-primary mr-1"></i> Secure Checkout
@@ -194,8 +274,33 @@
                 </div>
             </div>
 
+            <!-- Specifications Table -->
+            {% if product.specifications %}
+                <div class="card store-spec-card mb-5">
+                    <div class="card-content">
+                        <h2 class="title is-5 mb-3 store-section-heading">
+                            <i class="fas fa-list-check mr-2 has-text-primary"></i> Specifications
+                        </h2>
+                        <div class="table-container">
+                            <table class="table is-fullwidth is-striped is-hoverable store-spec-table">
+                                <tbody>
+                                    {% for spec_key, spec_val in product.specifications.items %}
+                                        {% if spec_key != "is_demo" %}
+                                            <tr>
+                                                <th style="width: 35%;" class="has-text-grey-dark text-capitalize">{{ spec_key|title }}</th>
+                                                <td>{{ spec_val }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
             <!-- Product Description Section -->
-            <div class="card store-description-card">
+            <div class="card store-description-card mb-5">
                 <div class="card-content">
                     <h2 class="title is-5 mb-3 store-section-heading">
                         <i class="fas fa-align-left mr-2 has-text-primary"></i> Product Overview & Details
@@ -205,7 +310,492 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Authentic Ratings & Customer Reviews Section -->
+            <div class="card store-reviews-card mb-5" id="reviews">
+                <div class="card-content">
+                    <div class="level is-mobile mb-4">
+                        <div class="level-left">
+                            <h2 class="title is-4 mb-0 store-section-heading">
+                                <i class="fas fa-star mr-2 has-text-warning"></i> Customer Ratings & Reviews
+                            </h2>
+                        </div>
+                    </div>
+
+                    <!-- Aggregate Rating Overview -->
+                    <div class="columns is-vcentered mb-5 store-rating-summary-box">
+                        <div class="column is-4-tablet has-text-centered has-text-left-desktop">
+                            <div class="title is-1 mb-1 has-text-warning">
+                                {% if product.average_rating %}{{ product.average_rating }}{% else %}0.0{% endif %}
+                            </div>
+                            <div class="store-stars mb-1">
+                                {% for filled in product.average_rating|star_range %}
+                                    <i class="{% if filled %}fas fa-star has-text-warning{% else %}far fa-star has-text-grey-lighter{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="is-size-7 has-text-grey">
+                                Based on {{ product.review_count }} verified review{{ product.review_count|pluralize }}
+                            </p>
+                        </div>
+                        <div class="column is-8-tablet">
+                            <div class="store-distribution-bars">
+                                {% for star in "54321" %}
+                                    {% with s=star|add:0 %}
+                                        {% with pct=product.rating_distribution|get_item:s %}
+                                            <div class="level is-mobile mb-1 store-dist-row">
+                                                <div class="level-left" style="width: 45px;">
+                                                    <span class="is-size-7">{{ star }} <i class="fas fa-star has-text-warning is-size-7"></i></span>
+                                                </div>
+                                                <div class="level-item" style="flex-grow: 1; margin: 0 10px;">
+                                                    <progress class="progress is-warning is-small mb-0" value="{{ pct }}" max="100">{{ pct }}%</progress>
+                                                </div>
+                                                <div class="level-right" style="width: 40px; text-align: right;">
+                                                    <span class="is-size-7 has-text-grey">{{ pct }}%</span>
+                                                </div>
+                                            </div>
+                                        {% endwith %}
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Customer Review Submission -->
+                    <div class="store-review-form-wrap mb-5">
+                        {% if request.user.is_authenticated %}
+                            {% if has_user_reviewed %}
+                                <div class="notification is-light py-3 px-4">
+                                    <i class="fas fa-check-circle has-text-success mr-1"></i>
+                                    You have already reviewed this product. Thank you for your feedback!
+                                </div>
+                            {% else %}
+                                <h3 class="title is-6 mb-3">
+                                    <i class="fas fa-pen mr-1 has-text-primary"></i> Write a Customer Review
+                                    {% if is_verified_buyer %}
+                                        <span class="tag is-success is-light ml-2">
+                                            <i class="fas fa-check-circle mr-1"></i> Verified Purchaser
+                                        </span>
+                                    {% endif %}
+                                </h3>
+                                <form method="post" action="{% url 'store:submit_product_review' product.slug %}" enctype="multipart/form-data" class="store-review-form">
+                                    {% csrf_token %}
+                                    <!-- Interactive Star Rating Input -->
+                                    <div class="field mb-3">
+                                        <label class="label is-small">Your Rating:</label>
+                                        <div class="control">
+                                            <div class="store-star-picker" id="starPicker">
+                                                {% for i in "12345" %}
+                                                    <button type="button" class="star-picker-btn" data-star="{{ i }}" onclick="setRating({{ i }})">
+                                                        <i class="far fa-star"></i>
+                                                    </button>
+                                                {% endfor %}
+                                            </div>
+                                            <input type="hidden" name="rating" id="reviewRatingInput" value="5" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="field mb-3">
+                                        <label class="label is-small">Review Headline / Summary:</label>
+                                        <div class="control">
+                                            {{ review_form.title }}
+                                        </div>
+                                    </div>
+
+                                    <div class="field mb-3">
+                                        <label class="label is-small">Review Details:</label>
+                                        <div class="control">
+                                            {{ review_form.content }}
+                                        </div>
+                                    </div>
+
+                                    <div class="field mb-4">
+                                        <label class="label is-small">Add Photos (Optional):</label>
+                                        <div class="control">
+                                            {{ review_form.review_images }}
+                                        </div>
+                                        <p class="help">Upload up to 3 genuine product photographs.</p>
+                                    </div>
+
+                                    <button type="submit" class="button is-primary is-small">
+                                        <span class="icon"><i class="fas fa-paper-plane"></i></span>
+                                        <span>Submit Review</span>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            <div class="notification is-light py-3 px-4">
+                                <i class="fas fa-lock mr-1 has-text-grey"></i>
+                                <span>Please <a href="{% url 'accounts:request-login-otp' %}?next={{ request.get_full_path }}#reviews" class="has-text-weight-bold has-text-primary">Sign in</a> to leave an authentic product review.</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Reviews List -->
+                    <div class="store-reviews-list">
+                        {% for r in approved_reviews %}
+                            <div class="box store-review-item mb-3">
+                                <div class="level is-mobile mb-2">
+                                    <div class="level-left">
+                                        <div>
+                                            <span class="store-stars mr-2">
+                                                {% for filled in r.rating|star_range %}
+                                                    <i class="{% if filled %}fas fa-star has-text-warning is-size-7{% else %}far fa-star has-text-grey-lighter is-size-7{% endif %}"></i>
+                                                {% endfor %}
+                                            </span>
+                                            <strong class="is-size-6">{{ r.title }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="level-right">
+                                        <span class="is-size-7 has-text-grey">{{ r.created_at|date:"M d, Y" }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="is-size-7 has-text-grey mb-2">
+                                    <span>By {{ r.user.get_full_name|default:r.user.username }}</span>
+                                    {% if r.is_verified_purchase %}
+                                        <span class="tag is-success is-light is-rounded ml-2">
+                                            <i class="fas fa-check-circle mr-1"></i> Verified Purchase
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <p class="is-size-6 mb-3 store-review-content">{{ r.content }}</p>
+
+                                {% if r.images.all %}
+                                    <div class="store-review-images-row mb-3">
+                                        {% for rimg in r.images.all %}
+                                            <button type="button" class="store-review-thumb-btn" onclick="openLightbox('{{ rimg.image.url }}')">
+                                                <img src="{{ rimg.image.url }}" alt="Customer review photo">
+                                            </button>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <div class="level is-mobile pt-2 border-top-light">
+                                    <div class="level-left">
+                                        <form method="post" action="{% url 'store:vote_review_helpful' r.id %}" class="is-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="button is-small is-light is-rounded" title="Mark this review as helpful">
+                                                <span class="icon is-small"><i class="fas fa-thumbs-up"></i></span>
+                                                <span>Helpful ({{ r.helpful_count }})</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="level-right">
+                                        <!-- Report review -->
+                                        <button type="button" class="button is-small is-text has-text-grey is-size-7" onclick="openReportModal({{ r.id }})">
+                                            <i class="far fa-flag mr-1"></i> Report
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="has-text-centered py-4 has-text-grey">
+                                <p class="is-size-6 mb-1">No customer reviews yet.</p>
+                                <p class="is-size-7">Purchased this product? Share your experience with the community!</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Products -->
+            {% if related_products %}
+                <div class="card store-related-card mb-5">
+                    <div class="card-content">
+                        <h2 class="title is-5 mb-4 store-section-heading">
+                            <i class="fas fa-layer-group mr-2 has-text-primary"></i> Similar in {{ product.category.name }}
+                        </h2>
+                        <div class="columns is-multiline is-mobile">
+                            {% for rp in related_products %}
+                                <div class="column is-6-mobile is-3-tablet">
+                                    <div class="card store-mini-card">
+                                        <a href="{% url 'store:product_detail' rp.slug %}">
+                                            <div class="store-mini-thumb">
+                                                {% if rp.primary_image %}
+                                                    <img src="{{ rp.primary_image.image.url }}" alt="{{ rp.title }}">
+                                                {% else %}
+                                                    <i class="fas {{ rp.category.name|category_icon|default:'fa-box-open' }} fa-2x has-text-grey-light"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="p-2">
+                                                <h4 class="is-size-7 has-text-weight-semibold store-mini-title">{{ rp.title|truncatechars:35 }}</h4>
+                                                <p class="is-size-7 has-text-primary has-text-weight-bold">
+                                                    {% with v=rp.variants.first %}
+                                                        {% if v %}{{ v.currency }} {{ v.price }}{% endif %}
+                                                    {% endwith %}
+                                                </p>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Recently Viewed Products -->
+            {% if recently_viewed_products %}
+                <div class="card store-recent-card mb-5">
+                    <div class="card-content">
+                        <h2 class="title is-5 mb-4 store-section-heading">
+                            <i class="fas fa-history mr-2 has-text-primary"></i> Recently Viewed
+                        </h2>
+                        <div class="columns is-multiline is-mobile">
+                            {% for rvp in recently_viewed_products %}
+                                <div class="column is-6-mobile is-3-tablet">
+                                    <div class="card store-mini-card">
+                                        <a href="{% url 'store:product_detail' rvp.slug %}">
+                                            <div class="store-mini-thumb">
+                                                {% if rvp.primary_image %}
+                                                    <img src="{{ rvp.primary_image.image.url }}" alt="{{ rvp.title }}">
+                                                {% else %}
+                                                    <i class="fas {{ rvp.category.name|category_icon|default:'fa-box-open' }} fa-2x has-text-grey-light"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="p-2">
+                                                <h4 class="is-size-7 has-text-weight-semibold store-mini-title">{{ rvp.title|truncatechars:35 }}</h4>
+                                                <p class="is-size-7 has-text-primary has-text-weight-bold">
+                                                    {% with v=rvp.variants.first %}
+                                                        {% if v %}{{ v.currency }} {{ v.price }}{% endif %}
+                                                    {% endwith %}
+                                                </p>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<!-- Image Lightbox Modal -->
+<div class="modal" id="imageLightboxModal">
+    <div class="modal-background" onclick="closeLightbox()"></div>
+    <div class="modal-content has-text-centered">
+        <p class="image store-lightbox-image-wrap">
+            <img id="lightboxModalImg" src="" alt="Zoomed view">
+        </p>
+    </div>
+    <button class="modal-close is-large" aria-label="close" onclick="closeLightbox()"></button>
+</div>
+
+<!-- Report Review Modal -->
+<div class="modal" id="reportReviewModal">
+    <div class="modal-background" onclick="closeReportModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title is-size-6 has-text-weight-bold">Report Review to Moderators</p>
+            <button class="delete" aria-label="close" onclick="closeReportModal()"></button>
+        </header>
+        <form method="post" id="reportReviewForm" action="">
+            {% csrf_token %}
+            <section class="modal-card-body">
+                <p class="is-size-7 has-text-grey mb-3">Please specify why this review violates NPTOR community guidelines:</p>
+                <div class="field">
+                    <div class="control">
+                        <textarea class="textarea is-small" name="reason" placeholder="Inappropriate language, fake claims, spam..." required></textarea>
+                    </div>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button type="submit" class="button is-danger is-small">Submit Report</button>
+                <button type="button" class="button is-light is-small" onclick="closeReportModal()">Cancel</button>
+            </footer>
+        </form>
+    </div>
+</div>
+
+<!-- Client-side Interactive Script -->
+<script>
+    // Variants Matrix
+    const variantsData = {{ variants_json|safe }};
+    const currentSelectedAttrs = {};
+
+    // Initialize default selected attributes from active pills
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll(".store-attr-pill.is-active").forEach(pill => {
+            currentSelectedAttrs[pill.dataset.attributeName] = pill.dataset.attributeValue;
+        });
+        setRating(5);
+    });
+
+    function selectAttribute(attrName, attrValue, btn) {
+        currentSelectedAttrs[attrName] = attrValue;
+
+        // Update active UI pills for this attribute group
+        const group = btn.closest(".store-attribute-group");
+        group.querySelectorAll(".store-attr-pill").forEach(p => {
+            p.classList.remove("is-primary", "is-active");
+            p.classList.add("is-light");
+        });
+        btn.classList.remove("is-light");
+        btn.classList.add("is-primary", "is-active");
+
+        // Update label
+        const lbl = document.getElementById("selectedAttrLabel_" + attrName);
+        if (lbl) lbl.textContent = attrValue;
+
+        // Find matching variant
+        const match = variantsData.find(v => {
+            return Object.entries(currentSelectedAttrs).every(([k, val]) => {
+                return v.attributes && String(v.attributes[k]).toLowerCase() === String(val).toLowerCase();
+            });
+        });
+
+        if (match) {
+            updateVariantUI(match);
+        }
+    }
+
+    function updateVariantUI(variant) {
+        // Price
+        const priceEl = document.getElementById("displayedPrice");
+        if (priceEl) priceEl.textContent = variant.currency + " " + variant.price;
+
+        // Compare price
+        const compPriceEl = document.getElementById("displayedComparePrice");
+        if (compPriceEl) {
+            if (variant.compare_at_price) {
+                compPriceEl.textContent = variant.currency + " " + variant.compare_at_price;
+                compPriceEl.style.display = "inline";
+            } else {
+                compPriceEl.style.display = "none";
+            }
+        }
+
+        // SKU
+        const skuEl = document.getElementById("displayedSKU");
+        if (skuEl) skuEl.textContent = variant.sku;
+
+        // Stock Tag
+        const stockEl = document.getElementById("displayedStockTag");
+        const addToCartBtn = document.getElementById("addToCartBtn");
+        const form = document.getElementById("addToCartForm");
+
+        if (variant.stock > 0) {
+            if (stockEl) {
+                stockEl.innerHTML = '<span class="tag is-success is-medium is-rounded"><i class="fas fa-check mr-1"></i> In Stock (' + variant.stock + ')</span>';
+            }
+            if (addToCartBtn) {
+                addToCartBtn.disabled = false;
+                addToCartBtn.classList.remove("is-danger");
+                addToCartBtn.classList.add("is-primary");
+                addToCartBtn.innerHTML = '<span class="icon"><i class="fas fa-cart-plus"></i></span><span>Add to Cart</span>';
+            }
+        } else {
+            if (stockEl) {
+                stockEl.innerHTML = '<span class="tag is-danger is-medium is-rounded"><i class="fas fa-times mr-1"></i> Out of Stock</span>';
+            }
+            if (addToCartBtn) {
+                addToCartBtn.disabled = true;
+                addToCartBtn.classList.remove("is-primary");
+                addToCartBtn.classList.add("is-danger");
+                addToCartBtn.innerHTML = '<span class="icon"><i class="fas fa-times-circle"></i></span><span>Out of Stock</span>';
+            }
+        }
+
+        // Form action
+        if (form) {
+            form.action = "/cart/add/" + variant.id + "/";
+        }
+
+        // Image swap if variant has image
+        if (variant.image_url) {
+            const mainImg = document.getElementById("mainProductImage");
+            if (mainImg) mainImg.src = variant.image_url;
+            showImageContainer();
+        }
+    }
+
+    // Media Switcher
+    function showImageThumbnail(url, btn) {
+        showImageContainer();
+        const mainImg = document.getElementById("mainProductImage");
+        if (mainImg) mainImg.src = url;
+
+        document.querySelectorAll(".store-thumbnail-btn").forEach(b => b.classList.remove("is-active"));
+        if (btn) btn.classList.add("is-active");
+    }
+
+    function showVideoThumbnail(btn) {
+        const vidContainer = document.getElementById("videoContainer");
+        const imgContainer = document.getElementById("imageContainer");
+        if (vidContainer && imgContainer) {
+            vidContainer.style.display = "block";
+            imgContainer.style.display = "none";
+            const player = document.getElementById("productVideoPlayer");
+            if (player) player.play();
+        }
+        document.querySelectorAll(".store-thumbnail-btn").forEach(b => b.classList.remove("is-active"));
+        if (btn) btn.classList.add("is-active");
+    }
+
+    function showImageContainer() {
+        const vidContainer = document.getElementById("videoContainer");
+        const imgContainer = document.getElementById("imageContainer");
+        if (vidContainer && imgContainer) {
+            vidContainer.style.display = "none";
+            imgContainer.style.display = "block";
+            const player = document.getElementById("productVideoPlayer");
+            if (player) player.pause();
+        }
+    }
+
+    // Lightbox
+    function openLightbox(url) {
+        const modal = document.getElementById("imageLightboxModal");
+        const img = document.getElementById("lightboxModalImg");
+        if (modal && img && url) {
+            img.src = url;
+            modal.classList.add("is-active");
+        }
+    }
+
+    function closeLightbox() {
+        const modal = document.getElementById("imageLightboxModal");
+        if (modal) modal.classList.remove("is-active");
+    }
+
+    // Report modal
+    function openReportModal(reviewId) {
+        const modal = document.getElementById("reportReviewModal");
+        const form = document.getElementById("reportReviewForm");
+        if (modal && form) {
+            form.action = "/store/reviews/" + reviewId + "/report/";
+            modal.classList.add("is-active");
+        }
+    }
+
+    function closeReportModal() {
+        const modal = document.getElementById("reportReviewModal");
+        if (modal) modal.classList.remove("is-active");
+    }
+
+    // Rating star picker
+    function setRating(val) {
+        const input = document.getElementById("reviewRatingInput");
+        if (input) input.value = val;
+
+        const btns = document.querySelectorAll("#starPicker .star-picker-btn");
+        btns.forEach(btn => {
+            const s = parseInt(btn.dataset.star, 10);
+            const icon = btn.querySelector("i");
+            if (icon) {
+                if (s <= val) {
+                    icon.className = "fas fa-star has-text-warning";
+                } else {
+                    icon.className = "far fa-star has-text-grey-lighter";
+                }
+            }
+        });
+    }
+</script>
 {% endblock %}

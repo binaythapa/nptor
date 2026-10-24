@@ -7,7 +7,7 @@ from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from store.models import Category, Product, ProductImage, ProductInventory, ProductVariant
+from store.models import Category, Product, ProductImage, ProductInventory, ProductVariant, ProductVideo
 
 
 class Command(BaseCommand):
@@ -793,36 +793,100 @@ class Command(BaseCommand):
                 else:
                     updated_count += 1
 
-                # Variant & Inventory
-                sku = f"SKU-{item['slug'].replace('demo-', '').upper()[:16]}"
-                variant, _ = ProductVariant.objects.get_or_create(
-                    product=prod,
-                    defaults={
-                        "sku": sku,
-                        "variant_name": "Standard",
-                        "price": item["price"],
-                        "compare_at_price": item.get("compare_at_price"),
-                        "currency": "NPR",
-                        "weight_grams": item["weight_grams"],
-                        "is_active": True,
-                    },
-                )
-                if force:
-                    variant.price = item["price"]
-                    variant.compare_at_price = item.get("compare_at_price")
-                    variant.save()
+                # Variants & Inventory with Configurable Attributes
+                category_slug = item["category_slug"]
+                base_sku = f"SKU-{item['slug'].replace('demo-', '').upper()[:10]}"
 
-                inventory, _ = ProductInventory.objects.get_or_create(
-                    variant=variant,
-                    defaults={
-                        "quantity": item["stock"],
-                        "reserved_quantity": 0,
-                        "low_stock_threshold": 5,
-                    },
-                )
-                if force or inventory.quantity == 0:
-                    inventory.quantity = item["stock"]
-                    inventory.save()
+                variants_config = []
+                if any(x in category_slug for x in ["shoe", "footwear", "sneaker", "sandal"]):
+                    sizes = ["40", "41", "42", "43"]
+                    base_stock = max(10, item["stock"] // len(sizes))
+                    for idx, s in enumerate(sizes):
+                        variants_config.append({
+                            "name": f"Size {s}",
+                            "sku": f"{base_sku}-SZ{s}",
+                            "attributes": {"size": s},
+                            "price": item["price"] + Decimal(idx * 50),
+                            "stock": base_stock + (idx % 3),
+                        })
+                elif any(x in category_slug for x in ["clothing", "tshirt", "jeans", "jacket", "activewear", "dress"]):
+                    sizes = ["S", "M", "L", "XL"]
+                    base_stock = max(10, item["stock"] // len(sizes))
+                    for idx, s in enumerate(sizes):
+                        variants_config.append({
+                            "name": f"Size {s}",
+                            "sku": f"{base_sku}-{s}",
+                            "attributes": {"size": s},
+                            "price": item["price"],
+                            "stock": base_stock + ((idx * 2) % 5),
+                        })
+                elif any(x in category_slug for x in ["headphones", "keyboards", "speakers", "smartwatches", "chargers", "monitors"]):
+                    colors = ["Matte Black", "Silver White"]
+                    base_stock = max(10, item["stock"] // len(colors))
+                    for idx, col in enumerate(colors):
+                        variants_config.append({
+                            "name": col,
+                            "sku": f"{base_sku}-COL{idx+1}",
+                            "attributes": {"color": col},
+                            "price": item["price"] + Decimal(idx * 150),
+                            "stock": base_stock + idx,
+                        })
+                else:
+                    variants_config.append({
+                        "name": "Standard Edition",
+                        "sku": f"{base_sku}-STD",
+                        "attributes": {"option": "Standard"},
+                        "price": item["price"],
+                        "stock": item["stock"],
+                    })
+
+                # Clean up legacy unconfigured standard variant if real variants exist
+                if variants_config:
+                    prod.variants.filter(attributes={}).delete()
+
+                for v_cfg in variants_config:
+                    var_obj, _ = ProductVariant.objects.get_or_create(
+                        product=prod,
+                        sku=v_cfg["sku"],
+                        defaults={
+                            "variant_name": v_cfg["name"],
+                            "price": v_cfg["price"],
+                            "compare_at_price": item.get("compare_at_price"),
+                            "currency": "NPR",
+                            "weight_grams": item["weight_grams"],
+                            "attributes": v_cfg["attributes"],
+                            "is_active": True,
+                        },
+                    )
+                    if force:
+                        var_obj.variant_name = v_cfg["name"]
+                        var_obj.price = v_cfg["price"]
+                        var_obj.compare_at_price = item.get("compare_at_price")
+                        var_obj.attributes = v_cfg["attributes"]
+                        var_obj.save()
+
+                    inv_obj, _ = ProductInventory.objects.get_or_create(
+                        variant=var_obj,
+                        defaults={
+                            "quantity": v_cfg["stock"],
+                            "reserved_quantity": 0,
+                            "low_stock_threshold": 3,
+                        },
+                    )
+                    if force or inv_obj.quantity == 0:
+                        inv_obj.quantity = v_cfg["stock"]
+                        inv_obj.save()
+
+                # Add sample product demo video for showcase
+                if prod.videos.count() == 0 and any(k in category_slug for k in ["running", "smartwatch", "headphone"]):
+                    ProductVideo.objects.get_or_create(
+                        product=prod,
+                        display_order=0,
+                        defaults={
+                            "title": f"{item['title']} Product Demonstration",
+                            "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                        },
+                    )
 
                 # Product Image handling
                 if not skip_images and prod.images.count() == 0:

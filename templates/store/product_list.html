@@ -6,7 +6,7 @@
 {% block content %}
 <div class="store-page-content">
     <!-- 1. Marketplace Hero / Promotional Banner (Shown when not filtering) -->
-    {% if not search_query and not selected_category %}
+    {% if not search_query and not selected_category and not min_price and not max_price and not in_stock and sort == 'newest' %}
         <section class="store-hero-banner mb-5">
             <div class="store-hero-inner">
                 <div class="store-hero-text">
@@ -17,7 +17,7 @@
                         Shop Everything You Need, Delivered to Your Door
                     </h1>
                     <p class="store-hero-desc">
-                        Explore quality products across electronics, fashion, books, home essentials, study materials, and more — with verified Cash on Delivery across Nepal.
+                        Explore quality products across electronics, fashion, footwear, books, study resources, and lifestyle essentials — with verified Cash on Delivery across Nepal.
                     </p>
                     <div class="store-hero-perks">
                         <div class="perk-item">
@@ -81,52 +81,80 @@
         </section>
     {% endif %}
 
-    <!-- 3. Product Catalog Header & Active Filters -->
-    <div class="store-catalog-header">
+    <!-- 3. Product Catalog Header & Discovery Controls -->
+    <div class="store-catalog-header mb-3">
         <div class="store-catalog-title-group">
-            <h2 class="title is-4 store-catalog-title">
+            <h2 class="title is-4 store-catalog-title mb-1">
                 <i class="fa fa-bag-shopping has-text-primary mr-2"></i>
                 {% if selected_category %}{{ selected_category.name }}{% elif search_query %}Search Results{% else %}All Products{% endif %}
             </h2>
-            <p class="subtitle is-6 has-text-grey store-catalog-count">
-                {{ products|length }} product{{ products|length|pluralize }} available
+            <p class="subtitle is-6 has-text-grey store-catalog-count mb-0">
+                {{ total_count }} product{{ total_count|pluralize }} available
                 {% if selected_category %}in <strong>{{ selected_category.name }}</strong>{% endif %}
                 {% if search_query %}matching "<em>{{ search_query }}</em>"{% endif %}
             </p>
         </div>
 
+        <!-- Filter & Search Toolbar -->
         <div class="store-toolbar-controls">
-            <form method="get" action="{% url 'store:product_list' %}" class="store-search-form">
-                <div class="field has-addons mb-0">
+            <form method="get" action="{% url 'store:product_list' %}" class="store-discovery-form">
+                {% if selected_category %}
+                    <input type="hidden" name="category" value="{{ selected_category.slug }}">
+                {% endif %}
+                <div class="field is-grouped is-grouped-multiline mb-0">
+                    <!-- Search input -->
+                    <div class="control is-expanded">
+                        <div class="field has-addons mb-0">
+                            <div class="control is-expanded">
+                                <input class="input is-small" type="text" name="q" placeholder="Search products..." value="{{ search_query }}" aria-label="Search products">
+                            </div>
+                            <div class="control">
+                                <button type="submit" class="button is-small is-primary" aria-label="Submit search">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Min Price -->
+                    <div class="control" style="width: 100px;">
+                        <input class="input is-small" type="number" name="min_price" placeholder="Min NPR" value="{{ min_price }}" min="0" step="100" aria-label="Minimum price">
+                    </div>
+
+                    <!-- Max Price -->
+                    <div class="control" style="width: 100px;">
+                        <input class="input is-small" type="number" name="max_price" placeholder="Max NPR" value="{{ max_price }}" min="0" step="100" aria-label="Maximum price">
+                    </div>
+
+                    <!-- In-stock only -->
+                    <div class="control is-flex is-align-items-center">
+                        <label class="checkbox is-size-7">
+                            <input type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %} onchange="this.form.submit()">
+                            In Stock Only
+                        </label>
+                    </div>
+
+                    <!-- Sort -->
                     <div class="control">
                         <div class="select is-small store-cat-select">
-                            <select name="category" onchange="this.form.submit()" aria-label="Select category">
-                                <option value="">All Categories</option>
-                                {% for cat in store_header_categories|default:categories %}
-                                    <option value="{{ cat.slug }}" {% if selected_category and selected_category.id == cat.id %}selected{% endif %}>
-                                        {{ cat.name }}
-                                    </option>
-                                    {% for sub in cat.children.all %}
-                                        <option value="{{ sub.slug }}" {% if selected_category and selected_category.id == sub.id %}selected{% endif %}>
-                                            &nbsp;&nbsp;&ndash; {{ sub.name }}
-                                        </option>
-                                    {% endfor %}
-                                {% endfor %}
+                            <select name="sort" onchange="this.form.submit()" aria-label="Sort products">
+                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                                <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                                <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+                                <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>Alphabetical (A-Z)</option>
                             </select>
                         </div>
                     </div>
-                    <div class="control is-expanded">
-                        <input class="input is-small" type="text" name="q" placeholder="Search products..." value="{{ search_query }}" aria-label="Search products">
-                    </div>
+
+                    <!-- Apply & Reset buttons -->
                     <div class="control">
-                        <button type="submit" class="button is-small is-primary" aria-label="Search">
-                            <i class="fas fa-search"></i>
-                        </button>
+                        <button type="submit" class="button is-small is-info is-light">Filter</button>
                     </div>
-                    {% if selected_category or search_query %}
+                    {% if selected_category or search_query or min_price or max_price or in_stock or sort != 'newest' %}
                         <div class="control">
-                            <a href="{% url 'store:product_list' %}" class="button is-small is-light" title="Reset all filters" aria-label="Reset filters">
-                                <i class="fas fa-times"></i>
+                            <a href="{% url 'store:product_list' %}" class="button is-small is-light" title="Reset all filters">
+                                <i class="fas fa-times mr-1"></i> Reset
                             </a>
                         </div>
                     {% endif %}
@@ -143,12 +171,12 @@
                 <i class="fa fa-th-large mr-1"></i> All Categories
             </a>
             {% for cat in store_header_categories|default:categories %}
-                <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
                    class="store-pill {% if selected_category and selected_category.id == cat.id %}is-active{% endif %}">
                     {{ cat.name }}
                 </a>
                 {% for sub in cat.children.all %}
-                    <a href="?category={{ sub.slug }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                    <a href="?category={{ sub.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
                        class="store-pill is-subpill {% if selected_category and selected_category.id == sub.id %}is-active{% endif %}">
                         &ndash; {{ sub.name }}
                     </a>
@@ -158,22 +186,46 @@
     </div>
 
     <!-- Active Filter Tags (if filtering) -->
-    {% if selected_category or search_query %}
-        <div class="store-active-filter-tags">
-            <span class="has-text-grey is-size-7 mr-1">Active filters:</span>
+    {% if selected_category or search_query or min_price or max_price or in_stock or sort != 'newest' %}
+        <div class="store-active-filter-tags mb-4">
+            <span class="has-text-grey is-size-7 mr-2">Active filters:</span>
             {% if selected_category %}
-                <span class="tag is-info is-light">
+                <span class="tag is-info is-light mr-1 mb-1">
                     Category: <strong>{{ selected_category.name }}</strong>
-                    <a href="{% url 'store:product_list' %}{% if search_query %}?q={{ search_query }}{% endif %}" class="delete is-small" aria-label="Remove category filter"></a>
+                    <a href="{% url 'store:product_list' %}?{% if search_query %}q={{ search_query }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if in_stock %}in_stock=1&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="delete is-small" aria-label="Remove category filter"></a>
                 </span>
             {% endif %}
             {% if search_query %}
-                <span class="tag is-info is-light">
+                <span class="tag is-info is-light mr-1 mb-1">
                     Query: "<strong>{{ search_query }}</strong>"
-                    <a href="{% url 'store:product_list' %}{% if selected_category %}?category={{ selected_category.slug }}{% endif %}" class="delete is-small" aria-label="Remove search filter"></a>
+                    <a href="{% url 'store:product_list' %}?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if in_stock %}in_stock=1&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="delete is-small" aria-label="Remove search filter"></a>
                 </span>
             {% endif %}
-            <a href="{% url 'store:product_list' %}" class="is-size-7 ml-2 has-text-grey-dark">Clear all</a>
+            {% if min_price %}
+                <span class="tag is-info is-light mr-1 mb-1">
+                    Min: NPR <strong>{{ min_price }}</strong>
+                    <a href="{% url 'store:product_list' %}?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if in_stock %}in_stock=1&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="delete is-small" aria-label="Remove min price filter"></a>
+                </span>
+            {% endif %}
+            {% if max_price %}
+                <span class="tag is-info is-light mr-1 mb-1">
+                    Max: NPR <strong>{{ max_price }}</strong>
+                    <a href="{% url 'store:product_list' %}?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if in_stock %}in_stock=1&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="delete is-small" aria-label="Remove max price filter"></a>
+                </span>
+            {% endif %}
+            {% if in_stock %}
+                <span class="tag is-success is-light mr-1 mb-1">
+                    In Stock Only
+                    <a href="{% url 'store:product_list' %}?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="delete is-small" aria-label="Remove in-stock filter"></a>
+                </span>
+            {% endif %}
+            {% if sort != 'newest' %}
+                <span class="tag is-light mr-1 mb-1">
+                    Sort: <strong>{{ sort }}</strong>
+                    <a href="{% url 'store:product_list' %}?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if in_stock %}in_stock=1{% endif %}" class="delete is-small" aria-label="Reset sort"></a>
+                </span>
+            {% endif %}
+            <a href="{% url 'store:product_list' %}" class="is-size-7 ml-2 has-text-grey-dark">Clear all filters</a>
         </div>
     {% endif %}
 
@@ -184,11 +236,20 @@
                 {% with v=p.variants.first %}
                     <div class="column is-3-widescreen is-4-desktop is-6-tablet is-12-mobile">
                         <div class="card store-product-card">
-                            <div class="store-card-thumb py-5 has-text-centered">
-                                {% if p.primary_image %}
-                                    <img src="{{ p.primary_image.image.url }}" alt="{{ p.title }}" class="store-card-img">
-                                {% else %}
-                                    <i class="fas {{ p.category.name|category_icon|default:'fa-box-open' }} fa-3x has-text-grey-light"></i>
+                            <div class="store-card-thumb py-5 has-text-centered pos-relative">
+                                <a href="{% url 'store:product_detail' p.slug %}">
+                                    {% if p.primary_image %}
+                                        <img src="{{ p.primary_image.image.url }}" alt="{{ p.title }}" class="store-card-img">
+                                    {% else %}
+                                        <i class="fas {{ p.category.name|category_icon|default:'fa-box-open' }} fa-3x has-text-grey-light"></i>
+                                    {% endif %}
+                                </a>
+
+                                <!-- Wishlist quick-toggle -->
+                                {% if request.user.is_authenticated %}
+                                    <a href="{% url 'store:wishlist_toggle' p.id %}" class="store-card-wishlist-btn {% if p.id in user_wishlist_ids %}is-active{% endif %}" title="{% if p.id in user_wishlist_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
+                                        <i class="{% if p.id in user_wishlist_ids %}fas fa-heart has-text-danger{% else %}far fa-heart{% endif %}"></i>
+                                    </a>
                                 {% endif %}
                             </div>
                             <div class="card-content">
@@ -201,6 +262,22 @@
                                 <h3 class="title is-6 mb-2 store-product-title">
                                     <a href="{% url 'store:product_detail' p.slug %}">{{ p.title }}</a>
                                 </h3>
+
+                                <!-- Rating snippet -->
+                                <div class="is-size-7 mb-2">
+                                    {% if p.average_rating %}
+                                        <span class="store-stars mr-1">
+                                            {% for filled in p.average_rating|star_range %}
+                                                <i class="{% if filled %}fas fa-star has-text-warning is-size-7{% else %}far fa-star has-text-grey-lighter is-size-7{% endif %}"></i>
+                                            {% endfor %}
+                                        </span>
+                                        <span class="has-text-weight-bold">{{ p.average_rating }}</span>
+                                        <span class="has-text-grey">({{ p.review_count }})</span>
+                                    {% else %}
+                                        <span class="has-text-grey is-size-7">No reviews yet</span>
+                                    {% endif %}
+                                </div>
+
                                 <p class="has-text-grey is-size-7 mb-2">
                                     Sold by: <strong>{% if p.vendor %}{{ p.vendor.store_name }}{% else %}NPTOR Official{% endif %}</strong>
                                 </p>
@@ -231,11 +308,46 @@
                 {% endwith %}
             {% endfor %}
         </div>
+
+        <!-- 5. Pagination Controls -->
+        {% if page_obj.has_other_pages %}
+            <nav class="pagination is-centered is-small mt-5 mb-5" role="navigation" aria-label="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category.slug }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="pagination-previous">
+                        <i class="fas fa-chevron-left mr-1"></i> Previous
+                    </a>
+                {% else %}
+                    <a class="pagination-previous" disabled>Previous</a>
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category.slug }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="pagination-next">
+                        Next <i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                {% else %}
+                    <a class="pagination-next" disabled>Next</a>
+                {% endif %}
+
+                <ul class="pagination-list">
+                    {% for page_num in page_obj.paginator.page_range %}
+                        {% if page_num == page_obj.number %}
+                            <li><a class="pagination-link is-current" aria-current="page">{{ page_num }}</a></li>
+                        {% elif page_num > page_obj.number|add:'-3' and page_num < page_obj.number|add:'3' %}
+                            <li>
+                                <a href="?page={{ page_num }}{% if selected_category %}&category={{ selected_category.slug }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="pagination-link">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        {% endif %}
     {% else %}
         <div class="box has-text-centered py-6 has-text-grey store-empty-box">
             <i class="fas fa-search fa-3x mb-3 has-text-grey-lighter"></i>
             <h3 class="title is-5">No products found</h3>
-            <p class="subtitle is-6">Try selecting a different category or clearing search terms.</p>
+            <p class="subtitle is-6">Try clearing filters or broadening search parameters.</p>
             <a href="{% url 'store:product_list' %}" class="button is-small is-primary mt-2">
                 <i class="fa fa-th-large mr-1"></i> View All Products
             </a>

@@ -1,0 +1,106 @@
+{% extends "layouts/store/base.html" %}
+{% load store_tags %}
+
+{% block title %}My Wishlist - NPTOR Store{% endblock %}
+
+{% block content %}
+<div class="store-page-content py-4">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb is-small mb-4 store-breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="{% url 'store:product_list' %}"><i class="fas fa-store mr-1"></i> Store</a></li>
+            <li class="is-active"><a href="#" aria-current="page">My Wishlist</a></li>
+        </ul>
+    </nav>
+
+    <div class="level is-mobile mb-4">
+        <div class="level-left">
+            <div>
+                <h1 class="title is-3 mb-1"><i class="fas fa-heart has-text-danger mr-2"></i> My Wishlist</h1>
+                <p class="subtitle is-6 has-text-grey">
+                    {{ wishlist_items|length }} item{{ wishlist_items|length|pluralize }} saved
+                </p>
+            </div>
+        </div>
+        <div class="level-right">
+            <a href="{% url 'store:product_list' %}" class="button is-small is-light">
+                <i class="fas fa-shopping-bag mr-1"></i> Continue Shopping
+            </a>
+        </div>
+    </div>
+
+    {% if wishlist_items %}
+        <div class="columns is-multiline store-product-grid">
+            {% for item in wishlist_items %}
+                {% with p=item.product %}
+                    {% with v=p.variants.first %}
+                        <div class="column is-3-widescreen is-4-desktop is-6-tablet is-12-mobile">
+                            <div class="card store-product-card">
+                                <div class="store-card-thumb py-5 has-text-centered">
+                                    <a href="{% url 'store:product_detail' p.slug %}">
+                                        {% if p.primary_image %}
+                                            <img src="{{ p.primary_image.image.url }}" alt="{{ p.title }}" class="store-card-img">
+                                        {% else %}
+                                            <i class="fas {{ p.category.name|category_icon|default:'fa-box-open' }} fa-3x has-text-grey-light"></i>
+                                        {% endif %}
+                                    </a>
+                                </div>
+                                <div class="card-content">
+                                    <div class="tags mb-2">
+                                        <span class="tag is-light">{{ p.category.name }}</span>
+                                    </div>
+                                    <h3 class="title is-6 mb-2 store-product-title">
+                                        <a href="{% url 'store:product_detail' p.slug %}">{{ p.title }}</a>
+                                    </h3>
+                                    <div class="store-price-stock-row mb-3">
+                                        <div class="title is-5 has-text-primary mb-0">
+                                            {% if v %}
+                                                {{ v.currency }} {{ v.price }}
+                                            {% else %}
+                                                Price on request
+                                            {% endif %}
+                                        </div>
+                                        {% if v and v.inventory %}
+                                            {% if v.inventory.available_quantity > 0 %}
+                                                <span class="tag is-success is-light is-rounded">In Stock</span>
+                                            {% else %}
+                                                <span class="tag is-danger is-light is-rounded">Out of Stock</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    <div class="buttons are-small">
+                                        {% if v and v.inventory and v.inventory.available_quantity > 0 %}
+                                            <form method="post" action="{% url 'cart:add' v.id %}" class="is-inline mr-2">
+                                                {% csrf_token %}
+                                                <button type="submit" class="button is-primary is-small">
+                                                    <i class="fas fa-cart-plus mr-1"></i> Add to Cart
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <a href="{% url 'store:product_detail' p.slug %}" class="button is-light is-small mr-2">
+                                                View Details
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'store:wishlist_toggle' p.id %}" class="button is-light is-danger is-small" title="Remove from wishlist">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endwith %}
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="box has-text-centered py-6 has-text-grey store-empty-box">
+            <i class="far fa-heart fa-3x mb-3 has-text-grey-lighter"></i>
+            <h3 class="title is-5">Your wishlist is empty</h3>
+            <p class="subtitle is-6">Explore the marketplace and save items you love for later.</p>
+            <a href="{% url 'store:product_list' %}" class="button is-small is-primary mt-2">
+                <i class="fa fa-th-large mr-1"></i> Browse Products
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from store.storage import protected_storage
 
@@ -155,6 +155,49 @@ class Product(models.Model):
             return True
         return False
 
+    @property
+    def average_rating(self):
+        """Returns average approved rating (float rounded to 1 decimal) or None."""
+        try:
+            approved = self.reviews.filter(status=ProductReview.STATUS_APPROVED)
+            if approved.exists():
+                from django.db.models import Avg
+                val = approved.aggregate(Avg("rating"))["rating__avg"]
+                return round(val, 1) if val is not None else None
+            return None
+        except Exception:
+            return None
+
+    @property
+    def review_count(self):
+        """Returns count of approved customer reviews."""
+        try:
+            return self.reviews.filter(status=ProductReview.STATUS_APPROVED).count()
+        except Exception:
+            return 0
+
+    @property
+    def rating_distribution(self):
+        """Returns distribution of 1-5 star percentages for approved customer reviews."""
+        try:
+            approved = list(self.reviews.filter(status=ProductReview.STATUS_APPROVED).values_list("rating", flat=True))
+            total = len(approved)
+            if total == 0:
+                return {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
+            dist = {}
+            for star in range(5, 0, -1):
+                count = approved.count(star)
+                dist[star] = int(round((count / total) * 100))
+            return dist
+        except Exception:
+            return {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
+
+    @property
+    def brand_name(self):
+        if self.specifications and isinstance(self.specifications, dict):
+            return self.specifications.get("brand") or self.specifications.get("Brand")
+        return None
+
 
 class ProductVariant(models.Model):
     product = models.ForeignKey(
@@ -180,6 +223,19 @@ class ProductVariant(models.Model):
         max_length=10,
         default="NPR",
         help_text="Product pricing currency; defaults to NPR for Nepal Store",
+    )
+    attributes = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Configurable key-value variant attributes, e.g. {'size': '42', 'color': 'Navy'}",
+    )
+    image = models.ForeignKey(
+        "ProductImage",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="variants",
+        help_text="Specific image representing this variant",
     )
     weight_grams = models.PositiveIntegerField(
         default=0,
@@ -274,3 +330,195 @@ class ProductDigitalAsset(models.Model):
 
     def __str__(self):
         return f"Digital Asset: {self.file_name} ({self.product.title})"
+
+class ProductVideo(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="videos",
+    )
+    video_url = models.URLField(
+        blank=True,
+        default="",
+        help_text="Direct MP4/WebM video URL or authorized video stream link",
+    )
+    video_file = models.FileField(
+        upload_to="store/videos/",
+        blank=True,
+        null=True,
+    )
+    poster_image = models.ImageField(
+        upload_to="store/videos/posters/",
+        blank=True,
+        null=True,
+    )
+    title = models.CharField(max_length=200, blank=True, default="")
+    display_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        verbose_name = "Product Video"
+        verbose_name_plural = "Product Videos"
+
+    def __str__(self):
+        return f"Video for {self.product.title}: {self.title or 'Product Demo'}"
+
+
+class ProductReview(models.Model):
+    STATUS_APPROVED = "approved"
+    STATUS_PENDING = "pending"
+    STATUS_REJECTED = "rejected"
+
+    STATUS_CHOICES = (
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_PENDING, "Pending Moderation"),
+        (STATUS_REJECTED, "Rejected"),
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="store_reviews",
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Rating between 1 and 5 stars",
+    )
+    title = models.CharField(max_length=150)
+    content = models.TextField()
+    is_verified_purchase = models.BooleanField(
+        default=False,
+        help_text="True if reviewer completed a verified purchase of this product",
+    )
+    order = models.ForeignKey(
+        "orders.Order",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="product_reviews",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_APPROVED,
+        db_index=True,
+    )
+    helpful_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Product Review"
+        verbose_name_plural = "Product Reviews"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["product", "user"],
+                name="unique_user_product_review",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.rating}* by {self.user.username} on {self.product.title}"
+
+
+class ProductReviewImage(models.Model):
+    review = models.ForeignKey(
+        ProductReview,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ImageField(upload_to="store/reviews/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Review Image"
+        verbose_name_plural = "Review Images"
+
+    def __str__(self):
+        return f"Image for Review #{self.review_id}"
+
+
+class ProductReviewHelpfulVote(models.Model):
+    review = models.ForeignKey(
+        ProductReview,
+        on_delete=models.CASCADE,
+        related_name="helpful_votes",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="review_helpful_votes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Review Helpful Vote"
+        verbose_name_plural = "Review Helpful Votes"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["review", "user"],
+                name="unique_user_review_helpful_vote",
+            )
+        ]
+
+    def __str__(self):
+        return f"Helpful vote by {self.user.username} on Review #{self.review_id}"
+
+
+class ProductReviewReport(models.Model):
+    review = models.ForeignKey(
+        ProductReview,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="review_reports",
+    )
+    reason = models.CharField(max_length=255)
+    is_resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Review Report"
+        verbose_name_plural = "Review Reports"
+
+    def __str__(self):
+        return f"Report on Review #{self.review_id} by {self.reporter.username}"
+
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="store_wishlist_items",
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="wishlisted_by",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Wishlist Item"
+        verbose_name_plural = "Wishlist Items"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "product"],
+                name="unique_user_wishlist_product",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.title}"

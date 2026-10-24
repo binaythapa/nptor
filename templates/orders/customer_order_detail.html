@@ -145,6 +145,29 @@
                         </div>
                     </div>
 
+                    <!-- Tracking Status Timeline -->
+                    <div class="store-order-timeline mb-4">
+                        <div class="timeline-step {% if sub.fulfillment_status != 'cancelled' %}is-done{% endif %}">
+                            <div class="timeline-circle"><i class="fas fa-check"></i></div>
+                            <span class="timeline-label">Placed</span>
+                        </div>
+                        <div class="timeline-line {% if sub.fulfillment_status == 'processing' or sub.fulfillment_status == 'shipped' or sub.fulfillment_status == 'delivered' %}is-done{% endif %}"></div>
+                        <div class="timeline-step {% if sub.fulfillment_status == 'processing' or sub.fulfillment_status == 'shipped' or sub.fulfillment_status == 'delivered' %}is-done{% elif sub.fulfillment_status == 'pending' %}is-active{% endif %}">
+                            <div class="timeline-circle">{% if sub.fulfillment_status == 'processing' or sub.fulfillment_status == 'shipped' or sub.fulfillment_status == 'delivered' %}<i class="fas fa-check"></i>{% else %}2{% endif %}</div>
+                            <span class="timeline-label">Processing</span>
+                        </div>
+                        <div class="timeline-line {% if sub.fulfillment_status == 'shipped' or sub.fulfillment_status == 'delivered' %}is-done{% endif %}"></div>
+                        <div class="timeline-step {% if sub.fulfillment_status == 'shipped' or sub.fulfillment_status == 'delivered' %}is-done{% elif sub.fulfillment_status == 'processing' %}is-active{% endif %}">
+                            <div class="timeline-circle">{% if sub.fulfillment_status == 'shipped' or sub.fulfillment_status == 'delivered' %}<i class="fas fa-check"></i>{% else %}3{% endif %}</div>
+                            <span class="timeline-label">Shipped</span>
+                        </div>
+                        <div class="timeline-line {% if sub.fulfillment_status == 'delivered' %}is-done{% endif %}"></div>
+                        <div class="timeline-step {% if sub.fulfillment_status == 'delivered' %}is-done{% endif %}">
+                            <div class="timeline-circle">{% if sub.fulfillment_status == 'delivered' %}<i class="fas fa-check"></i>{% else %}4{% endif %}</div>
+                            <span class="timeline-label">Delivered</span>
+                        </div>
+                    </div>
+
                     {% if sub.shipping_carrier or sub.tracking_number %}
                         <div class="notification is-light py-2 px-3 mb-3 is-size-7">
                             <span class="icon"><i class="fas fa-truck"></i></span>
@@ -174,6 +197,23 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    <!-- Return / Refund Request Actions -->
+                    <div class="level is-mobile mt-3 pt-2 border-top-light">
+                        <div class="level-left">
+                            {% if sub.return_requests.all %}
+                                {% with ret=sub.return_requests.first %}
+                                    <span class="tag is-warning is-light">
+                                        <i class="fas fa-undo mr-1"></i> Return: <strong>{{ ret.get_status_display }}</strong> ({{ ret.get_reason_display }})
+                                    </span>
+                                {% endwith %}
+                            {% elif sub.fulfillment_status == 'delivered' %}
+                                <a href="{% url 'orders:customer_return_request' sub.suborder_number %}" class="button is-small is-light">
+                                    <span class="icon is-small"><i class="fas fa-undo"></i></span>
+                                    <span>Request Return / Replacement</span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             {% endfor %}
         </div>

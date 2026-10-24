@@ -1396,3 +1396,367 @@ html[data-theme="dark"] .store-empty-box,
     gap: 0.5rem;
   }
 }
+
+
+/* ==============================================================================
+   STORE MARKETPLACE ADVANCED FEATURES (VARIANTS, GALLERY, REVIEWS, TRACKING)
+   ============================================================================== */
+
+/* 1. Header Action Links (Orders, Wishlist) */
+.store-header-action-link {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.store-header-action-link:hover {
+  color: #ffffff;
+}
+
+/* 2. Gallery Video & Zoom */
+.store-main-media-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.store-video-container {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000000;
+  margin-bottom: 0.75rem;
+}
+
+.store-video-player {
+  width: 100%;
+  max-height: 420px;
+  display: block;
+}
+
+.store-zoom-hint {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.store-main-image-wrap {
+  cursor: zoom-in;
+  position: relative;
+}
+
+.store-video-thumb-btn {
+  position: relative;
+  background: #0f172a;
+}
+
+.store-video-thumb-btn .video-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ffffff;
+  font-size: 0.9rem;
+  background: rgba(37, 99, 235, 0.85);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.store-lightbox-image-wrap img {
+  max-height: 85vh;
+  max-width: 90vw;
+  width: auto;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* 3. Configurable Variant Selectors */
+.store-variant-selectors {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.store-attribute-group:last-child {
+  margin-bottom: 0 !important;
+}
+
+.store-attr-pill {
+  min-width: 44px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.store-attr-pill.is-active {
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+  font-weight: 600;
+}
+
+/* 4. Wishlist Buttons */
+.store-card-thumb.pos-relative {
+  position: relative;
+}
+
+.store-card-wishlist-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+  z-index: 2;
+}
+
+.store-card-wishlist-btn:hover {
+  transform: scale(1.1);
+}
+
+.store-wishlist-btn {
+  font-weight: 500;
+}
+
+/* 5. Rating Stars & Distribution */
+.store-stars {
+  letter-spacing: 1px;
+}
+
+.store-dist-row .progress {
+  height: 0.55rem;
+}
+
+.store-star-picker {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.star-picker-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 1.35rem;
+  transition: transform 0.1s ease;
+}
+
+.star-picker-btn:hover {
+  transform: scale(1.2);
+}
+
+/* 6. Review Images & Lightbox Click */
+.store-review-thumb-btn {
+  background: none;
+  border: 1px solid #e2e8f0;
+  padding: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  display: inline-block;
+}
+
+.store-review-thumb-btn img {
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 2px;
+  display: block;
+}
+
+.store-mini-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+}
+
+.store-mini-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.store-mini-thumb {
+  height: 110px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.store-mini-thumb img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.store-mini-title {
+  color: #1e293b;
+  line-height: 1.25;
+  margin-bottom: 0.25rem;
+}
+
+/* 7. Order Tracking Status Timeline */
+.store-order-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 0.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.timeline-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.timeline-step.is-done .timeline-circle {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.timeline-step.is-active .timeline-circle {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.timeline-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.timeline-step.is-done .timeline-label,
+.timeline-step.is-active .timeline-label {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.timeline-line {
+  flex-grow: 1;
+  height: 3px;
+  background: #e2e8f0;
+  margin: 0 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.timeline-line.is-done {
+  background: #10b981;
+}
+
+.border-top-light {
+  border-top: 1px solid #f1f5f9;
+}
+
+.border-bottom-light {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ==============================================================================
+   DARK MODE ADAPTATIONS
+   ============================================================================== */
+[data-theme="dark"] .store-variant-selectors,
+[data-theme="dark"] .store-order-timeline,
+[data-theme="dark"] .store-mini-thumb {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .store-card-wishlist-btn {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .store-mini-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .store-mini-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .timeline-circle {
+  background: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .timeline-step.is-done .timeline-circle {
+  background: #059669;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .timeline-step.is-active .timeline-circle {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .timeline-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .timeline-step.is-done .timeline-label,
+[data-theme="dark"] .timeline-step.is-active .timeline-label {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .timeline-line {
+  background: #334155;
+}
+
+[data-theme="dark"] .timeline-line.is-done {
+  background: #059669;
+}
+
+[data-theme="dark"] .border-top-light {
+  border-top-color: #334155;
+}
+
+[data-theme="dark"] .border-bottom-light {
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .store-review-thumb-btn {
+  border-color: #334155;
+}

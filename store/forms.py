@@ -4,6 +4,8 @@ from django.utils.text import slugify
 
 from store.models import (
     Category,
+    ProductReview,
+    ProductReviewReport,
     Product,
     ProductDigitalAsset,
     ProductInventory,
@@ -135,3 +137,33 @@ class ProductReviewActionForm(forms.Form):
         widget=forms.Textarea(attrs={"class": "textarea", "rows": 3, "placeholder": "Feedback for seller..."}),
         required=False,
     )
+
+class MultipleFileInput(forms.FileInput):
+    allow_multiple_selected = True
+
+
+class ProductCustomerReviewForm(forms.ModelForm):
+    review_images = forms.FileField(
+        required=False,
+        widget=MultipleFileInput(attrs={"multiple": True, "accept": "image/*", "class": "input"}),
+        help_text="Optional photos (up to 3)"
+    )
+
+    class Meta:
+        model = ProductReview
+        fields = ["rating", "title", "content"]
+        widgets = {
+            "rating": forms.HiddenInput(),
+            "title": forms.TextInput(attrs={"class": "input", "placeholder": "What's most important to know? (e.g. Great fitting shoes)", "maxlength": "150", "required": "required"}),
+            "content": forms.Textarea(attrs={"class": "textarea", "rows": 4, "placeholder": "What did you like or dislike? How does it perform in daily use?", "required": "required"}),
+        }
+
+
+class ProductReviewReportForm(forms.ModelForm):
+    class Meta:
+        model = ProductReviewReport
+        fields = ["reason"]
+        widgets = {
+            "reason": forms.TextInput(attrs={"class": "input", "placeholder": "Describe why this review is misleading or inappropriate", "required": "required"}),
+        }
+
