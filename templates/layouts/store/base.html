@@ -1,0 +1,82 @@
+{% load static %}
+<!doctype html>
+<html lang="en" {% if request.COOKIES.darkmode == '1' %}data-theme="dark"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="32x32">
+  <link rel="icon" href="{% static 'images/logo.jpg' %}" sizes="48x48">
+  <title>{% block title %}NPTOR Store — Educational Materials & Study Essentials{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Shop verified textbooks, student notebooks, stationery sets, and desk organizers on NPTOR Store with Nepal-wide Cash on Delivery.{% endblock %}">
+  <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+  <link rel="stylesheet" href="{% static 'css/pages/store.css' %}">
+  {% block page_css %}{% endblock %}
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="store-dedicated-layout store-route">
+<a class="nptor-skip-link" href="#main-content">Skip to store content</a>
+<div id="app" class="store-app-layout">
+  <!-- Dedicated Store Header -->
+  {% include "layouts/store/header.html" %}
+
+  <!-- Full-Width Store Content Container (No Global Sidebar) -->
+  <div class="store-main-container">
+    <main id="main-content" class="store-viewport" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Standard Footer -->
+  {% include "layouts/student/footer.html" %}
+
+  {% if user.is_authenticated %}
+    <form id="logout-form" method="post" action="{% url 'accounts:logout' %}" style="display:none;">
+      {% csrf_token %}
+    </form>
+  {% endif %}
+</div>
+
+<!-- Logout Modal -->
+<div class="modal" id="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+  <div class="modal-background" onclick="closeLogoutModal()"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title" id="logout-modal-title">Confirm Logout</p>
+      <button type="button" class="delete" aria-label="Close" onclick="closeLogoutModal()"></button>
+    </header>
+    <section class="modal-card-body"><p>Are you sure you want to log out of your NPTOR account?</p></section>
+    <footer class="modal-card-foot">
+      <button type="button" class="button is-light" onclick="closeLogoutModal()">Cancel</button>
+      <button type="button" class="button is-danger" onclick="document.getElementById('logout-form').submit();">Logout</button>
+    </footer>
+  </div>
+</div>
+
+<script src="{% static 'js/theme.js' %}"></script>
+<script src="{% static 'js/navigation.js' %}"></script>
+<script src="{% static 'js/ui.js' %}"></script>
+<script>
+function openLogoutModal() {
+  const modal = document.getElementById("logout-modal");
+  if (modal) modal.classList.add("is-active");
+}
+function closeLogoutModal() {
+  const modal = document.getElementById("logout-modal");
+  if (modal) modal.classList.remove("is-active");
+}
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") closeLogoutModal();
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

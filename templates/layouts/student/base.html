@@ -31,13 +31,13 @@
   {% block head_extra %}{% endblock %}
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5294449232420430" crossorigin="anonymous"></script>
 </head>
-<body class="{% if request.resolver_match.namespace == 'cv' %}cv-route cv-compact-ui{% endif %}">
+<body class="{% if request.resolver_match.namespace == 'cv' %}cv-route cv-compact-ui{% elif request.resolver_match.namespace == 'store' or request.resolver_match.namespace == 'cart' or request.resolver_match.namespace == 'orders' %}store-route{% endif %}">
 <a class="nptor-skip-link" href="#main-content">Skip to main content</a>
 <div id="app" class="app-layout">
   {% include "layouts/student/header.html" %}
   {% include "cv/_workspace_nav.html" %}
   <div class="container main-area">
-    {% if request.resolver_match.namespace != 'cv' %}
+    {% if request.resolver_match.namespace != 'cv' and request.resolver_match.namespace != 'store' and request.resolver_match.namespace != 'cart' and request.resolver_match.namespace != 'orders' %}
       {% include "layouts/student/sidebar.html" %}
     {% endif %}
     <main id="main-content" class="site-content" tabindex="-1">

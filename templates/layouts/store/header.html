@@ -1,0 +1,112 @@
+{% load static %}
+
+<header class="store-dedicated-header">
+  <!-- 1. Primary Top Navigation Bar -->
+  <div class="store-header-primary">
+    <div class="container is-fluid store-header-inner">
+      <!-- Left: Logo & Back to Learning -->
+      <div class="store-header-left">
+        <a class="store-brand" href="{% url 'store:product_list' %}" title="NPTOR Store Catalog">
+          <img src="{% static 'images/logo.jpg' %}" class="store-brand-logo" alt="NPTOR">
+          <div class="store-brand-titles">
+            <span class="store-brand-main">nptor</span>
+            <span class="store-brand-badge">STORE</span>
+          </div>
+        </a>
+
+        <a href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'pages:home' %}{% endif %}" class="store-back-learning" title="Return to NPTOR learning & exams platform">
+          <i class="fa fa-arrow-left mr-1"></i>
+          <span><span class="is-hidden-mobile">Back to </span>Learning</span>
+        </a>
+      </div>
+
+      <!-- Center: Wide Prominent Search Bar -->
+      <div class="store-header-center">
+        <form action="{% url 'store:product_list' %}" method="get" class="store-global-search" role="search">
+          <div class="field has-addons mb-0">
+            <div class="control store-search-cat-control is-hidden-mobile">
+              <div class="select">
+                <select name="category" aria-label="Filter by category">
+                  <option value="">All Categories</option>
+                  {% for cat in store_header_categories %}
+                    <option value="{{ cat.slug }}" {% if selected_category and selected_category.id == cat.id or store_category_slug == cat.slug %}selected{% endif %}>
+                      {{ cat.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="control is-expanded">
+              <input class="input" type="search" name="q" value="{% if search_query %}{{ search_query }}{% elif store_query %}{{ store_query }}{% endif %}" placeholder="Search textbooks, stationery, notes, study essentials..." autocomplete="off" aria-label="Search store products">
+            </div>
+            <div class="control">
+              <button type="submit" class="button is-primary store-search-btn" aria-label="Search">
+                <i class="fa fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right: Actions, Account, Cart -->
+      <div class="store-header-right">
+        <!-- Theme Toggle -->
+        <button id="theme-toggle" type="button" class="button is-white store-theme-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <i class="fa fa-moon" aria-hidden="true"></i>
+        </button>
+
+        <!-- Account / Login -->
+        {% if user.is_authenticated %}
+          <div class="store-user-nav is-hidden-mobile">
+            <a href="{% url 'quiz:profile' %}" class="store-user-link" title="My Profile">
+              <i class="fa fa-user-circle mr-1"></i>
+              <span>{{ user.first_name|default:user.username }}</span>
+            </a>
+            <a href="#" class="button is-small is-light ml-2" onclick="event.preventDefault(); openLogoutModal();">
+              <i class="fa fa-right-from-bracket"></i>
+            </a>
+          </div>
+        {% else %}
+          <a href="{% url 'accounts:request-login-otp' %}" class="button is-primary is-small store-login-btn">
+            <i class="fa fa-right-to-bracket mr-1"></i> Login
+          </a>
+        {% endif %}
+
+        <!-- Cart Shortcut -->
+        <a href="{% url 'cart:detail' %}" class="store-cart-btn" aria-label="View Shopping Cart">
+          <div class="store-cart-icon-box">
+            <i class="fa fa-cart-shopping"></i>
+            <span class="store-cart-count-badge" id="store-cart-badge">{{ store_cart_count|default:0 }}</span>
+          </div>
+          <span class="store-cart-text is-hidden-mobile">Cart</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Secondary Sub-Navigation Strip (Category Strip) -->
+  <nav class="store-header-subnav" aria-label="Store category navigation">
+    <div class="container is-fluid store-subnav-inner">
+      <div class="store-subnav-links">
+        <a href="{% url 'store:product_list' %}" class="store-subnav-item {% if not selected_category and not store_category_slug %}is-active{% endif %}">
+          <i class="fa fa-bars mr-1"></i> All Products
+        </a>
+        {% for cat in store_header_categories %}
+          <a href="{% url 'store:product_list' %}?category={{ cat.slug }}" class="store-subnav-item {% if selected_category and selected_category.id == cat.id or store_category_slug == cat.slug %}is-active{% endif %}">
+            {{ cat.name }}
+          </a>
+        {% endfor %}
+      </div>
+
+      <div class="store-subnav-promo is-hidden-touch">
+        <span class="promo-badge">
+          <i class="fa fa-truck-fast mr-1"></i> Nepal Delivery
+        </span>
+        <span class="promo-sep">&bull;</span>
+        <span class="promo-badge">
+          <i class="fa fa-money-bill-wave mr-1"></i> Cash on Delivery Available
+        </span>
+      </div>
+    </div>
+  </nav>
+</header>

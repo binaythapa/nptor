@@ -217,3 +217,29 @@ class StoreCatalogUITests(TestCase):
         self.assertEqual(res2.status_code, 200)
         self.assertContains(res2, "No products found")
         self.assertNotContains(res2, "Desk Organizer Tray")
+
+    def test_dedicated_store_header_and_full_width_layout(self):
+        url = reverse("store:product_list")
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # Dedicated store header is rendered
+        self.assertContains(res, "store-dedicated-header")
+        self.assertContains(res, "store-brand")
+        self.assertContains(res, "Learning")
+        self.assertContains(res, "store-cart-btn")
+        self.assertContains(res, "Shop by Category")
+        self.assertContains(res, "store-hero-banner")
+
+        # Global education sidebar is hidden on store catalog
+        self.assertNotContains(res, 'id="site-sidebar"')
+
+    def test_global_sidebar_preserved_on_quiz_practice_page(self):
+        url = reverse("quiz:practice")
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # Global education sidebar MUST be present on non-store pages
+        self.assertContains(res, 'id="site-sidebar"')
+        # Dedicated store header MUST NOT be present on non-store pages
+        self.assertNotContains(res, "store-dedicated-header")

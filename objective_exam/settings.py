@@ -92,6 +92,7 @@ TEMPLATES = [
                 "quiz.context_processors.unread_notifications_count",
                 "pages.context_processors.site_globals",
                 "accounts.context_processors.social_login_config",
+                "store.context_processors.store_context",
             ],
         },
     },
