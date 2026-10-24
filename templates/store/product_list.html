@@ -8,15 +8,15 @@
 {% endblock %}
 
 {% block content %}
-<div class="section py-4">
+<div class="section py-4 store-section">
     <!-- 1. Header & Controls Toolbar -->
     <div class="store-catalog-header">
         <div class="store-catalog-title-group">
-            <h1 class="title is-4 mb-1">
+            <h1 class="title is-4 store-catalog-title">
                 <i class="fa fa-bag-shopping has-text-primary mr-2"></i>
                 {% if selected_category %}{{ selected_category.name }}{% else %}Store Catalog{% endif %}
             </h1>
-            <p class="subtitle is-6 has-text-grey mb-0">
+            <p class="subtitle is-6 has-text-grey store-catalog-count">
                 {{ products|length }} product{{ products|length|pluralize }} available
                 {% if selected_category %}in <strong>{{ selected_category.name }}</strong>{% endif %}
                 {% if search_query %}matching "<em>{{ search_query }}</em>"{% endif %}
@@ -25,50 +25,52 @@
 
         <div class="store-toolbar-controls">
             <form method="get" action="{% url 'store:product_list' %}" class="store-search-form">
-                <!-- Compact Category Dropdown -->
-                <div class="control">
-                    <div class="select is-small store-cat-select">
-                        <select name="category" onchange="this.form.submit()" aria-label="Select category">
-                            <option value="">All Categories</option>
-                            {% for cat in categories %}
-                                <option value="{{ cat.slug }}" {% if selected_category and selected_category.id == cat.id %}selected{% endif %}>
-                                    {{ cat.name }}
-                                </option>
-                                {% for sub in cat.children.all %}
-                                    <option value="{{ sub.slug }}" {% if selected_category and selected_category.id == sub.id %}selected{% endif %}>
-                                        &nbsp;&nbsp;&ndash; {{ sub.name }}
-                                    </option>
-                                {% endfor %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Search Input -->
-                <div class="control is-expanded">
-                    <input class="input is-small" type="text" name="q" placeholder="Search products..." value="{{ search_query }}" aria-label="Search products">
-                </div>
-
-                <!-- Submit Button -->
-                <div class="control">
-                    <button type="submit" class="button is-small is-primary" aria-label="Search">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-
-                {% if selected_category or search_query %}
+                <div class="field has-addons mb-0">
+                    <!-- Compact Category Dropdown -->
                     <div class="control">
-                        <a href="{% url 'store:product_list' %}" class="button is-small is-light" title="Reset all filters">
-                            <i class="fas fa-times"></i>
-                        </a>
+                        <div class="select is-small store-cat-select">
+                            <select name="category" onchange="this.form.submit()" aria-label="Select category">
+                                <option value="">All Categories</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat.slug }}" {% if selected_category and selected_category.id == cat.id %}selected{% endif %}>
+                                        {{ cat.name }}
+                                    </option>
+                                    {% for sub in cat.children.all %}
+                                        <option value="{{ sub.slug }}" {% if selected_category and selected_category.id == sub.id %}selected{% endif %}>
+                                            &nbsp;&nbsp;&ndash; {{ sub.name }}
+                                        </option>
+                                    {% endfor %}
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                {% endif %}
+
+                    <!-- Search Input -->
+                    <div class="control is-expanded">
+                        <input class="input is-small" type="text" name="q" placeholder="Search products..." value="{{ search_query }}" aria-label="Search products">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="control">
+                        <button type="submit" class="button is-small is-primary" aria-label="Search">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+
+                    {% if selected_category or search_query %}
+                        <div class="control">
+                            <a href="{% url 'store:product_list' %}" class="button is-small is-light" title="Reset all filters" aria-label="Reset filters">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- 2. Horizontal Category Filter Pills -->
-    <div class="store-filter-pills-wrap">
+    <!-- 2. Horizontal Category Filter Pills (Dedicated Row) -->
+    <div class="store-filter-pills-row">
         <nav class="store-filter-pills" aria-label="Filter by category">
             <a href="{% url 'store:product_list' %}{% if search_query %}?q={{ search_query }}{% endif %}"
                class="store-pill {% if not selected_category %}is-active{% endif %}">
