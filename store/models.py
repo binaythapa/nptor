@@ -144,6 +144,17 @@ class Product(models.Model):
         except Exception:
             return None
 
+    @property
+    def is_demo(self):
+        """Returns True if the product is demonstration/sample showcase data."""
+        if self.specifications and self.specifications.get("is_demo"):
+            return True
+        if self.slug and self.slug.startswith("demo-"):
+            return True
+        if self.title and self.title.startswith("[Demo"):
+            return True
+        return False
+
 
 class ProductVariant(models.Model):
     product = models.ForeignKey(

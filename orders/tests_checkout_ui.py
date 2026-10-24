@@ -286,6 +286,36 @@ class CheckoutUITests(TestCase):
         self.assertEqual(item.unit_price_snapshot, Decimal("1350.00"))
 
 
+    def test_public_checkout_rejects_demonstration_products(self):
+        """Public checkout view must reject carts containing demonstration items and redirect to cart."""
+        demo_prod = Product.objects.create(
+            title="Demo Running Shoes",
+            slug="demo-running-shoes-test",
+            category=self.category,
+            product_type=Product.TYPE_PHYSICAL,
+            approval_status=Product.STATUS_APPROVED,
+            is_active=True,
+            specifications={"is_demo": True},
+        )
+        demo_var = ProductVariant.objects.create(
+            product=demo_prod,
+            sku="DEMO-SHOE-01",
+            price=Decimal("3500.00"),
+            currency="NPR",
+        )
+        ProductInventory.objects.create(variant=demo_var, quantity=20, reserved_quantity=0)
+
+        self.client.force_login(self.customer)
+        # Add to cart
+        cart = Cart.objects.create(user=self.customer, currency="NPR")
+        CartItem.objects.create(cart=cart, variant=demo_var, quantity=1, unit_price_snapshot=Decimal("3500.00"))
+
+        checkout_url = reverse("orders:checkout")
+        resp = self.client.get(checkout_url)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse("cart:detail"), resp.url)
+
+
 class ConcurrentCheckoutUITests(TransactionTestCase):
     def setUp(self):
         self.user1 = User.objects.create_user(username="concur_u1", email="u1@test.com", password="pass")

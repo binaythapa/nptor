@@ -15,10 +15,20 @@ def category_icon(name):
     if not name:
         return "fa-tag"
     n = str(name).lower()
-    if any(k in n for k in ["electronic", "tech", "gadget", "mobile", "phone", "computer", "laptop", "audio", "camera", "engineering"]):
-        return "fa-laptop"
-    if any(k in n for k in ["fashion", "clothing", "apparel", "wear", "shirt", "dress", "shoe", "footwear"]):
+    if any(k in n for k in ["shoe", "sneaker", "footwear", "sandal", "boot", "slide"]):
+        return "fa-shoe-prints"
+    if any(k in n for k in ["watch", "smartwatch", "wearable"]):
+        return "fa-clock"
+    if any(k in n for k in ["headphone", "earbud", "audio", "speaker", "soundbar"]):
+        return "fa-headphones"
+    if any(k in n for k in ["keyboard", "mouse"]):
+        return "fa-keyboard"
+    if any(k in n for k in ["fashion", "clothing", "apparel", "wear", "shirt", "dress", "hoodie", "jacket", "jeans", "trouser", "activewear", "short", "top"]):
         return "fa-shirt"
+    if any(k in n for k in ["keyboard", "mouse"]):
+        return "fa-keyboard"
+    if any(k in n for k in ["electronic", "tech", "gadget", "mobile", "phone", "computer", "laptop", "monitor", "cable", "charger", "hub", "camera", "engineering"]):
+        return "fa-laptop"
     if any(k in n for k in ["home", "kitchen", "furniture", "living", "appliance", "decor"]):
         return "fa-couch"
     if any(k in n for k in ["beauty", "personal care", "cosmetic", "skincare", "fragrance", "health", "wellness"]):

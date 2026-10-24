@@ -50,6 +50,14 @@ def checkout_view(request):
         )
         return redirect("cart:detail")
     items = cart.items.select_related("variant", "variant__product", "variant__product__vendor").order_by("added_at")
+    has_demo = any(getattr(item.variant.product, "is_demo", False) for item in items)
+    if has_demo and not (request.user.is_authenticated and request.user.is_staff):
+        messages.warning(
+            request,
+            "Your cart contains demonstration showcase products. "
+            "Demonstration products cannot be ordered through live public checkout."
+        )
+        return redirect("cart:detail")
     subtotal = analysis["subtotal"]
 
     # Prepopulate with user's most recent shipping address if available

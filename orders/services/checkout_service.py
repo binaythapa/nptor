@@ -68,6 +68,17 @@ class CheckoutService:
                     "One or more products or sellers in your cart are not eligible for Cash on Delivery."
                 )
 
+        # Demonstration catalog restriction: public checkout rejects demonstration items
+        has_demo = any(
+            getattr(it.variant.product, "is_demo", False)
+            for it in cart.items.select_related("variant__product")
+        )
+        if has_demo and not (user and getattr(user, "is_staff", False)):
+            raise ValidationError(
+                "Your cart contains demonstration showcase products. "
+                "Demonstration products cannot be ordered through live public checkout."
+            )
+
         # 5. Atomic Stock Reservation (locks inventory rows)
         if has_physical:
             ReservationService.reserve_cart_stock(cart)

@@ -410,3 +410,74 @@ class StoreProductDetailUIAndMarkdownTests(TestCase):
         self.assertNotIn("<script>", rendered)
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", rendered)
         self.assertIn("<strong>bold</strong>", rendered)
+
+
+class StoreDemonstrationCatalogTests(TestCase):
+    def test_seed_and_clear_demonstration_catalog_command(self):
+        from django.core.management import call_command
+        # Seed catalog with skip-images for fast test execution
+        call_command("seed_store_marketplace_catalog", skip_images=True)
+
+        demo_products = Product.objects.filter(slug__startswith="demo-")
+        self.assertEqual(demo_products.count(), 30)
+
+        # Check shoes, clothing, electronics categories exist
+        self.assertTrue(Category.objects.filter(slug="shoes").exists())
+        self.assertTrue(Category.objects.filter(slug="clothing").exists())
+        self.assertTrue(Category.objects.filter(slug="electronics").exists())
+
+        # Check stock quantities are realistic between 10 and 50
+        for p in demo_products:
+            self.assertTrue(p.is_demo)
+            var = p.variants.first()
+            self.assertIsNotNone(var)
+            self.assertGreaterEqual(var.inventory.available_quantity, 10)
+            self.assertLessEqual(var.inventory.available_quantity, 50)
+            self.assertGreater(var.price, Decimal("0.00"))
+
+        # Test clearing command safely
+        call_command("clear_store_demo_catalog")
+        self.assertEqual(Product.objects.filter(slug__startswith="demo-").count(), 0)
+
+    def test_category_icon_shoes_and_electronics(self):
+        from store.templatetags.store_tags import category_icon
+        self.assertEqual(category_icon("Running Shoes"), "fa-shoe-prints")
+        self.assertEqual(category_icon("Casual Sneakers"), "fa-shoe-prints")
+        self.assertEqual(category_icon("Men's T-Shirts & Shirts"), "fa-shirt")
+        self.assertEqual(category_icon("Headphones & Earbuds"), "fa-headphones")
+        self.assertEqual(category_icon("Keyboards & Mice"), "fa-keyboard")
+        self.assertEqual(category_icon("Smartwatches & Wearables"), "fa-clock")
+        self.assertEqual(category_icon("Consumer Electronics"), "fa-laptop")
+
+    def test_demo_product_detail_displays_stock_and_demo_notice(self):
+        cat = Category.objects.create(name="Running Shoes Test", slug="running-shoes-test")
+        prod = Product.objects.create(
+            title="Demo Aeroflex Running Shoes",
+            slug="demo-aeroflex-test",
+            category=cat,
+            product_type=Product.TYPE_PHYSICAL,
+            approval_status=Product.STATUS_APPROVED,
+            is_active=True,
+            specifications={"is_demo": True},
+            description="### High Performance\n- Lightweight foam",
+        )
+        var = ProductVariant.objects.create(
+            product=prod,
+            sku="AERO-TEST-01",
+            price=Decimal("3850.00"),
+            currency="NPR",
+        )
+        ProductInventory.objects.create(variant=var, quantity=24, reserved_quantity=0)
+
+        url = reverse("store:product_detail", kwargs={"slug": prod.slug})
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # In stock badge with quantity
+        self.assertContains(res, "In Stock (24)")
+        # Demonstration notice banner
+        self.assertContains(res, "store-demo-notice")
+        self.assertContains(res, "Demonstration Showcase")
+        # Markdown parsed
+        self.assertContains(res, '<h4 class="title is-6 mb-2 mt-4">High Performance</h4>')
+        self.assertContains(res, "<li>Lightweight foam</li>")
