@@ -185,7 +185,11 @@
                     <div class="column is-3-widescreen is-4-desktop is-6-tablet is-12-mobile">
                         <div class="card store-product-card">
                             <div class="store-card-thumb py-5 has-text-centered">
-                                <i class="fas {{ p.category.name|category_icon|default:'fa-box-open' }} fa-3x has-text-grey-light"></i>
+                                {% if p.primary_image %}
+                                    <img src="{{ p.primary_image.image.url }}" alt="{{ p.title }}" class="store-card-img">
+                                {% else %}
+                                    <i class="fas {{ p.category.name|category_icon|default:'fa-box-open' }} fa-3x has-text-grey-light"></i>
+                                {% endif %}
                             </div>
                             <div class="card-content">
                                 <div class="tags mb-2">

@@ -132,6 +132,18 @@ class Product(models.Model):
     def is_digital(self):
         return self.product_type == self.TYPE_DIGITAL
 
+    @property
+    def primary_image(self):
+        """Returns the primary product image or the first available image."""
+        try:
+            imgs = list(self.images.all())
+            for img in imgs:
+                if img.is_primary:
+                    return img
+            return imgs[0] if imgs else None
+        except Exception:
+            return None
+
 
 class ProductVariant(models.Model):
     product = models.ForeignKey(

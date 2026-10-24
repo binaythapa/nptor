@@ -268,3 +268,145 @@ class StoreCatalogUITests(TestCase):
         self.assertContains(res, 'Verified Sellers')
         self.assertContains(res, 'Secure Checkout')
         self.assertContains(res, 'Shop by Category')
+
+
+from store.models import ProductImage
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+
+class StoreProductDetailUIAndMarkdownTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(name="Study Materials", slug="study-materials", is_active=True)
+        self.user = User.objects.create_user(username="seller_detail", email="detail@example.com", password="pass")
+        self.vendor = VendorProfile.objects.create(
+            user=self.user,
+            store_name="Quality Stationers",
+            slug="quality-stationers",
+            business_email="sales@stationers.com",
+            business_phone="+977-9800000000",
+        )
+        self.markdown_description = (
+            "### Overview\n"
+            "This is a **premium quality** desk organizer designed for students.\n\n"
+            "### Key Features\n"
+            "- Sturdy wooden build\n"
+            "- Multi-compartment sorting\n"
+            "- Smooth finish\n\n"
+            "Enjoy an organized *workspace* everyday!"
+        )
+        self.product = Product.objects.create(
+            vendor=self.vendor,
+            title="Premium Study Desk Organizer",
+            slug="premium-study-desk-organizer",
+            category=self.category,
+            product_type=Product.TYPE_PHYSICAL,
+            approval_status=Product.STATUS_APPROVED,
+            is_active=True,
+            is_cod_eligible=True,
+            is_internationally_available=False,
+            description=self.markdown_description,
+        )
+        self.variant = ProductVariant.objects.create(
+            product=self.product,
+            sku="OR-PREM-01",
+            price=Decimal("1250.00"),
+            currency="NPR",
+        )
+        self.inventory = ProductInventory.objects.create(
+            variant=self.variant,
+            quantity=0,
+            reserved_quantity=0,
+        )
+
+    def test_product_detail_seller_title_separation(self):
+        url = reverse("store:product_detail", kwargs={"slug": self.product.slug})
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # Title and seller info have separate distinct classes and proper spacing
+        self.assertContains(res, "store-title-seller-group")
+        self.assertContains(res, "store-product-detail-title")
+        self.assertContains(res, "store-product-seller-line")
+        self.assertContains(res, "Sold by:")
+        self.assertContains(res, "Quality Stationers")
+        self.assertContains(res, "store-verified-pill")
+        self.assertContains(res, "Verified Merchant")
+
+    def test_product_detail_markdown_rendering(self):
+        url = reverse("store:product_detail", kwargs={"slug": self.product.slug})
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # Markdown headings rendered as HTML tags
+        self.assertContains(res, '<h4 class="title is-6 mb-2 mt-4">Overview</h4>')
+        self.assertContains(res, '<h4 class="title is-6 mb-2 mt-4">Key Features</h4>')
+        # Bold rendered as <strong>
+        self.assertContains(res, "<strong>premium quality</strong>")
+        # Italics rendered as <em>
+        self.assertContains(res, "<em>workspace</em>")
+        # Bullet list rendered as <ul><li>
+        self.assertContains(res, '<ul class="store-desc-list">')
+        self.assertContains(res, "<li>Sturdy wooden build</li>")
+        self.assertContains(res, "<li>Multi-compartment sorting</li>")
+        self.assertContains(res, "<li>Smooth finish</li>")
+
+        # Raw Markdown tokens should NOT be displayed verbatim
+        content = res.content.decode("utf-8")
+        self.assertNotIn("### Overview", content)
+        self.assertNotIn("### Key Features", content)
+        self.assertNotIn("**premium quality**", content)
+
+    def test_product_detail_image_fallback_when_no_images(self):
+        url = reverse("store:product_detail", kwargs={"slug": self.product.slug})
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # Fallback container rendered when 0 images exist
+        self.assertContains(res, "store-image-fallback")
+        self.assertContains(res, "store-fallback-icon-wrap")
+        self.assertContains(res, "Genuine product photo coming soon")
+
+    def test_product_detail_renders_primary_image_when_present(self):
+        # Attach a dummy image
+        tiny_gif = (
+            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00"
+            b"\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00"
+            b"\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02"
+            b"\x44\x01\x00\x3b"
+        )
+        img_file = SimpleUploadedFile("sample_desk.gif", tiny_gif, content_type="image/gif")
+        prod_image = ProductImage.objects.create(
+            product=self.product,
+            image=img_file,
+            is_primary=True,
+            alt_text="Sample Desk Alt",
+        )
+        try:
+            self.assertEqual(self.product.primary_image, prod_image)
+            url = reverse("store:product_detail", kwargs={"slug": self.product.slug})
+            res = self.client.get(url)
+            self.assertEqual(res.status_code, 200)
+            self.assertContains(res, "store-main-image-wrap")
+            self.assertContains(res, prod_image.image.url)
+            self.assertNotContains(res, "Genuine product photo coming soon")
+        finally:
+            if prod_image.image:
+                prod_image.image.delete(save=False)
+
+    def test_buy_box_out_of_stock_restriction(self):
+        url = reverse("store:product_detail", kwargs={"slug": self.product.slug})
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # Zero stock item should show Out of Stock badge and disabled button
+        self.assertContains(res, "Out of Stock")
+        self.assertContains(res, "Currently Out of Stock")
+        self.assertContains(res, "disabled")
+
+    def test_markdown_sanitization_xss_protection(self):
+        from store.templatetags.store_tags import render_markdown
+        malicious = "<script>alert(1)</script> **bold**"
+        rendered = render_markdown(malicious)
+        self.assertNotIn("<script>", rendered)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", rendered)
+        self.assertIn("<strong>bold</strong>", rendered)

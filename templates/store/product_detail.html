@@ -1,39 +1,80 @@
 {% extends "layouts/store/base.html" %}
+{% load store_tags %}
 
 {% block title %}{{ product.title }} - NPTOR Store{% endblock %}
 
 {% block content %}
-<div class="section">
+<div class="store-detail-container">
     {% if is_preview %}
         <div class="notification is-warning is-light mb-4">
+            <span class="icon mr-1"><i class="fas fa-exclamation-triangle"></i></span>
             <strong>Preview Mode:</strong> This product is currently in status <strong>{{ product.get_approval_status_display }}</strong> and is not publicly visible on the storefront.
         </div>
     {% endif %}
 
-    <div class="columns">
-        <div class="column is-6">
-            <div class="box has-text-centered has-background-white-ter py-6">
-                <i class="fas {% if product.product_type == 'digital' %}fa-file-pdf{% else %}fa-box-open{% endif %} fa-6x has-text-grey-light"></i>
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb is-small mb-4 store-breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="{% url 'store:product_list' %}"><i class="fas fa-store mr-1"></i> Store</a></li>
+            <li><a href="{% url 'store:product_list' %}?category={{ product.category.slug }}">{{ product.category.name }}</a></li>
+            <li class="is-active"><a href="#" aria-current="page">{{ product.title|truncatechars:45 }}</a></li>
+        </ul>
+    </nav>
+
+    <div class="columns is-variable is-6">
+        <!-- Left Column: Gallery / Product Media -->
+        <div class="column is-5-desktop is-12-tablet">
+            <div class="store-gallery-card">
+                {% if product.primary_image %}
+                    <div class="store-main-image-wrap">
+                        <img id="mainProductImage" src="{{ product.primary_image.image.url }}" alt="{{ product.title }}" class="store-main-image">
+                    </div>
+                    {% if product.images.all|length > 1 %}
+                        <div class="store-thumbnails-row mt-3">
+                            {% for img in product.images.all %}
+                                <button type="button" class="store-thumbnail-btn {% if forloop.first %}is-active{% endif %}" onclick="document.getElementById('mainProductImage').src='{{ img.image.url }}'; document.querySelectorAll('.store-thumbnail-btn').forEach(b => b.classList.remove('is-active')); this.classList.add('is-active');">
+                                    <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.title }}">
+                                </button>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="store-image-fallback">
+                        <div class="store-fallback-icon-wrap">
+                            <i class="fas {{ product.category.name|category_icon|default:'fa-box-open' }} fa-5x"></i>
+                        </div>
+                        <span class="tag is-light is-rounded mt-3 store-fallback-badge">
+                            <i class="fas fa-tag mr-1"></i> {{ product.category.name|default:'General Product' }}
+                        </span>
+                        <p class="is-size-7 has-text-grey mt-2">Genuine product photo coming soon</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
-        <div class="column is-6">
-            <nav class="breadcrumb is-small mb-2" aria-label="breadcrumbs">
-                <ul>
-                    <li><a href="{% url 'store:product_list' %}">Store</a></li>
-                    <li><a href="{% url 'store:product_list' %}?category={{ product.category.slug }}">{{ product.category.name }}</a></li>
-                    <li class="is-active"><a href="#" aria-current="page">{{ product.title }}</a></li>
-                </ul>
-            </nav>
 
-            <h1 class="title is-3 mb-2">{{ product.title }}</h1>
-            <p class="subtitle is-6 has-text-grey mb-3">
-                Sold by: <strong>{% if product.vendor %}{{ product.vendor.store_name }}{% else %}NPTOR Official{% endif %}</strong>
-            </p>
+        <!-- Right Column: Product Title, Seller, Badges, Buy Box, Description -->
+        <div class="column is-7-desktop is-12-tablet">
+            <!-- Product Title & Seller Info (No Overlap) -->
+            <div class="store-title-seller-group mb-3">
+                <h1 class="title is-3 is-spaced mb-2 store-product-detail-title">{{ product.title }}</h1>
+                <div class="store-product-seller-line is-size-6">
+                    <span class="has-text-grey">Sold by:</span>
+                    <strong class="has-text-weight-bold ml-1">
+                        {% if product.vendor %}{{ product.vendor.store_name }}{% else %}NPTOR Official{% endif %}
+                    </strong>
+                    <span class="store-verified-pill ml-2">
+                        <i class="fas fa-check-circle mr-1"></i> Verified Merchant
+                    </span>
+                </div>
+            </div>
 
-            <div class="tags mb-4">
+            <!-- Tags & Badges -->
+            <div class="tags store-product-tags mb-4">
                 <span class="tag is-info is-light">{{ product.get_product_type_display }}</span>
                 {% if product.is_cod_eligible %}
                     <span class="tag is-success is-light"><i class="fas fa-money-bill-wave mr-1"></i> Cash on Delivery Available</span>
+                {% else %}
+                    <span class="tag is-warning is-light"><i class="fas fa-credit-card mr-1"></i> Prepaid Only</span>
                 {% endif %}
                 {% if product.is_internationally_available %}
                     <span class="tag is-primary is-light"><i class="fas fa-globe mr-1"></i> International Delivery</span>
@@ -42,92 +83,118 @@
                 {% endif %}
             </div>
 
-            <div class="box has-background-light mb-4">
-                <div class="level">
-                    <div class="level-left">
-                        <div>
-                            <span class="heading mb-0">Price</span>
-                            <span class="title is-4 has-text-primary">
-                                {% if primary_variant %}
-                                    {{ primary_variant.currency }} {{ primary_variant.price }}
+            <!-- Buy Box Card -->
+            <div class="card store-buy-box mb-5">
+                <div class="card-content">
+                    <div class="level is-mobile mb-3">
+                        <div class="level-left">
+                            <div>
+                                <span class="heading mb-1 has-text-grey">Price</span>
+                                <span class="title is-3 store-price-tag">
+                                    {% if primary_variant %}
+                                        {{ primary_variant.currency }} {{ primary_variant.price }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            {% if primary_variant and primary_variant.inventory %}
+                                {% if primary_variant.inventory.available_quantity > 0 %}
+                                    <span class="tag is-success is-medium is-rounded"><i class="fas fa-check mr-1"></i> In Stock ({{ primary_variant.inventory.available_quantity }})</span>
                                 {% else %}
-                                    N/A
+                                    <span class="tag is-danger is-medium is-rounded"><i class="fas fa-times mr-1"></i> Out of Stock</span>
                                 {% endif %}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="level-right">
-                        {% if primary_variant and primary_variant.inventory %}
-                            {% if primary_variant.inventory.available_quantity > 0 %}
-                                <span class="tag is-success">In Stock ({{ primary_variant.inventory.available_quantity }})</span>
-                            {% else %}
-                                <span class="tag is-danger">Out of Stock</span>
                             {% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-
-                {% if primary_variant %}
-                    {% if product.product_type == 'digital' %}
-                        <div class="notification is-info is-light mt-3 p-3">
-                            <p class="is-size-7 mb-0">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                <strong>Digital Preview:</strong> Downloadable resources are currently in preview mode. Digital purchases will be enabled when the online payment gateway is activated.
-                            </p>
                         </div>
-                        {% if request.user.is_staff %}
+                    </div>
+
+                    {% if primary_variant %}
+                        {% if product.product_type == 'digital' %}
+                            <div class="notification is-info is-light mt-3 p-3">
+                                <p class="is-size-7 mb-0">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    <strong>Digital Preview:</strong> Downloadable resources are currently in preview mode. Digital purchases will be enabled when the online payment gateway is activated.
+                                </p>
+                            </div>
+                            {% if request.user.is_staff %}
+                                <form method="post" action="{% url 'cart:add' primary_variant.id %}" class="mt-3">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <div class="field has-addons">
+                                        <div class="control" style="width: 80px;">
+                                            <input class="input" type="number" name="quantity" value="1" min="1" max="99" aria-label="Quantity">
+                                        </div>
+                                        <div class="control is-expanded">
+                                            <button class="button is-warning is-fullwidth" type="submit">
+                                                <span class="icon"><i class="fas fa-flask"></i></span>
+                                                <span>Add to Cart (Staff Test)</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            {% endif %}
+                        {% elif not primary_variant.inventory or primary_variant.inventory.available_quantity > 0 %}
                             <form method="post" action="{% url 'cart:add' primary_variant.id %}" class="mt-3">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                 <div class="field has-addons">
                                     <div class="control" style="width: 80px;">
-                                        <input class="input" type="number" name="quantity" value="1" min="1" max="99">
+                                        <input class="input" type="number" name="quantity" value="1" min="1" max="99" aria-label="Quantity">
                                     </div>
                                     <div class="control is-expanded">
-                                        <button class="button is-warning is-fullwidth" type="submit">
-                                            <span class="icon"><i class="fas fa-flask"></i></span>
-                                            <span>Add to Cart (Staff Test)</span>
+                                        <button class="button is-primary is-fullwidth" type="submit">
+                                            <span class="icon"><i class="fas fa-cart-plus"></i></span>
+                                            <span>Add to Cart</span>
                                         </button>
                                     </div>
                                 </div>
                             </form>
-                        {% endif %}
-                    {% elif not primary_variant.inventory or primary_variant.inventory.available_quantity > 0 %}
-                        <form method="post" action="{% url 'cart:add' primary_variant.id %}" class="mt-3">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <div class="field has-addons">
-                                <div class="control" style="width: 80px;">
-                                    <input class="input" type="number" name="quantity" value="1" min="1" max="99">
-                                </div>
-                                <div class="control is-expanded">
-                                    <button class="button is-primary is-fullwidth" type="submit">
-                                        <span class="icon"><i class="fas fa-cart-plus"></i></span>
-                                        <span>Add to Cart</span>
-                                    </button>
-                                </div>
+                        {% else %}
+                            <div class="buttons mt-3">
+                                <button class="button is-danger is-light is-fullwidth" disabled>
+                                    <span class="icon"><i class="fas fa-times-circle"></i></span>
+                                    <span>Currently Out of Stock</span>
+                                </button>
                             </div>
-                        </form>
+                        {% endif %}
                     {% else %}
                         <div class="buttons mt-3">
-                            <button class="button is-danger is-light is-fullwidth" disabled>
-                                <span class="icon"><i class="fas fa-times-circle"></i></span>
-                                <span>Currently Out of Stock</span>
+                            <button class="button is-light is-fullwidth" disabled>
+                                <span>Unavailable</span>
                             </button>
                         </div>
                     {% endif %}
-                {% else %}
-                    <div class="buttons mt-3">
-                        <button class="button is-light is-fullwidth" disabled>
-                            <span>Unavailable</span>
-                        </button>
+
+                    <!-- Trust Checklist -->
+                    <div class="store-trust-grid mt-4 pt-3">
+                        <div class="store-trust-item">
+                            <i class="fas fa-shield-alt has-text-primary mr-1"></i> 100% Genuine
+                        </div>
+                        <div class="store-trust-item">
+                            <i class="fas fa-truck has-text-primary mr-1"></i> Fast Dispatch
+                        </div>
+                        <div class="store-trust-item">
+                            <i class="fas fa-undo-alt has-text-primary mr-1"></i> Easy Return Policy
+                        </div>
+                        <div class="store-trust-item">
+                            <i class="fas fa-lock has-text-primary mr-1"></i> Secure Checkout
+                        </div>
                     </div>
-                {% endif %}
+                </div>
             </div>
 
-            <div class="content">
-                <h2 class="title is-5 mb-2">Description</h2>
-                <p>{{ product.description|linebreaks }}</p>
+            <!-- Product Description Section -->
+            <div class="card store-description-card">
+                <div class="card-content">
+                    <h2 class="title is-5 mb-3 store-section-heading">
+                        <i class="fas fa-align-left mr-2 has-text-primary"></i> Product Overview & Details
+                    </h2>
+                    <div class="store-rendered-description">
+                        {{ product.description|render_markdown }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
