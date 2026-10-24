@@ -485,6 +485,22 @@ body.store-route .site-content {
 
 .store-categories-section {
   width: 100%;
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.store-categories-section .title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem !important;
+  font-weight: 700;
+}
+
+.store-categories-section .title + .subtitle,
+.store-categories-section .subtitle {
+  margin-top: 0.25rem !important;
+  font-size: 0.95rem;
+  color: var(--store-text-muted, #64748b);
 }
 
 .store-category-tiles {
