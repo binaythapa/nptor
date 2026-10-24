@@ -243,3 +243,28 @@ class StoreCatalogUITests(TestCase):
         self.assertContains(res, 'id="site-sidebar"')
         # Dedicated store header MUST NOT be present on non-store pages
         self.assertNotContains(res, "store-dedicated-header")
+
+    def test_marketplace_category_icon_filter(self):
+        from store.templatetags.store_tags import category_icon
+        self.assertEqual(category_icon('Consumer Electronics'), 'fa-laptop')
+        self.assertEqual(category_icon('Men Fashion & Apparel'), 'fa-shirt')
+        self.assertEqual(category_icon('Home & Kitchen Appliances'), 'fa-couch')
+        self.assertEqual(category_icon('Beauty & Personal Care'), 'fa-spa')
+        self.assertEqual(category_icon('Exam Study Guides'), 'fa-book-bookmark')
+        self.assertEqual(category_icon('Daily Groceries & Food'), 'fa-basket-shopping')
+        self.assertEqual(category_icon('Sports & Fitness'), 'fa-dumbbell')
+        self.assertEqual(category_icon('Desk Organization'), 'fa-boxes-stacked')
+
+    def test_general_marketplace_hero_and_navigation(self):
+        url = reverse('store:product_list')
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # General marketplace hero elements
+        self.assertContains(res, 'Nepal Online Marketplace')
+        self.assertContains(res, 'Shop Everything You Need')
+        self.assertContains(res, 'Nepal Delivery')
+        self.assertContains(res, 'Cash on Delivery')
+        self.assertContains(res, 'Verified Sellers')
+        self.assertContains(res, 'Secure Checkout')
+        self.assertContains(res, 'Shop by Category')

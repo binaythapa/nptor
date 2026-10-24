@@ -1,23 +1,23 @@
 {% extends "layouts/store/base.html" %}
-{% load static %}
+{% load static store_tags %}
 
-{% block title %}NPTOR Store — Educational Materials & Study Essentials{% endblock %}
+{% block title %}NPTOR Store — Online Shopping Marketplace in Nepal{% endblock %}
 
 {% block content %}
 <div class="store-page-content">
-    <!-- 1. Professional Store Hero / Promotional Banner (Shown when not searching) -->
+    <!-- 1. Marketplace Hero / Promotional Banner (Shown when not filtering) -->
     {% if not search_query and not selected_category %}
         <section class="store-hero-banner mb-5">
             <div class="store-hero-inner">
                 <div class="store-hero-text">
                     <span class="store-hero-eyebrow">
-                        <i class="fa fa-graduation-cap mr-1"></i> Student & Professional Marketplace
+                        <i class="fa fa-store mr-1"></i> Nepal Online Marketplace
                     </span>
                     <h1 class="store-hero-title">
-                        Everything for Your Study & Exam Journey
+                        Shop Everything You Need, Delivered to Your Door
                     </h1>
                     <p class="store-hero-desc">
-                        Find verified certification preparation guides, student notebooks, stationery sets, and desk organizers — delivered across Nepal with Cash on Delivery.
+                        Explore quality products across electronics, fashion, books, home essentials, study materials, and more — with verified Cash on Delivery across Nepal.
                     </p>
                     <div class="store-hero-perks">
                         <div class="perk-item">
@@ -29,29 +29,28 @@
                             <span>Cash on Delivery</span>
                         </div>
                         <div class="perk-item">
-                            <i class="fa fa-shield-check"></i>
-                            <span>Verified Essentials</span>
+                            <i class="fa fa-shield-halved"></i>
+                            <span>Verified Sellers</span>
                         </div>
                         <div class="perk-item">
-                            <i class="fa fa-tags"></i>
-                            <span>Student Pricing</span>
+                            <i class="fa fa-lock"></i>
+                            <span>Secure Checkout</span>
                         </div>
                     </div>
                 </div>
                 <div class="store-hero-visual is-hidden-mobile">
                     <div class="store-hero-card-stack">
-                        <div class="stack-card card-1">
-                            <i class="fa fa-book-open"></i>
-                            <span>Exam Guides</span>
-                        </div>
-                        <div class="stack-card card-2">
-                            <i class="fa fa-pen-ruler"></i>
-                            <span>Study Notes</span>
-                        </div>
-                        <div class="stack-card card-3">
-                            <i class="fa fa-boxes-stacked"></i>
-                            <span>Desk Organizers</span>
-                        </div>
+                        {% for cat in store_header_categories|slice:":3" %}
+                            <a href="?category={{ cat.slug }}" class="stack-card card-{{ forloop.counter }}">
+                                <i class="fa {{ cat.name|category_icon }}"></i>
+                                <span>{{ cat.name }}</span>
+                            </a>
+                        {% empty %}
+                            <div class="stack-card card-1">
+                                <i class="fa fa-layer-group"></i>
+                                <span>All Marketplace</span>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -63,24 +62,14 @@
                 <h2 class="title is-4 mb-1">
                     <i class="fa fa-shapes has-text-primary mr-2"></i>Shop by Category
                 </h2>
-                <p class="subtitle is-6 has-text-grey mb-0">Browse through educational supplies and academic resources</p>
+                <p class="subtitle is-6 has-text-grey mb-0">Browse through our featured categories and collections</p>
             </div>
 
             <div class="store-category-tiles">
                 {% for cat in store_header_categories|default:categories %}
                     <a href="?category={{ cat.slug }}" class="store-cat-tile">
                         <div class="cat-tile-icon">
-                            {% if "exam" in cat.name|lower or "guide" in cat.name|lower or "study" in cat.name|lower %}
-                                <i class="fa fa-book-bookmark"></i>
-                            {% elif "stationery" in cat.name|lower or "supplies" in cat.name|lower or "pen" in cat.name|lower %}
-                                <i class="fa fa-pen-nib"></i>
-                            {% elif "desk" in cat.name|lower or "organizer" in cat.name|lower %}
-                                <i class="fa fa-boxes-stacked"></i>
-                            {% elif "engineering" in cat.name|lower %}
-                                <i class="fa fa-microchip"></i>
-                            {% else %}
-                                <i class="fa fa-folder-open"></i>
-                            {% endif %}
+                            <i class="fa {{ cat.name|category_icon }}"></i>
                         </div>
                         <div class="cat-tile-info">
                             <h3 class="cat-tile-name">{{ cat.name }}</h3>
@@ -196,7 +185,7 @@
                     <div class="column is-3-widescreen is-4-desktop is-6-tablet is-12-mobile">
                         <div class="card store-product-card">
                             <div class="store-card-thumb py-5 has-text-centered">
-                                <i class="fas {% if p.product_type == 'digital' %}fa-file-download{% else %}fa-box-open{% endif %} fa-3x has-text-grey-light"></i>
+                                <i class="fas {{ p.category.name|category_icon|default:'fa-box-open' }} fa-3x has-text-grey-light"></i>
                             </div>
                             <div class="card-content">
                                 <div class="tags mb-2">
