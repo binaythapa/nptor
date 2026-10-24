@@ -51,17 +51,36 @@ def patch_google_adapter() -> None:
             issuer = kwargs.get("issuer")
 
             if not verify_signature:
-                from google.auth import jwt as google_jwt
+                payload = None
+                try:
+                    from google.auth import jwt as google_jwt
 
-                payload = google_jwt.decode(credential, verify=False)
-                if audience and payload.get("aud") != audience:
-                    raise OAuth2Error(f"Invalid audience: {payload.get('aud')}")
-                if issuer and payload.get("iss") not in (issuer, issuer.rstrip("/")):
-                    raise OAuth2Error(f"Invalid issuer: {payload.get('iss')}")
-                exp = payload.get("exp")
-                if exp and exp < time.time() - 300:
-                    raise OAuth2Error("ID token expired")
-                return payload
+                    payload = google_jwt.decode(credential, verify=False)
+                except Exception:
+                    pass
+
+                if payload is None:
+                    import base64
+                    import json
+
+                    parts = str(credential).split(".")
+                    if len(parts) >= 2:
+                        p_b64 = parts[1]
+                        rem = len(p_b64) % 4
+                        if rem:
+                            p_b64 += "=" * (4 - rem)
+                        payload = json.loads(base64.urlsafe_b64decode(p_b64).decode("utf-8"))
+
+                if payload:
+                    if audience and payload.get("aud") != audience:
+                        raise OAuth2Error(f"Invalid audience: {payload.get('aud')}")
+                    if issuer and payload.get("iss") not in (issuer, issuer.rstrip("/")):
+                        raise OAuth2Error(f"Invalid issuer: {payload.get('iss')}")
+                    exp = payload.get("exp")
+                    if exp and exp < time.time() - 300:
+                        raise OAuth2Error("ID token expired")
+                    return payload
+                raise OAuth2Error("Unable to decode ID token payload")
 
             from google.auth.transport import requests as google_requests
             from google.oauth2 import id_token as google_id_token
