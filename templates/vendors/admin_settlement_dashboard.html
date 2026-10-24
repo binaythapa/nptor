@@ -1,0 +1,80 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Seller Settlement Dashboard | Platform Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page-container" style="padding: 2rem;">
+    <h1>Seller Settlement & Balance Dashboard</h1>
+    <p>Auditable overview of vendor balances, holding periods, and pending COD remittances.</p>
+
+    <div style="margin-bottom: 2rem;">
+        <a href="{% url 'vendors:admin_payout_queue' %}" class="btn btn-primary" style="padding: 0.5rem 1rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px;">
+            View Payout Queue &rarr;
+        </a>
+    </div>
+
+    <h2>Active Vendor Balances</h2>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2.5rem;" border="1">
+        <thead>
+            <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 0.75rem;">Store Name</th>
+                <th style="padding: 0.75rem;">Gross Sales</th>
+                <th style="padding: 0.75rem;">Commissions</th>
+                <th style="padding: 0.75rem;">Holding Balance</th>
+                <th style="padding: 0.75rem;">Available for Payout</th>
+                <th style="padding: 0.75rem;">Disbursed</th>
+                <th style="padding: 0.75rem;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in vendor_summaries %}
+            <tr>
+                <td style="padding: 0.75rem;"><strong>{{ s.vendor.store_name }}</strong></td>
+                <td style="padding: 0.75rem;">NPR {{ s.gross_sales }}</td>
+                <td style="padding: 0.75rem; color: #dc2626;">- NPR {{ s.commissions_deducted }}</td>
+                <td style="padding: 0.75rem; color: #d97706;">NPR {{ s.holding_balance }} ({{ s.holding_period_days }}d hold)</td>
+                <td style="padding: 0.75rem; color: #16a34a;"><strong>NPR {{ s.available_balance }}</strong></td>
+                <td style="padding: 0.75rem;">NPR {{ s.payouts_disbursed }}</td>
+                <td style="padding: 0.75rem;">
+                    <a href="{% url 'vendors:admin_vendor_ledger' s.vendor.id %}">View Ledger</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding: 1rem; text-align: center;">No active sellers found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Pending COD Remittance Audit</h2>
+    <p>Packages delivered to customers where courier cash has not yet been reconciled into platform bank.</p>
+    <table style="width: 100%; border-collapse: collapse;" border="1">
+        <thead>
+            <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 0.75rem;">SubOrder #</th>
+                <th style="padding: 0.75rem;">Vendor</th>
+                <th style="padding: 0.75rem;">Delivered At</th>
+                <th style="padding: 0.75rem;">Amount Due</th>
+                <th style="padding: 0.75rem;">COD Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in pending_cod_reconciliations %}
+            <tr>
+                <td style="padding: 0.75rem;">{{ sub.suborder_number }}</td>
+                <td style="padding: 0.75rem;">{{ sub.vendor.store_name|default:"NPTOR" }}</td>
+                <td style="padding: 0.75rem;">{{ sub.delivered_at|date:"M d, Y H:i" }}</td>
+                <td style="padding: 0.75rem;">NPR {{ sub.items_subtotal }}</td>
+                <td style="padding: 0.75rem;">{{ sub.master_order.get_cod_collection_status_display }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 1rem; text-align: center;">No pending COD remittances awaiting reconciliation.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Ledger: {{ vendor.store_name }} | Platform Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page-container" style="padding: 2rem;">
+    <p><a href="{% url 'vendors:admin_settlement_dashboard' %}">&larr; Back to Settlement Dashboard</a></p>
+    <h1>Auditable Ledger: {{ vendor.store_name }}</h1>
+    <p>Vendor Bank: {{ vendor.bank_details.bank_name|default:"Not configured" }} | Account: {{ vendor.bank_details.masked_account_number|default:"N/A" }}</p>
+
+    <div style="display: flex; gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; flex: 1;">
+            <p style="margin: 0; color: #64748b;">Holding Balance</p>
+            <h2 style="margin: 0.5rem 0 0; color: #d97706;">NPR {{ summary.holding_balance }}</h2>
+            <small>{{ summary.holding_period_days }}-day hold window</small>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; flex: 1;">
+            <p style="margin: 0; color: #64748b;">Available for Payout</p>
+            <h2 style="margin: 0.5rem 0 0; color: #16a34a;">NPR {{ summary.available_balance }}</h2>
+            <small>Unlocked and eligible</small>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; flex: 1;">
+            <p style="margin: 0; color: #64748b;">Total Disbursed</p>
+            <h2 style="margin: 0.5rem 0 0;">NPR {{ summary.payouts_disbursed }}</h2>
+        </div>
+    </div>
+
+    <h2>Ledger Entries (Chronological)</h2>
+    <table style="width: 100%; border-collapse: collapse;" border="1">
+        <thead>
+            <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 0.75rem;">Date</th>
+                <th style="padding: 0.75rem;">Entry Type</th>
+                <th style="padding: 0.75rem;">Reference</th>
+                <th style="padding: 0.75rem;">Amount</th>
+                <th style="padding: 0.75rem;">Status</th>
+                <th style="padding: 0.75rem;">Unlocks At</th>
+                <th style="padding: 0.75rem;">Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in entries %}
+            <tr>
+                <td style="padding: 0.75rem;">{{ e.created_at|date:"M d, Y H:i" }}</td>
+                <td style="padding: 0.75rem;">{{ e.get_entry_type_display }}</td>
+                <td style="padding: 0.75rem;">{{ e.reference_id }}</td>
+                <td style="padding: 0.75rem; font-weight: bold; {% if e.amount < 0 %}color: #dc2626;{% else %}color: #16a34a;{% endif %}">
+                    {% if e.amount > 0 %}+{% endif %}NPR {{ e.amount }}
+                </td>
+                <td style="padding: 0.75rem;">
+                    {% if e.is_settled %}
+                    <span style="color: #16a34a;">Settled</span>
+                    {% else %}
+                    <span style="color: #d97706;">Pending</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 0.75rem;">{{ e.unlocks_at|date:"M d, Y H:i"|default:"-" }}</td>
+                <td style="padding: 0.75rem;"><small>{{ e.notes }}</small></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding: 1rem; text-align: center;">No ledger entries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

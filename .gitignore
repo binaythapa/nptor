@@ -21,6 +21,7 @@ venv_bkp/
 staticfiles/
 staticfiles/**
 media/
+protected_storage/
 
 # ==================================================
 # Logs & runtime files
@@ -80,5 +81,11 @@ organizations/migrations/
 
 # Keep __init__.py
 !**/migrations/__init__.py
+
+# Keep store app migrations
+!cart/migrations/*.py
+!orders/migrations/*.py
+!store/migrations/*.py
+!vendors/migrations/*.py
 
 

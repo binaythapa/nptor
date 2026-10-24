@@ -1,0 +1,120 @@
+from decimal import Decimal
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.test import TestCase
+
+from store.models import (
+    Category,
+    Product,
+    ProductDigitalAsset,
+    ProductInventory,
+    ProductVariant,
+)
+from vendors.models import VendorProfile
+
+User = get_user_model()
+
+
+class StoreModelTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="seller_store", email="store@example.com", password="pass")
+        self.vendor = VendorProfile.objects.create(
+            user=self.user,
+            store_name="Himalayan Electronics",
+            slug="himalayan-electronics",
+            business_email="sales@himalayan.com",
+            business_phone="+977-9822222222",
+        )
+        self.category = Category.objects.create(name="Hardware Kits", slug="hardware-kits")
+
+    def test_category_hierarchy(self):
+        sub_cat = Category.objects.create(name="Robotics Kits", slug="robotics-kits", parent=self.category)
+        self.assertEqual(sub_cat.parent, self.category)
+        self.assertIn(sub_cat, self.category.children.all())
+
+    def test_nptor_owned_and_vendor_owned_products(self):
+        # NPTOR owned
+        nptor_prod = Product.objects.create(
+            title="NPTOR Official Study Guide",
+            slug="nptor-official-study-guide",
+            category=self.category,
+            product_type=Product.TYPE_PHYSICAL,
+        )
+        self.assertTrue(nptor_prod.is_nptor_owned)
+        self.assertIsNone(nptor_prod.vendor)
+
+        # Vendor owned
+        vendor_prod = Product.objects.create(
+            vendor=self.vendor,
+            title="Arduino Starter Kit",
+            slug="arduino-starter-kit",
+            category=self.category,
+            product_type=Product.TYPE_PHYSICAL,
+        )
+        self.assertFalse(vendor_prod.is_nptor_owned)
+        self.assertEqual(vendor_prod.vendor, self.vendor)
+
+    def test_product_variant_pricing_and_inventory(self):
+        prod = Product.objects.create(
+            title="Digital Microcontroller Handbook",
+            slug="digital-microcontroller-handbook",
+            category=self.category,
+            product_type=Product.TYPE_DIGITAL,
+            is_internationally_available=True,
+        )
+        variant = ProductVariant.objects.create(
+            product=prod,
+            sku="DMH-PDF-001",
+            variant_name="PDF Edition",
+            price=Decimal("499.00"),
+            currency="NPR",
+        )
+        inventory = ProductInventory.objects.create(
+            variant=variant,
+            quantity=100,
+            reserved_quantity=5,
+        )
+        self.assertEqual(inventory.available_quantity, 95)
+
+    def test_inventory_check_constraint_rejects_negative_stock(self):
+        prod = Product.objects.create(
+            title="Test Sensor",
+            slug="test-sensor",
+            category=self.category,
+            product_type=Product.TYPE_PHYSICAL,
+        )
+        variant = ProductVariant.objects.create(
+            product=prod,
+            sku="TEST-SENSOR-001",
+            price=Decimal("150.00"),
+        )
+        # Check constraint on quantity >= 0
+        with self.assertRaises(IntegrityError):
+            ProductInventory.objects.create(
+                variant=variant,
+                quantity=-5,
+                reserved_quantity=0,
+            )
+
+    def test_digital_asset_attributes(self):
+        prod = Product.objects.create(
+            title="Python Cheat Sheet",
+            slug="python-cheat-sheet",
+            category=self.category,
+            product_type=Product.TYPE_DIGITAL,
+            is_internationally_available=True,
+        )
+        asset = ProductDigitalAsset.objects.create(
+            product=prod,
+            file_name="python_cheat_sheet.pdf",
+            file_size_bytes=1048576,
+            checksum_sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            max_downloads_per_purchase=5,
+            download_validity_days=365,
+        )
+        self.assertEqual(prod.digital_asset, asset)
+        self.assertEqual(asset.max_downloads_per_purchase, 5)
+        # Verify protected storage raises ValueError when attempting to generate a public URL
+        with self.assertRaises(ValueError):
+            _ = asset.file.url

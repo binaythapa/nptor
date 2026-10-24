@@ -1,0 +1,38 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Order Packages | Seller Portal{% endblock %}
+
+{% block content %}
+<div class="vendor-orders-container" style="max-width: 1000px; margin: 2rem auto; padding: 1.5rem;">
+    <h1>Fulfillment Queue</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>SubOrder #</th>
+                <th>Created</th>
+                <th>Items</th>
+                <th>Fulfillment Status</th>
+                <th>Payout</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in suborders %}
+            <tr>
+                <td>{{ sub.suborder_number }}</td>
+                <td>{{ sub.created_at|date:"M d, Y" }}</td>
+                <td>{{ sub.items.count }}</td>
+                <td>{{ sub.get_fulfillment_status_display }}</td>
+                <td>NPR {{ sub.vendor_payout_amount }}</td>
+                <td><a href="{% url 'orders:vendor_suborder_detail' sub.suborder_number %}">View</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No orders assigned yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

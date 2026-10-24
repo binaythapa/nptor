@@ -1,0 +1,137 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}{{ profile.store_name }} - Seller Portal{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="level">
+        <div class="level-left">
+            <div>
+                <h1 class="title is-3 mb-1">{{ profile.store_name }}</h1>
+                <p class="subtitle is-6 has-text-grey">
+                    Seller Portal &bull; Status:
+                    {% if profile.status == 'active' %}
+                        <span class="tag is-success is-light">Active Approved</span>
+                    {% elif profile.status == 'pending' %}
+                        <span class="tag is-warning is-light">Pending Verification</span>
+                    {% elif profile.status == 'suspended' %}
+                        <span class="tag is-danger is-light">Suspended</span>
+                    {% else %}
+                        <span class="tag is-grey is-light">{{ profile.get_status_display }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="level-right">
+            {% if profile.status == 'active' %}
+                <a href="{% url 'store:vendor_product_create' %}" class="button is-primary">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Add New Product</span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="notification is-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if profile.status == 'pending' %}
+        <div class="notification is-info is-light">
+            <strong>Application Under Review:</strong> Your seller application has been submitted and is currently being verified by the NPTOR operations team. You will be notified once your store is activated.
+        </div>
+    {% elif profile.status == 'suspended' %}
+        <div class="notification is-danger is-light">
+            <strong>Store Suspended:</strong> Product listings and fulfillment actions are temporarily disabled. Please contact operations support.
+        </div>
+    {% endif %}
+
+    <div class="columns is-multiline mb-5">
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Total Products</p>
+                <p class="title is-3">{{ stats.total_products }}</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Active / Approved</p>
+                <p class="title is-3 has-text-success">{{ stats.approved_products }}</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">In Moderation</p>
+                <p class="title is-3 has-text-warning">{{ stats.pending_products }}</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Drafts</p>
+                <p class="title is-3 has-text-grey">{{ stats.draft_products }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="box">
+        <div class="level">
+            <div class="level-left">
+                <h2 class="title is-5 mb-0">Your Products</h2>
+            </div>
+            <div class="level-right">
+                <a href="{% url 'store:vendor_product_list' %}" class="button is-small is-light">View All</a>
+            </div>
+        </div>
+
+        {% if recent_products %}
+            <div class="table-container">
+                <table class="table is-fullwidth is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in recent_products %}
+                            <tr>
+                                <td><strong>{{ p.title }}</strong></td>
+                                <td>{{ p.category.name }}</td>
+                                <td>{{ p.get_product_type_display }}</td>
+                                <td>
+                                    {% if p.approval_status == 'approved' %}
+                                        <span class="tag is-success">Approved</span>
+                                    {% elif p.approval_status == 'pending' %}
+                                        <span class="tag is-warning">In Review</span>
+                                    {% elif p.approval_status == 'changes_required' %}
+                                        <span class="tag is-danger is-light">Changes Required</span>
+                                    {% else %}
+                                        <span class="tag is-light">{{ p.get_approval_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ p.updated_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'store:vendor_product_edit' p.pk %}" class="button is-small is-outlined is-info">Edit</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="has-text-centered py-5 has-text-grey">
+                <p>No products added yet.</p>
+                {% if profile.status == 'active' %}
+                    <a href="{% url 'store:vendor_product_create' %}" class="button is-primary is-small mt-3">Add Your First Product</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

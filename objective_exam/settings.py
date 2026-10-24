@@ -17,6 +17,7 @@ SITE_ID = 1
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+ENABLE_DUMMY_PAYMENT_GATEWAY = os.environ.get("ENABLE_DUMMY_PAYMENT_GATEWAY", "false").lower() == "true"
 
 if not SECRET_KEY:
     raise RuntimeError("DJANGO_SECRET_KEY must be set in the environment.")
@@ -55,6 +56,10 @@ INSTALLED_APPS = [
     "subscriptions",
     "payments",
     "cv.apps.CVConfig",
+    "vendors",
+    "store",
+    "cart",
+    "orders",
 ]
 
 MIDDLEWARE = [

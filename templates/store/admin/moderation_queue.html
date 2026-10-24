@@ -1,0 +1,83 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}Product Moderation Queue - NPTOR Admin{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="level">
+        <div class="level-left">
+            <div>
+                <h1 class="title is-3">Product Moderation Queue</h1>
+                <p class="subtitle is-6 has-text-grey">Review and verify products submitted by third-party sellers before storefront publication.</p>
+            </div>
+        </div>
+        <div class="level-right">
+            <span class="tag is-warning is-medium">Awaiting Review: {{ pending_count }}</span>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="notification is-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="tabs is-boxed mb-4">
+        <ul>
+            <li class="{% if status_filter == 'pending' %}is-active{% endif %}">
+                <a href="?status=pending">Pending Review</a>
+            </li>
+            <li class="{% if status_filter == 'approved' %}is-active{% endif %}">
+                <a href="?status=approved">Approved & Published</a>
+            </li>
+            <li class="{% if status_filter == 'changes_required' %}is-active{% endif %}">
+                <a href="?status=changes_required">Changes Required</a>
+            </li>
+            <li class="{% if status_filter == 'rejected' %}is-active{% endif %}">
+                <a href="?status=rejected">Rejected</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="box">
+        {% if products %}
+            <div class="table-container">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>Product Title</th>
+                            <th>Seller</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Price</th>
+                            <th>Submitted</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in products %}
+                            <tr>
+                                <td><strong>{{ p.title }}</strong></td>
+                                <td>{% if p.vendor %}{{ p.vendor.store_name }}{% else %}NPTOR{% endif %}</td>
+                                <td>{{ p.category.name }}</td>
+                                <td>{{ p.get_product_type_display }}</td>
+                                <td>
+                                    {% with v=p.variants.first %}
+                                        {% if v %}{{ v.currency }} {{ v.price }}{% else %}-{% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>{{ p.submitted_at|date:"M d, Y H:i"|default:p.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'store:admin_moderate_product' p.pk %}" class="button is-small is-primary">Review</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="has-text-centered has-text-grey py-5">No products in queue with status: <strong>{{ status_filter }}</strong>.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}Order #{{ order.order_number }} - NPTOR Store{% endblock %}
+
+{% block content %}
+<div class="section py-4">
+    <nav class="breadcrumb is-small mb-4" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="{% url 'store:product_list' %}">Store</a></li>
+            <li><a href="{% url 'cart:detail' %}">Cart</a></li>
+            <li class="is-active"><a href="#" aria-current="page">Order #{{ order.order_number }}</a></li>
+        </ul>
+    </nav>
+
+    <div class="level is-mobile mb-4">
+        <div class="level-left">
+            <div>
+                <h1 class="title is-3 mb-1">Order #{{ order.order_number }}</h1>
+                <p class="subtitle is-6 has-text-grey">
+                    Placed on {{ order.created_at|date:"F d, Y, h:i A" }}
+                </p>
+            </div>
+        </div>
+        <div class="level-right">
+            <span class="tag is-medium {% if order.order_status == 'completed' or order.order_status == 'processing' %}is-success{% elif order.order_status == 'cancelled' %}is-danger{% else %}is-warning{% endif %}">
+                {{ order.get_order_status_display }}
+            </span>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="notification is-{{ message.tags|default:'info' }} is-light py-2 px-4 mb-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Payment Status Callout -->
+    {% if order.payment_method == 'online' and order.online_payment_status != 'paid' %}
+        <div class="notification is-warning is-light mb-4">
+            <div class="level is-mobile">
+                <div class="level-left">
+                    <div>
+                        <p class="has-text-weight-bold mb-1">
+                            <span class="icon mr-1"><i class="fas fa-exclamation-triangle"></i></span>
+                            Payment Pending (NPR {{ order.grand_total }})
+                        </p>
+                        <p class="is-size-7">
+                            {% if request.user.is_staff %}
+                                [Staff Testing Mode] Simulated test gateway is active for testing order fulfillment.
+                            {% else %}
+                                Online payments are currently disabled for public checkout. Please contact support or place your order with Cash on Delivery.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if request.user.is_staff %}
+                    <div class="level-right">
+                        <a href="{% url 'orders:initiate_online_payment' order.order_number %}" class="button is-warning is-small has-text-weight-bold">
+                            <span class="icon"><i class="fas fa-credit-card"></i></span>
+                            <span>Simulate Payment (Staff Only)</span>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% elif order.payment_method == 'online' and order.online_payment_status == 'paid' %}
+        <div class="notification is-success is-light mb-4">
+            <span class="icon mr-1"><i class="fas fa-check-circle"></i></span>
+            <strong>Payment Confirmed.</strong> Your payment of NPR {{ order.grand_total }} has been verified.
+        </div>
+    {% elif order.payment_method == 'cod' %}
+        <div class="notification is-info is-light mb-4">
+            <span class="icon mr-1"><i class="fas fa-money-bill-wave"></i></span>
+            <strong>Cash on Delivery:</strong> Please pay NPR {{ order.grand_total }} in cash when your delivery courier arrives.
+        </div>
+    {% endif %}
+
+    <!-- Digital Downloads Section -->
+    {% if digital_deliveries %}
+        <div class="box mb-4 has-background-info-light">
+            <h2 class="title is-5 mb-3 has-text-info-dark">
+                <span class="icon mr-1"><i class="fas fa-cloud-download-alt"></i></span>
+                Your Digital Downloads
+            </h2>
+            <div class="table-container">
+                <table class="table is-fullwidth has-background-info-light">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Valid Until</th>
+                            <th>Downloads Remaining</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grant in digital_deliveries %}
+                            <tr>
+                                <td class="has-text-weight-semibold">
+                                    <span class="icon mr-1"><i class="fas fa-file-pdf"></i></span>
+                                    {{ grant.digital_asset.file_name }}
+                                </td>
+                                <td>{{ grant.expires_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="tag is-info is-light">
+                                        {{ grant.download_count }} of {{ grant.max_downloads }} used
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if grant.download_count < grant.max_downloads %}
+                                        <a href="{% url 'orders:download_digital_asset' grant.download_token %}" class="button is-info is-small">
+                                            <span class="icon"><i class="fas fa-download"></i></span>
+                                            <span>Download</span>
+                                        </a>
+                                    {% else %}
+                                        <span class="tag is-danger is-light">Limit Reached</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="columns">
+        <div class="column is-8">
+            <h2 class="title is-5 mb-3">Packages & Delivery Items</h2>
+            {% for sub in order.suborders.all %}
+                <div class="box mb-4">
+                    <div class="level is-mobile mb-2">
+                        <div class="level-left">
+                            <span class="title is-6 mb-0">
+                                Package from: <strong>{{ sub.vendor.store_name|default:"NPTOR Official" }}</strong>
+                            </span>
+                        </div>
+                        <div class="level-right">
+                            <span class="tag is-light {% if sub.fulfillment_status == 'delivered' %}is-success{% elif sub.fulfillment_status == 'shipped' %}is-info{% else %}is-warning{% endif %}">
+                                {{ sub.get_fulfillment_status_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if sub.shipping_carrier or sub.tracking_number %}
+                        <div class="notification is-light py-2 px-3 mb-3 is-size-7">
+                            <span class="icon"><i class="fas fa-truck"></i></span>
+                            Carrier: <strong>{{ sub.shipping_carrier|default:"Standard Delivery" }}</strong>
+                            {% if sub.tracking_number %}| Tracking #: <strong>{{ sub.tracking_number }}</strong>{% endif %}
+                        </div>
+                    {% endif %}
+
+                    <table class="table is-fullwidth is-narrow">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th class="has-text-centered">Qty</th>
+                                <th class="has-text-right">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for it in sub.items.all %}
+                                <tr>
+                                    <td>
+                                        <p class="has-text-weight-medium mb-0">{{ it.product_title_snapshot }}</p>
+                                        <p class="is-size-7 has-text-grey">SKU: {{ it.sku_snapshot }}</p>
+                                    </td>
+                                    <td class="has-text-centered">{{ it.quantity }}</td>
+                                    <td class="has-text-right">NPR {{ it.total_price }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="column is-4">
+            <div class="box mb-4">
+                <h2 class="title is-5 mb-3">Order Summary</h2>
+                <div class="level is-mobile mb-2">
+                    <div class="level-left"><span>Items Total</span></div>
+                    <div class="level-right"><span>NPR {{ order.total_items_amount }}</span></div>
+                </div>
+                <div class="level is-mobile mb-2">
+                    <div class="level-left"><span>Delivery Fee</span></div>
+                    <div class="level-right"><span class="has-text-success">Free</span></div>
+                </div>
+                <hr class="my-2">
+                <div class="level is-mobile mb-3">
+                    <div class="level-left"><strong class="title is-6 mb-0">Grand Total</strong></div>
+                    <div class="level-right"><strong class="title is-5 has-text-primary mb-0">NPR {{ order.grand_total }}</strong></div>
+                </div>
+                <p class="is-size-7 has-text-grey">
+                    Payment Method: <strong>{{ order.get_payment_method_display }}</strong>
+                </p>
+            </div>
+
+            {% if order.shipping_address %}
+                <div class="box">
+                    <h2 class="title is-6 mb-2">Shipping Destination</h2>
+                    <p class="has-text-weight-semibold mb-1">{{ order.shipping_address.full_name }}</p>
+                    <p class="is-size-7 mb-1">{{ order.shipping_address.phone }}</p>
+                    <p class="is-size-7 mb-0">{{ order.shipping_address.street_address_1 }}</p>
+                    {% if order.shipping_address.street_address_2 %}
+                        <p class="is-size-7 mb-0">{{ order.shipping_address.street_address_2 }}</p>
+                    {% endif %}
+                    <p class="is-size-7 mb-0">{{ order.shipping_address.city }}, {{ order.shipping_address.district }}</p>
+                    <p class="is-size-7 mb-0">{{ order.shipping_address.province }}, Nepal</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

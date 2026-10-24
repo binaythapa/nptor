@@ -1,0 +1,161 @@
+{% extends "layouts/admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Package #{{ suborder.suborder_number }} - Seller Portal{% endblock %}
+
+{% block content %}
+<div class="section py-4">
+    <nav class="breadcrumb is-small mb-4" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="{% url 'vendors:dashboard' %}">Seller Dashboard</a></li>
+            <li><a href="{% url 'orders:vendor_suborder_list' %}">Order Queue</a></li>
+            <li class="is-active"><a href="#" aria-current="page">Package #{{ suborder.suborder_number }}</a></li>
+        </ul>
+    </nav>
+
+    <div class="level is-mobile mb-4">
+        <div class="level-left">
+            <div>
+                <h1 class="title is-3 mb-1">Package #{{ suborder.suborder_number }}</h1>
+                <p class="subtitle is-6 has-text-grey">
+                    Master Order: <strong>#{{ suborder.master_order.order_number }}</strong> | 
+                    Store: <strong>{{ profile.store_name }}</strong>
+                </p>
+            </div>
+        </div>
+        <div class="level-right">
+            <span class="tag is-medium {% if suborder.fulfillment_status == 'delivered' %}is-success{% elif suborder.fulfillment_status == 'shipped' %}is-info{% else %}is-warning{% endif %}">
+                {{ suborder.get_fulfillment_status_display }}
+            </span>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="notification is-{{ message.tags|default:'info' }} is-light py-2 px-4 mb-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="columns">
+        <div class="column is-7">
+            <!-- Items Box -->
+            <div class="box mb-4">
+                <h2 class="title is-5 mb-3">Items to Fulfill</h2>
+                <table class="table is-fullwidth is-narrow" style="vertical-align: middle;">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="has-text-centered">Qty</th>
+                            <th class="has-text-right">Unit Price</th>
+                            <th class="has-text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in suborder.items.all %}
+                            <tr>
+                                <td>
+                                    <p class="has-text-weight-semibold mb-0">{{ item.product_title_snapshot }}</p>
+                                    <p class="is-size-7 has-text-grey">SKU: {{ item.sku_snapshot }}</p>
+                                </td>
+                                <td class="has-text-centered has-text-weight-bold">{{ item.quantity }}</td>
+                                <td class="has-text-right">NPR {{ item.unit_price }}</td>
+                                <td class="has-text-right has-text-weight-semibold has-text-primary">NPR {{ item.total_price }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Fulfillment Action Box -->
+            <div class="box">
+                <h2 class="title is-5 mb-3">Fulfillment Actions</h2>
+
+                {% if suborder.fulfillment_status == 'pending' or suborder.fulfillment_status == 'processing' %}
+                    <form method="post" action="{% url 'orders:vendor_suborder_detail' suborder.suborder_number %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="ship">
+
+                        <div class="field">
+                            <label class="label is-small">Courier / Logistics Carrier *</label>
+                            <div class="control">
+                                <input class="input is-small" type="text" name="carrier" placeholder="e.g. Nepal Post, Sundar Courier, Pathao" required>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label is-small">Waybill / Tracking Number *</label>
+                            <div class="control">
+                                <input class="input is-small" type="text" name="tracking_number" placeholder="Tracking reference" required>
+                            </div>
+                        </div>
+
+                        <button class="button is-primary is-small" type="submit">
+                            <span class="icon"><i class="fas fa-shipping-fast"></i></span>
+                            <span>Mark as Shipped</span>
+                        </button>
+                    </form>
+                {% elif suborder.fulfillment_status == 'shipped' %}
+                    <div class="notification is-info is-light py-2 px-3 mb-3">
+                        <p class="mb-1"><strong>Carrier:</strong> {{ suborder.shipping_carrier }}</p>
+                        <p class="mb-1"><strong>Tracking Number:</strong> {{ suborder.tracking_number }}</p>
+                        <p class="is-size-7 has-text-grey">Shipped on {{ suborder.shipped_at|date:"M d, Y H:i" }}</p>
+                    </div>
+
+                    <form method="post" action="{% url 'orders:vendor_suborder_detail' suborder.suborder_number %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="deliver">
+                        <button class="button is-success is-small" type="submit">
+                            <span class="icon"><i class="fas fa-check-double"></i></span>
+                            <span>Confirm Final Delivery</span>
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="has-text-success">
+                        <span class="icon mr-1"><i class="fas fa-check-circle"></i></span>
+                        Package has reached final delivered status.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="column is-5">
+            <!-- Payout & Accounting Box -->
+            <div class="box mb-4 has-background-light">
+                <h2 class="title is-5 mb-3">Seller Settlement Breakdown</h2>
+                <div class="level is-mobile mb-2">
+                    <div class="level-left"><span>Package Subtotal</span></div>
+                    <div class="level-right"><strong>NPR {{ suborder.items_subtotal }}</strong></div>
+                </div>
+                <div class="level is-mobile mb-2">
+                    <div class="level-left"><span>Platform Commission</span></div>
+                    <div class="level-right"><span class="has-text-danger">- NPR {{ suborder.platform_commission }}</span></div>
+                </div>
+                <hr class="my-2">
+                <div class="level is-mobile mb-3">
+                    <div class="level-left"><strong class="title is-6 mb-0">Net Seller Payout</strong></div>
+                    <div class="level-right"><strong class="title is-5 has-text-success mb-0">NPR {{ suborder.vendor_payout_amount }}</strong></div>
+                </div>
+                <p class="is-size-7 has-text-grey">
+                    Payable Status: <span class="tag is-small is-light">{{ suborder.get_seller_payable_status_display }}</span>
+                </p>
+            </div>
+
+            <!-- Shipping Destination Box -->
+            {% if suborder.master_order.shipping_address %}
+                <div class="box">
+                    <h2 class="title is-6 mb-2">Customer Shipping Address</h2>
+                    <p class="has-text-weight-semibold mb-1">{{ suborder.master_order.shipping_address.full_name }}</p>
+                    <p class="is-size-7 mb-1"><i class="fas fa-phone mr-1"></i> {{ suborder.master_order.shipping_address.phone }}</p>
+                    <p class="is-size-7 mb-0">{{ suborder.master_order.shipping_address.street_address_1 }}</p>
+                    <p class="is-size-7 mb-0">{{ suborder.master_order.shipping_address.city }}, {{ suborder.master_order.shipping_address.district }}</p>
+                    <p class="is-size-7 mb-0">{{ suborder.master_order.shipping_address.province }}, Nepal</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

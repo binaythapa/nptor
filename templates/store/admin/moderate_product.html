@@ -1,0 +1,115 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}Review Product: {{ product.title }} - NPTOR Admin{% endblock %}
+
+{% block content %}
+<div class="section">
+    <nav class="breadcrumb is-small mb-3" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="{% url 'store:admin_moderation_queue' %}">Moderation Queue</a></li>
+            <li class="is-active"><a href="#" aria-current="page">Review: {{ product.title }}</a></li>
+        </ul>
+    </nav>
+
+    <div class="columns">
+        <!-- Product Details for Inspection -->
+        <div class="column is-7">
+            <div class="box">
+                <div class="level mb-2">
+                    <div class="level-left">
+                        <span class="tag is-info is-light">{{ product.get_product_type_display }}</span>
+                    </div>
+                    <div class="level-right">
+                        <span class="tag is-warning">{{ product.get_approval_status_display }}</span>
+                    </div>
+                </div>
+
+                <h1 class="title is-4 mb-2">{{ product.title }}</h1>
+                <p class="subtitle is-6 has-text-grey mb-4">
+                    Seller: <strong>{% if product.vendor %}{{ product.vendor.store_name }}{% else %}NPTOR{% endif %}</strong> &bull;
+                    Category: <strong>{{ product.category.name }}</strong>
+                </p>
+
+                <div class="content mb-4">
+                    <h2 class="title is-6">Description</h2>
+                    <p>{{ product.description|linebreaks|default:"No description provided." }}</p>
+                </div>
+
+                <div class="box has-background-white-ter mb-4">
+                    <h2 class="title is-6 mb-2">Product Variants & Stock</h2>
+                    {% for v in product.variants.all %}
+                        <div class="level is-mobile py-1">
+                            <div class="level-left">
+                                <div>
+                                    <strong>{{ v.variant_name }}</strong> (SKU: {{ v.sku }})<br>
+                                    <small>{{ v.currency }} {{ v.price }}</small>
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                {% if v.inventory %}
+                                    <span class="tag is-light">Qty: {{ v.inventory.quantity }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="has-text-grey is-size-7">No variants configured.</p>
+                    {% endfor %}
+                </div>
+
+                <div class="tags">
+                    {% if product.is_cod_eligible %}
+                        <span class="tag is-success is-light">COD Eligible</span>
+                    {% endif %}
+                    {% if product.is_internationally_available %}
+                        <span class="tag is-primary is-light">International Delivery</span>
+                    {% else %}
+                        <span class="tag is-light">Nepal Delivery Only</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Moderation Action Form -->
+        <div class="column is-5">
+            <div class="box">
+                <h2 class="title is-5 mb-3">Moderation Decision</h2>
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="field mb-4">
+                        <label class="label">Decision</label>
+                        <div class="control">
+                            {% for radio in form.action %}
+                                <div class="mb-2">
+                                    <label class="radio">
+                                        {{ radio.tag }}
+                                        <strong>{{ radio.choice_label }}</strong>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.action.errors %}<p class="help is-danger">{{ form.action.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div class="field mb-4">
+                        <label class="label">Feedback / Review Notes</label>
+                        <div class="control">
+                            {{ form.review_notes }}
+                        </div>
+                        <p class="help">Required if requesting changes or rejecting product.</p>
+                    </div>
+
+                    <div class="field is-grouped">
+                        <div class="control">
+                            <button type="submit" class="button is-primary">Confirm Moderation Decision</button>
+                        </div>
+                        <div class="control">
+                            <a href="{% url 'store:admin_moderation_queue' %}" class="button is-light">Cancel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

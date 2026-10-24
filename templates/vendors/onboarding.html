@@ -1,0 +1,132 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}Seller Onboarding - NPTOR Store{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="columns is-centered">
+        <div class="column is-8-tablet is-7-desktop">
+            <div class="box">
+                <h1 class="title is-3 has-text-centered">Become an NPTOR Seller</h1>
+                <p class="subtitle is-6 has-text-centered has-text-grey mb-5">
+                    Register your business to list and sell educational equipment, books, kits, and digital materials across Nepal.
+                </p>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="notification is-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="field">
+                        <label class="label">{{ form.store_name.label }}</label>
+                        <div class="control has-icons-left">
+                            {{ form.store_name }}
+                            <span class="icon is-small is-left"><i class="fas fa-store"></i></span>
+                        </div>
+                        {% if form.store_name.errors %}<p class="help is-danger">{{ form.store_name.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div class="columns">
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ form.business_email.label }}</label>
+                                <div class="control has-icons-left">
+                                    {{ form.business_email }}
+                                    <span class="icon is-small is-left"><i class="fas fa-envelope"></i></span>
+                                </div>
+                                {% if form.business_email.errors %}<p class="help is-danger">{{ form.business_email.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ form.business_phone.label }}</label>
+                                <div class="control has-icons-left">
+                                    {{ form.business_phone }}
+                                    <span class="icon is-small is-left"><i class="fas fa-phone"></i></span>
+                                </div>
+                                {% if form.business_phone.errors %}<p class="help is-danger">{{ form.business_phone.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="columns">
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ form.pan_vat_number.label }}</label>
+                                <div class="control">
+                                    {{ form.pan_vat_number }}
+                                </div>
+                                <p class="help">Permanent Account Number (PAN) or VAT</p>
+                                {% if form.pan_vat_number.errors %}<p class="help is-danger">{{ form.pan_vat_number.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ form.business_registration_number.label }}</label>
+                                <div class="control">
+                                    {{ form.business_registration_number }}
+                                </div>
+                                <p class="help">Office of the Company Registrar / Dept. of Commerce</p>
+                                {% if form.business_registration_number.errors %}<p class="help is-danger">{{ form.business_registration_number.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h2 class="title is-5 mb-3"><i class="fas fa-university mr-2"></i>Bank Settlement Details</h2>
+                    <p class="is-size-7 has-text-grey mb-4">Required for payouts and settlement reconciliation in Nepal.</p>
+
+                    <div class="columns">
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ form.bank_name.label }}</label>
+                                <div class="control">{{ form.bank_name }}</div>
+                                {% if form.bank_name.errors %}<p class="help is-danger">{{ form.bank_name.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ form.bank_account_name.label }}</label>
+                                <div class="control">{{ form.bank_account_name }}</div>
+                                {% if form.bank_account_name.errors %}<p class="help is-danger">{{ form.bank_account_name.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="columns">
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ form.bank_account_number.label }}</label>
+                                <div class="control">{{ form.bank_account_number }}</div>
+                                {% if form.bank_account_number.errors %}<p class="help is-danger">{{ form.bank_account_number.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ form.bank_branch.label }}</label>
+                                <div class="control">{{ form.bank_branch }}</div>
+                                {% if form.bank_branch.errors %}<p class="help is-danger">{{ form.bank_branch.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field mt-4">
+                        <label class="checkbox">
+                            {{ form.is_cod_enabled }}
+                            <strong>Participate in Cash on Delivery (COD)</strong> for eligible physical orders in Nepal
+                        </label>
+                    </div>
+
+                    <div class="field mt-5">
+                        <button type="submit" class="button is-primary is-fullwidth is-medium">Submit Application</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

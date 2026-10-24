@@ -1,0 +1,104 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}Master Orders - NPTOR Store Admin{% endblock %}
+
+{% block content %}
+<div class="section py-4">
+    <div class="level mb-4">
+        <div class="level-left">
+            <div>
+                <h1 class="title is-3 mb-1">Store Orders Administration</h1>
+                <p class="subtitle is-6 has-text-grey">Overview of all customer master orders and fulfillment progress across vendors.</p>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="buttons">
+                <a href="{% url 'vendors:admin_settlement_dashboard' %}" class="button is-info is-light is-small">
+                    <span class="icon"><i class="fas fa-coins"></i></span>
+                    <span>Settlement Operations</span>
+                </a>
+                <a href="{% url 'vendors:admin_queue' %}" class="button is-light is-small">
+                    <span class="icon"><i class="fas fa-users-cog"></i></span>
+                    <span>Seller Queue</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="box py-3 mb-4">
+        <div class="level is-mobile mb-0">
+            <div class="level-left">
+                <span class="is-size-7 has-text-weight-bold mr-2">Filter by Status:</span>
+                <div class="tags">
+                    <a href="{% url 'orders:admin_order_list' %}" class="tag {% if not status_filter %}is-primary{% else %}is-light{% endif %}">All</a>
+                    <a href="{% url 'orders:admin_order_list' %}?status=pending" class="tag {% if status_filter == 'pending' %}is-warning{% else %}is-light{% endif %}">Pending</a>
+                    <a href="{% url 'orders:admin_order_list' %}?status=processing" class="tag {% if status_filter == 'processing' %}is-info{% else %}is-light{% endif %}">Processing</a>
+                    <a href="{% url 'orders:admin_order_list' %}?status=completed" class="tag {% if status_filter == 'completed' %}is-success{% else %}is-light{% endif %}">Completed</a>
+                    <a href="{% url 'orders:admin_order_list' %}?status=cancelled" class="tag {% if status_filter == 'cancelled' %}is-danger{% else %}is-light{% endif %}">Cancelled</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="box p-0">
+        <div class="table-container">
+            <table class="table is-fullwidth is-striped is-hoverable" style="vertical-align: middle;">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Packages / Vendors</th>
+                        <th>Placed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ord in orders %}
+                        <tr>
+                            <td class="has-text-weight-bold">
+                                {{ ord.order_number }}
+                            </td>
+                            <td>
+                                <p class="has-text-weight-medium mb-0">{{ ord.user.username }}</p>
+                                <p class="is-size-7 has-text-grey">{{ ord.user.email }}</p>
+                            </td>
+                            <td>
+                                <span class="tag is-small is-light {% if ord.online_payment_status == 'paid' %}is-success{% elif ord.payment_method == 'cod' %}is-info{% else %}is-warning{% endif %}">
+                                    {{ ord.get_payment_method_display }} ({{ ord.online_payment_status|default:ord.cod_collection_status }})
+                                </span>
+                            </td>
+                            <td>
+                                <span class="tag is-small {% if ord.order_status == 'completed' or ord.order_status == 'processing' %}is-success{% elif ord.order_status == 'cancelled' %}is-danger{% else %}is-warning{% endif %}">
+                                    {{ ord.get_order_status_display }}
+                                </span>
+                            </td>
+                            <td class="has-text-weight-bold has-text-primary">
+                                NPR {{ ord.grand_total }}
+                            </td>
+                            <td>
+                                {% for sub in ord.suborders.all %}
+                                    <span class="tag is-light is-small mb-1">
+                                        {{ sub.vendor.store_name|default:"NPTOR" }}: {{ sub.get_fulfillment_status_display }}
+                                    </span>
+                                {% endfor %}
+                            </td>
+                            <td class="is-size-7 has-text-grey">
+                                {{ ord.created_at|date:"M d, Y H:i" }}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="has-text-centered py-5 has-text-grey">
+                                No orders found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

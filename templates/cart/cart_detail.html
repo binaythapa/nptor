@@ -1,0 +1,173 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}Shopping Cart - NPTOR Store{% endblock %}
+
+{% block content %}
+<div class="section py-4">
+    <nav class="breadcrumb is-small mb-4" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="{% url 'store:product_list' %}">Store</a></li>
+            <li class="is-active"><a href="#" aria-current="page">Shopping Cart</a></li>
+        </ul>
+    </nav>
+
+    <h1 class="title is-3 mb-4">
+        <span class="icon mr-2"><i class="fas fa-shopping-cart"></i></span>Your Shopping Cart
+    </h1>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="notification is-{{ message.tags|default:'info' }} is-light py-2 px-4 mb-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if items %}
+        <div class="columns">
+            <div class="column is-8">
+                <div class="box">
+                    <table class="table is-fullwidth is-hoverable" style="vertical-align: middle;">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="has-text-centered">Price</th>
+                                <th class="has-text-centered" style="width: 140px;">Quantity</th>
+                                <th class="has-text-right">Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    <td>
+                                        <p class="has-text-weight-semibold mb-1">
+                                            <a href="{% url 'store:product_detail' item.variant.product.slug %}">
+                                                {{ item.variant.product.title }}
+                                            </a>
+                                        </p>
+                                        <p class="is-size-7 has-text-grey">
+                                            SKU: {{ item.variant.sku }} | Sold by: 
+                                            <strong>{{ item.variant.product.vendor.store_name|default:"NPTOR Official" }}</strong>
+                                        </p>
+                                        <span class="tag is-small is-light {% if item.variant.product.product_type == 'digital' %}is-info{% else %}is-primary{% endif %} mt-1">
+                                            {{ item.variant.product.get_product_type_display }}
+                                        </span>
+                                    </td>
+                                    <td class="has-text-centered has-text-weight-medium">
+                                        NPR {{ item.unit_price_snapshot }}
+                                    </td>
+                                    <td class="has-text-centered">
+                                        <form method="post" action="{% url 'cart:update' item.id %}" class="is-inline-flex">
+                                            {% csrf_token %}
+                                            <div class="field has-addons">
+                                                <div class="control" style="width: 60px;">
+                                                    <input class="input is-small has-text-centered" type="number" name="quantity" value="{{ item.quantity }}" min="1" max="99">
+                                                </div>
+                                                <div class="control">
+                                                    <button class="button is-small is-info" type="submit" title="Update Quantity">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </td>
+                                    <td class="has-text-right has-text-weight-bold has-text-primary">
+                                        NPR {{ item.total_price }}
+                                    </td>
+                                    <td class="has-text-right">
+                                        <form method="post" action="{% url 'cart:remove' item.id %}" class="is-inline">
+                                            {% csrf_token %}
+                                            <button class="button is-small is-danger is-inverted" type="submit" title="Remove item">
+                                                <span class="icon"><i class="fas fa-trash-alt"></i></span>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="level mt-4">
+                        <div class="level-left">
+                            <a href="{% url 'store:product_list' %}" class="button is-light is-small">
+                                <span class="icon"><i class="fas fa-arrow-left"></i></span>
+                                <span>Continue Shopping</span>
+                            </a>
+                        </div>
+                        <div class="level-right">
+                            <form method="post" action="{% url 'cart:clear' %}">
+                                {% csrf_token %}
+                                <button class="button is-small is-ghost has-text-danger" type="submit">
+                                    <span class="icon"><i class="fas fa-trash"></i></span>
+                                    <span>Clear Cart</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column is-4">
+                <div class="box has-background-light">
+                    <h2 class="title is-5 mb-3">Order Summary</h2>
+
+                    <div class="level is-mobile mb-2">
+                        <div class="level-left"><span>Items Subtotal</span></div>
+                        <div class="level-right"><strong class="has-text-primary">NPR {{ subtotal }}</strong></div>
+                    </div>
+                    <div class="level is-mobile mb-2">
+                        <div class="level-left"><span>Estimated Shipping</span></div>
+                        <div class="level-right"><span class="has-text-grey">Calculated at checkout</span></div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="level is-mobile mb-4">
+                        <div class="level-left"><span class="title is-5 mb-0">Total</span></div>
+                        <div class="level-right"><span class="title is-4 has-text-primary mb-0">NPR {{ subtotal }}</span></div>
+                    </div>
+
+                    {% if analysis %}
+                        <div class="tags mb-4">
+                            {% if analysis.is_cod_eligible %}
+                                <span class="tag is-success is-light is-fullwidth mb-1">
+                                    <i class="fas fa-money-bill-wave mr-1"></i> Eligible for Cash on Delivery (Nepal)
+                                </span>
+                            {% elif analysis.has_physical %}
+                                <span class="tag is-warning is-light is-fullwidth mb-1">
+                                    <i class="fas fa-info-circle mr-1"></i> Cash on Delivery not available for this cart
+                                </span>
+                            {% endif %}
+                            {% if analysis.has_digital %}
+                                <span class="tag is-info is-light is-fullwidth mb-1">
+                                    <i class="fas fa-bolt mr-1"></i> Instant Digital Delivery after payment
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <a href="{% url 'orders:checkout' %}" class="button is-primary is-fullwidth is-medium">
+                        <span>Proceed to Checkout</span>
+                        <span class="icon"><i class="fas fa-arrow-right"></i></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="box has-text-centered py-6">
+            <span class="icon is-large has-text-grey-light mb-3">
+                <i class="fas fa-shopping-cart fa-3x"></i>
+            </span>
+            <h2 class="title is-4 has-text-grey">Your shopping cart is empty</h2>
+            <p class="subtitle is-6 has-text-grey-light mb-4">Explore our wide selection of exam preparation guides, books, and digital notes.</p>
+            <a href="{% url 'store:product_list' %}" class="button is-primary">
+                <span class="icon"><i class="fas fa-store"></i></span>
+                <span>Browse Products</span>
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

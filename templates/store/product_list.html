@@ -1,0 +1,116 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}Store Catalog - NPTOR{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="columns">
+        <!-- Sidebar Filters -->
+        <div class="column is-3">
+            <div class="box">
+                <h2 class="title is-5 mb-3">Categories</h2>
+                <aside class="menu">
+                    <ul class="menu-list">
+                        <li>
+                            <a href="{% url 'store:product_list' %}" class="{% if not selected_category %}is-active{% endif %}">
+                                All Categories
+                            </a>
+                        </li>
+                        {% for cat in categories %}
+                            <li>
+                                <a href="?category={{ cat.slug }}" class="{% if selected_category and selected_category.id == cat.id %}is-active{% endif %}">
+                                    {{ cat.name }}
+                                </a>
+                                {% if cat.children.all %}
+                                    <ul>
+                                        {% for sub in cat.children.all %}
+                                            <li>
+                                                <a href="?category={{ sub.slug }}" class="{% if selected_category and selected_category.id == sub.id %}is-active{% endif %}">
+                                                    {{ sub.name }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </aside>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="column is-9">
+            <div class="level mb-4">
+                <div class="level-left">
+                    <div>
+                        <h1 class="title is-4 mb-1">
+                            {% if selected_category %}{{ selected_category.name }}{% else %}Store Catalog{% endif %}
+                        </h1>
+                        <p class="subtitle is-6 has-text-grey">{{ products|length }} product{{ products|length|pluralize }} available</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <form method="get" class="field has-addons">
+                        {% if selected_category %}
+                            <input type="hidden" name="category" value="{{ selected_category.slug }}">
+                        {% endif %}
+                        <div class="control">
+                            <input class="input is-small" type="text" name="q" placeholder="Search products..." value="{{ search_query }}">
+                        </div>
+                        <div class="control">
+                            <button type="submit" class="button is-small is-primary"><i class="fas fa-search"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if products %}
+                <div class="columns is-multiline">
+                    {% for p in products %}
+                        {% with v=p.variants.first %}
+                            <div class="column is-4-desktop is-6-tablet">
+                                <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+                                    <div class="card-image has-text-centered has-background-light py-5">
+                                        <i class="fas {% if p.product_type == 'digital' %}fa-file-download{% else %}fa-box{% endif %} fa-3x has-text-grey-light"></i>
+                                    </div>
+                                    <div class="card-content" style="flex-grow: 1;">
+                                        <div class="tags mb-1">
+                                            <span class="tag is-light">{{ p.category.name }}</span>
+                                            {% if p.is_cod_eligible %}
+                                                <span class="tag is-success is-light">COD Eligible</span>
+                                            {% endif %}
+                                        </div>
+                                        <h3 class="title is-6 mb-2">
+                                            <a href="{% url 'store:product_detail' p.slug %}">{{ p.title }}</a>
+                                        </h3>
+                                        <p class="has-text-grey is-size-7 mb-2">
+                                            Sold by: <strong>{% if p.vendor %}{{ p.vendor.store_name }}{% else %}NPTOR Official{% endif %}</strong>
+                                        </p>
+                                        <div class="title is-5 has-text-primary">
+                                            {% if v %}
+                                                {{ v.currency }} {{ v.price }}
+                                            {% else %}
+                                                Price on request
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <footer class="card-footer">
+                                        <a href="{% url 'store:product_detail' p.slug %}" class="card-footer-item">View Product</a>
+                                    </footer>
+                                </div>
+                            </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="box has-text-centered py-6 has-text-grey">
+                    <i class="fas fa-search fa-3x mb-3 has-text-grey-lighter"></i>
+                    <p class="title is-5">No products found</p>
+                    <p class="subtitle is-6">Try selecting a different category or clearing search terms.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

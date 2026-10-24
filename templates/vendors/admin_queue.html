@@ -1,0 +1,102 @@
+{% extends "layouts/admin/base_admin.html" %}
+
+{% block title %}Seller Applications Moderation - NPTOR Admin{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="level">
+        <div class="level-left">
+            <div>
+                <h1 class="title is-3">Seller Applications Queue</h1>
+                <p class="subtitle is-6 has-text-grey">Review, verify, and activate third-party sellers on NPTOR.</p>
+            </div>
+        </div>
+        <div class="level-right">
+            <span class="tag is-warning is-medium">Pending: {{ pending_count }}</span>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="notification is-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="tabs is-boxed mb-4">
+        <ul>
+            <li class="{% if status_filter == 'pending' %}is-active{% endif %}">
+                <a href="?status=pending">Pending Applications</a>
+            </li>
+            <li class="{% if status_filter == 'active' %}is-active{% endif %}">
+                <a href="?status=active">Active Sellers</a>
+            </li>
+            <li class="{% if status_filter == 'suspended' %}is-active{% endif %}">
+                <a href="?status=suspended">Suspended</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="box">
+        {% if vendors %}
+            <div class="table-container">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>Store Name</th>
+                            <th>Contact / Email</th>
+                            <th>PAN / VAT</th>
+                            <th>Bank (Masked)</th>
+                            <th>Commission</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in vendors %}
+                            <tr>
+                                <td>
+                                    <strong>{{ v.store_name }}</strong><br>
+                                    <small class="has-text-grey">User: {{ v.user.username }}</small>
+                                </td>
+                                <td>
+                                    {{ v.business_email }}<br>
+                                    <small>{{ v.business_phone }}</small>
+                                </td>
+                                <td>{{ v.pan_vat_number|default:"-" }}</td>
+                                <td>
+                                    {% if v.bank_details %}
+                                        {{ v.bank_details.bank_name }}<br>
+                                        <small>{{ v.bank_details.masked_account_number }}</small>
+                                    {% else %}
+                                        <span class="has-text-grey-light">None</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ v.commission_rate }}%</td>
+                                <td>{{ v.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'vendors:admin_action' v.pk %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        {% if v.status == 'pending' or v.status == 'suspended' %}
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" class="button is-small is-success">Approve</button>
+                                        {% endif %}
+                                    </form>
+                                    {% if v.status == 'active' %}
+                                        <form method="post" action="{% url 'vendors:admin_action' v.pk %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="suspend">
+                                            <button type="submit" class="button is-small is-danger is-light">Suspend</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="has-text-centered has-text-grey py-5">No vendors found with status: <strong>{{ status_filter }}</strong>.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

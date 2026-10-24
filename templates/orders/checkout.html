@@ -1,0 +1,229 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}Checkout - NPTOR Store{% endblock %}
+
+{% block content %}
+<div class="section py-4">
+    <nav class="breadcrumb is-small mb-4" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="{% url 'store:product_list' %}">Store</a></li>
+            <li><a href="{% url 'cart:detail' %}">Shopping Cart</a></li>
+            <li class="is-active"><a href="#" aria-current="page">Checkout</a></li>
+        </ul>
+    </nav>
+
+    <h1 class="title is-3 mb-4">
+        <span class="icon mr-2"><i class="fas fa-lock"></i></span>Secure Checkout
+    </h1>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="notification is-{{ message.tags|default:'info' }} is-light py-2 px-4 mb-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if form.errors %}
+        <div class="notification is-danger is-light py-3 px-4 mb-4">
+            <p class="has-text-weight-semibold mb-1">Please correct the following errors:</p>
+            <ul style="list-style: disc; margin-left: 1.5rem;">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field|capfirst }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'orders:checkout' %}">
+        {% csrf_token %}
+        {{ form.idempotency_key }}
+        {{ form.country }}
+
+        <div class="columns">
+            <div class="column is-7">
+                {% if has_physical %}
+                    <div class="box mb-4">
+                        <h2 class="title is-5 mb-3">
+                            <span class="icon is-small mr-1"><i class="fas fa-map-marker-alt"></i></span>
+                            Delivery Address (Nepal Only)
+                        </h2>
+                        
+                        <div class="columns is-multiline">
+                            <div class="column is-6 py-1">
+                                <div class="field">
+                                    <label class="label is-small">Full Name *</label>
+                                    <div class="control">
+                                        {{ form.full_name }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column is-6 py-1">
+                                <div class="field">
+                                    <label class="label is-small">Phone Number *</label>
+                                    <div class="control">
+                                        {{ form.phone }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column is-12 py-1">
+                                <div class="field">
+                                    <label class="label is-small">Street Address / Ward / Tole *</label>
+                                    <div class="control">
+                                        {{ form.street_address_1 }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column is-12 py-1">
+                                <div class="field">
+                                    <label class="label is-small">Apartment, Floor, Landmark (Optional)</label>
+                                    <div class="control">
+                                        {{ form.street_address_2 }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column is-4 py-1">
+                                <div class="field">
+                                    <label class="label is-small">City / Municipality *</label>
+                                    <div class="control">
+                                        {{ form.city }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column is-4 py-1">
+                                <div class="field">
+                                    <label class="label is-small">District *</label>
+                                    <div class="control">
+                                        {{ form.district }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column is-4 py-1">
+                                <div class="field">
+                                    <label class="label is-small">Province *</label>
+                                    <div class="control">
+                                        {{ form.province }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="box mb-4 has-background-info-light">
+                        <div class="media">
+                            <div class="media-left">
+                                <span class="icon is-large has-text-info">
+                                    <i class="fas fa-cloud-download-alt fa-2x"></i>
+                                </span>
+                            </div>
+                            <div class="media-content">
+                                <h2 class="title is-5 mb-1 has-text-info-dark">Digital Purchase</h2>
+                                <p class="is-size-6 has-text-info-dark">
+                                    Your order contains only instant digital downloads. No physical shipping address is required. Files will be available immediately upon order confirmation.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="box">
+                    <h2 class="title is-5 mb-3">
+                        <span class="icon is-small mr-1"><i class="fas fa-wallet"></i></span>
+                        Payment Method
+                    </h2>
+
+                    <div class="field">
+                        <div class="control">
+                            {% if request.user.is_staff %}
+                                <label class="radio mb-3 is-flex is-align-items-center">
+                                    <input type="radio" name="payment_method" value="online" {% if form.payment_method.value == 'online' %}checked{% endif %}>
+                                    <span class="ml-2">
+                                        <strong>Online Payment Gateway (Staff Testing Only)</strong>
+                                        <span class="is-block is-size-7 has-text-grey">
+                                            Simulated gateway adapter for staff verification.
+                                        </span>
+                                    </span>
+                                </label>
+                            {% else %}
+                                <div class="notification is-light py-2 px-3 mb-3 is-size-7">
+                                    <span class="icon is-small mr-1"><i class="fas fa-lock"></i></span>
+                                    <strong>Online Payment Gateway:</strong> Disabled for Day-1 launch. Orders are fulfilled via <strong>Cash on Delivery (COD)</strong>.
+                                </div>
+                            {% endif %}
+
+                            <label class="radio is-flex is-align-items-center {% if not is_cod_eligible %}has-text-grey-light{% endif %}">
+                                <input type="radio" name="payment_method" value="cod" {% if form.payment_method.value == 'cod' or not request.user.is_staff %}checked{% endif %} {% if not is_cod_eligible %}disabled{% endif %}>
+                                <span class="ml-2">
+                                    <strong>Cash on Delivery (COD)</strong>
+                                    {% if is_cod_eligible %}
+                                        <span class="is-block is-size-7 has-text-grey">
+                                            Pay in cash upon physical package delivery in Nepal.
+                                        </span>
+                                    {% else %}
+                                        <span class="is-block is-size-7 has-text-danger">
+                                            Unavailable for this cart (contains digital items or seller does not offer COD).
+                                        </span>
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column is-5">
+                <div class="box has-background-light">
+                    <h2 class="title is-5 mb-3">Order Items ({{ items|length }})</h2>
+
+                    <div class="mb-3" style="max-height: 240px; overflow-y: auto;">
+                        {% for item in items %}
+                            <div class="level is-mobile py-2 mb-0" style="border-bottom: 1px solid #e2e8f0;">
+                                <div class="level-left" style="max-width: 70%;">
+                                    <div>
+                                        <p class="is-size-6 has-text-weight-semibold mb-0">{{ item.variant.product.title }}</p>
+                                        <p class="is-size-7 has-text-grey">Qty: {{ item.quantity }} × NPR {{ item.unit_price_snapshot }}</p>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <span class="has-text-weight-bold has-text-primary">NPR {{ item.total_price }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="level is-mobile mb-2">
+                        <div class="level-left"><span>Items Subtotal</span></div>
+                        <div class="level-right"><strong>NPR {{ subtotal }}</strong></div>
+                    </div>
+                    <div class="level is-mobile mb-2">
+                        <div class="level-left"><span>Delivery Charge</span></div>
+                        <div class="level-right"><span class="has-text-success has-text-weight-medium">Free</span></div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="level is-mobile mb-4">
+                        <div class="level-left"><span class="title is-5 mb-0">Grand Total</span></div>
+                        <div class="level-right"><span class="title is-4 has-text-primary mb-0">NPR {{ subtotal }}</span></div>
+                    </div>
+
+                    <button class="button is-primary is-fullwidth is-medium mb-3" type="submit">
+                        <span class="icon"><i class="fas fa-check-circle"></i></span>
+                        <span>Confirm and Place Order</span>
+                    </button>
+
+                    <p class="has-text-centered">
+                        <a href="{% url 'cart:detail' %}" class="is-size-7 has-text-grey">
+                            <i class="fas fa-arrow-left mr-1"></i> Edit Cart Items
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

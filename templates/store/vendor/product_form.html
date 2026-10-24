@@ -1,0 +1,119 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}{{ action_title }} - NPTOR Store{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="columns is-centered">
+        <div class="column is-9-desktop is-10-tablet">
+            <nav class="breadcrumb is-small mb-3" aria-label="breadcrumbs">
+                <ul>
+                    <li><a href="{% url 'vendors:dashboard' %}">Seller Portal</a></li>
+                    <li><a href="{% url 'store:vendor_product_list' %}">Products</a></li>
+                    <li class="is-active"><a href="#" aria-current="page">{{ action_title }}</a></li>
+                </ul>
+            </nav>
+
+            <div class="box">
+                <h1 class="title is-4 mb-4">{{ action_title }}</h1>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="notification is-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="field">
+                        <label class="label">{{ p_form.title.label }}</label>
+                        <div class="control">{{ p_form.title }}</div>
+                        {% if p_form.title.errors %}<p class="help is-danger">{{ p_form.title.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div class="columns">
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ p_form.category.label }}</label>
+                                <div class="control"><div class="select is-fullwidth">{{ p_form.category }}</div></div>
+                                {% if p_form.category.errors %}<p class="help is-danger">{{ p_form.category.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="label">{{ p_form.product_type.label }}</label>
+                                <div class="control"><div class="select is-fullwidth">{{ p_form.product_type }}</div></div>
+                                {% if p_form.product_type.errors %}<p class="help is-danger">{{ p_form.product_type.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">{{ p_form.description.label }}</label>
+                        <div class="control">{{ p_form.description }}</div>
+                    </div>
+
+                    <div class="columns">
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="checkbox">
+                                    {{ p_form.is_cod_eligible }}
+                                    <strong>Cash on Delivery (COD) Eligible</strong> (Nepal physical orders)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="checkbox">
+                                    {{ p_form.is_internationally_available }}
+                                    <strong>Available Internationally</strong> (Digital downloads)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if v_form %}
+                        <hr>
+                        <h2 class="title is-5 mb-3">Pricing & Inventory</h2>
+                        <div class="columns">
+                            <div class="column is-4">
+                                <div class="field">
+                                    <label class="label">{{ v_form.price.label }} (NPR)</label>
+                                    <div class="control">{{ v_form.price }}</div>
+                                    {% if v_form.price.errors %}<p class="help is-danger">{{ v_form.price.errors.0 }}</p>{% endif %}
+                                </div>
+                            </div>
+                            <div class="column is-4">
+                                <div class="field">
+                                    <label class="label">{{ v_form.sku.label }}</label>
+                                    <div class="control">{{ v_form.sku }}</div>
+                                    {% if v_form.sku.errors %}<p class="help is-danger">{{ v_form.sku.errors.0 }}</p>{% endif %}
+                                </div>
+                            </div>
+                            <div class="column is-4">
+                                {% if i_form %}
+                                    <div class="field">
+                                        <label class="label">Initial Quantity</label>
+                                        <div class="control">{{ i_form.quantity }}</div>
+                                        {% if i_form.quantity.errors %}<p class="help is-danger">{{ i_form.quantity.errors.0 }}</p>{% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="field is-grouped mt-5">
+                        <div class="control">
+                            <button type="submit" class="button is-primary">Save Product</button>
+                        </div>
+                        <div class="control">
+                            <a href="{% url 'store:vendor_product_list' %}" class="button is-light">Cancel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

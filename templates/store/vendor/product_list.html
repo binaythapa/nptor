@@ -1,0 +1,105 @@
+{% extends "layouts/student/base.html" %}
+
+{% block title %}Manage Products - {{ vendor.store_name }}{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="level">
+        <div class="level-left">
+            <div>
+                <nav class="breadcrumb is-small mb-1" aria-label="breadcrumbs">
+                    <ul>
+                        <li><a href="{% url 'vendors:dashboard' %}">Seller Portal</a></li>
+                        <li class="is-active"><a href="#" aria-current="page">Products</a></li>
+                    </ul>
+                </nav>
+                <h1 class="title is-3">Your Product Listings</h1>
+            </div>
+        </div>
+        <div class="level-right">
+            <a href="{% url 'store:vendor_product_create' %}" class="button is-primary">
+                <span class="icon"><i class="fas fa-plus"></i></span>
+                <span>Add Product</span>
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="notification is-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="box">
+        {% if products %}
+            <div class="table-container">
+                <table class="table is-fullwidth is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in products %}
+                            <tr>
+                                <td>
+                                    <strong><a href="{% url 'store:product_detail' p.slug %}">{{ p.title }}</a></strong>
+                                </td>
+                                <td>{{ p.category.name }}</td>
+                                <td>{{ p.get_product_type_display }}</td>
+                                <td>
+                                    {% with v=p.variants.first %}
+                                        {% if v %}{{ v.currency }} {{ v.price }}{% else %}-{% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if p.approval_status == 'approved' %}
+                                        <span class="tag is-success">Approved & Active</span>
+                                    {% elif p.approval_status == 'pending' %}
+                                        <span class="tag is-warning">In Review</span>
+                                    {% elif p.approval_status == 'changes_required' %}
+                                        <span class="tag is-danger is-light">Changes Required</span>
+                                    {% elif p.approval_status == 'rejected' %}
+                                        <span class="tag is-danger">Rejected</span>
+                                    {% else %}
+                                        <span class="tag is-light">Draft</span>
+                                    {% endif %}
+                                    {% if p.review_notes %}
+                                        <p class="is-size-7 has-text-grey mt-1"><em>Notes: {{ p.review_notes }}</em></p>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="buttons are-small">
+                                        {% if p.approval_status == 'draft' or p.approval_status == 'changes_required' %}
+                                            <a href="{% url 'store:vendor_product_edit' p.pk %}" class="button is-info is-outlined">Edit</a>
+                                            <form method="post" action="{% url 'store:vendor_product_submit' p.pk %}" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="button is-success is-outlined">Submit for Review</button>
+                                            </form>
+                                        {% elif p.approval_status == 'pending' %}
+                                            <span class="has-text-grey is-size-7">Awaiting review</span>
+                                        {% else %}
+                                            <a href="{% url 'store:product_detail' p.slug %}" class="button is-light">View</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="has-text-centered py-6 has-text-grey">
+                <i class="fas fa-boxes fa-3x mb-3 has-text-grey-lighter"></i>
+                <p class="title is-5">No products listed</p>
+                <a href="{% url 'store:vendor_product_create' %}" class="button is-primary is-small mt-2">Create Product</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
