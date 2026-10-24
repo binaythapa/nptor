@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
+from django.urls import reverse
 
 from store.models import (
     Category,
@@ -118,3 +119,101 @@ class StoreModelTests(TestCase):
         # Verify protected storage raises ValueError when attempting to generate a public URL
         with self.assertRaises(ValueError):
             _ = asset.file.url
+
+
+
+class StoreCatalogUITests(TestCase):
+    def setUp(self):
+        self.cat1 = Category.objects.create(name="Study Materials", slug="study-materials", is_active=True)
+        self.subcat = Category.objects.create(name="Notes", slug="notes", parent=self.cat1, is_active=True)
+        self.cat2 = Category.objects.create(name="Desk Supplies", slug="desk-supplies", is_active=True)
+
+        self.prod1 = Product.objects.create(
+            title="Comprehensive Study Guide",
+            slug="comprehensive-study-guide",
+            category=self.cat1,
+            product_type=Product.TYPE_PHYSICAL,
+            approval_status=Product.STATUS_APPROVED,
+            is_active=True,
+            is_cod_eligible=True,
+        )
+        self.var1 = ProductVariant.objects.create(
+            product=self.prod1,
+            sku="SG-001",
+            price=Decimal("750.00"),
+            currency="NPR",
+        )
+
+        self.prod2 = Product.objects.create(
+            title="Desk Organizer Tray",
+            slug="desk-organizer-tray",
+            category=self.cat2,
+            product_type=Product.TYPE_PHYSICAL,
+            approval_status=Product.STATUS_APPROVED,
+            is_active=True,
+        )
+        self.var2 = ProductVariant.objects.create(
+            product=self.prod2,
+            sku="DOT-001",
+            price=Decimal("450.00"),
+            currency="NPR",
+        )
+
+    def test_catalog_renders_simplified_top_bar_and_wider_grid(self):
+        url = reverse("store:product_list")
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+
+        # Old inner sidebar category panel and is-3 column are removed
+        self.assertNotContains(res, '<h2 class="title is-5 mb-3">Categories</h2>')
+        self.assertNotContains(res, '<div class="column is-3">')
+
+        # New compact category controls and horizontal pills are rendered
+        self.assertContains(res, 'store-catalog-header')
+        self.assertContains(res, 'store-cat-select')
+        self.assertContains(res, 'store-filter-pills')
+        self.assertContains(res, 'All Categories')
+        self.assertContains(res, 'Study Materials')
+        self.assertContains(res, 'Desk Supplies')
+
+        # Wider product grid classes are present
+        self.assertContains(res, 'store-product-grid')
+        self.assertContains(res, 'is-3-widescreen')
+
+        # Product cards and titles are rendered
+        self.assertContains(res, "Comprehensive Study Guide")
+        self.assertContains(res, "Desk Organizer Tray")
+        self.assertContains(res, "COD Eligible")
+
+    def test_catalog_category_filtering(self):
+        url = reverse("store:product_list")
+        res = self.client.get(url, {"category": "study-materials"})
+        self.assertEqual(res.status_code, 200)
+
+        # Should include prod1 and exclude prod2
+        self.assertContains(res, "Comprehensive Study Guide")
+        self.assertNotContains(res, "Desk Organizer Tray")
+
+        # Category pill is active
+        self.assertContains(res, 'Category: <strong>Study Materials</strong>')
+
+    def test_catalog_search_filtering(self):
+        url = reverse("store:product_list")
+        res = self.client.get(url, {"q": "Organizer"})
+        self.assertEqual(res.status_code, 200)
+
+        self.assertContains(res, "Desk Organizer Tray")
+        self.assertNotContains(res, "Comprehensive Study Guide")
+        self.assertContains(res, 'matching "<em>Organizer</em>"')
+
+    def test_catalog_combined_category_and_search(self):
+        url = reverse("store:product_list")
+        res = self.client.get(url, {"category": "study-materials", "q": "Guide"})
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "Comprehensive Study Guide")
+
+        # Searching for something not in study materials
+        res2 = self.client.get(url, {"category": "study-materials", "q": "Organizer"})
+        self.assertEqual(res2.status_code, 200)
+        self.assertContains(res2, "No products found")
+        self.assertNotContains(res2, "Desk Organizer Tray")
