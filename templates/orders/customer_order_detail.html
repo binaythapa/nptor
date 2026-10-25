@@ -12,16 +12,20 @@
         </ul>
     </nav>
 
-    <div class="level is-mobile mb-4">
-        <div class="level-left">
-            <div>
-                <h1 class="title is-3 mb-1">Order #{{ order.order_number }}</h1>
-                <p class="subtitle is-6 has-text-grey">
-                    Placed on {{ order.created_at|date:"F d, Y, h:i A" }}
-                </p>
+    <!-- Page Header -->
+    <div class="store-page-header mb-5">
+        <div class="store-page-header-content">
+            <div class="store-page-heading-row">
+                <span class="store-page-heading-icon" aria-hidden="true">
+                    <i class="fas fa-receipt"></i>
+                </span>
+                <h1 class="store-page-title title is-3 mb-0">Order #{{ order.order_number }}</h1>
             </div>
+            <p class="store-page-subtitle subtitle is-6 has-text-grey">
+                Placed on {{ order.created_at|date:"F d, Y, h:i A" }}
+            </p>
         </div>
-        <div class="level-right">
+        <div class="store-page-header-action">
             <span class="tag is-medium {% if order.order_status == 'completed' or order.order_status == 'processing' %}is-success{% elif order.order_status == 'cancelled' %}is-danger{% else %}is-warning{% endif %}">
                 {{ order.get_order_status_display }}
             </span>

@@ -1760,3 +1760,125 @@ html[data-theme="dark"] .store-empty-box,
 [data-theme="dark"] .store-review-thumb-btn {
   border-color: #334155;
 }
+
+
+/* ==============================================================================
+   STORE PAGE HEADERS & ORDER VIEWS TYPOGRAPHY
+   ============================================================================== */
+.store-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.store-page-header-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.store-page-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 0 0.35rem 0;
+}
+
+.store-page-heading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--nptor-primary, #0284c7);
+  flex-shrink: 0;
+}
+
+.store-page-title {
+  margin: 0 !important;
+  font-size: clamp(1.4rem, 2.2vw, 1.75rem) !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  color: var(--nptor-text, #1e293b) !important;
+  letter-spacing: -0.015em;
+}
+
+.store-page-subtitle {
+  margin: 0.25rem 0 0 0 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.5 !important;
+  color: var(--nptor-text-muted, #64748b) !important;
+}
+
+.store-page-header-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .store-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .store-page-header-action {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .store-page-header-action .button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Neutralize Bulma negative top margin when .subtitle immediately follows .title */
+.store-page-content .title:not(.is-spaced) + .subtitle,
+.store-page-content .title + .subtitle {
+  margin-top: 0.35rem !important;
+}
+
+/* Dark mode adaptations for store page headers and order cards */
+[data-theme="dark"] .store-page-title {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .store-page-subtitle {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .store-page-heading-icon {
+  color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .store-order-history-card {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .store-order-history-card .has-text-grey {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .store-order-history-card .is-size-6 {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .store-empty-box {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .store-empty-box .title {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .store-empty-box .subtitle {
+  color: #94a3b8 !important;
+}

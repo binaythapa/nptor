@@ -12,16 +12,20 @@
         </ul>
     </nav>
 
-    <div class="level is-mobile mb-4">
-        <div class="level-left">
-            <div>
-                <h1 class="title is-3 mb-1"><i class="fas fa-box-open has-text-primary mr-2"></i> My Orders</h1>
-                <p class="subtitle is-6 has-text-grey">
-                    View order status, shipment tracking, and return options
-                </p>
+    <!-- Page Header -->
+    <div class="store-page-header mb-5">
+        <div class="store-page-header-content">
+            <div class="store-page-heading-row">
+                <span class="store-page-heading-icon" aria-hidden="true">
+                    <i class="fas fa-box-open"></i>
+                </span>
+                <h1 class="store-page-title title is-3 mb-0">My Orders</h1>
             </div>
+            <p class="store-page-subtitle subtitle is-6 has-text-grey">
+                View order status, shipment tracking, and return options
+            </p>
         </div>
-        <div class="level-right">
+        <div class="store-page-header-action">
             <a href="{% url 'store:product_list' %}" class="button is-small is-light">
                 <i class="fas fa-shopping-bag mr-1"></i> Browse Store
             </a>

@@ -618,3 +618,48 @@ class GeolocationAndCartDemoTests(TestCase):
         # Inventory reserved / deducted
         self.real_inv.refresh_from_db()
         self.assertEqual(self.real_inv.quantity, 9)
+
+    def test_customer_order_list_heading_structure(self):
+        """Customer order list renders proper heading row, icon alignment, and non-overlapping subtitle."""
+        self.client.force_login(self.customer)
+        resp = self.client.get(reverse("orders:customer_order_list"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "store-page-header")
+        self.assertContains(resp, "store-page-heading-row")
+        self.assertContains(resp, "store-page-heading-icon")
+        self.assertContains(resp, "store-page-title")
+        self.assertContains(resp, "store-page-subtitle")
+        self.assertContains(resp, "My Orders")
+        self.assertContains(resp, "View order status, shipment tracking, and return options")
+
+    def test_customer_order_detail_heading_structure(self):
+        """Customer order detail renders proper heading row and structured header."""
+        self.client.force_login(self.customer)
+        addr = ShippingAddress.objects.create(
+            user=self.customer,
+            full_name="Binay Test",
+            phone="9800000000",
+            street_address_1="Kholagaal Marg",
+            city="Kathmandu",
+            district="Kathmandu",
+            province="Bagmati",
+            country="NP",
+        )
+        order = Order.objects.create(
+            user=self.customer,
+            order_number="NPTOR-ORD-TEST-HEAD",
+            payment_method="cod",
+            total_items_amount=Decimal("1200.00"),
+            grand_total=Decimal("1200.00"),
+            currency="NPR",
+            shipping_address=addr,
+            order_status="pending",
+        )
+        resp = self.client.get(reverse("orders:customer_order_detail", kwargs={"order_number": order.order_number}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "store-page-header")
+        self.assertContains(resp, "store-page-heading-row")
+        self.assertContains(resp, "store-page-heading-icon")
+        self.assertContains(resp, "store-page-title")
+        self.assertContains(resp, "store-page-subtitle")
+        self.assertContains(resp, "Order #NPTOR-ORD-TEST-HEAD")
