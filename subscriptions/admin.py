@@ -71,6 +71,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "user",
+        "organization",
         "plan",
         "status",
         "payment_status",
@@ -85,6 +86,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
     list_filter = (
         "status",
+        "organization",
         "payment_status",
         "subscribed_by_admin",
         "auto_renew",
@@ -97,6 +99,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     search_fields = (
         "user__username",
         "user__email",
+        "organization__name",
         "payment_id",
         "plan__name",
         "plan__code",
@@ -123,6 +126,7 @@ class SubscriptionEntitlementAdmin(admin.ModelAdmin):
     search_fields = (
         "subscription__user__username",
         "subscription__user__email",
+        "subscription__organization__name",
         "course__title",
         "track__title",
         "exam__title",

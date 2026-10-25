@@ -81,9 +81,9 @@ class PaymentOrder(models.Model):
             if resource_type != self.resource_type and resource is not None:
                 raise ValidationError({"resource_type": "Only one resource can be associated with an order."})
         if self.resource_type == self.RESOURCE_SUBSCRIPTION and (
-            not self.subscription_plan or not self.subscription_plan.is_all_access()
+            not self.subscription_plan or not self.subscription_plan.is_account_plan()
         ):
-            raise ValidationError({"subscription_plan": "Only all-access plans can be purchased as subscriptions."})
+            raise ValidationError({"subscription_plan": "Only account subscription plans can be purchased as subscriptions."})
         if self.amount is not None and self.amount < Decimal("0"):
             raise ValidationError({"amount": "Order amount cannot be negative."})
         if self.original_amount is not None and self.original_amount < Decimal("0"):

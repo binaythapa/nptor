@@ -1,24 +1,139 @@
 {% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}Education Subscription Plans | {{ site_name|default:"Nepal Mentor" }}{% endblock %}
+
 {% block content %}
 <div class="container py-6">
-  <div class="has-text-centered mb-6">
-    <h1 class="title">All-access Subscription</h1>
-    <p class="subtitle">Complete access to courses, tracks, and exams across NPTOR.</p>
+  <!-- Status Banner if already subscribed -->
+  {% if current_subscription %}
+  <div class="notification is-info is-light mb-6">
+    <div class="level is-mobile mb-0">
+      <div class="level-left">
+        <div>
+          <p class="heading mb-1"><i class="fas fa-check-circle mr-1"></i> Current Active Subscription</p>
+          <p class="title is-5 mb-1">{{ current_subscription.plan.name }}</p>
+          <p class="is-size-7 has-text-grey">
+            {% if current_subscription.expires_at %}
+              Active until {{ current_subscription.expires_at|date:"F j, Y" }}
+            {% else %}
+              Lifetime access
+            {% endif %}
+            &middot; Status: <span class="tag is-success is-small">Active</span>
+          </p>
+        </div>
+      </div>
+      <div class="level-right">
+        <a href="{% url 'subscriptions:subscription_history' %}" class="button is-small is-info is-outlined">
+          <i class="fas fa-receipt mr-1"></i> Manage Subscriptions
+        </a>
+      </div>
+    </div>
   </div>
-  <div class="columns is-centered is-multiline">
+  {% endif %}
+
+  <!-- Header -->
+  <div class="has-text-centered mb-6">
+    <span class="tag is-primary is-light is-medium mb-3">EDUCATION PLANS</span>
+    <h1 class="title is-2">Unlock Full Learning &amp; Certification</h1>
+    <p class="subtitle is-5 has-text-grey">
+      Comprehensive access to interactive courses, exam tracks, and official practice assessments.
+    </p>
+  </div>
+
+  <!-- Plans Grid -->
+  <div class="columns is-centered is-multiline mb-6">
     {% for plan in plans %}
-    <div class="column is-5">
-      <div class="box is-flex is-flex-direction-column" style="height:100%">
-        <h2 class="title is-4">{{ plan.name }}</h2>
-        {% if plan.description %}<p class="has-text-grey mb-4">{{ plan.description }}</p>{% endif %}
-        <p class="title is-3 mb-2">{{ plan.currency }} {{ plan.price }}</p>
-        <p class="mb-5">{% if plan.duration_days %}Access for {{ plan.duration_days }} days.{% else %}Lifetime access.{% endif %}</p>
-        <a class="button is-primary is-fullwidth mt-auto" href="{% url 'payments:subscription_checkout' plan.id %}">Get complete access</a>
+    <div class="column is-4">
+      <div class="box is-flex is-flex-direction-column" style="height: 100%; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px;">
+        <div class="mb-3">
+          <span class="tag is-info is-light is-rounded">{{ plan.get_billing_interval_label }}</span>
+        </div>
+        <h2 class="title is-4 mb-2">{{ plan.name }}</h2>
+        {% if plan.description %}
+          <p class="has-text-grey is-size-6 mb-4">{{ plan.description }}</p>
+        {% else %}
+          <p class="has-text-grey is-size-6 mb-4">Complete unlimited access to all courses, tracks, and assessments across NPTOR.</p>
+        {% endif %}
+
+        <div class="my-3">
+          <span class="title is-2">{{ plan.currency }} {{ plan.price }}</span>
+          <span class="has-text-grey is-size-7"> / {{ plan.get_billing_interval_label|lower }}</span>
+        </div>
+
+        <ul class="mb-5 is-size-6 has-text-grey-dark" style="list-style: none; padding-left: 0;">
+          <li class="mb-2"><i class="fas fa-check has-text-success mr-2"></i> All published courses &amp; lessons</li>
+          <li class="mb-2"><i class="fas fa-check has-text-success mr-2"></i> All certification exam tracks</li>
+          <li class="mb-2"><i class="fas fa-check has-text-success mr-2"></i> Verified certificate upon completion</li>
+          <li class="mb-2"><i class="fas fa-check has-text-success mr-2"></i> Unlimited practice assessments</li>
+        </ul>
+
+        <div class="mt-auto pt-4">
+          {% if has_all_access %}
+            <button class="button is-light is-fullwidth" disabled>Currently Active</button>
+          {% else %}
+            <a class="button is-primary is-fullwidth" href="{% url 'payments:subscription_checkout' plan.id %}">
+              Subscribe Now &rarr;
+            </a>
+          {% endif %}
+        </div>
       </div>
     </div>
     {% empty %}
-    <div class="column is-12 has-text-centered"><p>No all-access subscription plans are currently available.</p></div>
+    <div class="column is-12 has-text-centered py-6">
+      <p class="has-text-grey">No all-access subscription plans are currently available.</p>
+    </div>
     {% endfor %}
+  </div>
+
+  <!-- Account Quota Plans if any -->
+  {% if account_plans %}
+  <div class="has-text-centered mb-5 pt-4">
+    <h2 class="title is-4">Department &amp; Quota Access Plans</h2>
+    <p class="subtitle is-6 has-text-grey">Select specific courses and exam tracks under structured plan quotas.</p>
+  </div>
+  <div class="columns is-centered is-multiline mb-6">
+    {% for plan in account_plans %}
+    <div class="column is-4">
+      <div class="box is-flex is-flex-direction-column" style="height: 100%; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px;">
+        <div class="mb-3">
+          <span class="tag is-warning is-light is-rounded">{{ plan.get_billing_interval_label }}</span>
+        </div>
+        <h3 class="title is-5 mb-2">{{ plan.name }}</h3>
+        <p class="has-text-grey is-size-7 mb-3">{{ plan.description|default:"Selectable course and track access plan." }}</p>
+        <div class="my-2">
+          <span class="title is-3">{{ plan.currency }} {{ plan.price }}</span>
+        </div>
+        <ul class="mb-4 is-size-7 has-text-grey-dark" style="list-style: none; padding-left: 0;">
+          {% if plan.max_courses %}<li class="mb-1"><i class="fas fa-check has-text-success mr-2"></i> Up to {{ plan.max_courses }} course{{ plan.max_courses|pluralize }}</li>{% endif %}
+          {% if plan.max_tracks %}<li class="mb-1"><i class="fas fa-check has-text-success mr-2"></i> Up to {{ plan.max_tracks }} exam track{{ plan.max_tracks|pluralize }}</li>{% endif %}
+        </ul>
+        <div class="mt-auto pt-3">
+          <a class="button is-primary is-outlined is-fullwidth" href="{% url 'payments:subscription_checkout' plan.id %}">
+            Choose Plan &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Information notes -->
+  <div class="box has-background-light py-5">
+    <div class="columns is-vcentered">
+      <div class="column is-8">
+        <h4 class="title is-6 mb-1">Looking for Organization / School Access?</h4>
+        <p class="is-size-7 has-text-grey">
+          Organizations can purchase institution-wide access for staff and students with automated learner allocation and performance reporting.
+        </p>
+      </div>
+      <div class="column is-4 has-text-right-tablet">
+        <a href="{% url 'pages:contact' %}" class="button is-small is-dark">
+          Contact for Enterprise Access
+        </a>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

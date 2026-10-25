@@ -59,6 +59,14 @@ class PaymentFulfillmentService:
         subscription.subscribed_by_admin = False
         subscription.granted_by = None
         subscription.save(update_fields=["amount", "currency", "payment_status", "payment_id", "subscribed_by_admin", "granted_by", "updated_at"])
+        from subscriptions.models import Payment as SubPayment
+        sub_payment = SubPayment.objects.filter(subscription=subscription).order_by("-created_at").first()
+        if sub_payment:
+            sub_payment.status = SubPayment.STATUS_SUCCESS
+            sub_payment.transaction_id = order.gateway_payment_id or transaction_obj.gateway_transaction_id or order.order_number
+            sub_payment.paid_at = order.paid_at or timezone.now()
+            sub_payment.amount = order.amount
+            sub_payment.save(update_fields=["status", "transaction_id", "paid_at", "amount", "updated_at"])
 
     @staticmethod
     def _access_result(*, user, resource_type, resource, subscription):

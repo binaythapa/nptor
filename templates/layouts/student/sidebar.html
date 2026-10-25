@@ -35,7 +35,10 @@
     <ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'store:product_list' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-bag-shopping"></i></span><span class="nav-label">Store</span><span class="nav-badge success">Shop</span></a></li></ul>
     {% if user.is_authenticated %}
     <p class="menu-label">Account</p>
-    <ul class="menu-list"><li><a href="{% if not is_from_course %}{% url 'quiz:profile' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-user"></i></span><span class="nav-label">Profile</span></a></li></ul>
+    <ul class="menu-list">
+      <li><a href="{% if not is_from_course %}{% url 'quiz:profile' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-user"></i></span><span class="nav-label">Profile</span></a></li>
+      <li><a href="{% if not is_from_course %}{% url 'subscriptions:subscription_history' %}{% else %}javascript:void(0);{% endif %}" class="{% if is_from_course %}is-disabled{% endif %}"><span class="nav-icon"><i class="fa fa-receipt"></i></span><span class="nav-label">Subscriptions &amp; Orders</span></a></li>
+    </ul>
     {% endif %}
     {% if user.is_authenticated and request.active_org %}
       {% if request.can_manage_organization or request.org_role == 'staff' %}
