@@ -52,6 +52,11 @@ def cart_detail(request):
     items = cart.items.select_related("variant", "variant__product", "variant__product__vendor").order_by("added_at")
     subtotal = sum(item.total_price for item in items)
 
+    demo_items = [item for item in items if getattr(item.variant.product, "is_demo", False)]
+    has_demo = bool(demo_items)
+    all_demo = bool(items) and len(demo_items) == len(items)
+    demo_items_count = len(demo_items)
+
     return render(
         request,
         "cart/cart_detail.html",
@@ -60,8 +65,33 @@ def cart_detail(request):
             "items": items,
             "subtotal": subtotal,
             "analysis": analysis,
+            "has_demo": has_demo,
+            "all_demo": all_demo,
+            "demo_items_count": demo_items_count,
         },
     )
+
+
+@require_POST
+def cart_remove_demo(request):
+    """
+    Convenience action to remove all demonstration showcase products from the cart.
+    Allows customers with mixed carts to quickly proceed to checkout with purchasable items.
+    """
+    cart = CartService.get_or_create_cart(request)
+    demo_items = [
+        item for item in cart.items.select_related("variant__product")
+        if getattr(item.variant.product, "is_demo", False)
+    ]
+    count = len(demo_items)
+    for it in demo_items:
+        it.delete()
+    if count:
+        messages.success(
+            request,
+            f"Removed {count} demonstration showcase product{'s' if count != 1 else ''} from your cart."
+        )
+    return redirect("cart:detail")
 
 
 @require_POST

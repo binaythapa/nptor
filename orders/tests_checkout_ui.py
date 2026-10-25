@@ -394,3 +394,221 @@ class ConcurrentCheckoutUITests(TransactionTestCase):
         self.assertEqual(self.inventory.reserved_quantity, 0)
         self.assertEqual(self.inventory.quantity, 0)
         self.assertEqual(self.inventory.available_quantity, 0)
+
+
+
+class GeolocationAndCartDemoTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.customer = User.objects.create_user(username="geo_buyer", email="geobuyer@test.com", password="pass")
+        self.category = Category.objects.create(name="Stationery", slug="stationery")
+        
+        # Genuine product
+        self.real_product = Product.objects.create(
+            title="NPTOR Academic Workbook",
+            slug="nptor-academic-workbook",
+            category=self.category,
+            product_type="physical",
+            approval_status="approved",
+            is_active=True,
+            is_cod_eligible=True,
+            specifications={"is_demo": False},
+        )
+        self.real_variant = ProductVariant.objects.create(
+            product=self.real_product,
+            sku="NPTOR-WB-01",
+            price=Decimal("850.00"),
+            currency="NPR",
+        )
+        self.real_inv = ProductInventory.objects.create(variant=self.real_variant, quantity=10, reserved_quantity=0)
+
+        # Demo product
+        self.demo_product = Product.objects.create(
+            title="Demo Universal Fast Cable",
+            slug="demo-universal-fast-cable",
+            category=self.category,
+            product_type="physical",
+            approval_status="approved",
+            is_active=True,
+            is_cod_eligible=True,
+            specifications={"is_demo": True},
+        )
+        self.demo_variant = ProductVariant.objects.create(
+            product=self.demo_product,
+            sku="DEMO-CBL-01",
+            price=Decimal("650.00"),
+            currency="NPR",
+        )
+        self.demo_inv = ProductInventory.objects.create(variant=self.demo_variant, quantity=25, reserved_quantity=0)
+
+    def test_gps_reverse_geocode_api_nepal_success(self):
+        """API successfully reverse-geocodes Nepal coordinates to structured address."""
+        from unittest.mock import patch, MagicMock
+
+        mock_resp = MagicMock()
+        mock_resp.ok = True
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "display_name": "Putalisadak, Kathmandu, Bagmati Province, 44600, Nepal",
+            "address": {
+                "road": "Putalisadak",
+                "neighbourhood": "Ward 28",
+                "city": "Kathmandu Metropolitan City",
+                "county": "Kathmandu District",
+                "state": "Bagmati Province",
+                "postcode": "44600",
+                "country": "Nepal",
+                "country_code": "np",
+            },
+        }
+
+        with patch("requests.get", return_value=mock_resp):
+            payload = {"latitude": 27.700769, "longitude": 85.300140}
+            resp = self.client.post(
+                reverse("orders:api_reverse_geocode"),
+                data=payload,
+                content_type="application/json",
+            )
+            self.assertEqual(resp.status_code, 200)
+            data = resp.json()
+            self.assertTrue(data["success"])
+            self.assertTrue(data["is_serviceable"])
+            addr = data["address"]
+            self.assertEqual(addr["city"], "Kathmandu")
+            self.assertEqual(addr["district"], "Kathmandu")
+            self.assertEqual(addr["province"], "Bagmati")
+            self.assertEqual(addr["country"], "NP")
+            self.assertIn("Putalisadak", addr["street_address_1"])
+
+    def test_gps_reverse_geocode_api_outside_nepal_rejected(self):
+        """API rejects coordinates outside Nepal with clear serviceability guidance."""
+        from unittest.mock import patch, MagicMock
+
+        mock_resp = MagicMock()
+        mock_resp.ok = True
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "display_name": "Trafalgar Square, London, England, United Kingdom",
+            "address": {
+                "road": "Trafalgar Square",
+                "city": "London",
+                "country": "United Kingdom",
+                "country_code": "gb",
+            },
+        }
+
+        with patch("requests.get", return_value=mock_resp):
+            payload = {"latitude": 51.5080, "longitude": -0.1281}
+            resp = self.client.post(
+                reverse("orders:api_reverse_geocode"),
+                data=payload,
+                content_type="application/json",
+            )
+            self.assertEqual(resp.status_code, 422)
+            data = resp.json()
+            self.assertFalse(data["success"])
+            self.assertFalse(data["is_serviceable"])
+            self.assertIn("United Kingdom", data["error"])
+            self.assertIn("Nepal", data["error"])
+
+    def test_gps_reverse_geocode_api_invalid_coordinates(self):
+        """API validates missing or out-of-range coordinates."""
+        # Missing coordinates
+        resp1 = self.client.post(
+            reverse("orders:api_reverse_geocode"),
+            data={},
+            content_type="application/json",
+        )
+        self.assertEqual(resp1.status_code, 400)
+
+        # Out-of-range coordinates
+        resp2 = self.client.post(
+            reverse("orders:api_reverse_geocode"),
+            data={"latitude": 120.0, "longitude": 200.0},
+            content_type="application/json",
+        )
+        self.assertEqual(resp2.status_code, 422)
+        self.assertIn("outside valid geographical range", resp2.json()["error"])
+
+    def test_gps_reverse_geocode_api_network_failure_handled(self):
+        """API handles reverse-geocoding network timeout gracefully."""
+        import requests
+        from unittest.mock import patch
+
+        with patch("requests.get", side_effect=requests.Timeout("Connection timed out")):
+            payload = {"latitude": 27.7172, "longitude": 85.3240}
+            resp = self.client.post(
+                reverse("orders:api_reverse_geocode"),
+                data=payload,
+                content_type="application/json",
+            )
+            self.assertEqual(resp.status_code, 422)
+            data = resp.json()
+            self.assertFalse(data["success"])
+            self.assertIn("manually", data["error"].lower())
+
+    def test_cart_remove_demo_action(self):
+        """Action cart:remove_demo removes only demonstration items from the cart."""
+        cart = Cart.objects.create(user=self.customer, currency="NPR")
+        CartItem.objects.create(cart=cart, variant=self.real_variant, quantity=1, unit_price_snapshot=Decimal("850.00"))
+        CartItem.objects.create(cart=cart, variant=self.demo_variant, quantity=2, unit_price_snapshot=Decimal("650.00"))
+
+        self.assertEqual(cart.items.count(), 2)
+
+        self.client.force_login(self.customer)
+        resp = self.client.post(reverse("cart:remove_demo"))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse("cart:detail"), resp.url)
+
+        cart.refresh_from_db()
+        self.assertEqual(cart.items.count(), 1)
+        remaining = cart.items.first()
+        self.assertEqual(remaining.variant, self.real_variant)
+
+    def test_cart_detail_renders_demo_badges_and_notice(self):
+        """Cart page displays demonstration badge and notice when demo items are present."""
+        cart = Cart.objects.create(user=self.customer, currency="NPR")
+        CartItem.objects.create(cart=cart, variant=self.demo_variant, quantity=1, unit_price_snapshot=Decimal("650.00"))
+
+        self.client.force_login(self.customer)
+        resp = self.client.get(reverse("cart:detail"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Demonstration Showcase")
+        self.assertContains(resp, "Remove Demonstration Item")
+        # Proceed to Checkout is disabled for non-staff with only demo items
+        self.assertContains(resp, "disabled")
+
+    def test_genuine_purchasable_product_completes_checkout(self):
+        """Customer with genuine, non-demo physical product can complete live checkout via COD."""
+        self.client.force_login(self.customer)
+        cart = Cart.objects.create(user=self.customer, currency="NPR")
+        CartItem.objects.create(cart=cart, variant=self.real_variant, quantity=1, unit_price_snapshot=Decimal("850.00"))
+
+        payload = {
+            "full_name": "Sita Sharma",
+            "phone": "9841234567",
+            "street_address_1": "Baluwatar, Ward 4",
+            "street_address_2": "Near Italian Embassy",
+            "city": "Kathmandu",
+            "district": "Kathmandu",
+            "province": "Bagmati",
+            "postal_code": "44600",
+            "country": "NP",
+            "payment_method": "cod",
+            "idempotency_key": uuid.uuid4().hex,
+        }
+
+        resp = self.client.post(reverse("orders:checkout"), payload)
+        self.assertEqual(resp.status_code, 302)
+
+        # Order created successfully
+        order = Order.objects.filter(user=self.customer).first()
+        self.assertIsNotNone(order)
+        self.assertEqual(order.shipping_address.full_name, "Sita Sharma")
+        self.assertEqual(order.shipping_address.city, "Kathmandu")
+        self.assertEqual(order.payment_method, "cod")
+        self.assertEqual(order.grand_total, Decimal("850.00"))
+
+        # Inventory reserved / deducted
+        self.real_inv.refresh_from_db()
+        self.assertEqual(self.real_inv.quantity, 9)

@@ -39,7 +39,7 @@
         </div>
     {% endif %}
 
-    <form method="post" action="{% url 'orders:checkout' %}">
+    <form method="post" action="{% url 'orders:checkout' %}" id="checkout-form">
         {% csrf_token %}
         {{ form.idempotency_key }}
         {{ form.country }}
@@ -48,11 +48,23 @@
             <div class="column is-7">
                 {% if has_physical %}
                     <div class="box mb-4">
-                        <h2 class="title is-5 mb-3">
-                            <span class="icon is-small mr-1"><i class="fas fa-map-marker-alt"></i></span>
-                            Delivery Address (Nepal Only)
-                        </h2>
-                        
+                        <div class="level is-mobile mb-3">
+                            <div class="level-left">
+                                <h2 class="title is-5 mb-0">
+                                    <span class="icon is-small mr-1"><i class="fas fa-map-marker-alt"></i></span>
+                                    Delivery Address (Nepal Only)
+                                </h2>
+                            </div>
+                            <div class="level-right">
+                                <button type="button" id="btn-use-location" class="button is-small is-info is-light" title="Autofill delivery address using current device location">
+                                    <span class="icon is-small"><i class="fas fa-crosshairs"></i></span>
+                                    <span>Use my current location</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="location-status-container" class="mb-3" style="display: none;"></div>
+
                         <div class="columns is-multiline">
                             <div class="column is-6 py-1">
                                 <div class="field">
@@ -86,7 +98,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="column is-4 py-1">
+                            <div class="column is-6 py-1">
                                 <div class="field">
                                     <label class="label is-small">City / Municipality *</label>
                                     <div class="control">
@@ -94,7 +106,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="column is-4 py-1">
+                            <div class="column is-6 py-1">
                                 <div class="field">
                                     <label class="label is-small">District *</label>
                                     <div class="control">
@@ -102,11 +114,19 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="column is-4 py-1">
+                            <div class="column is-6 py-1">
                                 <div class="field">
                                     <label class="label is-small">Province *</label>
                                     <div class="control">
                                         {{ form.province }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="column is-6 py-1">
+                                <div class="field">
+                                    <label class="label is-small">Postal Code (Optional)</label>
+                                    <div class="control">
+                                        {{ form.postal_code }}
                                     </div>
                                 </div>
                             </div>
@@ -211,7 +231,7 @@
                         <div class="level-right"><span class="title is-4 has-text-primary mb-0">NPR {{ subtotal }}</span></div>
                     </div>
 
-                    <button class="button is-primary is-fullwidth is-medium mb-3" type="submit">
+                    <button class="button is-primary is-fullwidth is-medium mb-3" type="submit" id="btn-submit-order">
                         <span class="icon"><i class="fas fa-check-circle"></i></span>
                         <span>Confirm and Place Order</span>
                     </button>
@@ -226,4 +246,155 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const btnLocation = document.getElementById("btn-use-location");
+    const statusContainer = document.getElementById("location-status-container");
+    const reverseGeocodeUrl = "{% url 'orders:api_reverse_geocode' %}";
+
+    if (!btnLocation || !statusContainer) return;
+
+    function showStatus(message, type) {
+        statusContainer.style.display = "block";
+        const icon = type === "success" ? "fa-check-circle" : (type === "warning" ? "fa-exclamation-triangle" : (type === "info" ? "fa-info-circle" : "fa-exclamation-circle"));
+        statusContainer.innerHTML = `
+            <div class="notification is-${type} is-light py-2 px-3 is-size-7">
+                <span class="icon is-small mr-1"><i class="fas ${icon}"></i></span>
+                <span>${message}</span>
+            </div>
+        `;
+    }
+
+    function clearStatus() {
+        statusContainer.innerHTML = "";
+        statusContainer.style.display = "none";
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    btnLocation.addEventListener("click", function() {
+        if (!navigator.geolocation) {
+            showStatus("Geolocation is not supported by your browser. Please enter your delivery address manually.", "warning");
+            return;
+        }
+
+        btnLocation.classList.add("is-loading");
+        btnLocation.disabled = true;
+        showStatus("Requesting your current location... Please allow location access in your browser.", "info");
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                showStatus("Location detected! Finding your Nepal delivery address...", "info");
+
+                fetch(reverseGeocodeUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken") || document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: JSON.stringify({ latitude: lat, longitude: lon })
+                })
+                .then(function(res) {
+                    return res.json().then(function(data) {
+                        return { ok: res.ok, status: res.status, data: data };
+                    });
+                })
+                .then(function(result) {
+                    btnLocation.classList.remove("is-loading");
+                    btnLocation.disabled = false;
+
+                    const data = result.data;
+                    if (result.ok && data.success) {
+                        const addr = data.address || {};
+                        const fields = [
+                            { id: "id_street_address_1", val: addr.street_address_1 },
+                            { id: "id_city", val: addr.city },
+                            { id: "id_district", val: addr.district },
+                            { id: "id_province", val: addr.province },
+                            { id: "id_postal_code", val: addr.postal_code }
+                        ];
+
+                        fields.forEach(function(f) {
+                            const input = document.getElementById(f.id);
+                            if (input && f.val) {
+                                input.value = f.val;
+                                input.classList.add("is-success");
+                                setTimeout(function() {
+                                    input.classList.remove("is-success");
+                                }, 3000);
+                            }
+                        });
+
+                        const locationNote = data.display_name ? ` (Near: <em>${data.display_name}</em>)` : "";
+                        showStatus(
+                            `Delivery address autofilled from your location${locationNote}. <strong>Please review and edit all fields</strong>, add your street number/building, and ensure recipient name and phone number are complete.`,
+                            "success"
+                        );
+
+                        // Focus on recipient name or phone if empty
+                        const nameField = document.getElementById("id_full_name");
+                        const phoneField = document.getElementById("id_phone");
+                        if (nameField && !nameField.value.trim()) {
+                            nameField.focus();
+                        } else if (phoneField && !phoneField.value.trim()) {
+                            phoneField.focus();
+                        }
+                    } else if (data.is_serviceable === false) {
+                        showStatus(
+                            data.error || "Your location appears to be outside our Nepal delivery area. Please enter a delivery address in Nepal manually.",
+                            "warning"
+                        );
+                    } else {
+                        showStatus(
+                            data.error || "Could not resolve address from coordinates. Please enter your address manually.",
+                            "warning"
+                        );
+                    }
+                })
+                .catch(function(err) {
+                    btnLocation.classList.remove("is-loading");
+                    btnLocation.disabled = false;
+                    showStatus("Network error looking up address. Please enter your delivery address manually.", "warning");
+                });
+            },
+            function(err) {
+                btnLocation.classList.remove("is-loading");
+                btnLocation.disabled = false;
+                if (err.code === 1) { // PERMISSION_DENIED
+                    showStatus("Location permission was denied. You can continue typing your address manually below, or enable location permission in browser settings.", "warning");
+                } else if (err.code === 2) { // POSITION_UNAVAILABLE
+                    showStatus("Location information is currently unavailable from your device. Please enter your address manually.", "warning");
+                } else if (err.code === 3) { // TIMEOUT
+                    showStatus("Location request timed out. Please try again or enter your delivery address manually.", "warning");
+                } else {
+                    showStatus("Unable to retrieve location. Please enter your address manually.", "warning");
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 12000,
+                maximumAge: 60000
+            }
+        );
+    });
+})();
+</script>
 {% endblock %}

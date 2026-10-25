@@ -52,9 +52,16 @@
                                             SKU: {{ item.variant.sku }} | Sold by: 
                                             <strong>{{ item.variant.product.vendor.store_name|default:"NPTOR Official" }}</strong>
                                         </p>
-                                        <span class="tag is-small is-light {% if item.variant.product.product_type == 'digital' %}is-info{% else %}is-primary{% endif %} mt-1">
-                                            {{ item.variant.product.get_product_type_display }}
-                                        </span>
+                                        <div class="tags mt-1 mb-0">
+                                            <span class="tag is-small is-light {% if item.variant.product.product_type == 'digital' %}is-info{% else %}is-primary{% endif %}">
+                                                {{ item.variant.product.get_product_type_display }}
+                                            </span>
+                                            {% if item.variant.product.is_demo %}
+                                                <span class="tag is-small is-warning is-light" title="Demonstration showcase product; not purchasable through public checkout.">
+                                                    <i class="fas fa-flask mr-1"></i> Demonstration Showcase (Not For Sale)
+                                                </span>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                     <td class="has-text-centered has-text-weight-medium">
                                         NPR {{ item.unit_price_snapshot }}
@@ -130,6 +137,24 @@
                         <div class="level-right"><span class="title is-4 has-text-primary mb-0">NPR {{ subtotal }}</span></div>
                     </div>
 
+                    {% if has_demo %}
+                        <div class="notification is-warning is-light py-3 px-3 mb-3 is-size-7">
+                            <p class="has-text-weight-bold mb-1">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Demonstration Showcase Notice
+                            </p>
+                            <p class="mb-2">
+                                Your cart contains <strong>{{ demo_items_count }}</strong> demonstration showcase item{{ demo_items_count|pluralize }}. Demonstration items are for catalog preview only and cannot be ordered through live public checkout.
+                            </p>
+                            <form method="post" action="{% url 'cart:remove_demo' %}">
+                                {% csrf_token %}
+                                <button class="button is-small is-warning is-fullwidth" type="submit">
+                                    <span class="icon is-small"><i class="fas fa-trash-alt"></i></span>
+                                    <span>Remove Demonstration Item{{ demo_items_count|pluralize }}</span>
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+
                     {% if analysis %}
                         <div class="tags mb-4">
                             {% if analysis.is_cod_eligible %}
@@ -149,10 +174,20 @@
                         </div>
                     {% endif %}
 
-                    <a href="{% url 'orders:checkout' %}" class="button is-primary is-fullwidth is-medium">
-                        <span>Proceed to Checkout</span>
-                        <span class="icon"><i class="fas fa-arrow-right"></i></span>
-                    </a>
+                    {% if all_demo and not request.user.is_staff %}
+                        <button class="button is-primary is-fullwidth is-medium" disabled style="cursor: not-allowed; opacity: 0.7;" title="Remove demonstration items or add genuine purchasable products to checkout.">
+                            <span>Proceed to Checkout</span>
+                            <span class="icon"><i class="fas fa-ban"></i></span>
+                        </button>
+                        <p class="is-size-7 has-text-grey has-text-centered mt-2">
+                            <i class="fas fa-info-circle mr-1"></i> Remove demo items or <a href="{% url 'store:product_list' %}">browse purchasable products</a> to proceed.
+                        </p>
+                    {% else %}
+                        <a href="{% url 'orders:checkout' %}" class="button is-primary is-fullwidth is-medium">
+                            <span>Proceed to Checkout</span>
+                            <span class="icon"><i class="fas fa-arrow-right"></i></span>
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

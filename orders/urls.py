@@ -1,11 +1,12 @@
 from django.urls import path
-from orders import views, views_checkout, views_digital, views_payment
+from orders import views, views_checkout, views_digital, views_geolocation, views_payment
 
 app_name = "orders"
 
 urlpatterns = [
     # Customer flows
     path("checkout/", views_checkout.checkout_view, name="checkout"),
+    path("api/reverse-geocode/", views_geolocation.reverse_geocode_api, name="api_reverse_geocode"),
     path("my-orders/", views.customer_order_list, name="customer_order_list"),
     path("my-orders/<str:order_number>/", views.customer_order_detail, name="customer_order_detail"),
     path("suborders/<str:suborder_number>/return/", views.customer_return_request, name="customer_return_request"),
