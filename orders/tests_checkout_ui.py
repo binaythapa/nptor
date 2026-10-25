@@ -464,6 +464,7 @@ class GeolocationAndCartDemoTests(TestCase):
 
         with patch("requests.get", return_value=mock_resp):
             payload = {"latitude": 27.700769, "longitude": 85.300140}
+            # Test POST
             resp = self.client.post(
                 reverse("orders:api_reverse_geocode"),
                 data=payload,
@@ -479,6 +480,11 @@ class GeolocationAndCartDemoTests(TestCase):
             self.assertEqual(addr["province"], "Bagmati")
             self.assertEqual(addr["country"], "NP")
             self.assertIn("Putalisadak", addr["street_address_1"])
+
+            # Test GET
+            resp_get = self.client.get(reverse("orders:api_reverse_geocode"), {"lat": 27.700769, "lon": 85.300140})
+            self.assertEqual(resp_get.status_code, 200)
+            self.assertTrue(resp_get.json()["success"])
 
     def test_gps_reverse_geocode_api_outside_nepal_rejected(self):
         """API rejects coordinates outside Nepal with clear serviceability guidance."""

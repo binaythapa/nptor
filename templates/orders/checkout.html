@@ -304,13 +304,12 @@
                 const lon = position.coords.longitude;
                 showStatus("Location detected! Finding your Nepal delivery address...", "info");
 
-                fetch(reverseGeocodeUrl, {
-                    method: "POST",
+                const apiUrl = `${reverseGeocodeUrl}?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+                fetch(apiUrl, {
+                    method: "GET",
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken") || document.querySelector("[name=csrfmiddlewaretoken]").value
-                    },
-                    body: JSON.stringify({ latitude: lat, longitude: lon })
+                        "Accept": "application/json"
+                    }
                 })
                 .then(function(res) {
                     return res.json().then(function(data) {
