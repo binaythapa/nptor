@@ -82,108 +82,121 @@
     {% endif %}
 
     <!-- 3. Product Catalog Header & Discovery Controls -->
-    <div class="store-catalog-header mb-3">
-        <div class="store-catalog-title-group">
-            <h2 class="title is-4 store-catalog-title mb-1">
-                <i class="fa fa-bag-shopping has-text-primary mr-2"></i>
-                {% if selected_category %}{{ selected_category.name }}{% elif search_query %}Search Results{% else %}All Products{% endif %}
-            </h2>
-            <p class="subtitle is-6 has-text-grey store-catalog-count mb-0">
-                {{ total_count }} product{{ total_count|pluralize }} available
-                {% if selected_category %}in <strong>{{ selected_category.name }}</strong>{% endif %}
-                {% if search_query %}matching "<em>{{ search_query }}</em>"{% endif %}
-            </p>
+    <div class="store-catalog-header mb-4">
+        <!-- Catalog Title & Count -->
+        <div class="store-catalog-top-row">
+            <div class="store-catalog-title-group">
+                <h1 class="title is-4 store-catalog-title mb-1">
+                    <i class="fa fa-bag-shopping has-text-primary mr-2"></i>
+                    {% if selected_category %}{{ selected_category.name }}{% elif search_query %}Search Results{% else %}All Products{% endif %}
+                </h1>
+                <p class="subtitle is-6 has-text-grey store-catalog-count mb-0">
+                    {{ total_count }} product{{ total_count|pluralize }} available
+                    {% if selected_category %}in <strong>{{ selected_category.name }}</strong>{% endif %}
+                    {% if search_query %}matching "<em>{{ search_query }}</em>"{% endif %}
+                </p>
+            </div>
         </div>
 
-        <!-- Filter & Search Toolbar -->
-        <div class="store-toolbar-controls">
-            <form method="get" action="{% url 'store:product_list' %}" class="store-discovery-form">
+        <!-- Filter & Search Toolbar Card -->
+        <div class="store-filter-toolbar">
+            <form method="get" action="{% url 'store:product_list' %}" class="store-filter-form">
                 {% if selected_category %}
                     <input type="hidden" name="category" value="{{ selected_category.slug }}">
                 {% endif %}
-                <div class="field is-grouped is-grouped-multiline mb-0">
-                    <!-- Search input -->
-                    <div class="control is-expanded">
-                        <div class="field has-addons mb-0">
-                            <div class="control is-expanded">
-                                <input class="input is-small" type="text" name="q" placeholder="Search products..." value="{{ search_query }}" aria-label="Search products">
-                            </div>
-                            <div class="control">
-                                <button type="submit" class="button is-small is-primary" aria-label="Submit search">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
+
+                <!-- Search Input Group -->
+                <div class="filter-group-search">
+                    <div class="field has-addons mb-0">
+                        <div class="control is-expanded">
+                            <input class="input is-small" type="text" name="q" placeholder="Search products..." value="{{ search_query }}" aria-label="Search products">
                         </div>
-                    </div>
-
-                    <!-- Min Price -->
-                    <div class="control" style="width: 100px;">
-                        <input class="input is-small" type="number" name="min_price" placeholder="Min NPR" value="{{ min_price }}" min="0" step="100" aria-label="Minimum price">
-                    </div>
-
-                    <!-- Max Price -->
-                    <div class="control" style="width: 100px;">
-                        <input class="input is-small" type="number" name="max_price" placeholder="Max NPR" value="{{ max_price }}" min="0" step="100" aria-label="Maximum price">
-                    </div>
-
-                    <!-- In-stock only -->
-                    <div class="control is-flex is-align-items-center">
-                        <label class="checkbox is-size-7">
-                            <input type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %} onchange="this.form.submit()">
-                            In Stock Only
-                        </label>
-                    </div>
-
-                    <!-- Sort -->
-                    <div class="control">
-                        <div class="select is-small store-cat-select">
-                            <select name="sort" onchange="this.form.submit()" aria-label="Sort products">
-                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
-                                <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
-                                <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
-                                <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Highest Rated</option>
-                                <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>Alphabetical (A-Z)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Apply & Reset buttons -->
-                    <div class="control">
-                        <button type="submit" class="button is-small is-info is-light">Filter</button>
-                    </div>
-                    {% if selected_category or search_query or min_price or max_price or in_stock or sort != 'newest' %}
                         <div class="control">
-                            <a href="{% url 'store:product_list' %}" class="button is-small is-light" title="Reset all filters">
-                                <i class="fas fa-times mr-1"></i> Reset
-                            </a>
+                            <button type="submit" class="button is-small is-primary" aria-label="Submit search">
+                                <i class="fas fa-search"></i>
+                            </button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Price Range Group -->
+                <div class="filter-group-price">
+                    <span class="filter-label is-size-7 has-text-grey">Price (NPR):</span>
+                    <input class="input is-small filter-price-input" type="number" name="min_price" placeholder="Min" value="{{ min_price }}" min="0" step="100" aria-label="Minimum price">
+                    <span class="filter-price-dash has-text-grey-light">&ndash;</span>
+                    <input class="input is-small filter-price-input" type="number" name="max_price" placeholder="Max" value="{{ max_price }}" min="0" step="100" aria-label="Maximum price">
+                </div>
+
+                <!-- In-Stock Checkbox Group -->
+                <div class="filter-group-stock">
+                    <label class="checkbox is-size-7 filter-stock-label">
+                        <input type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %} onchange="this.form.submit()">
+                        <span>In Stock Only</span>
+                    </label>
+                </div>
+
+                <!-- Sort Selector Group -->
+                <div class="filter-group-sort">
+                    <div class="select is-small store-cat-select">
+                        <select name="sort" onchange="this.form.submit()" aria-label="Sort products">
+                            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                            <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                            <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                            <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+                            <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>Alphabetical (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Action Buttons Group -->
+                <div class="filter-group-actions">
+                    <button type="submit" class="button is-small is-info is-light filter-apply-btn">
+                        <i class="fas fa-filter mr-1"></i> Filter
+                    </button>
+                    {% if selected_category or search_query or min_price or max_price or in_stock or sort != 'newest' %}
+                        <a href="{% url 'store:product_list' %}" class="button is-small is-light filter-reset-btn" title="Reset all filters">
+                            <i class="fas fa-undo mr-1"></i> Reset
+                        </a>
                     {% endif %}
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Category Pills Row -->
+    <!-- Category Navigation Pills -->
     <div class="store-filter-pills-row">
         <nav class="store-filter-pills" aria-label="Filter by category">
-            <a href="{% url 'store:product_list' %}{% if search_query %}?q={{ search_query }}{% endif %}"
+            <a href="{% url 'store:product_list' %}{% if search_query %}?q={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
                class="store-pill {% if not selected_category %}is-active{% endif %}">
                 <i class="fa fa-th-large mr-1"></i> All Categories
             </a>
-            {% for cat in store_header_categories|default:categories %}
-                <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
-                   class="store-pill {% if selected_category and selected_category.id == cat.id %}is-active{% endif %}">
+            {% for cat in categories %}
+                <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
+                   class="store-pill {% if active_root_category and active_root_category.id == cat.id %}is-active{% endif %}">
                     {{ cat.name }}
                 </a>
-                {% for sub in cat.children.all %}
-                    <a href="?category={{ sub.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
-                       class="store-pill is-subpill {% if selected_category and selected_category.id == sub.id %}is-active{% endif %}">
-                        &ndash; {{ sub.name }}
-                    </a>
-                {% endfor %}
             {% endfor %}
         </nav>
     </div>
+
+    {% if subcategories %}
+        <!-- Contextual Subcategories Navigation -->
+        <div class="store-subcategories-row">
+            <span class="store-subcat-label is-size-7 has-text-grey">
+                <i class="fa fa-level-down-alt mr-1"></i> {{ active_root_category.name }}:
+            </span>
+            <a href="?category={{ active_root_category.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
+               class="store-subpill {% if selected_category.id == active_root_category.id %}is-active{% endif %}">
+                All {{ active_root_category.name }}
+            </a>
+            {% for sub in subcategories %}
+                <a href="?category={{ sub.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
+                   class="store-subpill {% if selected_category and selected_category.id == sub.id %}is-active{% endif %}">
+                    {{ sub.name }}
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <!-- Active Filter Tags (if filtering) -->
     {% if selected_category or search_query or min_price or max_price or in_stock or sort != 'newest' %}

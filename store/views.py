@@ -116,6 +116,16 @@ def product_list(request):
 
     categories = Category.objects.filter(is_active=True, parent=None).prefetch_related("children")
 
+    active_root_category = None
+    subcategories = []
+    if selected_category:
+        if selected_category.parent:
+            active_root_category = selected_category.parent
+            subcategories = list(selected_category.parent.children.filter(is_active=True).order_by("display_order", "name"))
+        else:
+            active_root_category = selected_category
+            subcategories = list(selected_category.children.filter(is_active=True).order_by("display_order", "name"))
+
     user_wishlist_ids = set()
     if request.user.is_authenticated:
         user_wishlist_ids = set(Wishlist.objects.filter(user=request.user).values_list("product_id", flat=True))
@@ -129,6 +139,8 @@ def product_list(request):
             "total_count": total_count,
             "categories": categories,
             "selected_category": selected_category,
+            "active_root_category": active_root_category,
+            "subcategories": subcategories,
             "search_query": q,
             "min_price": min_price,
             "max_price": max_price,

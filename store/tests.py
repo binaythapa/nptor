@@ -269,6 +269,29 @@ class StoreCatalogUITests(TestCase):
         self.assertContains(res, 'Secure Checkout')
         self.assertContains(res, 'Shop by Category')
 
+    def test_catalog_filter_toolbar_and_subcategory_navigation(self):
+        """Catalog renders structured filter toolbar and contextual subcategory navigation."""
+        child_cat = Category.objects.create(name="Notebooks & Pads", slug="notebooks-pads", parent=self.cat1, is_active=True)
+        url = reverse("store:product_list")
+        res = self.client.get(url, {"category": "study-materials"})
+        self.assertEqual(res.status_code, 200)
+
+        # Toolbar controls structure
+        self.assertContains(res, "store-filter-toolbar")
+        self.assertContains(res, "store-filter-form")
+        self.assertContains(res, "filter-group-search")
+        self.assertContains(res, "filter-group-price")
+        self.assertContains(res, "filter-group-stock")
+        self.assertContains(res, "filter-group-sort")
+        self.assertContains(res, "filter-group-actions")
+
+        # Category pills & contextual subcategories
+        self.assertContains(res, "store-filter-pills-row")
+        self.assertContains(res, "store-subcategories-row")
+        self.assertContains(res, "All Study Materials")
+        self.assertContains(res, "Notebooks &amp; Pads")
+        self.assertContains(res, "Notes")
+
 
 from store.models import ProductImage
 from django.core.files.uploadedfile import SimpleUploadedFile
