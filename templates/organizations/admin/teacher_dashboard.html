@@ -219,7 +219,7 @@
                                 </td>
                                 <td>
                                     <span class="tag is-info is-light is-small mr-1">{{ res.get_resource_type_display }}</span>
-                                    {{ res.course.title|default:res.track.title|default:res.exam.title|default:"Resource" }}
+                                    {% if res.resource %}{{ res.resource.title }}{% else %}Resource{% endif %}
                                 </td>
                                 <td class="has-text-right is-size-7">
                                     {{ res.due_at|date:"M d"|default:"—" }}
