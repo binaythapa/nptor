@@ -1,0 +1,299 @@
+{% extends "organizations/admin/base.html" %}
+
+{% block title %}{{ org.name }} · Teacher Dashboard{% endblock %}
+
+{% block content %}
+<div class="org-teacher-dashboard">
+    <!-- Welcome Header -->
+    <div class="level mb-5">
+        <div class="level-left">
+            <div>
+                <p class="is-size-7 has-text-grey is-uppercase has-text-weight-semibold mb-1">
+                    Teacher Portal · {{ org.name }}
+                </p>
+                <h1 class="title is-3 mb-1">
+                    Welcome, {{ request.user.get_full_name|default:request.user.username }}
+                </h1>
+                <p class="has-text-grey">
+                    Manage your assigned academic sections, enrolled students, section curriculum, and assignments.
+                </p>
+            </div>
+        </div>
+        <div class="level-right">
+            <span class="tag is-primary is-medium">
+                <i class="fa fa-chalkboard-teacher mr-2"></i>{{ request.organization_member.get_role_display }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Teacher KPI Cards: Scoped to Teacher's Sections Only -->
+    <div class="columns is-multiline mb-5">
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Assigned Sections</p>
+                <p class="title is-3 has-text-link">{{ teacher_data.assigned_sections_count }}</p>
+                <span class="is-size-7 has-text-grey">Teaching Classes</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Enrolled Students</p>
+                <p class="title is-3 has-text-success">{{ teacher_data.total_section_students }}</p>
+                <span class="is-size-7 has-text-grey">In your sections only</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Section Resources</p>
+                <p class="title is-3 has-text-info">{{ teacher_data.section_resources_count }}</p>
+                <span class="is-size-7 has-text-grey">Assigned materials</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">My Assignments</p>
+                <p class="title is-3 has-text-primary">{{ teacher_data.teacher_assignments_count }}</p>
+                <span class="is-size-7 has-text-grey">Created by you</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Quick Links -->
+    <div class="box mb-5">
+        <h2 class="title is-6 mb-3 has-text-grey-dark"><i class="fa fa-tools mr-2"></i>Teaching Tools &amp; Actions</h2>
+        <div class="buttons">
+            <a href="{% url 'organizations_admin:academic' slug=org.slug %}" class="button is-small is-link is-light">
+                <span class="icon is-small"><i class="fa fa-school"></i></span><span>My Academic Sections</span>
+            </a>
+            <a href="{% url 'organizations_admin:org_course_list' slug=org.slug %}" class="button is-small is-link is-light">
+                <span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span>My Courses ({{ teacher_data.my_courses_count }})</span>
+            </a>
+            <a href="{% url 'organizations_admin:exams' slug=org.slug %}" class="button is-small is-link is-light">
+                <span class="icon is-small"><i class="fa fa-file-alt"></i></span><span>Exams ({{ teacher_data.my_exams_count }})</span>
+            </a>
+            <a href="{% url 'organizations_admin:questions' slug=org.slug %}" class="button is-small is-link is-light">
+                <span class="icon is-small"><i class="fa fa-question-circle"></i></span><span>Questions ({{ teacher_data.my_questions_count }})</span>
+            </a>
+            <a href="{% url 'organizations_admin:assignments' slug=org.slug %}" class="button is-small is-link is-light">
+                <span class="icon is-small"><i class="fa fa-tasks"></i></span><span>Assignments</span>
+            </a>
+            <a href="{% url 'organizations_admin:assignment_create' slug=org.slug %}" class="button is-small is-primary">
+                <span class="icon is-small"><i class="fa fa-plus"></i></span><span>Create Assignment</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Assigned Academic Sections Table -->
+    <div class="box mb-5">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+            <div>
+                <h2 class="title is-5 mb-1"><i class="fa fa-chalkboard mr-2"></i>My Assigned Sections</h2>
+                <p class="has-text-grey is-size-7">Academic sections you are actively assigned to teach in this organization.</p>
+            </div>
+            <a href="{% url 'organizations_admin:academic' slug=org.slug %}" class="button is-small is-light">Academic View</a>
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable is-vcentered">
+                <thead>
+                    <tr>
+                        <th>Class &amp; Section</th>
+                        <th>Academic Year</th>
+                        <th>Subject</th>
+                        <th>Role</th>
+                        <th class="has-text-centered">Enrolled Students</th>
+                        <th class="has-text-right">Section Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in teacher_data.assigned_sections %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.class_group.name }}</strong> — Section {{ item.section.name }}
+                        </td>
+                        <td>{{ item.academic_year.name }}</td>
+                        <td>{{ item.subject|default:"General" }}</td>
+                        <td>
+                            {% if item.is_primary %}
+                                <span class="tag is-primary is-light">Primary Teacher</span>
+                            {% else %}
+                                <span class="tag is-light">Subject Teacher</span>
+                            {% endif %}
+                        </td>
+                        <td class="has-text-centered">
+                            <span class="tag is-info is-light has-text-weight-bold">{{ item.student_count }} students</span>
+                        </td>
+                        <td class="has-text-right">
+                            <a class="button is-small is-link is-light" href="{% url 'organizations_admin:class_assignment_create' slug=org.slug section_id=item.section.id %}">
+                                <span class="icon is-small"><i class="fa fa-plus"></i></span><span>Assign Resource</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="has-text-grey has-text-centered py-5">
+                            <span class="icon is-large has-text-grey-light"><i class="fa fa-inbox fa-2x"></i></span>
+                            <p class="mt-2">No academic sections assigned to you yet.</p>
+                            <p class="is-size-7">Please contact an organization administrator to assign you to a class section.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Student Enrollment Roster & Section Resources (2 columns) -->
+    <div class="columns is-multiline mb-5">
+        <!-- Student Roster -->
+        <div class="column is-7">
+            <div class="box h-100">
+                <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                    <div>
+                        <h2 class="title is-5 mb-1"><i class="fa fa-users mr-2"></i>Students in My Sections</h2>
+                        <p class="has-text-grey is-size-7">Active students enrolled in your assigned sections only.</p>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable is-vcentered is-narrow">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Class &amp; Section</th>
+                                <th class="has-text-centered">Roll No</th>
+                                <th class="has-text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for enrollment in teacher_data.student_roster %}
+                            <tr>
+                                <td>
+                                    <strong>{{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}</strong>
+                                    {% if enrollment.student.admission_no %}
+                                        <span class="is-size-7 has-text-grey">({{ enrollment.student.admission_no }})</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ enrollment.class_section.class_group.name }} - {{ enrollment.class_section.name }}
+                                </td>
+                                <td class="has-text-centered">
+                                    {{ enrollment.roll_number|default:"—" }}
+                                </td>
+                                <td class="has-text-right">
+                                    <span class="tag is-success is-light is-small">{{ enrollment.get_status_display }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="has-text-grey has-text-centered py-4">No enrolled students in your sections yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Resources & Assignments -->
+        <div class="column is-5">
+            <div class="box h-100">
+                <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                    <div>
+                        <h2 class="title is-5 mb-1"><i class="fa fa-book-reader mr-2"></i>Curriculum Resources</h2>
+                        <p class="has-text-grey is-size-7">Resources assigned to your sections.</p>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable is-vcentered is-narrow">
+                        <thead>
+                            <tr>
+                                <th>Section</th>
+                                <th>Resource</th>
+                                <th class="has-text-right">Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for res in teacher_data.section_resources %}
+                            <tr>
+                                <td>
+                                    <span class="tag is-light is-small">{{ res.class_section.class_group.name }}-{{ res.class_section.name }}</span>
+                                </td>
+                                <td>
+                                    <span class="tag is-info is-light is-small mr-1">{{ res.get_resource_type_display }}</span>
+                                    {{ res.course.title|default:res.track.title|default:res.exam.title|default:"Resource" }}
+                                </td>
+                                <td class="has-text-right is-size-7">
+                                    {{ res.due_at|date:"M d"|default:"—" }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="has-text-grey has-text-centered py-4">No section resources assigned yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Assignments & Deadlines Created by Teacher -->
+    <div class="box">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+            <div>
+                <h2 class="title is-5 mb-1"><i class="fa fa-calendar-check mr-2"></i>Assignments &amp; Deadlines</h2>
+                <p class="has-text-grey is-size-7">Assignments created by you for organization students.</p>
+            </div>
+            <a href="{% url 'organizations_admin:assignment_create' slug=org.slug %}" class="button is-small is-primary is-light">
+                <span class="icon is-small"><i class="fa fa-plus"></i></span><span>New Assignment</span>
+            </a>
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable is-vcentered">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Resource</th>
+                        <th>Type</th>
+                        <th>Assigned On</th>
+                        <th>Due Date</th>
+                        <th class="has-text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in teacher_data.teacher_assignments %}
+                    <tr>
+                        <td><strong>{{ a.student.get_full_name|default:a.student.username }}</strong></td>
+                        <td>{{ a.resource_name }}</td>
+                        <td><span class="tag is-light is-small">{{ a.get_resource_type_display }}</span></td>
+                        <td>{{ a.assigned_at|date:"M d, Y" }}</td>
+                        <td>
+                            {% if a.due_at %}
+                                {{ a.due_at|date:"M d, Y" }}
+                            {% else %}
+                                <span class="has-text-grey">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="has-text-right">
+                            {% if a.status == 'completed' %}
+                                <span class="tag is-success is-light">Completed</span>
+                            {% elif a.status == 'started' %}
+                                <span class="tag is-info is-light">Started</span>
+                            {% elif a.status == 'assigned' %}
+                                <span class="tag is-warning is-light">Assigned</span>
+                            {% else %}
+                                <span class="tag is-light">{{ a.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="has-text-grey has-text-centered py-4">You have not created any student assignments yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

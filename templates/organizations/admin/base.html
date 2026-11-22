@@ -26,6 +26,8 @@
       </button>
       {% if request.organization_member.is_administrator %}
         <a class="admin-brand" href="{% url 'organizations_admin:dashboard' slug=org_slug %}">
+      {% elif request.organization_member.is_teacher %}
+        <a class="admin-brand" href="{% url 'organizations_admin:teacher_dashboard' slug=org_slug %}">
       {% else %}
         <a class="admin-brand" href="{% url 'organizations_public:workspace' slug=org_slug %}">
       {% endif %}
@@ -46,10 +48,14 @@
 <div class="admin-layout org-admin-layout">
   <aside id="admin-sidebar" class="admin-sidebar" aria-label="Organization admin navigation">
     <div id="orgAdminSidebar" class="org-admin-sidebar-hook" aria-hidden="true"></div>
-    {% if request.organization_member.is_administrator %}
-      <p class="menu-label">Overview</p>
-      <ul class="menu-list"><li><a href="{% url 'organizations_admin:dashboard' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-chart-line"></i></span><span class="menu-text">Dashboard</span></a></li></ul>
-    {% endif %}
+    <p class="menu-label">Overview</p>
+    <ul class="menu-list">
+      {% if request.organization_member.is_administrator %}
+        <li><a href="{% url 'organizations_admin:dashboard' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-chart-line"></i></span><span class="menu-text">Dashboard</span></a></li>
+      {% else %}
+        <li><a href="{% url 'organizations_admin:teacher_dashboard' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-chart-line"></i></span><span class="menu-text">Teacher Dashboard</span></a></li>
+      {% endif %}
+    </ul>
     <p class="menu-label">People</p>
     <ul class="menu-list"><li><a href="{% url 'organizations_admin:students' slug=org_slug %}"><span class="icon is-small"><i class="fa fa-users"></i></span><span class="menu-text">Students</span></a></li></ul>
     <p class="menu-label">Academic</p>

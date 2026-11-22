@@ -1,2 +1,334 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ profile.display_name|default:organization.name }} · Learning</title><style>:root{--p:{{ portal_config.primary_color|default:'#3273dc' }}}body{font-family:system-ui;margin:0;background:#f7f8fa;color:#1f2937}.wrap{width:min(1100px,92%);margin:auto}.top{background:var(--p);color:#fff;padding:28px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;padding:30px 0}.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px}.muted{color:#6b7280}.pill{display:inline-block;padding:4px 9px;border-radius:999px;background:#eef2ff;font-size:.8rem}</style></head><body><header class="top"><div class="wrap"><h1>{{ profile.display_name|default:organization.name }}</h1><p>Your learning dashboard</p></div></header><main class="wrap"><div class="grid"><section class="card"><h2>My Courses</h2>{% for a in course_assignments %}<p><strong>{{ a.course.title }}</strong>{% if a.due_at %}<br><span class="muted">Due {{ a.due_at }}</span>{% endif %}</p>{% empty %}<p class="muted">No active course assignments.</p>{% endfor %}</section><section class="card"><h2>Learning Programs</h2>{% for a in track_assignments %}<p><strong>{{ a.track }}</strong></p>{% empty %}<p class="muted">No active programs.</p>{% endfor %}</section><section class="card"><h2>Upcoming Exams</h2>{% for a in exam_assignments %}<p><strong>{{ a.exam }}</strong>{% if a.due_at %}<br><span class="muted">Due {{ a.due_at }}</span>{% endif %}</p>{% empty %}<p class="muted">No active exam assignments.</p>{% endfor %}</section></div></main></body></html>
+{% extends "layouts/student/base.html" %}
+{% load static %}
+
+{% block title %}{{ organization.name }} · Student Learning Dashboard{% endblock %}
+
+{% block content %}
+<section class="section py-4">
+    <!-- Student Profile & Organization Identity Header -->
+    <div class="box mb-5">
+        <div class="level is-mobile-stacked">
+            <div class="level-left">
+                <div class="is-flex is-align-items-center">
+                    <div class="mr-4" style="width: 56px; height: 56px; border-radius: 50%; background: #3273dc; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold;">
+                        {{ request.user.first_name|first|upper|default:request.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <p class="is-size-7 has-text-grey is-uppercase has-text-weight-semibold mb-1">
+                            {{ organization.name }} · Student Dashboard
+                        </p>
+                        <h1 class="title is-4 mb-1">
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        </h1>
+                        <p class="is-size-7 has-text-grey">
+                            {% if student_data.primary_enrollment %}
+                                <strong>Class:</strong> {{ student_data.primary_enrollment.class_section.class_group.name }} &mdash; Section {{ student_data.primary_enrollment.class_section.name }}
+                                {% if student_data.primary_enrollment.roll_number %}
+                                    &bull; <strong>Roll No:</strong> {{ student_data.primary_enrollment.roll_number }}
+                                {% endif %}
+                                &bull; <strong>Year:</strong> {{ student_data.primary_enrollment.academic_year.name }}
+                            {% elif student_data.student_profile %}
+                                <strong>Student ID:</strong> {{ student_data.student_profile.student_id|default:student_data.student_profile.admission_no|default:"Active" }}
+                            {% else %}
+                                <strong>Status:</strong> Active Enrolled Student
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="level-right">
+                <div class="buttons">
+                    <a href="{% url 'organizations_public:student_profile' slug=organization.slug %}" class="button is-small is-light">
+                        <span class="icon is-small"><i class="fa fa-user"></i></span><span>My Profile</span>
+                    </a>
+                    <a href="{% url 'quiz:dashboard' %}" class="button is-small is-light">
+                        <span class="icon is-small"><i class="fa fa-arrow-left"></i></span><span>Platform Home</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deadlines & Overdue Alerts -->
+    {% if student_data.overdue_assignments %}
+    <div class="notification is-danger is-light mb-5">
+        <button class="delete" onclick="this.parentElement.style.display='none'"></button>
+        <div class="is-flex is-align-items-center">
+            <span class="icon is-medium mr-3 has-text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i></span>
+            <div>
+                <strong>Attention Required:</strong> You have <strong>{{ student_data.overdue_assignments|length }}</strong> overdue assignment(s). Please complete them as soon as possible.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Student Metric KPI Cards -->
+    <div class="columns is-multiline mb-5">
+        <div class="column is-2">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Assigned Courses</p>
+                <p class="title is-3 has-text-primary">{{ student_data.total_courses }}</p>
+                <span class="is-size-7 has-text-grey">Curriculum</span>
+            </div>
+        </div>
+        <div class="column is-2">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Learning Tracks</p>
+                <p class="title is-3 has-text-info">{{ student_data.total_tracks }}</p>
+                <span class="is-size-7 has-text-grey">Programs</span>
+            </div>
+        </div>
+        <div class="column is-2">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Assigned Exams</p>
+                <p class="title is-3 has-text-warning-dark">{{ student_data.total_exams }}</p>
+                <span class="is-size-7 has-text-grey">Assessments</span>
+            </div>
+        </div>
+        <div class="column is-2">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Attempts Taken</p>
+                <p class="title is-3 has-text-dark">{{ student_data.total_attempts }}</p>
+                <span class="is-size-7 has-text-grey">{{ student_data.completed_attempts }} submitted</span>
+            </div>
+        </div>
+        <div class="column is-2">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Average Score</p>
+                <p class="title is-3 has-text-success">
+                    {% if student_data.avg_score is not None %}
+                        {{ student_data.avg_score }}%
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </p>
+                <span class="is-size-7 has-text-grey">Overall performance</span>
+            </div>
+        </div>
+        <div class="column is-2">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Exams Passed</p>
+                <p class="title is-3 has-text-success">{{ student_data.passed_count }}</p>
+                <span class="is-size-7 has-text-grey">Successful</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Courses Section -->
+    <div class="box mb-5">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+            <h2 class="title is-5 mb-0"><i class="fa fa-graduation-cap mr-2"></i>My Assigned Courses</h2>
+            <span class="tag is-info is-light">{{ student_data.total_courses }} available</span>
+        </div>
+        <div class="columns is-multiline">
+            {% for a in student_data.course_assignments %}
+            <div class="column is-6">
+                <div class="card p-4">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
+                        <span class="tag is-primary is-light">Direct Assignment</span>
+                        {% if a.due_at %}
+                            <span class="is-size-7 has-text-grey"><i class="fa fa-calendar-alt mr-1"></i>Due {{ a.due_at|date:"M d, Y" }}</span>
+                        {% endif %}
+                    </div>
+                    <h3 class="title is-6 mb-2">{{ a.course.title }}</h3>
+                    <p class="is-size-7 has-text-grey mb-3">{{ a.course.description|default:"Structured course modules and learning material."|truncatewords:20 }}</p>
+                    <div class="is-flex is-justify-content-space-between is-align-items-center">
+                        <span class="tag is-small">{{ a.get_status_display }}</span>
+                        <a href="{% url 'courses:course_detail' slug=a.course.slug %}" class="button is-small is-primary">
+                            <span>Open Course</span><span class="icon is-small"><i class="fa fa-arrow-right"></i></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% for sa in student_data.section_courses %}
+            <div class="column is-6">
+                <div class="card p-4">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
+                        <span class="tag is-link is-light">Class Section Resource</span>
+                        {% if sa.due_at %}
+                            <span class="is-size-7 has-text-grey"><i class="fa fa-calendar-alt mr-1"></i>Due {{ sa.due_at|date:"M d, Y" }}</span>
+                        {% endif %}
+                    </div>
+                    <h3 class="title is-6 mb-2">{{ sa.course.title }}</h3>
+                    <p class="is-size-7 has-text-grey mb-3">{{ sa.course.description|default:"Curriculum course assigned to your class section."|truncatewords:20 }}</p>
+                    <div class="is-flex is-justify-content-space-between is-align-items-center">
+                        <span class="tag is-small is-info is-light">{{ sa.class_section.class_group.name }} - {{ sa.class_section.name }}</span>
+                        <a href="{% url 'courses:course_detail' slug=sa.course.slug %}" class="button is-small is-link">
+                            <span>Open Course</span><span class="icon is-small"><i class="fa fa-arrow-right"></i></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if not student_data.course_assignments and not student_data.section_courses %}
+            <div class="column is-12">
+                <div class="notification is-light has-text-centered py-4">
+                    <p class="has-text-grey">No active courses currently assigned to you or your class section.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Assigned Exams & Assessments Section -->
+    <div class="box mb-5">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+            <h2 class="title is-5 mb-0"><i class="fa fa-file-alt mr-2"></i>Upcoming &amp; Assigned Exams</h2>
+            <span class="tag is-warning is-light">{{ student_data.total_exams }} assessments</span>
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable is-vcentered">
+                <thead>
+                    <tr>
+                        <th>Exam Title</th>
+                        <th>Type</th>
+                        <th>Questions</th>
+                        <th>Duration</th>
+                        <th>Due Date</th>
+                        <th class="has-text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in student_data.exam_assignments %}
+                    <tr>
+                        <td>
+                            <strong>{{ a.exam.title }}</strong>
+                        </td>
+                        <td><span class="tag is-primary is-light is-small">Direct</span></td>
+                        <td>{{ a.exam.question_count|default:"—" }}</td>
+                        <td>
+                            {% if a.exam.duration_seconds %}
+                                {{ a.exam.duration_seconds|divisibleby:60 }} mins
+                            {% else %}
+                                Untimed
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.due_at %}
+                                {{ a.due_at|date:"M d, Y" }}
+                            {% else %}
+                                <span class="has-text-grey">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="has-text-right">
+                            <a href="{% url 'quiz:exam_detail' exam_id=a.exam.id %}" class="button is-small is-primary">
+                                <span class="icon is-small"><i class="fa fa-play"></i></span><span>Start Exam</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% for sa in student_data.section_exams %}
+                    <tr>
+                        <td>
+                            <strong>{{ sa.exam.title }}</strong>
+                        </td>
+                        <td><span class="tag is-link is-light is-small">Class Section</span></td>
+                        <td>{{ sa.exam.question_count|default:"—" }}</td>
+                        <td>
+                            {% if sa.exam.duration_seconds %}
+                                {{ sa.exam.duration_seconds|divisibleby:60 }} mins
+                            {% else %}
+                                Untimed
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if sa.due_at %}
+                                {{ sa.due_at|date:"M d, Y" }}
+                            {% else %}
+                                <span class="has-text-grey">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="has-text-right">
+                            <a href="{% url 'quiz:exam_detail' exam_id=sa.exam.id %}" class="button is-small is-link">
+                                <span class="icon is-small"><i class="fa fa-play"></i></span><span>Start Exam</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if not student_data.exam_assignments and not student_data.section_exams %}
+                    <tr>
+                        <td colspan="6" class="has-text-grey has-text-centered py-4">No exam assessments currently assigned.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Exam Performance & Attempt History -->
+    <div class="box">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+            <div>
+                <h2 class="title is-5 mb-1"><i class="fa fa-chart-bar mr-2"></i>Recent Exam Attempts &amp; Performance</h2>
+                <p class="has-text-grey is-size-7">Review your test submissions, scores, and completion status.</p>
+            </div>
+            <span class="tag is-light">{{ student_data.attempts|length }} attempts shown</span>
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable is-vcentered">
+                <thead>
+                    <tr>
+                        <th>Exam</th>
+                        <th>Started</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th class="has-text-centered">Score</th>
+                        <th class="has-text-right">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attempt in student_data.attempts %}
+                    <tr>
+                        <td><strong>{{ attempt.exam.title }}</strong></td>
+                        <td class="is-size-7">{{ attempt.started_at|date:"M d, Y H:i" }}</td>
+                        <td class="is-size-7">
+                            {% if attempt.submitted_at %}
+                                {{ attempt.submitted_at|date:"M d, Y H:i" }}
+                            {% else %}
+                                <span class="has-text-grey">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if attempt.status == 'submitted' %}
+                                <span class="tag is-success is-light is-small">Submitted</span>
+                            {% elif attempt.status == 'started' %}
+                                <span class="tag is-info is-light is-small">In Progress</span>
+                            {% elif attempt.status == 'expired' %}
+                                <span class="tag is-warning is-light is-small">Expired</span>
+                            {% else %}
+                                <span class="tag is-light is-small">{{ attempt.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="has-text-centered">
+                            {% if attempt.score is not None %}
+                                <strong>{{ attempt.score }}%</strong>
+                            {% else %}
+                                <span class="has-text-grey">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="has-text-right">
+                            {% if attempt.passed is True %}
+                                <span class="tag is-success">Passed</span>
+                            {% elif attempt.passed is False %}
+                                <span class="tag is-danger is-light">Failed</span>
+                            {% else %}
+                                <span class="tag is-light">&mdash;</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="has-text-grey has-text-centered py-4">No exam attempts recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

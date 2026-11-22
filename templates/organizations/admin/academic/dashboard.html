@@ -1,12 +1,309 @@
 {% extends "organizations/admin/base.html" %}
+
+{% block title %}{{ org.name }} · Academic Management{% endblock %}
+
 {% block content %}
-<div class="level mb-5"><div class="level-left"><div><p class="is-size-7 has-text-grey is-uppercase has-text-weight-semibold mb-1">Academic Management</p><h1 class="title is-3 mb-2">Academic Structure</h1><p class="has-text-grey">Manage {{ org.name }}'s academic years, classes and sections.</p></div></div>{% if request.organization_member.role != 'staff' %}<div class="level-right"><div class="buttons"><a class="button" href="{% url 'organizations_admin:academic_year_create' slug=org.slug %}"><span class="icon"><i class="fas fa-calendar-plus"></i></span><span>Add Academic Year</span></a><a class="button" href="{% url 'organizations_admin:academic_class_create' slug=org.slug %}"><span class="icon"><i class="fas fa-layer-group"></i></span><span>Add Class</span></a><a class="button is-primary" href="{% url 'organizations_admin:academic_section_create' slug=org.slug %}"><span class="icon"><i class="fas fa-plus"></i></span><span>Add Section</span></a></div></div>{% endif %}</div>
+<div class="academic-management-dashboard">
+    <!-- Header banner -->
+    <div class="level mb-5">
+        <div class="level-left">
+            <div>
+                <p class="is-size-7 has-text-grey is-uppercase has-text-weight-semibold mb-1">
+                    Academic Structure · {{ org.name }}
+                </p>
+                <h1 class="title is-3 mb-1">Academic Management</h1>
+                <p class="has-text-grey">
+                    Manage academic calendars, class levels, sections, teacher assignments, and student enrollments.
+                </p>
+            </div>
+        </div>
+        {% if not is_staff_teacher %}
+        <div class="level-right">
+            <div class="buttons">
+                <a class="button is-light" href="{% url 'organizations_admin:academic_year_create' slug=org.slug %}">
+                    <span class="icon is-small"><i class="fas fa-calendar-plus"></i></span><span>Add Academic Year</span>
+                </a>
+                <a class="button is-light" href="{% url 'organizations_admin:academic_class_create' slug=org.slug %}">
+                    <span class="icon is-small"><i class="fas fa-layer-group"></i></span><span>Add Class</span>
+                </a>
+                <a class="button is-primary" href="{% url 'organizations_admin:academic_section_create' slug=org.slug %}">
+                    <span class="icon is-small"><i class="fas fa-plus"></i></span><span>Add Section</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 
-<div class="columns is-multiline mb-2"><div class="column is-4"><div class="box"><p class="heading">Academic Years</p><p class="title is-3">{{ years|length }}</p><p class="is-size-7 has-text-grey">Organization master records</p></div></div><div class="column is-4"><div class="box"><p class="heading">Classes</p><p class="title is-3">{{ classes|length }}</p><p class="is-size-7 has-text-grey">Reusable class levels</p></div></div><div class="column is-4"><div class="box"><p class="heading">Sections</p><p class="title is-3">{{ sections|length }}</p><p class="is-size-7 has-text-grey">Year-specific sections</p></div></div></div>
+    <!-- Teacher Notice Banner (when accessed by staff/teacher) -->
+    {% if is_staff_teacher %}
+    <div class="notification is-info is-light mb-5">
+        <div class="is-flex is-align-items-center">
+            <span class="icon is-medium mr-3"><i class="fa fa-info-circle fa-2x"></i></span>
+            <div>
+                <strong>Teacher View:</strong> You are viewing academic sections where you are actively assigned as an instructor.
+                Master record configuration (creating/editing academic years, classes, and sections) is restricted to organization administrators.
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
-<div class="box mb-5"><div class="level mb-4"><div class="level-left"><div><h2 class="title is-5 mb-1">Academic Years</h2><p class="is-size-7 has-text-grey">Create and maintain the organization's academic calendar.</p></div></div></div><div class="table-container"><table class="table is-fullwidth is-hoverable"><thead><tr><th>Name</th><th>Start</th><th>End</th><th>Current</th><th class="has-text-right">Actions</th></tr></thead><tbody>{% for year in years %}<tr><td class="has-text-weight-semibold">{{ year.name }}</td><td>{{ year.start_date|date:"M d, Y" }}</td><td>{{ year.end_date|date:"M d, Y" }}</td><td>{% if year.is_current %}<span class="tag is-success is-light">Current</span>{% else %}<span class="tag is-light">—</span>{% endif %}</td><td class="has-text-right"><a class="button is-small" href="{% url 'organizations_admin:academic_year_edit' slug=org.slug year_id=year.id %}">Edit</a><form method="post" action="{% url 'organizations_admin:academic_year_toggle' slug=org.slug year_id=year.id %}" style="display:inline">{% csrf_token %}<button class="button is-small is-light" type="submit">{% if year.is_current %}Unset Current{% else %}Set Current{% endif %}</button></form></td></tr>{% empty %}<tr><td colspan="5" class="has-text-grey">No academic years configured.</td></tr>{% endfor %}</tbody></table></div></div>
+    <!-- Current Academic Year Spotlight -->
+    {% if current_year %}
+    <div class="box mb-5 has-background-primary-light">
+        <div class="level">
+            <div class="level-left">
+                <div>
+                    <span class="tag is-primary has-text-weight-bold mb-1">Active Calendar Year</span>
+                    <h2 class="title is-4 mb-1">{{ current_year.name }}</h2>
+                    <p class="is-size-7 has-text-grey-dark">
+                        {{ current_year.start_date|date:"F d, Y" }} &mdash; {{ current_year.end_date|date:"F d, Y" }}
+                    </p>
+                </div>
+            </div>
+            <div class="level-right">
+                <span class="tag is-success is-medium">
+                    <i class="fa fa-check-circle mr-1"></i> Current Academic Period
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
-<div class="box mb-5"><div class="level mb-4"><div class="level-left"><div><h2 class="title is-5 mb-1">Classes</h2><p class="is-size-7 has-text-grey">Maintain reusable class levels for the organization.</p></div></div></div><div class="table-container"><table class="table is-fullwidth is-hoverable"><thead><tr><th>Class</th><th>Code</th><th>Status</th><th class="has-text-right">Actions</th></tr></thead><tbody>{% for klass in classes %}<tr><td class="has-text-weight-semibold">{{ klass.name }}</td><td>{{ klass.code|default:"—" }}</td><td>{% if klass.is_active %}<span class="tag is-success is-light">Active</span>{% else %}<span class="tag is-light">Inactive</span>{% endif %}</td><td class="has-text-right"><a class="button is-small" href="{% url 'organizations_admin:academic_class_edit' slug=org.slug class_id=klass.id %}">Edit</a><form method="post" action="{% url 'organizations_admin:academic_class_toggle' slug=org.slug class_id=klass.id %}" style="display:inline">{% csrf_token %}<button class="button is-small is-light" type="submit">{% if klass.is_active %}Deactivate{% else %}Activate{% endif %}</button></form></td></tr>{% empty %}<tr><td colspan="4" class="has-text-grey">No classes configured.</td></tr>{% endfor %}</tbody></table></div></div>
+    <!-- Summary KPI Stat Cards -->
+    <div class="columns is-multiline mb-5">
+        <div class="column is-4">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Academic Years</p>
+                <p class="title is-3">{{ years|length }}</p>
+                <span class="is-size-7 has-text-grey">Calendar definitions</span>
+            </div>
+        </div>
+        <div class="column is-4">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Class Levels</p>
+                <p class="title is-3">{{ classes|length }}</p>
+                <span class="is-size-7 has-text-grey">Grade / course levels</span>
+            </div>
+        </div>
+        <div class="column is-4">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Class Sections</p>
+                <p class="title is-3 has-text-primary">{{ sections|length }}</p>
+                <span class="is-size-7 has-text-grey">Active student cohorts</span>
+            </div>
+        </div>
+    </div>
 
-<div class="box"><div class="level mb-4"><div class="level-left"><div><h2 class="title is-5 mb-1">Class Sections</h2><p class="is-size-7 has-text-grey">Sections belong to a specific academic year and class.</p></div></div></div><div class="table-container"><table class="table is-fullwidth is-hoverable"><thead><tr><th>Class</th><th>Section</th><th>Academic Year</th><th>Students</th><th>Status</th><th class="has-text-right">Actions</th></tr></thead><tbody>{% for section in sections %}<tr><td class="has-text-weight-semibold">{{ section.class_group.name }}</td><td>{{ section.name }}</td><td>{{ section.academic_year.name }}</td><td>{{ section.enrollments.count }}</td><td>{% if section.is_active %}<span class="tag is-success is-light">Active</span>{% else %}<span class="tag is-light">Inactive</span>{% endif %}</td><td class="has-text-right"><a class="button is-small" href="{% url 'organizations_admin:academic_section_edit' slug=org.slug section_id=section.id %}">Edit</a><a class="button is-small" href="{% url 'organizations_admin:class_assignment_create' slug=org.slug section_id=section.id %}">Resources</a><form method="post" action="{% url 'organizations_admin:academic_section_toggle' slug=org.slug section_id=section.id %}" style="display:inline">{% csrf_token %}<button class="button is-small is-light" type="submit">{% if section.is_active %}Deactivate{% else %}Activate{% endif %}</button></form></td></tr>{% empty %}<tr><td colspan="6" class="has-text-grey">No class sections configured.</td></tr>{% endfor %}</tbody></table></div></div>
+    <!-- Class Sections Panel (Prominent) -->
+    <div class="box mb-5">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+            <div>
+                <h2 class="title is-5 mb-1"><i class="fa fa-chalkboard mr-2"></i>Class Sections</h2>
+                <p class="is-size-7 has-text-grey">
+                    Sections belong to an academic year and class level, with enrolled students and assigned teachers.
+                </p>
+            </div>
+            {% if not is_staff_teacher %}
+            <a class="button is-small is-primary" href="{% url 'organizations_admin:academic_section_create' slug=org.slug %}">
+                <span class="icon is-small"><i class="fa fa-plus"></i></span><span>New Section</span>
+            </a>
+            {% endif %}
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable is-vcentered">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Section</th>
+                        <th>Academic Year</th>
+                        <th class="has-text-centered">Enrolled Students</th>
+                        <th>Assigned Teachers</th>
+                        <th>Status</th>
+                        <th class="has-text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for section in sections %}
+                    <tr>
+                        <td class="has-text-weight-semibold">{{ section.class_group.name }}</td>
+                        <td><strong>Section {{ section.name }}</strong></td>
+                        <td>{{ section.academic_year.name }}</td>
+                        <td class="has-text-centered">
+                            <span class="tag is-info is-light has-text-weight-bold">
+                                {{ section.enrollments.count }}
+                                {% if section.capacity %}/ {{ section.capacity }}{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% for ta in section.teacher_assignments.all %}
+                                {% if ta.is_active %}
+                                    <span class="tag is-light is-small" title="{{ ta.subject|default:'All subjects' }}">
+                                        {{ ta.teacher.get_full_name|default:ta.teacher.username }}
+                                        {% if ta.is_primary %}&bull;{% endif %}
+                                    </span>
+                                {% endif %}
+                            {% empty %}
+                                <span class="has-text-grey-light is-size-7">Unassigned</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if section.is_active %}
+                                <span class="tag is-success is-light is-small">Active</span>
+                            {% else %}
+                                <span class="tag is-light is-small">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="has-text-right">
+                            <div class="buttons is-right are-small">
+                                <a class="button is-light" href="{% url 'organizations_admin:class_assignment_create' slug=org.slug section_id=section.id %}">
+                                    <span class="icon is-small"><i class="fa fa-book-reader"></i></span><span>Resources</span>
+                                </a>
+                                {% if not is_staff_teacher %}
+                                    <a class="button is-light" href="{% url 'organizations_admin:academic_section_edit' slug=org.slug section_id=section.id %}">
+                                        Edit
+                                    </a>
+                                    <form method="post" action="{% url 'organizations_admin:academic_section_toggle' slug=org.slug section_id=section.id %}" style="display:inline">
+                                        {% csrf_token %}
+                                        <button class="button is-light" type="submit">
+                                            {% if section.is_active %}Deactivate{% else %}Activate{% endif %}
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="has-text-grey has-text-centered py-4">No class sections configured.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Academic Years Panel -->
+    <div class="box mb-5">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+            <div>
+                <h2 class="title is-5 mb-1"><i class="fa fa-calendar-alt mr-2"></i>Academic Years</h2>
+                <p class="is-size-7 has-text-grey">Maintain the organization's academic calendars and active school years.</p>
+            </div>
+            {% if not is_staff_teacher %}
+            <a class="button is-small is-light" href="{% url 'organizations_admin:academic_year_create' slug=org.slug %}">
+                <span class="icon is-small"><i class="fa fa-plus"></i></span><span>Add Year</span>
+            </a>
+            {% endif %}
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable is-vcentered">
+                <thead>
+                    <tr>
+                        <th>Year Name</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        {% if not is_staff_teacher %}
+                        <th class="has-text-right">Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for year in years %}
+                    <tr>
+                        <td class="has-text-weight-semibold">{{ year.name }}</td>
+                        <td>{{ year.start_date|date:"M d, Y" }}</td>
+                        <td>{{ year.end_date|date:"M d, Y" }}</td>
+                        <td>
+                            {% if year.is_current %}
+                                <span class="tag is-success is-light has-text-weight-bold">Current</span>
+                            {% else %}
+                                <span class="tag is-light">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        {% if not is_staff_teacher %}
+                        <td class="has-text-right">
+                            <div class="buttons is-right are-small">
+                                <a class="button is-light" href="{% url 'organizations_admin:academic_year_edit' slug=org.slug year_id=year.id %}">Edit</a>
+                                <form method="post" action="{% url 'organizations_admin:academic_year_toggle' slug=org.slug year_id=year.id %}" style="display:inline">
+                                    {% csrf_token %}
+                                    <button class="button is-light" type="submit">
+                                        {% if year.is_current %}Unset Current{% else %}Set Current{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="has-text-grey has-text-centered py-4">No academic years configured.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Class Levels Panel -->
+    <div class="box">
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+            <div>
+                <h2 class="title is-5 mb-1"><i class="fa fa-layer-group mr-2"></i>Class Levels</h2>
+                <p class="is-size-7 has-text-grey">Maintain reusable grade and course levels for the organization.</p>
+            </div>
+            {% if not is_staff_teacher %}
+            <a class="button is-small is-light" href="{% url 'organizations_admin:academic_class_create' slug=org.slug %}">
+                <span class="icon is-small"><i class="fa fa-plus"></i></span><span>Add Class</span>
+            </a>
+            {% endif %}
+        </div>
+        <div class="table-container">
+            <table class="table is-fullwidth is-hoverable is-vcentered">
+                <thead>
+                    <tr>
+                        <th>Class Name</th>
+                        <th>Code</th>
+                        <th>Status</th>
+                        {% if not is_staff_teacher %}
+                        <th class="has-text-right">Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for klass in classes %}
+                    <tr>
+                        <td class="has-text-weight-semibold">{{ klass.name }}</td>
+                        <td>{{ klass.code|default:"—" }}</td>
+                        <td>
+                            {% if klass.is_active %}
+                                <span class="tag is-success is-light is-small">Active</span>
+                            {% else %}
+                                <span class="tag is-light is-small">Inactive</span>
+                            {% endif %}
+                        </td>
+                        {% if not is_staff_teacher %}
+                        <td class="has-text-right">
+                            <div class="buttons is-right are-small">
+                                <a class="button is-light" href="{% url 'organizations_admin:academic_class_edit' slug=org.slug class_id=klass.id %}">Edit</a>
+                                <form method="post" action="{% url 'organizations_admin:academic_class_toggle' slug=org.slug class_id=klass.id %}" style="display:inline">
+                                    {% csrf_token %}
+                                    <button class="button is-light" type="submit">
+                                        {% if klass.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="has-text-grey has-text-centered py-4">No classes configured.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
