@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 
@@ -255,7 +255,14 @@ class StudyPlan(models.Model):
             if done < len(d_ids):
                 backlog.extend(d_ids[done:])
 
-        return backlog[:self.questions_per_day] if backlog else self.question_ids[:self.questions_per_day]
+        # Calculate questions completed across earlier extension days to avoid repeating them
+        ext_completed_so_far = sum(
+            self.daily_progress.get(str(d), 0)
+            for d in range(self.total_days, day_index)
+        )
+        ext_slice = backlog[ext_completed_so_far : ext_completed_so_far + self.questions_per_day]
+
+        return ext_slice if ext_slice else (backlog[:self.questions_per_day] if backlog else self.question_ids[:self.questions_per_day])
 
     def get_missed_days_count(self):
         """Returns the number of past days where the daily question target was not met."""
@@ -330,22 +337,20 @@ class StudyPlan(models.Model):
         )
 
     def increment_today_progress(self):
-        day_index = str(
-            self.get_day_index()
-        )
-
-        current = self.daily_progress.get(
-            day_index,
-            0,
-        )
-
-        self.daily_progress[day_index] = (
-            current + 1
-        )
-
-        self.save(
-            update_fields=["daily_progress"]
-        )
+        """
+        Increment today's completed question count safely using select_for_update.
+        Capped at questions_per_day to prevent double-increment overflow.
+        """
+        with transaction.atomic():
+            plan = StudyPlan.objects.select_for_update().get(pk=self.pk)
+            day_index = str(plan.get_day_index())
+            current = plan.daily_progress.get(day_index, 0)
+            if current < plan.questions_per_day:
+                plan.daily_progress[day_index] = current + 1
+                plan.save(update_fields=["daily_progress"])
+                self.daily_progress = plan.daily_progress
+                return True
+            return False
 
     def completion_percentage(self):
         total_done = sum(
@@ -366,23 +371,24 @@ class StudyPlan(models.Model):
         )
 
     def mark_completed_if_finished(self):
-        if (
-            sum(self.daily_progress.values())
-            >= self.total_questions()
-        ):
-            self.is_completed = True
-            self.is_active = False
-
-            self.save(
-                update_fields=[
-                    "is_completed",
-                    "is_active",
-                ]
-            )
-
-            return True
-
-        return False
+        """
+        Mark plan completed safely using select_for_update.
+        """
+        with transaction.atomic():
+            plan = StudyPlan.objects.select_for_update().get(pk=self.pk)
+            if sum(plan.daily_progress.values()) >= plan.total_questions():
+                plan.is_completed = True
+                plan.is_active = False
+                plan.save(
+                    update_fields=[
+                        "is_completed",
+                        "is_active",
+                    ]
+                )
+                self.is_completed = True
+                self.is_active = False
+                return True
+            return False
 
     # =====================================================
     # EXTENSION

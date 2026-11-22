@@ -7,6 +7,7 @@ from courses.models import Course, CourseEnrollment
 from courses.models.subscription import CourseSubscription
 from organizations.models.access import ResourceAccess
 from quiz.models import UserExam
+from quiz.services.streak_service import get_student_streak_summary
 
 
 @login_required
@@ -82,6 +83,8 @@ def student_dashboard(request):
         for attempt in submitted_attempts
     ]
 
+    streak_summary = get_student_streak_summary(user)
+
     return render(
         request,
         "quiz/student/student_dashboard_overview.html",
@@ -92,5 +95,6 @@ def student_dashboard(request):
             "average_score": round(float(average_score), 1) if average_score is not None else 0,
             "learning_courses": learning_courses,
             "recent_results": recent_results,
+            "streak_summary": streak_summary,
         },
     )

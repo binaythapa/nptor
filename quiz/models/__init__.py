@@ -33,6 +33,8 @@ from .feedback import (
 
 from .practice import (
     PracticeStat,
+    UserPracticeStreak,
+    DailyPracticeLog,
 )
 
 from .exam_track import (

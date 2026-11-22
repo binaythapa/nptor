@@ -39,7 +39,7 @@ from quiz.models import Exam, ExamTrack, UserExam, Coupon
 from quiz.services.access import can_access_exam
 from quiz.services.pricing import apply_coupon
 from quiz.utils import get_leaf_category_name
-from quiz.models import Question, Category, Domain, QuestionDiscussion
+from quiz.models import Question, Category, Domain, QuestionDiscussion, PracticeStat
 from courses.services.context import get_course_context
 from courses.services.practice_completion import track_practice_completion
 from core.utils.memory import get_memory_usage_mb
@@ -211,7 +211,7 @@ def practice_express_save(request):
     question_id = request.POST.get("question_id")
     is_correct = request.POST.get("is_correct") == "true"
 
-    question = Question.objects.select_related("category").get(id=question_id)
+    question = Question.objects.select_related("primary_category").get(id=question_id)
     today = timezone.now().date()
 
     stat, _ = PracticeStat.objects.get_or_create(
@@ -232,9 +232,19 @@ def practice_express_save(request):
         stat.total_correct += 1
     stat.save()
 
+    from quiz.services.streak_service import record_qualifying_practice
+    streak_obj, _ = record_qualifying_practice(
+        user=request.user,
+        question=question,
+        is_correct=is_correct,
+        source="express_practice",
+    )
+
+    effective_streak = streak_obj.get_effective_current_streak() if streak_obj else stat.streak
+
     return JsonResponse({
         "total": stat.total_attempted,
         "correct": stat.total_correct,
-        "accuracy": stat.accuracy(),
-        "streak": stat.streak,
+        "accuracy": stat.accuracy,
+        "streak": effective_streak,
     })

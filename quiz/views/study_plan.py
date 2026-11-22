@@ -461,6 +461,14 @@ def study_plan_practice(request):
 
         plan.increment_today_progress()
 
+        from quiz.services.streak_service import record_qualifying_practice
+        record_qualifying_practice(
+            user=request.user,
+            question=question,
+            is_correct=is_correct,
+            source="study_plan",
+        )
+
         # 🔥 Final Completion Check
         plan.mark_completed_if_finished()
 

@@ -585,6 +585,16 @@ def practice_answer_ajax(request):
 
             show_next = True
 
+    # Record qualifying practice activity for authenticated students
+    if request.user.is_authenticated and (selected_multi_ids or (selected_choice_id and selected_choice_id.isdigit())):
+        from quiz.services.streak_service import record_qualifying_practice
+        record_qualifying_practice(
+            user=request.user,
+            question=question,
+            is_correct=(result == "correct"),
+            source="standard_practice",
+        )
+
 
     # =====================================================
     # RENDER RESULT

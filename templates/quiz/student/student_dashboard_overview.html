@@ -54,6 +54,57 @@
       <strong>{{ average_score }}%</strong>
       <small>Across completed attempts</small>
     </article>
+    <article class="student-overview-kpi" style="border-left: 3px solid #ff3860;">
+      <span>PRACTICE STREAK</span>
+      <strong style="color: #ff3860;">🔥 {{ streak_summary.current_streak }} Day{{ streak_summary.current_streak|pluralize }}</strong>
+      <small>Best: {{ streak_summary.longest_streak }} day{{ streak_summary.longest_streak|pluralize }}</small>
+    </article>
+  </section>
+
+  <!-- ================= WEEKLY HABIT TRACKER ================= -->
+  <section class="student-overview-section mb-5" aria-label="Weekly habit summary">
+    <div class="box" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem;">
+      <div class="is-flex is-justify-content-space-between is-align-items-center mb-3" style="flex-wrap: wrap; gap: 8px;">
+        <div>
+          <span class="is-size-7 has-text-grey" style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Daily Habit Tracker</span>
+          <h2 class="title is-6 mb-0">🔥 Weekly Practice Activity</h2>
+        </div>
+        <div>
+          {% if streak_summary.is_active_today %}
+            <span class="tag is-success is-light font-weight-bold">✓ Practiced Today</span>
+          {% else %}
+            <span class="tag is-warning is-light font-weight-bold">⚡ Practice today to maintain your streak!</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="is-flex is-justify-content-space-between is-align-items-center" style="gap: 8px; flex-wrap: wrap;">
+        {% for day in streak_summary.weekly_summary %}
+        <div style="flex: 1; min-width: 40px; text-align: center; padding: 8px 4px; border-radius: 6px; background: {% if day.is_active %}#ebfffc{% elif day.is_today %}#f0f7ff{% else %}#f9fafb{% endif %}; border: 1px solid {% if day.is_active %}#48c78e{% elif day.is_today %}#3273dc{% else %}#e5e7eb{% endif %};">
+          <div style="font-size: 0.7rem; font-weight: 600; color: #666;">{{ day.day_name }}</div>
+          <div style="font-size: 1.15rem; margin: 4px 0;">
+            {% if day.is_active %}
+              <span title="{{ day.questions_count }} questions practiced" style="color: #48c78e;">🔥</span>
+            {% elif day.is_today %}
+              <span title="Pending practice today" style="color: #3273dc;">⏳</span>
+            {% else %}
+              <span title="Inactive" style="color: #ccc;">·</span>
+            {% endif %}
+          </div>
+          <div style="font-size: 0.65rem; color: #888;">{{ day.date|date:"j" }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="is-flex is-justify-content-space-between is-align-items-center mt-3 pt-2" style="border-top: 1px solid #f0f0f0;">
+        <span class="is-size-7 has-text-grey">
+          Total Active Days: <strong>{{ streak_summary.total_active_days }}</strong> · Questions Practiced: <strong>{{ streak_summary.total_questions_practiced }}</strong>
+        </span>
+        <a href="{% url 'quiz:practice' %}" class="button is-small is-primary">
+          Practice Now →
+        </a>
+      </div>
+    </div>
   </section>
 
   <section class="student-overview-section">

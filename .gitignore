@@ -90,5 +90,6 @@ organizations/migrations/
 !quiz/migrations/0001_initial.py
 !quiz/migrations/0002_initial.py
 !quiz/migrations/0003_studyplan_exam.py
+!quiz/migrations/0004_dailypracticelog_userpracticestreak.py
 
 
