@@ -33,6 +33,91 @@
   </section>
   {% endif %}
 
+  <!-- ================= ACTIVE STUDY PLAN & TODAY'S MISSION ================= -->
+  <section class="student-overview-section mb-4" aria-label="Study plan mission">
+    <div class="box" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; background: linear-gradient(to right, #ffffff, #f9fafb);">
+      {% if study_plan_data %}
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-2" style="flex-wrap: wrap; gap: 8px;">
+          <div>
+            <span class="is-size-7 has-text-primary font-weight-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
+              🎯 Active Study Plan · Day {{ study_plan_data.day_number }} of {{ study_plan_data.total_days }}
+            </span>
+            <h2 class="title is-5 mb-0">{{ study_plan_data.target_name }}</h2>
+          </div>
+          <div>
+            {% if study_plan_data.is_today_completed %}
+              <span class="tag is-success is-light font-weight-bold">✓ Today's Mission Accomplished!</span>
+            {% else %}
+              <span class="tag is-info is-light font-weight-bold">{{ study_plan_data.today_completed }}/{{ study_plan_data.today_target }} Questions Done</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <p class="is-size-7 has-text-grey mb-2">
+          Daily Target: <strong>{{ study_plan_data.today_target }} questions</strong> · Overall Schedule Completion: <strong>{{ study_plan_data.completed_days }}/{{ study_plan_data.total_days }} days</strong> ({{ study_plan_data.overall_percent }}%)
+        </p>
+
+        <progress class="progress {% if study_plan_data.is_today_completed %}is-success{% else %}is-primary{% endif %} is-small mb-3" value="{{ study_plan_data.today_percent }}" max="100">
+          {{ study_plan_data.today_percent }}%
+        </progress>
+
+        <div class="is-flex is-justify-content-space-between is-align-items-center pt-2" style="border-top: 1px solid #f0f0f0;">
+          <a href="{% url 'quiz:study_plan_dashboard' %}" class="is-size-7 has-text-grey font-weight-bold">
+            View Full 15-Day Schedule →
+          </a>
+          <a href="{% url 'quiz:study_plan_practice' %}" class="button is-small is-primary font-weight-bold">
+            {% if study_plan_data.is_today_completed %}Review Today's Questions →{% else %}Continue Today's Mission →{% endif %}
+          </a>
+        </div>
+      {% else %}
+        <div class="is-flex is-justify-content-space-between is-align-items-center" style="flex-wrap: wrap; gap: 12px;">
+          <div>
+            <span class="is-size-7 has-text-primary font-weight-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
+              🎯 15-Day Study Plan
+            </span>
+            <h2 class="title is-6 mb-1">Set a structured daily study schedule</h2>
+            <p class="is-size-7 has-text-grey">Choose your target exam or domain and complete a daily balanced question mission.</p>
+          </div>
+          <a href="{% url 'quiz:create_study_plan' %}" class="button is-small is-primary">
+            Create Study Plan →
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ================= PENDING & UPCOMING TASKS ================= -->
+  {% if pending_tasks %}
+  <section class="student-overview-section mb-4" aria-label="Pending and upcoming tasks">
+    <div class="student-overview-section-heading mb-2">
+      <div>
+        <span>ACTION REQUIRED</span>
+        <h2 style="font-size: 1.15rem;">Pending &amp; Upcoming Tasks</h2>
+      </div>
+      <span class="tag is-rounded is-light">{{ pending_tasks|length }} pending</span>
+    </div>
+    <div class="columns is-multiline">
+      {% for task in pending_tasks %}
+      <div class="column is-4">
+        <div class="box p-3" style="border: 1px solid #e5e7eb; border-radius: 6px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div class="is-flex is-justify-content-space-between is-align-items-center mb-1">
+              <span class="tag {{ task.badge_class }} is-light is-size-7">{{ task.badge }}</span>
+              <i class="fa-solid {{ task.icon }} has-text-grey-light" aria-hidden="true"></i>
+            </div>
+            <h3 class="title is-6 mb-1" style="font-size: 0.95rem;">{{ task.title }}</h3>
+            <p class="is-size-7 has-text-grey mb-3">{{ task.description }}</p>
+          </div>
+          <a href="{{ task.action_url }}" class="button is-small is-fullwidth is-light font-weight-bold">
+            {{ task.action_label }} →
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   <section class="student-overview-kpis" aria-label="Learning summary">
     <article class="student-overview-kpi">
       <span>COURSE ACCESS</span>
@@ -140,6 +225,124 @@
     </div>
     {% endif %}
   </section>
+
+  <!-- ================= ENROLLED COURSES & LEARNING PROGRESS ================= -->
+  <section class="student-overview-section mb-5" aria-label="Course enrolments">
+    <div class="student-overview-section-heading mb-3">
+      <div>
+        <span>COURSE ENROLMENT</span>
+        <h2>My Courses &amp; Learning Progress</h2>
+      </div>
+      <a href="{% url 'quiz:learning_hub' %}">All Enrolled ({{ learning_courses }}) <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+
+    {% if enrolled_courses %}
+    <div class="columns is-multiline">
+      {% for course in enrolled_courses %}
+      <div class="column is-4">
+        <div class="box p-3" style="border: 1px solid #e5e7eb; border-radius: 8px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span class="tag is-info is-light is-size-7 mb-2">{{ course.category.name|default:"Course" }}</span>
+            <h3 class="title is-6 mb-2" style="font-size: 1rem;">{{ course.title }}</h3>
+            <p class="is-size-7 has-text-grey mb-3">{{ course.short_description|default:course.description|striptags|truncatewords:12 }}</p>
+          </div>
+          <div class="pt-2" style="border-top: 1px solid #f0f0f0;">
+            <a href="{% url 'courses:course_detail' course.slug %}" class="button is-small is-primary is-fullwidth font-weight-bold">
+              Continue Learning →
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="student-overview-empty p-4">
+      <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>
+      <h3 class="is-size-6 font-weight-bold mb-1">No enrolled courses yet</h3>
+      <p class="is-size-7 has-text-grey mb-3">Explore our comprehensive exam preparation courses and training materials.</p>
+      <a href="{% url 'quiz:learning_marketplace' %}" class="button is-small is-primary">Browse Courses</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ================= ACTIVE SUBSCRIPTIONS & ENTITLEMENTS ================= -->
+  {% if active_subscriptions or active_access_records %}
+  <section class="student-overview-section mb-5" aria-label="Subscriptions and entitlements">
+    <div class="student-overview-section-heading mb-3">
+      <div>
+        <span>ENTITLEMENTS</span>
+        <h2>Active Subscriptions &amp; Access</h2>
+      </div>
+      <a href="{% url 'subscriptions:subscription_history' %}">Manage Subscriptions <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+
+    <div class="columns is-multiline">
+      {% for sub in active_subscriptions %}
+      <div class="column is-4">
+        <div class="box p-3" style="border: 1px solid #e5e7eb; border-radius: 8px;">
+          <div class="is-flex is-justify-content-space-between is-align-items-center mb-1">
+            <span class="tag is-success is-light font-weight-bold">Active Subscription</span>
+            <i class="fa-solid fa-receipt has-text-grey-light" aria-hidden="true"></i>
+          </div>
+          <h3 class="title is-6 mb-1">{{ sub.course.title }}</h3>
+          <p class="is-size-7 has-text-grey">
+            {% if sub.expires_at %}Expires: <strong>{{ sub.expires_at|date:"M j, Y" }}</strong>{% else %}Full Access{% endif %}
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% for access in active_access_records %}
+      <div class="column is-4">
+        <div class="box p-3" style="border: 1px solid #e5e7eb; border-radius: 8px;">
+          <div class="is-flex is-justify-content-space-between is-align-items-center mb-1">
+            <span class="tag is-primary is-light font-weight-bold">
+              {% if access.resource_type == 'course' %}Course Access{% elif access.resource_type == 'track' %}Track Access{% else %}Exam Access{% endif %}
+            </span>
+            <i class="fa-solid fa-key has-text-grey-light" aria-hidden="true"></i>
+          </div>
+          <h3 class="title is-6 mb-1">{{ access.course.title|default:access.track.title }}</h3>
+          <p class="is-size-7 has-text-grey">
+            {% if access.expires_at %}Valid until: <strong>{{ access.expires_at|date:"M j, Y" }}</strong>{% else %}Permanent Access{% endif %}
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= RECOMMENDED NEXT LEARNING ================= -->
+  {% if recommended_exams %}
+  <section class="student-overview-section mb-5" aria-label="Recommended next learning">
+    <div class="student-overview-section-heading mb-3">
+      <div>
+        <span>NEXT TARGET</span>
+        <h2>Recommended Examinations</h2>
+      </div>
+      <a href="{% url 'quiz:exam_list' %}">Explore All <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+
+    <div class="columns is-multiline">
+      {% for exam in recommended_exams %}
+      <div class="column is-4">
+        <div class="box p-3" style="border: 1px solid #e5e7eb; border-radius: 8px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span class="tag is-warning is-light is-size-7 mb-2">{{ exam.primary_category.name|default:"Exam Track" }}</span>
+            <h3 class="title is-6 mb-1">{{ exam.title }}</h3>
+            <p class="is-size-7 has-text-grey mb-2">{{ exam.question_count }} Questions · Level {{ exam.level }} · Pass: {{ exam.passing_score|floatformat:0 }}%</p>
+          </div>
+          <div class="pt-2" style="border-top: 1px solid #f0f0f0;">
+            <a href="{% url 'quiz:exam_detail' exam.id %}" class="button is-small is-light is-fullwidth font-weight-bold">
+              View Exam Instructions →
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 
   <section class="student-overview-actions">
     <a href="{% url 'quiz:practice' %}"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span><strong>Practice</strong><small>Improve your skills</small></span></a>

@@ -41,6 +41,12 @@ class UserAnswer(models.Model):
         blank=True,
     )
 
+    is_marked_for_review = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Flagged by student to review before final submission",
+    )
+
     class Meta:
         unique_together = (
             "user_exam",

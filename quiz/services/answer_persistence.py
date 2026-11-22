@@ -57,6 +57,13 @@ def autosave_answers(
             if ue_locked.submitted_at is not None or ue_locked.is_expired():
                 return
             ua = UserAnswer.objects.select_for_update().get(pk=ua.pk)
+
+            # Persist marked for review state if present
+            if "is_marked_for_review" in posted:
+                val = posted.get("is_marked_for_review") or []
+                if val:
+                    ua.is_marked_for_review = str(val[0]).lower() in ("1", "true", "yes", "on")
+
             vals = posted.get(qkey) or []
 
             # ----------------------------------------------

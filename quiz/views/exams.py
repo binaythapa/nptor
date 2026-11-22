@@ -462,7 +462,8 @@ def exam_question(request, user_exam_id, index):
        from quiz.services.grading import grade_exam
        is_mock = request.session.get(f"mock_exam_{ue.id}", False)
        grade_exam(ue, None, is_mock=is_mock)
-       return redirect('quiz:student_dashboard')
+       messages.warning(request, "Time has expired. Your exam has been automatically submitted.")
+       return redirect('quiz:exam_result', user_exam_id=ue.id)
 
     q_ids = ue.question_order or []
 
@@ -477,6 +478,13 @@ def exam_question(request, user_exam_id, index):
     # ✅ SAVE ANSWER (POST HANDLING)
     # -------------------------------
     if request.method == "POST":
+
+        # Mark for review handling
+        if "mark_for_review" in request.POST or "is_marked_for_review" in request.POST:
+            val = request.POST.get("is_marked_for_review") or request.POST.get("mark_for_review")
+            ua.is_marked_for_review = str(val).lower() in ("1", "true", "yes", "on")
+        elif "toggle_mark" in request.POST:
+            ua.is_marked_for_review = not ua.is_marked_for_review
 
         # SINGLE / TF / DROPDOWN
         if q.question_type in ['single', 'tf', 'dropdown']:
@@ -505,7 +513,13 @@ def exam_question(request, user_exam_id, index):
 
         nav = request.POST.get("nav")
 
-        if nav == "next":
+        if nav in ("submit", "finish"):
+            from quiz.services.grading import grade_exam
+            is_mock = request.session.get(f"mock_exam_{ue.id}", False)
+            grade_exam(ue, request.POST, is_mock=is_mock)
+            return redirect('quiz:exam_result', user_exam_id=ue.id)
+
+        elif nav == "next":
             return redirect('quiz:exam_question', ue.id, index + 1)
 
         elif nav == "prev":
@@ -539,24 +553,27 @@ def exam_question(request, user_exam_id, index):
     answers_map = {getattr(a, "question_id", None): a for a in raw_answers if getattr(a, "question_id", None) is not None}
     palette = []
     answered_count = 0
+    marked_count = 0
     for idx, qid in enumerate(q_ids):
         ans = answers_map.get(qid)
         is_ans = False
+        is_marked = False
         if ans:
-            if ans.choice_id is not None:
+            if ans.choice_id is not None or ans.selections or (ans.raw_answer and ans.raw_answer.strip()):
                 is_ans = True
-            elif ans.selections:
-                is_ans = True
-            elif ans.raw_answer and ans.raw_answer.strip():
-                is_ans = True
+            if getattr(ans, "is_marked_for_review", False):
+                is_marked = True
         if is_ans:
             answered_count += 1
+        if is_marked:
+            marked_count += 1
         palette.append({
             'index': idx,
             'number': idx + 1,
             'question_id': qid,
             'is_current': idx == index,
             'is_answered': is_ans,
+            'is_marked_for_review': is_marked,
         })
     unanswered_count = len(q_ids) - answered_count
 
@@ -572,6 +589,8 @@ def exam_question(request, user_exam_id, index):
         'palette': palette,
         'answered_count': answered_count,
         'unanswered_count': unanswered_count,
+        'marked_count': marked_count,
+        'is_marked_for_review': getattr(ua, 'is_marked_for_review', False),
     })
 
 
@@ -591,6 +610,26 @@ def autosave(request, user_exam_id):
             {"status": "method_not_allowed"},
             status=405
         )
+
+    # Check for direct mark-for-review toggle or update
+    qid_val = request.POST.get("question_id") or request.POST.get("qid")
+    if qid_val and ("toggle_mark" in request.POST or "is_marked_for_review" in request.POST or "mark_for_review" in request.POST):
+        try:
+            target_qid = int(qid_val)
+            target_ua = ue.answers.get(question_id=target_qid)
+            if "toggle_mark" in request.POST:
+                target_ua.is_marked_for_review = not target_ua.is_marked_for_review
+            else:
+                m_val = request.POST.get("is_marked_for_review") or request.POST.get("mark_for_review")
+                target_ua.is_marked_for_review = str(m_val).lower() in ("1", "true", "yes", "on")
+            target_ua.save(update_fields=["is_marked_for_review"])
+            return JsonResponse({
+                "status": "ok",
+                "question_id": target_qid,
+                "is_marked_for_review": target_ua.is_marked_for_review,
+            })
+        except Exception as e:
+            logger.warning("Autosave mark toggle error: %s", e)
 
     autosave_answers(ue, request.POST)
 
@@ -621,6 +660,8 @@ def exam_submit(request, user_exam_id):
 
 @login_required
 def exam_result(request, user_exam_id):
+    from courses.models import Course
+
     mem = get_memory_usage_mb()
     if mem is not None:
         logger.info(f"Exam Result page memory usage: {mem} MB")
@@ -636,7 +677,6 @@ def exam_result(request, user_exam_id):
         from courses.services.quiz_completion import handle_course_quiz_completion
         from courses.models import Lesson
         from courses.services.progress import get_next_lesson
-        from courses.models import Course
 
         # Run completion logic ONLY ONCE
         if not request.session.get(f"course_exam_handled_{ue.id}"):
@@ -709,15 +749,43 @@ def exam_result(request, user_exam_id):
     # =====================================================
     answers = list(
         ue.answers
-        .select_related('question', 'choice')
+        .select_related('question', 'question__primary_category', 'choice')
         .prefetch_related('question__choices')
     )
 
     # =====================================================
-    # BUILD ANSWER DISPLAY DATA
+    # BUILD ANSWER DISPLAY DATA & TOPIC BREAKDOWN
     # =====================================================
+    correct_count = 0
+    incorrect_count = 0
+    unanswered_count = 0
+    category_map = {}
+
     for ans in answers:
         q = ans.question
+        cat = getattr(q, 'primary_category', None)
+        cat_name = cat.name if cat else "General Curriculum"
+        cat_id = cat.id if cat else None
+
+        if cat_name not in category_map:
+            category_map[cat_name] = {
+                "id": cat_id,
+                "name": cat_name,
+                "total": 0,
+                "correct": 0,
+                "score": 0.0,
+            }
+        category_map[cat_name]["total"] += 1
+
+        is_ans = bool(ans.choice_id or ans.selections or (ans.raw_answer or "").strip())
+        if not is_ans:
+            unanswered_count += 1
+        elif ans.is_correct is True:
+            correct_count += 1
+            category_map[cat_name]["correct"] += 1
+        else:
+            incorrect_count += 1
+
         ans.user_answers_display = []
         ans.correct_answers_display = []
         choices_list = list(q.choices.all())
@@ -772,9 +840,62 @@ def exam_result(request, user_exam_id):
             ]
             ans.correct_answers_display = correct_order
 
+    topic_breakdown = []
+    weak_categories = []
+    for cat_name, stats in category_map.items():
+        if stats["total"] > 0:
+            stats["score"] = round((stats["correct"] / stats["total"]) * 100, 1)
+        else:
+            stats["score"] = 0.0
+
+        if stats["score"] >= 75.0:
+            stats["status_label"] = "Proficient"
+            stats["status_class"] = "is-success"
+        elif stats["score"] >= 50.0:
+            stats["status_label"] = "Review Recommended"
+            stats["status_class"] = "is-warning"
+            weak_categories.append(stats)
+        else:
+            stats["status_label"] = "Needs Practice"
+            stats["status_class"] = "is-danger"
+            weak_categories.append(stats)
+        topic_breakdown.append(stats)
+
+    topic_breakdown.sort(key=lambda x: x["score"])
+
+    weak_cat_ids = [c["id"] for c in weak_categories if c.get("id")]
+    recommended_courses = []
+    if weak_cat_ids:
+        domain_ids = list(
+            Category.objects.filter(id__in=weak_cat_ids, domain__isnull=False)
+            .values_list("domain_id", flat=True)
+        )
+        if domain_ids:
+            recommended_courses = list(
+                Course.objects.filter(
+                    category_id__in=domain_ids,
+                    is_published=True,
+                ).select_related("category").distinct()[:3]
+            )
+    if not recommended_courses:
+        recommended_courses = list(
+            Course.objects.filter(is_published=True).select_related("category").distinct()[:3]
+        )
+
+    total_count = len(answers)
+    accuracy_rate = round((correct_count / total_count * 100), 1) if total_count > 0 else 0.0
+
     return render(request, 'quiz/student/exam/exam_result.html', {
         'user_exam': ue,
         'answers': answers,
         'next_lesson': next_lesson,
         'is_mock': is_mock,
+        'topic_breakdown': topic_breakdown,
+        'weak_categories': weak_categories,
+        'recommended_courses': recommended_courses,
+        'correct_count': correct_count,
+        'incorrect_count': incorrect_count,
+        'unanswered_count': unanswered_count,
+        'total_count': total_count,
+        'accuracy_rate': accuracy_rate,
     })

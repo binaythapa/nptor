@@ -19,6 +19,10 @@
             <span class="exam-meta-separator" aria-hidden="true">•</span>
             <span class="exam-answered-badge">{{ answered_count }} answered</span>
           {% endif %}
+          {% if marked_count > 0 %}
+            <span class="exam-meta-separator" aria-hidden="true">•</span>
+            <span class="exam-flagged-badge" style="color: #b45309; font-weight: 600;">{{ marked_count }} flagged</span>
+          {% endif %}
         </div>
       </div>
 
@@ -50,6 +54,7 @@
     <main class="exam-main-workspace">
       <form method="post" id="examForm" action="">
         {% csrf_token %}
+        <input type="hidden" name="is_marked_for_review" id="isMarkedForReviewInput" value="{% if is_marked_for_review %}1{% else %}0{% endif %}">
 
         <section class="exam-question-box" aria-labelledby="question-heading">
           <div class="exam-question-topbar">
@@ -65,9 +70,9 @@
               {% endif %}
             </span>
 
-            <button type="button" class="exam-flag-button" id="flagQuestionBtn" data-qid="{{ question.id }}" aria-pressed="false" title="Flag this question to review later">
-              <i class="fa-regular fa-bookmark" aria-hidden="true"></i>
-              <span id="flagButtonLabel">Mark for Review</span>
+            <button type="button" class="exam-flag-button {% if is_marked_for_review %}is-flagged{% endif %}" id="flagQuestionBtn" data-qid="{{ question.id }}" aria-pressed="{% if is_marked_for_review %}true{% else %}false{% endif %}" title="Flag this question to review later">
+              <i class="fa{% if is_marked_for_review %} fa-solid{% else %} fa-regular{% endif %} fa-bookmark" aria-hidden="true"></i>
+              <span id="flagButtonLabel">{% if is_marked_for_review %}Flagged for Review{% else %}Mark for Review{% endif %}</span>
             </button>
           </div>
 
@@ -132,9 +137,12 @@
             {% endif %}
           </div>
 
-          <div class="exam-nav-center">
+          <div class="exam-nav-center" style="display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap;">
+            <button type="button" class="button is-warning is-light is-small" id="openSubmitModalBtn" onclick="openSubmitModal()">
+              <i class="fa fa-flag-checkered" aria-hidden="true"></i> Submit Exam
+            </button>
             <a href="{% url 'quiz:exam_review' user_exam_id=user_exam.id %}" class="exam-nav-review-link">
-              <i class="fa fa-list-check" aria-hidden="true"></i> View Final Review
+              <i class="fa fa-list-check" aria-hidden="true"></i> View Full Review
             </a>
           </div>
 
@@ -144,7 +152,7 @@
                 Next <i class="fa fa-arrow-right" aria-hidden="true"></i>
               </button>
             {% else %}
-              <button type="submit" name="nav" value="review" class="button is-warning exam-nav-button review-submit-btn">
+              <button type="button" class="button is-warning exam-nav-button review-submit-btn" onclick="openSubmitModal()">
                 Review &amp; Submit <i class="fa fa-flag-checkered" aria-hidden="true"></i>
               </button>
             {% endif %}
@@ -174,9 +182,9 @@
                     form="examForm"
                     name="nav"
                     value="goto:{{ item.index }}"
-                    class="palette-tile {% if item.is_current %}is-current{% endif %} {% if item.is_answered %}is-answered{% endif %}"
+                    class="palette-tile {% if item.is_current %}is-current{% endif %} {% if item.is_answered %}is-answered{% endif %} {% if item.is_marked_for_review %}is-flagged{% endif %}"
                     data-question-tile="{{ item.question_id }}"
-                    title="Question {{ item.number }}">
+                    title="Question {{ item.number }}{% if item.is_marked_for_review %} (Flagged for Review){% endif %}">
               {{ item.number }}
             </button>
           {% empty %}
@@ -194,12 +202,71 @@
         </div>
 
         <div class="exam-palette-footer">
+          <button type="button" class="button is-warning is-fullwidth mb-2" onclick="openSubmitModal()">
+            <i class="fa fa-flag-checkered" aria-hidden="true"></i> Finish &amp; Submit Exam
+          </button>
           <button type="submit" form="examForm" name="nav" value="review" class="button is-light is-fullwidth palette-review-btn">
-            Final Review &amp; Submit
+            Final Review Sheet
           </button>
         </div>
       </div>
     </aside>
+  </div>
+</div>
+
+<!-- Submission Confirmation Modal -->
+<div class="modal" id="submitConfirmModal" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
+  <div class="modal-background" onclick="closeSubmitModal()"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title" id="submitModalTitle">Confirm Final Submission</p>
+      <button type="button" class="delete" aria-label="Close" onclick="closeSubmitModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      <h3 class="title is-6 mb-3">Ready to complete and submit your examination?</h3>
+      <div class="box p-3 mb-3" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+        <div class="columns is-mobile has-text-centered mb-0">
+          <div class="column">
+            <span class="is-size-7 has-text-grey is-uppercase font-weight-bold">Total</span>
+            <div class="title is-5 mb-0">{{ total }}</div>
+          </div>
+          <div class="column">
+            <span class="is-size-7 has-text-success is-uppercase font-weight-bold">Answered</span>
+            <div class="title is-5 mb-0 has-text-success" id="modalAnsweredCount">{{ answered_count }}</div>
+          </div>
+          <div class="column">
+            <span class="is-size-7 has-text-danger is-uppercase font-weight-bold">Unanswered</span>
+            <div class="title is-5 mb-0 has-text-danger" id="modalUnansweredCount">{{ unanswered_count }}</div>
+          </div>
+          <div class="column">
+            <span class="is-size-7 has-text-warning is-uppercase font-weight-bold" style="color: #b45309 !important;">Flagged</span>
+            <div class="title is-5 mb-0" style="color: #b45309;" id="modalFlaggedCount">{{ marked_count }}</div>
+          </div>
+        </div>
+      </div>
+
+      {% if unanswered_count > 0 or marked_count > 0 %}
+        <div class="notification is-warning is-light mb-3">
+          <i class="fa fa-triangle-exclamation" aria-hidden="true"></i>
+          <strong>Notice:</strong>
+          {% if unanswered_count > 0 %}
+            You have <strong>{{ unanswered_count }} unanswered</strong> question{{ unanswered_count|pluralize }}.
+          {% endif %}
+          {% if marked_count > 0 %}
+            You have <strong>{{ marked_count }} question{{ marked_count|pluralize }} marked for review</strong>.
+          {% endif %}
+          Unanswered questions receive 0 marks.
+        </div>
+      {% endif %}
+
+      <p class="is-size-7 has-text-grey">Once submitted, your examination is locked and graded immediately. A detailed topic-wise score breakdown will be displayed.</p>
+    </section>
+    <footer class="modal-card-foot is-justify-content-space-between">
+      <button type="button" class="button is-light" onclick="closeSubmitModal()">Return to Questions</button>
+      <button type="button" class="button is-success font-weight-bold" id="confirmFinalSubmitBtn">
+        <i class="fa fa-check" aria-hidden="true"></i> Yes, Submit Exam Now
+      </button>
+    </footer>
   </div>
 </div>
 
@@ -213,8 +280,33 @@
   const autosaveText = document.getElementById("autosaveText");
   const flagBtn = document.getElementById("flagQuestionBtn");
   const flagLabel = document.getElementById("flagButtonLabel");
+  const flagInput = document.getElementById("isMarkedForReviewInput");
   const currentQid = "{{ question.id }}";
-  const storageKey = "nptor_flags_{{ user_exam.id }}";
+  const modal = document.getElementById("submitConfirmModal");
+  const confirmFinalSubmitBtn = document.getElementById("confirmFinalSubmitBtn");
+
+  window.openSubmitModal = function () {
+    if (modal) modal.classList.add("is-active");
+  };
+
+  window.closeSubmitModal = function () {
+    if (modal) modal.classList.remove("is-active");
+  };
+
+  if (confirmFinalSubmitBtn) {
+    confirmFinalSubmitBtn.addEventListener("click", function () {
+      let navInput = form.querySelector("input[name=nav]");
+      if (!navInput) {
+        navInput = document.createElement("input");
+        navInput.type = "hidden";
+        navInput.name = "nav";
+        form.appendChild(navInput);
+      }
+      navInput.value = "submit";
+      form.action = "{% url 'quiz:exam_submit' user_exam_id=user_exam.id %}";
+      form.submit();
+    });
+  }
 
   if (!timerEl || !form || Number.isNaN(remainingSeconds)) return;
 
@@ -234,6 +326,14 @@
     clearInterval(interval);
     form.action = "{% url 'quiz:exam_submit' user_exam_id=user_exam.id %}";
     form.removeAttribute("target");
+    let navInput = form.querySelector("input[name=nav]");
+    if (!navInput) {
+      navInput = document.createElement("input");
+      navInput.type = "hidden";
+      navInput.name = "nav";
+      form.appendChild(navInput);
+    }
+    navInput.value = "submit";
     form.submit();
   }
 
@@ -279,14 +379,10 @@
         }
       })
       .then(async (response) => {
-        // Drop response if a newer autosave request was initiated
-        if (currentSequence !== autosaveSequence) {
-          return;
-        }
+        if (currentSequence !== autosaveSequence) return;
 
         if (!response.ok) {
           if (response.status === 409) {
-            // Exam attempt was already submitted
             if (autosaveText) autosaveText.textContent = "Exam submitted";
             if (autosaveEl) {
               autosaveEl.classList.remove("is-saving", "is-saved", "is-error");
@@ -306,7 +402,6 @@
           autosaveEl.classList.remove("is-saving", "is-error", "is-locked");
           autosaveEl.classList.add("is-saved");
         }
-        // Update current tile in palette
         const currentTile = document.querySelector(`[data-question-tile="${currentQid}"]`);
         if (currentTile) currentTile.classList.add("is-answered");
       })
@@ -327,55 +422,46 @@
     }
   });
 
-  // Flag / Bookmark management
-  function getFlags() {
-    try {
-      return JSON.parse(sessionStorage.getItem(storageKey) || "{}");
-    } catch (e) {
-      return {};
-    }
-  }
-
-  function setFlags(flags) {
-    try {
-      sessionStorage.setItem(storageKey, JSON.stringify(flags));
-    } catch (e) {}
-  }
-
-  function applyFlags() {
-    const flags = getFlags();
-    const isFlagged = Boolean(flags[currentQid]);
-    if (flagBtn) {
-      flagBtn.setAttribute("aria-pressed", isFlagged ? "true" : "false");
-      flagBtn.classList.toggle("is-flagged", isFlagged);
-      const icon = flagBtn.querySelector("i");
-      if (icon) {
-        icon.className = isFlagged ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
-      }
-      if (flagLabel) {
-        flagLabel.textContent = isFlagged ? "Flagged for Review" : "Mark for Review";
-      }
-    }
-    // Update all tiles
-    document.querySelectorAll("[data-question-tile]").forEach(tile => {
-      const qid = tile.getAttribute("data-question-tile");
-      if (flags[qid]) {
-        tile.classList.add("is-flagged");
-      } else {
-        tile.classList.remove("is-flagged");
-      }
-    });
-  }
-
+  // Flag / Mark for Review button handling with instant DB persistence
   if (flagBtn) {
     flagBtn.addEventListener("click", function () {
-      const flags = getFlags();
-      flags[currentQid] = !flags[currentQid];
-      setFlags(flags);
-      applyFlags();
+      const currentVal = flagInput ? flagInput.value === "1" : flagBtn.classList.contains("is-flagged");
+      const newVal = !currentVal;
+
+      if (flagInput) flagInput.value = newVal ? "1" : "0";
+      flagBtn.classList.toggle("is-flagged", newVal);
+      flagBtn.setAttribute("aria-pressed", newVal ? "true" : "false");
+
+      const icon = flagBtn.querySelector("i");
+      if (icon) {
+        icon.className = newVal ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
+      }
+      if (flagLabel) {
+        flagLabel.textContent = newVal ? "Flagged for Review" : "Mark for Review";
+      }
+
+      const activeTile = document.querySelector(`[data-question-tile="${currentQid}"]`);
+      if (activeTile) {
+        activeTile.classList.toggle("is-flagged", newVal);
+      }
+
+      // Immediately persist to backend via autosave
+      const csrfInput = form.querySelector('[name=csrfmiddlewaretoken]');
+      const csrfToken = csrfInput ? csrfInput.value : "";
+      const fd = new FormData();
+      fd.append("question_id", currentQid);
+      fd.append("is_marked_for_review", newVal ? "1" : "0");
+
+      fetch(autosaveUrl, {
+        method: "POST",
+        body: fd,
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": csrfToken
+        }
+      }).catch(e => console.warn("Flag persistence warning:", e));
     });
   }
-  applyFlags();
 
   // Mobile Palette Toggle
   const togglePaletteBtn = document.getElementById("togglePaletteBtn");

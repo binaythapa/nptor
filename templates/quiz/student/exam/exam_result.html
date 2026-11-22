@@ -27,13 +27,109 @@
     </div>
 
     <div class="exam-result-meta">
-      <span>{{ user_exam.exam.question_count }} questions</span>
+      <span>{{ total_count|default:user_exam.exam.question_count }} questions</span>
       <span>Passing score: {{ user_exam.exam.passing_score|floatformat:0 }}%</span>
       {% if user_exam.submitted_at %}
         <span>Submitted {{ user_exam.submitted_at|date:"M d, Y H:i" }}</span>
       {% endif %}
     </div>
+
+    <div class="box mt-4 mb-2 p-3" style="max-width: 640px; margin: 1.5rem auto 0; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
+      <div class="columns is-mobile has-text-centered mb-0">
+        <div class="column">
+          <span class="is-size-7 has-text-grey is-uppercase font-weight-bold">Questions</span>
+          <div class="title is-6 mb-0">{{ total_count }}</div>
+        </div>
+        <div class="column">
+          <span class="is-size-7 has-text-success is-uppercase font-weight-bold">Correct</span>
+          <div class="title is-6 mb-0 has-text-success">{{ correct_count }}</div>
+        </div>
+        <div class="column">
+          <span class="is-size-7 has-text-danger is-uppercase font-weight-bold">Incorrect</span>
+          <div class="title is-6 mb-0 has-text-danger">{{ incorrect_count }}</div>
+        </div>
+        <div class="column">
+          <span class="is-size-7 has-text-grey is-uppercase font-weight-bold">Unanswered</span>
+          <div class="title is-6 mb-0">{{ unanswered_count }}</div>
+        </div>
+        <div class="column">
+          <span class="is-size-7 has-text-info is-uppercase font-weight-bold">Accuracy</span>
+          <div class="title is-6 mb-0 has-text-info">{{ accuracy_rate }}%</div>
+        </div>
+      </div>
+    </div>
   </section>
+
+  <!-- ================= TOPIC-WISE PERFORMANCE BREAKDOWN ================= -->
+  {% if topic_breakdown %}
+  <section class="exam-result-section mt-5 mb-5" style="max-width: 960px; margin: 2rem auto; padding: 0 1rem;" aria-labelledby="topic-breakdown-title">
+    <div class="box" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem;">
+      <div class="mb-4">
+        <p class="is-size-7 has-text-grey is-uppercase font-weight-bold mb-1" style="letter-spacing: 0.05em;">DIAGNOSTIC ANALYSIS</p>
+        <h2 id="topic-breakdown-title" class="title is-5 mb-1">Topic-Wise Performance Breakdown</h2>
+        <p class="is-size-7 has-text-grey">Detailed breakdown of your proficiency across syllabus categories tested in this examination.</p>
+      </div>
+
+      <div class="topic-breakdown-list">
+        {% for topic in topic_breakdown %}
+        <div class="mb-4 pb-3" style="border-bottom: 1px solid #f3f4f6;">
+          <div class="is-flex is-justify-content-space-between is-align-items-center mb-1">
+            <div>
+              <strong class="is-size-6">{{ topic.name }}</strong>
+              <span class="is-size-7 has-text-grey ml-2">({{ topic.correct }} of {{ topic.total }} correct)</span>
+            </div>
+            <div>
+              <span class="tag {{ topic.status_class }} is-light font-weight-bold">{{ topic.status_label }}</span>
+              <strong class="ml-2 is-size-6">{{ topic.score }}%</strong>
+            </div>
+          </div>
+          <progress class="progress {{ topic.status_class }} is-small mb-0" value="{{ topic.score }}" max="100">{{ topic.score }}%</progress>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if weak_categories %}
+      <div class="notification is-warning is-light mt-4 mb-0">
+        <i class="fa fa-lightbulb" aria-hidden="true"></i>
+        <strong>Key Focus Area{{ weak_categories|length|pluralize }}:</strong>
+        We identified {{ weak_categories|length }} topic{{ weak_categories|length|pluralize }} below 75% accuracy ({% for wc in weak_categories %}{{ wc.name }}{% if not forloop.last %}, {% endif %}{% endfor %}). Reviewing these areas will significantly improve your overall pass rate.
+      </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= RECOMMENDED NEXT LEARNING ================= -->
+  {% if recommended_courses %}
+  <section class="exam-result-section mb-5" style="max-width: 960px; margin: 0 auto; padding: 0 1rem;" aria-labelledby="recommended-learning-title">
+    <div class="box" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: #fafafa;">
+      <div class="mb-3">
+        <p class="is-size-7 has-text-grey is-uppercase font-weight-bold mb-1" style="letter-spacing: 0.05em;">RECOMMENDED NEXT STEPS</p>
+        <h2 id="recommended-learning-title" class="title is-5 mb-1">Recommended Learning &amp; Courses</h2>
+        <p class="is-size-7 has-text-grey">Reinforce concepts and practice questions tailored to your assessment results.</p>
+      </div>
+
+      <div class="columns is-multiline">
+        {% for course in recommended_courses %}
+        <div class="column is-4">
+          <div class="card" style="height: 100%; display: flex; flex-direction: column; border-radius: 6px; border: 1px solid #e5e7eb;">
+            <div class="card-content" style="flex: 1; padding: 1rem;">
+              <span class="tag is-info is-light is-size-7 mb-2">{{ course.category.name|default:"Recommended Course" }}</span>
+              <h3 class="title is-6 mb-2">{{ course.title }}</h3>
+              <p class="is-size-7 has-text-grey mb-3">{{ course.short_description|default:course.description|striptags|truncatewords:15 }}</p>
+            </div>
+            <footer class="card-footer" style="border-top: 1px solid #f0f0f0;">
+              <a href="{% url 'courses:course_detail' course.slug %}" class="card-footer-item is-size-7 font-weight-bold has-text-primary">
+                View Course →
+              </a>
+            </footer>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
   <section class="exam-result-actions" aria-label="Result actions">
     <a class="exam-result-button primary" href="{% url 'quiz:student_dashboard' %}">

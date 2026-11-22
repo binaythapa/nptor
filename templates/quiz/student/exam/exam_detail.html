@@ -62,12 +62,15 @@
     <div class="exam-detail-main">
       <section class="exam-detail-card" data-section="exam-detail-rules" aria-labelledby="rules-title">
         <div class="exam-detail-card-heading">
-          <div><span class="exam-detail-section-kicker">BEFORE YOU START</span><h2 id="rules-title">Exam rules</h2></div>
+          <div><span class="exam-detail-section-kicker">BEFORE YOU START</span><h2 id="rules-title">Exam instructions &amp; rules</h2></div>
         </div>
         <div class="exam-rule-grid">
-          <div><strong>Passing score</strong><span>You need {{ exam.passing_score|floatformat:0 }}% or higher to pass.</span></div>
-          <div><strong>Timed attempt</strong><span>You have {{ duration_minutes }} minutes to complete {{ exam.question_count }} questions.</span></div>
-          <div><strong>Review</strong><span>{% if exam.allow_review %}Answer review is available before submission.{% else %}This is a certification-style exam with review disabled.{% endif %}</span></div>
+          <div><strong>Passing score</strong><span>You need {{ exam.passing_score|floatformat:0 }}% or higher to pass this assessment.</span></div>
+          <div><strong>Timed attempt</strong><span>You have {{ duration_minutes }} minutes for {{ exam.question_count }} questions. The timer runs continuously on the server.</span></div>
+          <div><strong>Question Navigation</strong><span>Freely navigate between questions using Next, Previous, or the Question Palette to jump to any question.</span></div>
+          <div><strong>Mark for Review</strong><span>Bookmark questions you wish to double-check. Flagged questions are highlighted in the navigation palette.</span></div>
+          <div><strong>Automatic Saving</strong><span>Your answers are continuously saved in real time. Page refreshes or brief drops will not lose your progress.</span></div>
+          <div><strong>Submission Confirmation</strong><span>A confirmation summary displays answered, unanswered, and flagged questions before final scoring.</span></div>
           <div><strong>Attempts</strong><span data-section="exam-detail-attempts">{% if latest_attempt %}Latest result: {{ latest_attempt.score|floatformat:0 }}%.{% else %}No attempts yet.{% endif %}</span></div>
         </div>
       </section>

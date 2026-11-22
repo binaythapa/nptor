@@ -80,6 +80,11 @@ def exam_review(request, user_exam_id):
         for question_id in question_ids
         if getattr(answer_map.get(question_id), "is_answered", False)
     )
+    marked_count = sum(
+        1
+        for question_id in question_ids
+        if getattr(answer_map.get(question_id), "is_marked_for_review", False)
+    )
     total_questions = len(question_ids)
 
     return render(
@@ -92,6 +97,7 @@ def exam_review(request, user_exam_id):
             "total_questions": total_questions,
             "answered_count": answered_count,
             "unanswered_count": total_questions - answered_count,
+            "marked_count": marked_count,
             "remaining": remaining,
         },
     )

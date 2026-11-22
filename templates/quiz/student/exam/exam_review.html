@@ -27,6 +27,9 @@
       <span class="summary-chip is-total"><strong>Total:</strong> {{ total_questions }}</span>
       <span class="summary-chip is-success"><strong>Answered:</strong> {{ answered_count }}</span>
       <span class="summary-chip is-danger"><strong>Unanswered:</strong> {{ unanswered_count }}</span>
+      {% if marked_count > 0 %}
+        <span class="summary-chip" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a;"><strong>Flagged:</strong> {{ marked_count }}</span>
+      {% endif %}
     </div>
 
     <div class="exam-review-filters" role="tablist" aria-label="Filter questions">
@@ -159,10 +162,16 @@
     </header>
     <section class="modal-card-body">
       <p>Are you sure you want to submit your examination?</p>
-      {% if unanswered_count > 0 %}
+      {% if unanswered_count > 0 or marked_count > 0 %}
         <div class="notification is-warning is-light mt-3">
           <i class="fa fa-triangle-exclamation" aria-hidden="true"></i>
-          You still have <strong>{{ unanswered_count }} unanswered</strong> question{{ unanswered_count|pluralize }}. Unanswered questions receive 0 marks.
+          {% if unanswered_count > 0 %}
+            You still have <strong>{{ unanswered_count }} unanswered</strong> question{{ unanswered_count|pluralize }}.
+          {% endif %}
+          {% if marked_count > 0 %}
+            You have <strong>{{ marked_count }} question{{ marked_count|pluralize }} marked for review</strong>.
+          {% endif %}
+          Unanswered questions receive 0 marks.
         </div>
       {% endif %}
       <p class="mt-2 text-muted is-size-7">Your attempt will be permanently locked and graded immediately.</p>
