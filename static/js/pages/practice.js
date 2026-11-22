@@ -510,6 +510,17 @@
             return;
         }
 
+        /*
+         * For multiple-choice questions, require at least one selection.
+         */
+        if (
+            form.querySelector('input[name="choice_multi"]') &&
+            !form.querySelector('input[name="choice_multi"]:checked')
+        ) {
+            alert("Please select at least one answer before submitting.");
+            return;
+        }
+
 
         /*
          * Prevent accidental double submission.

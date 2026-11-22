@@ -98,21 +98,30 @@ TEMPLATES = [
     },
 ]
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("DB_NAME", "nptor_local"),
-        "USER": os.environ.get("DB_USER", "root"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": "3306",
-        "CONN_MAX_AGE": 60,
-        "OPTIONS": {
-            "charset": "utf8mb4",
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+DB_ENGINE = os.environ.get("DB_ENGINE", "django.db.backends.mysql")
+if DB_ENGINE == "django.db.backends.sqlite3":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / os.environ.get("DB_NAME", "db.sqlite3"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.environ.get("DB_NAME", "nptorcom_nptor"),
+            "USER": os.environ.get("DB_USER", "nptorcom_admin"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "3306"),
+            "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
+            "OPTIONS": {
+                "charset": "utf8mb4",
+                "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -184,7 +193,7 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = "mandatory"
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -195,10 +204,14 @@ EMAIL_HOST_PASSWORD = (
     or ""
 ).strip().replace(" ", "")
 if not EMAIL_HOST_PASSWORD:
-    raise RuntimeError(
-        "EMAIL_HOST_PASSWORD (or GMAIL_APP_PASSWORD) must be set for Gmail SMTP. "
-        "Use a Gmail App Password, not the normal Gmail account password."
-    )
+    if DEBUG:
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+        EMAIL_HOST_PASSWORD = "local-dev-dummy-password"
+    else:
+        raise RuntimeError(
+            "EMAIL_HOST_PASSWORD (or GMAIL_APP_PASSWORD) must be set for Gmail SMTP. "
+            "Use a Gmail App Password, not the normal Gmail account password."
+        )
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", f"NPTOR <{EMAIL_HOST_USER}>").strip()
 
 REST_FRAMEWORK = {
