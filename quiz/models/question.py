@@ -347,6 +347,13 @@ class Question(models.Model):
 
         self.primary_category = value
 
+    @property
+    def category_id(self):
+        """
+        Compatibility alias for primary_category_id.
+        """
+        return self.primary_category_id
+
     # =========================================================
     # CATEGORY HELPERS
     # =========================================================

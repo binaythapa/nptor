@@ -15,8 +15,13 @@ from quiz.models import (
     Question,
     Domain,
     Category,
+    Exam,
 )
-from quiz.services.study_plan_service import generate_study_plan
+from quiz.services.study_plan_service import (
+    generate_study_plan,
+    get_today_topics,
+    get_today_recommended_courses,
+)
 from quiz.services.adaptive_engine import select_adaptive_question
 from quiz.utils import calculate_global_percentile
 
@@ -247,6 +252,28 @@ def study_plan_dashboard(request):
             "tier": tier,
         }
 
+        daily_schedule = active_plan.get_daily_schedule()
+        missed_days_count = active_plan.get_missed_days_count()
+        completed_days_count = active_plan.get_completed_days_count()
+        today_completed = active_plan.get_today_completed_count()
+        today_target = active_plan.questions_per_day
+        today_percent = (
+            min(100, round((today_completed / today_target) * 100, 1))
+            if today_target > 0 else 0
+        )
+        today_topics = get_today_topics(active_plan)
+        recommended_courses = get_today_recommended_courses(active_plan)
+
+    else:
+        daily_schedule = []
+        missed_days_count = 0
+        completed_days_count = 0
+        today_completed = 0
+        today_target = 0
+        today_percent = 0
+        today_topics = []
+        recommended_courses = []
+
     context = {
         "active_plan": active_plan,
         "analytics": analytics,
@@ -254,6 +281,14 @@ def study_plan_dashboard(request):
         "weak_categories": weak_categories,
         "suggestion": suggestion,
         "history_plans": history_plans,
+        "daily_schedule": daily_schedule,
+        "missed_days_count": missed_days_count,
+        "completed_days_count": completed_days_count,
+        "today_completed": today_completed,
+        "today_target": today_target,
+        "today_percent": today_percent,
+        "today_topics": today_topics,
+        "recommended_courses": recommended_courses,
         "show_testimonial_popup": show_testimonial_popup,
         "testimonial_study_plan": testimonial_study_plan,
         "testimonial_exam_track": testimonial_exam_track,
@@ -460,8 +495,14 @@ def study_plan_practice(request):
 def create_study_plan(request):
 
     if request.method == "POST":
-        plan_type = int(request.POST.get("plan_type"))
+        plan_type_raw = request.POST.get("plan_type", "15")
+        try:
+            plan_type = int(plan_type_raw)
+        except (ValueError, TypeError):
+            plan_type = 15
+
         domain_id = request.POST.get("domain")
+        exam_id = request.POST.get("exam")
 
         domain = None
         if domain_id:
@@ -471,13 +512,21 @@ def create_study_plan(request):
                 is_active=True,
             ).first()
 
+        exam = None
+        if exam_id:
+            exam = Exam.objects.filter(
+                id=exam_id,
+                is_published=True,
+            ).first()
+
         try:
             generate_study_plan(
                 user=request.user,
                 plan_type=plan_type,
-                domain=domain
+                domain=domain,
+                exam=exam,
             )
-            messages.success(request, "Study Plan created successfully!")
+            messages.success(request, f"Your {plan_type}-Day Study Plan has been created successfully!")
             return redirect("quiz:study_plan_dashboard")
 
         except Exception as e:
@@ -487,9 +536,14 @@ def create_study_plan(request):
         organization__isnull=True,
         is_active=True,
     )
+    exams = Exam.objects.filter(
+        is_published=True,
+        organization__isnull=True,
+    ).order_by("title")
 
     return render(request, "quiz/study_plan/create_plan.html", {
-        "domains": domains
+        "domains": domains,
+        "exams": exams,
     })
 
 

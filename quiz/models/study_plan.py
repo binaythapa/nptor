@@ -44,6 +44,15 @@ class StudyPlan(models.Model):
         help_text="Optional domain focus",
     )
 
+    exam = models.ForeignKey(
+        "Exam",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="study_plans",
+        help_text="Optional target exam focus",
+    )
+
     # =====================================================
     # PLAN CONFIGURATION
     # =====================================================
@@ -222,18 +231,93 @@ class StudyPlan(models.Model):
 
     def get_today_question_ids(self):
         day_index = self.get_day_index()
+        if day_index < 0:
+            return self.question_ids[:self.questions_per_day]
 
-        start = (
-            day_index *
-            self.questions_per_day
-        )
+        start = day_index * self.questions_per_day
+        end = start + self.questions_per_day
 
-        end = (
-            start +
-            self.questions_per_day
-        )
+        # Normal day within scheduled days
+        if day_index < self.total_days:
+            return self.question_ids[start:end]
 
-        return self.question_ids[start:end]
+        # Extension day: return uncompleted questions from missed days or remaining slice
+        slice_ids = self.question_ids[start:end]
+        if slice_ids:
+            return slice_ids
+
+        backlog = []
+        for i in range(self.total_days):
+            d_start = i * self.questions_per_day
+            d_end = d_start + self.questions_per_day
+            d_ids = self.question_ids[d_start:d_end]
+            done = self.daily_progress.get(str(i), 0)
+            if done < len(d_ids):
+                backlog.extend(d_ids[done:])
+
+        return backlog[:self.questions_per_day] if backlog else self.question_ids[:self.questions_per_day]
+
+    def get_missed_days_count(self):
+        """Returns the number of past days where the daily question target was not met."""
+        current_day = self.get_day_index()
+        missed = 0
+        for i in range(max(0, min(current_day, self.total_days))):
+            done = self.daily_progress.get(str(i), 0)
+            if done < self.questions_per_day:
+                missed += 1
+        return missed
+
+    def get_completed_days_count(self):
+        """Returns the number of days where the daily question target was met."""
+        completed = 0
+        for i in range(self.total_plan_days()):
+            done = self.daily_progress.get(str(i), 0)
+            if done >= self.questions_per_day:
+                completed += 1
+        return completed
+
+    def get_daily_schedule(self):
+        """
+        Returns structured list of days for the entire plan duration (including extensions).
+        """
+        current_day = self.get_day_index()
+        total_duration = self.total_plan_days()
+        schedule = []
+
+        for i in range(total_duration):
+            date = self.start_date + timedelta(days=i)
+            completed = self.daily_progress.get(str(i), 0)
+            is_today = (i == current_day)
+            is_past = (i < current_day)
+            is_future = (i > current_day)
+            is_done = completed >= self.questions_per_day
+            is_missed = is_past and not is_done
+            is_ext = (i >= self.total_days)
+
+            status = "upcoming"
+            if is_today:
+                status = "today" if not is_done else "completed"
+            elif is_past:
+                status = "completed" if is_done else "missed"
+            elif is_ext:
+                status = "extension"
+
+            schedule.append({
+                "day_index": i,
+                "day_number": i + 1,
+                "date": date,
+                "target": self.questions_per_day,
+                "completed": completed,
+                "percent": min(100, round((completed / self.questions_per_day) * 100, 1)) if self.questions_per_day > 0 else 0,
+                "is_today": is_today,
+                "is_past": is_past,
+                "is_future": is_future,
+                "is_completed": is_done,
+                "is_missed": is_missed,
+                "is_extension": is_ext,
+                "status": status,
+            })
+        return schedule
 
     def get_today_completed_count(self):
         day_index = str(

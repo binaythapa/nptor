@@ -1,26 +1,45 @@
 {% extends "layouts/student/base.html" %}
-{% block title %}Create Study Plan{% endblock %}
+{% block title %}Create Study Plan — NPTOR{% endblock %}
 
 {% block content %}
-
 <div class="container">
+  <div class="box" style="max-width:640px;margin:2rem auto;padding:2rem;">
 
-  <div class="box" style="max-width:600px;margin:auto;">
-
-    <h2 class="title is-5 mb-4">
-      📅 Create New Study Plan
-    </h2>
+    <div class="mb-5">
+      <h2 class="title is-4 mb-2">
+        📅 Create Personalized Study Plan
+      </h2>
+      <p class="subtitle is-6 has-text-grey">
+        Select your learning objective or target exam, pick your preferred pace, and get structured daily tasks tailored to your goals.
+      </p>
+    </div>
 
     <form method="post">
       {% csrf_token %}
 
-      <!-- ================= DOMAIN SELECT ================= -->
-      <div class="field mb-5">
-        <label class="label is-size-7">Select Domain (Optional)</label>
+      <!-- ================= TARGET EXAM ================= -->
+      <div class="field mb-4">
+        <label class="label is-size-7">Target Exam (Optional)</label>
         <div class="control">
           <div class="select is-fullwidth">
-            <select name="domain">
-              <option value="">All Domains</option>
+            <select name="exam" id="examSelect">
+              <option value="">-- All Available Exams / General Question Pool --</option>
+              {% for ex in exams %}
+                <option value="{{ ex.id }}">{{ ex.title }} ({{ ex.question_count }} Questions)</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <p class="help is-size-7 has-text-grey">Questions will be prioritized from this exam's syllabus and topic blueprint.</p>
+      </div>
+
+      <!-- ================= DOMAIN SELECT ================= -->
+      <div class="field mb-5">
+        <label class="label is-size-7">Domain Focus (Optional)</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="domain" id="domainSelect">
+              <option value="">-- All Subject Domains --</option>
               {% for d in domains %}
                 <option value="{{ d.id }}">{{ d.name }}</option>
               {% endfor %}
@@ -30,70 +49,94 @@
       </div>
 
       <!-- ================= PLAN OPTIONS ================= -->
-      <div class="field">
-        <label class="label is-size-7 mb-3">Select Plan Type</label>
+      <div class="field mb-5">
+        <label class="label is-size-7 mb-3">Select Plan Duration</label>
 
-        <label class="plan-card">
-          <input type="radio" name="plan_type" value="7" data-days="7" required>
-          <div>
-            <strong>🚀 7-Day Crash Plan</strong>
-            <p class="is-size-7 has-text-grey">
-              60 Questions / Day · Fast intensive revision
+        <!-- 15-DAY BALANCED (RECOMMENDED) -->
+        <label class="plan-card active-plan-card">
+          <input type="radio" name="plan_type" value="15" data-days="15" checked required>
+          <div style="flex:1;">
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+              <strong>⚖️ 15-Day Balanced Plan</strong>
+              <span class="tag is-success is-light is-small font-weight-bold">RECOMMENDED</span>
+            </div>
+            <p class="is-size-7 has-text-grey mt-1">
+              40 Questions / Day · Structured improvement with topic tracking & auto-recovery
             </p>
           </div>
         </label>
 
+        <!-- 7-DAY CRASH -->
         <label class="plan-card">
-          <input type="radio" name="plan_type" value="15" data-days="15">
-          <div>
-            <strong>⚖ 15-Day Balanced Plan</strong>
-            <p class="is-size-7 has-text-grey">
-              40 Questions / Day · Structured improvement
+          <input type="radio" name="plan_type" value="7" data-days="7">
+          <div style="flex:1;">
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+              <strong>🚀 7-Day Crash Plan</strong>
+              <span class="tag is-info is-light is-small">INTENSIVE</span>
+            </div>
+            <p class="is-size-7 has-text-grey mt-1">
+              60 Questions / Day · High-intensity rapid revision before upcoming exams
             </p>
           </div>
         </label>
 
+        <!-- 30-DAY MASTERY -->
         <label class="plan-card">
           <input type="radio" name="plan_type" value="30" data-days="30">
-          <div>
-            <strong>🏆 30-Day Mastery Plan</strong>
-            <p class="is-size-7 has-text-grey">
-              25 Questions / Day · Deep mastery preparation
+          <div style="flex:1;">
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+              <strong>🏆 30-Day Mastery Plan</strong>
+              <span class="tag is-warning is-light is-small">DEEP MASTERY</span>
+            </div>
+            <p class="is-size-7 has-text-grey mt-1">
+              25 Questions / Day · Comprehensive syllabus mastery with spaced repetition
             </p>
           </div>
         </label>
-
       </div>
 
       <!-- ================= LIVE PREVIEW ================= -->
-      <div class="notification is-light mt-4" id="previewBox" style="display:none;">
-        ⏳ <strong>Estimated Completion Date:</strong>
-        <span id="completionDate"></span>
+      <div class="notification is-info is-light mb-5" id="previewBox">
+        <div class="is-flex is-align-items-center">
+          <span class="icon mr-2"><i class="fas fa-calendar-check"></i></span>
+          <div>
+            <strong>Plan Projection:</strong>
+            <span id="previewText">15 days of structured daily practice.</span>
+            <br>
+            <span class="is-size-7 has-text-grey">
+              Estimated Completion: <strong id="completionDate" class="has-text-info"></strong>
+            </span>
+          </div>
+        </div>
       </div>
 
       <!-- ================= ACTION ================= -->
-      <div class="field mt-5">
+      <div class="field">
         <div class="control">
-          <button type="submit" class="button is-primary is-fullwidth">
-            Create Study Plan
+          <button type="submit" class="button is-primary is-fullwidth is-medium">
+            Generate My Study Plan
           </button>
         </div>
       </div>
 
+      <div class="has-text-centered mt-3">
+        <a href="{% url 'quiz:study_plan_dashboard' %}" class="is-size-7 has-text-grey">
+          ← Cancel and return to Dashboard
+        </a>
+      </div>
+
     </form>
-
   </div>
-
 </div>
 
 <style>
 .plan-card {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px;
+  gap: 14px;
+  padding: 16px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 2px solid #e5e7eb;
   cursor: pointer;
   transition: all 0.2s ease;
   margin-bottom: 12px;
@@ -104,37 +147,52 @@
   border-color: #3273dc;
 }
 
-.plan-card input {
+.plan-card input[type="radio"] {
   margin-top: 4px;
+}
+
+.plan-card input[type="radio"]:checked ~ div strong {
+  color: #3273dc;
 }
 
 /* Dark mode */
 :root[data-theme='dark'] .plan-card {
-  border-color: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
 }
 
 :root[data-theme='dark'] .plan-card:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.08);
+  border-color: #3273dc;
 }
 </style>
 
 <script>
+function updatePlanPreview() {
+  const selected = document.querySelector('input[name="plan_type"]:checked');
+  if (!selected) return;
+
+  const days = parseInt(selected.dataset.days);
+  const today = new Date();
+  const completion = new Date();
+  completion.setDate(today.getDate() + days);
+
+  const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+  document.getElementById("completionDate").innerText = completion.toLocaleDateString(undefined, options);
+
+  const previewMap = {
+    7: "7 days · 60 questions/day · Fast intensive revision",
+    15: "15 days · 40 questions/day · Structured balanced improvement",
+    30: "30 days · 25 questions/day · Deep mastery & full syllabus coverage"
+  };
+  document.getElementById("previewText").innerText = previewMap[days] || `${days} days structured practice.`;
+}
+
 document.querySelectorAll('input[name="plan_type"]').forEach(radio => {
-  radio.addEventListener('change', function() {
-
-    const days = parseInt(this.dataset.days);
-    const today = new Date();
-
-    const completion = new Date();
-    completion.setDate(today.getDate() + days);
-
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    const formattedDate = completion.toLocaleDateString(undefined, options);
-
-    document.getElementById("completionDate").innerText = formattedDate;
-    document.getElementById("previewBox").style.display = "block";
-  });
+  radio.addEventListener('change', updatePlanPreview);
 });
-</script>
 
+// Initialize on load
+document.addEventListener("DOMContentLoaded", updatePlanPreview);
+</script>
 {% endblock %}
