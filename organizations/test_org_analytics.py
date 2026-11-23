@@ -391,3 +391,57 @@ class OrganizationAnalyticsTests(TestCase):
         # Student attempting to access Teacher Dashboard -> 403 Forbidden
         res_teacher_forbidden = client.get(url_teacher)
         self.assertEqual(res_teacher_forbidden.status_code, 403)
+
+    # ========================================================
+    # 7. Additional Security & URL Boundary Tests
+    # ========================================================
+    def test_inactive_membership_rejected(self):
+        client = Client()
+        inactive_user = User.objects.create_user(username="inactive_u", password="password123")
+        OrganizationMember.objects.create(organization=self.org_a, user=inactive_user, role=OrganizationRole.ORG_ADMIN, is_active=False)
+
+        client.force_login(inactive_user)
+        url_admin = reverse("organizations_admin:dashboard", kwargs={"slug": self.org_a.slug})
+        res = client.get(url_admin)
+        self.assertEqual(res.status_code, 403)
+
+    def test_cross_tenant_manipulated_url_rejected(self):
+        client = Client()
+        # admin_b belongs only to org_b, attempting to access org_a URL
+        client.force_login(self.admin_b)
+        url_admin_a = reverse("organizations_admin:dashboard", kwargs={"slug": self.org_a.slug})
+        res = client.get(url_admin_a)
+        self.assertEqual(res.status_code, 403)
+
+        url_teacher_a = reverse("organizations_admin:teacher_dashboard", kwargs={"slug": self.org_a.slug})
+        res_t = client.get(url_teacher_a)
+        self.assertEqual(res_t.status_code, 403)
+
+    def test_inactive_organization_returns_404(self):
+        client = Client()
+        inactive_org = Organization.objects.create(name="Closed Org", slug="closed-org", is_active=False)
+        user = User.objects.create_user(username="closed_admin", password="password123")
+        OrganizationMember.objects.create(organization=inactive_org, user=user, role=OrganizationRole.ORG_ADMIN, is_active=True)
+
+        client.force_login(user)
+        url = reverse("organizations_admin:dashboard", kwargs={"slug": inactive_org.slug})
+        res = client.get(url)
+        self.assertEqual(res.status_code, 404)
+
+    def test_date_range_boundary_filters(self):
+        # Test boundaries: all, 1y, 90d, 30d, 7d
+        for r in ["7d", "30d", "90d", "1y", "all"]:
+            analytics = get_admin_analytics(self.org_a, date_range=r)
+            self.assertEqual(analytics["active_range"], r)
+            self.assertIn("charts", analytics)
+            self.assertIn("enrollment_trends", analytics["charts"])
+            self.assertIn("exam_trends", analytics["charts"])
+
+    def test_sri_hash_present_in_dashboard_html(self):
+        client = Client()
+        client.force_login(self.admin_a)
+        url_admin = reverse("organizations_admin:dashboard", kwargs={"slug": self.org_a.slug})
+        res = client.get(url_admin)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "integrity=\"sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4\"")
+        self.assertContains(res, "crossorigin=\"anonymous\"")
