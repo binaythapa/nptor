@@ -1,11 +1,11 @@
 {% extends "organizations/admin/base.html" %}
 
-{% block title %}{{ org.name }} · Teacher Dashboard{% endblock %}
+{% block title %}{{ org.name }} · Teacher Dashboard &amp; Analytics{% endblock %}
 
 {% block content %}
 <div class="org-teacher-dashboard">
     <!-- Welcome Header -->
-    <div class="level mb-5">
+    <div class="level mb-4">
         <div class="level-left">
             <div>
                 <p class="is-size-7 has-text-grey is-uppercase has-text-weight-semibold mb-1">
@@ -15,7 +15,7 @@
                     Welcome, {{ request.user.get_full_name|default:request.user.username }}
                 </h1>
                 <p class="has-text-grey">
-                    Manage your assigned academic sections, enrolled students, section curriculum, and assignments.
+                    Manage your assigned academic sections, enrolled students, section curriculum, assignments, and teaching analytics.
                 </p>
             </div>
         </div>
@@ -26,34 +26,178 @@
         </div>
     </div>
 
+    <!-- Date Range Filter Bar -->
+    <div class="level mb-4">
+        <div class="level-left">
+            <div class="field has-addons">
+                <p class="control">
+                    <span class="button is-small is-static has-text-weight-semibold"><i class="fa fa-filter mr-1"></i>Period:</span>
+                </p>
+                <p class="control">
+                    <a href="?range=7d" class="button is-small {% if active_range == '7d' %}is-link is-selected has-text-weight-bold{% endif %}">7 Days</a>
+                </p>
+                <p class="control">
+                    <a href="?range=30d" class="button is-small {% if active_range == '30d' or not active_range %}is-link is-selected has-text-weight-bold{% endif %}">30 Days</a>
+                </p>
+                <p class="control">
+                    <a href="?range=90d" class="button is-small {% if active_range == '90d' %}is-link is-selected has-text-weight-bold{% endif %}">90 Days</a>
+                </p>
+                <p class="control">
+                    <a href="?range=1y" class="button is-small {% if active_range == '1y' %}is-link is-selected has-text-weight-bold{% endif %}">1 Year</a>
+                </p>
+                <p class="control">
+                    <a href="?range=all" class="button is-small {% if active_range == 'all' %}is-link is-selected has-text-weight-bold{% endif %}">All Time</a>
+                </p>
+            </div>
+        </div>
+        <div class="level-right">
+            <span class="tag is-info is-light">
+                <i class="fa fa-calendar-alt mr-1"></i> Active Window: <strong>{{ analytics.range_label }}</strong>
+            </span>
+        </div>
+    </div>
+
     <!-- Teacher KPI Cards: Scoped to Teacher's Sections Only -->
-    <div class="columns is-multiline mb-5">
+    <div class="columns is-multiline mb-4">
         <div class="column is-3">
             <div class="box has-text-centered py-4">
                 <p class="heading has-text-grey">Assigned Sections</p>
-                <p class="title is-3 has-text-link">{{ teacher_data.assigned_sections_count }}</p>
+                <p class="title is-3 has-text-link">{{ analytics.assigned_sections_count }}</p>
                 <span class="is-size-7 has-text-grey">Teaching Classes</span>
             </div>
         </div>
         <div class="column is-3">
             <div class="box has-text-centered py-4">
                 <p class="heading has-text-grey">Enrolled Students</p>
-                <p class="title is-3 has-text-success">{{ teacher_data.total_section_students }}</p>
+                <p class="title is-3 has-text-success">{{ analytics.total_section_students }}</p>
                 <span class="is-size-7 has-text-grey">In your sections only</span>
             </div>
         </div>
         <div class="column is-3">
             <div class="box has-text-centered py-4">
                 <p class="heading has-text-grey">Section Resources</p>
-                <p class="title is-3 has-text-info">{{ teacher_data.section_resources_count }}</p>
+                <p class="title is-3 has-text-info">{{ analytics.section_resources_count }}</p>
                 <span class="is-size-7 has-text-grey">Assigned materials</span>
             </div>
         </div>
         <div class="column is-3">
             <div class="box has-text-centered py-4">
                 <p class="heading has-text-grey">My Assignments</p>
-                <p class="title is-3 has-text-primary">{{ teacher_data.teacher_assignments_count }}</p>
-                <span class="is-size-7 has-text-grey">Created by you</span>
+                <p class="title is-3 has-text-primary">{{ analytics.total_teacher_assignments }}</p>
+                <span class="is-size-7 has-text-grey">{{ analytics.completion_rate }}% completion rate</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Performance & Assessment Metrics -->
+    <div class="columns is-multiline mb-5">
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Completed Assignments</p>
+                <p class="title is-3 has-text-success">{{ analytics.completed_assignments }}</p>
+                <span class="is-size-7 has-text-grey">By assigned students</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Overdue Attention</p>
+                <p class="title is-3 has-text-danger">{{ analytics.overdue_assignments }}</p>
+                <span class="is-size-7 has-text-grey">Require follow-up</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Student Submissions</p>
+                <p class="title is-3 has-text-info">{{ analytics.student_exams_attempted }}</p>
+                <span class="is-size-7 has-text-grey">In your sections</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Class Average Score</p>
+                <p class="title is-3 has-text-primary">
+                    {% if analytics.avg_student_exam_score is not None %}{{ analytics.avg_student_exam_score }}%{% else %}—{% endif %}
+                </p>
+                <span class="is-size-7 has-text-grey">{{ analytics.student_pass_rate }}% pass rate</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Visual Analytics Section -->
+    <div class="block mb-5">
+        <div class="level mb-3">
+            <div class="level-left">
+                <h2 class="title is-4 mb-0">
+                    <span class="icon is-small mr-2"><i class="fa fa-chart-bar"></i></span>Section Analytics &amp; Student Performance
+                </h2>
+            </div>
+            <div class="level-right">
+                <span class="is-size-7 has-text-grey"><i class="fa fa-shield-alt mr-1"></i>Scoped exclusively to your assigned sections &bull; {{ analytics.range_label }}</span>
+            </div>
+        </div>
+
+        <div class="columns is-multiline">
+            <!-- Chart 1: Section Student Distribution -->
+            <div class="column is-6">
+                <div class="box h-100">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <h3 class="title is-6 mb-0"><i class="fa fa-users mr-2 has-text-link"></i>Enrolled Students by Section</h3>
+                        <span class="tag is-info is-light is-small">{{ analytics.total_section_students }} Total Students</span>
+                    </div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        {% if analytics.charts.section_students.has_data %}
+                            <canvas id="chart-teacher-sections"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-chalkboard fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">No enrolled students in your assigned sections.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 2: My Assignments Status & Completion -->
+            <div class="column is-6">
+                <div class="box h-100">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <h3 class="title is-6 mb-0"><i class="fa fa-tasks mr-2 has-text-primary"></i>My Assignments Status Breakdown</h3>
+                        <span class="tag is-success is-light is-small">{{ analytics.completion_rate }}% Completed</span>
+                    </div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        {% if analytics.charts.assignment_status.has_data %}
+                            <canvas id="chart-teacher-assignments"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-inbox fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">No assignments created by you in this period.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 3: Score Distribution Histogram -->
+            <div class="column is-12">
+                <div class="box">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <div>
+                            <h3 class="title is-6 mb-0"><i class="fa fa-chart-line mr-2 has-text-success"></i>Student Exam Score Distribution in My Sections</h3>
+                            <p class="is-size-7 has-text-grey">Identifies students performing well or requiring remedial support.</p>
+                        </div>
+                        <span class="tag is-info is-light is-small">{{ analytics.student_exams_attempted }} Submissions Recorded</span>
+                    </div>
+                    <div style="position: relative; height: 240px; width: 100%;">
+                        {% if analytics.charts.score_distribution.has_data %}
+                            <canvas id="chart-teacher-scores"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-file-alt fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">No exam attempts submitted yet by students in your assigned sections.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -66,13 +210,13 @@
                 <span class="icon is-small"><i class="fa fa-school"></i></span><span>My Academic Sections</span>
             </a>
             <a href="{% url 'organizations_admin:org_course_list' slug=org.slug %}" class="button is-small is-link is-light">
-                <span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span>My Courses ({{ teacher_data.my_courses_count }})</span>
+                <span class="icon is-small"><i class="fa fa-graduation-cap"></i></span><span>My Courses ({{ analytics.my_courses_count }})</span>
             </a>
             <a href="{% url 'organizations_admin:exams' slug=org.slug %}" class="button is-small is-link is-light">
-                <span class="icon is-small"><i class="fa fa-file-alt"></i></span><span>Exams ({{ teacher_data.my_exams_count }})</span>
+                <span class="icon is-small"><i class="fa fa-file-alt"></i></span><span>Exams ({{ analytics.my_exams_count }})</span>
             </a>
             <a href="{% url 'organizations_admin:questions' slug=org.slug %}" class="button is-small is-link is-light">
-                <span class="icon is-small"><i class="fa fa-question-circle"></i></span><span>Questions ({{ teacher_data.my_questions_count }})</span>
+                <span class="icon is-small"><i class="fa fa-question-circle"></i></span><span>Questions ({{ analytics.my_questions_count }})</span>
             </a>
             <a href="{% url 'organizations_admin:assignments' slug=org.slug %}" class="button is-small is-link is-light">
                 <span class="icon is-small"><i class="fa fa-tasks"></i></span><span>Assignments</span>
@@ -105,7 +249,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in teacher_data.assigned_sections %}
+                    {% for item in analytics.assigned_sections %}
                     <tr>
                         <td>
                             <strong>{{ item.class_group.name }}</strong> — Section {{ item.section.name }}
@@ -164,7 +308,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for enrollment in teacher_data.student_roster %}
+                            {% for enrollment in analytics.student_roster %}
                             <tr>
                                 <td>
                                     <strong>{{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}</strong>
@@ -261,7 +405,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for a in teacher_data.teacher_assignments %}
+                    {% for a in analytics.recent_teacher_assignments %}
                     <tr>
                         <td><strong>{{ a.student.get_full_name|default:a.student.username }}</strong></td>
                         <td>{{ a.resource_name }}</td>
@@ -296,4 +440,100 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts_extra %}
+{{ analytics.charts|json_script:"teacher-analytics-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const dataEl = document.getElementById("teacher-analytics-data");
+    if (!dataEl || !window.Chart) return;
+    const chartsData = JSON.parse(dataEl.textContent);
+
+    // Chart 1: Section Students Bar
+    const secCanvas = document.getElementById("chart-teacher-sections");
+    if (secCanvas && chartsData.section_students && chartsData.section_students.has_data) {
+        new Chart(secCanvas.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: chartsData.section_students.labels,
+                datasets: [{
+                    label: "Students Enrolled",
+                    data: chartsData.section_students.data,
+                    backgroundColor: "rgba(50, 115, 220, 0.7)",
+                    borderColor: "#3273dc",
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { ticks: { maxRotation: 45, minRotation: 0 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // Chart 2: My Assignments Status Donut
+    const assignCanvas = document.getElementById("chart-teacher-assignments");
+    if (assignCanvas && chartsData.assignment_status && chartsData.assignment_status.has_data) {
+        new Chart(assignCanvas.getContext("2d"), {
+            type: "doughnut",
+            data: {
+                labels: chartsData.assignment_status.labels,
+                datasets: [{
+                    data: chartsData.assignment_status.data,
+                    backgroundColor: ["#48c78e", "#3273dc", "#ffe08a", "#f14668"],
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: "right", labels: { boxWidth: 12 } }
+                }
+            }
+        });
+    }
+
+    // Chart 3: Score Distribution Histogram
+    const scoreCanvas = document.getElementById("chart-teacher-scores");
+    if (scoreCanvas && chartsData.score_distribution && chartsData.score_distribution.has_data) {
+        new Chart(scoreCanvas.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: chartsData.score_distribution.labels,
+                datasets: [{
+                    label: "Students",
+                    data: chartsData.score_distribution.data,
+                    backgroundColor: [
+                        "rgba(72, 199, 142, 0.8)",  // 90-100% green
+                        "rgba(50, 115, 220, 0.8)",  // 75-89% blue
+                        "rgba(255, 224, 138, 0.8)", // 60-74% yellow
+                        "rgba(255, 140, 0, 0.8)",   // 40-59% orange
+                        "rgba(241, 70, 104, 0.8)"   // <40% red
+                    ],
+                    borderColor: ["#48c78e", "#3273dc", "#ffe08a", "#ff8c00", "#f14668"],
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

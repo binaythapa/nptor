@@ -4,6 +4,7 @@ from django.shortcuts import redirect, render
 from organizations.models.role import OrganizationRole
 from organizations.permissions import org_admin_required, organization_required
 from organizations.services.dashboard import get_overview
+from organizations.services.analytics import get_admin_analytics
 
 
 @org_admin_required
@@ -12,10 +13,13 @@ def org_dashboard(request, slug):
     Organization Owner / Admin Dashboard.
 
     Displays high-level KPI metrics across students, teaching staff, administrators,
-    academic structure, learning products, assignment states, and recent audit activity.
+    academic structure, learning products, assignment states, institutional analytics,
+    and recent audit activity.
     """
     org = request.organization
+    date_range = request.GET.get("range", "30d")
     overview = get_overview(org)
+    analytics = get_admin_analytics(org, date_range=date_range)
     return render(
         request,
         "organizations/admin/dashboard.html",
@@ -23,6 +27,8 @@ def org_dashboard(request, slug):
             "org": org,
             "stats": overview,
             "overview": overview,
+            "analytics": analytics,
+            "active_range": analytics["active_range"],
             "academic_year_count": overview["academic_years"],
             "academic_class_count": overview["classes"],
             "academic_section_count": overview["sections"],

@@ -114,6 +114,62 @@
         </div>
     </div>
 
+    <!-- Personal Learning Analytics & Progression Section -->
+    <div class="block mb-5">
+        <div class="level mb-3">
+            <div class="level-left">
+                <h2 class="title is-4 mb-0">
+                    <span class="icon is-small mr-2"><i class="fa fa-chart-line"></i></span>My Learning Progression &amp; Analytics
+                </h2>
+            </div>
+            <div class="level-right">
+                <span class="is-size-7 has-text-grey"><i class="fa fa-lock mr-1"></i>Private to your student account</span>
+            </div>
+        </div>
+
+        <div class="columns is-multiline">
+            <!-- Chart 1: My Exam Score Progression -->
+            <div class="column is-7">
+                <div class="box h-100">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <h3 class="title is-6 mb-0"><i class="fa fa-chart-line mr-2 has-text-primary"></i>My Exam Score Progression</h3>
+                        <span class="tag is-success is-light is-small">Average: {{ student_data.avg_score|default:"—" }}%</span>
+                    </div>
+                    <div style="position: relative; height: 240px; width: 100%;">
+                        {% if analytics.charts.score_progression.has_data %}
+                            <canvas id="chart-student-progression"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-chart-area fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">Take practice or assigned exams to view your score progression.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 2: My Assignment Progress -->
+            <div class="column is-5">
+                <div class="box h-100">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <h3 class="title is-6 mb-0"><i class="fa fa-tasks mr-2 has-text-info"></i>Assignment Completion Rate</h3>
+                        <span class="tag is-info is-light is-small">{{ analytics.completion_rate }}% Finished</span>
+                    </div>
+                    <div style="position: relative; height: 240px; width: 100%;">
+                        {% if analytics.charts.assignment_progress.has_data %}
+                            <canvas id="chart-student-assignments"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-clipboard-check fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">No direct assignments assigned yet.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Assigned Courses Section -->
     <div class="box mb-5">
         <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
@@ -331,4 +387,70 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block scripts_extra %}
+{{ analytics.charts|json_script:"student-analytics-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const dataEl = document.getElementById("student-analytics-data");
+    if (!dataEl || !window.Chart) return;
+    const chartsData = JSON.parse(dataEl.textContent);
+
+    // Chart 1: Exam Score Progression
+    const progCanvas = document.getElementById("chart-student-progression");
+    if (progCanvas && chartsData.score_progression && chartsData.score_progression.has_data) {
+        new Chart(progCanvas.getContext("2d"), {
+            type: "line",
+            data: {
+                labels: chartsData.score_progression.labels,
+                datasets: [{
+                    label: "Score (%)",
+                    data: chartsData.score_progression.scores,
+                    borderColor: "#3273dc",
+                    backgroundColor: "rgba(50, 115, 220, 0.15)",
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: "#3273dc",
+                    pointRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%" } },
+                    x: { ticks: { maxRotation: 45, minRotation: 0 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // Chart 2: Assignment Progress Donut
+    const assignCanvas = document.getElementById("chart-student-assignments");
+    if (assignCanvas && chartsData.assignment_progress && chartsData.assignment_progress.has_data) {
+        new Chart(assignCanvas.getContext("2d"), {
+            type: "doughnut",
+            data: {
+                labels: chartsData.assignment_progress.labels,
+                datasets: [{
+                    data: chartsData.assignment_progress.data,
+                    backgroundColor: ["#48c78e", "#3273dc", "#ffe08a", "#f14668"],
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: "right", labels: { boxWidth: 12 } }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

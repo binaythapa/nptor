@@ -1,19 +1,19 @@
 {% extends "organizations/admin/base.html" %}
 
-{% block title %}{{ org.name }} · Admin Dashboard{% endblock %}
+{% block title %}{{ org.name }} · Admin Dashboard &amp; Analytics{% endblock %}
 
 {% block content %}
 <div class="org-dashboard">
     <!-- Header banner -->
-    <div class="level mb-5">
+    <div class="level mb-4">
         <div class="level-left">
             <div>
                 <p class="is-size-7 has-text-grey is-uppercase has-text-weight-semibold mb-1">
-                    Organization Administration
+                    Organization Administration &amp; Analytics
                 </p>
                 <h1 class="title is-3 mb-1">{{ org.name }}</h1>
                 <p class="has-text-grey">
-                    Comprehensive overview of academic structure, people, learning content, and student assignments.
+                    Comprehensive overview of academic structure, people, learning content, student assignments, and performance intelligence.
                 </p>
             </div>
         </div>
@@ -27,6 +27,37 @@
                     <span class="tag is-danger">Inactive</span>
                 {% endif %}
             </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter Bar -->
+    <div class="level mb-4">
+        <div class="level-left">
+            <div class="field has-addons">
+                <p class="control">
+                    <span class="button is-small is-static has-text-weight-semibold"><i class="fa fa-filter mr-1"></i>Period:</span>
+                </p>
+                <p class="control">
+                    <a href="?range=7d" class="button is-small {% if active_range == '7d' %}is-link is-selected has-text-weight-bold{% endif %}">7 Days</a>
+                </p>
+                <p class="control">
+                    <a href="?range=30d" class="button is-small {% if active_range == '30d' or not active_range %}is-link is-selected has-text-weight-bold{% endif %}">30 Days</a>
+                </p>
+                <p class="control">
+                    <a href="?range=90d" class="button is-small {% if active_range == '90d' %}is-link is-selected has-text-weight-bold{% endif %}">90 Days</a>
+                </p>
+                <p class="control">
+                    <a href="?range=1y" class="button is-small {% if active_range == '1y' %}is-link is-selected has-text-weight-bold{% endif %}">1 Year</a>
+                </p>
+                <p class="control">
+                    <a href="?range=all" class="button is-small {% if active_range == 'all' %}is-link is-selected has-text-weight-bold{% endif %}">All Time</a>
+                </p>
+            </div>
+        </div>
+        <div class="level-right">
+            <span class="tag is-info is-light">
+                <i class="fa fa-calendar-alt mr-1"></i> Active Window: <strong>{{ analytics.range_label }}</strong>
+            </span>
         </div>
     </div>
 
@@ -77,7 +108,7 @@
     </div>
 
     <!-- KPI Metric Cards: Row 2 - Content & Assignment Attention -->
-    <div class="columns is-multiline mb-5">
+    <div class="columns is-multiline mb-4">
         <div class="column is-6">
             <div class="box h-100">
                 <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
@@ -134,6 +165,136 @@
                         <p class="heading has-text-grey">Overdue</p>
                         <p class="title is-4 has-text-danger">{{ stats.overdue_assignments }}</p>
                         <span class="is-size-7 has-text-grey">Need attention</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Metric Cards: Row 3 - Performance & Assessment Intelligence -->
+    <div class="columns is-multiline mb-5">
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Assignment Completion</p>
+                <p class="title is-3 has-text-success">{{ analytics.completion_rate }}%</p>
+                <span class="is-size-7 has-text-grey">{{ analytics.completed_assignments }} of {{ analytics.total_assignments }} finished</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Exam Submissions</p>
+                <p class="title is-3 has-text-info">{{ analytics.submitted_exam_attempts }}</p>
+                <span class="is-size-7 has-text-grey">{{ analytics.total_exam_attempts }} total attempts</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Average Exam Score</p>
+                <p class="title is-3 has-text-primary">
+                    {% if analytics.avg_exam_score is not None %}{{ analytics.avg_exam_score }}%{% else %}—{% endif %}
+                </p>
+                <span class="is-size-7 has-text-grey">Institution average</span>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered py-4">
+                <p class="heading has-text-grey">Assessment Pass Rate</p>
+                <p class="title is-3 has-text-success">{{ analytics.pass_rate }}%</p>
+                <span class="is-size-7 has-text-grey">{{ analytics.passed_exam_attempts }} passed submissions</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Institutional Visual Analytics Section -->
+    <div class="block mb-5">
+        <div class="level mb-3">
+            <div class="level-left">
+                <h2 class="title is-4 mb-0">
+                    <span class="icon is-small mr-2"><i class="fa fa-chart-pie"></i></span>Institutional Analytics &amp; Visual Intelligence
+                </h2>
+            </div>
+            <div class="level-right">
+                <span class="is-size-7 has-text-grey"><i class="fa fa-database mr-1"></i>Aggregated from current tenant records &bull; {{ analytics.range_label }}</span>
+            </div>
+        </div>
+
+        <div class="columns is-multiline">
+            <!-- Chart 1: Enrollment Growth Trend -->
+            <div class="column is-6">
+                <div class="box h-100">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <h3 class="title is-6 mb-0"><i class="fa fa-user-plus mr-2 has-text-primary"></i>Student Enrollment Growth</h3>
+                        <span class="tag is-light is-small">Trend</span>
+                    </div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        {% if analytics.charts.enrollment_trends.has_data %}
+                            <canvas id="chart-enrollment-trends"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-chart-line fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">No student enrollment records in this time window.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 2: Assignment Status & Lifecycle -->
+            <div class="column is-6">
+                <div class="box h-100">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <h3 class="title is-6 mb-0"><i class="fa fa-tasks mr-2 has-text-info"></i>Assignment Lifecycle &amp; Completion</h3>
+                        <span class="tag is-success is-light is-small">{{ analytics.completion_rate }}% Completed</span>
+                    </div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        {% if analytics.charts.assignment_status.has_data %}
+                            <canvas id="chart-assignment-status"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-pie-chart fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">No assignments created in this time window.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 3: Section Student Distribution -->
+            <div class="column is-6">
+                <div class="box h-100">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <h3 class="title is-6 mb-0"><i class="fa fa-sitemap mr-2 has-text-link"></i>Class &amp; Section Distribution</h3>
+                        <a href="{% url 'organizations_admin:academic' slug=org.slug %}" class="is-size-7 has-text-link">Manage</a>
+                    </div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        {% if analytics.charts.section_distribution.has_data %}
+                            <canvas id="chart-section-dist"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-users fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">No active student enrollments in class sections.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 4: Exam Performance & Score Trends -->
+            <div class="column is-6">
+                <div class="box h-100">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                        <h3 class="title is-6 mb-0"><i class="fa fa-graduation-cap mr-2 has-text-success"></i>Assessment Score &amp; Pass Trends</h3>
+                        <span class="tag is-info is-light is-small">Pass Rate: {{ analytics.pass_rate }}%</span>
+                    </div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        {% if analytics.charts.exam_trends.has_data %}
+                            <canvas id="chart-exam-trends"></canvas>
+                        {% else %}
+                            <div class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center h-100 has-text-grey">
+                                <span class="icon is-large has-text-grey-light"><i class="fa fa-file-alt fa-2x"></i></span>
+                                <p class="mt-2 is-size-7">No exam attempts submitted in this time window.</p>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -272,4 +433,138 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts_extra %}
+{{ analytics.charts|json_script:"admin-analytics-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const dataEl = document.getElementById("admin-analytics-data");
+    if (!dataEl || !window.Chart) return;
+    const chartsData = JSON.parse(dataEl.textContent);
+
+    // Chart 1: Enrollment Growth Trend
+    const enrollCanvas = document.getElementById("chart-enrollment-trends");
+    if (enrollCanvas && chartsData.enrollment_trends && chartsData.enrollment_trends.has_data) {
+        new Chart(enrollCanvas.getContext("2d"), {
+            type: "line",
+            data: {
+                labels: chartsData.enrollment_trends.labels,
+                datasets: [{
+                    label: "New Enrollments",
+                    data: chartsData.enrollment_trends.data,
+                    backgroundColor: "rgba(50, 115, 220, 0.15)",
+                    borderColor: "#3273dc",
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: "#3273dc",
+                    pointRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // Chart 2: Assignment Status Donut
+    const assignCanvas = document.getElementById("chart-assignment-status");
+    if (assignCanvas && chartsData.assignment_status && chartsData.assignment_status.has_data) {
+        new Chart(assignCanvas.getContext("2d"), {
+            type: "doughnut",
+            data: {
+                labels: chartsData.assignment_status.labels,
+                datasets: [{
+                    data: chartsData.assignment_status.data,
+                    backgroundColor: ["#48c78e", "#3273dc", "#ffe08a", "#f14668"],
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: "right", labels: { boxWidth: 12 } }
+                }
+            }
+        });
+    }
+
+    // Chart 3: Section Distribution Bar
+    const sectionCanvas = document.getElementById("chart-section-dist");
+    if (sectionCanvas && chartsData.section_distribution && chartsData.section_distribution.has_data) {
+        new Chart(sectionCanvas.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: chartsData.section_distribution.labels,
+                datasets: [{
+                    label: "Students",
+                    data: chartsData.section_distribution.data,
+                    backgroundColor: "rgba(72, 95, 199, 0.7)",
+                    borderColor: "#485fc7",
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { ticks: { maxRotation: 45, minRotation: 0 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // Chart 4: Exam Trends Line (Avg Score & Pass Rate)
+    const examCanvas = document.getElementById("chart-exam-trends");
+    if (examCanvas && chartsData.exam_trends && chartsData.exam_trends.has_data) {
+        new Chart(examCanvas.getContext("2d"), {
+            type: "line",
+            data: {
+                labels: chartsData.exam_trends.labels,
+                datasets: [
+                    {
+                        label: "Avg Score (%)",
+                        data: chartsData.exam_trends.scores,
+                        borderColor: "#48c78e",
+                        backgroundColor: "rgba(72, 199, 142, 0.15)",
+                        borderWidth: 2,
+                        tension: 0.2,
+                        pointRadius: 4,
+                    },
+                    {
+                        label: "Pass Rate (%)",
+                        data: chartsData.exam_trends.pass_rates,
+                        borderColor: "#3273dc",
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        tension: 0.2,
+                        pointRadius: 3,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%" } }
+                },
+                plugins: {
+                    legend: { position: "top", labels: { boxWidth: 12 } }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
