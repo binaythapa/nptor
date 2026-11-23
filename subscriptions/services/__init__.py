@@ -17,6 +17,10 @@ class AccessService(_ResourceAccessService):
     @staticmethod
     def _has_organization_assignment_access(student, resource_type, resource):
         """Return assigned organization access without evaluating payment."""
+        if not student or not getattr(student, "is_authenticated", False):
+            resource_organization = getattr(resource, "organization", None)
+            return False if resource_organization is not None else None
+
         resource_field = {
             _ResourceAccessService.RESOURCE_COURSE: "course",
             _ResourceAccessService.RESOURCE_TRACK: "track",

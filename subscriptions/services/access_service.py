@@ -733,7 +733,7 @@ class AccessService:
         # BASIC VALIDATION
         # =====================================================
 
-        if not student:
+        if not student or not getattr(student, "is_authenticated", False):
             return False
 
         if not resource:

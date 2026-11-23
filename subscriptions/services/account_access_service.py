@@ -26,7 +26,7 @@ class AccountAccessService:
 
     @staticmethod
     def has_course_access(user, course):
-        if not user or not course:
+        if not user or not getattr(user, "is_authenticated", False) or not course:
             return False
         for subscription in AccountAccessService._valid_account_subscriptions(user):
             if not subscription.is_valid():
@@ -42,7 +42,7 @@ class AccountAccessService:
 
     @staticmethod
     def has_track_access(user, track):
-        if not user or not track:
+        if not user or not getattr(user, "is_authenticated", False) or not track:
             return False
         for subscription in AccountAccessService._valid_account_subscriptions(user):
             if not subscription.is_valid():

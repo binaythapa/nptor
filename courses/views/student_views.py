@@ -168,15 +168,23 @@ def course_detail(request, slug):
         or is_admin
     ) and not is_publicly_available
 
-    is_enrolled = CourseEnrollment.objects.filter(
-        user=request.user,
-        course=course,
-        is_active=True,
-    ).exists()
+    is_enrolled = (
+        CourseEnrollment.objects.filter(
+            user=request.user,
+            course=course,
+            is_active=True,
+        ).exists()
+        if getattr(request.user, "is_authenticated", False)
+        else False
+    )
 
-    completed, total, progress = get_course_progress(
-        request.user,
-        course,
+    completed, total, progress = (
+        get_course_progress(
+            request.user,
+            course,
+        )
+        if getattr(request.user, "is_authenticated", False)
+        else (0, 0, 0)
     )
 
     return render(

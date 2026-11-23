@@ -8,8 +8,8 @@ def get_course_progress(user, course):
     lessons = Lesson.objects.filter(section__course=course)
     total = lessons.count()
 
-    if total == 0:
-        return 0, 0, 0
+    if total == 0 or not user or not getattr(user, "is_authenticated", False):
+        return 0, total, 0
 
     completed = LessonProgress.objects.filter(
         user=user,
