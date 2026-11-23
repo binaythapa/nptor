@@ -1,7 +1,7 @@
 # organizations/services/analytics/admin.py
 
+from collections import OrderedDict
 from django.db.models import Avg, Count, Q
-from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
 from courses.models import Course
@@ -111,20 +111,15 @@ def get_admin_analytics(organization, date_range="30d"):
     if start_dt is not None:
         enrollments_qs = enrollments_qs.filter(joined_at__gte=start_dt)
 
-    monthly_enrollments = (
-        enrollments_qs.annotate(period=TruncMonth("joined_at"))
-        .values("period")
-        .annotate(total=Count("id"))
-        .order_by("period")
-    )
+    enrollment_dates = enrollments_qs.order_by("joined_at").values_list("joined_at", flat=True)
+    enrollment_counts = OrderedDict()
+    for dt in enrollment_dates:
+        if dt:
+            key = dt.strftime("%b %Y")
+            enrollment_counts[key] = enrollment_counts.get(key, 0) + 1
 
-    enrollment_chart_labels = []
-    enrollment_chart_data = []
-    for item in monthly_enrollments:
-        p = item["period"]
-        if p:
-            enrollment_chart_labels.append(p.strftime("%b %Y"))
-            enrollment_chart_data.append(item["total"])
+    enrollment_chart_labels = list(enrollment_counts.keys())
+    enrollment_chart_data = list(enrollment_counts.values())
 
     # 6b. Class & Section Student Distribution
     section_dist_qs = (
@@ -188,31 +183,36 @@ def get_admin_analytics(organization, date_range="30d"):
     ]
 
     # 6e. Exam Performance Trends (Monthly Avg Score & Pass Rate)
-    exam_trends_qs = (
+    exam_records = (
         period_user_exams.filter(
             status=UserExam.STATUS_SUBMITTED,
             submitted_at__isnull=False,
         )
-        .annotate(period=TruncMonth("submitted_at"))
-        .values("period")
-        .annotate(
-            avg_score=Avg("score", filter=Q(score__isnull=False)),
-            total=Count("id"),
-            passed=Count("id", filter=Q(passed=True)),
-        )
-        .order_by("period")
+        .order_by("submitted_at")
+        .values_list("submitted_at", "score", "passed")
     )
 
-    exam_trend_labels = []
-    exam_trend_scores = []
-    exam_trend_pass_rates = []
-    for row in exam_trends_qs:
-        p = row["period"]
-        if p:
-            exam_trend_labels.append(p.strftime("%b %Y"))
-            exam_trend_scores.append(round(row["avg_score"], 1) if row["avg_score"] is not None else 0.0)
-            p_rate = round((row["passed"] / row["total"]) * 100, 1) if row["total"] > 0 else 0.0
-            exam_trend_pass_rates.append(p_rate)
+    monthly_exam_data = OrderedDict()
+    for dt, score, passed in exam_records:
+        if dt:
+            key = dt.strftime("%b %Y")
+            if key not in monthly_exam_data:
+                monthly_exam_data[key] = {"scores": [], "passed": 0, "total": 0}
+            if score is not None:
+                monthly_exam_data[key]["scores"].append(score)
+            if passed:
+                monthly_exam_data[key]["passed"] += 1
+            monthly_exam_data[key]["total"] += 1
+
+    exam_trend_labels = list(monthly_exam_data.keys())
+    exam_trend_scores = [
+        round(sum(m["scores"]) / len(m["scores"]), 1) if m["scores"] else 0.0
+        for m in monthly_exam_data.values()
+    ]
+    exam_trend_pass_rates = [
+        round((m["passed"] / m["total"]) * 100, 1) if m["total"] > 0 else 0.0
+        for m in monthly_exam_data.values()
+    ]
 
     # 7. Audit Activity & Recent Assignments
     recent_audit_logs = (
