@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.core.paginator import Paginator
 from django.db.models import Prefetch
 
@@ -76,8 +77,12 @@ def _exam_categories(exam):
 
 
 def _exam_category(exam):
+    if hasattr(exam, "_cached_primary_category"):
+        return exam._cached_primary_category
     categories = _exam_categories(exam)
-    return sorted(categories, key=lambda category: (category.name.lower(), category.id))[0] if categories else None
+    cat = sorted(categories, key=lambda category: (category.name.lower(), category.id))[0] if categories else None
+    exam._cached_primary_category = cat
+    return cat
 
 
 def _track_exams(track):
@@ -91,8 +96,11 @@ def _track_exams(track):
 
 
 def _domain_for_track(track):
+    if hasattr(track, "_cached_primary_domain"):
+        return track._cached_primary_domain
     manager = getattr(track, "track_exams", None)
     if manager is None:
+        track._cached_primary_domain = None
         return None
     domains = []
     for membership in manager.all():
@@ -103,8 +111,11 @@ def _domain_for_track(track):
         if category and category.domain and category.domain.is_active and category.domain.organization_id is None:
             domains.append(category.domain)
     if not domains:
+        track._cached_primary_domain = None
         return None
-    return sorted(domains, key=lambda domain: domain.name.lower())[0]
+    primary_domain = sorted(domains, key=lambda domain: domain.name.lower())[0]
+    track._cached_primary_domain = primary_domain
+    return primary_domain
 
 
 def _matches_vertical(domain, catalog_vertical):
@@ -113,10 +124,15 @@ def _matches_vertical(domain, catalog_vertical):
     return bool(domain and domain.content_vertical_id and domain.content_vertical.vertical_type == catalog_vertical)
 
 
-def _domain_summary(domain, courses, exams, tracks):
-    course_ids = [course.id for course in courses if course.category_id == domain.id]
-    exam_ids = [exam.id for exam in exams if (_exam_category(exam) and _exam_category(exam).domain_id == domain.id)]
-    track_ids = [track.id for track in tracks if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)]
+def _domain_summary(domain, courses, exams, tracks, *, courses_by_domain=None, exams_by_domain=None, tracks_by_domain=None):
+    if courses_by_domain is not None and exams_by_domain is not None and tracks_by_domain is not None:
+        course_ids = courses_by_domain.get(domain.id, [])
+        exam_ids = exams_by_domain.get(domain.id, [])
+        track_ids = tracks_by_domain.get(domain.id, [])
+    else:
+        course_ids = [course.id for course in courses if course.category_id == domain.id]
+        exam_ids = [exam.id for exam in exams if (_exam_category(exam) and _exam_category(exam).domain_id == domain.id)]
+        track_ids = [track.id for track in tracks if (_domain_for_track(track) and _domain_for_track(track).id == domain.id)]
     return {"domain": domain, "course_count": len(course_ids), "exam_count": len(exam_ids), "track_count": len(track_ids), "course_ids": course_ids, "exam_ids": exam_ids, "track_ids": track_ids}
 
 
@@ -304,7 +320,32 @@ def build_learning_catalog(*, user, domain=None, query="", resource_type="all", 
     tracks = [item for item in tracks if _matches_vertical(_domain_for_track(item), catalog_vertical)]
     active_domains = list(Domain.objects.filter(is_active=True, organization__isnull=True).select_related("content_vertical").order_by("name"))
     active_domains = [item for item in active_domains if _matches_vertical(item, catalog_vertical)]
-    domains = [_domain_summary(item, courses, exams, tracks) for item in active_domains]
+
+    courses_by_domain = defaultdict(list)
+    for c in courses:
+        courses_by_domain[c.category_id].append(c.id)
+
+    exams_by_domain = defaultdict(list)
+    for e in exams:
+        c_cat = _exam_category(e)
+        if c_cat and c_cat.domain_id:
+            exams_by_domain[c_cat.domain_id].append(e.id)
+
+    tracks_by_domain = defaultdict(list)
+    for t in tracks:
+        t_dom = _domain_for_track(t)
+        if t_dom:
+            tracks_by_domain[t_dom.id].append(t.id)
+
+    domains = [_domain_summary(
+        item,
+        courses,
+        exams,
+        tracks,
+        courses_by_domain=courses_by_domain,
+        exams_by_domain=exams_by_domain,
+        tracks_by_domain=tracks_by_domain,
+    ) for item in active_domains]
     domains = [item for item in domains if item["course_count"] or item["track_count"]]
     popular_domains, domain_page_obj, domain_sort = _build_domain_explorer(domains, domain_query, domain_sort, domain_page)
     selected_domain = domain

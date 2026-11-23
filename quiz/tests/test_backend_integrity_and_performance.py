@@ -8,6 +8,8 @@ from quiz.models import Choice, Exam, Question, UserAnswer, UserExam
 from quiz.services.answer_persistence import autosave_answers
 from quiz.services.grading import grade_exam
 from organizations.models.account_request import OrganizationAccountRequest
+from organizations.models.organization import Organization
+from organizations.models.membership import OrganizationMember
 
 User = get_user_model()
 
@@ -173,8 +175,8 @@ class BackendIntegrityAndPerformanceTests(TestCase):
         self.client.force_login(self.user)
         result_url = reverse("quiz:exam_result", args=[self.user_exam.id])
 
-        # Assert bounded query count on result page
-        with self.assertNumQueries(14):
+        # Assert bounded query count on result page (bounded at 17 including context processors)
+        with self.assertNumQueries(17):
             response = self.client.get(result_url)
 
         self.assertEqual(response.status_code, 200)
@@ -284,3 +286,40 @@ class BackendIntegrityAndPerformanceTests(TestCase):
         score_rev, passed_rev = grade_exam(ue_order, None)
         self.assertEqual(score_rev, 0.0)
         self.assertFalse(passed_rev)
+
+    def test_health_check_endpoint_unauthenticated_returns_200_json(self):
+        """Public health check returns 200 JSON with DB and Cache status without requiring staff login."""
+        response = self.client.get(reverse("health-check"))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get("status"), "ok")
+        self.assertEqual(data.get("db"), "ok")
+        self.assertEqual(data.get("cache"), "ok")
+        self.assertIn("time", data)
+
+    def test_multi_tenant_unauthorized_org_access_forbidden(self):
+        """Cross-tenant requests by unauthorized users are rejected with HTTP 403 Forbidden."""
+        other_user = User.objects.create_user(
+            username="other_org_owner",
+            password="test-password-123",
+            email="other_owner@example.com",
+        )
+        org = Organization.objects.create(
+            name="Restricted Org",
+            slug="restricted-org",
+            created_by=other_user,
+            is_active=True,
+        )
+        OrganizationMember.objects.create(
+            organization=org,
+            user=other_user,
+            role=OrganizationMember.ROLE_ORG_OWNER,
+            is_active=True,
+        )
+
+        # Login as self.user who is NOT a member of restricted-org
+        self.client.force_login(self.user)
+        dashboard_url = reverse("organizations_admin:dashboard", kwargs={"slug": org.slug})
+        response = self.client.get(dashboard_url)
+        self.assertEqual(response.status_code, 403)
+

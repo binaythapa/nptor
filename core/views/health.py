@@ -1,11 +1,12 @@
+import logging
 from django.http import JsonResponse
 from django.db import connection
 from django.core.cache import cache
 from django.utils.timezone import now
 
-from django.contrib.admin.views.decorators import staff_member_required
+logger = logging.getLogger(__name__)
 
-@staff_member_required
+
 def health_check(request):
     status = {
         "status": "ok",
@@ -20,9 +21,10 @@ def health_check(request):
             cursor.execute("SELECT 1")
             cursor.fetchone()
     except Exception as e:
+        logger.error("Health check DB check failed: %s", e)
+        status["status"] = "error"
         status["db"] = "error"
-        status["error"] = str(e)
-        return JsonResponse(status, status=500)
+        return JsonResponse(status, status=503)
 
     # --- Cache check ---
     try:
@@ -30,8 +32,9 @@ def health_check(request):
         if cache.get("health_check") != "ok":
             raise Exception("Cache read failed")
     except Exception as e:
+        logger.error("Health check Cache check failed: %s", e)
+        status["status"] = "error"
         status["cache"] = "error"
-        status["error"] = str(e)
-        return JsonResponse(status, status=500)
+        return JsonResponse(status, status=503)
 
     return JsonResponse(status, status=200)
