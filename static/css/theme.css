@@ -976,3 +976,90 @@ html[data-theme='dark'] .user-menu a:hover {
   background: rgba(255, 255, 255, 0.06) !important;
 }
 
+/* =========================================================
+   PHASE 4 FRONTEND MODERNIZATION ENHANCEMENTS
+   Accessible focus rings, modern scrollbars, cards & pills
+   ========================================================= */
+
+/* Accessible high-contrast focus rings for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent, #2f80ed) !important;
+  outline-offset: 2px !important;
+}
+
+/* Modern slim scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nptor-border-strong, #cbd5e1) transparent;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--nptor-border-strong, #cbd5e1);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted, #64748b);
+}
+
+/* Interactive Card Elevation Utility */
+.nptor-card-interactive {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  will-change: transform;
+}
+.nptor-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+  border-color: var(--accent, #2f80ed);
+}
+
+/* Standardized Modern Pills & Badges */
+.nptor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.nptor-pill--primary {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+.nptor-pill--success {
+  background: rgba(22, 163, 74, 0.1);
+  color: #15803d;
+}
+.nptor-pill--warning {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+}
+.nptor-pill--danger {
+  background: rgba(220, 38, 38, 0.1);
+  color: #b91c1c;
+}
+.nptor-pill--info {
+  background: rgba(8, 145, 178, 0.1);
+  color: #0e7490;
+}
+
+/* Mobile Touch Target Standardization (min 44px) */
+@media (max-width: 768px) {
+  .button,
+  .input,
+  .select select,
+  .nav-item,
+  .exam-palette-toggle-button,
+  .practice-mode {
+    min-height: 44px;
+  }
+}
+

@@ -9,7 +9,7 @@
 
       <div class="brand-group">
         <a class="brand" href="{% if user.is_authenticated %}{% url 'quiz:dashboard' %}{% else %}{% url 'quiz:practice' %}{% endif %}">
-          <img src="{% static 'images/logo.jpg' %}" class="brand-logo" alt="{{ site_name|default:'Nepal Mentor' }}">
+          <img src="{% static 'images/logo.jpg' %}" class="brand-logo" width="36" height="36" alt="{{ site_name|default:'Nepal Mentor' }}">
           <span class="brand-text">{{ site_name|default:"Nepal Mentor" }}</span>
         </a>
       </div>

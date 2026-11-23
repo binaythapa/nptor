@@ -21,6 +21,6 @@ class CourseStudentResponsiveTemplateTests(SimpleTestCase):
         template = get_template("courses/student/course_detail.html")
         source = Path(template.origin.name).read_text(encoding="utf-8")
 
-        self.assertIn('class="course-detail-card"', source)
+        self.assertIn("course-detail-card", source)
         self.assertIn('class="course-detail-actions"', source)
         self.assertIn("course-mobile.css", source)

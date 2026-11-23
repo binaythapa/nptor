@@ -1716,3 +1716,64 @@ html[data-theme="dark"] .exam-action-warning {
         break-inside: avoid;
     }
 }
+
+/* =========================================================
+   PHASE 4: ASSIGNMENT DATES, STATUS CHIPS & CARD ACTIONS
+   ========================================================= */
+
+.learning-assignment-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin-top: 10px;
+    color: var(--nptor-text-muted, #64748b);
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.learning-assignment-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.learning-assignment-date i {
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+.learning-assignment-date strong {
+    color: var(--nptor-text, #0f172a);
+    font-weight: 650;
+}
+
+.learning-assignment-status {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    font-weight: 650;
+}
+
+.learning-assignment-status.status-not-started {
+    color: #b45309;
+}
+
+.learning-assignment-status.status-overdue {
+    color: #dc2626;
+}
+
+.learning-assignment-status.status-expired {
+    color: #64748b;
+}
+
+.learning-card-action.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+    .learning-assignment-dates {
+        gap: 5px 10px;
+    }
+}

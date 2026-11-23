@@ -81,7 +81,7 @@
     .nptor-table-wrapper, .nptor-table-wrap, .nptor-table-container, .table-container { width: 100%; overflow-x: auto; }
     .site-content .columns { margin-left: 0; margin-right: 0; }
     .site-content .column { min-width: 0; }
-    .site-content input, .site-content select, .site-content textarea, .site-content button, .site-content .button, .site-content a.button { min-height: 42px; }
+    .site-content input, .site-content select, .site-content textarea, .site-content button, .site-content .button, .site-content a.button { min-height: 44px; }
     .dashboard-page { gap: 24px; padding-bottom: 24px; }
     .dashboard-header-content { flex-direction: column; align-items: stretch; gap: 16px; }
     .dashboard-header-actions, .dashboard-primary-action { width: 100%; }

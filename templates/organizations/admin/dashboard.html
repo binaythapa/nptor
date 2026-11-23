@@ -64,42 +64,42 @@
     <!-- KPI Metric Cards: Row 1 - People & Academic Structure -->
     <div class="columns is-multiline mb-4">
         <div class="column is-2">
-            <div class="box has-text-centered py-4">
+            <div class="box has-text-centered py-4 nptor-card-interactive">
                 <p class="heading has-text-grey">Students</p>
                 <p class="title is-3 has-text-primary">{{ stats.students }}</p>
                 <a href="{% url 'organizations_admin:students' slug=org.slug %}" class="is-size-7 has-text-link">Manage Students</a>
             </div>
         </div>
         <div class="column is-2">
-            <div class="box has-text-centered py-4">
+            <div class="box has-text-centered py-4 nptor-card-interactive">
                 <p class="heading has-text-grey">Teachers / Staff</p>
                 <p class="title is-3 has-text-info">{{ stats.teachers }}</p>
                 <span class="is-size-7 has-text-grey">Teaching Staff</span>
             </div>
         </div>
         <div class="column is-2">
-            <div class="box has-text-centered py-4">
+            <div class="box has-text-centered py-4 nptor-card-interactive">
                 <p class="heading has-text-grey">Administrators</p>
                 <p class="title is-3 has-text-dark">{{ stats.admins }}</p>
                 <span class="is-size-7 has-text-grey">Owners &amp; Admins</span>
             </div>
         </div>
         <div class="column is-2">
-            <div class="box has-text-centered py-4">
+            <div class="box has-text-centered py-4 nptor-card-interactive">
                 <p class="heading has-text-grey">Academic Years</p>
                 <p class="title is-3">{{ stats.academic_years }}</p>
                 <a href="{% url 'organizations_admin:academic' slug=org.slug %}" class="is-size-7 has-text-link">View Calendar</a>
             </div>
         </div>
         <div class="column is-2">
-            <div class="box has-text-centered py-4">
+            <div class="box has-text-centered py-4 nptor-card-interactive">
                 <p class="heading has-text-grey">Active Classes</p>
                 <p class="title is-3">{{ stats.classes }}</p>
                 <span class="is-size-7 has-text-grey">Class Levels</span>
             </div>
         </div>
         <div class="column is-2">
-            <div class="box has-text-centered py-4">
+            <div class="box has-text-centered py-4 nptor-card-interactive">
                 <p class="heading has-text-grey">Active Sections</p>
                 <p class="title is-3">{{ stats.sections }}</p>
                 <a href="{% url 'organizations_admin:academic' slug=org.slug %}" class="is-size-7 has-text-link">Manage Sections</a>

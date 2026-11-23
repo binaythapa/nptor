@@ -8,18 +8,6 @@
 <link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">
 <link rel="stylesheet" href="{% static 'css/dashboard_learning_hub.css' %}">
 <link rel="stylesheet" href="{% static 'css/pages/my_learning_compact.css' %}">
-<style>
-  .learning-assignment-dates { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; color:var(--nptor-text-muted,#64748b); font-size:11px; line-height:1.4; }
-  .learning-assignment-date { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
-  .learning-assignment-date i { font-size:10px; opacity:.8; }
-  .learning-assignment-date strong { color:var(--nptor-text,#0f172a); font-weight:650; }
-  .learning-assignment-status { margin-top:8px; }
-  .learning-assignment-status.status-not-started { color:#b45309; }
-  .learning-assignment-status.status-overdue { color:#dc2626; }
-  .learning-assignment-status.status-expired { color:#64748b; }
-  .learning-card-action.is-disabled { opacity:.45; pointer-events:none; cursor:not-allowed; }
-  @media (max-width:760px) { .learning-assignment-dates { gap:5px 10px; } }
-</style>
 {% endblock %}
 
 {% block content %}

@@ -35,7 +35,7 @@
 
   <!-- ================= ACTIVE STUDY PLAN & TODAY'S MISSION ================= -->
   <section class="student-overview-section mb-4" aria-label="Study plan mission">
-    <div class="box" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; background: linear-gradient(to right, #ffffff, #f9fafb);">
+    <div class="student-study-plan-card">
       {% if study_plan_data %}
         <div class="is-flex is-justify-content-space-between is-align-items-center mb-2" style="flex-wrap: wrap; gap: 8px;">
           <div>
@@ -148,7 +148,7 @@
 
   <!-- ================= WEEKLY HABIT TRACKER ================= -->
   <section class="student-overview-section mb-5" aria-label="Weekly habit summary">
-    <div class="box" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem;">
+    <div class="student-habit-card">
       <div class="is-flex is-justify-content-space-between is-align-items-center mb-3" style="flex-wrap: wrap; gap: 8px;">
         <div>
           <span class="is-size-7 has-text-grey" style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Daily Habit Tracker</span>
@@ -165,7 +165,7 @@
 
       <div class="is-flex is-justify-content-space-between is-align-items-center" style="gap: 8px; flex-wrap: wrap;">
         {% for day in streak_summary.weekly_summary %}
-        <div style="flex: 1; min-width: 40px; text-align: center; padding: 8px 4px; border-radius: 6px; background: {% if day.is_active %}#ebfffc{% elif day.is_today %}#f0f7ff{% else %}#f9fafb{% endif %}; border: 1px solid {% if day.is_active %}#48c78e{% elif day.is_today %}#3273dc{% else %}#e5e7eb{% endif %};">
+        <div class="student-habit-day {% if day.is_active %}is-active{% elif day.is_today %}is-today{% else %}is-inactive{% endif %}">
           <div style="font-size: 0.7rem; font-weight: 600; color: #666;">{{ day.day_name }}</div>
           <div style="font-size: 1.15rem; margin: 4px 0;">
             {% if day.is_active %}
@@ -240,7 +240,7 @@
     <div class="columns is-multiline">
       {% for course in enrolled_courses %}
       <div class="column is-4">
-        <div class="box p-3" style="border: 1px solid #e5e7eb; border-radius: 8px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="student-course-card">
           <div>
             <span class="tag is-info is-light is-size-7 mb-2">{{ course.category.name|default:"Course" }}</span>
             <h3 class="title is-6 mb-2" style="font-size: 1rem;">{{ course.title }}</h3>
@@ -326,7 +326,7 @@
     <div class="columns is-multiline">
       {% for exam in recommended_exams %}
       <div class="column is-4">
-        <div class="box p-3" style="border: 1px solid #e5e7eb; border-radius: 8px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="student-course-card">
           <div>
             <span class="tag is-warning is-light is-size-7 mb-2">{{ exam.primary_category.name|default:"Exam Track" }}</span>
             <h3 class="title is-6 mb-1">{{ exam.title }}</h3>

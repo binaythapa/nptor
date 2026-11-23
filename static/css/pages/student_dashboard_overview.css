@@ -508,3 +508,81 @@ html[data-theme="dark"] .student-overview-actions small,
     grid-row: 1;
   }
 }
+
+/* =====================================================
+   PHASE 4: STUDY PLAN, HABIT CALENDAR & COURSE ENHANCEMENTS
+   ===================================================== */
+
+.student-study-plan-card {
+  border: 1px solid var(--nptor-border, #e2e8f0);
+  border-radius: var(--nptor-radius-lg, 14px);
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--nptor-surface, #ffffff), var(--nptor-surface-soft, #f8fafc));
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.student-study-plan-card:hover {
+  border-color: var(--nptor-primary, #4338ca);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+}
+
+.student-habit-card {
+  border: 1px solid var(--nptor-border, #e2e8f0);
+  border-radius: var(--nptor-radius-lg, 14px);
+  padding: 1.5rem;
+  background: var(--nptor-surface, #ffffff);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.student-habit-day {
+  flex: 1;
+  min-width: 44px;
+  text-align: center;
+  padding: 10px 4px;
+  border-radius: 8px;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.student-habit-day:hover {
+  transform: translateY(-2px);
+}
+.student-habit-day.is-active {
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+}
+.student-habit-day.is-today {
+  background: #eff6ff;
+  border: 1px solid #3b82f6;
+}
+.student-habit-day.is-inactive {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.student-course-card {
+  border: 1px solid var(--nptor-border, #e2e8f0);
+  border-radius: var(--nptor-radius-lg, 12px);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  background: var(--nptor-surface, #ffffff);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.student-course-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  border-color: var(--nptor-primary, #4338ca);
+}
+
+/* Dark mode adaptations */
+html[data-theme="dark"] .student-study-plan-card,
+html[data-theme="dark"] .student-habit-card,
+html[data-theme="dark"] .student-course-card {
+  background: var(--nptor-surface, #1e293b);
+  border-color: #334155;
+}
+html[data-theme="dark"] .student-habit-day.is-inactive {
+  background: #0f172a;
+  border-color: #334155;
+}

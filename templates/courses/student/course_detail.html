@@ -8,6 +8,7 @@
     {% load static %}
     {% load course_tags %}
     <link rel="stylesheet" href="{% static 'css/pages/course-detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pages/course-mobile.css' %}">
 </head>
 <body class="course-overview-page">
 <main class="course-overview-shell">
@@ -155,7 +156,7 @@
             {% endif %}
         </section>
 
-        <aside class="course-overview-sidebar-card course-detail-purchase-card" aria-label="Course enrollment and purchase">
+        <aside class="course-overview-sidebar-card course-detail-purchase-card course-detail-card" aria-label="Course enrollment and purchase">
             <div class="purchase-card-heading">
                 <span class="course-section-label">YOUR LEARNING PLAN</span>
                 {% if not is_preview and is_enrolled %}<span class="enrolled-pill">✓ Enrolled</span>{% endif %}
